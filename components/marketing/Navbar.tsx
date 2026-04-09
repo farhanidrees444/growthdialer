@@ -19,6 +19,8 @@ const navLinks = [
       { label: "GrowthDialer vs Nooks", href: "/compare/vs-nooks" },
       { label: "GrowthDialer vs KrispCall", href: "/compare/vs-krispcall" },
       { label: "GrowthDialer vs PhoneBurner", href: "/compare/vs-phoneburner" },
+      { label: "GrowthDialer vs DandyDialer", href: "/compare/vs-dandydialer" },
+      { label: "GrowthDialer vs PowerDialer", href: "/compare/vs-powerdialer" },
     ],
   },
   {

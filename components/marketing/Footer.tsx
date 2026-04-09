@@ -43,6 +43,8 @@ const footerLinks = {
     { label: "vs Nooks", href: "/compare/vs-nooks" },
     { label: "vs KrispCall", href: "/compare/vs-krispcall" },
     { label: "vs PhoneBurner", href: "/compare/vs-phoneburner" },
+    { label: "vs DandyDialer", href: "/compare/vs-dandydialer" },
+    { label: "vs PowerDialer", href: "/compare/vs-powerdialer" },
   ],
   Resources: [
     { label: "Documentation", href: "/docs" },
