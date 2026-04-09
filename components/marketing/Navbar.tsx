@@ -12,6 +12,16 @@ const navLinks = [
   { label: "How It Works", href: "/#how-it-works" },
   { label: "Pricing", href: "/pricing" },
   {
+    label: "Compare",
+    href: "#",
+    children: [
+      { label: "GrowthDialer vs Orum", href: "/compare/vs-orum" },
+      { label: "GrowthDialer vs Nooks", href: "/compare/vs-nooks" },
+      { label: "GrowthDialer vs KrispCall", href: "/compare/vs-krispcall" },
+      { label: "GrowthDialer vs PhoneBurner", href: "/compare/vs-phoneburner" },
+    ],
+  },
+  {
     label: "Resources",
     href: "/docs",
     children: [

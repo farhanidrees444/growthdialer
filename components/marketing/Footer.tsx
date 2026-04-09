@@ -38,6 +38,12 @@ const footerLinks = {
     { label: "Agencies", href: "/contact-sales" },
     { label: "Enterprise", href: "/contact-sales" },
   ],
+  Compare: [
+    { label: "vs Orum", href: "/compare/vs-orum" },
+    { label: "vs Nooks", href: "/compare/vs-nooks" },
+    { label: "vs KrispCall", href: "/compare/vs-krispcall" },
+    { label: "vs PhoneBurner", href: "/compare/vs-phoneburner" },
+  ],
   Resources: [
     { label: "Documentation", href: "/docs" },
     { label: "Blog", href: "/blog" },

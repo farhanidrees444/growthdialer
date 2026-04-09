@@ -8,6 +8,7 @@ import CompareTable from "@/components/marketing/CompareTable";
 import PricingSection from "@/components/marketing/PricingSection";
 import TestimonialsSection from "@/components/marketing/TestimonialsSection";
 import FAQSection from "@/components/marketing/FAQSection";
+import CompareSection from "@/components/marketing/CompareSection";
 import CTASection from "@/components/marketing/CTASection";
 
 export default function LandingPage() {
@@ -23,6 +24,7 @@ export default function LandingPage() {
       <PricingSection />
       <TestimonialsSection />
       <FAQSection />
+      <CompareSection />
       <CTASection />
     </>
   );
