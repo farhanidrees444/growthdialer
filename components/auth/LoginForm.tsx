@@ -3,12 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
 import { Loader2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
 
 export function LoginForm({ showGoogle }: { showGoogle: boolean }) {
   const router = useRouter();
@@ -24,15 +24,17 @@ export function LoginForm({ showGoogle }: { showGoogle: boolean }) {
     setError(null);
     setLoading(true);
     try {
-      const res = await signIn("credentials", {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
-        redirect: false,
       });
-      if (res?.error) {
-        setError("Invalid email or password.");
+
+      if (error) {
+        setError(error.message || "Invalid email or password.");
         return;
       }
+
       router.push(callbackUrl);
       router.refresh();
     } finally {
@@ -66,7 +68,10 @@ export function LoginForm({ showGoogle }: { showGoogle: boolean }) {
             type="button"
             variant="outline"
             className="w-full border-white/15 bg-white/5 hover:bg-white/10 mb-4"
-            onClick={() => signIn("google", { callbackUrl })}
+            onClick={async () => {
+              const supabase = createClient();
+              await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: callbackUrl } });
+            }}
           >
             Continue with Google
           </Button>
@@ -129,8 +134,7 @@ export function LoginForm({ showGoogle }: { showGoogle: boolean }) {
         </Link>
       </p>
       <p className="text-center text-xs text-muted-foreground mt-4">
-        Demo: <span className="text-foreground/80">demo@growthdialer.com</span> /{" "}
-        <span className="text-foreground/80">demo1234</span>
+        Demo: <span className="text-foreground/80">demo@growthdialer.com</span> / <span className="text-foreground/80">demo1234</span>
       </p>
     </motion.div>
   );

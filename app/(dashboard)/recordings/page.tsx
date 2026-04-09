@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { Play, Clock } from "lucide-react";
 import DashboardHeader from "@/components/DashboardHeader";
 import { Card } from "@/components/ui/card";

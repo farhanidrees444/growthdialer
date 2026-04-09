@@ -3,12 +3,25 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
 import { Loader2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
+
+function passwordStrength(password: string) {
+  if (password.length >= 12 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)) {
+    return { label: "Strong", color: "text-emerald-400" };
+  }
+  if (password.length >= 10 && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
+    return { label: "Good", color: "text-amber-300" };
+  }
+  if (password.length >= 8) {
+    return { label: "Fair", color: "text-yellow-300" };
+  }
+  return { label: "Weak", color: "text-destructive" };
+}
 
 export function SignupForm({ showGoogle }: { showGoogle: boolean }) {
   const router = useRouter();
@@ -19,39 +32,41 @@ export function SignupForm({ showGoogle }: { showGoogle: boolean }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
     setLoading(true);
     try {
-      const reg = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
-      const data = await reg.json().catch(() => ({}));
-      if (!reg.ok) {
-        setError(typeof data.error === "string" ? data.error : "Could not create account.");
-        return;
-      }
-      const sign = await signIn("credentials", {
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        redirect: false,
+        options: {
+          data: { full_name: name },
+        },
       });
-      if (sign?.error) {
-        setError("Account created but sign-in failed. Try logging in.");
+
+      if (error) {
+        setError(error.message || "Could not create account.");
         return;
       }
-      const next = plan ? `/dashboard?plan=${encodeURIComponent(plan)}` : "/dashboard";
-      router.push(next);
-      router.refresh();
+
+      if (data.session) {
+        const next = plan ? `/dashboard?plan=${encodeURIComponent(plan)}` : "/dashboard";
+        router.push(next);
+        router.refresh();
+        return;
+      }
+
+      setSuccess("Check your email for a confirmation link to complete signup.");
     } finally {
       setLoading(false);
     }
@@ -92,7 +107,10 @@ export function SignupForm({ showGoogle }: { showGoogle: boolean }) {
             type="button"
             variant="outline"
             className="w-full border-white/15 bg-white/5 hover:bg-white/10 mb-4"
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+            onClick={async () => {
+              const supabase = createClient();
+              await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/dashboard` } });
+            }}
           >
             Continue with Google
           </Button>
@@ -147,6 +165,9 @@ export function SignupForm({ showGoogle }: { showGoogle: boolean }) {
             className="bg-white/5 border-white/12"
             placeholder="At least 8 characters"
           />
+          <p className={`text-xs ${passwordStrength(password).color}`}>
+            Password strength: {passwordStrength(password).label}
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="confirm">Confirm password</Label>
@@ -164,6 +185,11 @@ export function SignupForm({ showGoogle }: { showGoogle: boolean }) {
         {error && (
           <p className="text-sm text-destructive" role="alert">
             {error}
+          </p>
+        )}
+        {success && (
+          <p className="text-sm text-emerald-400" role="status">
+            {success}
           </p>
         )}
         <Button

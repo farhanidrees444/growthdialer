@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { stripe, PLANS, type PlanKey } from "@/lib/stripe";
-import { auth } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 
 function stripeReadyForPlan(planData: (typeof PLANS)[PlanKey]) {
   const key = process.env.STRIPE_SECRET_KEY ?? "";
@@ -10,7 +10,9 @@ function stripeReadyForPlan(planData: (typeof PLANS)[PlanKey]) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getSession();
+  const session = data.session;
   const { plan, annual } = (await req.json()) as { plan: PlanKey; annual: boolean };
 
   if (!PLANS[plan]) {

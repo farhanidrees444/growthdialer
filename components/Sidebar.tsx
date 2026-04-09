@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -21,6 +20,8 @@ import { useLeads } from "@/contexts/leads-context";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
+import { useSupabaseSession } from "@/lib/supabase/hooks";
 
 type NavItem = {
   icon: LucideIcon;
@@ -53,10 +54,10 @@ function initials(name: string | null | undefined) {
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { data } = useSession();
+  const session = useSupabaseSession();
   const { leads } = useLeads();
 
-  const displayName = data?.user?.name ?? "Alex Rivera";
+  const displayName = session?.user?.user_metadata?.full_name ?? session?.user?.email ?? "Alex Rivera";
   const role = "Sales Rep";
 
   return (
@@ -142,7 +143,11 @@ export default function Sidebar() {
           variant="ghost"
           size="sm"
           className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:text-white hover:bg-sidebar-accent/50 mt-1"
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={async () => {
+            const supabase = createClient();
+            await supabase.auth.signOut();
+            window.location.href = "/login";
+          }}
         >
           <LogOut className="w-4 h-4" />
           Sign out

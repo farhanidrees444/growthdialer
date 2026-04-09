@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { Metadata } from "next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
   title: "GrowthDialer Blog — Sales Dialer Tips, AI Sales Strategies & B2B Sales Best Practices",
@@ -78,43 +76,61 @@ const posts = [
 
 export default function BlogPage() {
   return (
-    <div className="pt-24 pb-16">
-      <div className="container mx-auto px-4">
+    <div className="pt-24 pb-16 bg-black text-white min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Breadcrumb */}
+        <nav className="mb-8 text-sm text-gray-400">
+          <Link href="/" className="hover:text-[#16a34a]">Home</Link>
+          <span className="mx-2">›</span>
+          <span className="text-gray-300">Blog</span>
+        </nav>
+
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
             GrowthDialer Blog
           </h1>
-          <p className="text-xl text-muted-foreground">
-            Expert insights on AI-powered sales dialing, automation strategies, and B2B sales best practices.
+          <p className="text-xl text-gray-300 leading-relaxed">
+            Expert insights on AI-powered sales dialing, automation strategies, and B2B sales best practices. Grow your revenue with proven sales ops tactics.
           </p>
         </div>
 
         {/* Blog Posts Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {posts.map((post) => (
-            <Card key={post.slug} className="group hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="secondary">{post.category}</Badge>
-                  <span className="text-sm text-muted-foreground">{post.readTime}</span>
+            <Link key={post.slug} href={`/blog/${post.slug}`}>
+              <div className="group h-full border border-gray-800 rounded-lg p-6 hover:border-[#16a34a] hover:bg-gray-900/50 transition-all duration-300 cursor-pointer">
+                {/* Category Badge */}
+                <div className="flex items-center justify-between mb-4">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#16a34a]/10 text-[#16a34a] border border-[#16a34a]/30">
+                    {post.category}
+                  </span>
+                  <span className="text-xs text-gray-500">{post.readTime}</span>
                 </div>
-                <CardTitle className="group-hover:text-blue-400 transition-colors">
-                  <Link href={`/blog/${post.slug}`}>
-                    {post.title}
-                  </Link>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
+
+                {/* Title */}
+                <h2 className="text-xl font-bold mb-3 group-hover:text-[#16a34a] transition-colors">
+                  {post.title}
+                </h2>
+
+                {/* Excerpt */}
+                <p className="text-gray-400 text-sm mb-6 line-clamp-3 leading-relaxed">
                   {post.excerpt}
                 </p>
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
+
+                {/* Meta */}
+                <div className="flex items-center justify-between text-xs text-gray-500 border-t border-gray-800 pt-4">
                   <span>{post.author}</span>
                   <span>{post.date}</span>
                 </div>
-              </CardContent>
-            </Card>
+
+                {/* Read more link */}
+                <div className="mt-4 flex items-center gap-2 text-[#16a34a] group-hover:gap-3 transition-all text-sm font-medium">
+                  Read article
+                  <span>→</span>
+                </div>
+              </div>
+            </Link>
           ))}
         </div>
       </div>

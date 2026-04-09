@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Phone, Upload, Users, BarChart2 } from "lucide-react";

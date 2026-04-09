@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import DashboardHeader from "@/components/DashboardHeader";
 import LeadsQueue from "@/components/LeadsQueue";
 import { useLeads } from "@/contexts/leads-context";

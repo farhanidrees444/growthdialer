@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useState } from "react";
 import { Plug } from "lucide-react";
 import DashboardHeader from "@/components/DashboardHeader";

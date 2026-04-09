@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { Bell, Search, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LeadSearchDialog } from "@/components/LeadSearchDialog";
 import { useLeads } from "@/contexts/leads-context";
+import { useSupabaseSession } from "@/lib/supabase/hooks";
 
 export function DashboardHeader({
   title,
@@ -19,10 +19,10 @@ export function DashboardHeader({
   /** Show Import leads in header (also available in queue). */
   showImport?: boolean;
 }) {
-  const { data } = useSession();
+  const session = useSupabaseSession();
   const { setImportOpen } = useLeads();
   const [searchOpen, setSearchOpen] = useState(false);
-  const firstName = data?.user?.name?.split(" ")[0] ?? "there";
+  const firstName = session?.user?.user_metadata?.full_name?.split(" ")[0] ?? session?.user?.email?.split(" ")[0] ?? "there";
 
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-US", {

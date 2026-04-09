@@ -1,9 +1,11 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSupabaseSession } from "@/lib/supabase/hooks";
 import DashboardHeader from "@/components/DashboardHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,14 +14,14 @@ import { Card } from "@/components/ui/card";
 import { settingsProfileSchema, type SettingsProfileInput } from "@/lib/validations";
 
 export default function SettingsPage() {
-  const { data } = useSession();
+  const session = useSupabaseSession();
   const [saved, setSaved] = useState(false);
 
   const form = useForm<SettingsProfileInput>({
     resolver: zodResolver(settingsProfileSchema),
     defaultValues: {
-      name: data?.user?.name ?? "",
-      email: data?.user?.email ?? "",
+      name: session?.user?.user_metadata?.full_name ?? "",
+      email: session?.user?.email ?? "",
       title: "Account Executive",
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       phone: "+1 (555) 000-0000",
@@ -27,16 +29,16 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    if (data?.user) {
+    if (session?.user) {
       form.reset({
-        name: data.user.name ?? "",
-        email: data.user.email ?? "",
+        name: session.user.user_metadata?.full_name ?? "",
+        email: session.user.email ?? "",
         title: "Account Executive",
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         phone: "+1 (555) 000-0000",
       });
     }
-  }, [data?.user, form]);
+  }, [session?.user, form]);
 
   async function onSubmit(_values: SettingsProfileInput) {
     await new Promise((r) => setTimeout(r, 400));
