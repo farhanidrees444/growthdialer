@@ -61,7 +61,7 @@ const footerLinks = {
 };
 
 const socials = [
-  { icon: TwitterIcon, href: "https://twitter.com", label: "Twitter" },
+  { icon: TwitterIcon, href: "https://twitter.com", label: "X (Twitter)" },
   { icon: LinkedinIcon, href: "https://linkedin.com", label: "LinkedIn" },
   { icon: GithubIcon, href: "https://github.com", label: "GitHub" },
   { icon: YoutubeIcon, href: "https://youtube.com", label: "YouTube" },
@@ -69,32 +69,35 @@ const socials = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-white/8 bg-[oklch(0.056_0.018_286)]">
+    <footer className="relative bg-[#0a0a0a] border-t border-[#16a34a]/20">
+      {/* Thin green gradient line at top */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#16a34a]/50 to-transparent" />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Top row */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10 mb-14">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-12 mb-16">
           {/* Brand */}
-          <div className="col-span-2 md:col-span-3 lg:col-span-2">
-            <Link href="/" className="flex items-center gap-2 mb-4 group">
-              <div className="w-8 h-8 rounded-lg gradient-brand flex items-center justify-center glow-brand-sm">
-                <Zap className="w-4 h-4 text-[oklch(0.08_0.04_153)]" fill="currentColor" />
+          <div className="col-span-1 sm:col-span-2 lg:col-span-2">
+            <Link href="/" className="flex items-center gap-3 mb-6 group">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#16a34a] to-[#15803d] flex items-center justify-center shadow-lg shadow-[#16a34a]/20">
+                <Zap className="w-5 h-5 text-white" fill="currentColor" />
               </div>
-              <span className="font-display font-bold text-lg">
-                Growth<span className="text-brand">Dialer</span>
+              <span className="font-display font-bold text-xl text-white">
+                Growth<span className="text-[#16a34a]">Dialer</span>
               </span>
             </Link>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
+            <p className="text-gray-400 leading-relaxed max-w-sm mb-8 text-sm">
               The AI-powered sales dialer that helps B2B teams connect with more
               prospects and close more deals, faster.
             </p>
             {/* Socials */}
-            <div className="flex items-center gap-3 mt-6">
+            <div className="flex items-center gap-4">
               {socials.map(({ icon: Icon, href, label }) => (
                 <a
                   key={label}
                   href={href}
                   aria-label={label}
-                  className="w-8 h-8 rounded-lg bg-white/6 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/12 transition-colors"
+                  className="w-10 h-10 rounded-lg bg-gray-800/50 border border-gray-700/50 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#16a34a]/10 hover:border-[#16a34a]/30 hover:shadow-lg hover:shadow-[#16a34a]/20 transition-all duration-300 group"
                 >
                   <Icon />
                 </a>
@@ -104,16 +107,16 @@ export default function Footer() {
 
           {/* Link columns */}
           {Object.entries(footerLinks).map(([section, links]) => (
-            <div key={section}>
-              <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">
+            <div key={section} className="col-span-1">
+              <h4 className="text-[#16a34a] font-bold text-sm uppercase tracking-wider mb-6">
                 {section}
               </h4>
-              <ul className="space-y-2.5">
+              <ul className="space-y-4">
                 {links.map((link) => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-gray-300 hover:text-[#16a34a] transition-all duration-200 text-sm font-medium hover:translate-x-1 inline-block"
                     >
                       {link.label}
                     </Link>
@@ -125,13 +128,24 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="pt-8 border-t border-white/8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">
+        <div className="pt-8 border-t border-gray-800/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-gray-500 text-sm">
             © {new Date().getFullYear()} GrowthDialer, Inc. All rights reserved.
           </p>
-          <div className="flex items-center gap-1">
-            <span className="w-2 h-2 bg-brand rounded-full animate-pulse" />
-            <span className="text-xs text-muted-foreground">All systems operational</span>
+          <div className="flex items-center gap-6 text-sm">
+            <Link
+              href="/privacy"
+              className="text-gray-400 hover:text-[#16a34a] transition-colors duration-200"
+            >
+              Privacy Policy
+            </Link>
+            <span className="text-gray-600">·</span>
+            <Link
+              href="/terms"
+              className="text-gray-400 hover:text-[#16a34a] transition-colors duration-200"
+            >
+              Terms of Service
+            </Link>
           </div>
         </div>
       </div>
