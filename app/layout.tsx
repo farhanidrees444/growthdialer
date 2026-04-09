@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import CookieConsent from "@/components/CookieConsent";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -284,6 +285,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <SessionProvider>
           <TooltipProvider delay={200}>{children}</TooltipProvider>
+          <CookieConsent />
         </SessionProvider>
       </body>
     </html>
