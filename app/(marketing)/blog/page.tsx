@@ -21,6 +21,33 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "best-ai-sales-dialer-2026",
+    title: "7 Best AI Sales Dialers in 2026: Honest Reviews & Comparisons",
+    date: "April 9, 2026",
+    author: "GrowthDialer Sales Team",
+    excerpt: "We tested every major AI sales dialer in 2026. Here's our honest, data-backed review of the top 7 platforms — features, pricing, and who each is best for.",
+    category: "Reviews",
+    readTime: "18 min read",
+  },
+  {
+    slug: "how-parallel-dialing-works",
+    title: "How Parallel Dialing 10x's Your Sales Connect Rate in 2026",
+    date: "April 9, 2026",
+    author: "GrowthDialer Sales Team",
+    excerpt: "Parallel dialing lets your team dial 10 prospects simultaneously. Learn exactly how it works, the science behind it, and how to implement it to 10x your connect rates.",
+    category: "Strategy",
+    readTime: "16 min read",
+  },
+  {
+    slug: "replace-sdr-team-with-ai",
+    title: "How to Replace Your SDR Team with AI in 2026 (Complete Guide)",
+    date: "April 9, 2026",
+    author: "GrowthDialer Sales Team",
+    excerpt: "AI is replacing SDR teams at record speed in 2026. Learn the exact process to transition from human SDRs to AI sales agents — with real cost savings and implementation steps.",
+    category: "Guide",
+    readTime: "19 min read",
+  },
+  {
     slug: "best-b2b-sales-dialer-2026",
     title: "10 Best B2B Sales Dialer Software in 2026 (Honest Review)",
     date: "April 9, 2026",
