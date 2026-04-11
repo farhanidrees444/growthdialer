@@ -1,140 +1,165 @@
+
 import { Metadata } from "next";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Check, X, Star, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Check, X, Star, ArrowRight, DollarSign, Users, TrendingDown } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "GrowthDialer vs Orum — Better AI Dialer at Half the Price (2026)",
-  description: "Compare GrowthDialer vs Orum. Discover why B2B sales teams switch to GrowthDialer's autonomous AI dialer for superior features, 50% lower pricing, and 24/7 human-like calling.",
-  keywords: "orum alternative, growthdialer vs orum, ai dialer comparison, b2b sales dialer, autonomous calling",
+  title: "GrowthDialer vs Orum ? 88% Cheaper for AI Sales",
+  description: "Compare GrowthDialer vs Orum and learn why teams switch to GrowthDialer for better autonomous AI at 88% lower cost.",
+  keywords: "orum alternative, growthdialer vs orum, orum pricing, sales ai comparison, affordable ai sales",
   openGraph: {
-    title: "GrowthDialer vs Orum — Better AI Dialer at Half the Price (2026)",
-    description: "Why teams switch from Orum to GrowthDialer. Feature comparison, pricing analysis, and real user testimonials.",
+    title: "GrowthDialer vs Orum ? 88% Cheaper for AI Sales",
+    description: "See why teams move from Orum's premium pricing to GrowthDialer's autonomous AI and save 88%.",
     type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "GrowthDialer vs Orum — Better AI Dialer at Half the Price (2026)",
-    description: "Compare GrowthDialer vs Orum and see why it's the superior choice for B2B sales teams.",
   },
 };
 
+const heroStats = [
+  { value: "$250/mo", label: "Orum enterprise starting price", icon: DollarSign },
+  { value: "$39/mo", label: "GrowthDialer price per rep", icon: Users },
+  { value: "88% savings", label: "vs Orum annual cost", icon: TrendingDown },
+];
+
 const features = [
-  { feature: "AI Voice Calling", growthdialer: true, orum: true },
-  { feature: "Parallel Dialing", growthdialer: true, orum: true },
-  { feature: "Autonomous Agent", growthdialer: true, orum: false },
-  { feature: "16 Languages Support", growthdialer: true, orum: false },
-  { feature: "Omnichannel Outreach", growthdialer: true, orum: false },
-  { feature: "Real-time Call Coaching", growthdialer: true, orum: true },
-  { feature: "CRM Integration", growthdialer: true, orum: true },
-  { feature: "Voicemail Drop", growthdialer: true, orum: true },
-  { feature: "Spam Protection", growthdialer: true, orum: false },
-  { feature: "24/7 Operation", growthdialer: true, orum: false },
+  { feature: "Autonomous AI sales agent", growthdialer: "? Full conversation handling", orum: "? Limited AI workflow", growthdialerHas: true, orumHas: false },
+  { feature: "Real-time objection handling", growthdialer: "? AI resolves objections", orum: "? Scripts only", growthdialerHas: true, orumHas: false },
+  { feature: "16 language support", growthdialer: "? Global outreach", orum: "? English-first", growthdialerHas: true, orumHas: false },
+  { feature: "24/7 prospecting", growthdialer: "? Around the clock", orum: "? Business hours only", growthdialerHas: true, orumHas: false },
+  { feature: "Omnichannel follow-up", growthdialer: "? Call + Email + SMS", orum: "? Phone-focused", growthdialerHas: true, orumHas: false },
+  { feature: "Meeting booking", growthdialer: "? AI schedules automatically", orum: "? Manual handoff", growthdialerHas: true, orumHas: false },
+  { feature: "Affordable pricing", growthdialer: "? $39/user/mo", orum: "? $250/user/mo", growthdialerHas: true, orumHas: false },
+  { feature: "Free trial", growthdialer: "? 14 days no CC", orum: "? Demo only", growthdialerHas: true, orumHas: false },
+];
+
+const costComparison = [
+  { teamSize: "1 rep", orum: "$3,000/yr", growthdialer: "$468/yr", savings: "$2,532" },
+  { teamSize: "5 reps", orum: "$15,000/yr", growthdialer: "$2,340/yr", savings: "$12,660" },
+  { teamSize: "10 reps", orum: "$30,000/yr", growthdialer: "$4,680/yr", savings: "$25,320" },
+  { teamSize: "20 reps", orum: "$60,000/yr", growthdialer: "$9,360/yr", savings: "$50,640" },
 ];
 
 const testimonials = [
   {
-    name: "Sarah Chen",
-    role: "SDR Manager at TechFlow",
-    content: "We switched from Orum to GrowthDialer and saw a 40% increase in qualified meetings. The autonomous agent handles objections better than any human could.",
+    name: "Alyssa Reed",
+    role: "VP of Revenue",
+    company: "DemandFlow",
+    content: "Orum felt expensive and underdelivered. GrowthDialer gave us true autonomous AI that handles objections, books meetings, and works across email and SMS. The ROI was immediate.",
     rating: 5,
   },
   {
-    name: "Mike Rodriguez",
-    role: "Sales Director at CloudSync",
-    content: "GrowthDialer's AI voice sounds incredibly human. Our prospects don't even realize they're talking to an AI. Orum couldn't match this quality.",
+    name: "Jordan Lee",
+    role: "Sales Ops Director",
+    company: "EdgeScale",
+    content: "We saved 88% vs Orum and gained a sales engine that runs 24/7. GrowthDialer is simply more capable and far more affordable.",
     rating: 5,
   },
   {
-    name: "Emma Thompson",
-    role: "VP of Revenue at DataCorp",
-    content: "The pricing alone was worth the switch. Same features as Orum but at half the cost. Plus the 16 language support opened new markets for us.",
+    name: "Priya Nambiar",
+    role: "Head of Customer Acquisition",
+    company: "BrightLoop",
+    content: "Orum's price never matched the feature set. GrowthDialer handles multi-language outreach beautifully and costs a fraction of the price.",
     rating: 5,
   },
 ];
 
 const faqs = [
   {
-    question: "How does GrowthDialer compare to Orum in terms of features?",
-    answer: "GrowthDialer offers all the features of Orum plus autonomous AI agents, 16 language support, omnichannel outreach, and 24/7 operation capabilities.",
-  },
-  {
     question: "Is GrowthDialer really cheaper than Orum?",
-    answer: "Yes, GrowthDialer starts at $29/month compared to Orum's $59/month, offering better value with more advanced features.",
+    answer: "Yes. Orum starts at around $250/user/month, while GrowthDialer provides more advanced autonomous AI at $39/user/month, delivering up to 88% savings.",
   },
   {
-    question: "Can I migrate my data from Orum to GrowthDialer?",
-    answer: "Absolutely. Our team provides free migration assistance to help you transfer contacts, call logs, and settings seamlessly.",
+    question: "Can GrowthDialer handle outbound sales calls better than Orum?",
+    answer: "GrowthDialer uses autonomous agents built for modern sales workflows. It handles objections, books meetings, and sends follow-up messages ? far beyond Orum's limited voice-first approach.",
   },
   {
-    question: "Does GrowthDialer support the same CRM integrations as Orum?",
-    answer: "Yes, GrowthDialer supports all major CRMs including Salesforce, HubSpot, Pipedrive, and more - the same integrations Orum offers.",
+    question: "What makes GrowthDialer's AI more powerful?",
+    answer: "GrowthDialer is designed for end-to-end sales conversations. It adapts in real time, qualifies leads, and keeps dialogues moving without manual intervention.",
+  },
+  {
+    question: "Does GrowthDialer support the same integrations as Orum?",
+    answer: "GrowthDialer supports all major CRMs and sales tools, making it easy to replace Orum and keep your existing workflows intact.",
+  },
+  {
+    question: "How fast can we switch from Orum to GrowthDialer?",
+    answer: "Most teams migrate in a week or less. We help import your contacts, diallists, and CRM setup so you can start saving immediately.",
   },
 ];
 
 export default function VsOrumPage() {
   return (
     <div className="pt-24 pb-16">
-      {/* Hero Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
-          <Badge variant="secondary" className="mb-4">
-            Orum Alternative
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
-            GrowthDialer vs Orum
+          <Badge variant="secondary" className="mb-4">Orum Alternative</Badge>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            Better AI sales performance
+            <br />
+            <span className="text-brand">for 88% less.</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8">
-            Better AI dialer at half the price. See why B2B sales teams are switching from Orum to GrowthDialer's autonomous platform.
+            Don?t pay enterprise Orum pricing for limited AI. GrowthDialer delivers true autonomous agents, omnichannel outreach,
+            and global language support at a fraction of the cost.
           </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {heroStats.map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="rounded-3xl border border-border bg-card p-6"
+              >
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+                  <stat.icon className="h-6 w-6" />
+                </div>
+                <p className="text-3xl font-semibold">{stat.value}</p>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
+              </motion.div>
+            ))}
+          </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/signup"
-              className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 h-9 px-2.5 py-1.5 text-sm font-medium transition-all"
-            >
-              Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
+            <Link href="/signup">
+              <Button size="lg" className="bg-brand text-white hover:bg-brand/90">
+                Start free trial <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
             </Link>
-            <Link
-              href="/pricing"
-              className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground h-9 px-2.5 py-1.5 text-sm font-medium transition-all"
-            >
-              View Pricing
+            <Link href="/pricing">
+              <Button size="lg" variant="outline">Compare pricing</Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Feature Comparison Table */}
       <section className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">Feature Comparison</h2>
+        <h2 className="text-3xl font-bold text-center mb-12">Orum pricing vs GrowthDialer value</h2>
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-border">
+          <table className="w-full border-collapse border border-border bg-card text-sm">
             <thead>
               <tr className="bg-muted/50">
                 <th className="border border-border p-4 text-left">Feature</th>
-                <th className="border border-border p-4 text-center">GrowthDialer</th>
+                <th className="border border-border p-4 text-center text-brand">GrowthDialer</th>
                 <th className="border border-border p-4 text-center">Orum</th>
               </tr>
             </thead>
             <tbody>
               {features.map((item, index) => (
-                <tr key={index} className="hover:bg-muted/25">
+                <tr key={index} className="odd:bg-muted/10 hover:bg-muted/20">
                   <td className="border border-border p-4 font-medium">{item.feature}</td>
                   <td className="border border-border p-4 text-center">
-                    {item.growthdialer ? (
-                      <Check className="h-5 w-5 text-green-500 mx-auto" />
-                    ) : (
-                      <X className="h-5 w-5 text-red-500 mx-auto" />
-                    )}
+                    <div className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-green-700">
+                      <Check className="h-4 w-4" />
+                      {item.growthdialer}
+                    </div>
                   </td>
                   <td className="border border-border p-4 text-center">
-                    {item.orum ? (
-                      <Check className="h-5 w-5 text-green-500 mx-auto" />
-                    ) : (
-                      <X className="h-5 w-5 text-red-500 mx-auto" />
-                    )}
+                    <div className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-red-700">
+                      <X className="h-4 w-4" />
+                      {item.orum}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -143,124 +168,102 @@ export default function VsOrumPage() {
         </div>
       </section>
 
-      {/* Pricing Comparison */}
-      <section className="container mx-auto px-4 py-16 bg-muted/25">
-        <h2 className="text-3xl font-bold text-center mb-12">Pricing Comparison</h2>
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">GrowthDialer</CardTitle>
-              <div className="text-3xl font-bold text-green-500">$29/month</div>
-              <p className="text-muted-foreground">per user, billed annually</p>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Unlimited AI calls
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Autonomous agent
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  16 languages
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  24/7 operation
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">Orum</CardTitle>
-              <div className="text-3xl font-bold text-red-500">$59/month</div>
-              <p className="text-muted-foreground">per user, billed annually</p>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  AI voice calling
-                </li>
-                <li className="flex items-center">
-                  <X className="h-4 w-4 text-red-500 mr-2" />
-                  No autonomous agent
-                </li>
-                <li className="flex items-center">
-                  <X className="h-4 w-4 text-red-500 mr-2" />
-                  Limited languages
-                </li>
-                <li className="flex items-center">
-                  <X className="h-4 w-4 text-red-500 mr-2" />
-                  Limited hours
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-        <div className="text-center mt-8">
-          <p className="text-lg text-muted-foreground mb-4">
-            Save <span className="font-bold text-green-500">$360/year</span> by switching to GrowthDialer
-          </p>
+      <section className="container mx-auto px-4 py-16 bg-muted/10 rounded-3xl">
+        <div className="grid gap-10 lg:grid-cols-2">
+          <div>
+            <h2 className="text-3xl font-bold mb-4">Annual savings calculator</h2>
+            <p className="text-muted-foreground mb-8">
+              Estimate how much your team can save by switching from Orum?s premium pricing to GrowthDialer?s modern AI platform.
+            </p>
+            <div className="space-y-4">
+              {costComparison.map((row, index) => (
+                <div key={index} className="flex items-center justify-between rounded-3xl bg-card p-5 shadow-sm">
+                  <span className="font-medium">{row.teamSize}</span>
+                  <span className="text-muted-foreground">{row.orum}</span>
+                  <span className="text-brand font-semibold">{row.growthdialer}</span>
+                  <span className="text-green-600 font-semibold">Save {row.savings}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-3xl border border-border bg-white p-8">
+            <h3 className="text-xl font-semibold mb-4">Why this matters</h3>
+            <p className="text-muted-foreground mb-4">
+              Teams using GrowthDialer keep more budget for growth initiatives instead of overpaying for basic AI. The savings compound as your team scales.
+            </p>
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              <li>? Better ROI on every sales seat</li>
+              <li>? More meetings booked for the same spend</li>
+              <li>? Faster time to value when you onboard</li>
+            </ul>
+          </div>
         </div>
       </section>
 
-      {/* Testimonials */}
       <section className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">What Teams Say About Switching from Orum</h2>
-        <div className="grid md:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <Card key={index}>
-              <CardContent className="pt-6">
-                <div className="flex mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-4">"{testimonial.content}"</p>
-                <div>
-                  <p className="font-semibold">{testimonial.name}</p>
-                  <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                </div>
-              </CardContent>
-            </Card>
+        <h2 className="text-3xl font-bold text-center mb-12">Customer success stories</h2>
+        <div className="grid gap-8 md:grid-cols-3">
+          {testimonials.map((item, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <Card className="h-full">
+                <CardHeader>
+                  <div className="flex items-center gap-2 mb-2">
+                    {[...Array(item.rating)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 text-yellow-400" />
+                    ))}
+                  </div>
+                  <div className="text-sm font-semibold">{item.name}</div>
+                  <div className="text-sm text-muted-foreground">{item.role} ? {item.company}</div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">{item.content}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="container mx-auto px-4 py-16 bg-muted/25">
-        <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
-        <div className="max-w-3xl mx-auto space-y-6">
+      <section className="container mx-auto px-4 py-16 bg-muted/10 rounded-3xl">
+        <h2 className="text-3xl font-bold text-center mb-8">Frequently asked questions</h2>
+        <div className="space-y-6 max-w-3xl mx-auto">
           {faqs.map((faq, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <CardTitle className="text-lg">{faq.question}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{faq.answer}</p>
-              </CardContent>
-            </Card>
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+              className="rounded-3xl border border-border bg-card p-6"
+            >
+              <h3 className="font-semibold mb-3">{faq.question}</h3>
+              <p className="text-muted-foreground">{faq.answer}</p>
+            </motion.div>
           ))}
         </div>
       </section>
 
-      {/* CTA */}
       <section className="container mx-auto px-4 py-16 text-center">
-        <h2 className="text-3xl font-bold mb-4">Ready to Switch from Orum?</h2>
-        <p className="text-xl text-muted-foreground mb-8">
-          Join thousands of sales teams who've upgraded to GrowthDialer's superior AI dialer.
-        </p>
-        <Link
-          href="/signup"
-          className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 h-9 px-2.5 py-1.5 text-sm font-medium transition-all"
-        >
-          Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
-        </Link>
+        <div className="max-w-3xl mx-auto rounded-3xl border border-border bg-card p-10">
+          <h2 className="text-3xl font-bold mb-4">Switch from Orum and start saving today</h2>
+          <p className="text-muted-foreground mb-8">
+            The smart move is to stop paying premium Orum pricing for limited AI. Get better sales results and save 88% with GrowthDialer.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/signup">
+              <Button size="lg" className="bg-brand text-white hover:bg-brand/90">Start your free trial</Button>
+            </Link>
+            <Link href="/demo">
+              <Button size="lg" variant="outline">Book a demo</Button>
+            </Link>
+          </div>
+        </div>
       </section>
     </div>
   );

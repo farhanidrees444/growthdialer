@@ -7,9 +7,28 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+        allow: [
+          "/",
+          "/blog/",
+          "/compare/",
+          "/pricing",
+          "/features/",
+          "/about",
+          "/features/integrations",
+          "/contact-sales"
+        ],
+        disallow: [
+          "/dashboard",
+          "/dialer",
+          "/leads",
+          "/sequences",
+          "/analytics",
+          "/recordings",
+          "/settings",
+          "/api/",
+        ],
       },
     ],
-    sitemap: `${BASE}/sitemap.xml`,
+    sitemap: "https://www.growthdialer.com/sitemap.xml",
   };
 }

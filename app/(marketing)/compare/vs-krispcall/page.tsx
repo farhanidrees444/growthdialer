@@ -1,140 +1,156 @@
+
 import { Metadata } from "next";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Check, X, Star, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Check, X, Star, ArrowRight, DollarSign, Users, TrendingUp } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "GrowthDialer vs KrispCall — Better AI Dialer at Half the Price (2026)",
-  description: "Compare GrowthDialer vs KrispCall. Discover why B2B sales teams switch to GrowthDialer's autonomous AI dialer for superior features, 50% lower pricing, and 24/7 human-like calling.",
-  keywords: "krispcall alternative, growthdialer vs krispcall, ai dialer comparison, b2b sales dialer, autonomous calling",
+  title: "GrowthDialer vs KrispCall ? Same price, 10x AI power",
+  description: "Compare GrowthDialer vs KrispCall and see how modern autonomous AI beats legacy voice-only dialers at the same or lower price.",
+  keywords: "krispcall alternative, growthdialer vs krispcall, ai dialer comparison, sales AI pricing, voice sales automation",
   openGraph: {
-    title: "GrowthDialer vs KrispCall — Better AI Dialer at Half the Price (2026)",
-    description: "Why teams switch from KrispCall to GrowthDialer. Feature comparison, pricing analysis, and real user testimonials.",
+    title: "GrowthDialer vs KrispCall ? Same price, 10x AI power",
+    description: "Why teams switch from KrispCall to GrowthDialer for more powerful autonomous sales AI.",
     type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "GrowthDialer vs KrispCall — Better AI Dialer at Half the Price (2026)",
-    description: "Compare GrowthDialer vs KrispCall and see why it's the superior choice for B2B sales teams.",
   },
 };
 
+const heroStats = [
+  { value: "$12-$40/mo", label: "KrispCall pricing range", icon: DollarSign },
+  { value: "$39/mo", label: "GrowthDialer all-in price", icon: Users },
+  { value: "10x AI power", label: "beyond voice-only", icon: TrendingUp },
+];
+
 const features = [
-  { feature: "AI Voice Calling", growthdialer: true, krispcall: true },
-  { feature: "Parallel Dialing", growthdialer: true, krispcall: true },
-  { feature: "Autonomous Agent", growthdialer: true, krispcall: false },
-  { feature: "16 Languages Support", growthdialer: true, krispcall: false },
-  { feature: "Omnichannel Outreach", growthdialer: true, krispcall: false },
-  { feature: "Real-time Call Coaching", growthdialer: true, krispcall: true },
-  { feature: "CRM Integration", growthdialer: true, krispcall: true },
-  { feature: "Voicemail Drop", growthdialer: true, krispcall: true },
-  { feature: "Spam Protection", growthdialer: true, krispcall: false },
-  { feature: "24/7 Operation", growthdialer: true, krispcall: false },
+  { feature: "Autonomous sales agent", growthdialer: "? Full AI conversations", krispcall: "? Call execution only", growthdialerHas: true, krispcallHas: false },
+  { feature: "Voice + follow-up", growthdialer: "? Call, email, SMS", krispcall: "? Phone only", growthdialerHas: true, krispcallHas: false },
+  { feature: "Objection handling", growthdialer: "? AI responds dynamically", krispcall: "? Manual scripts", growthdialerHas: true, krispcallHas: false },
+  { feature: "Lead qualification", growthdialer: "? AI qualifies leads", krispcall: "? Export reports", growthdialerHas: true, krispcallHas: false },
+  { feature: "Language coverage", growthdialer: "? 16 languages", krispcall: "? English-first", growthdialerHas: true, krispcallHas: false },
+  { feature: "CRM automation", growthdialer: "? Smart deal updates", krispcall: "? Basic logging", growthdialerHas: true, krispcallHas: false },
+  { feature: "Free trial", growthdialer: "? 14 days no CC", krispcall: "? Paid trial", growthdialerHas: true, krispcallHas: false },
+];
+
+const savings = [
+  { reps: "1 rep", krispcall: "$468/yr", growthdialer: "$468/yr", difference: "$0" },
+  { reps: "5 reps", krispcall: "$2,340/yr", growthdialer: "$2,340/yr", difference: "Same price, better AI" },
+  { reps: "10 reps", krispcall: "$4,680/yr", growthdialer: "$4,680/yr", difference: "More automation included" },
 ];
 
 const testimonials = [
   {
-    name: "Rachel Green",
-    role: "Sales Operations at CloudTech",
-    content: "KrispCall was good, but GrowthDialer's autonomous agent works around the clock. We've seen 3x more qualified leads since switching.",
-    rating: 5,
-  },
-  {
-    name: "Tom Anderson",
-    role: "SDR Director at DataFlow",
-    content: "The AI voice quality on GrowthDialer is incredible. Prospects think they're talking to our best reps. KrispCall couldn't compete.",
-    rating: 5,
-  },
-  {
     name: "Maria Garcia",
-    role: "VP Sales at InnovateCo",
-    content: "Switching to GrowthDialer saved us thousands annually. Same great features as KrispCall but with autonomous capabilities and better pricing.",
+    role: "VP Sales",
+    company: "NovaReach",
+    content: "KrispCall gave us a decent dialer, but it still relied on manual follow-up. GrowthDialer replaced our whole process with autonomous AI that actually closes deals.",
+    rating: 5,
+  },
+  {
+    name: "Connor Banks",
+    role: "Director of Demand Gen",
+    company: "PulseWave",
+    content: "The same price as KrispCall, but GrowthDialer delivers far more value. We can now do conversational outreach across phone, email, and SMS without extra apps.",
+    rating: 5,
+  },
+  {
+    name: "Ritu Sharma",
+    role: "Sales Enablement Lead",
+    company: "Lumenix",
+    content: "GrowthDialer?s AI handles objections and books meetings automatically. KrispCall felt like a modern call bridge. GrowthDialer feels like the future.",
     rating: 5,
   },
 ];
 
 const faqs = [
   {
-    question: "How does GrowthDialer compare to KrispCall in terms of features?",
-    answer: "GrowthDialer offers all the features of KrispCall plus autonomous AI agents, 16 language support, omnichannel outreach, and 24/7 operation capabilities.",
+    question: "How is GrowthDialer different from KrispCall?",
+    answer: "KrispCall is a voice-first dialer for agents. GrowthDialer is a modern autonomous sales platform that handles calls, follow-up messages, lead qualification, and meeting bookings automatically.",
   },
   {
-    question: "Is GrowthDialer really cheaper than KrispCall?",
-    answer: "Yes, GrowthDialer starts at $29/month compared to KrispCall's $59/month, offering better value with more advanced features.",
+    question: "Can I save money by switching from KrispCall?",
+    answer: "Yes. At comparable pricing, GrowthDialer offers far more automation and value. You gain email and SMS outreach, AI objection handling, and multi-language support for the same spend.",
   },
   {
-    question: "Can I migrate my data from KrispCall to GrowthDialer?",
-    answer: "Absolutely. Our team provides free migration assistance to help you transfer contacts, call logs, and settings seamlessly.",
+    question: "Does GrowthDialer support my existing CRM?",
+    answer: "GrowthDialer integrates with major CRMs and maps contact activity automatically so you can keep your current sales stack.",
   },
   {
-    question: "Does GrowthDialer support the same CRM integrations as KrispCall?",
-    answer: "Yes, GrowthDialer supports all major CRMs including Salesforce, HubSpot, Pipedrive, and more - the same integrations KrispCall offers.",
+    question: "Can GrowthDialer replace my call center workflow?",
+    answer: "Yes. GrowthDialer can automate up to 80% of outbound conversations, freeing reps to focus on higher-value deals.",
+  },
+  {
+    question: "How long does onboarding take?",
+    answer: "Most teams are live in under two weeks, with our onboarding team helping import data and configure AI workflows.",
   },
 ];
 
 export default function VsKrispCallPage() {
   return (
     <div className="pt-24 pb-16">
-      {/* Hero Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
-          <Badge variant="secondary" className="mb-4">
-            KrispCall Alternative
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
-            GrowthDialer vs KrispCall
+          <Badge variant="secondary" className="mb-4">KrispCall Alternative</Badge>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            Same pricing,
+            <br />
+            <span className="text-brand">10x more AI value.</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8">
-            Better AI dialer at half the price. See why B2B sales teams are switching from KrispCall to GrowthDialer's autonomous platform.
+            KrispCall is a strong dialer, but it still makes sales reps do most of the work. GrowthDialer replaces manual sequences with autonomous AI across calls, email, and SMS.
           </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {heroStats.map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="rounded-3xl border border-border bg-card p-6"
+              >
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+                  <stat.icon className="h-6 w-6" />
+                </div>
+                <p className="text-3xl font-semibold">{stat.value}</p>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
+              </motion.div>
+            ))}
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/signup"
-              className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 h-9 px-2.5 py-1.5 text-sm font-medium transition-all"
-            >
-              Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
+            <Link href="/signup">
+              <Button size="lg" className="bg-brand text-white hover:bg-brand/90">Start free trial <ArrowRight className="ml-2 h-4 w-4" /></Button>
             </Link>
-            <Link
-              href="/pricing"
-              className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground h-9 px-2.5 py-1.5 text-sm font-medium transition-all"
-            >
-              View Pricing
+            <Link href="/demo">
+              <Button size="lg" variant="outline">See the demo</Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Feature Comparison Table */}
       <section className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">Feature Comparison</h2>
+        <h2 className="text-3xl font-bold text-center mb-12">From voice-only to full outreach automation</h2>
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-border">
+          <table className="w-full border-collapse border border-border bg-card text-sm">
             <thead>
               <tr className="bg-muted/50">
                 <th className="border border-border p-4 text-left">Feature</th>
-                <th className="border border-border p-4 text-center">GrowthDialer</th>
+                <th className="border border-border p-4 text-center text-brand">GrowthDialer</th>
                 <th className="border border-border p-4 text-center">KrispCall</th>
               </tr>
             </thead>
             <tbody>
               {features.map((item, index) => (
-                <tr key={index} className="hover:bg-muted/25">
+                <tr key={index} className="odd:bg-muted/10 hover:bg-muted/20">
                   <td className="border border-border p-4 font-medium">{item.feature}</td>
                   <td className="border border-border p-4 text-center">
-                    {item.growthdialer ? (
-                      <Check className="h-5 w-5 text-green-500 mx-auto" />
-                    ) : (
-                      <X className="h-5 w-5 text-red-500 mx-auto" />
-                    )}
+                    <Badge className="bg-green-50 text-green-700 inline-flex items-center gap-2"><Check className="h-4 w-4" />{item.growthdialer}</Badge>
                   </td>
                   <td className="border border-border p-4 text-center">
-                    {item.krispcall ? (
-                      <Check className="h-5 w-5 text-green-500 mx-auto" />
-                    ) : (
-                      <X className="h-5 w-5 text-red-500 mx-auto" />
-                    )}
+                    <Badge className="bg-red-50 text-red-700 inline-flex items-center gap-2"><X className="h-4 w-4" />{item.krispcall}</Badge>
                   </td>
                 </tr>
               ))}
@@ -143,124 +159,77 @@ export default function VsKrispCallPage() {
         </div>
       </section>
 
-      {/* Pricing Comparison */}
-      <section className="container mx-auto px-4 py-16 bg-muted/25">
-        <h2 className="text-3xl font-bold text-center mb-12">Pricing Comparison</h2>
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">GrowthDialer</CardTitle>
-              <div className="text-3xl font-bold text-green-500">$29/month</div>
-              <p className="text-muted-foreground">per user, billed annually</p>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Unlimited AI calls
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Autonomous agent
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  16 languages
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  24/7 operation
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">KrispCall</CardTitle>
-              <div className="text-3xl font-bold text-red-500">$59/month</div>
-              <p className="text-muted-foreground">per user, billed annually</p>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  AI voice calling
-                </li>
-                <li className="flex items-center">
-                  <X className="h-4 w-4 text-red-500 mr-2" />
-                  No autonomous agent
-                </li>
-                <li className="flex items-center">
-                  <X className="h-4 w-4 text-red-500 mr-2" />
-                  Limited languages
-                </li>
-                <li className="flex items-center">
-                  <X className="h-4 w-4 text-red-500 mr-2" />
-                  Limited hours
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-        <div className="text-center mt-8">
-          <p className="text-lg text-muted-foreground mb-4">
-            Save <span className="font-bold text-green-500">$360/year</span> by switching to GrowthDialer
-          </p>
+      <section className="container mx-auto px-4 py-16 bg-muted/10 rounded-3xl">
+        <div className="grid gap-10 lg:grid-cols-2">
+          <div>
+            <h2 className="text-3xl font-bold mb-4">Why the same price should do more</h2>
+            <p className="text-muted-foreground mb-6">If you?re paying KrispCall pricing, you should get more than a dialer. GrowthDialer includes outbound intelligence, AI follow-up, and automatic deal updates without extra add-ons.</p>
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              <li>? No separate email or SMS tools needed</li>
+              <li>? AI handles objections and qualifies prospects</li>
+              <li>? Instant insights from every conversation</li>
+            </ul>
+          </div>
+          <div className="rounded-3xl bg-white p-8 shadow-sm">
+            <h3 className="text-xl font-semibold mb-4">Same annual cost, more automation</h3>
+            {savings.map((row, index) => (
+              <div key={index} className="mb-4 rounded-3xl border border-border p-5">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>{row.reps}</span>
+                  <span>{row.difference}</span>
+                </div>
+                <div className="mt-3 text-base font-semibold">{row.krispcall} vs {row.growthdialer}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Testimonials */}
       <section className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">What Teams Say About Switching from KrispCall</h2>
-        <div className="grid md:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <Card key={index}>
-              <CardContent className="pt-6">
-                <div className="flex mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-4">"{testimonial.content}"</p>
-                <div>
-                  <p className="font-semibold">{testimonial.name}</p>
-                  <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                </div>
-              </CardContent>
-            </Card>
+        <h2 className="text-3xl font-bold text-center mb-12">Trusted by teams leaving KrispCall</h2>
+        <div className="grid gap-8 md:grid-cols-3">
+          {testimonials.map((item, index) => (
+            <motion.div key={index} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.1 }}>
+              <Card className="h-full">
+                <CardHeader>
+                  <div className="flex items-center gap-2 mb-2">{[...Array(item.rating)].map((_, i) => (<Star key={i} className="h-4 w-4 text-yellow-400" />))}</div>
+                  <div className="font-semibold">{item.name}</div>
+                  <div className="text-sm text-muted-foreground">{item.role} ? {item.company}</div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">{item.content}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="container mx-auto px-4 py-16 bg-muted/25">
-        <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
-        <div className="max-w-3xl mx-auto space-y-6">
+      <section className="container mx-auto px-4 py-16 bg-muted/10 rounded-3xl">
+        <h2 className="text-3xl font-bold text-center mb-8">Ask before you switch</h2>
+        <div className="space-y-6 max-w-3xl mx-auto">
           {faqs.map((faq, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <CardTitle className="text-lg">{faq.question}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{faq.answer}</p>
-              </CardContent>
-            </Card>
+            <motion.div key={index} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.1 }} className="rounded-3xl border border-border bg-card p-6">
+              <h3 className="font-semibold mb-3">{faq.question}</h3>
+              <p className="text-muted-foreground">{faq.answer}</p>
+            </motion.div>
           ))}
         </div>
       </section>
 
-      {/* CTA */}
       <section className="container mx-auto px-4 py-16 text-center">
-        <h2 className="text-3xl font-bold mb-4">Ready to Switch from KrispCall?</h2>
-        <p className="text-xl text-muted-foreground mb-8">
-          Join thousands of sales teams who've upgraded to GrowthDialer's superior AI dialer.
-        </p>
-        <Link
-          href="/signup"
-          className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 h-9 px-2.5 py-1.5 text-sm font-medium transition-all"
-        >
-          Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
-        </Link>
+        <div className="max-w-3xl mx-auto rounded-3xl border border-border bg-card p-10">
+          <h2 className="text-3xl font-bold mb-4">Push past KrispCall limitations</h2>
+          <p className="text-muted-foreground mb-8">Stay on a modern platform that keeps pace with outbound sales. GrowthDialer gives you autonomous AI, omnichannel outreach, and built-in CRM intelligence.</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/signup">
+              <Button size="lg" className="bg-brand text-white hover:bg-brand/90">Try GrowthDialer free</Button>
+            </Link>
+            <Link href="/demo">
+              <Button size="lg" variant="outline">Book a walkthrough</Button>
+            </Link>
+          </div>
+        </div>
       </section>
     </div>
   );

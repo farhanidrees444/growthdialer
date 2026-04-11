@@ -79,9 +79,16 @@ export default function CompareTable() {
             <div className="col-span-1 px-6 py-4 text-sm font-medium text-muted-foreground">Feature</div>
             <div className="col-span-1 px-6 py-4 text-center">
               <div className="text-sm font-bold text-brand">GrowthDialer</div>
+              <div className="text-xs text-muted-foreground mt-1">$29/user/mo</div>
             </div>
-            <div className="col-span-1 px-6 py-4 text-center text-sm text-muted-foreground">Competitor A</div>
-            <div className="col-span-1 px-6 py-4 text-center text-sm text-muted-foreground">Competitor B</div>
+            <div className="col-span-1 px-6 py-4 text-center text-sm text-muted-foreground">
+              <div>Orum</div>
+              <div className="text-xs text-muted-foreground mt-1">$59/user/mo</div>
+            </div>
+            <div className="col-span-1 px-6 py-4 text-center text-sm text-muted-foreground">
+              <div>Nooks</div>
+              <div className="text-xs text-muted-foreground mt-1">$45/user/mo</div>
+            </div>
           </div>
 
           {/* Rows */}

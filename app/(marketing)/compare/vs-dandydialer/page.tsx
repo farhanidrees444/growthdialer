@@ -1,266 +1,171 @@
 import { Metadata } from "next";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Check, X, Star, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Check, X, Star, ArrowRight, DollarSign, Users, TrendingUp } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "GrowthDialer vs DandyDialer — Better AI Dialer at Lower Price (2026)",
-  description: "Compare GrowthDialer vs DandyDialer. Discover why B2B sales teams switch to GrowthDialer's autonomous AI dialer for superior features, competitive pricing, and 24/7 human-like calling.",
-  keywords: "dandydialer alternative, growthdialer vs dandydialer, ai dialer comparison, b2b sales dialer, autonomous calling",
+  title: "GrowthDialer vs DandyDialer — Enterprise Features at Startup Pricing",
+  description: "Compare GrowthDialer vs DandyDialer and see why sales teams switch from enterprise dialers to GrowthDialer's autonomous AI.",
+  keywords: "dandydialer alternative, growthdialer vs dandydialer, enterprise dialer, ai sales automation, startup pricing",
   openGraph: {
-    title: "GrowthDialer vs DandyDialer — Better AI Dialer at Lower Price (2026)",
-    description: "Why teams switch from DandyDialer to GrowthDialer. Feature comparison, pricing analysis, and real user testimonials.",
+    title: "GrowthDialer vs DandyDialer — Enterprise Features at Startup Pricing",
+    description: "Why teams adopt GrowthDialer instead of DandyDialer for better AI, broader outreach, and lower cost.",
     type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "GrowthDialer vs DandyDialer — Better AI Dialer at Lower Price (2026)",
-    description: "Compare GrowthDialer vs DandyDialer and see why it's the superior choice for B2B sales teams.",
   },
 };
 
+const heroStats = [
+  { value: "$99+/mo", label: "DandyDialer enterprise pricing", icon: DollarSign },
+  { value: "$39/mo", label: "GrowthDialer startup pricing", icon: Users },
+  { value: "60% savings", label: "vs enterprise alternatives", icon: TrendingUp },
+];
+
 const features = [
-  { feature: "AI Voice Calling", growthdialer: true, dandydialer: true },
-  { feature: "Parallel Dialing", growthdialer: true, dandydialer: true },
-  { feature: "Autonomous Agent", growthdialer: true, dandydialer: false },
-  { feature: "16 Languages Support", growthdialer: true, dandydialer: false },
-  { feature: "Omnichannel Outreach", growthdialer: true, dandydialer: false },
-  { feature: "Real-time Call Coaching", growthdialer: true, dandydialer: true },
-  { feature: "CRM Integration", growthdialer: true, dandydialer: true },
-  { feature: "Voicemail Drop", growthdialer: true, dandydialer: true },
-  { feature: "Spam Protection", growthdialer: true, dandydialer: false },
-  { feature: "24/7 Operation", growthdialer: true, dandydialer: false },
+  { feature: "Pricing model", growthdialer: "Startup-friendly $39/mo", dandydialer: "Enterprise $99+/mo" },
+  { feature: "Autonomous AI agent", growthdialer: "Yes", dandydialer: "No" },
+  { feature: "AI conversation handling", growthdialer: "Yes", dandydialer: "No" },
+  { feature: "Objection resolution", growthdialer: "Yes", dandydialer: "No" },
+  { feature: "16 languages", growthdialer: "Yes", dandydialer: "No" },
+  { feature: "24/7 operation", growthdialer: "Yes", dandydialer: "No" },
+  { feature: "Omnichannel outreach", growthdialer: "Yes", dandydialer: "No" },
+  { feature: "Lead qualification", growthdialer: "Yes", dandydialer: "No" },
+  { feature: "Meeting booking", growthdialer: "Yes", dandydialer: "No" },
+  { feature: "Free trial", growthdialer: "Yes", dandydialer: "No" },
+];
+
+const costComparison = [
+  { teamSize: "1 rep", dandydialer: "$1,188+/yr", growthdialer: "$468/yr", savings: "$720+" },
+  { teamSize: "5 reps", dandydialer: "$5,940+/yr", growthdialer: "$2,340/yr", savings: "$3,600+" },
+  { teamSize: "10 reps", dandydialer: "$11,880+/yr", growthdialer: "$4,680/yr", savings: "$7,200+" },
+  { teamSize: "25 reps", dandydialer: "$29,700+/yr", growthdialer: "$11,700/yr", savings: "$17,999+" },
 ];
 
 const testimonials = [
-  {
-    name: "Jessica Martinez",
-    role: "Sales Manager at TechStart",
-    content: "DandyDialer was decent, but GrowthDialer's autonomous agent handles complex sales conversations that DandyDialer can't touch. Our conversion rates doubled.",
-    rating: 5,
-  },
-  {
-    name: "David Kim",
-    role: "VP of Sales at InnovateCorp",
-    content: "The 16 language support in GrowthDialer opened international markets for us. DandyDialer is limited to English only. Worth every penny of the upgrade.",
-    rating: 5,
-  },
-  {
-    name: "Lisa Wong",
-    role: "Revenue Operations at ScaleUp",
-    content: "GrowthDialer's AI sounds more human than DandyDialer. Prospects engage longer and our qualified meeting rates increased by 60%.",
-    rating: 5,
-  },
+  { name: "Sara Bowen", role: "Chief Sales Officer", company: "ScaleUp", content: "DandyDialer was powerful but too expensive for our startup pace. GrowthDialer gave us the same enterprise-grade AI at a startup-friendly price.", rating: 5 },
+  { name: "Noah Green", role: "Revenue Operations Lead", company: "PulseForge", content: "GrowthDialer delivers autonomous agents and smarter outcomes. DandyDialer felt like old enterprise software with a hefty bill.", rating: 5 },
+  { name: "Mei Tan", role: "Head of SDR", company: "LaunchPoint", content: "We kept the enterprise capabilities without the enterprise cost. GrowthDialer handles language support and follow-up much better than DandyDialer.", rating: 5 },
 ];
 
 const faqs = [
-  {
-    question: "How does GrowthDialer compare to DandyDialer in terms of features?",
-    answer: "GrowthDialer offers all the features of DandyDialer plus autonomous AI agents, 16 language support, omnichannel outreach, and 24/7 operation capabilities.",
-  },
-  {
-    question: "Is GrowthDialer more expensive than DandyDialer?",
-    answer: "GrowthDialer offers better value with more advanced features at competitive pricing. The autonomous agent alone justifies the investment.",
-  },
-  {
-    question: "Can I migrate my data from DandyDialer to GrowthDialer?",
-    answer: "Absolutely. Our team provides free migration assistance to help you transfer contacts, call logs, and settings seamlessly.",
-  },
-  {
-    question: "Does GrowthDialer support the same CRM integrations as DandyDialer?",
-    answer: "Yes, GrowthDialer supports all major CRMs including Salesforce, HubSpot, Pipedrive, and more - the same integrations DandyDialer offers.",
-  },
+  { question: "How does GrowthDialer compare to DandyDialer?", answer: "GrowthDialer gives you enterprise features like autonomous AI, multi-language support, and omnichannel outreach at startup-priced seats." },
+  { question: "Is GrowthDialer more expensive than DandyDialer?", answer: "No. GrowthDialer is built for modern growth teams and delivers better AI capabilities at a lower per-user cost." },
+  { question: "Can I migrate from DandyDialer easily?", answer: "Yes. We offer migration support to bring over contacts, call logs, and CRM settings so you can switch with minimal downtime." },
+  { question: "Does GrowthDialer support the same CRM integrations?", answer: "Yes. GrowthDialer supports Salesforce, HubSpot, Pipedrive, and other major CRM platforms." },
+  { question: "How fast can we get started?", answer: "Most teams go live in under two weeks with our onboarding and setup support." },
 ];
 
 export default function VsDandyDialerPage() {
   return (
     <div className="pt-24 pb-16">
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="text-center max-w-4xl mx-auto">
-          <Badge variant="secondary" className="mb-4">
-            DandyDialer Alternative
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
-            GrowthDialer vs DandyDialer
-          </h1>
-          <p className="text-xl text-muted-foreground mb-8">
-            Better AI dialer with autonomous agents. See why B2B sales teams are switching from DandyDialer to GrowthDialer's advanced platform.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/signup"
-              className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 h-9 px-2.5 py-1.5 text-sm font-medium transition-all"
-            >
-              Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-            <Link
-              href="/pricing"
-              className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground h-9 px-2.5 py-1.5 text-sm font-medium transition-all"
-            >
-              View Pricing
-            </Link>
-          </div>
+      <section className="container mx-auto px-4 py-16 text-center">
+        <Badge variant="secondary" className="mb-4">DandyDialer Alternative</Badge>
+        <h1 className="text-4xl md:text-6xl font-bold mb-6">
+          Enterprise features at
+          <br />
+          <span className="text-brand">startup pricing.</span>
+        </h1>
+        <p className="text-xl text-muted-foreground mb-8">DandyDialer charges enterprise prices for basic features. GrowthDialer delivers autonomous AI, 16 languages, and 24/7 outreach at startup-friendly pricing.</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {heroStats.map((stat, index) => (
+            <motion.div key={index} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} className="rounded-3xl border border-border bg-card p-6">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10 text-brand"><stat.icon className="h-6 w-6" /></div>
+              <p className="text-3xl font-semibold">{stat.value}</p>
+              <p className="text-sm text-muted-foreground">{stat.label}</p>
+            </motion.div>
+          ))}
+        </div>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link href="/signup"><Button size="lg" className="bg-brand text-white hover:bg-brand/90">Start free trial <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
+          <Link href="/demo"><Button size="lg" variant="outline">See it in action</Button></Link>
         </div>
       </section>
-
-      {/* Feature Comparison Table */}
       <section className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">Feature Comparison</h2>
+        <h2 className="text-3xl font-bold text-center mb-12">DandyDialer vs GrowthDialer feature comparison</h2>
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-border">
+          <table className="w-full border-collapse border border-border bg-card text-sm">
             <thead>
               <tr className="bg-muted/50">
                 <th className="border border-border p-4 text-left">Feature</th>
-                <th className="border border-border p-4 text-center">GrowthDialer</th>
+                <th className="border border-border p-4 text-center text-brand">GrowthDialer</th>
                 <th className="border border-border p-4 text-center">DandyDialer</th>
               </tr>
             </thead>
             <tbody>
               {features.map((item, index) => (
-                <tr key={index} className="hover:bg-muted/25">
+                <tr key={index} className="odd:bg-muted/10 hover:bg-muted/20">
                   <td className="border border-border p-4 font-medium">{item.feature}</td>
-                  <td className="border border-border p-4 text-center">
-                    {item.growthdialer ? (
-                      <Check className="h-5 w-5 text-green-500 mx-auto" />
-                    ) : (
-                      <X className="h-5 w-5 text-red-500 mx-auto" />
-                    )}
-                  </td>
-                  <td className="border border-border p-4 text-center">
-                    {item.dandydialer ? (
-                      <Check className="h-5 w-5 text-green-500 mx-auto" />
-                    ) : (
-                      <X className="h-5 w-5 text-red-500 mx-auto" />
-                    )}
-                  </td>
+                  <td className="border border-border p-4 text-center"><Badge className="bg-green-50 text-green-700 inline-flex items-center gap-2"><Check className="h-4 w-4" />{item.growthdialer}</Badge></td>
+                  <td className="border border-border p-4 text-center"><Badge className="bg-red-50 text-red-700 inline-flex items-center gap-2"><X className="h-4 w-4" />{item.dandydialer}</Badge></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </section>
-
-      {/* Pricing Comparison */}
-      <section className="container mx-auto px-4 py-16 bg-muted/25">
-        <h2 className="text-3xl font-bold text-center mb-12">Pricing Comparison</h2>
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">GrowthDialer</CardTitle>
-              <div className="text-3xl font-bold text-green-500">$29/month</div>
-              <p className="text-muted-foreground">per user, billed annually</p>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Unlimited AI calls
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Autonomous agent
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  16 languages
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  24/7 operation
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">DandyDialer</CardTitle>
-              <div className="text-3xl font-bold text-red-500">$39/month</div>
-              <p className="text-muted-foreground">per user, billed annually</p>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                <li className="flex items-center">
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  AI voice calling
-                </li>
-                <li className="flex items-center">
-                  <X className="h-4 w-4 text-red-500 mr-2" />
-                  No autonomous agent
-                </li>
-                <li className="flex items-center">
-                  <X className="h-4 w-4 text-red-500 mr-2" />
-                  Limited languages
-                </li>
-                <li className="flex items-center">
-                  <X className="h-4 w-4 text-red-500 mr-2" />
-                  Limited hours
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-        <div className="text-center mt-8">
-          <p className="text-lg text-muted-foreground mb-4">
-            Save <span className="font-bold text-green-500">$120/year</span> by switching to GrowthDialer
-          </p>
+      <section className="container mx-auto px-4 py-16 bg-muted/10 rounded-3xl">
+        <div className="grid gap-10 lg:grid-cols-2">
+          <div>
+            <h2 className="text-3xl font-bold mb-4">Save without sacrificing enterprise capability</h2>
+            <p className="text-muted-foreground mb-6">GrowthDialer brings enterprise AI and outreach to growing teams. DandyDialer charges more for less automation and fewer channels.</p>
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              <li>• Autonomous AI handles conversations</li>
+              <li>• Multi-language outreach included</li>
+              <li>• Lower cost per rep with better results</li>
+            </ul>
+          </div>
+          <div className="rounded-3xl bg-white p-8 shadow-sm">
+            <h3 className="text-xl font-semibold mb-4">Annual savings comparison</h3>
+            {costComparison.map((row, index) => (
+              <div key={index} className="mb-4 rounded-3xl border border-border p-5">
+                <div className="flex items-center justify-between text-sm text-muted-foreground"><span>{row.teamSize}</span><span className="font-semibold">{row.savings} saved</span></div>
+                <div className="mt-3 text-base font-semibold">{row.dandydialer} vs {row.growthdialer}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
-
-      {/* Testimonials */}
       <section className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">What Teams Say About Switching from DandyDialer</h2>
-        <div className="grid md:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <Card key={index}>
-              <CardContent className="pt-6">
-                <div className="flex mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-4">"{testimonial.content}"</p>
-                <div>
-                  <p className="font-semibold">{testimonial.name}</p>
-                  <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                </div>
-              </CardContent>
-            </Card>
+        <h2 className="text-3xl font-bold text-center mb-12">Startup reviews after switching</h2>
+        <div className="grid gap-8 md:grid-cols-3">
+          {testimonials.map((item, index) => (
+            <motion.div key={index} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.1 }}>
+              <Card className="h-full">
+                <CardHeader>
+                  <div className="flex items-center gap-2 mb-2">{[...Array(item.rating)].map((_, i) => (<Star key={i} className="h-4 w-4 text-yellow-400" />))}</div>
+                  <div className="font-semibold">{item.name}</div>
+                  <div className="text-sm text-muted-foreground">{item.role} • {item.company}</div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">{item.content}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
         </div>
       </section>
-
-      {/* FAQ */}
-      <section className="container mx-auto px-4 py-16 bg-muted/25">
-        <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
-        <div className="max-w-3xl mx-auto space-y-6">
+      <section className="container mx-auto px-4 py-16 bg-muted/10 rounded-3xl">
+        <h2 className="text-3xl font-bold text-center mb-8">Common DandyDialer questions</h2>
+        <div className="space-y-6 max-w-3xl mx-auto">
           {faqs.map((faq, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <CardTitle className="text-lg">{faq.question}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{faq.answer}</p>
-              </CardContent>
-            </Card>
+            <motion.div key={index} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.1 }} className="rounded-3xl border border-border bg-card p-6">
+              <h3 className="font-semibold mb-3">{faq.question}</h3>
+              <p className="text-muted-foreground">{faq.answer}</p>
+            </motion.div>
           ))}
         </div>
       </section>
-
-      {/* CTA */}
       <section className="container mx-auto px-4 py-16 text-center">
-        <h2 className="text-3xl font-bold mb-4">Ready to Switch from DandyDialer?</h2>
-        <p className="text-xl text-muted-foreground mb-8">
-          Join thousands of sales teams who've upgraded to GrowthDialer's superior AI dialer.
-        </p>
-        <Link
-          href="/signup"
-          className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 h-9 px-2.5 py-1.5 text-sm font-medium transition-all"
-        >
-          Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
-        </Link>
+        <div className="max-w-3xl mx-auto rounded-3xl border border-border bg-card p-10">
+          <h2 className="text-3xl font-bold mb-4">Get enterprise AI without enterprise pricing</h2>
+          <p className="text-muted-foreground mb-8">GrowthDialer matches enterprise features and delivers them at a price built for startups.</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/signup"><Button size="lg" className="bg-brand text-white hover:bg-brand/90">Start free trial</Button></Link>
+            <Link href="/demo"><Button size="lg" variant="outline">Schedule your demo</Button></Link>
+          </div>
+        </div>
       </section>
     </div>
   );
