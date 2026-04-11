@@ -30,19 +30,6 @@ export async function POST(request: NextRequest) {
     const resolvedLeadId = LeadId || leadId || null;
     const duration = RecordingDuration ? Number(RecordingDuration) : undefined;
 
-    const {
-      RecordingUrl,
-      RecordingSid,
-      RecordingDuration,
-      CallSid,
-      AccountSid,
-      LeadId,
-      leadId,
-    } = body;
-
-    const resolvedLeadId = LeadId || leadId || null;
-    const duration = RecordingDuration ? Number(RecordingDuration) : undefined;
-
     console.log('Recording completed:', {
       recordingSid: RecordingSid,
       callSid: CallSid,

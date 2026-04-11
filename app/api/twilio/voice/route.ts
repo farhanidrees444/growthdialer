@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const { To, From, Direction, CallSid, LeadId, UserId } = body;
+    const { To } = body;
 
     const twiml = new VoiceResponse();
     const twilioCallerId = process.env.TWILIO_PHONE_NUMBER || undefined;

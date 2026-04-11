@@ -85,3 +85,31 @@ export async function PATCH(
     return NextResponse.json({ error: 'Unable to update lead' }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = await createClient();
+    const { data: authData, error: authError } = await supabase.auth.getSession();
+    const userId = authData?.session?.user?.id;
+
+    if (authError || !userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = params;
+    const { error } = await supabase.from('leads').delete().eq('id', id).eq('user_id', userId);
+
+    if (error) {
+      console.error('Lead delete failed:', error);
+      return NextResponse.json({ error: 'Unable to delete lead' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Lead delete error:', error);
+    return NextResponse.json({ error: 'Unable to delete lead' }, { status: 500 });
+  }
+}

@@ -18,12 +18,6 @@ export async function POST(request: NextRequest) {
       return new NextResponse('OK', { status: 200 });
     }
 
-    // Validate signature
-    if (!validateTwilioRequest(url, signature, body)) {
-      console.error('Invalid Twilio signature on status webhook');
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
-
     const {
       CallSid,
       CallStatus,
