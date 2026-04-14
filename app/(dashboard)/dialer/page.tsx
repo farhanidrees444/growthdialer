@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Bell, Search, Plus, ShieldCheck, Wifi } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -56,6 +56,7 @@ export default function DialerPage() {
   const [isConnected, setIsConnected] = useState(false);
   const [identity, setIdentity] = useState('agent-1');
   const [stats, setStats] = useState({ calls: 0, connects: 0, meetings: 0, connectRate: 0 });
+  const hasAutoSelectedRef = useRef(false);
 
   const { device, callState, connection, isReady, error, initDevice, makeCall, hangUp, toggleMute, toggleHold, sendDigits } = useTwilioDevice();
 
@@ -103,7 +104,7 @@ export default function DialerPage() {
   useEffect(() => {
     const loadLeads = async () => {
       const { data, error } = await supabase
-        .from<LeadRecord>('leads')
+        .from('leads')
         .select('id,name,title,company,phone,email,linkedin,ai_score,status,last_called_at,call_attempts,tags,notes,company_size,industry,revenue,activity_summary,profile_url')
         .order('call_attempts', { ascending: true });
 
@@ -112,14 +113,17 @@ export default function DialerPage() {
         return;
       }
 
-      const normalized = (data ?? []).map((lead) => ({
+      const normalized = ((data ?? []) as LeadRecord[]).map((lead) => ({
         ...lead,
         call_attempts: lead.call_attempts ?? 0,
         ai_score: lead.ai_score ?? 0,
       }));
 
       setLeads(normalized);
-      if (!selectedLead && normalized.length > 0) {
+      // Auto-select only on the very first load — using a ref avoids adding
+      // selectedLead to deps which would cause an infinite re-render loop.
+      if (!hasAutoSelectedRef.current && normalized.length > 0) {
+        hasAutoSelectedRef.current = true;
         setSelectedLead(normalized[0]);
         setNotes(normalized[0].notes ?? '');
       }
@@ -137,7 +141,7 @@ export default function DialerPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase, selectedLead]);
+  }, [supabase]); // selectedLead intentionally excluded — use hasAutoSelectedRef instead
 
   useEffect(() => {
     const calls = leads.reduce((sum, lead) => sum + (lead.call_attempts ?? 0), 0);
@@ -186,7 +190,8 @@ export default function DialerPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [callState.status, hangUp, toggleMute]);
+  // handleDial must be included so the closure captures fresh phoneNumber/selectedLead/session
+  }, [callState.status, hangUp, toggleMute, handleDial]);
 
   const handleConnectDevice = async () => {
     try {
@@ -199,9 +204,9 @@ export default function DialerPage() {
     }
   };
 
-  const sanitizeNumber = (raw: string) => raw.replace(/[^\d+]/g, '');
+  const sanitizeNumber = useCallback((raw: string) => raw.replace(/[^\d+]/g, ''), []);
 
-  const handleDial = async () => {
+  const handleDial = useCallback(async () => {
     const raw = sanitizeNumber(phoneNumber);
     const destination = raw.startsWith('+') ? raw : `${countryCode}${raw}`;
     if (!destination) return;
@@ -211,7 +216,7 @@ export default function DialerPage() {
       leadName: selectedLead?.name,
       userId: session?.user?.id,
     });
-  };
+  }, [sanitizeNumber, phoneNumber, countryCode, makeCall, selectedLead, session]);
 
   const handleCallLead = async (phone: string, lead?: LeadRecord) => {
     const raw = sanitizeNumber(phone);
@@ -262,7 +267,18 @@ export default function DialerPage() {
 
   const handleSaveAndNext = async () => {
     if (!selectedLead) return;
-    await supabase.from('leads').update({ notes, disposition, next_callback_at: callbackTime }).eq('id', selectedLead.id);
+    // Save notes + callback to leads; disposition belongs on the calls table
+    await supabase
+      .from('leads')
+      .update({ notes, next_callback_at: callbackTime })
+      .eq('id', selectedLead.id);
+    // If there's an active call SID, record the outcome on the calls row
+    if (callState.callSid) {
+      await supabase
+        .from('calls')
+        .update({ outcome: disposition })
+        .eq('twilio_call_sid', callState.callSid);
+    }
     const nextIndex = leads.findIndex((lead) => lead.id === selectedLead.id) + 1;
     const nextLead = leads[nextIndex] ?? leads[0] ?? null;
     setSelectedLead(nextLead);

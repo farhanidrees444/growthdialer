@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Calendar, Zap, Users, MessageSquare, Shield, Star } from "lucide-react";
+import { ArrowRight, Calendar, Zap, Users, MessageSquare, Shield, Star, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -195,6 +195,93 @@ export default function ChangelogPage() {
               Subscribe
             </Button>
           </div>
+        </div>
+      </section>
+
+      {/* Roadmap Section */}
+      <section id="roadmap" className="container mx-auto px-4 py-16 scroll-mt-24">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <Badge variant="secondary" className="mb-4">
+              Coming Soon
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Roadmap</h2>
+            <p className="text-lg text-muted-foreground">
+              What we're building next. Vote on features or{" "}
+              <Link href="/contact-sales" className="text-brand hover:underline">
+                suggest your own
+              </Link>
+              .
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                quarter: "Q2 2026",
+                status: "In Progress",
+                statusColor: "bg-brand/15 text-brand",
+                items: [
+                  "Native Salesforce CTI integration (click-to-call from SFDC)",
+                  "Power Dialer mode for single-line sequential campaigns",
+                  "SMS follow-up sequences with AI personalization",
+                ],
+              },
+              {
+                quarter: "Q3 2026",
+                status: "Planned",
+                statusColor: "bg-blue-500/15 text-blue-400",
+                items: [
+                  "Mobile app (iOS + Android) for on-the-go coaching",
+                  "WhatsApp Business integration for global outreach",
+                  "Manager dashboard with rep leaderboards and call scorecards",
+                  "Advanced A/B testing for scripts and voicemail drops",
+                ],
+              },
+              {
+                quarter: "Q4 2026",
+                status: "Exploring",
+                statusColor: "bg-purple-500/15 text-purple-400",
+                items: [
+                  "AI-generated prospect research cards (LinkedIn + news + funding)",
+                  "Video voicemail drop support",
+                  "Conversation intelligence reporting (topic frequency, talk ratio)",
+                ],
+              },
+            ].map((section) => (
+              <Card key={section.quarter} className="border-white/10 bg-[oklch(0.086_0.024_282)]/95">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Clock className="w-5 h-5 text-muted-foreground" />
+                      <CardTitle className="text-lg">{section.quarter}</CardTitle>
+                    </div>
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${section.statusColor}`}>
+                      {section.status}
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {section.items.map((item, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <div className="w-1.5 h-1.5 rounded-full bg-brand mt-2 flex-shrink-0" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <p className="text-center text-sm text-muted-foreground mt-8">
+            Have a feature request?{" "}
+            <Link href="/contact-sales" className="text-brand hover:underline">
+              Let us know
+            </Link>{" "}
+            — high-vote requests move up the queue.
+          </p>
         </div>
       </section>
 

@@ -53,25 +53,22 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceClient();
     if (supabase && CallSid) {
-      await supabase.from('calls').upsert(
-        {
-          twilio_call_sid: CallSid,
-          user_id: resolvedUserId ?? undefined,
-          lead_id: resolvedLeadId ?? undefined,
-          from_number: From ?? undefined,
-          to_number: To ?? undefined,
-          status: CallStatus ?? undefined,
-          direction: Direction ?? undefined,
-          duration: durationValue ?? undefined,
-          answered_by: AnsweredBy ?? undefined,
-          recording_url: RecordingUrl ?? undefined,
-          recording_sid: RecordingSid ?? undefined,
-          recording_duration: RecordingDuration ? Number(RecordingDuration) : undefined,
-          ended_at: isFinalStatus ? new Date().toISOString() : undefined,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'twilio_call_sid' }
-      );
+      // Column names match the SQL schema (duration_seconds, not duration)
+      const upsertPayload: Record<string, any> = {
+        twilio_call_sid: CallSid,
+        status: CallStatus ?? undefined,
+        direction: Direction ?? undefined,
+        ended_at: isFinalStatus ? new Date().toISOString() : undefined,
+        updated_at: new Date().toISOString(),
+      };
+      if (resolvedUserId) upsertPayload.user_id = resolvedUserId;
+      if (resolvedLeadId) upsertPayload.lead_id = resolvedLeadId;
+      if (From) upsertPayload.from_number = From;
+      if (To) upsertPayload.to_number = To;
+      if (durationValue !== undefined) upsertPayload.duration_seconds = durationValue;
+      if (RecordingUrl) upsertPayload.recording_url = RecordingUrl;
+
+      await supabase.from('calls').upsert(upsertPayload, { onConflict: 'twilio_call_sid' });
 
       if (resolvedLeadId) {
         await supabase.from('leads').update({ last_called_at: new Date().toISOString() }).eq('id', resolvedLeadId);

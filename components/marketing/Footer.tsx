@@ -28,8 +28,8 @@ const footerLinks = {
     { label: "Features", href: "/#features" },
     { label: "Pricing", href: "/pricing" },
     { label: "Integrations", href: "/#integrations" },
-    { label: "Changelog", href: "/docs#changelog" },
-    { label: "Roadmap", href: "/docs#roadmap" },
+    { label: "Changelog", href: "/changelog" },
+    { label: "Roadmap", href: "/changelog#roadmap" },
   ],
   Solutions: [
     { label: "SDR Teams", href: "/#features" },
@@ -49,13 +49,13 @@ const footerLinks = {
   Resources: [
     { label: "Documentation", href: "/docs" },
     { label: "Blog", href: "/blog" },
-    { label: "Case Studies", href: "/blog" },
+    { label: "Case Studies", href: "/customers" },
     { label: "API Reference", href: "/docs#api" },
     { label: "Status", href: "https://vercel-status.com" },
   ],
   Company: [
-    { label: "About", href: "/docs#about" },
-    { label: "Careers", href: "/contact-sales" },
+    { label: "About", href: "/about" },
+    { label: "Careers", href: "/careers" },
     { label: "Press Kit", href: "/contact-sales" },
     { label: "Privacy Policy", href: "/privacy" },
     { label: "Terms of Service", href: "/terms" },

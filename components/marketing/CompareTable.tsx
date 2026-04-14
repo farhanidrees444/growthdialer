@@ -82,12 +82,16 @@ export default function CompareTable() {
               <div className="text-xs text-muted-foreground mt-1">$29/user/mo</div>
             </div>
             <div className="col-span-1 px-6 py-4 text-center text-sm text-muted-foreground">
-              <div>Orum</div>
-              <div className="text-xs text-muted-foreground mt-1">$59/user/mo</div>
+              <Link href="/compare/vs-orum" className="hover:text-foreground transition-colors">
+                <div>Orum</div>
+                <div className="text-xs text-muted-foreground mt-1">$59/user/mo</div>
+              </Link>
             </div>
             <div className="col-span-1 px-6 py-4 text-center text-sm text-muted-foreground">
-              <div>Nooks</div>
-              <div className="text-xs text-muted-foreground mt-1">$45/user/mo</div>
+              <Link href="/compare/vs-nooks" className="hover:text-foreground transition-colors">
+                <div>Nooks</div>
+                <div className="text-xs text-muted-foreground mt-1">$45/user/mo</div>
+              </Link>
             </div>
           </div>
 
@@ -132,6 +136,29 @@ export default function CompareTable() {
               View pricing
             </Button>
           </Link>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: 0.25 }}
+          className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2"
+        >
+          {[
+            { label: "vs Orum", href: "/compare/vs-orum" },
+            { label: "vs Nooks", href: "/compare/vs-nooks" },
+            { label: "vs PhoneBurner", href: "/compare/vs-phoneburner" },
+            { label: "vs KrispCall", href: "/compare/vs-krispcall" },
+          ].map((c) => (
+            <Link
+              key={c.label}
+              href={c.href}
+              className="text-xs text-muted-foreground hover:text-brand transition-colors underline underline-offset-2"
+            >
+              {c.label}
+            </Link>
+          ))}
         </motion.div>
       </div>
     </section>

@@ -4,32 +4,38 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 
 const stats = [
-  { value: 2184, suffix: "+", label: "Total calls made", prefix: "" },
-  { value: 71, suffix: "", label: "Meetings booked", prefix: "" },
-  { value: 41.2, suffix: "%", label: "Connect rate", prefix: "" },
-  { value: 144, suffix: "k", label: "Pipeline generated", prefix: "$" },
+  { value: 150, suffix: "+", label: "Avg. daily calls per rep", prefix: "" },
+  { value: 22, suffix: "%", label: "Average connect rate", prefix: "" },
+  { value: 3, suffix: "×", label: "More meetings booked", prefix: "" },
+  { value: 2400, suffix: "+", label: "Sales teams trust us", prefix: "" },
 ];
 
 function Counter({ target, suffix, prefix }: { target: number; suffix: string; prefix: string }) {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(target);
+  const [animated, setAnimated] = useState(false);
   const ref = useRef(null);
   const inView = useInView(ref, { once: true });
 
   useEffect(() => {
-    if (!inView) return;
+    if (!inView || animated) return;
+    setAnimated(true);
+    setCount(0);
     const duration = 1800;
     const start = performance.now();
     const update = (now: number) => {
       const t = Math.min((now - start) / duration, 1);
       const ease = 1 - Math.pow(1 - t, 3);
-      setCount(Math.round(ease * target));
+      const next = target % 1 !== 0
+        ? Math.round(ease * target * 10) / 10
+        : Math.round(ease * target);
+      setCount(next);
       if (t < 1) requestAnimationFrame(update);
     };
     requestAnimationFrame(update);
-  }, [inView, target]);
+  }, [inView, target, animated]);
 
   return (
-    <span ref={ref} className="tabular-nums">
+    <span ref={ref} className="tabular-nums" suppressHydrationWarning>
       {prefix}{count.toLocaleString()}{suffix}
     </span>
   );

@@ -27,33 +27,34 @@ interface UseTwilioDeviceReturn {
   error: string | null;
 }
 
+const initialCallState: CallState = {
+  status: 'idle',
+  direction: null,
+  callSid: null,
+  duration: 0,
+  isMuted: false,
+  isOnHold: false,
+  leadId: null,
+  leadName: null,
+};
+
 export function useTwilioDevice(): UseTwilioDeviceReturn {
   const [device, setDevice] = useState<any>(null);
   const [connection, setConnection] = useState<any>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [callState, setCallState] = useState<CallState>({
-    status: 'idle',
-    direction: null,
-    callSid: null,
-    duration: 0,
-    isMuted: false,
-    isOnHold: false,
-    leadId: null,
-    leadName: null,
-  });
+  const [callState, setCallState] = useState<CallState>(initialCallState);
 
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const identityRef = useRef<string>('');
 
-  // Start duration timer
   const startDurationTimer = useCallback(() => {
-    stopDurationTimer();
+    if (durationIntervalRef.current) clearInterval(durationIntervalRef.current);
     durationIntervalRef.current = setInterval(() => {
       setCallState(prev => ({ ...prev, duration: prev.duration + 1 }));
     }, 1000);
   }, []);
 
-  // Stop duration timer
   const stopDurationTimer = useCallback(() => {
     if (durationIntervalRef.current) {
       clearInterval(durationIntervalRef.current);
@@ -61,12 +62,60 @@ export function useTwilioDevice(): UseTwilioDeviceReturn {
     }
   }, []);
 
-  // Initialize Twilio Device
+  /**
+   * Attach v2.x Call-level event listeners.
+   * In SDK v2.x the Device no longer emits 'connect'/'disconnect' —
+   * those events live on the individual Call object returned by device.connect().
+   */
+  const attachCallListeners = useCallback((call: any) => {
+    // Fired when the other party picks up (outbound) or when we accept (inbound)
+    call.on('accept', (acceptedCall: any) => {
+      setConnection(acceptedCall);
+      setCallState(prev => ({
+        ...prev,
+        status: 'connected',
+        callSid: acceptedCall.parameters?.CallSid ?? null,
+        duration: 0,
+      }));
+      startDurationTimer();
+    });
+
+    // Outbound: phone is ringing on the other end
+    call.on('ringing', () => {
+      setCallState(prev => ({ ...prev, status: 'ringing' }));
+    });
+
+    call.on('disconnect', () => {
+      setConnection(null);
+      setCallState(prev => ({
+        ...prev,
+        status: 'disconnected',
+        isMuted: false,
+        isOnHold: false,
+        duration: 0,
+      }));
+      stopDurationTimer();
+    });
+
+    call.on('cancel', () => {
+      setConnection(null);
+      setCallState(prev => ({ ...prev, status: 'idle', isMuted: false, isOnHold: false }));
+      stopDurationTimer();
+    });
+
+    call.on('error', (callError: any) => {
+      setError(callError.message || 'Call error');
+      setCallState(prev => ({ ...prev, status: 'idle' }));
+      stopDurationTimer();
+    });
+  }, [startDurationTimer, stopDurationTimer]);
+
+  // Initialize Twilio Device (v2.x)
   const initDevice = useCallback(async (identity: string) => {
     try {
       setError(null);
+      identityRef.current = identity;
 
-      // Fetch access token
       const response = await fetch('/api/twilio/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -74,62 +123,46 @@ export function useTwilioDevice(): UseTwilioDeviceReturn {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to get access token: ${response.status}`);
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || `Token request failed: ${response.status}`);
       }
 
       const data = await response.json();
+      if (data.error) throw new Error(data.error);
 
-      // Dynamic import to avoid SSR issues
+      // Dynamic import keeps SSR happy
       const { Device } = await import('@twilio/voice-sdk');
-      const twilioDevice = new Device(data.token);
-      setDevice(twilioDevice);
 
-      // Register event handlers
-      twilioDevice.on('ready', () => {
+      const twilioDevice = new Device(data.token, {
+        logLevel: 1, // 1 = warn, keeps console clean in prod
+        codecPreferences: ['opus', 'pcmu'] as any,
+      });
+
+      // v2.x: 'registered' replaces the old 'ready' event
+      twilioDevice.on('registered', () => {
         setIsReady(true);
         setError(null);
       });
 
-      twilioDevice.on('error', (twilioError: any) => {
-        setError(twilioError.message);
+      twilioDevice.on('unregistered', () => {
         setIsReady(false);
       });
 
-      twilioDevice.on('connect', (conn: any) => {
-        setConnection(conn);
-        setCallState(prev => ({
-          ...prev,
-          status: 'connected',
-          callSid: conn.parameters.CallSid,
-          duration: 0,
-        }));
-        startDurationTimer();
+      twilioDevice.on('error', (twilioError: any) => {
+        setError(twilioError.message || 'Device error');
+        setIsReady(false);
       });
 
-      twilioDevice.on('disconnect', () => {
-        setConnection(null);
-        setCallState(prev => ({
-          ...prev,
-          status: 'disconnected',
-          duration: 0,
-        }));
-        stopDurationTimer();
-      });
-
-      twilioDevice.on('incoming', (conn: any) => {
-        setConnection(conn);
+      // v2.x: 'incoming' still fires on the Device; attach call-level listeners
+      twilioDevice.on('incoming', (call: any) => {
+        setConnection(call);
         setCallState(prev => ({
           ...prev,
           status: 'ringing',
           direction: 'inbound',
         }));
-
-        // Auto-accept incoming calls (can be customized)
-        conn.accept();
-      });
-
-      twilioDevice.on('cancel', () => {
-        setCallState(prev => ({ ...prev, status: 'idle' }));
+        attachCallListeners(call);
+        call.accept(); // auto-accept; swap for UI prompt if you need manual accept
       });
 
       twilioDevice.on('tokenWillExpire', async () => {
@@ -137,34 +170,43 @@ export function useTwilioDevice(): UseTwilioDeviceReturn {
           const refreshResponse = await fetch('/api/twilio/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identity }),
+            body: JSON.stringify({ identity: identityRef.current }),
           });
-
           if (refreshResponse.ok) {
             const refreshData = await refreshResponse.json();
             twilioDevice.updateToken(refreshData.token);
           } else {
             setError('Failed to refresh token');
           }
-        } catch (refreshError) {
+        } catch {
           setError('Token refresh failed');
         }
       });
 
+      setDevice(twilioDevice);
+
+      // v2.x REQUIRED: must call register() to start receiving incoming calls
+      await twilioDevice.register();
+
     } catch (initError: any) {
-      setError(initError.message);
+      setError(initError.message || 'Failed to initialize device');
       setIsReady(false);
     }
-  }, [startDurationTimer, stopDurationTimer]);
+  }, [attachCallListeners]);
 
-  // Make outbound call
-  const makeCall = useCallback(async ({ toNumber, leadId, leadName, userId }: {
+  // Make outbound call (v2.x)
+  const makeCall = useCallback(async ({
+    toNumber, leadId, leadName, userId,
+  }: {
     toNumber: string;
     leadId?: string;
     leadName?: string;
     userId?: string;
   }) => {
-    if (!device || !toNumber) return;
+    if (!device || !toNumber) {
+      setError('Device not ready. Click "Connect Device" first.');
+      return;
+    }
 
     try {
       setError(null);
@@ -172,59 +214,53 @@ export function useTwilioDevice(): UseTwilioDeviceReturn {
         ...prev,
         status: 'connecting',
         direction: 'outbound',
-        leadId: leadId || null,
-        leadName: leadName || null,
+        leadId: leadId ?? null,
+        leadName: leadName ?? null,
+        isMuted: false,
+        isOnHold: false,
       }));
 
-      const conn = await device.connect({
+      // v2.x: device.connect() returns a Call object (Promise)
+      const call = await device.connect({
         params: {
           To: toNumber,
-          leadId: leadId || '',
-          userId: userId || 'unknown-user',
-        }
+          leadId: leadId ?? '',
+          userId: userId ?? 'unknown-user',
+        },
       });
 
-      setConnection(conn);
+      setConnection(call);
+      attachCallListeners(call);
 
     } catch (callError: any) {
-      setError(callError.message);
+      setError(callError.message || 'Failed to make call');
       setCallState(prev => ({ ...prev, status: 'idle' }));
     }
-  }, [device]);
+  }, [device, attachCallListeners]);
 
-  // Hang up call
+  // Hang up
   const hangUp = useCallback(() => {
     if (connection) {
       connection.disconnect();
+    } else if (device) {
+      device.disconnectAll();
     }
-  }, [connection]);
+  }, [connection, device]);
 
-  // Toggle mute
+  // v2.x: call.mute(boolean) — no separate unmute method
   const toggleMute = useCallback(() => {
-    if (connection) {
-      if (callState.isMuted) {
-        connection.unmute();
-      } else {
-        connection.mute();
-      }
-      setCallState(prev => ({ ...prev, isMuted: !prev.isMuted }));
-    }
+    if (!connection) return;
+    const newMuted = !callState.isMuted;
+    connection.mute(newMuted);
+    setCallState(prev => ({ ...prev, isMuted: newMuted }));
   }, [connection, callState.isMuted]);
 
-  // Toggle hold state
+  // Hold is not in the v2.x browser SDK; update UI state only
   const toggleHold = useCallback(() => {
     if (!connection) return;
-    if (typeof connection.hold === 'function') {
-      if (callState.isOnHold && typeof connection.unhold === 'function') {
-        connection.unhold();
-      } else {
-        connection.hold();
-      }
-    }
     setCallState(prev => ({ ...prev, isOnHold: !prev.isOnHold }));
-  }, [connection, callState.isOnHold]);
+  }, [connection]);
 
-  // Send DTMF digits
   const sendDigits = useCallback((digits: string) => {
     if (connection) {
       connection.sendDigits(digits);

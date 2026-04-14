@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Phone, Mail, MoreHorizontal, Building2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +30,7 @@ interface LeadsQueueProps {
 
 export default function LeadsQueue({ limit }: LeadsQueueProps) {
   const { leads, setImportOpen } = useLeads();
+  const router = useRouter();
   const shown = typeof limit === "number" ? leads.slice(0, limit) : leads;
   const remaining = Math.max(0, 40 + leads.length * 2);
 
@@ -103,12 +105,25 @@ export default function LeadsQueue({ limit }: LeadsQueueProps) {
                 <div className="text-[10px] text-muted-foreground">score</div>
               </div>
               <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/10" type="button">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 hover:bg-white/10"
+                  type="button"
+                  title="Call in dialer"
+                  onClick={() => router.push('/dialer')}
+                >
                   <Phone className="h-3.5 w-3.5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/10" type="button">
-                  <Mail className="h-3.5 w-3.5" />
-                </Button>
+                {lead.name && (
+                  <a
+                    href={`mailto:${(lead as any).email ?? ''}`}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-white/10 transition-colors"
+                    title="Send email"
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                  </a>
+                )}
                 <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/10" type="button">
                   <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>

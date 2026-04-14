@@ -59,22 +59,26 @@ const floatingCards = [
 ];
 
 function AnimatedCounter({ target, suffix, prefix }: { target: number; suffix: string; prefix: string }) {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(target);
 
   useEffect(() => {
-    const duration = 2000; // 2 seconds
+    setCount(0);
+    const duration = 2000;
     const start = performance.now();
     const update = (now: number) => {
       const t = Math.min((now - start) / duration, 1);
-      const ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
-      setCount(Math.round(ease * target));
+      const ease = 1 - Math.pow(1 - t, 3);
+      const next = target % 1 !== 0
+        ? Math.round(ease * target * 10) / 10
+        : Math.round(ease * target);
+      setCount(next);
       if (t < 1) requestAnimationFrame(update);
     };
     requestAnimationFrame(update);
   }, [target]);
 
   return (
-    <span className="tabular-nums">
+    <span className="tabular-nums" suppressHydrationWarning>
       {prefix}{count.toLocaleString()}{suffix}
     </span>
   );

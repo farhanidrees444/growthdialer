@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { Check, Loader2, Zap } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, Loader2, Zap, Shield, Lock, FileCheck, Plus, Minus } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -31,7 +32,7 @@ const plans: Array<{
     featured: false,
     features: [
       "3 parallel lines",
-      "500 dials / month",
+      "2,000 dials / month",
       "Local presence (50 area codes)",
       "CRM sync (HubSpot, Salesforce)",
       "Basic analytics",
@@ -238,7 +239,141 @@ export default function PricingSection() {
         >
           All plans include a 14-day free trial. No credit card required.
         </motion.p>
+
+        {/* Compliance trust strip */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+          className="mt-10 rounded-2xl border border-white/8 bg-[oklch(0.068_0.020_284)] px-6 py-5"
+        >
+          <p className="text-center text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-5">
+            Built for compliant outreach
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-6 lg:gap-10">
+            {[
+              { icon: Shield, label: "SOC 2 Type II", sub: "Certified" },
+              { icon: FileCheck, label: "TCPA Compliant", sub: "DNC scrubbing built-in" },
+              { icon: Lock, label: "GDPR Ready", sub: "EU data controls" },
+              { icon: Shield, label: "Carrier Approved", sub: "No spam flags" },
+            ].map(({ icon: Icon, label, sub }) => (
+              <div key={label} className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
+                  <Icon className="w-4 h-4 text-brand" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium leading-none">{label}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Pricing FAQ */}
+        <PricingFAQ />
       </div>
     </section>
+  );
+}
+
+const pricingFaqs = [
+  {
+    q: "Can I cancel anytime?",
+    a: "Yes. Cancel directly from your dashboard with one click — no calls, no forms. If you cancel mid-cycle, you keep access through the end of the billing period.",
+  },
+  {
+    q: "What happens after the 14-day trial?",
+    a: "You're automatically moved to the free tier (read-only) unless you add a card and upgrade. We'll send you a reminder 3 days before the trial ends — no surprise charges.",
+  },
+  {
+    q: "Do you charge per minute or per call?",
+    a: "No. Every plan includes unlimited call duration with no per-minute fees. Your dial allowance covers the number of outbound dials, not the minutes spent talking.",
+  },
+  {
+    q: "Is there a free tier?",
+    a: "We offer a 14-day full-featured trial. After that, you can book a demo to discuss a permanent free seat for evaluation — email us at hello@growthdialer.com.",
+  },
+  {
+    q: "How does TCPA compliance work?",
+    a: "GrowthDialer scrubs every dial against the national DNC registry, supports consent-based lead filtering, and logs call timestamps with disposition for audit purposes. All at no extra charge.",
+  },
+  {
+    q: "Can I talk to a human before buying?",
+    a: (
+      <span>
+        Absolutely.{" "}
+        <Link href="/contact-sales" className="text-brand hover:underline">
+          Book a 20-minute demo
+        </Link>{" "}
+        and we'll walk you through the platform live, answer questions, and set up a custom trial for your team.
+      </span>
+    ),
+  },
+];
+
+function PricingFAQ() {
+  const [open, setOpen] = useState<number | null>(null);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: 0.2, duration: 0.45 }}
+      className="mt-14"
+    >
+      <h3 className="font-display text-2xl font-bold text-center mb-8">
+        Still have questions?
+      </h3>
+      <div className="space-y-2 max-w-2xl mx-auto">
+        {pricingFaqs.map((faq, i) => (
+          <div
+            key={i}
+            className="rounded-xl border border-white/8 bg-[oklch(0.086_0.024_282)] overflow-hidden"
+          >
+            <button
+              onClick={() => setOpen(open === i ? null : i)}
+              className="flex items-center justify-between w-full px-5 py-4 text-left gap-4 hover:bg-white/3 transition-colors"
+            >
+              <span className="text-sm font-medium">{faq.q}</span>
+              <div className="shrink-0 w-6 h-6 rounded-full bg-white/6 flex items-center justify-center">
+                {open === i ? (
+                  <Minus className="w-3.5 h-3.5 text-brand" />
+                ) : (
+                  <Plus className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
+              </div>
+            </button>
+            <AnimatePresence initial={false}>
+              {open === i && (
+                <motion.div
+                  initial={{ height: 0 }}
+                  animate={{ height: "auto" }}
+                  exit={{ height: 0 }}
+                  transition={{ duration: 0.22, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed border-t border-white/6 pt-3">
+                    {faq.a}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        ))}
+      </div>
+      <p className="text-center text-sm text-muted-foreground mt-8">
+        Need something custom?{" "}
+        <Link href="/contact-sales" className="text-brand hover:underline">
+          Talk to sales
+        </Link>{" "}
+        or email{" "}
+        <a href="mailto:hello@growthdialer.com" className="text-brand hover:underline">
+          hello@growthdialer.com
+        </a>
+      </p>
+    </motion.div>
   );
 }

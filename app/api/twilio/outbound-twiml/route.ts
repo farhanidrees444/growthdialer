@@ -25,7 +25,9 @@ export async function POST(request: NextRequest) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const { AnsweredBy, CallSid } = body;
+    const { AnsweredBy, CallSid, UserId, userId } = body;
+    // Prefer the userId forwarded via status-callback params; fall back to default
+    const agentIdentity = UserId || userId || 'default-user';
 
     const twiml = new VoiceResponse();
 
@@ -51,7 +53,7 @@ export async function POST(request: NextRequest) {
         action: '/api/twilio/dial-complete',
       });
 
-      dial.client('default-user');
+      dial.client(agentIdentity);
     }
 
     return new NextResponse(twiml.toString(), {
