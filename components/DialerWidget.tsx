@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Phone,
@@ -27,7 +27,7 @@ const currentLead = {
   name: "Sarah Chen",
   title: "VP of Sales",
   company: "TechNova Inc.",
-  phone: "+1 (555) 842-7391",
+  phone: "+15551234567",
   attempts: 2,
 };
 
@@ -36,6 +36,8 @@ export default function DialerWidget() {
   const [muted, setMuted] = useState(false);
   const [speakerOff, setSpeakerOff] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [callControlId, setCallControlId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -53,13 +55,53 @@ export default function DialerWidget() {
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
 
-  const handleCall = () => {
+  const handleCall = useCallback(async () => {
+    if (callState !== "idle") return;
+    setError(null);
+    setCallState("dialing");
+    try {
+      const res = await fetch("/api/calls/dial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: currentLead.phone }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? "Failed to dial");
+      }
+      setCallControlId(data.call_control_id ?? null);
+      setCallState("connected");
+    } catch (err) {
+      console.error("Dial error:", err);
+      setError(err instanceof Error ? err.message : "Call failed");
+      setCallState("idle");
+    }
+  }, [callState]);
+
+  const handleHangup = useCallback(async () => {
+    if (callState === "idle" || callState === "ended") return;
+    setCallState("ended");
+    try {
+      if (callControlId) {
+        await fetch("/api/calls/hangup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ call_control_id: callControlId }),
+        });
+      }
+    } catch (err) {
+      console.error("Hangup error:", err);
+    } finally {
+      setCallControlId(null);
+      setTimeout(() => setCallState("idle"), 1200);
+    }
+  }, [callState, callControlId]);
+
+  const handleMainButton = () => {
     if (callState === "idle") {
-      setCallState("dialing");
-      setTimeout(() => setCallState("connected"), 2500);
+      handleCall();
     } else if (callState === "connected" || callState === "dialing") {
-      setCallState("ended");
-      setTimeout(() => setCallState("idle"), 1500);
+      handleHangup();
     }
   };
 
@@ -106,6 +148,13 @@ export default function DialerWidget() {
         </Badge>
       </div>
 
+      {/* Error */}
+      {error && (
+        <p className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 text-xs text-red-400">
+          {error}
+        </p>
+      )}
+
       {/* Call timer */}
       <AnimatePresence>
         {callState === "connected" && (
@@ -140,7 +189,7 @@ export default function DialerWidget() {
                 className="w-1.5 h-1.5 rounded-full bg-amber-500"
               />
             ))}
-            <span className="ml-1 text-sm font-medium text-amber-300">Calling...</span>
+            <span className="ml-1 text-sm font-medium text-amber-300">Connecting via Telnyx…</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -173,7 +222,7 @@ export default function DialerWidget() {
         {/* Main call button */}
         <motion.button
           whileTap={{ scale: 0.92 }}
-          onClick={handleCall}
+          onClick={handleMainButton}
           className={cn(
             "flex flex-1 items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold text-white transition-colors",
             callState === "idle"

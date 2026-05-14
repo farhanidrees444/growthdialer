@@ -26,12 +26,30 @@ export function ImportLeadsDialog() {
       setMessage(null);
       try {
         const text = await file.text();
-        const res = importCsv(text);
-        if (res.error) {
-          setError(res.error);
+
+        // Add to in-memory / localStorage queue for the dialer
+        const localResult = importCsv(text);
+        if (localResult.error) {
+          setError(localResult.error);
           return;
         }
-        setMessage(`Imported ${res.added} lead${res.added === 1 ? "" : "s"}.`);
+
+        // Persist to Supabase in the background (best-effort)
+        try {
+          const res = await fetch("/api/leads/import", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ csv: text }),
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            console.warn("Supabase lead import warning:", body.error ?? res.status);
+          }
+        } catch (networkErr) {
+          console.warn("Supabase lead import network error:", networkErr);
+        }
+
+        setMessage(`Imported ${localResult.added} lead${localResult.added === 1 ? "" : "s"}.`);
         window.setTimeout(() => {
           setImportOpen(false);
           setMessage(null);
@@ -55,6 +73,7 @@ export function ImportLeadsDialog() {
             Upload a CSV with a header row. Recognized columns include{" "}
             <span className="text-foreground/90">name</span>,{" "}
             <span className="text-foreground/90">company</span>,{" "}
+            <span className="text-foreground/90">phone</span>,{" "}
             <span className="text-foreground/90">title</span> (or export from HubSpot / Salesforce).
           </DialogDescription>
         </DialogHeader>
@@ -74,7 +93,7 @@ export function ImportLeadsDialog() {
           )}
           <div className="text-center">
             <p className="text-sm font-medium">Drop a CSV here or click to browse</p>
-            <p className="text-xs text-muted-foreground mt-1">Max practical size ~10k rows for this demo</p>
+            <p className="text-xs text-muted-foreground mt-1">Saved to queue and Supabase</p>
           </div>
         </label>
 

@@ -19,14 +19,16 @@ export async function GET(request: NextRequest) {
     const period = url.searchParams.get('period') === 'month' ? 'month' : 'week';
     const days = period === 'month' ? 30 : 7;
     const now = new Date();
-    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - (days - 1)));
+    const start = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - (days - 1)),
+    );
 
     const { data: calls, error } = await supabase
       .from('calls')
-      .select('started_at,disposition')
+      .select('created_at, answered_at, status')
       .eq('user_id', userId)
-      .gte('started_at', start.toISOString())
-      .order('started_at', { ascending: true });
+      .gte('created_at', start.toISOString())
+      .order('created_at', { ascending: true });
 
     if (error) {
       console.error('Activity stats query failed:', error);
@@ -36,26 +38,22 @@ export async function GET(request: NextRequest) {
     const buckets = Array.from({ length: days }, (_, index) => {
       const date = new Date(start);
       date.setUTCDate(start.getUTCDate() + index);
-      return {
-        date: formatDate(date),
-        calls: 0,
-        connects: 0,
-        meetings: 0,
-      };
+      const label =
+        period === 'week'
+          ? date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
+          : `D${index + 1}`;
+      return { date: formatDate(date), day: label, calls: 0, connected: 0, meetings: 0 };
     });
 
     (calls ?? []).forEach((call) => {
-      const startedAt = call.started_at ? new Date(call.started_at).toISOString().slice(0, 10) : null;
-      if (!startedAt) return;
-      const bucket = buckets.find((item) => item.date === startedAt);
+      const dateStr = call.created_at ? new Date(call.created_at).toISOString().slice(0, 10) : null;
+      if (!dateStr) return;
+      const bucket = buckets.find((b) => b.date === dateStr);
       if (!bucket) return;
 
       bucket.calls += 1;
-      if (['Connected', 'Meeting Booked'].includes(call.disposition)) {
-        bucket.connects += 1;
-      }
-      if (call.disposition === 'Meeting Booked') {
-        bucket.meetings += 1;
+      if (call.answered_at) {
+        bucket.connected += 1;
       }
     });
 

@@ -5,7 +5,7 @@ function startOfDayUTC(date: Date) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())).toISOString();
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: authData, error: authError } = await supabase.auth.getSession();
@@ -17,34 +17,70 @@ export async function GET(request: NextRequest) {
 
     const now = new Date();
     const todayStart = startOfDayUTC(now);
-    const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
-    const tomorrowStart = tomorrow.toISOString();
-    const yesterday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1));
-    const yesterdayStart = yesterday.toISOString();
-    const todayEnd = todayStart;
+    const tomorrowStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1),
+    ).toISOString();
+    const yesterdayStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1),
+    ).toISOString();
 
-    const [{ count: callsToday }, { count: connectsToday }, { count: meetingsToday }, { count: callsYesterday }, { count: connectsYesterday }] = await Promise.all([
-      supabase.from('calls').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('started_at', todayStart).lt('started_at', tomorrowStart),
-      supabase.from('calls').select('id', { count: 'exact', head: true }).eq('user_id', userId).in('disposition', ['Connected', 'Meeting Booked']).gte('started_at', todayStart).lt('started_at', tomorrowStart),
-      supabase.from('calls').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('disposition', 'Meeting Booked').gte('started_at', todayStart).lt('started_at', tomorrowStart),
-      supabase.from('calls').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('started_at', yesterdayStart).lt('started_at', todayStart),
-      supabase.from('calls').select('id', { count: 'exact', head: true }).eq('user_id', userId).in('disposition', ['Connected', 'Meeting Booked']).gte('started_at', yesterdayStart).lt('started_at', todayStart),
+    const [
+      { count: callsToday },
+      { count: answeredToday },
+      { count: callsYesterday },
+      { count: answeredYesterday },
+      { count: leadsCount },
+    ] = await Promise.all([
+      supabase
+        .from('calls')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', todayStart)
+        .lt('created_at', tomorrowStart),
+      supabase
+        .from('calls')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .not('answered_at', 'is', null)
+        .gte('created_at', todayStart)
+        .lt('created_at', tomorrowStart),
+      supabase
+        .from('calls')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', yesterdayStart)
+        .lt('created_at', todayStart),
+      supabase
+        .from('calls')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .not('answered_at', 'is', null)
+        .gte('created_at', yesterdayStart)
+        .lt('created_at', todayStart),
+      supabase
+        .from('leads')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId),
     ]);
 
-    const callsCount = callsToday ?? 0;
-    const connectsCount = connectsToday ?? 0;
-    const meetingsCount = meetingsToday ?? 0;
-    const connectRate = callsCount ? Math.round((connectsCount / Math.max(callsCount, 1)) * 10000) / 100 : 0;
-    const pipelineValue = meetingsCount * 5000;
-    const yesterdayRate = (callsYesterday ?? 0) ? Math.round(((connectsYesterday ?? 0) / Math.max(callsYesterday ?? 1, 1)) * 10000) / 100 : 0;
+    const total = callsToday ?? 0;
+    const answered = answeredToday ?? 0;
+    const connectRate = total ? Math.round((answered / total) * 10000) / 100 : 0;
+    const pipelineValue = (leadsCount ?? 0) * 5000;
+
+    const totalYesterday = callsYesterday ?? 0;
+    const answeredYesterdayCount = answeredYesterday ?? 0;
+    const yesterdayRate = totalYesterday
+      ? Math.round((answeredYesterdayCount / totalYesterday) * 10000) / 100
+      : 0;
 
     return NextResponse.json({
-      callsToday: callsCount,
-      connectRate: connectRate,
-      meetingsBooked: meetingsCount,
+      callsToday: total,
+      connectRate,
+      meetingsBooked: 0,
       pipelineValue,
       yesterday: {
-        calls: callsYesterday ?? 0,
+        calls: totalYesterday,
         connectRate: yesterdayRate,
       },
     });
