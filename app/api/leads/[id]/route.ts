@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const { data, error } = await supabase.from('leads').select('*').eq('id', id).eq('user_id', userId).single();
 
     if (error) {
@@ -31,7 +31,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -42,9 +42,9 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
-    const updates: Record<string, any> = {};
+    const updates: Record<string, unknown> = {};
 
     if (typeof body.status === 'string') updates.status = body.status;
     if (typeof body.notes === 'string') updates.notes = body.notes;
@@ -59,8 +59,8 @@ export async function PATCH(
 
     if (updates.first_name || updates.last_name) {
       const existingLead = await supabase.from('leads').select('first_name,last_name').eq('id', id).eq('user_id', userId).single();
-      const firstName = updates.first_name ?? existingLead.data?.first_name ?? '';
-      const lastName = updates.last_name ?? existingLead.data?.last_name ?? '';
+      const firstName = (updates.first_name as string | undefined) ?? existingLead.data?.first_name ?? '';
+      const lastName = (updates.last_name as string | undefined) ?? existingLead.data?.last_name ?? '';
       updates.name = `${firstName} ${lastName}`.trim();
     }
 
@@ -88,7 +88,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -99,7 +99,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const { error } = await supabase.from('leads').delete().eq('id', id).eq('user_id', userId);
 
     if (error) {
