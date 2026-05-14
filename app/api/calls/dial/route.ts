@@ -30,8 +30,7 @@ export async function POST(request: NextRequest) {
       webhook_url_method: 'POST',
     });
 
-    const callData = result.data as Record<string, unknown>;
-    const callControlId = callData.call_control_id as string | undefined;
+    const callControlId = result.data?.call_control_id;
 
     if (userId && callControlId) {
       const { error: insertError } = await supabase.from('calls').insert({

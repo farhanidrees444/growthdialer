@@ -166,6 +166,20 @@ export default function DialerPage() {
     }
   }, [callState.status, playTone]);
 
+  const sanitizeNumber = useCallback((raw: string) => raw.replace(/[^\d+]/g, ''), []);
+
+  const handleDial = useCallback(async () => {
+    const raw = sanitizeNumber(phoneNumber);
+    const destination = raw.startsWith('+') ? raw : `${countryCode}${raw}`;
+    if (!destination) return;
+    await makeCall({
+      toNumber: destination,
+      leadId: selectedLead?.id,
+      leadName: selectedLead?.name,
+      userId: session?.user?.id,
+    });
+  }, [sanitizeNumber, phoneNumber, countryCode, makeCall, selectedLead, session]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((event.target as HTMLElement)?.tagName)) return;
@@ -203,20 +217,6 @@ export default function DialerPage() {
       console.error('Microphone permission error:', error);
     }
   };
-
-  const sanitizeNumber = useCallback((raw: string) => raw.replace(/[^\d+]/g, ''), []);
-
-  const handleDial = useCallback(async () => {
-    const raw = sanitizeNumber(phoneNumber);
-    const destination = raw.startsWith('+') ? raw : `${countryCode}${raw}`;
-    if (!destination) return;
-    await makeCall({
-      toNumber: destination,
-      leadId: selectedLead?.id,
-      leadName: selectedLead?.name,
-      userId: session?.user?.id,
-    });
-  }, [sanitizeNumber, phoneNumber, countryCode, makeCall, selectedLead, session]);
 
   const handleCallLead = async (phone: string, lead?: LeadRecord) => {
     const raw = sanitizeNumber(phone);
@@ -289,7 +289,7 @@ export default function DialerPage() {
   const lineStatus = useMemo(() => {
     const labels = ['James W.', 'Priya N.', 'Marcus W.', 'Sarah C.', 'Empty'];
     return Array.from({ length: parallelLines }, (_, index) => {
-      const status = index === 0 ? 'ringing' : index === 1 ? 'connected' : index === 2 ? 'no-answer' : index === 3 ? 'voicemail' : 'idle';
+      const status = (index === 0 ? 'ringing' : index === 1 ? 'connected' : index === 2 ? 'no-answer' : index === 3 ? 'voicemail' : 'idle') as 'ringing' | 'connected' | 'no-answer' | 'voicemail' | 'idle';
       return {
         id: index + 1,
         label: labels[index] ?? `Line ${index + 1}`,

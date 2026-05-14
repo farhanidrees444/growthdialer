@@ -63,13 +63,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing CSV body' }, { status: 400 });
     }
 
-    const lines = csv.split(/\r?\n/).filter((line) => line.trim().length > 0);
+    const lines = csv.split(/\r?\n/).filter((line: string) => line.trim().length > 0);
     if (lines.length < 2) {
       return NextResponse.json({ error: 'CSV must contain a header row and at least one lead row' }, { status: 400 });
     }
 
     const header = parseCsvLine(lines[0]).map((column) => column.toLowerCase());
-    const rows = lines.slice(1).map((line) => {
+    const rows = lines.slice(1).map((line: string) => {
       const values = parseCsvLine(line);
       const record: Record<string, string> = {};
       header.forEach((key, index) => {
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    const prepared = rows.reduce<Record<string, any>[]>((acc, row) => {
+    const prepared = rows.reduce((acc: Array<Record<string, unknown>>, row: Record<string, string>) => {
       const phone = normalizePhone(row.phone || row.mobile || row['phone number'] || '');
       if (!phone || existingPhones.has(phone)) {
         return acc;

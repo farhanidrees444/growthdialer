@@ -62,7 +62,7 @@ export default function LeadCard({ lead, selected, onSelect, onCall, onDragStart
     <motion.div
       drag
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-      onDragStart={(event) => onDragStart(event, lead.id)}
+      onDragStart={(event) => onDragStart(event as unknown as DragEvent<HTMLDivElement>, lead.id)}
       onDrop={(event) => onDrop(event, lead.id)}
       onDragOver={onDragOver}
       initial={{ opacity: 0, y: 12 }}

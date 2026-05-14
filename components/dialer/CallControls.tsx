@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Bell, Mic, MicOff, Pause, Repeat, Record, Edit3, SkipForward, PhoneOff, Zap } from 'lucide-react';
+import { Bell, Mic, MicOff, Pause, Repeat, Disc, Edit3, SkipForward, PhoneOff, Zap } from 'lucide-react';
 
 interface CallControlsProps {
   isMuted: boolean;
@@ -56,7 +56,7 @@ export default function CallControls({ isMuted, isOnHold, isRecording, onMute, o
         className={`rounded-3xl border border-white/10 px-4 py-4 text-sm font-semibold transition ${isRecording ? 'bg-rose-500/15 text-rose-300' : 'bg-slate-900/80 text-white hover:border-emerald-400/30'}`}
       >
         <div className="flex items-center justify-center gap-2">
-          <Record className="h-5 w-5" />
+          <Disc className="h-5 w-5" />
           {isRecording ? 'Recording' : 'Record'}
         </div>
       </motion.button>

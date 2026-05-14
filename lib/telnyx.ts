@@ -4,7 +4,7 @@ if (!process.env.TELNYX_API_KEY) {
   console.warn('TELNYX_API_KEY is not set');
 }
 
-const telnyxClient = new Telnyx(process.env.TELNYX_API_KEY ?? '');
+const telnyxClient = new Telnyx({ apiKey: process.env.TELNYX_API_KEY ?? '' });
 
 export default telnyxClient;
 

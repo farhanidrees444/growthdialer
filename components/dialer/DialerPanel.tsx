@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, Mail, Linkedin, ChevronRight, Sparkles, ClipboardList, RotateCcw } from 'lucide-react';
+import { Phone, Mail, ChevronRight, Sparkles, ClipboardList, RotateCcw } from 'lucide-react';
 import ManualDialer from '@/components/dialer/ManualDialer';
 import CallControls from '@/components/dialer/CallControls';
 import CallTimer from '@/components/dialer/CallTimer';
@@ -28,7 +28,7 @@ interface DialerPanelProps {
   notes: string;
   notesOpen: boolean;
   disposition: string;
-  lines: Array<{ id: number; label: string; status: string; timer: string }>;
+  lines: Array<{ id: number; label: string; status: 'ringing' | 'connected' | 'no-answer' | 'voicemail' | 'idle'; timer: string }>;
   onCountryChange: (value: string) => void;
   onPhoneChange: (value: string) => void;
   onDigit: (digit: string) => void;
@@ -127,7 +127,6 @@ export default function DialerPanel({ selectedLead, phoneNumber, countryCode, di
                   <span className="text-lg font-semibold text-white">AI readiness</span>
                 </div>
               </div>
-            </div>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <a href={`tel:${leadDisplay.phone}`} className="rounded-3xl border border-white/10 bg-slate-950/90 px-4 py-3 text-sm text-white transition hover:border-emerald-400/30">
@@ -144,7 +143,7 @@ export default function DialerPanel({ selectedLead, phoneNumber, countryCode, di
             </div>
 
             <div className="mt-6 flex flex-wrap gap-2">
-              {tags.map((tag) => (
+              {(tags ?? []).map((tag) => (
                 <span key={tag} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.25em] text-slate-300">{tag}</span>
               ))}
             </div>
