@@ -1,10 +1,19 @@
 import { NextRequest } from "next/server";
 import { stripe, PLANS, type PlanKey } from "@/lib/stripe";
-import { auth } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+
+function stripeReadyForPlan(planData: (typeof PLANS)[PlanKey]) {
+  const key = process.env.STRIPE_SECRET_KEY ?? "";
+  if (!key || key.includes("placeholder")) return false;
+  if (!planData.priceId?.trim()) return false;
+  return true;
+}
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  const { plan, annual } = await req.json() as { plan: PlanKey; annual: boolean };
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getSession();
+  const session = data.session;
+  const { plan, annual } = (await req.json()) as { plan: PlanKey; annual: boolean };
 
   if (!PLANS[plan]) {
     return Response.json({ error: "Invalid plan" }, { status: 400 });
@@ -15,6 +24,13 @@ export async function POST(req: NextRequest) {
   // Enterprise — no checkout, redirect to contact
   if (!planData.priceId) {
     return Response.json({ url: "/contact-sales" });
+  }
+
+  if (!stripeReadyForPlan(planData)) {
+    const signup = new URL("/signup", req.nextUrl.origin);
+    signup.searchParams.set("plan", plan);
+    if (annual) signup.searchParams.set("billing", "annual");
+    return Response.json({ url: signup.toString() });
   }
 
   try {

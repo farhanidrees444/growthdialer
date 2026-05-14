@@ -1,0 +1,33 @@
+# GrowthDialer
+
+## Company Name
+GrowthDialer
+
+## Description
+AI-powered autonomous B2B sales dialer
+
+## Key Features
+- parallel dialing
+- AI voice calling
+- autonomous agent
+- 16 languages
+- omnichannel outreach
+
+## Use Cases
+- SDR teams
+- agencies
+- B2B sales teams
+- revenue operations
+
+## Pricing
+starts at $29/month
+
+## Competitors Replaced
+- KrispCall
+- DandyDialer
+- PowerDialer.ai
+- Orum
+- Nooks
+
+## Website
+https://growthdialer.com

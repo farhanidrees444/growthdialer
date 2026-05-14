@@ -34,13 +34,13 @@ const monthData = [
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border border-border rounded-lg p-3 shadow-md text-xs">
-        <p className="font-semibold mb-1.5">{label}</p>
+      <div className="rounded-lg border border-white/10 bg-[oklch(0.086_0.024_282)] p-3 text-xs shadow-xl shadow-black/40">
+        <p className="mb-1.5 font-semibold text-foreground">{label}</p>
         {payload.map((p: any) => (
           <div key={p.name} className="flex items-center gap-2 capitalize">
-            <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
+            <div className="h-2 w-2 rounded-full" style={{ background: p.color }} />
             <span className="text-muted-foreground">{p.name}:</span>
-            <span className="font-medium">{p.value}</span>
+            <span className="font-medium text-foreground">{p.value}</span>
           </div>
         ))}
       </div>
@@ -54,16 +54,26 @@ export default function ActivityChart() {
   const data = range === "week" ? weekData : monthData;
 
   return (
-    <Card className="p-5">
-      <div className="flex items-center justify-between mb-5">
+    <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
+      <div className="mb-5 flex items-center justify-between">
         <div>
-          <h2 className="font-semibold text-sm">Call Activity</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Calls, connects & meetings booked</p>
+          <h2 className="font-display text-sm font-semibold">Call activity</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">Calls, connects & meetings booked</p>
         </div>
         <Tabs value={range} onValueChange={setRange}>
-          <TabsList className="h-7 text-xs">
-            <TabsTrigger value="week" className="text-xs px-3 h-5">Week</TabsTrigger>
-            <TabsTrigger value="month" className="text-xs px-3 h-5">Month</TabsTrigger>
+          <TabsList className="h-7 border border-white/10 bg-white/5 text-xs">
+            <TabsTrigger
+              value="week"
+              className="h-5 px-3 text-xs data-active:bg-brand/20 data-active:text-brand"
+            >
+              Week
+            </TabsTrigger>
+            <TabsTrigger
+              value="month"
+              className="h-5 px-3 text-xs data-active:bg-brand/20 data-active:text-brand"
+            >
+              Month
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -84,15 +94,15 @@ export default function ActivityChart() {
               <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
+          <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 8%)" />
           <XAxis
             dataKey="day"
-            tick={{ fontSize: 11, fill: "#94a3b8" }}
+            tick={{ fontSize: 11, fill: "oklch(0.65 0.02 286)" }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 11, fill: "#94a3b8" }}
+            tick={{ fontSize: 11, fill: "oklch(0.65 0.02 286)" }}
             axisLine={false}
             tickLine={false}
           />
@@ -127,7 +137,7 @@ export default function ActivityChart() {
           <Legend
             iconType="circle"
             iconSize={7}
-            wrapperStyle={{ fontSize: "11px", paddingTop: "12px" }}
+            wrapperStyle={{ fontSize: "11px", paddingTop: "12px", color: "oklch(0.65 0.02 286)" }}
           />
         </AreaChart>
       </ResponsiveContainer>

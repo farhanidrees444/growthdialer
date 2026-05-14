@@ -8,16 +8,29 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { label: "Features", href: "#features" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Features", href: "/#features" },
+  { label: "How It Works", href: "/#how-it-works" },
+  { label: "Pricing", href: "/pricing" },
   {
-    label: "Resources",
+    label: "Compare",
     href: "#",
     children: [
-      { label: "Blog", href: "#" },
-      { label: "Case Studies", href: "#" },
-      { label: "Documentation", href: "#" },
+      { label: "GrowthDialer vs Orum", href: "/compare/vs-orum" },
+      { label: "GrowthDialer vs Nooks", href: "/compare/vs-nooks" },
+      { label: "GrowthDialer vs KrispCall", href: "/compare/vs-krispcall" },
+      { label: "GrowthDialer vs PhoneBurner", href: "/compare/vs-phoneburner" },
+      { label: "GrowthDialer vs DandyDialer", href: "/compare/vs-dandydialer" },
+      { label: "GrowthDialer vs PowerDialer", href: "/compare/vs-powerdialer" },
+    ],
+  },
+  {
+    label: "Resources",
+    href: "/docs",
+    children: [
+      { label: "Documentation", href: "/docs" },
+      { label: "Blog", href: "/blog" },
+      { label: "Customers", href: "/customers" },
+      { label: "Contact sales", href: "/contact-sales" },
     ],
   },
 ];
@@ -112,12 +125,12 @@ export default function Navbar() {
 
           {/* CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <Link href="/dashboard">
+            <Link href="/login">
               <Button variant="ghost" size="sm" className="text-sm text-muted-foreground hover:text-foreground">
                 Sign in
               </Button>
             </Link>
-            <Link href="/dashboard">
+            <Link href="/signup">
               <Button
                 size="sm"
                 className="bg-brand text-[oklch(0.08_0.04_153)] hover:bg-[oklch(0.76_0.27_153)] font-semibold text-sm glow-brand-sm transition-all"
@@ -158,12 +171,12 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="mt-3 flex flex-col gap-2 pt-3 border-t border-white/8">
-                <Link href="/dashboard">
+                <Link href="/login">
                   <Button variant="outline" className="w-full text-sm border-white/15">
                     Sign in
                   </Button>
                 </Link>
-                <Link href="/dashboard">
+                <Link href="/signup">
                   <Button className="w-full bg-brand text-[oklch(0.08_0.04_153)] font-semibold text-sm">
                     Start free trial
                   </Button>

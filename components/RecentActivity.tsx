@@ -18,7 +18,7 @@ const activities = [
     text: "Meeting booked with James Whitfield",
     sub: "BluePeak Systems · 15 min ago",
     icon: CalendarCheck,
-    iconClass: "bg-emerald-100 text-emerald-600",
+    iconClass: "bg-emerald-500/15 text-emerald-400",
   },
   {
     id: 2,
@@ -26,7 +26,7 @@ const activities = [
     text: "Connected with Priya Nair",
     sub: "Vortex Analytics · 2:34 duration · 32 min ago",
     icon: PhoneCall,
-    iconClass: "bg-blue-100 text-blue-600",
+    iconClass: "bg-sky-500/15 text-sky-400",
   },
   {
     id: 3,
@@ -34,7 +34,7 @@ const activities = [
     text: "No answer — Marcus Webb",
     sub: "Nimbus Cloud · Attempt 3 · 45 min ago",
     icon: PhoneMissed,
-    iconClass: "bg-red-100 text-red-500",
+    iconClass: "bg-red-500/15 text-red-400",
   },
   {
     id: 4,
@@ -42,7 +42,7 @@ const activities = [
     text: "Note added for Elena Kowalski",
     sub: "Meridian Corp · 1 hr ago",
     icon: MessageSquare,
-    iconClass: "bg-purple-100 text-purple-600",
+    iconClass: "bg-purple-500/15 text-purple-400",
   },
   {
     id: 5,
@@ -50,25 +50,27 @@ const activities = [
     text: "Follow-up email sent to Raj Patel",
     sub: "Stackify AI · 2 hrs ago",
     icon: Mail,
-    iconClass: "bg-amber-100 text-amber-600",
+    iconClass: "bg-amber-500/15 text-amber-300",
   },
 ];
 
 export default function RecentActivity() {
   return (
-    <Card className="flex flex-col">
-      <div className="flex items-center justify-between px-5 py-4 border-b">
-        <h2 className="font-semibold text-sm">Recent Activity</h2>
-        <button className="text-xs text-primary hover:underline">Clear</button>
+    <Card className="flex flex-col border-white/10 bg-[oklch(0.086_0.024_282)]/95 shadow-lg shadow-black/25 backdrop-blur-sm">
+      <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+        <h2 className="font-display text-sm font-semibold">Recent activity</h2>
+        <button type="button" className="text-xs text-brand hover:underline">
+          Clear
+        </button>
       </div>
-      <div className="divide-y">
+      <div className="divide-y divide-white/[0.06]">
         {activities.map((item, i) => (
           <motion.div
             key={item.id}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 + i * 0.06 }}
-            className="flex items-start gap-3 px-5 py-3.5 hover:bg-muted/30 transition-colors"
+            className="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-white/[0.04]"
           >
             <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5", item.iconClass)}>
               <item.icon className="w-3.5 h-3.5" />

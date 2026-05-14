@@ -41,7 +41,7 @@ export default function CTASection() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link href="/dashboard">
+            <Link href="/signup">
               <Button
                 size="lg"
                 className="bg-brand text-[oklch(0.08_0.04_153)] hover:bg-[oklch(0.76_0.27_153)] font-semibold text-base px-8 h-13 glow-brand gap-2 transition-all"
@@ -50,7 +50,7 @@ export default function CTASection() {
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
-            <Link href="/dashboard">
+            <Link href="/#how-it-works">
               <Button
                 variant="outline"
                 size="lg"

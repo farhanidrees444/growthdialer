@@ -1,4 +1,5 @@
 import HeroSection from "@/components/marketing/HeroSection";
+import TrustBadges from "@/components/marketing/TrustBadges";
 import Ticker from "@/components/marketing/Ticker";
 import IntegrationsBar from "@/components/marketing/IntegrationsBar";
 import HowItWorks from "@/components/marketing/HowItWorks";
@@ -8,12 +9,14 @@ import CompareTable from "@/components/marketing/CompareTable";
 import PricingSection from "@/components/marketing/PricingSection";
 import TestimonialsSection from "@/components/marketing/TestimonialsSection";
 import FAQSection from "@/components/marketing/FAQSection";
+import CompareSection from "@/components/marketing/CompareSection";
 import CTASection from "@/components/marketing/CTASection";
 
 export default function LandingPage() {
   return (
     <>
       <HeroSection />
+      <TrustBadges />
       <Ticker />
       <IntegrationsBar />
       <HowItWorks />
@@ -23,6 +26,7 @@ export default function LandingPage() {
       <PricingSection />
       <TestimonialsSection />
       <FAQSection />
+      <CompareSection />
       <CTASection />
     </>
   );

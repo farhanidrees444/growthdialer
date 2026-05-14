@@ -64,17 +64,17 @@ export default function DialerWidget() {
   };
 
   return (
-    <Card className="p-5 flex flex-col gap-4">
+    <Card className="flex flex-col gap-4 border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-sm">Active Dialer</h2>
+        <h2 className="font-display text-sm font-semibold">Active dialer</h2>
         <Badge
           className={cn(
-            "text-[10px] px-2 rounded-full font-medium",
+            "rounded-full px-2 text-[10px] font-medium",
             callState === "connected"
-              ? "bg-emerald-100 text-emerald-700"
+              ? "border border-emerald-500/30 bg-emerald-500/15 text-emerald-300"
               : callState === "dialing"
-              ? "bg-amber-100 text-amber-700"
-              : "bg-muted text-muted-foreground"
+              ? "border border-amber-500/30 bg-amber-500/15 text-amber-300"
+              : "border border-white/10 bg-white/5 text-muted-foreground"
           )}
         >
           {callState === "idle"
@@ -88,9 +88,9 @@ export default function DialerWidget() {
       </div>
 
       {/* Lead info */}
-      <div className="bg-muted/50 rounded-xl p-4 flex items-start gap-3">
-        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-          <User className="w-5 h-5 text-primary" />
+      <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-brand/[0.06] p-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/15">
+          <User className="h-5 w-5 text-brand" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm">{currentLead.name}</p>
@@ -101,7 +101,7 @@ export default function DialerWidget() {
           </div>
           <p className="text-xs font-mono text-primary mt-1">{currentLead.phone}</p>
         </div>
-        <Badge variant="secondary" className="text-[10px] shrink-0">
+        <Badge variant="secondary" className="shrink-0 border-white/10 bg-white/5 text-[10px] text-muted-foreground">
           Attempt {currentLead.attempts}
         </Badge>
       </div>
@@ -120,7 +120,7 @@ export default function DialerWidget() {
               transition={{ repeat: Infinity, duration: 1.4 }}
               className="w-2 h-2 rounded-full bg-emerald-500"
             />
-            <span className="font-mono text-xl font-semibold tabular-nums text-emerald-600">
+            <span className="font-mono text-xl font-semibold tabular-nums text-emerald-400">
               {formatTime(elapsed)}
             </span>
           </motion.div>
@@ -140,7 +140,7 @@ export default function DialerWidget() {
                 className="w-1.5 h-1.5 rounded-full bg-amber-500"
               />
             ))}
-            <span className="ml-1 text-sm text-amber-600 font-medium">Calling...</span>
+            <span className="ml-1 text-sm font-medium text-amber-300">Calling...</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -150,7 +150,7 @@ export default function DialerWidget() {
         <Button
           variant="outline"
           size="icon"
-          className="w-9 h-9 rounded-full"
+          className="h-9 w-9 rounded-full border-white/15 bg-white/5 hover:bg-white/10"
           onClick={() => setMuted(!muted)}
           disabled={callState !== "connected"}
         >
@@ -159,7 +159,7 @@ export default function DialerWidget() {
         <Button
           variant="outline"
           size="icon"
-          className="w-9 h-9 rounded-full"
+          className="h-9 w-9 rounded-full border-white/15 bg-white/5 hover:bg-white/10"
           onClick={() => setSpeakerOff(!speakerOff)}
           disabled={callState !== "connected"}
         >
@@ -175,14 +175,14 @@ export default function DialerWidget() {
           whileTap={{ scale: 0.92 }}
           onClick={handleCall}
           className={cn(
-            "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-semibold text-white transition-colors",
+            "flex flex-1 items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold text-white transition-colors",
             callState === "idle"
-              ? "bg-primary hover:bg-primary/90"
+              ? "bg-brand text-[oklch(0.08_0.04_153)] hover:bg-[oklch(0.76_0.27_153)] glow-brand-sm"
               : callState === "dialing"
               ? "bg-amber-500 hover:bg-amber-600"
               : callState === "connected"
               ? "bg-red-500 hover:bg-red-600"
-              : "bg-muted text-muted-foreground cursor-not-allowed"
+              : "cursor-not-allowed bg-white/10 text-muted-foreground"
           )}
           disabled={callState === "ended"}
         >
@@ -200,7 +200,7 @@ export default function DialerWidget() {
         <Button
           variant="outline"
           size="icon"
-          className="w-9 h-9 rounded-full"
+          className="h-9 w-9 rounded-full border-white/15 bg-white/5 hover:bg-white/10"
           disabled={callState === "connected" || callState === "dialing"}
         >
           <SkipForward className="w-4 h-4" />

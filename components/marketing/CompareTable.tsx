@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { Check, X, Minus } from "lucide-react";
+import { Check, X, Minus, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const rows: Array<{ feature: string; gd: Val; comp1: Val; comp2: Val }> = [
@@ -77,9 +79,20 @@ export default function CompareTable() {
             <div className="col-span-1 px-6 py-4 text-sm font-medium text-muted-foreground">Feature</div>
             <div className="col-span-1 px-6 py-4 text-center">
               <div className="text-sm font-bold text-brand">GrowthDialer</div>
+              <div className="text-xs text-muted-foreground mt-1">$29/user/mo</div>
             </div>
-            <div className="col-span-1 px-6 py-4 text-center text-sm text-muted-foreground">Competitor A</div>
-            <div className="col-span-1 px-6 py-4 text-center text-sm text-muted-foreground">Competitor B</div>
+            <div className="col-span-1 px-6 py-4 text-center text-sm text-muted-foreground">
+              <Link href="/compare/vs-orum" className="hover:text-foreground transition-colors">
+                <div>Orum</div>
+                <div className="text-xs text-muted-foreground mt-1">$59/user/mo</div>
+              </Link>
+            </div>
+            <div className="col-span-1 px-6 py-4 text-center text-sm text-muted-foreground">
+              <Link href="/compare/vs-nooks" className="hover:text-foreground transition-colors">
+                <div>Nooks</div>
+                <div className="text-xs text-muted-foreground mt-1">$45/user/mo</div>
+              </Link>
+            </div>
           </div>
 
           {/* Rows */}
@@ -102,6 +115,49 @@ export default function CompareTable() {
                 <Cell val={row.comp2} />
               </div>
             </div>
+          ))}
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.45, delay: 0.15 }}
+          className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4"
+        >
+          <Link href="/signup">
+            <Button className="bg-brand text-[oklch(0.08_0.04_153)] hover:bg-[oklch(0.76_0.27_153)] font-semibold gap-2">
+              Start free trial
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </Link>
+          <Link href="/pricing">
+            <Button variant="outline" className="border-white/15 bg-white/5 hover:bg-white/10">
+              View pricing
+            </Button>
+          </Link>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: 0.25 }}
+          className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2"
+        >
+          {[
+            { label: "vs Orum", href: "/compare/vs-orum" },
+            { label: "vs Nooks", href: "/compare/vs-nooks" },
+            { label: "vs PhoneBurner", href: "/compare/vs-phoneburner" },
+            { label: "vs KrispCall", href: "/compare/vs-krispcall" },
+          ].map((c) => (
+            <Link
+              key={c.label}
+              href={c.href}
+              className="text-xs text-muted-foreground hover:text-brand transition-colors underline underline-offset-2"
+            >
+              {c.label}
+            </Link>
           ))}
         </motion.div>
       </div>

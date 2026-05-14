@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { signInSchema } from "@/lib/validations";
+import { findRegisteredUser } from "@/lib/user-store";
 
 // Demo users for development (replace with real DB in production)
 const DEMO_USERS = [
@@ -10,18 +11,36 @@ const DEMO_USERS = [
     name: "Alex Rivera",
     email: "demo@growthdialer.com",
     password: "demo1234",
-    image: null,
+    image: null as string | null,
     role: "admin",
     plan: "growth",
   },
 ];
 
+const googleConfigured =
+  Boolean(process.env.AUTH_GOOGLE_ID?.trim()) &&
+  Boolean(process.env.AUTH_GOOGLE_SECRET?.trim());
+
+/**
+ * Auth.js requires a secret to sign sessions. In development, a fixed fallback avoids
+ * MissingSecret / ClientFetchError when `.env.local` is not set. On Vercel, set `AUTH_SECRET`.
+ */
+const authSecret =
+  process.env.AUTH_SECRET?.trim() ||
+  (process.env.NODE_ENV === "development"
+    ? "development-only-auth-secret-min-32-chars-do-not-use-in-prod"
+    : undefined);
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID ?? "",
-      clientSecret: process.env.AUTH_GOOGLE_SECRET ?? "",
-    }),
+    ...(googleConfigured
+      ? [
+          Google({
+            clientId: process.env.AUTH_GOOGLE_ID!,
+            clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+          }),
+        ]
+      : []),
     Credentials({
       name: "credentials",
       credentials: {
@@ -33,17 +52,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
-        const user = DEMO_USERS.find(
-          (u) => u.email === email && u.password === password
+        const demo = DEMO_USERS.find(
+          (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
         );
-        if (!user) return null;
+        if (demo) {
+          return {
+            id: demo.id,
+            name: demo.name,
+            email: demo.email,
+            image: demo.image,
+          };
+        }
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          image: user.image,
-        };
+        const registered = findRegisteredUser(email);
+        if (registered && registered.password === password) {
+          return {
+            id: registered.id,
+            name: registered.name,
+            email: registered.email,
+            image: registered.image,
+          };
+        }
+
+        return null;
       },
     }),
   ],
@@ -66,6 +97,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
   },
-  secret: process.env.AUTH_SECRET,
+  secret: authSecret,
   trustHost: true,
 });

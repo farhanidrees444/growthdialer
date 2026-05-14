@@ -6,6 +6,10 @@ import { Plus, Minus } from "lucide-react";
 
 const faqs = [
   {
+    q: "How does GrowthDialer compare to Orum and Nooks?",
+    a: "GrowthDialer offers parallel dialing up to 10 lines (vs Orum's 3 and Nooks' 5), AI voice technology for better conversations, and team collaboration features. At $29/user/mo, we're 50% cheaper than Orum ($59) and 35% cheaper than Nooks ($45) while delivering superior results.",
+  },
+  {
     q: "How does parallel dialing work?",
     a: "GrowthDialer dials up to 10 lines simultaneously. When any prospect answers, your rep is immediately connected — no hold music, no delays. Unanswered lines are automatically hung up or routed to AI voicemail drop.",
   },
@@ -32,6 +36,18 @@ const faqs = [
   {
     q: "What compliance features do you have?",
     a: "GrowthDialer includes built-in DNC list scrubbing, TCPA-compliant consent management, call recording disclosure prompts, and audit logs. We're SOC 2 Type II certified.",
+  },
+  {
+    q: "How does AI coaching work?",
+    a: "Our AI listens to your calls in real-time and provides live suggestions via text or voice. It analyzes conversation flow, objection handling, and closing techniques to help you improve immediately.",
+  },
+  {
+    q: "Can managers monitor calls in real-time?",
+    a: "Yes — managers can join calls silently, provide live coaching, or take over if needed. All activity is logged for performance reviews and training purposes.",
+  },
+  {
+    q: "What's included in the $29/month plan?",
+    a: "Everything: parallel dialing, AI voice, CRM integrations, unlimited calls, call recording, team analytics, live coaching, and priority support. No hidden fees or add-ons required.",
   },
 ];
 

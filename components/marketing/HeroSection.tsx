@@ -2,17 +2,19 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, Play, TrendingUp, Phone, Users, Zap } from "lucide-react";
+import { ArrowRight, Play, TrendingUp, Phone, Users, Zap, CalendarCheck, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
 
 const floatingCards = [
   {
     id: 1,
     icon: Phone,
-    label: "Calls today",
-    value: "284",
-    change: "+34%",
+    label: "Total calls today",
+    targetValue: 2184,
+    suffix: "",
+    prefix: "",
     pos: "top-[12%] -left-4 lg:-left-10",
     delay: 0.6,
     color: "text-indigo-400",
@@ -20,27 +22,67 @@ const floatingCards = [
   },
   {
     id: 2,
-    icon: Users,
-    label: "Connect rate",
-    value: "41.2%",
-    change: "+8.1%",
+    icon: CalendarCheck,
+    label: "Meetings booked",
+    targetValue: 71,
+    suffix: "",
+    prefix: "",
     pos: "top-[50%] -right-4 lg:-right-10",
     delay: 0.75,
+    color: "text-emerald-400",
+    bg: "bg-emerald-500/10",
+  },
+  {
+    id: 3,
+    icon: Users,
+    label: "Connect rate",
+    targetValue: 41.2,
+    suffix: "%",
+    prefix: "",
+    pos: "bottom-[12%] -left-4 lg:-left-10",
+    delay: 0.9,
     color: "text-brand",
     bg: "bg-brand/10",
   },
   {
-    id: 3,
-    icon: TrendingUp,
+    id: 4,
+    icon: DollarSign,
     label: "Pipeline added",
-    value: "$92K",
-    change: "this week",
-    pos: "bottom-[12%] -left-4 lg:-left-10",
-    delay: 0.9,
+    targetValue: 144,
+    suffix: "k",
+    prefix: "$",
+    pos: "bottom-[50%] -right-4 lg:-right-10",
+    delay: 1.05,
     color: "text-amber-400",
     bg: "bg-amber-500/10",
   },
 ];
+
+function AnimatedCounter({ target, suffix, prefix }: { target: number; suffix: string; prefix: string }) {
+  const [count, setCount] = useState(target);
+
+  useEffect(() => {
+    setCount(0);
+    const duration = 2000;
+    const start = performance.now();
+    const update = (now: number) => {
+      const t = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      const next = target % 1 !== 0
+        ? Math.round(ease * target * 10) / 10
+        : Math.round(ease * target);
+      setCount(next);
+      if (t < 1) requestAnimationFrame(update);
+    };
+    requestAnimationFrame(update);
+  }, [target]);
+
+  return (
+    <span className="tabular-nums" suppressHydrationWarning>
+      {prefix}{count.toLocaleString()}{suffix}
+    </span>
+  );
+}
 
 const avatars = [
   { initials: "JW", bg: "bg-indigo-500" },
@@ -109,7 +151,7 @@ export default function HeroSection() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="flex flex-wrap gap-3 mb-10"
             >
-              <Link href="/dashboard">
+              <Link href="/signup">
                 <Button
                   size="lg"
                   className="bg-brand text-[oklch(0.08_0.04_153)] hover:bg-[oklch(0.76_0.27_153)] font-semibold text-base px-7 h-12 glow-brand gap-2 transition-all"
@@ -118,14 +160,16 @@ export default function HeroSection() {
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-white/15 bg-white/5 hover:bg-white/10 text-sm h-12 px-6 gap-2 transition-all"
-              >
-                <Play className="w-4 h-4 fill-current" />
-                Watch 2-min demo
-              </Button>
+              <Link href="/#how-it-works">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="border-white/15 bg-white/5 hover:bg-white/10 text-sm h-12 px-6 gap-2 transition-all"
+                >
+                  <Play className="w-4 h-4 fill-current" />
+                  Watch 2-min demo
+                </Button>
+              </Link>
             </motion.div>
 
             {/* Social proof */}
@@ -261,8 +305,14 @@ export default function HeroSection() {
                   </div>
                   <span className="text-[11px] text-muted-foreground">{card.label}</span>
                 </div>
-                <div className="text-xl font-bold font-display">{card.value}</div>
-                <div className="text-[11px] text-brand font-medium">{card.change}</div>
+                <div className="text-xl font-bold font-display">
+                  <AnimatedCounter
+                    target={card.targetValue}
+                    suffix={card.suffix}
+                    prefix={card.prefix}
+                  />
+                </div>
+                <div className="text-[11px] text-brand font-medium">Live data</div>
               </motion.div>
             ))}
           </motion.div>

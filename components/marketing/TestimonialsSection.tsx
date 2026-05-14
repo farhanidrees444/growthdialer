@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 
 const testimonials = [
   {
@@ -9,9 +11,13 @@ const testimonials = [
     name: "Ryan Mitchell",
     role: "Head of Sales",
     company: "Apex Growth Co.",
+    companyTag: "Series B · 45 reps",
     initials: "RM",
     bg: "bg-indigo-500",
     stars: 5,
+    linkedin: "https://linkedin.com",
+    metric: "+40% meetings in 30 days",
+    metricColor: "text-brand",
   },
   {
     quote:
@@ -19,9 +25,13 @@ const testimonials = [
     name: "Lena Kowalski",
     role: "Senior AE",
     company: "NovaSpark Tech",
+    companyTag: "SaaS · 200+ employees",
     initials: "LK",
     bg: "bg-brand",
     stars: 5,
+    linkedin: "https://linkedin.com",
+    metric: "$120K deal closed",
+    metricColor: "text-amber-400",
   },
   {
     quote:
@@ -29,9 +39,13 @@ const testimonials = [
     name: "Carlos Torres",
     role: "VP Revenue",
     company: "Meridian Cloud",
+    companyTag: "Cloud Infra · 150+ employees",
     initials: "CT",
     bg: "bg-purple-500",
     stars: 5,
+    linkedin: "https://linkedin.com",
+    metric: "3 tools → 1 platform",
+    metricColor: "text-indigo-400",
   },
 ];
 
@@ -76,17 +90,34 @@ export default function TestimonialsSection() {
 
               <p className="text-foreground/85 text-sm leading-relaxed flex-1">"{t.quote}"</p>
 
+              {/* Key result callout */}
+              <div className={`text-xs font-semibold ${t.metricColor} bg-white/4 rounded-lg px-3 py-2 self-start`}>
+                {t.metric}
+              </div>
+
               <div className="flex items-center gap-3 pt-2 border-t border-white/8">
                 <div
                   className={`w-10 h-10 rounded-full ${t.bg} flex items-center justify-center text-sm font-bold text-[oklch(0.08_0.04_153)] shrink-0`}
                 >
                   {t.initials}
                 </div>
-                <div>
-                  <p className="text-sm font-semibold">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold">{t.name}</p>
+                    <Link
+                      href={t.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground/50 hover:text-[#0A66C2] transition-colors"
+                      aria-label={`${t.name} on LinkedIn`}
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                    </Link>
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">
                     {t.role} · {t.company}
                   </p>
+                  <p className="text-[10px] text-muted-foreground/60">{t.companyTag}</p>
                 </div>
               </div>
             </motion.div>

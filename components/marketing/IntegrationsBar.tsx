@@ -26,7 +26,7 @@ const colors = [
 
 export default function IntegrationsBar() {
   return (
-    <section className="py-16 border-b border-white/8">
+    <section id="integrations" className="py-16 border-b border-white/8 scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.p
           initial={{ opacity: 0, y: 10 }}
