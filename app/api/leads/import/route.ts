@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { isValidPhoneNumber } from '@/lib/twilio';
+
+function isValidPhoneNumber(phone: string): boolean {
+  return /^\+[1-9]\d{1,14}$/.test(phone);
+}
 
 function parseCsvLine(line: string) {
   const result: string[] = [];

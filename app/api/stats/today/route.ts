@@ -30,6 +30,7 @@ export async function GET(_request: NextRequest) {
       { count: callsYesterday },
       { count: answeredYesterday },
       { count: leadsCount },
+      { count: meetingsBooked },
     ] = await Promise.all([
       supabase
         .from('calls')
@@ -61,6 +62,11 @@ export async function GET(_request: NextRequest) {
         .from('leads')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId),
+      supabase
+        .from('leads')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('status', 'meeting_booked'),
     ]);
 
     const total = callsToday ?? 0;
@@ -77,7 +83,7 @@ export async function GET(_request: NextRequest) {
     return NextResponse.json({
       callsToday: total,
       connectRate,
-      meetingsBooked: 0,
+      meetingsBooked: meetingsBooked ?? 0,
       pipelineValue,
       yesterday: {
         calls: totalYesterday,

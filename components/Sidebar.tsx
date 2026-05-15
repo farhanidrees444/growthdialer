@@ -11,7 +11,6 @@ import {
   BarChart2,
   Settings,
   Headphones,
-  ListChecks,
   Zap,
   ChevronRight,
   LogOut,
@@ -35,7 +34,6 @@ const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
   { icon: Phone, label: "Dialer", href: "/dialer", badge: "Live" },
   { icon: Users, label: "Leads", href: "/leads", showCount: true },
-  { icon: ListChecks, label: "Sequences", href: "/sequences" },
   { icon: BarChart2, label: "Analytics", href: "/analytics" },
   { icon: Headphones, label: "Recordings", href: "/recordings" },
 ];

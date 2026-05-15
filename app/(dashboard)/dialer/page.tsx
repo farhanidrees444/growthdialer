@@ -1,8 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+export const dynamic = 'force-dynamic';
+
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Bell, Search, Plus } from 'lucide-react';
+import { Bell, Search } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useSupabaseSession } from '@/lib/supabase/hooks';
 import LiveStats from '@/components/dialer/LiveStats';
@@ -47,9 +50,10 @@ const initialLead: LeadRecord = {
   call_attempts: 0,
 };
 
-export default function DialerPage() {
+function DialerContent() {
   const [supabase] = useState(() => createClient());
   const session = useSupabaseSession();
+  const searchParams = useSearchParams();
   const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [selectedLead, setSelectedLead] = useState<LeadRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,6 +71,7 @@ export default function DialerPage() {
   const [callState, setCallState] = useState<CallState>(INITIAL_CALL_STATE);
   const [error, setError] = useState<string | null>(null);
   const hasAutoSelectedRef = useRef(false);
+  const preselectedLeadId = searchParams?.get('lead_id') ?? null;
 
   // ── Duration timer ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -121,8 +126,12 @@ export default function DialerPage() {
       setLeads(normalized);
       if (!hasAutoSelectedRef.current && normalized.length > 0) {
         hasAutoSelectedRef.current = true;
-        setSelectedLead(normalized[0]);
-        setNotes(normalized[0].notes ?? '');
+        const preselected = preselectedLeadId
+          ? normalized.find((l) => l.id === preselectedLeadId) ?? normalized[0]
+          : normalized[0];
+        setSelectedLead(preselected);
+        setPhoneNumber(preselected.phone ?? '');
+        setNotes(preselected.notes ?? '');
       }
     };
 
@@ -302,14 +311,19 @@ export default function DialerPage() {
   };
 
   const lineStatus = useMemo(() => {
-    const labels = ['James W.', 'Priya N.', 'Marcus W.', 'Sarah C.', 'Empty'];
     return Array.from({ length: parallelLines }, (_, index) => ({
       id: index + 1,
-      label: labels[index] ?? `Line ${index + 1}`,
-      status: (index === 0 ? 'ringing' : index === 1 ? 'connected' : index === 2 ? 'no-answer' : index === 3 ? 'voicemail' : 'idle') as 'ringing' | 'connected' | 'no-answer' | 'voicemail' | 'idle',
-      timer: index === 0 ? '00:00' : `00:0${index + 2}`,
+      label: index === 0 && selectedLead ? selectedLead.name.split(' ')[0] : `Line ${index + 1}`,
+      status: (index === 0 && callState.status === 'ringing'
+        ? 'ringing'
+        : index === 0 && callState.status === 'connected'
+        ? 'connected'
+        : 'idle') as 'ringing' | 'connected' | 'no-answer' | 'voicemail' | 'idle',
+      timer: index === 0 && callState.status === 'connected'
+        ? `${Math.floor(callState.duration / 60).toString().padStart(2, '0')}:${(callState.duration % 60).toString().padStart(2, '0')}`
+        : '00:00',
     }));
-  }, [parallelLines]);
+  }, [parallelLines, selectedLead, callState.status, callState.duration]);
 
   const currentLead = selectedLead ?? initialLead;
 
@@ -398,12 +412,20 @@ export default function DialerPage() {
             companySize={currentLead.company_size ?? 'Medium'}
             industry={currentLead.industry ?? 'Technology'}
             revenue={currentLead.revenue ?? '$25M'}
-            activity={currentLead.activity_summary ?? 'Opened 3 emails, visited pricing page.'}
+            activity={currentLead.activity_summary ?? ''}
             profileUrl={currentLead.profile_url}
             notes={currentLead.notes ?? 'No notes yet.'}
           />
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DialerPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#070b10]" />}>
+      <DialerContent />
+    </Suspense>
   );
 }

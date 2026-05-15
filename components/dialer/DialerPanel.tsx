@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, Mail, ChevronRight, Sparkles, ClipboardList, RotateCcw } from 'lucide-react';
+import { Phone, Mail, ChevronRight } from 'lucide-react';
 import ManualDialer from '@/components/dialer/ManualDialer';
 import CallControls from '@/components/dialer/CallControls';
 import CallTimer from '@/components/dialer/CallTimer';
@@ -221,31 +221,42 @@ export default function DialerPanel({ selectedLead, phoneNumber, countryCode, di
           <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-6 shadow-[0_0_30px_rgba(0,255,102,0.08)]">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Call intelligence</p>
-                <p className="mt-2 text-lg font-semibold text-white">Live coaching</p>
+                <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Lead notes</p>
+                <p className="mt-2 text-lg font-semibold text-white">{selectedLead?.company ?? 'No company'}</p>
               </div>
-              <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-3 py-1 text-xs uppercase tracking-[0.28em] text-emerald-300">AI</span>
             </div>
-
-            <div className="mt-6 grid gap-3">
-              <div className="rounded-3xl border border-rose-400/15 bg-rose-500/5 p-4">
-                <p className="text-xs uppercase tracking-[0.32em] text-rose-300">Objection detected</p>
-                <p className="mt-2 text-sm text-white">Price concern — acknowledge value and ask for budget range.</p>
-              </div>
-              <div className="rounded-3xl border border-emerald-400/15 bg-emerald-500/5 p-4">
-                <p className="text-xs uppercase tracking-[0.32em] text-emerald-300">Buying signal</p>
-                <p className="mt-2 text-sm text-white">Asked about timeline — move toward next steps.</p>
-              </div>
-              <div className="rounded-3xl border border-sky-400/15 bg-sky-500/5 p-4">
-                <p className="text-xs uppercase tracking-[0.32em] text-sky-300">Suggestion</p>
-                <p className="mt-2 text-sm text-white">Ask about their current tool and what they like/dislike.</p>
-              </div>
+            <div className="mt-4 space-y-2 text-sm text-slate-400">
+              {selectedLead?.industry && (
+                <div className="flex justify-between">
+                  <span>Industry</span>
+                  <span className="text-white">{selectedLead.industry}</span>
+                </div>
+              )}
+              {selectedLead?.company_size && (
+                <div className="flex justify-between">
+                  <span>Size</span>
+                  <span className="text-white">{selectedLead.company_size}</span>
+                </div>
+              )}
+              {selectedLead?.revenue && (
+                <div className="flex justify-between">
+                  <span>Revenue</span>
+                  <span className="text-white">{selectedLead.revenue}</span>
+                </div>
+              )}
+              {selectedLead?.activity_summary && (
+                <p className="mt-3 text-xs text-slate-400 leading-relaxed">{selectedLead.activity_summary}</p>
+              )}
+              {!selectedLead?.industry && !selectedLead?.company_size && !selectedLead?.activity_summary && (
+                <p className="text-xs text-slate-500 italic">No company data available.</p>
+              )}
             </div>
           </div>
+
           <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-6 shadow-[0_0_30px_rgba(0,255,102,0.08)]">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Battlecards</p>
+                <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Quick scripts</p>
                 <p className="mt-2 text-lg font-semibold text-white">Objection handling</p>
               </div>
             </div>
@@ -253,10 +264,10 @@ export default function DialerPanel({ selectedLead, phoneNumber, countryCode, di
               {['We already have a solution', 'Send me an email', 'No budget'].map((item) => (
                 <div key={item} className="rounded-3xl border border-white/10 bg-slate-950/90 p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-white">{item}</p>
-                    <ChevronRight className="h-4 w-4 text-emerald-300" />
+                    <p className="font-semibold text-white text-sm">{item}</p>
+                    <ChevronRight className="h-4 w-4 text-emerald-300 shrink-0" />
                   </div>
-                  <p className="mt-2 text-sm text-slate-400">Use this response to keep the call moving and uncover urgency.</p>
+                  <p className="mt-2 text-xs text-slate-400">Acknowledge, pivot to value, ask an open question.</p>
                 </div>
               ))}
             </div>

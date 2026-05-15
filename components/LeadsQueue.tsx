@@ -111,7 +111,7 @@ export default function LeadsQueue({ limit }: LeadsQueueProps) {
                   className="h-7 w-7 hover:bg-white/10"
                   type="button"
                   title="Call in dialer"
-                  onClick={() => router.push('/dialer')}
+                  onClick={() => router.push(`/dialer?lead_id=${lead.id}`)}
                 >
                   <Phone className="h-3.5 w-3.5" />
                 </Button>

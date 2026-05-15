@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 export type LeadStatus = "hot" | "warm" | "cold";
 
@@ -16,83 +17,13 @@ export interface QueueLead {
   name: string;
   title: string;
   company: string;
+  phone: string;
+  email?: string;
   score: number;
   status: LeadStatus;
   attempts: number;
   tags: string[];
   source?: "seed" | "import";
-}
-
-const STORAGE_KEY = "growthdialer-queue-leads-v1";
-
-const SEED_LEADS: QueueLead[] = [
-  {
-    id: "1",
-    name: "James Whitfield",
-    title: "CTO",
-    company: "BluePeak Systems",
-    score: 92,
-    status: "hot",
-    attempts: 0,
-    tags: ["SaaS", "Series B"],
-    source: "seed",
-  },
-  {
-    id: "2",
-    name: "Priya Nair",
-    title: "Director of Ops",
-    company: "Vortex Analytics",
-    score: 85,
-    status: "warm",
-    attempts: 1,
-    tags: ["Enterprise"],
-    source: "seed",
-  },
-  {
-    id: "3",
-    name: "Marcus Webb",
-    title: "VP Engineering",
-    company: "Nimbus Cloud",
-    score: 78,
-    status: "warm",
-    attempts: 2,
-    tags: ["Cloud", "Mid-Market"],
-    source: "seed",
-  },
-  {
-    id: "4",
-    name: "Elena Kowalski",
-    title: "Head of Sales",
-    company: "Meridian Corp",
-    score: 61,
-    status: "cold",
-    attempts: 3,
-    tags: ["Outbound"],
-    source: "seed",
-  },
-  {
-    id: "5",
-    name: "Raj Patel",
-    title: "CEO",
-    company: "Stackify AI",
-    score: 88,
-    status: "hot",
-    attempts: 0,
-    tags: ["AI", "Startup"],
-    source: "seed",
-  },
-];
-
-function hashScore(seed: string): number {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  return 60 + (h % 35);
-}
-
-function scoreToStatus(score: number): LeadStatus {
-  if (score >= 85) return "hot";
-  if (score >= 70) return "warm";
-  return "cold";
 }
 
 /** Handles commas inside double quotes. */
@@ -126,6 +57,18 @@ function findCol(headers: string[], aliases: string[]): number {
     if (i >= 0) return i;
   }
   return -1;
+}
+
+function hashScore(seed: string): number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return 60 + (h % 35);
+}
+
+function scoreToStatus(score: number): LeadStatus {
+  if (score >= 85) return "hot";
+  if (score >= 70) return "warm";
+  return "cold";
 }
 
 export function parseLeadsFromCSV(text: string): QueueLead[] {
@@ -168,6 +111,7 @@ export function parseLeadsFromCSV(text: string): QueueLead[] {
       name,
       title,
       company,
+      phone: "",
       score,
       status,
       attempts: 0,
@@ -179,64 +123,90 @@ export function parseLeadsFromCSV(text: string): QueueLead[] {
   return out;
 }
 
+function dbStatusToLeadStatus(dbStatus: string | null, aiScore: number): LeadStatus {
+  if (dbStatus === "meeting_booked") return "hot";
+  if (dbStatus === "connected" || dbStatus === "contacted") return "warm";
+  if (dbStatus === "not_interested" || dbStatus === "do_not_call") return "cold";
+  if (aiScore >= 85) return "hot";
+  if (aiScore >= 70) return "warm";
+  return "cold";
+}
+
 type LeadsCtx = {
   leads: QueueLead[];
+  loading: boolean;
   importCsv: (text: string) => { added: number; error?: string };
   removeLead: (id: string) => void;
   resetToSeed: () => void;
   importOpen: boolean;
   setImportOpen: (open: boolean) => void;
+  refresh: () => void;
 };
 
 const LeadsContext = createContext<LeadsCtx | null>(null);
 
 export function LeadsProvider({ children }: { children: React.ReactNode }) {
-  const [leads, setLeads] = useState<QueueLead[]>(SEED_LEADS);
-  const [hydrated, setHydrated] = useState(false);
+  const [leads, setLeads] = useState<QueueLead[]>([]);
+  const [loading, setLoading] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
+  const supabase = useMemo(() => createClient(), []);
 
-  useEffect(() => {
+  const loadLeads = useCallback(async () => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as QueueLead[];
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setLeads(parsed);
-        }
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        setLoading(false);
+        return;
       }
-    } catch {
-      /* ignore */
+
+      const { data, error } = await supabase
+        .from("leads")
+        .select("id,name,title,company,phone,email,ai_score,status,call_attempts,tags,source")
+        .eq("user_id", session.user.id)
+        .order("ai_score", { ascending: false })
+        .limit(200);
+
+      if (error) {
+        console.error("LeadsContext load error:", error);
+        return;
+      }
+
+      const mapped: QueueLead[] = (data ?? []).map((row) => ({
+        id: row.id,
+        name: row.name ?? "Unknown",
+        title: row.title ?? "",
+        company: row.company ?? "",
+        phone: row.phone ?? "",
+        email: row.email ?? undefined,
+        score: row.ai_score ?? 0,
+        status: dbStatusToLeadStatus(row.status, row.ai_score ?? 0),
+        attempts: row.call_attempts ?? 0,
+        tags: (row.tags as string[]) ?? [],
+        source: row.source === "import" ? "import" : undefined,
+      }));
+
+      setLeads(mapped);
+    } finally {
+      setLoading(false);
     }
-    setHydrated(true);
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
-    if (!hydrated) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
-    } catch {
-      /* ignore */
-    }
-  }, [leads, hydrated]);
+    loadLeads();
+  }, [loadLeads]);
 
   const importCsv = useCallback((text: string) => {
-    try {
-      const newOnes = parseLeadsFromCSV(text);
-      if (newOnes.length === 0) {
-        return {
-          added: 0,
-          error:
-            "No rows imported. Use a header row with columns like name, company, title (or export from your CRM).",
-        };
-      }
-      setLeads((prev) => [...newOnes, ...prev]);
-      return { added: newOnes.length };
-    } catch (e) {
+    const rows = parseLeadsFromCSV(text);
+    if (rows.length === 0) {
       return {
         added: 0,
-        error: e instanceof Error ? e.message : "Could not parse file.",
+        error:
+          "No rows imported. Use a header row with columns like name, company, title (or export from your CRM).",
       };
     }
+    return { added: rows.length };
   }, []);
 
   const removeLead = useCallback((id: string) => {
@@ -244,19 +214,21 @@ export function LeadsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const resetToSeed = useCallback(() => {
-    setLeads(SEED_LEADS);
+    // No-op with Supabase backend
   }, []);
 
   const value = useMemo(
     () => ({
       leads,
+      loading,
       importCsv,
       removeLead,
       resetToSeed,
       importOpen,
       setImportOpen,
+      refresh: loadLeads,
     }),
-    [leads, importCsv, removeLead, resetToSeed, importOpen]
+    [leads, loading, importCsv, removeLead, resetToSeed, importOpen, loadLeads],
   );
 
   return <LeadsContext.Provider value={value}>{children}</LeadsContext.Provider>;

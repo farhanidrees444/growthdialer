@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useLeads } from "@/contexts/leads-context";
 
 export function ImportLeadsDialog() {
-  const { importOpen, setImportOpen, importCsv } = useLeads();
+  const { importOpen, setImportOpen, importCsv, refresh } = useLeads();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,16 +34,19 @@ export function ImportLeadsDialog() {
           return;
         }
 
-        // Persist to Supabase in the background (best-effort)
+        // Persist to Supabase
         try {
           const res = await fetch("/api/leads/import", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ csv: text }),
           });
+          const body = await res.json().catch(() => ({}));
           if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
             console.warn("Supabase lead import warning:", body.error ?? res.status);
+          } else {
+            // Reload leads from Supabase so the queue reflects the import
+            refresh();
           }
         } catch (networkErr) {
           console.warn("Supabase lead import network error:", networkErr);
