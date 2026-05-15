@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceClient();
     if (!supabase) {
-      console.warn('Webhook received but Supabase service client unavailable — skipping persistence');
+      console.warn('Webhook received but service client unavailable — skipping persistence');
       return NextResponse.json({ received: true });
     }
 
@@ -61,11 +61,30 @@ export async function POST(request: NextRequest) {
       }
 
       case 'call.answered': {
+        const { data: callRow, error: fetchErr } = await supabase
+          .from('calls')
+          .select('id, user_id, lead_id, to_number')
+          .eq('telnyx_call_id', callControlId)
+          .single();
+
+        if (fetchErr) console.error('call.answered fetch error:', fetchErr);
+
         const { error } = await supabase
           .from('calls')
           .update({ status: 'answered', answered_at: new Date().toISOString() })
           .eq('telnyx_call_id', callControlId);
         if (error) console.error('call.answered update error:', error);
+
+        // Log activity
+        if (callRow?.user_id) {
+          await supabase.from('activities').insert({
+            user_id: callRow.user_id,
+            type: 'call',
+            lead_id: callRow.lead_id ?? null,
+            description: `Call answered${callRow.lead_id ? '' : ` — ${callRow.to_number ?? 'unknown'}`}`,
+            metadata: { event: 'call.answered', call_id: callRow.id, telnyx_call_id: callControlId },
+          }).select().maybeSingle();
+        }
         break;
       }
 
@@ -73,7 +92,7 @@ export async function POST(request: NextRequest) {
         const endedAt = new Date().toISOString();
         const { data: existing } = await supabase
           .from('calls')
-          .select('answered_at, created_at')
+          .select('id, user_id, lead_id, answered_at, created_at, to_number')
           .eq('telnyx_call_id', callControlId)
           .single();
 
@@ -95,6 +114,26 @@ export async function POST(request: NextRequest) {
           })
           .eq('telnyx_call_id', callControlId);
         if (error) console.error('call.hangup update error:', error);
+
+        // Update lead last_called_at if we have a lead_id
+        if (existing?.lead_id) {
+          await supabase
+            .from('leads')
+            .update({ last_called_at: endedAt })
+            .eq('id', existing.lead_id);
+        }
+
+        // Log activity
+        if (existing?.user_id) {
+          const durStr = durationSeconds ? `${Math.floor(durationSeconds / 60)}:${String(durationSeconds % 60).padStart(2, '0')}` : null;
+          await supabase.from('activities').insert({
+            user_id: existing.user_id,
+            type: 'call',
+            lead_id: existing.lead_id ?? null,
+            description: durStr ? `Call ended — ${durStr}` : 'Call ended',
+            metadata: { event: 'call.hangup', call_id: existing.id, duration_seconds: durationSeconds, telnyx_call_id: callControlId },
+          }).select().maybeSingle();
+        }
         break;
       }
 
@@ -102,11 +141,28 @@ export async function POST(request: NextRequest) {
         const recordingUrl =
           payload.recording_urls?.mp3 ?? payload.recording_urls?.wav ?? null;
         if (recordingUrl) {
+          const { data: callRow } = await supabase
+            .from('calls')
+            .select('id, user_id, lead_id')
+            .eq('telnyx_call_id', callControlId)
+            .single();
+
           const { error } = await supabase
             .from('calls')
             .update({ recording_url: recordingUrl })
             .eq('telnyx_call_id', callControlId);
           if (error) console.error('call.recording.saved update error:', error);
+
+          // Log activity
+          if (callRow?.user_id) {
+            await supabase.from('activities').insert({
+              user_id: callRow.user_id,
+              type: 'call',
+              lead_id: callRow.lead_id ?? null,
+              description: 'Recording saved',
+              metadata: { event: 'call.recording.saved', call_id: callRow.id, recording_url: recordingUrl },
+            }).select().maybeSingle();
+          }
         }
         break;
       }
@@ -117,7 +173,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true, event_type });
   } catch (error) {
-    console.error('Telnyx webhook error:', error);
+    console.error('Webhook processing error:', error);
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
   }
 }

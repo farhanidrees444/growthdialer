@@ -50,6 +50,18 @@ const initialLead: LeadRecord = {
   call_attempts: 0,
 };
 
+// Maps disposition label → lead status value in DB
+const DISPOSITION_STATUS_MAP: Record<string, string> = {
+  'Connected': 'connected',
+  'Meeting Booked': 'meeting_booked',
+  'Not Interested': 'not_interested',
+  'Callback': 'callback',
+  'Wrong Number': 'wrong_number',
+  'No Answer': 'contacted',
+  'Voicemail Left': 'contacted',
+  'Busy': 'contacted',
+};
+
 function DialerContent() {
   const [supabase] = useState(() => createClient());
   const session = useSupabaseSession();
@@ -73,6 +85,23 @@ function DialerContent() {
   const hasAutoSelectedRef = useRef(false);
   const preselectedLeadId = searchParams?.get('lead_id') ?? null;
 
+  // ── Fetch today's real stats from API ───────────────────────────────────────
+  useEffect(() => {
+    fetch('/api/stats/today')
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.error) {
+          setStats({
+            calls: data.callsToday ?? 0,
+            connects: data.answeredToday ?? Math.round((data.callsToday ?? 0) * (data.connectRate ?? 0) / 100),
+            meetings: data.meetingsBooked ?? 0,
+            connectRate: data.connectRate ?? 0,
+          });
+        }
+      })
+      .catch(console.error);
+  }, []);
+
   // ── Duration timer ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (callState.status !== 'connected') return;
@@ -82,7 +111,7 @@ function DialerContent() {
     return () => clearInterval(timer);
   }, [callState.status]);
 
-  // ── Subscribe to call status changes from Telnyx webhook ────────────────────
+  // ── Subscribe to call status changes from webhook ───────────────────────────
   useEffect(() => {
     if (!callState.callSid) return;
     const channel = supabase
@@ -110,10 +139,10 @@ function DialerContent() {
       const { data, error: queryError } = await supabase
         .from('leads')
         .select('id,name,title,company,phone,email,linkedin,ai_score,status,last_called_at,call_attempts,tags,notes,company_size,industry,revenue,activity_summary,profile_url')
-        .order('call_attempts', { ascending: true });
+        .order('ai_score', { ascending: false });
 
       if (queryError) {
-        console.error('Supabase load leads error:', queryError.message);
+        console.error('Load leads error:', queryError.message);
         return;
       }
 
@@ -145,14 +174,6 @@ function DialerContent() {
     return () => { supabase.removeChannel(channel); };
   }, [supabase]);
 
-  // ── Stats derived from leads ─────────────────────────────────────────────────
-  useEffect(() => {
-    const calls = leads.reduce((sum, lead) => sum + (lead.call_attempts ?? 0), 0);
-    const connects = leads.filter((lead) => ['connected', 'qualified', 'meeting_booked'].includes(lead.status)).length;
-    const meetings = leads.filter((lead) => lead.status === 'meeting_booked').length;
-    setStats({ calls, connects, meetings, connectRate: calls ? (connects / Math.max(calls, 1)) * 100 : 0 });
-  }, [leads]);
-
   // ── Filtered leads ───────────────────────────────────────────────────────────
   const filteredLeads = useMemo(() => {
     let list = [...leads];
@@ -160,18 +181,18 @@ function DialerContent() {
       const q = searchQuery.toLowerCase();
       list = list.filter((l) => l.name.toLowerCase().includes(q) || l.company.toLowerCase().includes(q) || l.phone.includes(q));
     }
-    if (filterMode === 'Queue') list = list.filter((l) => l.status === 'new' || l.status === 'contacted');
-    if (filterMode === 'Hot Leads') list = list.filter((l) => l.ai_score >= 75 || l.status === 'qualified' || l.status === 'meeting_booked');
+    if (filterMode === 'Queue') list = list.filter((l) => l.status === 'new' || l.status === 'contacted' || l.status === 'queued');
+    if (filterMode === 'Hot Leads') list = list.filter((l) => l.ai_score >= 75 || l.status === 'connected' || l.status === 'meeting_booked');
     return list;
   }, [leads, searchQuery, filterMode]);
 
-  // ── Server-side dial via Telnyx API ─────────────────────────────────────────
+  // ── Server-side dial ────────────────────────────────────────────────────────
   const sanitizeNumber = useCallback((raw: string) => raw.replace(/[^\d+]/g, ''), []);
 
   const handleDial = useCallback(async () => {
     const raw = sanitizeNumber(phoneNumber);
     const destination = raw.startsWith('+') ? raw : `${countryCode}${raw}`;
-    if (!destination) return;
+    if (!destination || destination === countryCode) return;
 
     setCallState({
       status: 'connecting',
@@ -185,6 +206,24 @@ function DialerContent() {
     });
     setError(null);
 
+    // Update lead: increment call_attempts, set last_called_at, mark as contacted
+    if (selectedLead) {
+      const newAttempts = (selectedLead.call_attempts ?? 0) + 1;
+      const newStatus = selectedLead.status === 'new' || selectedLead.status === 'queued' ? 'contacted' : selectedLead.status;
+      supabase.from('leads').update({
+        call_attempts: newAttempts,
+        last_called_at: new Date().toISOString(),
+        status: newStatus,
+      }).eq('id', selectedLead.id).then(() => {
+        setLeads((prev) => prev.map((l) =>
+          l.id === selectedLead.id
+            ? { ...l, call_attempts: newAttempts, last_called_at: new Date().toISOString(), status: newStatus }
+            : l
+        ));
+        setSelectedLead((prev) => prev ? { ...prev, call_attempts: newAttempts, status: newStatus } : prev);
+      });
+    }
+
     try {
       const res = await fetch('/api/calls/dial', {
         method: 'POST',
@@ -192,13 +231,17 @@ function DialerContent() {
         body: JSON.stringify({ to: destination, lead_id: selectedLead?.id }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to dial');
+      if (!res.ok) throw new Error(data.error ?? 'Call could not be connected');
       setCallState((prev) => ({ ...prev, status: 'ringing', callSid: data.call_control_id ?? null }));
+      // Refresh stats after dialing
+      fetch('/api/stats/today').then((r) => r.json()).then((d) => {
+        if (!d.error) setStats({ calls: d.callsToday ?? 0, connects: Math.round((d.callsToday ?? 0) * (d.connectRate ?? 0) / 100), meetings: d.meetingsBooked ?? 0, connectRate: d.connectRate ?? 0 });
+      }).catch(() => {});
     } catch (err) {
       setCallState(INITIAL_CALL_STATE);
-      setError(err instanceof Error ? err.message : 'Call failed');
+      setError(err instanceof Error ? err.message : 'Call could not be connected');
     }
-  }, [sanitizeNumber, phoneNumber, countryCode, selectedLead]);
+  }, [sanitizeNumber, phoneNumber, countryCode, selectedLead, supabase]);
 
   const hangUp = useCallback(async () => {
     const cid = callState.callSid;
@@ -251,6 +294,12 @@ function DialerContent() {
     });
     setError(null);
 
+    if (lead) {
+      const newAttempts = (lead.call_attempts ?? 0) + 1;
+      const newStatus = lead.status === 'new' || lead.status === 'queued' ? 'contacted' : lead.status;
+      supabase.from('leads').update({ call_attempts: newAttempts, last_called_at: new Date().toISOString(), status: newStatus }).eq('id', lead.id);
+    }
+
     try {
       const res = await fetch('/api/calls/dial', {
         method: 'POST',
@@ -258,13 +307,13 @@ function DialerContent() {
         body: JSON.stringify({ to: destination, lead_id: lead?.id }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to dial');
+      if (!res.ok) throw new Error(data.error ?? 'Call could not be connected');
       setCallState((prev) => ({ ...prev, status: 'ringing', callSid: data.call_control_id ?? null }));
     } catch (err) {
       setCallState(INITIAL_CALL_STATE);
-      setError(err instanceof Error ? err.message : 'Call failed');
+      setError(err instanceof Error ? err.message : 'Call could not be connected');
     }
-  }, [sanitizeNumber, countryCode]);
+  }, [sanitizeNumber, countryCode, supabase]);
 
   const handleSelectLead = (lead: LeadRecord) => {
     setSelectedLead(lead);
@@ -299,15 +348,38 @@ function DialerContent() {
 
   const handleSaveAndNext = async () => {
     if (!selectedLead) return;
-    await supabase.from('leads').update({ notes, next_callback_at: callbackTime }).eq('id', selectedLead.id);
-    if (callState.callSid) {
-      await supabase.from('calls').update({ disposition }).eq('telnyx_call_id', callState.callSid);
-    }
+
+    const newStatus = DISPOSITION_STATUS_MAP[disposition] ?? selectedLead.status;
+
+    await Promise.all([
+      supabase.from('leads').update({
+        notes,
+        status: newStatus,
+        last_called_at: new Date().toISOString(),
+        ...(callbackTime ? { next_callback_at: callbackTime } : {}),
+      }).eq('id', selectedLead.id),
+      callState.callSid
+        ? supabase.from('calls').update({ disposition, notes }).eq('telnyx_call_id', callState.callSid)
+        : Promise.resolve(),
+    ]);
+
+    // Update local lead status immediately
+    setLeads((prev) => prev.map((l) => l.id === selectedLead.id ? { ...l, status: newStatus as import('@/components/dialer/LeadCard').LeadRecord['status'], notes } : l));
+
+    // Advance to next lead
     const nextIndex = leads.findIndex((l) => l.id === selectedLead.id) + 1;
     const next = leads[nextIndex] ?? leads[0] ?? null;
     setSelectedLead(next);
     setNotes(next?.notes ?? '');
     setPhoneNumber(next?.phone ?? '');
+    setCallState(INITIAL_CALL_STATE);
+    setDisposition('Connected');
+    setCallbackTime('');
+
+    // Refresh stats
+    fetch('/api/stats/today').then((r) => r.json()).then((d) => {
+      if (!d.error) setStats({ calls: d.callsToday ?? 0, connects: Math.round((d.callsToday ?? 0) * (d.connectRate ?? 0) / 100), meetings: d.meetingsBooked ?? 0, connectRate: d.connectRate ?? 0 });
+    }).catch(() => {});
   };
 
   const lineStatus = useMemo(() => {

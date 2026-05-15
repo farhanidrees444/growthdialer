@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Upload, FileSpreadsheet, Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useLeads } from "@/contexts/leads-context";
 
 export function ImportLeadsDialog() {
+  const router = useRouter();
   const { importOpen, setImportOpen, importCsv, refresh } = useLeads();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -27,14 +29,12 @@ export function ImportLeadsDialog() {
       try {
         const text = await file.text();
 
-        // Add to in-memory / localStorage queue for the dialer
         const localResult = importCsv(text);
         if (localResult.error) {
           setError(localResult.error);
           return;
         }
 
-        // Persist to Supabase
         try {
           const res = await fetch("/api/leads/import", {
             method: "POST",
@@ -43,25 +43,26 @@ export function ImportLeadsDialog() {
           });
           const body = await res.json().catch(() => ({}));
           if (!res.ok) {
-            console.warn("Supabase lead import warning:", body.error ?? res.status);
+            console.warn("Lead import warning:", body.error ?? res.status);
           } else {
-            // Reload leads from Supabase so the queue reflects the import
             refresh();
           }
         } catch (networkErr) {
-          console.warn("Supabase lead import network error:", networkErr);
+          console.warn("Lead import network error:", networkErr);
         }
 
-        setMessage(`Imported ${localResult.added} lead${localResult.added === 1 ? "" : "s"}.`);
+        const count = localResult.added;
+        setMessage(`Imported ${count} lead${count === 1 ? "" : "s"}.`);
         window.setTimeout(() => {
           setImportOpen(false);
           setMessage(null);
-        }, 1200);
+          router.push("/leads");
+        }, 1000);
       } finally {
         setLoading(false);
       }
     },
-    [importCsv, setImportOpen]
+    [importCsv, setImportOpen, refresh, router]
   );
 
   return (
@@ -96,7 +97,7 @@ export function ImportLeadsDialog() {
           )}
           <div className="text-center">
             <p className="text-sm font-medium">Drop a CSV here or click to browse</p>
-            <p className="text-xs text-muted-foreground mt-1">Saved to queue and Supabase</p>
+            <p className="text-xs text-muted-foreground mt-1">Saved to your leads queue</p>
           </div>
         </label>
 

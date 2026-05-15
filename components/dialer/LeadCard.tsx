@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import type { DragEvent } from 'react';
 import { Phone, ArrowRight, Zap } from 'lucide-react';
 
-type LeadStatus = 'new' | 'contacted' | 'qualified' | 'meeting_booked' | 'no_answer' | 'busy' | 'wrong_number' | 'not_interested';
+type LeadStatus = 'new' | 'queued' | 'contacted' | 'connected' | 'qualified' | 'meeting_booked' | 'no_answer' | 'busy' | 'wrong_number' | 'not_interested' | 'callback' | 'do_not_call';
 
 export interface LeadRecord {
   id: string;
@@ -39,24 +39,33 @@ export default function LeadCard({ lead, selected, onSelect, onCall, onDragStart
   const scoreColor = lead.ai_score >= 80 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/20' : lead.ai_score >= 50 ? 'bg-amber-500/15 text-amber-300 border-amber-500/20' : 'bg-red-500/15 text-red-300 border-red-500/20';
   const statusMap: Record<LeadStatus, string> = {
     new: 'New',
+    queued: 'Queued',
     contacted: 'Contacted',
+    connected: 'Connected',
     qualified: 'Qualified',
     meeting_booked: 'Meeting Booked',
     no_answer: 'No Answer',
     busy: 'Busy',
     wrong_number: 'Wrong Number',
     not_interested: 'Not Interested',
+    callback: 'Callback',
+    do_not_call: 'Do Not Call',
   };
-  const statusColor = {
+  const statusColorMap: Record<LeadStatus, string> = {
     new: 'bg-slate-700 text-slate-200',
-    contacted: 'bg-emerald-500/15 text-emerald-300',
+    queued: 'bg-blue-500/15 text-blue-300',
+    contacted: 'bg-amber-500/15 text-amber-300',
+    connected: 'bg-emerald-500/15 text-emerald-300',
     qualified: 'bg-cyan-500/15 text-cyan-300',
     meeting_booked: 'bg-violet-500/15 text-violet-300',
     no_answer: 'bg-amber-500/15 text-amber-300',
     busy: 'bg-red-500/15 text-red-300',
     wrong_number: 'bg-rose-500/15 text-rose-300',
     not_interested: 'bg-slate-600 text-slate-200',
-  }[lead.status];
+    callback: 'bg-cyan-500/15 text-cyan-300',
+    do_not_call: 'bg-rose-900/50 text-rose-300',
+  };
+  const statusColor = statusColorMap[lead.status] ?? 'bg-slate-700 text-slate-200';
 
   return (
     <motion.div

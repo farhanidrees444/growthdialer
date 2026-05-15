@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause, Clock, Mic } from "lucide-react";
+import { Play, Pause, Clock, Mic, Download } from "lucide-react";
 import DashboardHeader from "@/components/DashboardHeader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ interface Recording {
   duration_seconds: number | null;
   created_at: string;
   status: string | null;
+  leads: { name: string | null; company: string | null } | null;
 }
 
 function formatDuration(seconds: number | null): string {
@@ -32,6 +33,8 @@ function formatDate(iso: string): string {
     month: "short",
     day: "numeric",
     year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -78,7 +81,7 @@ function AudioPlayer({ url }: { url: string }) {
       >
         {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
       </Button>
-      <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden">
+      <div className="w-32 h-1.5 rounded-full bg-white/10 overflow-hidden">
         <div
           className="h-full rounded-full bg-brand transition-all"
           style={{ width: `${progress}%` }}
@@ -102,7 +105,7 @@ export default function RecordingsPage() {
 
         const { data, error } = await supabase
           .from("calls")
-          .select("id, to_number, from_number, recording_url, duration_seconds, created_at, status")
+          .select("id, to_number, from_number, recording_url, duration_seconds, created_at, status, leads(name, company)")
           .eq("user_id", session.user.id)
           .not("recording_url", "is", null)
           .order("created_at", { ascending: false })
@@ -113,7 +116,7 @@ export default function RecordingsPage() {
           return;
         }
 
-        setRecordings((data ?? []).filter((r) => r.recording_url) as Recording[]);
+        setRecordings((data ?? []).filter((r) => r.recording_url) as unknown as Recording[]);
       } catch (err) {
         console.error("Recordings load error:", err);
       } finally {
@@ -131,7 +134,7 @@ export default function RecordingsPage() {
         {loading ? (
           <div className="space-y-3 max-w-3xl">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-16 animate-pulse rounded-xl border border-white/10 bg-white/5" />
+              <div key={i} className="h-20 animate-pulse rounded-xl border border-white/10 bg-white/5" />
             ))}
           </div>
         ) : recordings.length === 0 ? (
@@ -139,36 +142,48 @@ export default function RecordingsPage() {
             <Mic className="h-10 w-10 text-muted-foreground/40" />
             <p className="text-sm font-medium">No recordings yet</p>
             <p className="text-xs text-muted-foreground max-w-xs">
-              Recordings will appear here after calls with recording enabled are completed.
+              Recordings will appear here automatically after calls are completed.
             </p>
           </div>
         ) : (
           <div className="space-y-3 max-w-3xl">
-            {recordings.map((r) => (
-              <Card key={r.id} className="p-4 flex items-center gap-4 border-white/10 bg-[oklch(0.086_0.024_282)]/90">
-                <AudioPlayer url={r.recording_url} />
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">
-                    {r.to_number ?? "Unknown number"}
-                  </div>
-                  <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
-                    <span className="truncate">{r.from_number ?? "—"}</span>
-                    {r.duration_seconds && (
-                      <>
-                        <span className="text-muted-foreground/50">·</span>
+            {recordings.map((r) => {
+              const displayName = r.leads?.name ?? r.to_number ?? "Unknown";
+              const company = r.leads?.company;
+              return (
+                <Card key={r.id} className="p-4 flex items-center gap-4 border-white/10 bg-[oklch(0.086_0.024_282)]/90">
+                  <AudioPlayer url={r.recording_url} />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm truncate">{displayName}</div>
+                    <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
+                      {company && <span className="truncate">{company}</span>}
+                      {company && r.duration_seconds && <span className="text-muted-foreground/50">·</span>}
+                      {r.duration_seconds && (
                         <span className="flex items-center gap-1 shrink-0">
                           <Clock className="w-3 h-3" />
                           {formatDuration(r.duration_seconds)}
                         </span>
-                      </>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-                <Badge variant="secondary" className="text-[10px] shrink-0">
-                  {formatDate(r.created_at)}
-                </Badge>
-              </Card>
-            ))}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant="secondary" className="text-[10px]">
+                      {formatDate(r.created_at)}
+                    </Badge>
+                    <a
+                      href={r.recording_url}
+                      download
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground"
+                      title="Download recording"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         )}
       </main>
