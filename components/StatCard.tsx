@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
+import { LucideIcon, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,7 @@ interface StatCardProps {
   value: string;
   change: string;
   positive: boolean;
+  neutral?: boolean;
   icon: LucideIcon;
   iconColor: string;
   iconBg: string;
@@ -21,11 +22,14 @@ export default function StatCard({
   value,
   change,
   positive,
+  neutral = false,
   icon: Icon,
   iconColor,
   iconBg,
   delay = 0,
 }: StatCardProps) {
+  const isNeutral = neutral || change === "—";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -40,10 +44,12 @@ export default function StatCard({
             <div
               className={cn(
                 "mt-2 flex items-center gap-1 text-xs font-medium",
-                positive ? "text-emerald-400" : "text-red-400"
+                isNeutral ? "text-slate-500" : positive ? "text-emerald-400" : "text-red-400"
               )}
             >
-              {positive ? (
+              {isNeutral ? (
+                <Minus className="h-3.5 w-3.5" />
+              ) : positive ? (
                 <TrendingUp className="h-3.5 w-3.5" />
               ) : (
                 <TrendingDown className="h-3.5 w-3.5" />

@@ -123,8 +123,10 @@ export async function POST(request: NextRequest) {
       return acc;
     }, []);
 
+    const skipped = rows.length - prepared.length;
+
     if (prepared.length === 0) {
-      return NextResponse.json({ success: true, inserted: 0, message: 'No new valid leads were found in the CSV.' });
+      return NextResponse.json({ success: true, inserted: 0, skipped, message: 'No new valid leads were found in the CSV.' });
     }
 
     const { error: insertError } = await supabase.from('leads').insert(prepared);
@@ -133,7 +135,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to import leads' }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, inserted: prepared.length });
+    return NextResponse.json({ success: true, inserted: prepared.length, skipped });
   } catch (error) {
     console.error('Lead import error:', error);
     return NextResponse.json({ error: 'Unable to import leads' }, { status: 500 });

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Phone, Upload, Users, BarChart2,
-  CalendarCheck, DollarSign, Info,
+  CalendarCheck, DollarSign,
 } from "lucide-react";
 import DashboardHeader from "@/components/DashboardHeader";
 import StatCard from "@/components/StatCard";
@@ -19,57 +19,16 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLeads } from "@/contexts/leads-context";
 
-// Static fallback data shown when no real calls exist yet
-const DEMO_STATS = [
-  {
-    title: "Calls Today",
-    value: "63",
-    change: "+18%",
-    positive: true,
-    icon: Phone,
-    iconColor: "text-indigo-400",
-    iconBg: "bg-indigo-500/15",
-    delay: 0,
-  },
-  {
-    title: "Connect Rate",
-    value: "34.9%",
-    change: "+4.2%",
-    positive: true,
-    icon: Users,
-    iconColor: "text-emerald-400",
-    iconBg: "bg-emerald-500/15",
-    delay: 0.07,
-  },
-  {
-    title: "Meetings Booked",
-    value: "7",
-    change: "+2",
-    positive: true,
-    icon: CalendarCheck,
-    iconColor: "text-amber-300",
-    iconBg: "bg-amber-500/15",
-    delay: 0.14,
-  },
-  {
-    title: "Pipeline Value",
-    value: "$48.2K",
-    change: "-3.1%",
-    positive: false,
-    icon: DollarSign,
-    iconColor: "text-purple-400",
-    iconBg: "bg-purple-500/15",
-    delay: 0.21,
-  },
-];
-
-function buildLiveStats(data: {
+interface StatsData {
   callsToday: number;
   connectRate: number;
   meetingsBooked: number;
   pipelineValue: number;
   yesterday: { calls: number; connectRate: number };
-}) {
+}
+
+function buildStats(data: StatsData) {
+  const hasYesterdayData = data.yesterday.calls > 0 || data.callsToday > 0;
   const callDelta = data.callsToday - data.yesterday.calls;
   const rateDelta = data.connectRate - data.yesterday.connectRate;
 
@@ -77,8 +36,9 @@ function buildLiveStats(data: {
     {
       title: "Calls Today",
       value: String(data.callsToday),
-      change: callDelta >= 0 ? `+${callDelta}` : String(callDelta),
+      change: hasYesterdayData ? (callDelta >= 0 ? `+${callDelta}` : String(callDelta)) : "—",
       positive: callDelta >= 0,
+      neutral: !hasYesterdayData,
       icon: Phone,
       iconColor: "text-indigo-400",
       iconBg: "bg-indigo-500/15",
@@ -87,8 +47,9 @@ function buildLiveStats(data: {
     {
       title: "Connect Rate",
       value: `${data.connectRate.toFixed(1)}%`,
-      change: rateDelta >= 0 ? `+${rateDelta.toFixed(1)}%` : `${rateDelta.toFixed(1)}%`,
+      change: hasYesterdayData ? (rateDelta >= 0 ? `+${rateDelta.toFixed(1)}%` : `${rateDelta.toFixed(1)}%`) : "—",
       positive: rateDelta >= 0,
+      neutral: !hasYesterdayData,
       icon: Users,
       iconColor: "text-emerald-400",
       iconBg: "bg-emerald-500/15",
@@ -97,8 +58,9 @@ function buildLiveStats(data: {
     {
       title: "Meetings Booked",
       value: String(data.meetingsBooked),
-      change: `+${data.meetingsBooked}`,
-      positive: true,
+      change: hasYesterdayData ? `+${data.meetingsBooked}` : "—",
+      positive: data.meetingsBooked >= 0,
+      neutral: !hasYesterdayData,
       icon: CalendarCheck,
       iconColor: "text-amber-300",
       iconBg: "bg-amber-500/15",
@@ -106,9 +68,10 @@ function buildLiveStats(data: {
     },
     {
       title: "Pipeline Value",
-      value: `$${(data.pipelineValue / 1000).toFixed(1)}K`,
-      change: data.meetingsBooked > 0 ? "+new" : "—",
-      positive: data.meetingsBooked > 0,
+      value: data.pipelineValue > 0 ? `$${(data.pipelineValue / 1000).toFixed(1)}K` : "$0",
+      change: "—",
+      positive: true,
+      neutral: true,
       icon: DollarSign,
       iconColor: "text-purple-400",
       iconBg: "bg-purple-500/15",
@@ -116,6 +79,14 @@ function buildLiveStats(data: {
     },
   ];
 }
+
+const EMPTY_STATS: StatsData = {
+  callsToday: 0,
+  connectRate: 0,
+  meetingsBooked: 0,
+  pipelineValue: 0,
+  yesterday: { calls: 0, connectRate: 0 },
+};
 
 function QuickActions() {
   const { setImportOpen } = useLeads();
@@ -172,7 +143,7 @@ function QuickActions() {
           <div className="min-w-0 flex-1">
             <p className="font-display text-sm font-semibold">Start dialing</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Parallel lines and disposition sync to your CRM.
+              Disposition sync and real-time progress tracking.
             </p>
             <Link href="/dialer">
               <Button
@@ -191,30 +162,33 @@ function QuickActions() {
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<ReturnType<typeof buildLiveStats> | null>(null);
-  const [isDemo, setIsDemo] = useState(false);
+  const [statsData, setStatsData] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/stats/today')
       .then((r) => r.json())
       .then((data) => {
-        if (data.error || data.callsToday === 0) {
-          setIsDemo(true);
-          setStats(DEMO_STATS as any);
+        if (!data.error) {
+          setStatsData({
+            callsToday: data.callsToday ?? 0,
+            connectRate: data.connectRate ?? 0,
+            meetingsBooked: data.meetingsBooked ?? 0,
+            pipelineValue: data.pipelineValue ?? 0,
+            yesterday: {
+              calls: data.yesterday?.calls ?? 0,
+              connectRate: data.yesterday?.connectRate ?? 0,
+            },
+          });
         } else {
-          setIsDemo(false);
-          setStats(buildLiveStats(data));
+          setStatsData(EMPTY_STATS);
         }
       })
-      .catch(() => {
-        setIsDemo(true);
-        setStats(DEMO_STATS as any);
-      })
+      .catch(() => setStatsData(EMPTY_STATS))
       .finally(() => setLoading(false));
   }, []);
 
-  const displayStats = stats ?? DEMO_STATS;
+  const displayStats = buildStats(statsData ?? EMPTY_STATS);
 
   return (
     <>
@@ -240,13 +214,6 @@ export default function DashboardPage() {
         </div>
 
         <QuickActions />
-
-        {isDemo && !loading && (
-          <div className="flex items-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">
-            <Info className="h-3.5 w-3.5 shrink-0" />
-            Demo data shown — make your first call to see real stats here.
-          </div>
-        )}
 
         <motion.div
           initial={{ opacity: 0, y: 6 }}

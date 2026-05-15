@@ -15,7 +15,7 @@ import { useLeads } from "@/contexts/leads-context";
 
 export function ImportLeadsDialog() {
   const router = useRouter();
-  const { importOpen, setImportOpen, importCsv, refresh } = useLeads();
+  const { importOpen, setImportOpen, refresh } = useLeads();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -29,40 +29,46 @@ export function ImportLeadsDialog() {
       try {
         const text = await file.text();
 
-        const localResult = importCsv(text);
-        if (localResult.error) {
-          setError(localResult.error);
+        const res = await fetch("/api/leads/import", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ csv: text }),
+        });
+
+        const body = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          setError(body.error ?? `Import failed (${res.status}). Please try again.`);
           return;
         }
 
-        try {
-          const res = await fetch("/api/leads/import", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ csv: text }),
-          });
-          const body = await res.json().catch(() => ({}));
-          if (!res.ok) {
-            console.warn("Lead import warning:", body.error ?? res.status);
-          } else {
-            refresh();
-          }
-        } catch (networkErr) {
-          console.warn("Lead import network error:", networkErr);
+        const inserted: number = body.inserted ?? 0;
+        const skipped: number = body.skipped ?? 0;
+
+        if (inserted === 0 && skipped === 0) {
+          setError("No valid leads found in the CSV. Make sure the file has a header row with name and phone columns.");
+          return;
         }
 
-        const count = localResult.added;
-        setMessage(`Imported ${count} lead${count === 1 ? "" : "s"}.`);
+        const parts: string[] = [];
+        if (inserted > 0) parts.push(`${inserted} lead${inserted === 1 ? "" : "s"} imported`);
+        if (skipped > 0) parts.push(`${skipped} skipped (duplicates or missing phone)`);
+        setMessage(parts.join(", ") + ".");
+
+        refresh();
+
         window.setTimeout(() => {
           setImportOpen(false);
           setMessage(null);
           router.push("/leads");
-        }, 1000);
+        }, 1200);
+      } catch {
+        setError("Network error — check your connection and try again.");
       } finally {
         setLoading(false);
       }
     },
-    [importCsv, setImportOpen, refresh, router]
+    [setImportOpen, refresh, router]
   );
 
   return (
@@ -97,7 +103,7 @@ export function ImportLeadsDialog() {
           )}
           <div className="text-center">
             <p className="text-sm font-medium">Drop a CSV here or click to browse</p>
-            <p className="text-xs text-muted-foreground mt-1">Saved to your leads queue</p>
+            <p className="text-xs text-muted-foreground mt-1">Saved permanently to your leads queue</p>
           </div>
         </label>
 

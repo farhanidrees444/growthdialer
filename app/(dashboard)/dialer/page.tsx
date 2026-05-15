@@ -479,14 +479,9 @@ function DialerContent() {
           />
 
           <CoachingSidebar
-            leadName={currentLead.name}
-            companyName={currentLead.company}
-            companySize={currentLead.company_size ?? 'Medium'}
-            industry={currentLead.industry ?? 'Technology'}
-            revenue={currentLead.revenue ?? '$25M'}
-            activity={currentLead.activity_summary ?? ''}
-            profileUrl={currentLead.profile_url}
-            notes={currentLead.notes ?? 'No notes yet.'}
+            lead={selectedLead}
+            notes={notes}
+            onSaveNotes={handleSaveNotes}
           />
         </div>
       </div>

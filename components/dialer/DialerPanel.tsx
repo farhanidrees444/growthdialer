@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, Mail, ChevronRight } from 'lucide-react';
+import { Phone, Mail } from 'lucide-react';
 import ManualDialer from '@/components/dialer/ManualDialer';
 import CallControls from '@/components/dialer/CallControls';
 import CallTimer from '@/components/dialer/CallTimer';
@@ -254,23 +254,13 @@ export default function DialerPanel({ selectedLead, phoneNumber, countryCode, di
           </div>
 
           <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-6 shadow-[0_0_30px_rgba(0,255,102,0.08)]">
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Quick scripts</p>
-                <p className="mt-2 text-lg font-semibold text-white">Objection handling</p>
-              </div>
-            </div>
-            <div className="mt-4 space-y-3">
-              {['We already have a solution', 'Send me an email', 'No budget'].map((item) => (
-                <div key={item} className="rounded-3xl border border-white/10 bg-slate-950/90 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-white text-sm">{item}</p>
-                    <ChevronRight className="h-4 w-4 text-emerald-300 shrink-0" />
-                  </div>
-                  <p className="mt-2 text-xs text-slate-400">Acknowledge, pivot to value, ask an open question.</p>
-                </div>
-              ))}
-            </div>
+            <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Call attempts</p>
+            <p className="mt-2 text-3xl font-semibold text-white">{selectedLead?.call_attempts ?? 0}</p>
+            <p className="mt-2 text-xs text-slate-400">
+              {selectedLead?.last_called_at
+                ? `Last called ${new Date(selectedLead.last_called_at).toLocaleDateString()}`
+                : 'Never called'}
+            </p>
           </div>
         </div>
       </div>
