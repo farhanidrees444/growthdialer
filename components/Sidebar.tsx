@@ -15,6 +15,7 @@ import {
   ChevronRight,
   LogOut,
   X,
+  Hash,
 } from "lucide-react";
 import { useLeads } from "@/contexts/leads-context";
 import { useMobileNav } from "@/contexts/mobile-nav-context";
@@ -38,6 +39,7 @@ const navItems: NavItem[] = [
   { icon: Users, label: "Leads", href: "/leads", showCount: true },
   { icon: BarChart2, label: "Analytics", href: "/analytics" },
   { icon: Headphones, label: "Recordings", href: "/recordings" },
+  { icon: Hash, label: "Numbers", href: "/numbers" },
 ];
 
 const bottomItems = [
