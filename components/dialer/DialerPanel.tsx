@@ -1,34 +1,34 @@
+'use client';
+
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, Mail } from 'lucide-react';
+import { Phone, PhoneOff, Mic, MicOff, Pause, Disc, SkipForward } from 'lucide-react';
 import ManualDialer from '@/components/dialer/ManualDialer';
-import CallControls from '@/components/dialer/CallControls';
-import CallTimer from '@/components/dialer/CallTimer';
-import AudioVisualizer from '@/components/dialer/AudioVisualizer';
-import ParallelLines from '@/components/dialer/ParallelLines';
 import DispositionPanel from '@/components/dialer/DispositionPanel';
 import { LeadRecord } from '@/components/dialer/LeadCard';
+
+function formatTimer(seconds: number): string {
+  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+  const s = (seconds % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+interface CallState {
+  status: string;
+  callSid: string | null;
+  duration: number;
+  isMuted: boolean;
+  isOnHold: boolean;
+  leadId: string | null;
+  leadName: string | null;
+}
 
 interface DialerPanelProps {
   selectedLead: LeadRecord | null;
   phoneNumber: string;
   countryCode: string;
-  dialMode: 'Power' | 'Parallel' | 'Preview';
-  parallelLines: number;
-  callState: {
-    status: string;
-    direction: 'inbound' | 'outbound' | null;
-    callSid: string | null;
-    duration: number;
-    isMuted: boolean;
-    isOnHold: boolean;
-    leadId: string | null;
-    leadName: string | null;
-  };
+  callState: CallState;
   notes: string;
-  notesOpen: boolean;
-  disposition: string;
-  lines: Array<{ id: number; label: string; status: 'ringing' | 'connected' | 'no-answer' | 'voicemail' | 'idle'; timer: string }>;
   onCountryChange: (value: string) => void;
   onPhoneChange: (value: string) => void;
   onDigit: (digit: string) => void;
@@ -36,301 +36,343 @@ interface DialerPanelProps {
   onDial: () => void;
   onMute: () => void;
   onHold: () => void;
-  onTransfer: () => void;
   onRecord: () => void;
-  onNotes: () => void;
   onNextLead: () => void;
   onEndCall: () => void;
   onSaveNotes: (value: string) => void;
-  onDispositionChange: (value: string) => void;
-  onSchedule: (value: string) => void;
-  onSaveAndNext: () => void;
+  onDisposition: (disp: string, localNotes: string, callbackAt?: string) => Promise<void>;
   isReady: boolean;
   isRecording: boolean;
   error?: string | null;
-  onSetDialMode: (mode: 'Power' | 'Parallel' | 'Preview') => void;
-  onSetParallelLines: (count: number) => void;
 }
 
-export default function DialerPanel({ selectedLead, phoneNumber, countryCode, dialMode, parallelLines, callState, notes, notesOpen, disposition, lines, onCountryChange, onPhoneChange, onDigit, onBackspace, onDial, onMute, onHold, onTransfer, onRecord, onNotes, onNextLead, onEndCall, onSaveNotes, onDispositionChange, onSchedule, onSaveAndNext, isReady, isRecording, error, onSetDialMode, onSetParallelLines }: DialerPanelProps) {
-  const leadDisplay = selectedLead ?? {
-    id: 'empty',
-    name: 'No lead selected',
-    title: 'Select a prospect from the queue',
-    company: '',
-    phone: '',
-    email: '',
-    linkedin: '',
-    ai_score: 0,
-    status: 'new' as const,
-    last_called_at: '',
-    call_attempts: 0,
-    notes: '',
-    company_size: 'Medium',
-    industry: 'Technology',
-    revenue: '$25M',
-    activity_summary: 'No activity recorded.',
-    profile_url: '#',
-    tags: ['High Priority', 'B2B', 'Referral'],
-  };
+export default function DialerPanel({
+  selectedLead,
+  phoneNumber,
+  countryCode,
+  callState,
+  notes,
+  onCountryChange,
+  onPhoneChange,
+  onDigit,
+  onBackspace,
+  onDial,
+  onMute,
+  onHold,
+  onRecord,
+  onNextLead,
+  onEndCall,
+  onSaveNotes,
+  onDisposition,
+  isReady,
+  isRecording,
+  error,
+}: DialerPanelProps) {
+  const isIdle = callState.status === 'idle';
+  const isActive = ['connecting', 'ringing', 'connected'].includes(callState.status);
+  const isRinging = callState.status === 'ringing' || callState.status === 'connecting';
+  const isConnected = callState.status === 'connected';
+  const isDisconnected = callState.status === 'disconnected';
 
-  const tags = selectedLead?.tags ?? leadDisplay.tags;
-  const history = [
-    {
-      label: 'Last action',
-      date: selectedLead?.last_called_at ? new Date(selectedLead.last_called_at).toLocaleDateString() : 'No record',
-      result: selectedLead?.status.replace('_', ' ') ?? 'Idle',
-      accent: 'emerald',
-    },
-    {
-      label: 'Next step',
-      date: 'Today',
-      result: disposition,
-      accent: disposition === 'Connected' ? 'emerald' : 'amber',
-    },
-  ];
-  const scoreHue = leadDisplay.ai_score > 80 ? 'from-emerald-500 to-teal-400' : leadDisplay.ai_score > 50 ? 'from-sky-500 to-indigo-500' : 'from-slate-500 to-slate-700';
-  const activeCall = ['connecting', 'ringing', 'connected'].includes(callState.status);
-  const dispositionVisible = activeCall || notesOpen;
-  const summary = useMemo(() => {
-    return selectedLead ? selectedLead.company : 'No company data available';
+  const scoreGradient = useMemo(() => {
+    if (!selectedLead) return 'from-slate-500 to-slate-700';
+    if (selectedLead.ai_score >= 80) return 'from-emerald-500 to-teal-400';
+    if (selectedLead.ai_score >= 50) return 'from-amber-500 to-orange-400';
+    return 'from-slate-500 to-slate-600';
   }, [selectedLead]);
 
+  const tags = selectedLead?.tags ?? [];
+
   return (
-    <section className="flex-1 rounded-[40px] border border-white/10 bg-slate-950/80 p-5 shadow-[0_0_50px_rgba(0,255,102,0.08)] backdrop-blur-xl">
-      <div className="grid gap-5 xl:grid-cols-[1.4fr_0.85fr]">
-        <div className="space-y-5">
-          <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-6 shadow-[0_0_30px_rgba(0,255,102,0.08)]">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.35em] text-emerald-300/70">Now dialing</p>
-                <h2 className="mt-2 text-3xl font-semibold text-white">{leadDisplay.name}</h2>
-                <p className="mt-2 text-sm text-slate-400">{leadDisplay.title} • {leadDisplay.company}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className={`flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br ${scoreHue} text-white shadow-[0_0_30px_rgba(0,255,102,0.2)]`}>
-                  <span className="text-xl font-semibold">{leadDisplay.ai_score}</span>
-                </div>
-              </div>
-            </div>
-
-            {error ? (
-              <div className="mt-6 rounded-3xl border border-rose-400/20 bg-rose-500/10 p-4 text-sm text-rose-100">
-                <p className="font-semibold text-rose-100">Call device error</p>
-                <p className="mt-1 text-slate-200">{error}</p>
-              </div>
-            ) : null}
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <div className="flex flex-col gap-2 rounded-3xl border border-white/10 bg-slate-950/90 px-4 py-3">
-                  <span className="text-xs uppercase tracking-[0.35em] text-slate-500">Score</span>
-                  <span className="text-lg font-semibold text-white">AI readiness</span>
-                </div>
-              </div>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <a href={`tel:${leadDisplay.phone}`} className="rounded-3xl border border-white/10 bg-slate-950/90 px-4 py-3 text-sm text-white transition hover:border-emerald-400/30">
-                <span className="block text-slate-400">Phone</span>
-                <span className="mt-1 block text-base font-semibold">{leadDisplay.phone || 'Not available'}</span>
-              </a>
-              <div className="rounded-3xl border border-white/10 bg-slate-950/90 px-4 py-3 text-sm text-white">
-                <span className="block text-slate-400">Contact</span>
-                <div className="mt-1 flex items-center gap-3">
-                  <a href={`mailto:${selectedLead?.email ?? '#'}`} className="text-slate-200 transition hover:text-emerald-300">Email</a>
-                  <a href={selectedLead?.linkedin ?? '#'} target="_blank" rel="noreferrer" className="text-slate-200 transition hover:text-emerald-300">LinkedIn</a>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-2">
-              {(tags ?? []).map((tag) => (
-                <span key={tag} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.25em] text-slate-300">{tag}</span>
-              ))}
-            </div>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              {history.map((item) => (
-                <div key={item.label} className="rounded-3xl border border-white/10 bg-slate-950/90 p-4">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">{item.label}</p>
-                  <p className="mt-2 text-sm text-white">{item.date}</p>
-                  <p className={`mt-3 text-sm font-semibold ${item.accent === 'emerald' ? 'text-emerald-300' : item.accent === 'amber' ? 'text-amber-300' : 'text-slate-400'}`}>{item.result}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-            <ManualDialer
-              countryCode={countryCode}
-              phoneNumber={phoneNumber}
-              onCountryChange={onCountryChange}
-              onPhoneChange={onPhoneChange}
-              onDial={onDial}
-              onDigit={onDigit}
-              onBackspace={onBackspace}
-              isReady={isReady}
-            />
-
-            <div className="space-y-5">
-              <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-6 shadow-[0_0_30px_rgba(0,255,102,0.08)]">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Dial mode</p>
-                    <h3 className="mt-2 text-lg font-semibold text-white">{dialMode} dialing</h3>
-                  </div>
-                  <div className="px-3 py-2 rounded-3xl bg-emerald-500/10 text-emerald-300">Lines {parallelLines}</div>
-                </div>
-                <div className="mt-4 grid grid-cols-3 gap-3">
-                  {(['Power', 'Parallel', 'Preview'] as const).map((mode) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      className={`rounded-3xl px-3 py-3 text-sm font-semibold transition ${dialMode === mode ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/20' : 'bg-slate-950/70 text-slate-300 hover:bg-slate-900'}`}
-                      onClick={() => onSetDialMode(mode)}
-                    >
-                      {mode}
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-4 grid grid-cols-4 gap-2">
-                  {[1, 3, 5, 10].map((count) => (
-                    <button
-                      key={count}
-                      type="button"
-                      className={`rounded-3xl px-3 py-3 text-sm font-semibold transition ${parallelLines === count ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/20' : 'bg-slate-950/70 text-slate-300 hover:bg-slate-900'}`}
-                      onClick={() => onSetParallelLines(count)}
-                    >
-                      {count}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-6 shadow-[0_0_30px_rgba(0,255,102,0.08)]">
-                <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Call status</p>
-                <div className="mt-4 flex items-center gap-3 text-sm text-slate-300">
-                  <span className="rounded-full bg-white/5 px-3 py-2 text-slate-200">{statusLabel(callState.status)}</span>
-                  <span className="rounded-full bg-slate-800 px-3 py-2 text-slate-400">{selectedLead ? selectedLead.status.replace('_', ' ') : 'Idle'}</span>
-                </div>
-                <p className="mt-4 text-sm text-slate-500">Current prospect profile: {summary}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-5">
-          <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-6 shadow-[0_0_30px_rgba(0,255,102,0.08)]">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Lead notes</p>
-                <p className="mt-2 text-lg font-semibold text-white">{selectedLead?.company ?? 'No company'}</p>
-              </div>
-            </div>
-            <div className="mt-4 space-y-2 text-sm text-slate-400">
-              {selectedLead?.industry && (
-                <div className="flex justify-between">
-                  <span>Industry</span>
-                  <span className="text-white">{selectedLead.industry}</span>
-                </div>
-              )}
-              {selectedLead?.company_size && (
-                <div className="flex justify-between">
-                  <span>Size</span>
-                  <span className="text-white">{selectedLead.company_size}</span>
-                </div>
-              )}
-              {selectedLead?.revenue && (
-                <div className="flex justify-between">
-                  <span>Revenue</span>
-                  <span className="text-white">{selectedLead.revenue}</span>
-                </div>
-              )}
-              {selectedLead?.activity_summary && (
-                <p className="mt-3 text-xs text-slate-400 leading-relaxed">{selectedLead.activity_summary}</p>
-              )}
-              {!selectedLead?.industry && !selectedLead?.company_size && !selectedLead?.activity_summary && (
-                <p className="text-xs text-slate-500 italic">No company data available.</p>
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-6 shadow-[0_0_30px_rgba(0,255,102,0.08)]">
-            <p className="text-xs uppercase tracking-[0.32em] text-slate-500">Call attempts</p>
-            <p className="mt-2 text-3xl font-semibold text-white">{selectedLead?.call_attempts ?? 0}</p>
-            <p className="mt-2 text-xs text-slate-400">
-              {selectedLead?.last_called_at
-                ? `Last called ${new Date(selectedLead.last_called_at).toLocaleDateString()}`
-                : 'Never called'}
+    <section className="flex flex-col gap-5">
+      {/* ── Lead info card ───────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] uppercase tracking-widest text-emerald-400/70">Now Dialing</p>
+            <h2 className="mt-1.5 truncate text-2xl font-bold text-white">
+              {selectedLead?.name ?? 'No lead selected'}
+            </h2>
+            <p className="mt-1 truncate text-sm text-slate-400">
+              {selectedLead
+                ? `${selectedLead.title} · ${selectedLead.company}`
+                : 'Pick a lead from the queue'}
             </p>
           </div>
+          {selectedLead && (
+            <div
+              className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${scoreGradient} shadow-lg`}
+            >
+              <span className="text-lg font-bold text-white">{selectedLead.ai_score}</span>
+            </div>
+          )}
         </div>
+
+        {/* Lead details row */}
+        {selectedLead && (
+          <div className="mt-4 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
+              <p className="text-slate-500">Phone</p>
+              <p className="mt-1 font-semibold text-white">{selectedLead.phone || '—'}</p>
+            </div>
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
+              <p className="text-slate-500">Company</p>
+              <p className="mt-1 truncate font-semibold text-white">{selectedLead.company || '—'}</p>
+            </div>
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
+              <p className="text-slate-500">Attempts</p>
+              <p className="mt-1 font-semibold text-white">{selectedLead.call_attempts ?? 0}</p>
+            </div>
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
+              <p className="text-slate-500">Status</p>
+              <p className="mt-1 truncate font-semibold capitalize text-white">
+                {selectedLead.status.replace('_', ' ')}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Tags */}
+        {tags.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[10px] uppercase tracking-wider text-slate-400"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Error banner */}
+        {error && (
+          <div className="mt-4 rounded-xl border border-rose-500/25 bg-rose-500/[0.08] px-4 py-3">
+            <p className="text-sm font-semibold text-rose-300">Call failed</p>
+            <p className="mt-0.5 text-xs text-rose-300/70">{error}</p>
+          </div>
+        )}
+
+        {/* ── Call status bar ──────────────────────────────────────────────── */}
+        {isIdle && selectedLead && (
+          <button
+            type="button"
+            onClick={onDial}
+            disabled={!phoneNumber}
+            className="mt-4 w-full rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 py-4 text-sm font-bold text-black shadow-lg shadow-emerald-500/30 transition hover:from-emerald-400 hover:to-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <span className="flex items-center justify-center gap-2">
+              <Phone className="h-4 w-4" />
+              Call {selectedLead.name.split(' ')[0]}
+            </span>
+          </button>
+        )}
+
+        {isRinging && (
+          <div className="mt-4 flex items-center justify-between rounded-xl border border-amber-500/25 bg-amber-500/[0.08] px-4 py-3">
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-3 w-3">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-60" />
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400" />
+              </span>
+              <span className="text-sm font-semibold text-amber-300">
+                {callState.status === 'connecting' ? 'Connecting…' : 'Ringing…'}
+              </span>
+              <span className="text-xs text-amber-300/60">{formatTimer(callState.duration)}</span>
+            </div>
+            <button
+              type="button"
+              onClick={onEndCall}
+              className="flex items-center gap-1.5 rounded-lg bg-rose-500/15 px-3 py-1.5 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/25"
+            >
+              <PhoneOff className="h-3.5 w-3.5" />
+              Hang Up
+            </button>
+          </div>
+        )}
+
+        {isConnected && (
+          <div className="mt-4 flex items-center justify-between rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] px-4 py-3">
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-3 w-3">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-400" />
+              </span>
+              <span className="text-sm font-bold text-emerald-300">
+                Connected · {formatTimer(callState.duration)}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={onEndCall}
+              className="flex items-center gap-1.5 rounded-lg bg-rose-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-rose-500/30 transition hover:bg-rose-400"
+            >
+              <PhoneOff className="h-3.5 w-3.5" />
+              Hang Up
+            </button>
+          </div>
+        )}
+
+        {isDisconnected && (
+          <div className="mt-4 flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+            <p className="text-sm text-slate-400">
+              Call ended · {formatTimer(callState.duration)}
+            </p>
+            <button
+              type="button"
+              onClick={onNextLead}
+              className="flex items-center gap-1.5 text-xs text-emerald-400 transition hover:text-emerald-300"
+            >
+              <SkipForward className="h-3.5 w-3.5" />
+              Skip lead
+            </button>
+          </div>
+        )}
       </div>
 
-      {activeCall && (
-        <div className="mt-5 space-y-5">
-          <div className="grid gap-5 xl:grid-cols-[1fr_0.6fr]">
-            <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-6 shadow-[0_0_30px_rgba(0,255,102,0.08)]">
-              <CallTimer duration={callState.duration} status={callState.status === 'connected' ? 'Connected' : 'Ringing'} quality={87} />
-            </div>
-            <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-6 shadow-[0_0_30px_rgba(0,255,102,0.08)]">
-              <AudioVisualizer active={callState.status === 'connected'} />
-              <div className="mt-4 rounded-3xl border border-white/10 bg-slate-950/90 p-4 text-sm text-slate-300">
-                <div className="flex items-center justify-between text-slate-400">
-                  <span>Contact</span>
-                  <span className="text-white">{leadDisplay.name}</span>
-                </div>
-                <div className="mt-2 flex items-center justify-between text-slate-400">
-                  <span>Phone</span>
-                  <span className="text-white">{leadDisplay.phone || '—'}</span>
-                </div>
+      {/* ── In-call controls (mute/hold/record) ─────────────────────────── */}
+      {isActive && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-3 gap-3"
+        >
+          <button
+            type="button"
+            onClick={onMute}
+            className={`flex items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-semibold transition ${
+              callState.isMuted
+                ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                : 'border-white/[0.06] bg-white/[0.03] text-slate-300 hover:border-white/20'
+            }`}
+          >
+            {callState.isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            {callState.isMuted ? 'Unmute' : 'Mute'}
+          </button>
+          <button
+            type="button"
+            onClick={onHold}
+            className={`flex items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-semibold transition ${
+              callState.isOnHold
+                ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+                : 'border-white/[0.06] bg-white/[0.03] text-slate-300 hover:border-white/20'
+            }`}
+          >
+            <Pause className="h-4 w-4" />
+            {callState.isOnHold ? 'Resume' : 'Hold'}
+          </button>
+          <button
+            type="button"
+            onClick={onRecord}
+            className={`flex items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-semibold transition ${
+              isRecording
+                ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                : 'border-white/[0.06] bg-white/[0.03] text-slate-300 hover:border-white/20'
+            }`}
+          >
+            <Disc className="h-4 w-4" />
+            {isRecording ? 'Recording' : 'Record'}
+          </button>
+        </motion.div>
+      )}
+
+      {/* ── Disposition panel — shown post-call ─────────────────────────── */}
+      {isDisconnected && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5"
+        >
+          <DispositionPanel
+            notes={notes}
+            onSaveNotes={onSaveNotes}
+            onDisposition={onDisposition}
+          />
+        </motion.div>
+      )}
+
+      {/* ── Manual dialer + mode indicator ──────────────────────────────── */}
+      <div className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
+        <ManualDialer
+          countryCode={countryCode}
+          phoneNumber={phoneNumber}
+          onCountryChange={onCountryChange}
+          onPhoneChange={onPhoneChange}
+          onDial={onDial}
+          onDigit={onDigit}
+          onBackspace={onBackspace}
+          isReady={isReady}
+        />
+
+        {/* Dial mode + quick stats */}
+        <div className="space-y-4">
+          {/* Mode selector — manual only, others coming soon */}
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <p className="mb-3 text-[10px] uppercase tracking-widest text-slate-500">Dial Mode</p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] px-3 py-2.5">
+                <span className="text-xs font-semibold text-emerald-300">Manual</span>
+                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+                  Active
+                </span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.01] px-3 py-2.5 opacity-40">
+                <span className="text-xs text-slate-500">Power Dialing</span>
+                <span className="rounded-full bg-slate-700/60 px-2 py-0.5 text-[10px] text-slate-500">
+                  Soon
+                </span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.01] px-3 py-2.5 opacity-40">
+                <span className="text-xs text-slate-500">Parallel Lines</span>
+                <span className="rounded-full bg-slate-700/60 px-2 py-0.5 text-[10px] text-slate-500">
+                  Soon
+                </span>
               </div>
             </div>
           </div>
-          <CallControls
-            isMuted={callState.isMuted}
-            isOnHold={callState.isOnHold}
-            isRecording={isRecording}
-            onMute={onMute}
-            onHold={onHold}
-            onTransfer={onTransfer}
-            onRecord={onRecord}
-            onNotes={onNotes}
-            onNext={onNextLead}
-            onEnd={onEndCall}
-          />
-        </div>
-      )}
 
-      {dispositionVisible && (
-        <div className="mt-5">
-          <DispositionPanel
-            disposition={disposition}
-            notes={notes}
-            onDispositionChange={onDispositionChange}
-            onSaveNotes={onSaveNotes}
-            onSchedule={onSchedule}
-            onSaveAndNext={onSaveAndNext}
-          />
+          {/* Lead intel */}
+          {selectedLead && (
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+              <p className="mb-3 text-[10px] uppercase tracking-widest text-slate-500">Lead Intel</p>
+              <div className="space-y-2 text-xs">
+                {selectedLead.industry && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Industry</span>
+                    <span className="font-medium text-white">{selectedLead.industry}</span>
+                  </div>
+                )}
+                {selectedLead.company_size && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Size</span>
+                    <span className="font-medium text-white">{selectedLead.company_size}</span>
+                  </div>
+                )}
+                {selectedLead.revenue && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Revenue</span>
+                    <span className="font-medium text-white">{selectedLead.revenue}</span>
+                  </div>
+                )}
+                {selectedLead.last_called_at && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Last called</span>
+                    <span className="font-medium text-white">
+                      {new Date(selectedLead.last_called_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+                {selectedLead.activity_summary && (
+                  <p className="mt-2 leading-relaxed text-slate-400">
+                    {selectedLead.activity_summary}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
-      )}
-
-      <div className="mt-5">
-        <ParallelLines lines={lines} />
       </div>
     </section>
   );
-}
-
-function statusLabel(status: string) {
-  switch (status) {
-    case 'connecting':
-      return 'Connecting...';
-    case 'ringing':
-      return 'Ringing';
-    case 'connected':
-      return 'Connected';
-    case 'disconnected':
-      return 'Call ended';
-    default:
-      return 'Idle';
-  }
 }

@@ -3,11 +3,8 @@
 export const dynamic = 'force-dynamic';
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Bell, Search } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { useSupabaseSession } from '@/lib/supabase/hooks';
 import LiveStats from '@/components/dialer/LiveStats';
 import LeadQueue from '@/components/dialer/LeadQueue';
 import DialerPanel from '@/components/dialer/DialerPanel';
@@ -36,35 +33,18 @@ const INITIAL_CALL_STATE: CallState = {
   leadName: null,
 };
 
-const initialLead: LeadRecord = {
-  id: 'empty',
-  name: 'No lead selected',
-  title: 'Select a prospect from the queue',
-  company: '',
-  phone: '',
-  email: '',
-  linkedin: '',
-  ai_score: 0,
-  status: 'new',
-  last_called_at: '',
-  call_attempts: 0,
-};
-
-// Maps disposition label → lead status value in DB
 const DISPOSITION_STATUS_MAP: Record<string, string> = {
-  'Connected': 'connected',
   'Meeting Booked': 'meeting_booked',
   'Not Interested': 'not_interested',
-  'Callback': 'callback',
+  Callback: 'callback',
   'Wrong Number': 'wrong_number',
+  Voicemail: 'contacted',
   'No Answer': 'contacted',
-  'Voicemail Left': 'contacted',
-  'Busy': 'contacted',
+  Connected: 'connected',
 };
 
 function DialerContent() {
   const [supabase] = useState(() => createClient());
-  const session = useSupabaseSession();
   const searchParams = useSearchParams();
   const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [selectedLead, setSelectedLead] = useState<LeadRecord | null>(null);
@@ -73,27 +53,25 @@ function DialerContent() {
   const [countryCode, setCountryCode] = useState('+1');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [notes, setNotes] = useState('');
-  const [disposition, setDisposition] = useState('Connected');
-  const [callbackTime, setCallbackTime] = useState('');
-  const [parallelLines, setParallelLines] = useState(3);
-  const [dialMode, setDialMode] = useState<'Power' | 'Parallel' | 'Preview'>('Power');
   const [isRecording, setIsRecording] = useState(false);
-  const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [stats, setStats] = useState({ calls: 0, connects: 0, meetings: 0, connectRate: 0 });
   const [callState, setCallState] = useState<CallState>(INITIAL_CALL_STATE);
   const [error, setError] = useState<string | null>(null);
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const hasAutoSelectedRef = useRef(false);
   const preselectedLeadId = searchParams?.get('lead_id') ?? null;
 
-  // ── Fetch today's real stats from API ───────────────────────────────────────
-  useEffect(() => {
+  // ── Stats ───────────────────────────────────────────────────────────────────
+  const refreshStats = useCallback(() => {
     fetch('/api/stats/today')
       .then((r) => r.json())
       .then((data) => {
         if (!data.error) {
           setStats({
             calls: data.callsToday ?? 0,
-            connects: data.answeredToday ?? Math.round((data.callsToday ?? 0) * (data.connectRate ?? 0) / 100),
+            connects:
+              data.answeredToday ??
+              Math.round(((data.callsToday ?? 0) * (data.connectRate ?? 0)) / 100),
             meetings: data.meetingsBooked ?? 0,
             connectRate: data.connectRate ?? 0,
           });
@@ -102,30 +80,69 @@ function DialerContent() {
       .catch(console.error);
   }, []);
 
-  // ── Duration timer ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    refreshStats();
+    const interval = setInterval(refreshStats, 30000);
+    return () => clearInterval(interval);
+  }, [refreshStats]);
+
+  // ── Call duration timer ─────────────────────────────────────────────────────
   useEffect(() => {
     if (callState.status !== 'connected') return;
-    const timer = setInterval(() => {
-      setCallState((prev) => ({ ...prev, duration: prev.duration + 1 }));
-    }, 1000);
+    const timer = setInterval(
+      () => setCallState((prev) => ({ ...prev, duration: prev.duration + 1 })),
+      1000,
+    );
     return () => clearInterval(timer);
   }, [callState.status]);
 
-  // ── Subscribe to call status changes from webhook ───────────────────────────
+  // ── Poll call status (2s interval while active) ─────────────────────────────
+  useEffect(() => {
+    const cid = callState.callSid;
+    if (!cid || callState.status === 'idle' || callState.status === 'disconnected') return;
+
+    const poll = async () => {
+      const { data } = await supabase
+        .from('calls')
+        .select('status')
+        .eq('telnyx_call_id', cid)
+        .maybeSingle();
+      if (!data) return;
+      const s = (data as { status: string }).status;
+      if (s === 'answered' || s === 'in-progress') {
+        setCallState((prev) => (prev.status !== 'connected' ? { ...prev, status: 'connected' } : prev));
+      } else if (s === 'completed' || s === 'failed' || s === 'no-answer' || s === 'busy') {
+        setCallState((prev) =>
+          prev.status !== 'disconnected' ? { ...prev, status: 'disconnected' } : prev,
+        );
+        setHistoryRefreshKey((k) => k + 1);
+      }
+    };
+
+    const interval = setInterval(poll, 2000);
+    return () => clearInterval(interval);
+  }, [callState.callSid, callState.status, supabase]);
+
+  // ── Supabase realtime for call status ───────────────────────────────────────
   useEffect(() => {
     if (!callState.callSid) return;
     const channel = supabase
-      .channel(`call-status-${callState.callSid}`)
+      .channel(`call-${callState.callSid}`)
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'calls', filter: `telnyx_call_id=eq.${callState.callSid}` },
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'calls',
+          filter: `telnyx_call_id=eq.${callState.callSid}`,
+        },
         (payload) => {
-          const status = (payload.new as { status?: string })?.status;
-          if (status === 'answered') {
+          const s = (payload.new as { status?: string })?.status ?? '';
+          if (s === 'answered' || s === 'in-progress') {
             setCallState((prev) => ({ ...prev, status: 'connected' }));
-          } else if (status === 'completed') {
+          } else if (s === 'completed' || s === 'failed' || s === 'busy' || s === 'no-answer') {
             setCallState((prev) => ({ ...prev, status: 'disconnected' }));
-            setTimeout(() => setCallState((prev) => ({ ...prev, status: 'idle', callSid: null, duration: 0 })), 2000);
+            setHistoryRefreshKey((k) => k + 1);
           }
         },
       )
@@ -133,12 +150,14 @@ function DialerContent() {
     return () => { supabase.removeChannel(channel); };
   }, [callState.callSid, supabase]);
 
-  // ── Load leads ───────────────────────────────────────────────────────────────
+  // ── Load leads ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const loadLeads = async () => {
       const { data, error: queryError } = await supabase
         .from('leads')
-        .select('id,name,title,company,phone,email,linkedin,ai_score,status,last_called_at,call_attempts,tags,notes,company_size,industry,revenue,activity_summary,profile_url')
+        .select(
+          'id,name,title,company,phone,email,linkedin,ai_score,status,last_called_at,call_attempts,tags,notes,company_size,industry,revenue,activity_summary,profile_url',
+        )
         .order('ai_score', { ascending: false });
 
       if (queryError) {
@@ -153,10 +172,11 @@ function DialerContent() {
       }));
 
       setLeads(normalized);
+
       if (!hasAutoSelectedRef.current && normalized.length > 0) {
         hasAutoSelectedRef.current = true;
         const preselected = preselectedLeadId
-          ? normalized.find((l) => l.id === preselectedLeadId) ?? normalized[0]
+          ? (normalized.find((l) => l.id === preselectedLeadId) ?? normalized[0])
           : normalized[0];
         setSelectedLead(preselected);
         setPhoneNumber(preselected.phone ?? '');
@@ -167,85 +187,133 @@ function DialerContent() {
     loadLeads();
 
     const channel = supabase
-      .channel('leads-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => { loadLeads(); })
+      .channel('leads-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () =>
+        loadLeads(),
+      )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [supabase]);
 
-  // ── Filtered leads ───────────────────────────────────────────────────────────
+  // ── Filtered leads ──────────────────────────────────────────────────────────
   const filteredLeads = useMemo(() => {
     let list = [...leads];
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      list = list.filter((l) => l.name.toLowerCase().includes(q) || l.company.toLowerCase().includes(q) || l.phone.includes(q));
+      list = list.filter(
+        (l) =>
+          l.name.toLowerCase().includes(q) ||
+          l.company.toLowerCase().includes(q) ||
+          l.phone.includes(q),
+      );
     }
-    if (filterMode === 'Queue') list = list.filter((l) => l.status === 'new' || l.status === 'contacted' || l.status === 'queued');
-    if (filterMode === 'Hot Leads') list = list.filter((l) => l.ai_score >= 75 || l.status === 'connected' || l.status === 'meeting_booked');
+    if (filterMode === 'Queue')
+      list = list.filter(
+        (l) => l.status === 'new' || l.status === 'contacted' || l.status === 'queued',
+      );
+    if (filterMode === 'Hot Leads')
+      list = list.filter(
+        (l) => l.ai_score >= 75 || l.status === 'connected' || l.status === 'meeting_booked',
+      );
     return list;
   }, [leads, searchQuery, filterMode]);
 
-  // ── Server-side dial ────────────────────────────────────────────────────────
-  const sanitizeNumber = useCallback((raw: string) => raw.replace(/[^\d+]/g, ''), []);
+  // ── Core dial function ──────────────────────────────────────────────────────
+  const sanitize = useCallback((raw: string) => raw.replace(/[^\d+]/g, ''), []);
 
-  const handleDial = useCallback(async () => {
-    const raw = sanitizeNumber(phoneNumber);
-    const destination = raw.startsWith('+') ? raw : `${countryCode}${raw}`;
-    if (!destination || destination === countryCode) return;
+  const dial = useCallback(
+    async (phone: string, lead?: LeadRecord | null) => {
+      const raw = sanitize(phone);
+      const destination = raw.startsWith('+') ? raw : `${countryCode}${raw}`;
+      if (!destination || destination === countryCode) return;
 
-    setCallState({
-      status: 'connecting',
-      direction: 'outbound',
-      callSid: null,
-      duration: 0,
-      isMuted: false,
-      isOnHold: false,
-      leadId: selectedLead?.id ?? null,
-      leadName: selectedLead?.name ?? null,
-    });
-    setError(null);
-
-    // Update lead: increment call_attempts, set last_called_at, mark as contacted
-    if (selectedLead) {
-      const newAttempts = (selectedLead.call_attempts ?? 0) + 1;
-      const newStatus = selectedLead.status === 'new' || selectedLead.status === 'queued' ? 'contacted' : selectedLead.status;
-      supabase.from('leads').update({
-        call_attempts: newAttempts,
-        last_called_at: new Date().toISOString(),
-        status: newStatus,
-      }).eq('id', selectedLead.id).then(() => {
-        setLeads((prev) => prev.map((l) =>
-          l.id === selectedLead.id
-            ? { ...l, call_attempts: newAttempts, last_called_at: new Date().toISOString(), status: newStatus }
-            : l
-        ));
-        setSelectedLead((prev) => prev ? { ...prev, call_attempts: newAttempts, status: newStatus } : prev);
+      setCallState({
+        status: 'connecting',
+        direction: 'outbound',
+        callSid: null,
+        duration: 0,
+        isMuted: false,
+        isOnHold: false,
+        leadId: lead?.id ?? null,
+        leadName: lead?.name ?? null,
       });
-    }
+      setError(null);
 
-    try {
-      const res = await fetch('/api/calls/dial', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: destination, lead_id: selectedLead?.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Call could not be connected');
-      setCallState((prev) => ({ ...prev, status: 'ringing', callSid: data.call_control_id ?? null }));
-      // Refresh stats after dialing
-      fetch('/api/stats/today').then((r) => r.json()).then((d) => {
-        if (!d.error) setStats({ calls: d.callsToday ?? 0, connects: Math.round((d.callsToday ?? 0) * (d.connectRate ?? 0) / 100), meetings: d.meetingsBooked ?? 0, connectRate: d.connectRate ?? 0 });
-      }).catch(() => {});
-    } catch (err) {
-      setCallState(INITIAL_CALL_STATE);
-      setError(err instanceof Error ? err.message : 'Call could not be connected');
-    }
-  }, [sanitizeNumber, phoneNumber, countryCode, selectedLead, supabase]);
+      if (lead) {
+        const newAttempts = (lead.call_attempts ?? 0) + 1;
+        const newStatus =
+          lead.status === 'new' || lead.status === 'queued' ? 'contacted' : lead.status;
+        supabase
+          .from('leads')
+          .update({
+            call_attempts: newAttempts,
+            last_called_at: new Date().toISOString(),
+            status: newStatus,
+          })
+          .eq('id', lead.id)
+          .then(() => {
+            setLeads((prev) =>
+              prev.map((l) =>
+                l.id === lead.id
+                  ? {
+                      ...l,
+                      call_attempts: newAttempts,
+                      status: newStatus as LeadRecord['status'],
+                    }
+                  : l,
+              ),
+            );
+            setSelectedLead((prev) =>
+              prev?.id === lead.id
+                ? { ...prev, call_attempts: newAttempts, status: newStatus as LeadRecord['status'] }
+                : prev,
+            );
+          });
+      }
+
+      try {
+        const res = await fetch('/api/calls/dial', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: destination, lead_id: lead?.id }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? 'Call could not be connected');
+        setCallState((prev) => ({
+          ...prev,
+          status: 'ringing',
+          callSid: data.call_control_id ?? null,
+        }));
+        refreshStats();
+      } catch (err) {
+        setCallState(INITIAL_CALL_STATE);
+        setError(err instanceof Error ? err.message : 'Call could not be connected. Try again.');
+      }
+    },
+    [sanitize, countryCode, supabase, refreshStats],
+  );
+
+  const handleDial = useCallback(
+    () => dial(phoneNumber, selectedLead),
+    [dial, phoneNumber, selectedLead],
+  );
+
+  const handleCallLead = useCallback(
+    (phone: string, lead: LeadRecord) => {
+      setPhoneNumber(phone);
+      setSelectedLead(lead);
+      setNotes(lead.notes ?? '');
+      dial(phone, lead);
+    },
+    [dial],
+  );
 
   const hangUp = useCallback(async () => {
     const cid = callState.callSid;
+    // Stay 'disconnected' so DispositionPanel is shown — reset happens in handleDisposition
     setCallState((prev) => ({ ...prev, status: 'disconnected' }));
+    setHistoryRefreshKey((k) => k + 1);
     if (cid) {
       fetch('/api/calls/hangup', {
         method: 'POST',
@@ -253,75 +321,50 @@ function DialerContent() {
         body: JSON.stringify({ call_control_id: cid }),
       }).catch(console.error);
     }
-    setTimeout(() => setCallState((prev) => ({ ...prev, status: 'idle', callSid: null, duration: 0 })), 1500);
   }, [callState.callSid]);
 
-  const toggleMute = useCallback(() => setCallState((prev) => ({ ...prev, isMuted: !prev.isMuted })), []);
-  const toggleHold = useCallback(() => setCallState((prev) => ({ ...prev, isOnHold: !prev.isOnHold })), []);
+  const toggleMute = useCallback(
+    () => setCallState((prev) => ({ ...prev, isMuted: !prev.isMuted })),
+    [],
+  );
+  const toggleHold = useCallback(
+    () => setCallState((prev) => ({ ...prev, isOnHold: !prev.isOnHold })),
+    [],
+  );
 
-  // ── Keyboard shortcuts ───────────────────────────────────────────────────────
+  // ── Keyboard shortcuts ──────────────────────────────────────────────────────
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((event.target as HTMLElement)?.tagName)) return;
-      if (event.code === 'Space') {
-        event.preventDefault();
-        if (callState.status === 'idle') { handleDial(); } else { hangUp(); }
+    const onKey = (e: KeyboardEvent) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (callState.status === 'idle') handleDial();
+        else if (['connecting', 'ringing', 'connected'].includes(callState.status)) hangUp();
       }
-      if (event.key.toLowerCase() === 'm') toggleMute();
-      if (event.key.toLowerCase() === 'n') setIsNotesOpen(true);
-      if (event.key === 'Escape') setIsNotesOpen(false);
+      if (e.key.toLowerCase() === 'm') toggleMute();
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [callState.status, hangUp, toggleMute, handleDial]);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [callState.status, handleDial, hangUp, toggleMute]);
 
-  // ── Lead actions ─────────────────────────────────────────────────────────────
-  const handleCallLead = useCallback(async (phone: string, lead?: LeadRecord) => {
-    const raw = sanitizeNumber(phone);
-    const destination = raw.startsWith('+') ? raw : `${countryCode}${raw}`;
-    setPhoneNumber(raw);
-    if (lead) { setSelectedLead(lead); setNotes(lead.notes ?? ''); }
-
-    setCallState({
-      status: 'connecting',
-      direction: 'outbound',
-      callSid: null,
-      duration: 0,
-      isMuted: false,
-      isOnHold: false,
-      leadId: lead?.id ?? null,
-      leadName: lead?.name ?? null,
-    });
-    setError(null);
-
-    if (lead) {
-      const newAttempts = (lead.call_attempts ?? 0) + 1;
-      const newStatus = lead.status === 'new' || lead.status === 'queued' ? 'contacted' : lead.status;
-      supabase.from('leads').update({ call_attempts: newAttempts, last_called_at: new Date().toISOString(), status: newStatus }).eq('id', lead.id);
-    }
-
-    try {
-      const res = await fetch('/api/calls/dial', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: destination, lead_id: lead?.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Call could not be connected');
-      setCallState((prev) => ({ ...prev, status: 'ringing', callSid: data.call_control_id ?? null }));
-    } catch (err) {
-      setCallState(INITIAL_CALL_STATE);
-      setError(err instanceof Error ? err.message : 'Call could not be connected');
-    }
-  }, [sanitizeNumber, countryCode, supabase]);
-
-  const handleSelectLead = (lead: LeadRecord) => {
+  // ── Lead selection ──────────────────────────────────────────────────────────
+  const handleSelectLead = useCallback((lead: LeadRecord) => {
     setSelectedLead(lead);
     setNotes(lead.notes ?? '');
     setPhoneNumber(lead.phone);
-  };
+  }, []);
 
-  const reorderLeads = (draggedId: string, targetId: string) => {
+  const handleSkipNext = useCallback(() => {
+    const idx = leads.findIndex((l) => l.id === selectedLead?.id);
+    const next = leads[idx + 1] ?? leads[0] ?? null;
+    if (next) {
+      setSelectedLead(next);
+      setNotes(next.notes ?? '');
+      setPhoneNumber(next.phone ?? '');
+    }
+  }, [leads, selectedLead]);
+
+  const reorderLeads = useCallback((draggedId: string, targetId: string) => {
     setLeads((prev) => {
       const list = [...prev];
       const from = list.findIndex((l) => l.id === draggedId);
@@ -331,101 +374,77 @@ function DialerContent() {
       list.splice(to, 0, item);
       return list;
     });
-  };
+  }, []);
 
-  const handleSaveNotes = async (value: string) => {
-    setNotes(value);
-    if (!selectedLead) return;
-    setLeads((prev) => prev.map((l) => (l.id === selectedLead.id ? { ...l, notes: value } : l)));
-    await supabase.from('leads').update({ notes: value }).eq('id', selectedLead.id);
-  };
+  // ── Notes ───────────────────────────────────────────────────────────────────
+  const handleSaveNotes = useCallback(
+    async (value: string) => {
+      setNotes(value);
+      if (!selectedLead) return;
+      setLeads((prev) =>
+        prev.map((l) => (l.id === selectedLead.id ? { ...l, notes: value } : l)),
+      );
+      await supabase.from('leads').update({ notes: value }).eq('id', selectedLead.id);
+    },
+    [selectedLead, supabase],
+  );
 
-  const handleSchedule = async (value: string) => {
-    setCallbackTime(value);
-    if (!selectedLead) return;
-    await supabase.from('leads').update({ next_callback_at: value }).eq('id', selectedLead.id);
-  };
+  // ── Disposition ─────────────────────────────────────────────────────────────
+  const handleDisposition = useCallback(
+    async (disp: string, localNotes: string, callbackAt?: string) => {
+      if (!selectedLead) return;
+      const newStatus =
+        (DISPOSITION_STATUS_MAP[disp] as LeadRecord['status']) ?? selectedLead.status;
 
-  const handleSaveAndNext = async () => {
-    if (!selectedLead) return;
-
-    const newStatus = DISPOSITION_STATUS_MAP[disposition] ?? selectedLead.status;
-
-    await Promise.all([
-      supabase.from('leads').update({
-        notes,
+      const updates: Record<string, unknown> = {
         status: newStatus,
         last_called_at: new Date().toISOString(),
-        ...(callbackTime ? { next_callback_at: callbackTime } : {}),
-      }).eq('id', selectedLead.id),
-      callState.callSid
-        ? supabase.from('calls').update({ disposition, notes }).eq('telnyx_call_id', callState.callSid)
-        : Promise.resolve(),
-    ]);
+        notes: localNotes,
+      };
+      if (callbackAt) updates.next_callback_at = callbackAt;
 
-    // Update local lead status immediately
-    setLeads((prev) => prev.map((l) => l.id === selectedLead.id ? { ...l, status: newStatus as import('@/components/dialer/LeadCard').LeadRecord['status'], notes } : l));
+      await supabase.from('leads').update(updates).eq('id', selectedLead.id);
 
-    // Advance to next lead
-    const nextIndex = leads.findIndex((l) => l.id === selectedLead.id) + 1;
-    const next = leads[nextIndex] ?? leads[0] ?? null;
-    setSelectedLead(next);
-    setNotes(next?.notes ?? '');
-    setPhoneNumber(next?.phone ?? '');
-    setCallState(INITIAL_CALL_STATE);
-    setDisposition('Connected');
-    setCallbackTime('');
+      if (callState.callSid) {
+        await supabase
+          .from('calls')
+          .update({ disposition: disp, notes: localNotes })
+          .eq('telnyx_call_id', callState.callSid);
+      }
 
-    // Refresh stats
-    fetch('/api/stats/today').then((r) => r.json()).then((d) => {
-      if (!d.error) setStats({ calls: d.callsToday ?? 0, connects: Math.round((d.callsToday ?? 0) * (d.connectRate ?? 0) / 100), meetings: d.meetingsBooked ?? 0, connectRate: d.connectRate ?? 0 });
-    }).catch(() => {});
-  };
+      setNotes(localNotes);
+      setLeads((prev) =>
+        prev.map((l) =>
+          l.id === selectedLead.id ? { ...l, status: newStatus, notes: localNotes } : l,
+        ),
+      );
 
-  const lineStatus = useMemo(() => {
-    return Array.from({ length: parallelLines }, (_, index) => ({
-      id: index + 1,
-      label: index === 0 && selectedLead ? selectedLead.name.split(' ')[0] : `Line ${index + 1}`,
-      status: (index === 0 && callState.status === 'ringing'
-        ? 'ringing'
-        : index === 0 && callState.status === 'connected'
-        ? 'connected'
-        : 'idle') as 'ringing' | 'connected' | 'no-answer' | 'voicemail' | 'idle',
-      timer: index === 0 && callState.status === 'connected'
-        ? `${Math.floor(callState.duration / 60).toString().padStart(2, '0')}:${(callState.duration % 60).toString().padStart(2, '0')}`
-        : '00:00',
-    }));
-  }, [parallelLines, selectedLead, callState.status, callState.duration]);
-
-  const currentLead = selectedLead ?? initialLead;
+      setTimeout(() => {
+        const idx = leads.findIndex((l) => l.id === selectedLead.id);
+        const next = leads[idx + 1] ?? leads[0] ?? null;
+        if (next && next.id !== selectedLead.id) {
+          setSelectedLead(next);
+          setNotes(next.notes ?? '');
+          setPhoneNumber(next.phone ?? '');
+        }
+        setCallState(INITIAL_CALL_STATE);
+        refreshStats();
+      }, 1500);
+    },
+    [selectedLead, callState.callSid, leads, supabase, refreshStats],
+  );
 
   return (
-    <div className="min-h-screen bg-[#070b10] text-slate-100">
-      <div className="mx-auto flex max-w-[1640px] flex-col gap-6 px-6 py-6">
-        <div className="grid gap-5 xl:grid-cols-[1fr_auto]">
-          <LiveStats
-            calls={stats.calls}
-            connects={stats.connects}
-            meetings={stats.meetings}
-            connectRate={stats.connectRate}
-          />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-3xl border border-white/10 bg-slate-900/80 px-5 py-3 text-sm text-slate-200 transition hover:border-emerald-400/30"
-            >
-              <Search className="h-4 w-4" /> Search
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-3xl border border-white/10 bg-slate-900/80 px-5 py-3 text-sm text-slate-200 transition hover:border-emerald-400/30"
-            >
-              <Bell className="h-4 w-4" /> Notifications
-            </button>
-          </div>
-        </div>
+    <div className="flex-1 overflow-y-auto text-slate-100">
+      <div className="mx-auto flex max-w-[1680px] flex-col gap-5 px-6 py-6">
+        <LiveStats
+          calls={stats.calls}
+          connects={stats.connects}
+          meetings={stats.meetings}
+          connectRate={stats.connectRate}
+        />
 
-        <div className="grid gap-5 xl:grid-cols-[280px_1.7fr_320px]">
+        <div className="grid gap-5 xl:grid-cols-[280px_1fr_300px]">
           <LeadQueue
             leads={filteredLeads}
             selectedLeadId={selectedLead?.id ?? null}
@@ -434,22 +453,18 @@ function DialerContent() {
             searchValue={searchQuery}
             onSearchChange={setSearchQuery}
             onSelectLead={handleSelectLead}
-            onCallLead={(phone) => handleCallLead(phone)}
+            onCallLead={handleCallLead}
             onReorder={reorderLeads}
-            leadCount={`${filteredLeads.length} / ${leads.length} leads`}
+            onSkipNext={handleSkipNext}
+            leadCount={`${filteredLeads.length} / ${leads.length}`}
           />
 
           <DialerPanel
-            selectedLead={currentLead}
+            selectedLead={selectedLead}
             phoneNumber={phoneNumber}
             countryCode={countryCode}
-            dialMode={dialMode}
-            parallelLines={parallelLines}
             callState={callState}
             notes={notes}
-            notesOpen={isNotesOpen}
-            disposition={disposition}
-            lines={lineStatus}
             onCountryChange={setCountryCode}
             onPhoneChange={setPhoneNumber}
             onDigit={(digit) => setPhoneNumber((prev) => `${prev}${digit}`)}
@@ -457,31 +472,21 @@ function DialerContent() {
             onDial={handleDial}
             onMute={toggleMute}
             onHold={toggleHold}
-            onTransfer={() => {}}
             onRecord={() => setIsRecording((prev) => !prev)}
-            onNotes={() => setIsNotesOpen((prev) => !prev)}
-            onNextLead={() => {
-              const next = leads[leads.findIndex((l) => l.id === selectedLead?.id) + 1] ?? leads[0] ?? null;
-              setSelectedLead(next);
-              setNotes(next?.notes ?? '');
-              setPhoneNumber(next?.phone ?? '');
-            }}
+            onNextLead={handleSkipNext}
             onEndCall={hangUp}
             onSaveNotes={handleSaveNotes}
-            onDispositionChange={setDisposition}
-            onSchedule={handleSchedule}
-            onSaveAndNext={handleSaveAndNext}
+            onDisposition={handleDisposition}
             isReady={true}
             isRecording={isRecording}
             error={error}
-            onSetDialMode={setDialMode}
-            onSetParallelLines={setParallelLines}
           />
 
           <CoachingSidebar
             lead={selectedLead}
             notes={notes}
             onSaveNotes={handleSaveNotes}
+            refreshKey={historyRefreshKey}
           />
         </div>
       </div>
@@ -491,7 +496,7 @@ function DialerContent() {
 
 export default function DialerPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#070b10]" />}>
+    <Suspense fallback={<div className="flex-1" />}>
       <DialerContent />
     </Suspense>
   );

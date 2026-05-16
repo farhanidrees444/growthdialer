@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Search, Filter, Download } from 'lucide-react';
+import { Search, Filter, SkipForward } from 'lucide-react';
 import LeadCard, { LeadRecord } from '@/components/dialer/LeadCard';
 
 interface LeadQueueProps {
@@ -10,12 +10,25 @@ interface LeadQueueProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
   onSelectLead: (lead: LeadRecord) => void;
-  onCallLead: (phone: string) => void;
+  onCallLead: (phone: string, lead: LeadRecord) => void;
   onReorder: (draggedId: string, targetId: string) => void;
+  onSkipNext: () => void;
   leadCount: string;
 }
 
-export default function LeadQueue({ leads, selectedLeadId, filterMode, onFilterChange, searchValue, onSearchChange, onSelectLead, onCallLead, onReorder, leadCount }: LeadQueueProps) {
+export default function LeadQueue({
+  leads,
+  selectedLeadId,
+  filterMode,
+  onFilterChange,
+  searchValue,
+  onSearchChange,
+  onSelectLead,
+  onCallLead,
+  onReorder,
+  onSkipNext,
+  leadCount,
+}: LeadQueueProps) {
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, id: string) => {
     event.dataTransfer.setData('text/plain', id);
   };
@@ -23,41 +36,55 @@ export default function LeadQueue({ leads, selectedLeadId, filterMode, onFilterC
   const handleDrop = (event: React.DragEvent<HTMLDivElement>, targetId: string) => {
     event.preventDefault();
     const draggedId = event.dataTransfer.getData('text/plain');
-    if (draggedId && draggedId !== targetId) {
-      onReorder(draggedId, targetId);
-    }
+    if (draggedId && draggedId !== targetId) onReorder(draggedId, targetId);
   };
 
   return (
-    <aside className="flex h-full flex-col rounded-[32px] border border-white/10 bg-slate-950/80 p-4 shadow-[0_0_50px_rgba(0,255,102,0.06)] backdrop-blur-xl">
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-emerald-500/10 text-emerald-300 shadow-[0_0_20px_rgba(0,255,102,0.12)]">
-          <Filter className="h-5 w-5" />
+    <aside className="flex h-full flex-col gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 backdrop-blur-xl">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+            <Filter className="h-4 w-4 text-emerald-400" />
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-emerald-400/70">Lead Queue</p>
+            <p className="text-xs font-semibold text-white">{leadCount} leads</p>
+          </div>
         </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Lead queue</p>
-          <p className="text-lg font-semibold text-white">Queue & hot prospects</p>
-        </div>
+        <button
+          type="button"
+          onClick={onSkipNext}
+          title="Skip to next lead"
+          className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 transition hover:border-emerald-500/30 hover:text-emerald-300"
+        >
+          <SkipForward className="h-3 w-3" />
+          Skip
+        </button>
       </div>
 
-      <div className="mb-4 rounded-3xl border border-white/10 bg-slate-900/80 p-3">
-        <label className="relative block">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-          <input
-            value={searchValue}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Search leads"
-            className="w-full rounded-3xl border border-transparent bg-slate-950/90 py-3 pl-12 pr-4 text-sm text-white outline-none transition focus:border-emerald-400/30 focus:ring-emerald-400/20"
-          />
-        </label>
+      {/* Search */}
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
+        <input
+          value={searchValue}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Search leads…"
+          className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-2.5 pl-9 pr-4 text-xs text-white placeholder:text-slate-600 outline-none transition focus:border-emerald-500/30 focus:bg-white/[0.05]"
+        />
       </div>
 
-      <div className="mb-4 flex items-center justify-between gap-2 rounded-3xl border border-white/10 bg-slate-900/80 p-3 text-sm text-slate-300">
+      {/* Filter tabs */}
+      <div className="flex gap-1 rounded-xl border border-white/[0.06] bg-black/20 p-1">
         {(['Queue', 'All Leads', 'Hot Leads'] as const).map((mode) => (
           <button
             key={mode}
             type="button"
-            className={`rounded-2xl px-3 py-2 transition ${filterMode === mode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+            className={`flex-1 rounded-lg py-1.5 text-[10px] font-semibold uppercase tracking-wider transition ${
+              filterMode === mode
+                ? 'bg-emerald-500/15 text-emerald-300'
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
             onClick={() => onFilterChange(mode)}
           >
             {mode}
@@ -65,15 +92,11 @@ export default function LeadQueue({ leads, selectedLeadId, filterMode, onFilterC
         ))}
       </div>
 
-      <div className="mb-4 flex items-center justify-between rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-slate-300">
-        <span>{leadCount}</span>
-        <span className="rounded-full bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.25em] text-slate-400">Priority</span>
-      </div>
-
-      <div className="flex-1 space-y-3 overflow-y-auto pr-1 pb-2">
+      {/* Lead list */}
+      <div className="flex-1 space-y-2 overflow-y-auto pr-0.5">
         {leads.length === 0 ? (
-          <div className="rounded-[28px] border border-dashed border-white/10 p-6 text-center text-slate-500">
-            No leads match the current filter.
+          <div className="rounded-xl border border-dashed border-white/[0.06] p-6 text-center">
+            <p className="text-xs text-slate-600">No leads match filter.</p>
           </div>
         ) : (
           leads.map((lead) => (
@@ -85,23 +108,10 @@ export default function LeadQueue({ leads, selectedLeadId, filterMode, onFilterC
               onCall={onCallLead}
               onDragStart={handleDragStart}
               onDrop={handleDrop}
-              onDragOver={(event) => event.preventDefault()}
+              onDragOver={(e) => e.preventDefault()}
             />
           ))
         )}
-      </div>
-
-      <div className="mt-4 rounded-3xl border border-emerald-400/15 bg-slate-900/80 p-4 text-sm text-slate-300 shadow-[0_0_20px_rgba(0,255,102,0.06)]">
-        <div className="mb-3 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Leads</p>
-            <p className="text-lg font-semibold text-white">{leadCount}</p>
-          </div>
-          <button type="button" className="inline-flex items-center gap-2 rounded-full bg-emerald-500/15 px-3 py-2 text-emerald-300 transition hover:bg-emerald-500/25">
-            <Download className="h-4 w-4" /> Import leads
-          </button>
-        </div>
-        <p className="text-xs text-slate-400">Drag leads to reprioritize and keep the hottest prospects ready.</p>
       </div>
     </aside>
   );

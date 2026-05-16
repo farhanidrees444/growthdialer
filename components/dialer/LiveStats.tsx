@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { motion } from 'framer-motion';
-import { TrendingUp } from 'lucide-react';
+import type React from 'react';
+import { Phone, Users, CalendarCheck, TrendingUp } from 'lucide-react';
 
 interface LiveStatsProps {
   calls: number;
@@ -10,33 +10,49 @@ interface LiveStatsProps {
   connectRate: number;
 }
 
+const STATS: Array<{
+  key: 'calls' | 'connects' | 'meetings' | 'connectRate';
+  label: string;
+  icon: React.ElementType;
+  color: string;
+  bg: string;
+  isRate?: boolean;
+}> = [
+  { key: 'calls', label: 'Calls Today', icon: Phone, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+  { key: 'connects', label: 'Connects', icon: Users, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+  { key: 'meetings', label: 'Meetings', icon: CalendarCheck, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+  { key: 'connectRate', label: 'Connect Rate', icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10', isRate: true },
+];
+
 export default function LiveStats({ calls, connects, meetings, connectRate }: LiveStatsProps) {
+  const values = { calls, connects, meetings, connectRate };
+
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto] gap-4 py-4 px-6 rounded-[32px] border border-white/10 bg-slate-950/80 backdrop-blur-xl shadow-[0_0_50px_rgba(0,255,102,0.08)]">
-      <div className="flex items-center">
-        <h1 className="text-3xl font-semibold text-white">Dialer</h1>
+    <div className="flex flex-col gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p className="text-[10px] uppercase tracking-widest text-emerald-400/70">Live Session</p>
+        <h1 className="mt-1 text-xl font-bold text-white">Dialer</h1>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <motion.div whileHover={{ y: -2 }} className="rounded-3xl border border-white/10 bg-slate-900/80 p-4 text-center shadow-[0_0_15px_rgba(0,255,102,0.08)]">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/60">Calls Today</p>
-          <p className="mt-2 text-2xl font-semibold text-white">{calls}</p>
-        </motion.div>
-        <motion.div whileHover={{ y: -2 }} className="rounded-3xl border border-white/10 bg-slate-900/80 p-4 text-center shadow-[0_0_15px_rgba(0,255,102,0.08)]">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/60">Connects Today</p>
-          <p className="mt-2 text-2xl font-semibold text-white">{connects}</p>
-        </motion.div>
-        <motion.div whileHover={{ y: -2 }} className="rounded-3xl border border-white/10 bg-slate-900/80 p-4 text-center shadow-[0_0_15px_rgba(0,255,102,0.08)]">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/60">Meetings Today</p>
-          <p className="mt-2 text-2xl font-semibold text-white">{meetings}</p>
-        </motion.div>
-        <motion.div whileHover={{ y: -2 }} className="rounded-3xl border border-white/10 bg-slate-900/80 p-4 text-center shadow-[0_0_15px_rgba(0,255,102,0.08)]">
-          <div className="flex items-center justify-center gap-2 text-emerald-400">
-            <TrendingUp className="h-4 w-4" />
-            <p className="text-xs uppercase tracking-[0.3em]">Connect Rate</p>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {STATS.map(({ key, label, icon: Icon, color, bg, isRate }) => (
+          <div
+            key={key}
+            className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3"
+          >
+            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${bg}`}>
+              <Icon className={`h-4 w-4 ${color}`} />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-slate-500">{label}</p>
+              <p className="mt-0.5 text-lg font-bold text-white">
+                {isRate
+                  ? `${connectRate.toFixed(1)}%`
+                  : (values[key] as number)}
+              </p>
+            </div>
           </div>
-          <p className="mt-2 text-2xl font-semibold text-white">{connectRate.toFixed(1)}%</p>
-        </motion.div>
+        ))}
       </div>
     </div>
   );
