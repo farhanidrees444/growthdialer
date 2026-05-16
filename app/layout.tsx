@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, DM_Sans, JetBrains_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import CookieConsent from "@/components/CookieConsent";
 import "./globals.css";
@@ -284,6 +285,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <TooltipProvider delay={200}>{children}</TooltipProvider>
         <CookieConsent />
+        <Analytics />
       </body>
     </html>
   );
