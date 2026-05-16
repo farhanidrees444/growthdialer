@@ -6,7 +6,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Phone, Mail, Building2, Search, X, ExternalLink,
-  CalendarClock, Hash, Tag,
+  CalendarClock, Hash, Tag, CheckSquare, Square,
 } from "lucide-react";
 import DashboardHeader from "@/components/DashboardHeader";
 import { Card } from "@/components/ui/card";
@@ -86,7 +86,7 @@ interface DetailPanelProps {
 function DetailPanel({ lead, onClose, onCallNow, onMarkStatus }: DetailPanelProps) {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-start justify-between gap-3 border-b border-white/10 p-5">
+      <div className="flex items-start justify-between gap-3 border-b border-white/10 p-4 lg:p-5">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10 shrink-0">
             <AvatarFallback className="bg-brand/15 text-sm font-semibold text-brand">
@@ -101,13 +101,13 @@ function DetailPanel({ lead, onClose, onCallNow, onMarkStatus }: DetailPanelProp
         <button
           type="button"
           onClick={onClose}
-          className="rounded-md p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground"
+          className="rounded-md p-2 text-muted-foreground hover:bg-white/10 hover:text-foreground min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto p-5">
+      <div className="flex-1 space-y-4 overflow-y-auto p-4 lg:p-5">
         {lead.company && (
           <div className="flex items-center gap-2 text-sm">
             <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -197,7 +197,7 @@ function DetailPanel({ lead, onClose, onCallNow, onMarkStatus }: DetailPanelProp
 
       <div className="border-t border-white/10 p-4 space-y-2">
         <Button
-          className="w-full gap-2 bg-brand text-[oklch(0.08_0.04_153)] hover:bg-[oklch(0.76_0.27_153)] font-semibold"
+          className="w-full gap-2 bg-brand text-[oklch(0.08_0.04_153)] hover:bg-[oklch(0.76_0.27_153)] font-semibold min-h-[44px]"
           onClick={() => onCallNow(lead)}
         >
           <Phone className="h-4 w-4" /> Call Now
@@ -206,7 +206,7 @@ function DetailPanel({ lead, onClose, onCallNow, onMarkStatus }: DetailPanelProp
           <Button
             variant="outline"
             size="sm"
-            className="border-white/15 bg-white/5 text-xs hover:bg-white/10"
+            className="border-white/15 bg-white/5 text-xs hover:bg-white/10 min-h-[44px]"
             onClick={() => onMarkStatus(lead, "not_interested")}
           >
             Not Interested
@@ -214,7 +214,7 @@ function DetailPanel({ lead, onClose, onCallNow, onMarkStatus }: DetailPanelProp
           <Button
             variant="outline"
             size="sm"
-            className="border-white/15 bg-white/5 text-xs hover:bg-white/10"
+            className="border-white/15 bg-white/5 text-xs hover:bg-white/10 min-h-[44px]"
             onClick={() => onMarkStatus(lead, "meeting_booked")}
           >
             Meeting Booked
@@ -234,6 +234,7 @@ export default function LeadsPage() {
   const [search, setSearch] = useState("");
   const [selectedLead, setSelectedLead] = useState<FullLead | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -257,7 +258,7 @@ export default function LeadsPage() {
       }
     }
     load();
-  }, [contextLeads.length]); // reload when context signals a new import
+  }, [contextLeads.length]);
 
   const filtered = useMemo(() => {
     let list = leads;
@@ -308,11 +309,75 @@ export default function LeadsPage() {
         subtitle={`${leads.length} in queue${imported ? ` · ${imported} from CSV` : ""}`}
         showImport
       />
+
+      {/* Mobile: sticky search + filters */}
+      <div className="sticky top-[57px] z-10 shrink-0 space-y-2 border-b border-white/10 bg-[oklch(0.056_0.018_286)]/90 px-3 py-3 backdrop-blur-xl lg:hidden">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, company, phone…"
+            className="w-full rounded-lg border border-white/10 bg-white/[0.04] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/20"
+          />
+        </div>
+        {/* Horizontal scroll filter chips */}
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+          {STATUS_FILTERS.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => setStatusFilter(f.value)}
+              className={cn(
+                "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                statusFilter === f.value
+                  ? "bg-brand/20 text-brand border border-brand/30"
+                  : "border border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10",
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        {/* Select mode toggle + bulk actions */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => { setSelectMode((v) => !v); setSelected(new Set()); }}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            {selectMode ? <CheckSquare className="h-3.5 w-3.5" /> : <Square className="h-3.5 w-3.5" />}
+            {selectMode ? "Cancel" : "Select"}
+          </button>
+          {selectMode && selected.size > 0 && (
+            <>
+              <span className="text-xs text-muted-foreground">{selected.size} selected</span>
+              <Button
+                size="sm"
+                className="h-7 bg-brand text-[oklch(0.08_0.04_153)] text-xs font-semibold hover:bg-[oklch(0.76_0.27_153)]"
+                onClick={handleDialSelected}
+              >
+                <Phone className="mr-1.5 h-3 w-3" /> Dial
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setSelected(new Set())}
+              >
+                Clear
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
       <main className="flex flex-1 overflow-hidden">
         {/* Lead list */}
-        <div className={cn("flex flex-col flex-1 overflow-hidden", selectedLead ? "border-r border-white/10" : "")}>
-          {/* Filters + search */}
-          <div className="shrink-0 space-y-3 border-b border-white/10 px-6 py-4">
+        <div className={cn("flex flex-col flex-1 overflow-hidden", selectedLead ? "lg:border-r lg:border-white/10" : "")}>
+
+          {/* ── Desktop filters (hidden on mobile — shown in sticky bar above) ── */}
+          <div className="hidden lg:block shrink-0 space-y-3 border-b border-white/10 px-6 py-4">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -361,12 +426,12 @@ export default function LeadsPage() {
             )}
           </div>
 
-          {/* Lead rows */}
+          {/* Lead rows / cards */}
           <div className="flex-1 overflow-y-auto">
             {loading ? (
-              <div className="space-y-px px-6 py-4">
+              <div className="space-y-2 px-3 py-3 lg:space-y-px lg:px-6 lg:py-4">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="h-16 animate-pulse rounded-xl border border-white/10 bg-white/5 mb-2" />
+                  <div key={i} className="h-16 animate-pulse rounded-xl border border-white/10 bg-white/5" />
                 ))}
               </div>
             ) : filtered.length === 0 ? (
@@ -375,94 +440,168 @@ export default function LeadsPage() {
                 <p className="text-xs text-muted-foreground">Try a different status or clear the search.</p>
               </div>
             ) : (
-              <div className="divide-y divide-white/[0.06]">
-                {filtered.map((lead) => (
-                  <div
-                    key={lead.id}
-                    onClick={() => setSelectedLead(selectedLead?.id === lead.id ? null : lead)}
-                    className={cn(
-                      "group flex cursor-pointer items-center gap-3 px-6 py-3.5 transition-colors hover:bg-white/[0.04]",
-                      selectedLead?.id === lead.id && "bg-white/[0.06]",
-                    )}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selected.has(lead.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      onChange={() => toggleSelect(lead.id)}
-                      className="h-4 w-4 rounded border-white/20 bg-white/5 accent-brand"
-                    />
-                    <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarFallback className="bg-brand/15 text-[11px] font-semibold text-brand">
-                        {initials(lead.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate text-sm font-medium">{lead.name}</p>
-                        <Badge
-                          className={cn(
-                            "h-4 shrink-0 rounded-full px-1.5 py-0 text-[10px]",
-                            STATUS_BADGE[lead.status] ?? STATUS_BADGE.new,
-                          )}
-                        >
-                          {lead.status.replace(/_/g, " ")}
-                        </Badge>
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-1.5">
-                        <Building2 className="h-3 w-3 shrink-0 text-muted-foreground" />
-                        <p className="truncate text-xs text-muted-foreground">
-                          {[lead.title, lead.company].filter(Boolean).join(" · ")}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <div className="hidden text-right sm:block">
-                        <div className={cn("text-sm font-bold tabular-nums", scoreColor(lead.ai_score))}>
-                          {lead.ai_score ?? "—"}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground">score</div>
-                      </div>
-                      <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 hover:bg-white/10"
-                          type="button"
-                          title="Call now"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCallNow(lead);
-                          }}
-                        >
-                          <Phone className="h-3.5 w-3.5" />
-                        </Button>
-                        {lead.email && (
-                          <a
-                            href={`mailto:${lead.email}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-white/10 transition-colors"
-                            title="Send email"
+              <>
+                {/* Mobile: card list */}
+                <div className="space-y-2 p-3 lg:hidden">
+                  {filtered.map((lead) => (
+                    <Card
+                      key={lead.id}
+                      onClick={() => setSelectedLead(selectedLead?.id === lead.id ? null : lead)}
+                      className={cn(
+                        "cursor-pointer border-white/10 bg-[oklch(0.086_0.024_282)]/90 p-3 transition-colors hover:border-brand/30 active:scale-[0.99]",
+                        selectedLead?.id === lead.id && "border-brand/40 bg-brand/5",
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
+                        {selectMode && (
+                          <div
+                            className="mt-0.5 shrink-0"
+                            onClick={(e) => { e.stopPropagation(); toggleSelect(lead.id); }}
                           >
-                            <Mail className="h-3.5 w-3.5" />
-                          </a>
+                            {selected.has(lead.id)
+                              ? <CheckSquare className="h-4 w-4 text-brand" />
+                              : <Square className="h-4 w-4 text-muted-foreground" />}
+                          </div>
                         )}
+                        <Avatar className="h-9 w-9 shrink-0">
+                          <AvatarFallback className="bg-brand/15 text-[11px] font-semibold text-brand">
+                            {initials(lead.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-semibold">{lead.name}</p>
+                            <Badge
+                              className={cn(
+                                "h-4 shrink-0 rounded-full px-1.5 py-0 text-[10px]",
+                                STATUS_BADGE[lead.status] ?? STATUS_BADGE.new,
+                              )}
+                            >
+                              {lead.status.replace(/_/g, " ")}
+                            </Badge>
+                          </div>
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                            {[lead.title, lead.company].filter(Boolean).join(" · ")}
+                          </p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">{lead.phone}</p>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-1.5">
+                          <span className={cn("text-sm font-bold tabular-nums", scoreColor(lead.ai_score))}>
+                            {lead.ai_score ?? "—"}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleCallNow(lead); }}
+                            className="flex h-8 w-8 items-center justify-center rounded-full bg-brand/15 text-brand hover:bg-brand/25 transition-colors"
+                            aria-label="Call now"
+                          >
+                            <Phone className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Desktop: row list */}
+                <div className="hidden lg:block divide-y divide-white/[0.06]">
+                  {filtered.map((lead) => (
+                    <div
+                      key={lead.id}
+                      onClick={() => setSelectedLead(selectedLead?.id === lead.id ? null : lead)}
+                      className={cn(
+                        "group flex cursor-pointer items-center gap-3 px-6 py-3.5 transition-colors hover:bg-white/[0.04]",
+                        selectedLead?.id === lead.id && "bg-white/[0.06]",
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selected.has(lead.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={() => toggleSelect(lead.id)}
+                        className="h-4 w-4 rounded border-white/20 bg-white/5 accent-brand"
+                      />
+                      <Avatar className="h-8 w-8 shrink-0">
+                        <AvatarFallback className="bg-brand/15 text-[11px] font-semibold text-brand">
+                          {initials(lead.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate text-sm font-medium">{lead.name}</p>
+                          <Badge
+                            className={cn(
+                              "h-4 shrink-0 rounded-full px-1.5 py-0 text-[10px]",
+                              STATUS_BADGE[lead.status] ?? STATUS_BADGE.new,
+                            )}
+                          >
+                            {lead.status.replace(/_/g, " ")}
+                          </Badge>
+                        </div>
+                        <div className="mt-0.5 flex items-center gap-1.5">
+                          <Building2 className="h-3 w-3 shrink-0 text-muted-foreground" />
+                          <p className="truncate text-xs text-muted-foreground">
+                            {[lead.title, lead.company].filter(Boolean).join(" · ")}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-3">
+                        <div className="hidden text-right sm:block">
+                          <div className={cn("text-sm font-bold tabular-nums", scoreColor(lead.ai_score))}>
+                            {lead.ai_score ?? "—"}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">score</div>
+                        </div>
+                        <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 hover:bg-white/10"
+                            type="button"
+                            title="Call now"
+                            onClick={(e) => { e.stopPropagation(); handleCallNow(lead); }}
+                          >
+                            <Phone className="h-3.5 w-3.5" />
+                          </Button>
+                          {lead.email && (
+                            <a
+                              href={`mailto:${lead.email}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-white/10 transition-colors"
+                              title="Send email"
+                            >
+                              <Mail className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
 
-          <div className="shrink-0 border-t border-white/10 px-6 py-3 text-xs text-muted-foreground">
+          <div className="shrink-0 border-t border-white/10 px-4 py-2 text-xs text-muted-foreground lg:px-6 lg:py-3">
             {filtered.length} of {leads.length} leads
           </div>
         </div>
 
-        {/* Detail panel */}
+        {/* Desktop: right detail panel */}
         {selectedLead && (
-          <div className="w-80 shrink-0 overflow-hidden">
+          <div className="hidden lg:block w-80 shrink-0 overflow-hidden">
+            <DetailPanel
+              lead={selectedLead}
+              onClose={() => setSelectedLead(null)}
+              onCallNow={handleCallNow}
+              onMarkStatus={handleMarkStatus}
+            />
+          </div>
+        )}
+
+        {/* Mobile: full-screen overlay detail panel */}
+        {selectedLead && (
+          <div className="fixed inset-0 z-50 flex flex-col bg-[oklch(0.056_0.018_286)] lg:hidden">
             <DetailPanel
               lead={selectedLead}
               onClose={() => setSelectedLead(null)}

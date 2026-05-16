@@ -14,8 +14,10 @@ import {
   Zap,
   ChevronRight,
   LogOut,
+  X,
 } from "lucide-react";
 import { useLeads } from "@/contexts/leads-context";
+import { useMobileNav } from "@/contexts/mobile-nav-context";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,103 +56,139 @@ export default function Sidebar() {
   const pathname = usePathname();
   const session = useSupabaseSession();
   const { leads } = useLeads();
+  const { isOpen, close } = useMobileNav();
 
   const displayName = session?.user?.user_metadata?.full_name ?? session?.user?.email ?? "Alex Rivera";
   const role = "Sales Rep";
 
   return (
-    <aside className="w-[228px] shrink-0 flex flex-col bg-sidebar text-sidebar-foreground h-screen sticky top-0 border-r border-sidebar-border shadow-xl shadow-black/40">
-      <div className="flex items-center gap-2.5 px-5 py-5 border-b border-sidebar-border">
-        <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0 group">
-          <div className="w-8 h-8 rounded-lg gradient-brand flex items-center justify-center shrink-0 glow-brand-sm">
-            <Zap className="w-4 h-4 text-[oklch(0.08_0.04_153)]" fill="currentColor" />
-          </div>
-          <span className="font-display font-bold text-base tracking-tight text-white truncate group-hover:text-white/95">
-            Growth<span className="text-brand">Dialer</span>
-          </span>
-        </Link>
-      </div>
+    <>
+      {/* Mobile backdrop overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          onClick={close}
+          aria-hidden
+        />
+      )}
 
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {navItems.map((item) => {
-          const active =
-            item.href === "/dashboard"
-              ? pathname === "/dashboard"
-              : pathname === item.href || pathname.startsWith(`${item.href}/`);
-          return (
-            <motion.div key={item.href} whileHover={{ x: 2 }}>
-              <Link
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group",
-                  active
-                    ? "bg-sidebar-accent text-white"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-white"
-                )}
-              >
-                <item.icon className="w-4 h-4 shrink-0" />
-                <span className="flex-1">{item.label}</span>
-                {item.badge === "Live" && (
-                  <Badge className="bg-emerald-500 text-white text-[10px] px-1.5 py-0 h-4 rounded-full">
-                    Live
-                  </Badge>
-                )}
-                {item.showCount && (
-                  <span className="text-xs tabular-nums text-sidebar-foreground/60">{leads.length}</span>
-                )}
-                {active && <ChevronRight className="w-3.5 h-3.5 text-white/50" />}
-              </Link>
-            </motion.div>
-          );
-        })}
-      </nav>
-
-      <div className="px-3 py-4 border-t border-sidebar-border space-y-0.5">
-        {bottomItems.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-          return (
-            <motion.div key={item.href} whileHover={{ x: 2 }}>
-              <Link
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                  active
-                    ? "bg-sidebar-accent text-white"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-white"
-                )}
-              >
-                <item.icon className="w-4 h-4 shrink-0" />
-                <span>{item.label}</span>
-              </Link>
-            </motion.div>
-          );
-        })}
-
-        <div className="flex items-center gap-3 px-3 py-2.5 mt-2 rounded-lg bg-sidebar-accent/30">
-          <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-[11px] font-bold text-white shrink-0">
-            {initials(displayName)}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-white truncate">{displayName}</p>
-            <p className="text-[10px] text-sidebar-foreground/50 truncate">{role}</p>
-          </div>
+      {/* Sidebar — fixed drawer on mobile, static on desktop */}
+      <aside
+        className={cn(
+          "flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border shadow-xl shadow-black/40",
+          // Mobile: fixed off-canvas drawer
+          "fixed inset-y-0 left-0 z-50 w-[280px] transition-transform duration-300 ease-in-out",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+          // Desktop: static in flex flow
+          "lg:static lg:w-[228px] lg:translate-x-0 lg:z-auto lg:h-screen lg:shrink-0",
+        )}
+      >
+        {/* Logo row */}
+        <div className="flex items-center justify-between gap-2.5 px-5 py-5 border-b border-sidebar-border">
+          <Link href="/dashboard" onClick={close} className="flex items-center gap-2.5 min-w-0 group">
+            <div className="w-8 h-8 rounded-lg gradient-brand flex items-center justify-center shrink-0 glow-brand-sm">
+              <Zap className="w-4 h-4 text-[oklch(0.08_0.04_153)]" fill="currentColor" />
+            </div>
+            <span className="font-display font-bold text-base tracking-tight text-white truncate group-hover:text-white/95">
+              Growth<span className="text-brand">Dialer</span>
+            </span>
+          </Link>
+          {/* Close button — mobile only */}
+          <button
+            type="button"
+            onClick={close}
+            className="flex lg:hidden h-8 w-8 items-center justify-center rounded-lg text-sidebar-foreground/60 hover:bg-white/10 hover:text-white transition-colors"
+            aria-label="Close menu"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:text-white hover:bg-sidebar-accent/50 mt-1"
-          onClick={async () => {
-            const supabase = createClient();
-            await supabase.auth.signOut();
-            window.location.href = "/login";
-          }}
-        >
-          <LogOut className="w-4 h-4" />
-          Sign out
-        </Button>
-      </div>
-    </aside>
+        {/* Main nav */}
+        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+          {navItems.map((item) => {
+            const active =
+              item.href === "/dashboard"
+                ? pathname === "/dashboard"
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <motion.div key={item.href} whileHover={{ x: 2 }}>
+                <Link
+                  href={item.href}
+                  onClick={close}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group",
+                    active
+                      ? "bg-sidebar-accent text-white"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-white"
+                  )}
+                >
+                  <item.icon className="w-4 h-4 shrink-0" />
+                  <span className="flex-1">{item.label}</span>
+                  {item.badge === "Live" && (
+                    <Badge className="bg-emerald-500 text-white text-[10px] px-1.5 py-0 h-4 rounded-full">
+                      Live
+                    </Badge>
+                  )}
+                  {item.showCount && (
+                    <span className="text-xs tabular-nums text-sidebar-foreground/60">{leads.length}</span>
+                  )}
+                  {active && <ChevronRight className="w-3.5 h-3.5 text-white/50" />}
+                </Link>
+              </motion.div>
+            );
+          })}
+        </nav>
+
+        {/* Bottom section */}
+        <div className="px-3 py-4 border-t border-sidebar-border space-y-0.5">
+          {bottomItems.map((item) => {
+            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <motion.div key={item.href} whileHover={{ x: 2 }}>
+                <Link
+                  href={item.href}
+                  onClick={close}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                    active
+                      ? "bg-sidebar-accent text-white"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-white"
+                  )}
+                >
+                  <item.icon className="w-4 h-4 shrink-0" />
+                  <span>{item.label}</span>
+                </Link>
+              </motion.div>
+            );
+          })}
+
+          <div className="flex items-center gap-3 px-3 py-2.5 mt-2 rounded-lg bg-sidebar-accent/30">
+            <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-[11px] font-bold text-white shrink-0">
+              {initials(displayName)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-white truncate">{displayName}</p>
+              <p className="text-[10px] text-sidebar-foreground/50 truncate">{role}</p>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:text-white hover:bg-sidebar-accent/50 mt-1"
+            onClick={async () => {
+              const supabase = createClient();
+              await supabase.auth.signOut();
+              window.location.href = "/login";
+            }}
+          >
+            <LogOut className="w-4 h-4" />
+            Sign out
+          </Button>
+        </div>
+      </aside>
+    </>
   );
 }

@@ -3,6 +3,7 @@
 import Sidebar from "@/components/Sidebar";
 import { LeadsProvider } from "@/contexts/leads-context";
 import { ImportLeadsDialog } from "@/components/ImportLeadsDialog";
+import { MobileNavProvider } from "@/contexts/mobile-nav-context";
 
 export default function DashboardLayout({
   children,
@@ -11,6 +12,7 @@ export default function DashboardLayout({
 }) {
   return (
     <LeadsProvider>
+      <MobileNavProvider>
       <ImportLeadsDialog />
       <div className="dashboard-shell relative flex h-screen overflow-hidden bg-background text-foreground">
         <div className="pointer-events-none absolute inset-0 grid-bg opacity-[0.35]" aria-hidden />
@@ -24,6 +26,7 @@ export default function DashboardLayout({
         <Sidebar />
         <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
       </div>
+      </MobileNavProvider>
     </LeadsProvider>
   );
 }

@@ -91,7 +91,7 @@ const EMPTY_STATS: StatsData = {
 function QuickActions() {
   const { setImportOpen } = useLeads();
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid gap-3 md:grid-cols-3">
       <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/90 p-4 shadow-lg shadow-black/20 backdrop-blur-sm transition-colors hover:border-brand/30">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/15">
@@ -194,11 +194,11 @@ export default function DashboardPage() {
     <>
       <DashboardHeader title="Dashboard" />
 
-      <main className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+      <main className="flex-1 space-y-4 overflow-y-auto px-3 py-3 lg:space-y-5 lg:px-6 lg:py-5">
+        <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
             <p className="text-xs font-medium uppercase tracking-widest text-brand">Today</p>
-            <p className="font-display text-lg font-semibold">Pipeline & activity</p>
+            <p className="font-display text-base lg:text-lg font-semibold">Pipeline & activity</p>
           </div>
           <Link href="/analytics">
             <Button
@@ -219,7 +219,7 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          className="grid grid-cols-2 gap-4 xl:grid-cols-4"
+          className="grid grid-cols-2 gap-3 xl:grid-cols-4 lg:gap-4"
         >
           {loading
             ? Array.from({ length: 4 }).map((_, i) => (
@@ -233,7 +233,7 @@ export default function DashboardPage() {
               ))}
         </motion.div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 lg:gap-4 lg:grid-cols-3">
           <div className="lg:col-span-1">
             <DialerWidget />
           </div>
@@ -242,7 +242,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 pb-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 pb-2 lg:gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <LeadsQueue limit={5} />
           </div>

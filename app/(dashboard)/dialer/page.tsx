@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { cn } from '@/lib/utils';
 import LiveStats from '@/components/dialer/LiveStats';
 import LeadQueue from '@/components/dialer/LeadQueue';
 import DialerPanel from '@/components/dialer/DialerPanel';
@@ -43,6 +44,31 @@ const DISPOSITION_STATUS_MAP: Record<string, string> = {
   Connected: 'connected',
 };
 
+type MobileTab = 'queue' | 'call' | 'history';
+
+function MobileStatStrip({ calls, connects, meetings, connectRate }: {
+  calls: number; connects: number; meetings: number; connectRate: number;
+}) {
+  return (
+    <div className="flex gap-2 overflow-x-auto px-3 py-2.5 scrollbar-none shrink-0 border-b border-white/[0.06]">
+      {[
+        { label: 'Calls', value: calls },
+        { label: 'Connects', value: connects },
+        { label: 'Meetings', value: meetings },
+        { label: 'Rate', value: `${connectRate.toFixed(1)}%` },
+      ].map(({ label, value }) => (
+        <div
+          key={label}
+          className="flex shrink-0 items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-1.5"
+        >
+          <span className="text-[10px] uppercase tracking-wider text-slate-500">{label}</span>
+          <span className="text-sm font-bold text-white">{value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function DialerContent() {
   const [supabase] = useState(() => createClient());
   const searchParams = useSearchParams();
@@ -58,6 +84,7 @@ function DialerContent() {
   const [callState, setCallState] = useState<CallState>(INITIAL_CALL_STATE);
   const [error, setError] = useState<string | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+  const [mobileTab, setMobileTab] = useState<MobileTab>('call');
   const hasAutoSelectedRef = useRef(false);
   const preselectedLeadId = searchParams?.get('lead_id') ?? null;
 
@@ -85,6 +112,13 @@ function DialerContent() {
     const interval = setInterval(refreshStats, 30000);
     return () => clearInterval(interval);
   }, [refreshStats]);
+
+  // ── Auto-switch mobile tab when call goes active ─────────────────────────────
+  useEffect(() => {
+    if (callState.status !== 'idle' && callState.status !== 'disconnected') {
+      setMobileTab('call');
+    }
+  }, [callState.status]);
 
   // ── Call duration timer ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -311,7 +345,6 @@ function DialerContent() {
 
   const hangUp = useCallback(async () => {
     const cid = callState.callSid;
-    // Stay 'disconnected' so DispositionPanel is shown — reset happens in handleDisposition
     setCallState((prev) => ({ ...prev, status: 'disconnected' }));
     setHistoryRefreshKey((k) => k + 1);
     if (cid) {
@@ -353,6 +386,11 @@ function DialerContent() {
     setNotes(lead.notes ?? '');
     setPhoneNumber(lead.phone);
   }, []);
+
+  const handleSelectLeadMobile = useCallback((lead: LeadRecord) => {
+    handleSelectLead(lead);
+    setMobileTab('call');
+  }, [handleSelectLead]);
 
   const handleSkipNext = useCallback(() => {
     const idx = leads.findIndex((l) => l.id === selectedLead?.id);
@@ -434,60 +472,140 @@ function DialerContent() {
     [selectedLead, callState.callSid, leads, supabase, refreshStats],
   );
 
+  // Shared props for both mobile and desktop panels
+  const dialerPanelProps = {
+    selectedLead,
+    phoneNumber,
+    countryCode,
+    callState,
+    notes,
+    onCountryChange: setCountryCode,
+    onPhoneChange: setPhoneNumber,
+    onDigit: (digit: string) => setPhoneNumber((prev) => `${prev}${digit}`),
+    onBackspace: () => setPhoneNumber((prev) => prev.slice(0, -1)),
+    onDial: handleDial,
+    onMute: toggleMute,
+    onHold: toggleHold,
+    onRecord: () => setIsRecording((prev) => !prev),
+    onNextLead: handleSkipNext,
+    onEndCall: hangUp,
+    onSaveNotes: handleSaveNotes,
+    onDisposition: handleDisposition,
+    isReady: true,
+    isRecording,
+    error,
+  };
+
+  const leadQueueProps = {
+    leads: filteredLeads,
+    selectedLeadId: selectedLead?.id ?? null,
+    filterMode,
+    onFilterChange: setFilterMode,
+    searchValue: searchQuery,
+    onSearchChange: setSearchQuery,
+    onReorder: reorderLeads,
+    onSkipNext: handleSkipNext,
+    leadCount: `${filteredLeads.length} / ${leads.length}`,
+  };
+
+  const mobileTabs: { key: MobileTab; label: string }[] = [
+    { key: 'queue', label: 'Queue' },
+    { key: 'call', label: 'Call' },
+    { key: 'history', label: 'History' },
+  ];
+
   return (
     <div className="flex-1 overflow-y-auto text-slate-100">
-      <div className="mx-auto flex max-w-[1680px] flex-col gap-5 px-6 py-6">
-        <LiveStats
+
+      {/* ── DESKTOP layout (lg+) ─────────────────────────────────────────────── */}
+      <div className="hidden lg:block">
+        <div className="mx-auto flex max-w-[1680px] flex-col gap-5 px-6 py-6">
+          <LiveStats
+            calls={stats.calls}
+            connects={stats.connects}
+            meetings={stats.meetings}
+            connectRate={stats.connectRate}
+          />
+          <div className="grid gap-5 xl:grid-cols-[280px_1fr_300px]">
+            <LeadQueue
+              {...leadQueueProps}
+              onSelectLead={handleSelectLead}
+              onCallLead={handleCallLead}
+            />
+            <DialerPanel {...dialerPanelProps} />
+            <CoachingSidebar
+              lead={selectedLead}
+              notes={notes}
+              onSaveNotes={handleSaveNotes}
+              refreshKey={historyRefreshKey}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── MOBILE layout (< lg) ─────────────────────────────────────────────── */}
+      <div className="flex flex-col lg:hidden" style={{ minHeight: 'calc(100vh - 57px)' }}>
+        {/* Compact stats strip */}
+        <MobileStatStrip
           calls={stats.calls}
           connects={stats.connects}
           meetings={stats.meetings}
           connectRate={stats.connectRate}
         />
 
-        <div className="grid gap-5 xl:grid-cols-[280px_1fr_300px]">
-          <LeadQueue
-            leads={filteredLeads}
-            selectedLeadId={selectedLead?.id ?? null}
-            filterMode={filterMode}
-            onFilterChange={setFilterMode}
-            searchValue={searchQuery}
-            onSearchChange={setSearchQuery}
-            onSelectLead={handleSelectLead}
-            onCallLead={handleCallLead}
-            onReorder={reorderLeads}
-            onSkipNext={handleSkipNext}
-            leadCount={`${filteredLeads.length} / ${leads.length}`}
-          />
+        {/* Tab bar */}
+        <div className="flex shrink-0 border-b border-white/[0.06] bg-black/20">
+          {mobileTabs.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setMobileTab(key)}
+              className={cn(
+                'flex-1 py-3 text-sm font-semibold transition-colors border-b-2',
+                mobileTab === key
+                  ? 'border-emerald-400 text-emerald-300'
+                  : 'border-transparent text-slate-500 hover:text-slate-300',
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
-          <DialerPanel
-            selectedLead={selectedLead}
-            phoneNumber={phoneNumber}
-            countryCode={countryCode}
-            callState={callState}
-            notes={notes}
-            onCountryChange={setCountryCode}
-            onPhoneChange={setPhoneNumber}
-            onDigit={(digit) => setPhoneNumber((prev) => `${prev}${digit}`)}
-            onBackspace={() => setPhoneNumber((prev) => prev.slice(0, -1))}
-            onDial={handleDial}
-            onMute={toggleMute}
-            onHold={toggleHold}
-            onRecord={() => setIsRecording((prev) => !prev)}
-            onNextLead={handleSkipNext}
-            onEndCall={hangUp}
-            onSaveNotes={handleSaveNotes}
-            onDisposition={handleDisposition}
-            isReady={true}
-            isRecording={isRecording}
-            error={error}
-          />
-
-          <CoachingSidebar
-            lead={selectedLead}
-            notes={notes}
-            onSaveNotes={handleSaveNotes}
-            refreshKey={historyRefreshKey}
-          />
+        {/* Tab content */}
+        <div className="flex-1 overflow-y-auto">
+          {mobileTab === 'queue' && (
+            <div className="p-3">
+              <LeadQueue
+                {...leadQueueProps}
+                onSelectLead={handleSelectLeadMobile}
+                onCallLead={(phone, lead) => {
+                  handleCallLead(phone, lead);
+                  setMobileTab('call');
+                }}
+              />
+            </div>
+          )}
+          {mobileTab === 'call' && (
+            <div className="p-3">
+              <DialerPanel {...dialerPanelProps} />
+            </div>
+          )}
+          {mobileTab === 'history' && (
+            <div className="p-3">
+              <CoachingSidebar
+                lead={selectedLead}
+                notes={notes}
+                onSaveNotes={handleSaveNotes}
+                refreshKey={historyRefreshKey}
+              />
+              {(!selectedLead || selectedLead.id === 'empty') && (
+                <p className="mt-6 text-center text-sm text-slate-500">
+                  Select a lead from the Queue tab to see their history.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

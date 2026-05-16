@@ -136,12 +136,12 @@ export default function AnalyticsPage() {
   return (
     <>
       <DashboardHeader title="Analytics" subtitle="Team performance and call outcomes" />
-      <main className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+      <main className="flex-1 overflow-y-auto px-3 py-3 space-y-4 lg:px-6 lg:py-5 lg:space-y-5">
         {/* Stat cards */}
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-2 xl:grid-cols-4 gap-4"
+          className="grid grid-cols-2 xl:grid-cols-4 gap-3 lg:gap-4"
         >
           {loading
             ? Array.from({ length: 4 }).map((_, i) => (
@@ -155,10 +155,10 @@ export default function AnalyticsPage() {
         {/* Activity chart */}
         <ActivityChart />
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:gap-5 lg:grid-cols-2">
           {/* Lead status distribution */}
-          <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
-            <div className="mb-5">
+          <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-4 lg:p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
+            <div className="mb-4 lg:mb-5">
               <h2 className="font-display text-sm font-semibold">Lead status distribution</h2>
               <p className="mt-0.5 text-xs text-muted-foreground">All-time breakdown by status</p>
             </div>
@@ -188,8 +188,8 @@ export default function AnalyticsPage() {
           </Card>
 
           {/* Best call times */}
-          <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
-            <div className="mb-5">
+          <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-4 lg:p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
+            <div className="mb-4 lg:mb-5">
               <h2 className="font-display text-sm font-semibold">Best call times</h2>
               <p className="mt-0.5 text-xs text-muted-foreground">Connects by hour of day — last 30 days</p>
             </div>
@@ -216,8 +216,8 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Weekly trend */}
-        <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
-          <div className="mb-5">
+        <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-4 lg:p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
+          <div className="mb-4 lg:mb-5">
             <h2 className="font-display text-sm font-semibold">Weekly connect rate trend</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">Calls, connects, and connect rate — last 4 weeks</p>
           </div>
