@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-
-function isValidPhoneNumber(phone: string): boolean {
-  return /^\+[1-9]\d{1,14}$/.test(phone);
-}
+import { normalizePhone } from '@/lib/phone';
+import { type CountryCode } from 'libphonenumber-js';
 
 function parseCsvLine(line: string) {
   const result: string[] = [];
@@ -31,24 +29,6 @@ function parseCsvLine(line: string) {
   return result;
 }
 
-function normalizePhone(raw: string) {
-  const sanitized = raw.replace(/[^\d+]/g, '').trim();
-  if (isValidPhoneNumber(sanitized)) {
-    return sanitized;
-  }
-
-  const digits = sanitized.replace(/\D/g, '');
-  if (digits.length === 10) {
-    return `+1${digits}`;
-  }
-
-  if (digits.length === 11 && digits.startsWith('1')) {
-    return `+${digits}`;
-  }
-
-  return null;
-}
-
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -61,6 +41,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const csv = typeof body.csv === 'string' ? body.csv.trim() : '';
+    const defaultCountry = (body.defaultCountry as CountryCode | undefined) ?? 'US';
 
     if (!csv) {
       return NextResponse.json({ error: 'Missing CSV body' }, { status: 400 });
@@ -88,20 +69,44 @@ export async function POST(request: NextRequest) {
       .eq('user_id', userId);
 
     (existing ?? []).forEach((lead) => {
-      if (lead.phone) {
-        existingPhones.add(lead.phone.trim());
-      }
+      if (lead.phone) existingPhones.add(lead.phone.trim());
     });
 
+    let invalidPhones = 0;
     const prepared = rows.reduce((acc: Array<Record<string, unknown>>, row: Record<string, string>) => {
-      const phone = normalizePhone(row.phone || row.mobile || row['phone number'] || '');
-      if (!phone || existingPhones.has(phone)) {
-        return acc;
-      }
+      const rawPhone = row.phone || row.mobile || row['phone number'] || '';
+      const phone = normalizePhone(rawPhone, defaultCountry);
 
       const firstName = row.first_name || row.firstname || row.name?.split(' ').slice(0, 1).join('') || '';
       const lastName = row.last_name || row.lastname || row.name?.split(' ').slice(1).join('') || '';
       const fullName = row.name || `${firstName} ${lastName}`.trim() || row.company || 'Unknown Lead';
+
+      if (!phone) {
+        // Save with original raw phone so the row isn't silently dropped
+        if (rawPhone && !existingPhones.has(rawPhone)) {
+          invalidPhones += 1;
+          acc.push({
+            user_id: userId,
+            name: fullName,
+            first_name: firstName || undefined,
+            last_name: lastName || undefined,
+            email: row.email || undefined,
+            phone: rawPhone, // keep raw; user can fix
+            company: row.company || undefined,
+            title: row.title || undefined,
+            source: row.source || undefined,
+            notes: row.notes || undefined,
+            ai_score: Number(row.ai_score) || 0,
+            status: 'invalid_phone',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+          existingPhones.add(rawPhone);
+        }
+        return acc;
+      }
+
+      if (existingPhones.has(phone)) return acc;
 
       acc.push({
         user_id: userId,
@@ -126,7 +131,7 @@ export async function POST(request: NextRequest) {
     const skipped = rows.length - prepared.length;
 
     if (prepared.length === 0) {
-      return NextResponse.json({ success: true, inserted: 0, skipped, message: 'No new valid leads were found in the CSV.' });
+      return NextResponse.json({ success: true, inserted: 0, skipped, invalidPhones: 0, message: 'No new valid leads were found in the CSV.' });
     }
 
     const { error: insertError } = await supabase.from('leads').insert(prepared);
@@ -135,7 +140,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to import leads' }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, inserted: prepared.length, skipped });
+    return NextResponse.json({ success: true, inserted: prepared.length, skipped, invalidPhones });
   } catch (error) {
     console.error('Lead import error:', error);
     return NextResponse.json({ error: 'Unable to import leads' }, { status: 500 });

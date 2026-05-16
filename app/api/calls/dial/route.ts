@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import telnyxClient, { toE164 } from '@/lib/telnyx';
+import { normalizePhone } from '@/lib/phone';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,9 +16,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing "to" phone number' }, { status: 400 });
     }
 
-    const e164 = toE164(to);
+    // Try the smart normalizer first (handles international numbers correctly),
+    // then fall back to the simpler toE164 for already-formatted numbers.
+    const e164 = normalizePhone(to) ?? toE164(to);
+    console.log(`[dial] original="${to}" normalized="${e164}"`);
     if (!e164) {
-      return NextResponse.json({ error: 'Invalid phone number — must be E.164 or 10-digit US number' }, { status: 400 });
+      return NextResponse.json({ error: 'Phone number format is invalid' }, { status: 400 });
     }
 
     // Use the user's default purchased number if available

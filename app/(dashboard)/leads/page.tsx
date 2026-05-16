@@ -6,7 +6,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Phone, Mail, Building2, Search, X, ExternalLink,
-  CalendarClock, Hash, Tag, CheckSquare, Square,
+  CalendarClock, Hash, Tag, CheckSquare, Square, AlertTriangle,
 } from "lucide-react";
 import DashboardHeader from "@/components/DashboardHeader";
 import { Card } from "@/components/ui/card";
@@ -42,6 +42,7 @@ const STATUS_FILTERS = [
   { value: "connected", label: "Connected" },
   { value: "meeting_booked", label: "Meeting" },
   { value: "not_interested", label: "Not Interested" },
+  { value: "invalid_phone", label: "Invalid Phone" },
 ];
 
 const STATUS_BADGE: Record<string, string> = {
@@ -52,6 +53,7 @@ const STATUS_BADGE: Record<string, string> = {
   meeting_booked: "bg-violet-500/15 text-violet-300 border border-violet-500/25",
   not_interested: "bg-red-500/15 text-red-300 border border-red-500/25",
   do_not_call: "bg-rose-900/50 text-rose-300 border border-rose-500/25",
+  invalid_phone: "bg-amber-900/50 text-amber-300 border border-amber-500/25",
 };
 
 function scoreColor(score: number | null) {
@@ -483,7 +485,12 @@ export default function LeadsPage() {
                           <p className="mt-0.5 truncate text-xs text-muted-foreground">
                             {[lead.title, lead.company].filter(Boolean).join(" · ")}
                           </p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">{lead.phone}</p>
+                          <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                            {lead.status === "invalid_phone" && (
+                              <AlertTriangle className="h-3 w-3 shrink-0 text-amber-400" aria-label="Phone format could not be validated" />
+                            )}
+                            {lead.phone}
+                          </p>
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1.5">
                           <span className={cn("text-sm font-bold tabular-nums", scoreColor(lead.ai_score))}>
