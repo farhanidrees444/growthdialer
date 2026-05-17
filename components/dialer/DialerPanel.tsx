@@ -1,8 +1,21 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, PhoneOff, Mic, MicOff, Pause, Disc, SkipForward, Zap } from 'lucide-react';
+import {
+  Phone,
+  PhoneOff,
+  Mic,
+  MicOff,
+  Pause,
+  Disc,
+  SkipForward,
+  Zap,
+  Mail,
+  Clock,
+  Hash,
+  PhoneCall,
+} from 'lucide-react';
 import ManualDialer from '@/components/dialer/ManualDialer';
 import { LeadRecord } from '@/components/dialer/LeadCard';
 
@@ -10,6 +23,25 @@ function formatTimer(seconds: number): string {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0');
   const s = (seconds % 60).toString().padStart(2, '0');
   return `${m}:${s}`;
+}
+
+function timeAgo(dateStr: string | undefined | null): string {
+  if (!dateStr) return 'Never';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days}d ago`;
+  const weeks = Math.floor(days / 7);
+  return weeks === 1 ? '1 wk ago' : `${weeks}wks ago`;
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('');
 }
 
 interface CallState {
@@ -27,6 +59,7 @@ interface DialerPanelProps {
   phoneNumber: string;
   countryCode: string;
   callState: CallState;
+  notes: string;
   onCountryChange: (value: string) => void;
   onPhoneChange: (value: string) => void;
   onDigit: (digit: string) => void;
@@ -37,6 +70,8 @@ interface DialerPanelProps {
   onRecord: () => void;
   onNextLead: () => void;
   onEndCall: () => void;
+  onSaveNotes: (value: string) => void;
+  onMarkDNC: () => void;
   isReady: boolean;
   isRecording: boolean;
   error?: string | null;
@@ -49,6 +84,7 @@ export default function DialerPanel({
   phoneNumber,
   countryCode,
   callState,
+  notes,
   onCountryChange,
   onPhoneChange,
   onDigit,
@@ -59,12 +95,21 @@ export default function DialerPanel({
   onRecord,
   onNextLead,
   onEndCall,
+  onSaveNotes,
+  onMarkDNC,
   isReady,
   isRecording,
   error,
   dialMode,
   onStartPowerDial,
 }: DialerPanelProps) {
+  const [localNotes, setLocalNotes] = useState(notes);
+
+  // Sync when parent notes change (lead selection changed)
+  useEffect(() => {
+    setLocalNotes(notes);
+  }, [notes]);
+
   const isIdle = callState.status === 'idle';
   const isActive = ['connecting', 'ringing', 'connected'].includes(callState.status);
   const isRinging = callState.status === 'ringing' || callState.status === 'connecting';
@@ -79,69 +124,126 @@ export default function DialerPanel({
   }, [selectedLead]);
 
   const tags = selectedLead?.tags ?? [];
+  const initials = selectedLead ? getInitials(selectedLead.name) : '';
 
   return (
     <section className="flex flex-col gap-5">
-      {/* ── Lead info card ───────────────────────────────────────────────── */}
+      {/* ── Now Dialing card ─────────────────────────────────────────────── */}
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] uppercase tracking-widest text-emerald-400/70">Now Dialing</p>
-            <h2 className="mt-1.5 truncate text-2xl font-bold text-white">
-              {selectedLead?.name ?? 'No lead selected'}
-            </h2>
-            <p className="mt-1 truncate text-sm text-slate-400">
-              {selectedLead
-                ? `${selectedLead.title} · ${selectedLead.company}`
-                : 'Pick a lead from the queue'}
-            </p>
-          </div>
-          {selectedLead && (
-            <div
-              className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${scoreGradient} shadow-lg`}
-            >
-              <span className="text-lg font-bold text-white">{selectedLead.ai_score}</span>
-            </div>
-          )}
-        </div>
 
-        {/* Lead details row */}
-        {selectedLead && (
-          <div className="mt-4 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
-              <p className="text-slate-500">Phone</p>
-              <p className="mt-1 font-semibold text-white">{selectedLead.phone || '—'}</p>
-            </div>
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
-              <p className="text-slate-500">Company</p>
-              <p className="mt-1 truncate font-semibold text-white">{selectedLead.company || '—'}</p>
-            </div>
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
-              <p className="text-slate-500">Attempts</p>
-              <p className="mt-1 font-semibold text-white">{selectedLead.call_attempts ?? 0}</p>
-            </div>
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
-              <p className="text-slate-500">Status</p>
-              <p className="mt-1 truncate font-semibold capitalize text-white">
-                {selectedLead.status.replace(/_/g, ' ')}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Tags */}
-        {tags.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[10px] uppercase tracking-wider text-slate-400"
+        {/* Lead info OR empty state */}
+        {selectedLead ? (
+          <>
+            {/* Header: avatar + name + score */}
+            <div className="flex items-start gap-4">
+              <div
+                className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${scoreGradient} text-lg font-bold text-white shadow-lg`}
               >
-                {tag}
-              </span>
-            ))}
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] uppercase tracking-widest text-emerald-400/70">Now Dialing</p>
+                <h2 className="mt-1 truncate text-2xl font-bold leading-tight text-white">
+                  {selectedLead.name}
+                </h2>
+                <p className="mt-0.5 truncate text-sm text-slate-400">
+                  {[selectedLead.title, selectedLead.company].filter(Boolean).join(' at ')}
+                </p>
+              </div>
+              <div
+                className={`shrink-0 rounded-xl bg-gradient-to-br ${scoreGradient} px-3 py-1.5 text-center shadow-sm`}
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-white/70">AI</p>
+                <p className="text-lg font-bold text-white">{selectedLead.ai_score}</p>
+              </div>
+            </div>
+
+            {/* Contact info */}
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center gap-2.5">
+                <Phone className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                <span className="font-mono text-sm text-emerald-400">
+                  {selectedLead.phone || '—'}
+                </span>
+              </div>
+              {selectedLead.email && (
+                <div className="flex items-center gap-2.5">
+                  <Mail className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                  <span className="truncate text-sm text-slate-300">{selectedLead.email}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Call history row */}
+            <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
+                <div className="flex items-center gap-1.5 text-slate-500">
+                  <Clock className="h-3 w-3" />
+                  <span>Last Call</span>
+                </div>
+                <p className="mt-1 font-semibold text-white">
+                  {timeAgo(selectedLead.last_called_at)}
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
+                <div className="flex items-center gap-1.5 text-slate-500">
+                  <Hash className="h-3 w-3" />
+                  <span>Attempts</span>
+                </div>
+                <p className="mt-1 font-semibold text-white">{selectedLead.call_attempts ?? 0}</p>
+              </div>
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
+                <div className="flex items-center gap-1.5 text-slate-500">
+                  <PhoneCall className="h-3 w-3" />
+                  <span>Status</span>
+                </div>
+                <p className="mt-1 truncate font-semibold capitalize text-white">
+                  {selectedLead.status.replace(/_/g, ' ')}
+                </p>
+              </div>
+            </div>
+
+            {/* Tags */}
+            {tags.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[10px] uppercase tracking-wider text-slate-400"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Notes */}
+            <div className="mt-4">
+              <p className="mb-1.5 text-[10px] uppercase tracking-wider text-slate-500">Notes</p>
+              <textarea
+                value={localNotes}
+                onChange={(e) => setLocalNotes(e.target.value)}
+                onBlur={() => onSaveNotes(localNotes)}
+                placeholder="Quick notes about this lead…"
+                rows={2}
+                className="w-full resize-none rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-xs text-slate-300 placeholder:text-slate-600 outline-none transition focus:border-emerald-500/30 focus:bg-white/[0.05]"
+              />
+            </div>
+          </>
+        ) : isIdle ? (
+          /* Empty state */
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <motion.div
+              animate={{ scale: [0.95, 1.05, 0.95] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+              className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02]"
+            >
+              <Phone className="h-8 w-8 text-slate-600" />
+            </motion.div>
+            <p className="text-sm font-semibold text-slate-400">Select a lead to begin</p>
+            <p className="mt-1 text-xs text-slate-600">← Pick from the lead queue</p>
           </div>
-        )}
+        ) : null}
 
         {/* Error banner */}
         {error && (
@@ -151,21 +253,41 @@ export default function DialerPanel({
           </div>
         )}
 
-        {/* ── Call status bar ──────────────────────────────────────────────── */}
+        {/* CALL NOW button + quick actions (idle + lead selected) */}
         {isIdle && selectedLead && (
-          <button
-            type="button"
-            onClick={onDial}
-            disabled={!phoneNumber}
-            className="mt-4 w-full rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 py-4 text-sm font-bold text-black shadow-lg shadow-emerald-500/30 transition hover:from-emerald-400 hover:to-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <span className="flex items-center justify-center gap-2">
-              <Phone className="h-4 w-4" />
-              Call {selectedLead.name.split(' ')[0]}
-            </span>
-          </button>
+          <div className="mt-4 space-y-2">
+            <button
+              type="button"
+              onClick={onDial}
+              disabled={!phoneNumber}
+              className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 py-4 text-sm font-bold text-black shadow-lg shadow-emerald-500/30 transition hover:from-emerald-400 hover:to-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <span className="flex items-center justify-center gap-2">
+                <Phone className="h-4 w-4" />
+                Call {selectedLead.name.split(' ')[0]}
+              </span>
+            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onNextLead}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] py-2.5 text-xs font-semibold text-slate-400 transition hover:border-white/20 hover:text-slate-300"
+              >
+                <SkipForward className="h-3.5 w-3.5" />
+                Skip
+              </button>
+              <button
+                type="button"
+                onClick={onMarkDNC}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-red-500/20 bg-red-500/[0.04] py-2.5 text-xs font-semibold text-red-400 transition hover:border-red-500/35 hover:bg-red-500/[0.08]"
+              >
+                Mark DNC
+              </button>
+            </div>
+          </div>
         )}
 
+        {/* Ringing bar */}
         {isRinging && (
           <div className="mt-4 flex items-center justify-between rounded-xl border border-amber-500/25 bg-amber-500/[0.08] px-4 py-3">
             <div className="flex items-center gap-3">
@@ -189,6 +311,7 @@ export default function DialerPanel({
           </div>
         )}
 
+        {/* Connected bar */}
         {isConnected && (
           <div className="mt-4 flex items-center justify-between rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] px-4 py-3">
             <div className="flex items-center gap-3">
@@ -211,24 +334,15 @@ export default function DialerPanel({
           </div>
         )}
 
+        {/* Disconnected bar */}
         {isDisconnected && (
           <div className="mt-4 flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-            <p className="text-sm text-slate-400">
-              Call ended · {formatTimer(callState.duration)}
-            </p>
-            <button
-              type="button"
-              onClick={onNextLead}
-              className="flex items-center gap-1.5 text-xs text-emerald-400 transition hover:text-emerald-300"
-            >
-              <SkipForward className="h-3.5 w-3.5" />
-              Skip lead
-            </button>
+            <p className="text-sm text-slate-400">Call ended · {formatTimer(callState.duration)}</p>
           </div>
         )}
       </div>
 
-      {/* ── In-call controls (mute/hold/record) ─────────────────────────── */}
+      {/* ── In-call controls (mute / hold / record) ──────────────────────── */}
       {isActive && (
         <motion.div
           initial={{ opacity: 0, y: 6 }}
@@ -274,7 +388,7 @@ export default function DialerPanel({
         </motion.div>
       )}
 
-      {/* ── Manual dialer + mode indicator ──────────────────────────────── */}
+      {/* ── Manual dialer + dial mode panel ──────────────────────────────── */}
       <div className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
         <ManualDialer
           countryCode={countryCode}
@@ -287,13 +401,11 @@ export default function DialerPanel({
           isReady={isReady}
         />
 
-        {/* Dial mode + quick stats */}
+        {/* Dial mode + lead intel */}
         <div className="space-y-4">
-          {/* Mode selector */}
           <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
             <p className="mb-3 text-[10px] uppercase tracking-widest text-slate-500">Dial Mode</p>
             <div className="space-y-2">
-              {/* Manual — always available */}
               <div
                 className={`flex items-center justify-between rounded-xl border px-3 py-2.5 transition ${
                   dialMode === 'manual'
@@ -301,7 +413,11 @@ export default function DialerPanel({
                     : 'border-white/[0.04] bg-white/[0.01]'
                 }`}
               >
-                <span className={`text-xs font-semibold ${dialMode === 'manual' ? 'text-emerald-300' : 'text-slate-400'}`}>
+                <span
+                  className={`text-xs font-semibold ${
+                    dialMode === 'manual' ? 'text-emerald-300' : 'text-slate-400'
+                  }`}
+                >
                   Manual
                 </span>
                 {dialMode === 'manual' && (
@@ -311,7 +427,6 @@ export default function DialerPanel({
                 )}
               </div>
 
-              {/* Power Dialing — now active */}
               <button
                 type="button"
                 onClick={onStartPowerDial}
@@ -319,10 +434,14 @@ export default function DialerPanel({
                 className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 transition ${
                   dialMode === 'power'
                     ? 'border-rose-500/30 bg-rose-500/[0.08]'
-                    : 'border-violet-500/20 bg-violet-500/[0.04] hover:border-violet-500/35 hover:bg-violet-500/[0.08] disabled:opacity-40 disabled:cursor-not-allowed'
+                    : 'border-violet-500/20 bg-violet-500/[0.04] hover:border-violet-500/35 hover:bg-violet-500/[0.08] disabled:cursor-not-allowed disabled:opacity-40'
                 }`}
               >
-                <span className={`flex items-center gap-1.5 text-xs font-semibold ${dialMode === 'power' ? 'text-rose-300' : 'text-violet-300'}`}>
+                <span
+                  className={`flex items-center gap-1.5 text-xs font-semibold ${
+                    dialMode === 'power' ? 'text-rose-300' : 'text-violet-300'
+                  }`}
+                >
                   <Zap className="h-3 w-3" />
                   Power Dialing
                 </span>
@@ -367,14 +486,6 @@ export default function DialerPanel({
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500">Revenue</span>
                     <span className="font-medium text-white">{selectedLead.revenue}</span>
-                  </div>
-                )}
-                {selectedLead.last_called_at && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Last called</span>
-                    <span className="font-medium text-white">
-                      {new Date(selectedLead.last_called_at).toLocaleDateString()}
-                    </span>
                   </div>
                 )}
                 {selectedLead.activity_summary && (

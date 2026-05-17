@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import type { DragEvent } from 'react';
-import { Phone, Zap } from 'lucide-react';
+import { Phone } from 'lucide-react';
 
 type LeadStatus =
   | 'new'
@@ -48,35 +48,46 @@ interface LeadCardProps {
   onDragOver: (event: DragEvent<HTMLDivElement>) => void;
 }
 
-const STATUS_LABEL: Record<LeadStatus, string> = {
-  new: 'New',
-  queued: 'Queued',
-  contacted: 'Contacted',
-  connected: 'Connected',
-  qualified: 'Qualified',
-  meeting_booked: 'Meeting Booked',
-  no_answer: 'No Answer',
-  busy: 'Busy',
-  wrong_number: 'Wrong Number',
-  not_interested: 'Not Interested',
-  callback: 'Callback',
-  do_not_call: 'Do Not Call',
-};
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('');
+}
 
-const STATUS_COLOR: Record<LeadStatus, string> = {
-  new: 'bg-slate-700/60 text-slate-200',
-  queued: 'bg-blue-500/15 text-blue-300',
-  contacted: 'bg-amber-500/15 text-amber-300',
-  connected: 'bg-emerald-500/15 text-emerald-300',
-  qualified: 'bg-cyan-500/15 text-cyan-300',
-  meeting_booked: 'bg-violet-500/15 text-violet-300',
-  no_answer: 'bg-amber-500/15 text-amber-300',
-  busy: 'bg-red-500/15 text-red-300',
-  wrong_number: 'bg-rose-500/15 text-rose-300',
-  not_interested: 'bg-slate-600/60 text-slate-300',
-  callback: 'bg-cyan-500/15 text-cyan-300',
-  do_not_call: 'bg-rose-900/50 text-rose-300',
-};
+function getAvatarGradient(score: number): string {
+  if (score >= 80) return 'from-emerald-500 to-teal-500';
+  if (score >= 50) return 'from-amber-500 to-orange-500';
+  return 'from-slate-500 to-slate-600';
+}
+
+function getBadge(lead: LeadRecord): { label: string; dotColor: string; textColor: string } {
+  if (lead.dnc || lead.status === 'do_not_call') {
+    return { label: 'DNC', dotColor: 'bg-red-400', textColor: 'text-red-400' };
+  }
+  if (lead.status === 'meeting_booked') {
+    return { label: 'Meeting', dotColor: 'bg-violet-400', textColor: 'text-violet-400' };
+  }
+  if (
+    lead.status === 'not_interested' ||
+    lead.status === 'wrong_number' ||
+    lead.status === 'busy' ||
+    lead.status === 'no_answer'
+  ) {
+    return { label: 'Done', dotColor: 'bg-slate-500', textColor: 'text-slate-500' };
+  }
+  if (lead.status === 'callback') {
+    return { label: 'Callback', dotColor: 'bg-blue-400', textColor: 'text-blue-400' };
+  }
+  if (lead.status === 'connected' || lead.status === 'qualified') {
+    return { label: 'Interested', dotColor: 'bg-emerald-400', textColor: 'text-emerald-400' };
+  }
+  if ((lead.call_attempts ?? 0) > 0) {
+    return { label: 'Attempted', dotColor: 'bg-amber-400', textColor: 'text-amber-400' };
+  }
+  return { label: 'New', dotColor: 'bg-emerald-400', textColor: 'text-emerald-400' };
+}
 
 export default function LeadCard({
   lead,
@@ -87,12 +98,9 @@ export default function LeadCard({
   onDrop,
   onDragOver,
 }: LeadCardProps) {
-  const scoreColor =
-    lead.ai_score >= 80
-      ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25'
-      : lead.ai_score >= 50
-      ? 'bg-amber-500/15 text-amber-300 border-amber-500/25'
-      : 'bg-red-500/15 text-red-300 border-red-500/25';
+  const initials = getInitials(lead.name);
+  const gradient = getAvatarGradient(lead.ai_score);
+  const badge = getBadge(lead);
 
   return (
     <motion.div
@@ -101,56 +109,56 @@ export default function LeadCard({
       onDragStart={(e) => onDragStart(e as unknown as DragEvent<HTMLDivElement>, lead.id)}
       onDrop={(e) => onDrop(e, lead.id)}
       onDragOver={onDragOver}
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
+      whileHover={{ y: -1 }}
       onClick={onSelect}
-      className={`group cursor-pointer rounded-2xl border p-4 transition-all duration-200 ${
+      className={`group cursor-pointer rounded-xl border p-3 transition-all duration-200 ${
         selected
-          ? 'border-emerald-500/50 bg-emerald-500/[0.06] shadow-[0_0_20px_rgba(34,197,94,0.12)]'
-          : 'border-white/[0.06] bg-white/[0.02] hover:border-emerald-500/20 hover:bg-white/[0.04]'
+          ? 'border-emerald-500/40 bg-emerald-500/[0.07] shadow-[0_0_16px_rgba(34,197,94,0.12)]'
+          : 'border-white/[0.06] bg-white/[0.02] hover:border-emerald-500/20 hover:bg-white/[0.04] hover:shadow-[0_4px_16px_rgba(34,197,94,0.06)]'
       }`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-white">{lead.name}</p>
-          <p className="mt-0.5 truncate text-[11px] uppercase tracking-wider text-slate-500">
-            {lead.title}
-          </p>
-          <p className="mt-1.5 truncate text-xs text-slate-300">{lead.company}</p>
+      <div className="flex items-center gap-2.5">
+        {/* Avatar */}
+        <div
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${gradient} text-[11px] font-bold text-white shadow-sm`}
+        >
+          {initials}
         </div>
+
+        {/* Name + company */}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13px] font-semibold leading-tight text-white">{lead.name}</p>
+          <p className="mt-0.5 truncate text-[10px] leading-tight text-slate-500">
+            {[lead.company, lead.title].filter(Boolean).join(' · ')}
+          </p>
+        </div>
+
+        {/* Call button — visible on hover */}
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             onCall(lead.phone, lead);
           }}
-          className="shrink-0 rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-2 text-emerald-400 transition-all duration-200 hover:border-emerald-400/50 hover:bg-emerald-500/20 hover:shadow-[0_0_12px_rgba(34,197,94,0.2)]"
+          className="shrink-0 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] p-1.5 text-emerald-400 opacity-0 transition-all duration-150 group-hover:opacity-100 hover:border-emerald-400/40 hover:bg-emerald-500/15"
           aria-label={`Call ${lead.name}`}
         >
-          <Phone className="h-3.5 w-3.5" />
+          <Phone className="h-3 w-3" />
         </button>
       </div>
 
-      <p className="mt-2.5 truncate text-xs text-slate-400">{lead.phone || 'No phone'}</p>
-
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${scoreColor}`}>
-          AI {lead.ai_score}
-        </span>
-        <span
-          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-            STATUS_COLOR[lead.status] ?? 'bg-slate-700/60 text-slate-300'
-          }`}
-        >
-          {STATUS_LABEL[lead.status] ?? lead.status}
-        </span>
-        {lead.call_attempts > 0 && (
-          <span className="ml-auto flex items-center gap-1 text-[10px] text-slate-500">
-            <Zap className="h-3 w-3" />
-            {lead.call_attempts}
-          </span>
-        )}
+      {/* Phone + status badge */}
+      <div className="mt-2.5 flex items-center justify-between">
+        <span className="font-mono text-[11px] text-emerald-400/70">{lead.phone || '—'}</span>
+        <div className="flex items-center gap-1.5">
+          <span className={`h-1.5 w-1.5 rounded-full ${badge.dotColor}`} />
+          <span className={`text-[10px] font-semibold ${badge.textColor}`}>{badge.label}</span>
+          {(lead.call_attempts ?? 0) > 0 && (
+            <span className="text-[10px] text-slate-600"> · {lead.call_attempts}×</span>
+          )}
+        </div>
       </div>
     </motion.div>
   );

@@ -664,12 +664,25 @@ function DialerContent() {
   // ── Load leads ────────────────────────────────────────────────────────────────
   useEffect(() => {
     const loadLeads = async () => {
-      const { data, error: queryError } = await supabase
+      const SELECT_WITH_DNC =
+        'id,name,title,company,phone,email,linkedin,ai_score,status,last_called_at,call_attempts,tags,notes,company_size,industry,revenue,activity_summary,profile_url,dnc';
+      const SELECT_NO_DNC =
+        'id,name,title,company,phone,email,linkedin,ai_score,status,last_called_at,call_attempts,tags,notes,company_size,industry,revenue,activity_summary,profile_url';
+
+      let { data, error: queryError } = await supabase
         .from('leads')
-        .select(
-          'id,name,title,company,phone,email,linkedin,ai_score,status,last_called_at,call_attempts,tags,notes,company_size,industry,revenue,activity_summary,profile_url,dnc',
-        )
+        .select(SELECT_WITH_DNC)
         .order('ai_score', { ascending: false });
+
+      // Gracefully fall back if migration 005 (dnc column) hasn't been run yet
+      if (queryError?.message?.includes('dnc')) {
+        const fallback = await supabase
+          .from('leads')
+          .select(SELECT_NO_DNC)
+          .order('ai_score', { ascending: false });
+        data = fallback.data as typeof data;
+        queryError = fallback.error;
+      }
 
       if (queryError) { console.error('Load leads error:', queryError.message); return; }
 
@@ -702,6 +715,22 @@ function DialerContent() {
     return () => { supabase.removeChannel(channel); };
   }, [supabase]);
 
+  // ── Tab counts (computed from all leads, ignoring search) ────────────────────
+  const tabCounts = useMemo(() => ({
+    queue: leads.filter(
+      (l) =>
+        !l.dnc &&
+        l.status !== 'do_not_call' &&
+        (l.status === 'new' ||
+          l.status === 'queued' ||
+          (l.status === 'contacted' && (l.call_attempts ?? 0) < 3)),
+    ).length,
+    all: leads.length,
+    hot: leads.filter(
+      (l) => l.status === 'callback' || l.status === 'meeting_booked' || l.status === 'connected',
+    ).length,
+  }), [leads]);
+
   // ── Filtered leads ────────────────────────────────────────────────────────────
   const filteredLeads = useMemo(() => {
     let list = [...leads];
@@ -712,9 +741,18 @@ function DialerContent() {
       );
     }
     if (filterMode === 'Queue')
-      list = list.filter((l) => l.status === 'new' || l.status === 'contacted' || l.status === 'queued');
+      list = list.filter(
+        (l) =>
+          !l.dnc &&
+          l.status !== 'do_not_call' &&
+          (l.status === 'new' ||
+            l.status === 'queued' ||
+            (l.status === 'contacted' && (l.call_attempts ?? 0) < 3)),
+      );
     if (filterMode === 'Hot Leads')
-      list = list.filter((l) => l.ai_score >= 75 || l.status === 'connected' || l.status === 'meeting_booked');
+      list = list.filter(
+        (l) => l.status === 'callback' || l.status === 'meeting_booked' || l.status === 'connected',
+      );
     return list;
   }, [leads, searchQuery, filterMode]);
 
@@ -1011,6 +1049,31 @@ function DialerContent() {
     }
   }, [dialMode, startCountdown]);
 
+  const handleMarkDNC = useCallback(async () => {
+    if (!selectedLead) return;
+    await supabase
+      .from('leads')
+      .update({ dnc: true, status: 'do_not_call' })
+      .eq('id', selectedLead.id);
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.id === selectedLead.id ? { ...l, dnc: true, status: 'do_not_call' as const } : l,
+      ),
+    );
+    setSelectedLead((prev) =>
+      prev ? { ...prev, dnc: true, status: 'do_not_call' as const } : prev,
+    );
+    setTimeout(() => {
+      const idx = leads.findIndex((l) => l.id === selectedLead.id);
+      const next = leads[idx + 1] ?? null;
+      if (next) {
+        setSelectedLead(next);
+        setNotes(next.notes ?? '');
+        setPhoneNumber(next.phone ?? '');
+      }
+    }, 400);
+  }, [selectedLead, supabase, leads]);
+
   // ── Keyboard shortcuts ────────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -1085,6 +1148,7 @@ function DialerContent() {
     phoneNumber,
     countryCode,
     callState,
+    notes,
     onCountryChange: setCountryCode,
     onPhoneChange: setPhoneNumber,
     onDigit: (digit: string) => setPhoneNumber((prev) => `${prev}${digit}`),
@@ -1095,6 +1159,8 @@ function DialerContent() {
     onRecord: () => setIsRecording((prev) => !prev),
     onNextLead: handleSkipNext,
     onEndCall: hangUp,
+    onSaveNotes: handleSaveNotes,
+    onMarkDNC: handleMarkDNC,
     isReady: phoneStatus === 'ready',
     isRecording,
     error,
@@ -1111,7 +1177,7 @@ function DialerContent() {
     onSearchChange: setSearchQuery,
     onReorder: reorderLeads,
     onSkipNext: handleSkipNext,
-    leadCount: `${filteredLeads.length} / ${leads.length}`,
+    tabCounts,
   };
 
   const mobileTabs: { key: MobileTab; label: string }[] = [
