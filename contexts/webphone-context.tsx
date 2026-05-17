@@ -218,6 +218,15 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         destinationNumber: destination,
         audio: true,
         video: false,
+        // HD voice: request Opus with echo/noise cancellation
+        mediaConstraints: {
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+          video: false,
+        },
       };
       if (callerNumber) {
         callParams.callerNumber = callerNumber;

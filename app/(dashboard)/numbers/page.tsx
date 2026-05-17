@@ -140,6 +140,7 @@ function MyNumbers({ refreshSignal }: { refreshSignal: number }) {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-mono text-sm font-semibold">
                   {formatPhone(num.phone_number)}
+                  {num.is_default ? ' ⭐' : ''}
                 </span>
                 {num.is_default && (
                   <Badge className="bg-brand/20 text-brand border-brand/30 text-[10px] px-1.5 py-0 h-4">

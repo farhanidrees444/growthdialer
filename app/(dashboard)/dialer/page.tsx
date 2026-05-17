@@ -13,7 +13,14 @@ import CoachingSidebar from '@/components/dialer/CoachingSidebar';
 import PhoneStatusBar from '@/components/dialer/PhoneStatusBar';
 import MicPermissionModal from '@/components/dialer/MicPermissionModal';
 import { WebPhoneProvider, useWebPhone } from '@/contexts/webphone-context';
+import { isE164 } from '@/lib/phone';
 import type { LeadRecord } from '@/components/dialer/LeadCard';
+
+function formatPhone(phone: string): string {
+  const m = phone.match(/^\+1(\d{3})(\d{3})(\d{4})$/);
+  if (m) return `+1 (${m[1]}) ${m[2]}-${m[3]}`;
+  return phone;
+}
 
 interface CallState {
   status: 'idle' | 'connecting' | 'ringing' | 'connected' | 'disconnected';
@@ -72,6 +79,60 @@ function MobileStatStrip({ calls, connects, meetings, connectRate }: {
   );
 }
 
+function CallingFromCard({
+  purchasedNumbers,
+  fromNumber,
+  onFromNumberChange,
+  disabled,
+}: {
+  purchasedNumbers: Array<{ id: string; phone_number: string; is_default: boolean }>;
+  fromNumber: string;
+  onFromNumberChange: (v: string) => void;
+  disabled: boolean;
+}) {
+  return (
+    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] px-4 py-3.5 shadow-sm shadow-emerald-500/5">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-emerald-400/70">
+          Calling From
+        </span>
+        {purchasedNumbers.length === 0 ? (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-slate-400">No number configured —</span>
+            <a
+              href="/numbers"
+              className="font-semibold text-emerald-400 transition-colors hover:text-emerald-300"
+            >
+              Buy a number →
+            </a>
+          </div>
+        ) : purchasedNumbers.length === 1 ? (
+          <span className="font-mono text-sm font-semibold text-white">
+            {formatPhone(purchasedNumbers[0].phone_number)}{purchasedNumbers[0].is_default ? ' ⭐' : ''}
+          </span>
+        ) : (
+          <select
+            value={fromNumber}
+            onChange={(e) => onFromNumberChange(e.target.value)}
+            disabled={disabled}
+            className="rounded-lg border border-white/[0.10] bg-[oklch(0.10_0.025_282)] px-3 py-1.5 font-mono text-sm font-medium text-white focus:outline-none focus:ring-1 focus:ring-emerald-500/50 disabled:opacity-60"
+          >
+            {purchasedNumbers.map((n) => (
+              <option
+                key={n.id}
+                value={n.phone_number}
+                style={{ backgroundColor: 'oklch(0.10 0.025 282)' }}
+              >
+                {formatPhone(n.phone_number)}{n.is_default ? ' ⭐' : ''}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function DialerContent() {
   const [supabase] = useState(() => createClient());
   const searchParams = useSearchParams();
@@ -105,7 +166,7 @@ function DialerContent() {
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [mobileTab, setMobileTab] = useState<MobileTab>('call');
   const [purchasedNumbers, setPurchasedNumbers] = useState<
-    Array<{ id: string; phone_number: string; friendly_name: string | null }>
+    Array<{ id: string; phone_number: string; is_default: boolean }>
   >([]);
   const [fromNumber, setFromNumber] = useState('');
   const hasAutoSelectedRef = useRef(false);
@@ -118,13 +179,14 @@ function DialerContent() {
   useEffect(() => {
     supabase
       .from('purchased_numbers')
-      .select('id, phone_number, friendly_name, is_default')
+      .select('id, phone_number, is_default')
       .eq('status', 'active')
       .order('is_default', { ascending: false })
-      .then(({ data }) => {
+      .then(({ data, error: qErr }) => {
+        if (qErr) { console.error('[dialer] purchased_numbers fetch error:', qErr); return; }
         if (data && data.length > 0) {
-          setPurchasedNumbers(data);
-          const defaultNum = data.find((n: { is_default: boolean }) => n.is_default) ?? data[0];
+          setPurchasedNumbers(data as Array<{ id: string; phone_number: string; is_default: boolean }>);
+          const defaultNum = data.find((n) => n.is_default) ?? data[0];
           setFromNumber(defaultNum.phone_number);
         }
       });
@@ -322,6 +384,13 @@ function DialerContent() {
         return;
       }
 
+      if (fromNumber && !isE164(fromNumber)) {
+        setError('Invalid "From" number — please select a valid purchased number.');
+        return;
+      }
+
+      console.log('[DIALER] Initiating call:', { from: fromNumber || '(none)', to: destination });
+
       // Store for later logging when activeCallId arrives
       pendingDialRef.current = { to: destination, leadId: lead?.id ?? null };
 
@@ -493,9 +562,6 @@ function DialerContent() {
     countryCode,
     callState,
     notes,
-    fromNumber,
-    purchasedNumbers,
-    onFromNumberChange: setFromNumber,
     onCountryChange: setCountryCode,
     onPhoneChange: setPhoneNumber,
     onDigit: (digit: string) => setPhoneNumber((prev) => `${prev}${digit}`),
@@ -551,6 +617,14 @@ function DialerContent() {
             </div>
             <PhoneStatusBar />
           </div>
+
+          {/* Calling From */}
+          <CallingFromCard
+            purchasedNumbers={purchasedNumbers}
+            fromNumber={fromNumber}
+            onFromNumberChange={setFromNumber}
+            disabled={callState.status !== 'idle'}
+          />
 
           <div className="grid gap-5 xl:grid-cols-[280px_1fr_300px]">
             <LeadQueue
@@ -616,7 +690,13 @@ function DialerContent() {
             </div>
           )}
           {mobileTab === 'call' && (
-            <div className="p-3">
+            <div className="space-y-3 p-3">
+              <CallingFromCard
+                purchasedNumbers={purchasedNumbers}
+                fromNumber={fromNumber}
+                onFromNumberChange={setFromNumber}
+                disabled={callState.status !== 'idle'}
+              />
               <DialerPanel {...dialerPanelProps} />
             </div>
           )}

@@ -23,21 +23,12 @@ interface CallState {
   leadName: string | null;
 }
 
-interface PurchasedNumber {
-  id: string;
-  phone_number: string;
-  friendly_name: string | null;
-}
-
 interface DialerPanelProps {
   selectedLead: LeadRecord | null;
   phoneNumber: string;
   countryCode: string;
   callState: CallState;
   notes: string;
-  fromNumber: string;
-  purchasedNumbers: PurchasedNumber[];
-  onFromNumberChange: (value: string) => void;
   onCountryChange: (value: string) => void;
   onPhoneChange: (value: string) => void;
   onDigit: (digit: string) => void;
@@ -61,9 +52,6 @@ export default function DialerPanel({
   countryCode,
   callState,
   notes,
-  fromNumber,
-  purchasedNumbers,
-  onFromNumberChange,
   onCountryChange,
   onPhoneChange,
   onDigit,
@@ -97,30 +85,6 @@ export default function DialerPanel({
 
   return (
     <section className="flex flex-col gap-5">
-      {/* ── Call From selector ───────────────────────────────────────────── */}
-      {purchasedNumbers.length > 0 && (
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-          <div className="flex items-center gap-3">
-            <span className="shrink-0 text-[10px] uppercase tracking-widest text-slate-500">
-              Call From
-            </span>
-            <select
-              value={fromNumber}
-              onChange={(e) => onFromNumberChange(e.target.value)}
-              disabled={!isIdle}
-              className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-sm font-medium text-white focus:outline-none focus:ring-1 focus:ring-emerald-500/50 disabled:opacity-60"
-              style={{ backgroundColor: 'oklch(0.10 0.025 282)' }}
-            >
-              {purchasedNumbers.map((n) => (
-                <option key={n.id} value={n.phone_number} style={{ backgroundColor: 'oklch(0.10 0.025 282)' }}>
-                  {n.friendly_name ? `${n.friendly_name} (${n.phone_number})` : n.phone_number}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
-
       {/* ── Lead info card ───────────────────────────────────────────────── */}
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
         <div className="flex items-start justify-between gap-4">
