@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CalendarClock } from 'lucide-react';
+import { X, CalendarClock, VoicemailIcon, Phone, SkipForward } from 'lucide-react';
 
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0');
@@ -14,7 +14,6 @@ function defaultCallbackTime(): string {
   const d = new Date();
   d.setDate(d.getDate() + 1);
   d.setHours(10, 0, 0, 0);
-  // datetime-local needs local ISO-ish string
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
@@ -47,6 +46,11 @@ const DISPOSITIONS: DispOption[] = [
   { key: 'dnc',            label: 'Do Not Call',    emoji: '🚫', shortcut: '8', color: 'border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20', ring: 'ring-red-400/60' },
 ];
 
+const QUICK_OPTIONS = [
+  { key: 'voicemail',    label: 'Voicemail',     icon: VoicemailIcon, color: 'border-blue-500/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20' },
+  { key: 'wrong_number', label: 'Wrong Number',  icon: Phone,         color: 'border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]' },
+];
+
 export interface DispositionModalProps {
   open: boolean;
   leadName: string | null;
@@ -71,6 +75,9 @@ export default function DispositionModal({
   const [showDNCConfirm, setShowDNCConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Quick mode: call answered but < 5s (likely voicemail or accidental pickup)
+  const isQuickMode = callDuration < 5;
+
   useEffect(() => {
     if (open) {
       setSelected(null);
@@ -88,14 +95,15 @@ export default function DispositionModal({
     setShowDNCConfirm(key === 'dnc');
   }, []);
 
-  const handleSave = useCallback(async () => {
-    if (!selected || saving) return;
+  const handleSave = useCallback(async (overrideKey?: string) => {
+    const key = overrideKey ?? selected;
+    if (!key || saving) return;
     setSaving(true);
     try {
       let cbAt: string | undefined;
-      if (selected === 'callback' && callbackAt) cbAt = new Date(callbackAt).toISOString();
-      if (selected === 'gatekeeper') cbAt = new Date(gatekeeperRetryTime()).toISOString();
-      await onSave(selected, localNotes, cbAt);
+      if (key === 'callback' && callbackAt) cbAt = new Date(callbackAt).toISOString();
+      if (key === 'gatekeeper') cbAt = new Date(gatekeeperRetryTime()).toISOString();
+      await onSave(key, localNotes, cbAt);
     } finally {
       setSaving(false);
     }
@@ -105,17 +113,19 @@ export default function DispositionModal({
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
-      const idx = parseInt(e.key) - 1;
-      if (idx >= 0 && idx < DISPOSITIONS.length) {
-        e.preventDefault();
-        handleSelect(DISPOSITIONS[idx].key);
+      if (!isQuickMode) {
+        const idx = parseInt(e.key) - 1;
+        if (idx >= 0 && idx < DISPOSITIONS.length) {
+          e.preventDefault();
+          handleSelect(DISPOSITIONS[idx].key);
+        }
+        if (e.key === 'Enter') { e.preventDefault(); handleSave(); }
       }
-      if (e.key === 'Enter') { e.preventDefault(); handleSave(); }
       if (e.key === 'Escape') { e.preventDefault(); onSkip(); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, handleSelect, handleSave, onSkip]);
+  }, [open, isQuickMode, handleSelect, handleSave, onSkip]);
 
   const selectedDisp = DISPOSITIONS.find((d) => d.key === selected);
 
@@ -148,6 +158,7 @@ export default function DispositionModal({
                 </h2>
                 <p className="mt-0.5 text-xs text-slate-500">
                   Duration: {formatDuration(callDuration)}
+                  {isQuickMode && <span className="ml-2 text-amber-400/70">· Short call</span>}
                 </p>
               </div>
               <button
@@ -159,103 +170,147 @@ export default function DispositionModal({
               </button>
             </div>
 
-            <div className="space-y-3 p-5">
-              {/* 4×2 disposition grid */}
-              <div className="grid grid-cols-4 gap-2">
-                {DISPOSITIONS.map((d) => (
-                  <motion.button
-                    key={d.key}
-                    type="button"
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => handleSelect(d.key)}
-                    className={`relative flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-xl border py-3 text-center transition-all ${d.color} ${selected === d.key ? `ring-2 ${d.ring} scale-[1.04] shadow-lg` : ''}`}
-                    aria-pressed={selected === d.key}
-                  >
-                    <span className="text-xl leading-none">{d.emoji}</span>
-                    <span className="text-[10px] font-semibold leading-tight">{d.label}</span>
-                    <span className="absolute right-1.5 top-1 font-mono text-[8px] text-white/20">{d.shortcut}</span>
-                  </motion.button>
-                ))}
-              </div>
+            {isQuickMode ? (
+              /* ── Quick mode: 3 large buttons ── */
+              <div className="space-y-3 p-5">
+                <p className="text-xs text-slate-500">Short call — select outcome quickly:</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {QUICK_OPTIONS.map((opt) => (
+                    <motion.button
+                      key={opt.key}
+                      type="button"
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      disabled={saving}
+                      onClick={() => handleSave(opt.key)}
+                      className={`flex flex-col items-center justify-center gap-2 rounded-xl border py-5 text-center transition-all disabled:opacity-50 ${opt.color}`}
+                    >
+                      <opt.icon className="h-6 w-6" />
+                      <span className="text-sm font-semibold">{opt.label}</span>
+                    </motion.button>
+                  ))}
+                </div>
 
-              {/* Callback picker */}
-              <AnimatePresence>
-                {showCallbackPicker && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="flex items-center gap-3 rounded-xl border border-amber-400/20 bg-amber-500/[0.06] px-4 py-3">
-                      <CalendarClock className="h-4 w-4 shrink-0 text-amber-400" />
-                      <input
-                        type="datetime-local"
-                        value={callbackAt}
-                        onChange={(e) => setCallbackAt(e.target.value)}
-                        className="flex-1 bg-transparent text-sm text-white outline-none"
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                <textarea
+                  value={localNotes}
+                  onChange={(e) => setLocalNotes(e.target.value)}
+                  rows={2}
+                  placeholder="Add call notes…"
+                  className="w-full resize-none rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-emerald-500/30"
+                />
 
-              {/* DNC confirmation */}
-              <AnimatePresence>
-                {showDNCConfirm && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="rounded-xl border border-red-500/25 bg-red-500/[0.08] px-4 py-3">
-                      <p className="text-sm font-semibold text-red-300">Add to Do Not Call list?</p>
-                      <p className="mt-0.5 text-xs text-red-300/60">
-                        This flags the lead and prevents future auto-dials.
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Notes */}
-              <textarea
-                value={localNotes}
-                onChange={(e) => setLocalNotes(e.target.value)}
-                rows={2}
-                placeholder="Add call notes, objections, next steps…"
-                className="w-full resize-none rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-emerald-500/30"
-              />
-
-              {/* Action buttons */}
-              <div className="flex gap-2.5">
                 <button
                   type="button"
                   onClick={onSkip}
-                  className="flex-1 rounded-xl border border-white/[0.06] bg-white/[0.02] py-3 text-sm font-semibold text-slate-400 transition hover:text-slate-200"
+                  className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] py-3 text-sm font-semibold text-slate-400 transition hover:text-slate-200"
                 >
+                  <SkipForward className="h-3.5 w-3.5" />
                   Skip <span className="text-slate-600">(Esc)</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={!selected || saving}
-                  className="flex-[2] rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 py-3 text-sm font-bold text-black shadow-lg shadow-emerald-500/30 transition hover:from-emerald-400 hover:to-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {saving
-                    ? 'Saving…'
-                    : selected
-                    ? `Save · ${selectedDisp?.label}`
-                    : 'Select outcome'}
-                </button>
-              </div>
 
-              <p className="text-center text-[10px] text-slate-700">
-                Press 1–8 to select · Enter to save · Esc to skip
-              </p>
-            </div>
+                <p className="text-center text-[10px] text-slate-700">
+                  Esc to skip · click to save immediately
+                </p>
+              </div>
+            ) : (
+              /* ── Full mode: 4×2 grid ── */
+              <div className="space-y-3 p-5">
+                <div className="grid grid-cols-4 gap-2">
+                  {DISPOSITIONS.map((d) => (
+                    <motion.button
+                      key={d.key}
+                      type="button"
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => handleSelect(d.key)}
+                      className={`relative flex min-h-[76px] flex-col items-center justify-center gap-1.5 rounded-xl border py-3 text-center transition-all ${d.color} ${selected === d.key ? `ring-2 ${d.ring} scale-[1.04] shadow-lg` : ''}`}
+                      aria-pressed={selected === d.key}
+                    >
+                      <span className="text-xl leading-none">{d.emoji}</span>
+                      <span className="text-[10px] font-semibold leading-tight">{d.label}</span>
+                      <span className="absolute right-1.5 top-1 font-mono text-[8px] text-white/20">{d.shortcut}</span>
+                    </motion.button>
+                  ))}
+                </div>
+
+                {/* Callback picker */}
+                <AnimatePresence>
+                  {showCallbackPicker && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="flex items-center gap-3 rounded-xl border border-amber-400/20 bg-amber-500/[0.06] px-4 py-3">
+                        <CalendarClock className="h-4 w-4 shrink-0 text-amber-400" />
+                        <input
+                          type="datetime-local"
+                          value={callbackAt}
+                          onChange={(e) => setCallbackAt(e.target.value)}
+                          className="flex-1 bg-transparent text-sm text-white outline-none"
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* DNC confirmation */}
+                <AnimatePresence>
+                  {showDNCConfirm && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="rounded-xl border border-red-500/25 bg-red-500/[0.08] px-4 py-3">
+                        <p className="text-sm font-semibold text-red-300">Add to Do Not Call list?</p>
+                        <p className="mt-0.5 text-xs text-red-300/60">
+                          This flags the lead and prevents future auto-dials.
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Notes */}
+                <textarea
+                  value={localNotes}
+                  onChange={(e) => setLocalNotes(e.target.value)}
+                  rows={2}
+                  placeholder="Add call notes, objections, next steps…"
+                  className="w-full resize-none rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-emerald-500/30"
+                />
+
+                {/* Action buttons */}
+                <div className="flex gap-2.5">
+                  <button
+                    type="button"
+                    onClick={onSkip}
+                    className="flex-1 rounded-xl border border-white/[0.06] bg-white/[0.02] py-3 text-sm font-semibold text-slate-400 transition hover:text-slate-200"
+                  >
+                    Skip <span className="text-slate-600">(Esc)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSave()}
+                    disabled={!selected || saving}
+                    className="flex-[2] rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 py-3 text-sm font-bold text-black shadow-lg shadow-emerald-500/30 transition hover:from-emerald-400 hover:to-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {saving
+                      ? 'Saving…'
+                      : selected
+                      ? `Save · ${selectedDisp?.label}`
+                      : 'Select outcome'}
+                  </button>
+                </div>
+
+                <p className="text-center text-[10px] text-slate-700">
+                  Press 1–8 to select · Enter to save · Esc to skip
+                </p>
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}

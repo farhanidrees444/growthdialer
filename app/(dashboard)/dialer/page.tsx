@@ -12,12 +12,17 @@ import LeadQueue from '@/components/dialer/LeadQueue';
 import DialerPanel from '@/components/dialer/DialerPanel';
 import CoachingSidebar from '@/components/dialer/CoachingSidebar';
 import PhoneStatusBar from '@/components/dialer/PhoneStatusBar';
+import UpNextQueue from '@/components/dialer/UpNextQueue';
+import CurrentLeadCard from '@/components/dialer/CurrentLeadCard';
+import AiInsightsPanel from '@/components/dialer/AiInsightsPanel';
+import ManualDialCollapsible from '@/components/dialer/ManualDialCollapsible';
 import MicPermissionModal from '@/components/dialer/MicPermissionModal';
 import DispositionModal from '@/components/dialer/DispositionModal';
 import { WebPhoneProvider, useWebPhone } from '@/contexts/webphone-context';
 import { isE164 } from '@/lib/phone';
 import type { LeadRecord } from '@/components/dialer/LeadCard';
-import { Zap, PhoneOff, Trophy, Clock, PhoneCall, CalendarCheck } from 'lucide-react';
+import { Zap, PhoneOff, Trophy, Clock, PhoneCall, CalendarCheck, Sparkles, Keyboard, X as XIcon, PhoneMissed } from 'lucide-react';
+import { PRODUCT_FEATURES } from '@/lib/constants';
 
 function formatPhone(phone: string): string {
   const m = phone.match(/^\+1(\d{3})(\d{3})(\d{4})$/);
@@ -167,16 +172,17 @@ function PowerDialBar({
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-rose-500/30 bg-rose-500/[0.06] px-4 py-3"
+      className="rounded-2xl border border-violet-500/30 bg-violet-500/[0.06] px-4 py-3"
     >
       <div className="flex flex-wrap items-center gap-3">
         {/* Status */}
         <div className="flex items-center gap-2">
           <span className="relative flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-60" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-400" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-60" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-violet-400" />
           </span>
-          <span className="text-xs font-bold uppercase tracking-widest text-rose-300">Power Dial Active</span>
+          <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+          <span className="text-xs font-bold uppercase tracking-widest text-violet-300">{PRODUCT_FEATURES.POWER_DIAL_NAME} Active · Smart routing enabled</span>
         </div>
 
         {/* Session counters */}
@@ -211,7 +217,7 @@ function PowerDialBar({
         <button
           type="button"
           onClick={onEnd}
-          className="ml-auto flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/20"
+          className="ml-auto flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/20 sm:ml-auto"
         >
           <PhoneOff className="h-3 w-3" />
           End Session
@@ -334,11 +340,11 @@ function PowerPreFlight({
       >
         <div className="flex items-center gap-3 mb-5">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/15">
-            <Zap className="h-5 w-5 text-violet-400" />
+            <Sparkles className="h-5 w-5 text-violet-400" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-white">Start Power Dial Session</h2>
-            <p className="text-xs text-slate-500">Auto-dial through your queue</p>
+            <h2 className="text-base font-bold text-white">Start {PRODUCT_FEATURES.POWER_DIAL_NAME}</h2>
+            <p className="text-xs text-slate-500">Auto-dial with smart routing</p>
           </div>
         </div>
 
@@ -529,7 +535,23 @@ function DialerContent() {
   const powerDialIndexRef = useRef<number>(0);
   const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Track whether the current call was ever answered (reached 'active' state)
+  const wasAnsweredRef = useRef(false);
+  // Stable refs for async callbacks to avoid stale closures
+  const callSidRef = useRef<string | null>(null);
+  const dialModeRef = useRef<'manual' | 'power'>('manual');
+  const selectedLeadRef = useRef<LeadRecord | null>(null);
+  // Forward ref so the callStatus effect can call handleAutoNoAnswer before it's defined
+  const handleAutoNoAnswerRef = useRef<() => Promise<void>>(() => Promise.resolve());
+
+  // Toast + UI state
+  const [noAnswerToast, setNoAnswerToast] = useState(false);
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+
   useEffect(() => { powerSessionRef.current = powerSession; }, [powerSession]);
+  useEffect(() => { callSidRef.current = callState.callSid; }, [callState.callSid]);
+  useEffect(() => { dialModeRef.current = dialMode; }, [dialMode]);
+  useEffect(() => { selectedLeadRef.current = selectedLead; }, [selectedLead]);
 
   // ── Fetch purchased numbers ───────────────────────────────────────────────────
   useEffect(() => {
@@ -550,6 +572,10 @@ function DialerContent() {
 
   // ── Sync WebRTC call status → local callState ─────────────────────────────────
   useEffect(() => {
+    // Track whether this call was ever answered
+    if (callStatus === 'connecting') wasAnsweredRef.current = false;
+    if (callStatus === 'active' || callStatus === 'held') wasAnsweredRef.current = true;
+
     setCallState((prev) => {
       const statusMap: Record<typeof callStatus, CallState['status']> = {
         idle: 'idle',
@@ -572,8 +598,15 @@ function DialerContent() {
 
     if (callStatus === 'ended') {
       setHistoryRefreshKey((k) => k + 1);
-      setShowDispositionModal(true);
+      if (!wasAnsweredRef.current) {
+        // Call never connected — auto-handle silently
+        handleAutoNoAnswerRef.current();
+      } else {
+        setShowDispositionModal(true);
+      }
+      wasAnsweredRef.current = false;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callStatus, isMuted, isOnHold]);
 
   // ── Log call to DB when WebRTC gives us a call_control_id ───────────────────
@@ -901,6 +934,24 @@ function DialerContent() {
     }, 1000);
   }, [stopCountdown, advancePowerDial]);
 
+  // ── Auto-no-answer: silently dispositions unanswered calls ───────────────────
+  const handleAutoNoAnswer = useCallback(async () => {
+    const callSid = callSidRef.current;
+    if (callSid) {
+      supabase.from('calls').update({ disposition: 'no_answer' })
+        .eq('telnyx_call_id', callSid);
+    }
+    setCallState(INITIAL_CALL_STATE);
+    setNoAnswerToast(true);
+    setTimeout(() => setNoAnswerToast(false), 5000);
+    refreshStats();
+    if (dialModeRef.current === 'power') {
+      startCountdown();
+    }
+  }, [supabase, refreshStats, startCountdown]);
+
+  useEffect(() => { handleAutoNoAnswerRef.current = handleAutoNoAnswer; }, [handleAutoNoAnswer]);
+
   const endPowerDialSession = useCallback(() => {
     stopCountdown();
     const sess = powerSessionRef.current;
@@ -1074,28 +1125,16 @@ function DialerContent() {
     }, 400);
   }, [selectedLead, supabase, leads]);
 
-  // ── Keyboard shortcuts ────────────────────────────────────────────────────────
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) return;
-
-      // Countdown shortcuts
-      if (powerCountdown !== null) {
-        if (e.code === 'Space') { e.preventDefault(); advancePowerDial(); }
-        if (e.key === 'Escape') { e.preventDefault(); stopCountdown(); }
-        return;
-      }
-
-      if (e.code === 'Space') {
-        e.preventDefault();
-        if (callState.status === 'idle') handleDial();
-        else if (['connecting', 'ringing', 'connected'].includes(callState.status)) hangUp();
-      }
-      if (e.key.toLowerCase() === 'm') toggleMute();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [callState.status, handleDial, hangUp, toggleMute, powerCountdown, advancePowerDial, stopCountdown]);
+  const handleMarkHot = useCallback(async () => {
+    if (!selectedLead) return;
+    const currentTags = selectedLead.tags ?? [];
+    const isHot = currentTags.includes('hot');
+    const newTags = isHot ? currentTags.filter((t) => t !== 'hot') : [...currentTags, 'hot'];
+    await supabase.from('leads').update({ tags: newTags }).eq('id', selectedLead.id);
+    const updated = { ...selectedLead, tags: newTags };
+    setLeads((prev) => prev.map((l) => (l.id === selectedLead.id ? updated : l)));
+    setSelectedLead(updated);
+  }, [selectedLead, supabase]);
 
   // ── Lead selection ────────────────────────────────────────────────────────────
   const handleSelectLead = useCallback((lead: LeadRecord) => {
@@ -1118,6 +1157,34 @@ function DialerContent() {
       setPhoneNumber(next.phone ?? '');
     }
   }, [leads, selectedLead]);
+
+  // ── Keyboard shortcuts ────────────────────────────────────────────────────────
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) return;
+
+      if (e.key === '?') { e.preventDefault(); setShowShortcutsModal((v) => !v); return; }
+      if (e.key === 'Escape') { setShowShortcutsModal(false); }
+
+      // Countdown shortcuts
+      if (powerCountdown !== null) {
+        if (e.code === 'Space') { e.preventDefault(); advancePowerDial(); }
+        if (e.key === 'Escape') { e.preventDefault(); stopCountdown(); }
+        if (e.key.toLowerCase() === 'p') { e.preventDefault(); stopCountdown(); }
+        return;
+      }
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (callState.status === 'idle') handleDial();
+        else if (['connecting', 'ringing', 'connected'].includes(callState.status)) hangUp();
+      }
+      if (e.key.toLowerCase() === 'm') toggleMute();
+      if (e.key.toLowerCase() === 's' && callState.status === 'idle') { e.preventDefault(); handleSkipNext(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [callState.status, handleDial, hangUp, toggleMute, powerCountdown, advancePowerDial, stopCountdown, handleSkipNext]);
 
   const reorderLeads = useCallback((draggedId: string, targetId: string) => {
     setLeads((prev) => {
@@ -1186,6 +1253,12 @@ function DialerContent() {
     { key: 'history', label: 'History' },
   ];
 
+  // ── Page title ────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    document.title = `${PRODUCT_FEATURES.DIALER_NAME} | GrowthDialer`;
+    return () => { document.title = 'GrowthDialer'; };
+  }, []);
+
   // Next leads preview for power dial bar
   const nextPowerLeads = powerDialQueueRef.current.slice(powerDialIndex, powerDialIndex + 3);
   const nextPowerLead = powerDialQueueRef.current[powerDialIndex] ?? null;
@@ -1193,6 +1266,78 @@ function DialerContent() {
   return (
     <div className="flex-1 overflow-y-auto text-slate-100">
       <MicPermissionModal />
+
+      {/* ── No-answer toast ───────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {noAnswerToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            className="fixed bottom-6 left-1/2 z-[60] flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-white/[0.10] bg-[oklch(0.12_0.02_282)] px-5 py-3 shadow-xl shadow-black/60"
+          >
+            <PhoneMissed className="h-4 w-4 shrink-0 text-slate-400" />
+            <p className="text-sm font-semibold text-slate-200">No answer</p>
+            <span className="text-xs text-slate-500">
+              {dialMode === 'power' ? '· Moving to next lead in 5s' : '· Marked as no answer'}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Keyboard shortcuts modal ──────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showShortcutsModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowShortcutsModal(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ backgroundColor: 'rgba(0,0,0,0.70)', backdropFilter: 'blur(4px)' }}
+          >
+            <motion.div
+              initial={{ scale: 0.94, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.94, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[oklch(0.10_0.025_282)] p-6 shadow-2xl shadow-black/70"
+            >
+              <div className="mb-5 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Keyboard className="h-4 w-4 text-slate-400" />
+                  <h2 className="text-sm font-bold text-white">Keyboard Shortcuts</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowShortcutsModal(false)}
+                  className="rounded-lg p-1 text-slate-500 hover:text-slate-300"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {[
+                  { key: 'Space', desc: 'Start call / Hang up' },
+                  { key: '1 – 8', desc: 'Quick disposition' },
+                  { key: 'M', desc: 'Mute / Unmute' },
+                  { key: 'S', desc: 'Skip to next lead (idle)' },
+                  { key: 'P', desc: 'Pause countdown (AI Power Dial)' },
+                  { key: 'Esc', desc: 'Close modal / pause countdown' },
+                  { key: '?', desc: 'Toggle this shortcuts panel' },
+                ].map(({ key, desc }) => (
+                  <div key={key} className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400">{desc}</span>
+                    <kbd className="rounded-lg border border-white/[0.10] bg-white/[0.05] px-2.5 py-1 font-mono text-[11px] text-slate-300">
+                      {key}
+                    </kbd>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Disposition Modal ─────────────────────────────────────────────────── */}
       <DispositionModal
@@ -1249,7 +1394,17 @@ function DialerContent() {
                 connectRate={stats.connectRate}
               />
             </div>
-            <PhoneStatusBar />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowShortcutsModal(true)}
+                title="Keyboard shortcuts (?)"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.02] text-slate-500 transition hover:text-slate-300"
+              >
+                <Keyboard className="h-4 w-4" />
+              </button>
+              <PhoneStatusBar />
+            </div>
           </div>
 
           {/* Power dial bar */}
@@ -1270,19 +1425,63 @@ function DialerContent() {
             disabled={callState.status !== 'idle'}
           />
 
-          <div className="grid gap-5 xl:grid-cols-[280px_1fr_300px]">
-            <LeadQueue
-              {...leadQueueProps}
+          {/* ── 3-column focused layout ──────────────────────────────────── */}
+          <div className="grid gap-5 lg:grid-cols-[320px_1fr_300px]">
+            <UpNextQueue
+              leads={leads}
+              selectedLeadId={selectedLead?.id ?? null}
               onSelectLead={handleSelectLead}
               onCallLead={handleCallLead}
             />
-            <DialerPanel {...dialerPanelProps} />
-            <CoachingSidebar
+            <CurrentLeadCard
+              selectedLead={selectedLead}
+              callState={callState}
+              notes={notes}
+              onDial={handleDial}
+              onMute={toggleMute}
+              onHold={toggleHold}
+              onRecord={() => setIsRecording((prev) => !prev)}
+              onEndCall={hangUp}
+              onSkip={handleSkipNext}
+              onMarkHot={handleMarkHot}
+              onMarkDNC={handleMarkDNC}
+              onSaveNotes={handleSaveNotes}
+              isReady={phoneStatus === 'ready'}
+              isRecording={isRecording}
+              error={error}
+            />
+            <AiInsightsPanel
               lead={selectedLead}
               notes={notes}
-              onSaveNotes={handleSaveNotes}
               refreshKey={historyRefreshKey}
             />
+          </div>
+
+          {/* ── Bottom row: manual dial + AI Power Dial trigger ──────────── */}
+          <div className="flex items-start gap-4">
+            <div className="flex-1">
+              <ManualDialCollapsible
+                countryCode={countryCode}
+                phoneNumber={phoneNumber}
+                onCountryChange={setCountryCode}
+                onPhoneChange={setPhoneNumber}
+                onDial={handleDial}
+                onDigit={(digit) => setPhoneNumber((prev) => `${prev}${digit}`)}
+                onBackspace={() => setPhoneNumber((prev) => prev.slice(0, -1))}
+                isReady={phoneStatus === 'ready'}
+              />
+            </div>
+            {dialMode !== 'power' && (
+              <button
+                type="button"
+                onClick={() => setShowPowerPreFlight(true)}
+                disabled={phoneStatus !== 'ready' || callState.status !== 'idle'}
+                className="flex shrink-0 items-center gap-2.5 rounded-2xl border border-violet-500/30 bg-gradient-to-r from-violet-600/20 to-emerald-600/10 px-6 py-3.5 text-sm font-bold text-violet-300 shadow-lg shadow-violet-500/10 transition hover:from-violet-600/30 hover:to-emerald-600/20 hover:text-violet-200 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Sparkles className="h-4 w-4" />
+                Start AI Power Dial
+              </button>
+            )}
           </div>
         </div>
       </div>

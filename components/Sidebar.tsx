@@ -16,6 +16,7 @@ import {
   LogOut,
   X,
   Hash,
+  Sparkles,
 } from "lucide-react";
 import { useLeads } from "@/contexts/leads-context";
 import { useMobileNav } from "@/contexts/mobile-nav-context";
@@ -31,11 +32,12 @@ type NavItem = {
   href: string;
   badge?: "Live";
   showCount?: boolean;
+  sparkle?: boolean;
 };
 
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: Phone, label: "Dialer", href: "/dialer", badge: "Live" },
+  { icon: Phone, label: "AI Dialer", href: "/dialer", badge: "Live", sparkle: true },
   { icon: Users, label: "Leads", href: "/leads", showCount: true },
   { icon: BarChart2, label: "Analytics", href: "/analytics" },
   { icon: Headphones, label: "Recordings", href: "/recordings" },
@@ -126,7 +128,10 @@ export default function Sidebar() {
                   )}
                 >
                   <item.icon className="w-4 h-4 shrink-0" />
-                  <span className="flex-1">{item.label}</span>
+                  <span className="flex-1 flex items-center gap-1.5">
+                    {item.label}
+                    {item.sparkle && <Sparkles className="h-3 w-3 text-amber-400/80" />}
+                  </span>
                   {item.badge === "Live" && (
                     <Badge className="bg-emerald-500 text-white text-[10px] px-1.5 py-0 h-4 rounded-full">
                       Live

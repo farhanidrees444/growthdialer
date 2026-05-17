@@ -11,7 +11,12 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(mkdir -p \"C:\\\\Users\\\\HP\\\\Desktop\\\\growthdialer\\\\app\\\\api\\\\power-dial\\\\sessions\\\\[id]\")"
+      "Bash(mkdir -p \"C:\\\\Users\\\\HP\\\\Desktop\\\\growthdialer\\\\app\\\\api\\\\power-dial\\\\sessions\\\\[id]\")",
+      "Bash(dir -R -Include *.tsx,*.ts,*.jsx,*.js)",
+      "Bash(findstr \"app\\\\|pages\\\\|components\\\\|lib\")",
+      "Bash(Select-Object Name)",
+      "PowerShell(ls \"c:\\\\Users\\\\HP\\\\Desktop\\\\growthdialer\" | Where-Object {$_.PSIsContainer} | Select-Object Name)",
+      "Bash(npx next *)"
     ],
     "additionalDirectories": [
       "C:\\Users\\HP\\Desktop\\growthdialer\\app\\api\\power-dial\\sessions"

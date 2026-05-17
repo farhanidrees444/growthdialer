@@ -15,6 +15,7 @@ import {
   Clock,
   Hash,
   PhoneCall,
+  Sparkles,
 } from 'lucide-react';
 import ManualDialer from '@/components/dialer/ManualDialer';
 import { LeadRecord } from '@/components/dialer/LeadCard';
@@ -431,28 +432,33 @@ export default function DialerPanel({
                 type="button"
                 onClick={onStartPowerDial}
                 disabled={!isReady || callState.status !== 'idle'}
-                className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 transition ${
+                className={`flex w-full flex-col rounded-xl border px-3 py-2.5 transition ${
                   dialMode === 'power'
                     ? 'border-rose-500/30 bg-rose-500/[0.08]'
                     : 'border-violet-500/20 bg-violet-500/[0.04] hover:border-violet-500/35 hover:bg-violet-500/[0.08] disabled:cursor-not-allowed disabled:opacity-40'
                 }`}
               >
-                <span
-                  className={`flex items-center gap-1.5 text-xs font-semibold ${
-                    dialMode === 'power' ? 'text-rose-300' : 'text-violet-300'
-                  }`}
-                >
-                  <Zap className="h-3 w-3" />
-                  Power Dialing
-                </span>
-                {dialMode === 'power' ? (
-                  <span className="rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold text-rose-400">
-                    Active
+                <div className="flex w-full items-center justify-between">
+                  <span
+                    className={`flex items-center gap-1.5 text-xs font-semibold ${
+                      dialMode === 'power' ? 'text-rose-300' : 'text-violet-300'
+                    }`}
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    AI Power Dial
                   </span>
-                ) : (
-                  <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] text-violet-400">
-                    Start
-                  </span>
+                  {dialMode === 'power' ? (
+                    <span className="rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold text-rose-400">
+                      Active
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] text-violet-400">
+                      Start
+                    </span>
+                  )}
+                </div>
+                {dialMode === 'power' && (
+                  <p className="mt-0.5 text-[10px] text-rose-300/60">Smart routing enabled</p>
                 )}
               </button>
 
