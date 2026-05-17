@@ -23,7 +23,7 @@ export interface WebPhoneContextValue {
   isMuted: boolean;
   isOnHold: boolean;
   micPermission: MicPermission;
-  makeCall: (destination: string) => void;
+  makeCall: (destination: string, callerNumber?: string) => void;
   hangup: () => void;
   toggleMute: () => void;
   toggleHold: () => void;
@@ -200,7 +200,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ── Call actions ─────────────────────────────────────────────────────────────
-  const makeCall = useCallback((destination: string) => {
+  const makeCall = useCallback((destination: string, callerNumber?: string) => {
     if (!clientRef.current) {
       console.warn('[WebPhone] makeCall: client not initialized');
       return;
@@ -213,7 +213,22 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     setIsMuted(false);
     setIsOnHold(false);
     try {
-      const call = clientRef.current.newCall({ destinationNumber: destination });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const callParams: Record<string, any> = {
+        destinationNumber: destination,
+        audio: true,
+        video: false,
+      };
+      if (callerNumber) {
+        callParams.callerNumber = callerNumber;
+        callParams.callerName = 'GrowthDialer';
+      }
+      console.log('[WebPhone] initiating call:', {
+        destinationNumber: destination,
+        callerNumber: callerNumber ?? '(none)',
+        callerName: callerNumber ? 'GrowthDialer' : '(none)',
+      });
+      const call = clientRef.current.newCall(callParams);
       activeCallRef.current = call;
     } catch (err) {
       console.error('[WebPhone] newCall error:', err);

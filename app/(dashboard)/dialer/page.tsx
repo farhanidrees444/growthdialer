@@ -104,11 +104,31 @@ function DialerContent() {
   const [error, setError] = useState<string | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [mobileTab, setMobileTab] = useState<MobileTab>('call');
+  const [purchasedNumbers, setPurchasedNumbers] = useState<
+    Array<{ id: string; phone_number: string; friendly_name: string | null }>
+  >([]);
+  const [fromNumber, setFromNumber] = useState('');
   const hasAutoSelectedRef = useRef(false);
   const preselectedLeadId = searchParams?.get('lead_id') ?? null;
 
   // Store the pending dial target so we can log it once we have call_control_id
   const pendingDialRef = useRef<{ to: string; leadId: string | null }>({ to: '', leadId: null });
+
+  // ── Fetch user's purchased numbers ───────────────────────────────────────────
+  useEffect(() => {
+    supabase
+      .from('purchased_numbers')
+      .select('id, phone_number, friendly_name, is_default')
+      .eq('status', 'active')
+      .order('is_default', { ascending: false })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setPurchasedNumbers(data);
+          const defaultNum = data.find((n: { is_default: boolean }) => n.is_default) ?? data[0];
+          setFromNumber(defaultNum.phone_number);
+        }
+      });
+  }, [supabase]);
 
   // ── Sync WebRTC call status → local callState ────────────────────────────────
   useEffect(() => {
@@ -342,9 +362,9 @@ function DialerContent() {
       }
 
       // Initiate WebRTC call — audio flows browser ↔ destination
-      webPhoneMakeCall(destination);
+      webPhoneMakeCall(destination, fromNumber || undefined);
     },
-    [sanitize, countryCode, phoneStatus, micPermission, supabase, webPhoneMakeCall],
+    [sanitize, countryCode, phoneStatus, micPermission, supabase, webPhoneMakeCall, fromNumber],
   );
 
   const handleDial = useCallback(() => dial(phoneNumber, selectedLead), [dial, phoneNumber, selectedLead]);
@@ -473,6 +493,9 @@ function DialerContent() {
     countryCode,
     callState,
     notes,
+    fromNumber,
+    purchasedNumbers,
+    onFromNumberChange: setFromNumber,
     onCountryChange: setCountryCode,
     onPhoneChange: setPhoneNumber,
     onDigit: (digit: string) => setPhoneNumber((prev) => `${prev}${digit}`),
