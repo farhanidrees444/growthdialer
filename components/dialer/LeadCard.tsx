@@ -35,6 +35,7 @@ export interface LeadRecord {
   revenue?: string;
   activity_summary?: string;
   profile_url?: string;
+  dnc?: boolean;
 }
 
 interface LeadCardProps {

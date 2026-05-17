@@ -2,9 +2,8 @@
 
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, PhoneOff, Mic, MicOff, Pause, Disc, SkipForward } from 'lucide-react';
+import { Phone, PhoneOff, Mic, MicOff, Pause, Disc, SkipForward, Zap } from 'lucide-react';
 import ManualDialer from '@/components/dialer/ManualDialer';
-import DispositionPanel from '@/components/dialer/DispositionPanel';
 import { LeadRecord } from '@/components/dialer/LeadCard';
 
 function formatTimer(seconds: number): string {
@@ -28,7 +27,6 @@ interface DialerPanelProps {
   phoneNumber: string;
   countryCode: string;
   callState: CallState;
-  notes: string;
   onCountryChange: (value: string) => void;
   onPhoneChange: (value: string) => void;
   onDigit: (digit: string) => void;
@@ -39,11 +37,11 @@ interface DialerPanelProps {
   onRecord: () => void;
   onNextLead: () => void;
   onEndCall: () => void;
-  onSaveNotes: (value: string) => void;
-  onDisposition: (disp: string, localNotes: string, callbackAt?: string) => Promise<void>;
   isReady: boolean;
   isRecording: boolean;
   error?: string | null;
+  dialMode: 'manual' | 'power';
+  onStartPowerDial: () => void;
 }
 
 export default function DialerPanel({
@@ -51,7 +49,6 @@ export default function DialerPanel({
   phoneNumber,
   countryCode,
   callState,
-  notes,
   onCountryChange,
   onPhoneChange,
   onDigit,
@@ -62,11 +59,11 @@ export default function DialerPanel({
   onRecord,
   onNextLead,
   onEndCall,
-  onSaveNotes,
-  onDisposition,
   isReady,
   isRecording,
   error,
+  dialMode,
+  onStartPowerDial,
 }: DialerPanelProps) {
   const isIdle = callState.status === 'idle';
   const isActive = ['connecting', 'ringing', 'connected'].includes(callState.status);
@@ -126,7 +123,7 @@ export default function DialerPanel({
             <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
               <p className="text-slate-500">Status</p>
               <p className="mt-1 truncate font-semibold capitalize text-white">
-                {selectedLead.status.replace('_', ' ')}
+                {selectedLead.status.replace(/_/g, ' ')}
               </p>
             </div>
           </div>
@@ -277,21 +274,6 @@ export default function DialerPanel({
         </motion.div>
       )}
 
-      {/* ── Disposition panel — shown post-call ─────────────────────────── */}
-      {isDisconnected && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5"
-        >
-          <DispositionPanel
-            notes={notes}
-            onSaveNotes={onSaveNotes}
-            onDisposition={onDisposition}
-          />
-        </motion.div>
-      )}
-
       {/* ── Manual dialer + mode indicator ──────────────────────────────── */}
       <div className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
         <ManualDialer
@@ -307,22 +289,54 @@ export default function DialerPanel({
 
         {/* Dial mode + quick stats */}
         <div className="space-y-4">
-          {/* Mode selector — manual only, others coming soon */}
+          {/* Mode selector */}
           <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
             <p className="mb-3 text-[10px] uppercase tracking-widest text-slate-500">Dial Mode</p>
             <div className="space-y-2">
-              <div className="flex items-center justify-between rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] px-3 py-2.5">
-                <span className="text-xs font-semibold text-emerald-300">Manual</span>
-                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
-                  Active
+              {/* Manual — always available */}
+              <div
+                className={`flex items-center justify-between rounded-xl border px-3 py-2.5 transition ${
+                  dialMode === 'manual'
+                    ? 'border-emerald-500/25 bg-emerald-500/[0.06]'
+                    : 'border-white/[0.04] bg-white/[0.01]'
+                }`}
+              >
+                <span className={`text-xs font-semibold ${dialMode === 'manual' ? 'text-emerald-300' : 'text-slate-400'}`}>
+                  Manual
                 </span>
+                {dialMode === 'manual' && (
+                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+                    Active
+                  </span>
+                )}
               </div>
-              <div className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.01] px-3 py-2.5 opacity-40">
-                <span className="text-xs text-slate-500">Power Dialing</span>
-                <span className="rounded-full bg-slate-700/60 px-2 py-0.5 text-[10px] text-slate-500">
-                  Soon
+
+              {/* Power Dialing — now active */}
+              <button
+                type="button"
+                onClick={onStartPowerDial}
+                disabled={!isReady || callState.status !== 'idle'}
+                className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 transition ${
+                  dialMode === 'power'
+                    ? 'border-rose-500/30 bg-rose-500/[0.08]'
+                    : 'border-violet-500/20 bg-violet-500/[0.04] hover:border-violet-500/35 hover:bg-violet-500/[0.08] disabled:opacity-40 disabled:cursor-not-allowed'
+                }`}
+              >
+                <span className={`flex items-center gap-1.5 text-xs font-semibold ${dialMode === 'power' ? 'text-rose-300' : 'text-violet-300'}`}>
+                  <Zap className="h-3 w-3" />
+                  Power Dialing
                 </span>
-              </div>
+                {dialMode === 'power' ? (
+                  <span className="rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold text-rose-400">
+                    Active
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] text-violet-400">
+                    Start
+                  </span>
+                )}
+              </button>
+
               <div className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.01] px-3 py-2.5 opacity-40">
                 <span className="text-xs text-slate-500">Parallel Lines</span>
                 <span className="rounded-full bg-slate-700/60 px-2 py-0.5 text-[10px] text-slate-500">

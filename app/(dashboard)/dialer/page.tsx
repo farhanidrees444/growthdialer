@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import LiveStats from '@/components/dialer/LiveStats';
@@ -12,14 +13,23 @@ import DialerPanel from '@/components/dialer/DialerPanel';
 import CoachingSidebar from '@/components/dialer/CoachingSidebar';
 import PhoneStatusBar from '@/components/dialer/PhoneStatusBar';
 import MicPermissionModal from '@/components/dialer/MicPermissionModal';
+import DispositionModal from '@/components/dialer/DispositionModal';
 import { WebPhoneProvider, useWebPhone } from '@/contexts/webphone-context';
 import { isE164 } from '@/lib/phone';
 import type { LeadRecord } from '@/components/dialer/LeadCard';
+import { Zap, PhoneOff, Trophy, Clock, PhoneCall, CalendarCheck } from 'lucide-react';
 
 function formatPhone(phone: string): string {
   const m = phone.match(/^\+1(\d{3})(\d{3})(\d{4})$/);
   if (m) return `+1 (${m[1]}) ${m[2]}-${m[3]}`;
   return phone;
+}
+
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s > 0 ? `${m}m ${s}s` : `${m}m`;
 }
 
 interface CallState {
@@ -44,17 +54,27 @@ const INITIAL_CALL_STATE: CallState = {
   leadName: null,
 };
 
-const DISPOSITION_STATUS_MAP: Record<string, string> = {
-  'Meeting Booked': 'meeting_booked',
-  'Not Interested': 'not_interested',
-  Callback: 'callback',
-  'Wrong Number': 'wrong_number',
-  Voicemail: 'contacted',
-  'No Answer': 'contacted',
-  Connected: 'connected',
+const DISPOSITION_STATUS_MAP: Record<string, LeadRecord['status']> = {
+  // New modal keys
+  interested:      'connected',
+  callback:        'callback',
+  meeting_booked:  'meeting_booked',
+  voicemail:       'contacted',
+  not_interested:  'not_interested',
+  wrong_number:    'wrong_number',
+  gatekeeper:      'contacted',
+  dnc:             'do_not_call',
 };
 
 type MobileTab = 'queue' | 'call' | 'history';
+
+interface PowerSession {
+  id: string;
+  totalCalls: number;
+  connectedCalls: number;
+  meetingsBooked: number;
+  talkTime: number;
+}
 
 function MobileStatStrip({ calls, connects, meetings, connectRate }: {
   calls: number; connects: number; meetings: number; connectRate: number;
@@ -133,11 +153,327 @@ function CallingFromCard({
   );
 }
 
+// ── Power Dial Active Bar ─────────────────────────────────────────────────────
+function PowerDialBar({
+  session,
+  nextLeads,
+  onEnd,
+}: {
+  session: PowerSession;
+  nextLeads: LeadRecord[];
+  onEnd: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl border border-rose-500/30 bg-rose-500/[0.06] px-4 py-3"
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Status */}
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-60" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-400" />
+          </span>
+          <span className="text-xs font-bold uppercase tracking-widest text-rose-300">Power Dial Active</span>
+        </div>
+
+        {/* Session counters */}
+        <div className="flex items-center gap-4 text-xs">
+          <span className="text-slate-400">
+            <span className="font-bold text-white">{session.totalCalls}</span> calls
+          </span>
+          <span className="text-slate-400">
+            <span className="font-bold text-white">{session.connectedCalls}</span> connected
+          </span>
+          <span className="text-slate-400">
+            <span className="font-bold text-emerald-300">{session.meetingsBooked}</span> meetings
+          </span>
+        </div>
+
+        {/* Next up */}
+        {nextLeads.length > 0 && (
+          <div className="hidden items-center gap-2 sm:flex">
+            <span className="text-[10px] uppercase tracking-wider text-slate-600">Next:</span>
+            {nextLeads.slice(0, 3).map((lead) => (
+              <span
+                key={lead.id}
+                className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2.5 py-0.5 text-[10px] font-medium text-slate-300"
+              >
+                {lead.name.split(' ')[0]}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* End session */}
+        <button
+          type="button"
+          onClick={onEnd}
+          className="ml-auto flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/20"
+        >
+          <PhoneOff className="h-3 w-3" />
+          End Session
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Power Dial Countdown Overlay ──────────────────────────────────────────────
+function PowerCountdownOverlay({
+  countdown,
+  nextLead,
+  onSkip,
+  onPause,
+}: {
+  countdown: number;
+  nextLead: LeadRecord | null;
+  onSkip: () => void;
+  onPause: () => void;
+}) {
+  const pct = ((5 - countdown) / 5) * 100;
+  const r = 36;
+  const circumference = 2 * Math.PI * r;
+  const strokeDash = circumference - (pct / 100) * circumference;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-40 flex items-center justify-center"
+      style={{ backgroundColor: 'rgba(0,0,0,0.70)', backdropFilter: 'blur(4px)' }}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="flex flex-col items-center gap-6 rounded-2xl border border-white/[0.08] bg-[oklch(0.10_0.025_282)] px-10 py-8 shadow-2xl shadow-black/60"
+      >
+        {/* Circular countdown */}
+        <div className="relative flex items-center justify-center">
+          <svg width={96} height={96} className="-rotate-90">
+            <circle cx={48} cy={48} r={r} fill="none" stroke="oklch(1 0 0 / 6%)" strokeWidth={5} />
+            <circle
+              cx={48}
+              cy={48}
+              r={r}
+              fill="none"
+              stroke="#10b981"
+              strokeWidth={5}
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDash}
+              style={{ transition: 'stroke-dashoffset 0.9s linear' }}
+            />
+          </svg>
+          <span className="absolute text-3xl font-bold text-white">{countdown}</span>
+        </div>
+
+        <div className="text-center">
+          <p className="text-sm font-semibold text-slate-300">
+            {nextLead ? `Calling ${nextLead.name.split(' ')[0]} in…` : 'Next call in…'}
+          </p>
+          {nextLead && (
+            <p className="mt-0.5 text-xs text-slate-500">
+              {nextLead.company} · {nextLead.phone}
+            </p>
+          )}
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onPause}
+            className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-5 py-2.5 text-sm font-semibold text-slate-300 transition hover:text-white"
+          >
+            Pause <span className="text-slate-600">(Esc)</span>
+          </button>
+          <button
+            type="button"
+            onClick={onSkip}
+            className="rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-2.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/30 transition hover:from-emerald-400 hover:to-emerald-500"
+          >
+            Call Now <span className="text-black/50">(Space)</span>
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ── Pre-Flight Modal ──────────────────────────────────────────────────────────
+function PowerPreFlight({
+  queueSize,
+  skipAlreadyCalled,
+  skipDNC,
+  onToggleSkipCalled: setSkipAlreadyCalled,
+  onToggleSkipDNC: setSkipDNC,
+  onStart,
+  onCancel,
+}: {
+  queueSize: number;
+  skipAlreadyCalled: boolean;
+  skipDNC: boolean;
+  onToggleSkipCalled: (v: boolean) => void;
+  onToggleSkipDNC: (v: boolean) => void;
+  onStart: () => void;
+  onCancel: () => void;
+}) {
+  const estMin = Math.round(queueSize * 1.5);
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0,0,0,0.80)', backdropFilter: 'blur(6px)' }}
+    >
+      <motion.div
+        initial={{ scale: 0.94, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[oklch(0.10_0.025_282)] p-6 shadow-2xl shadow-black/70"
+      >
+        <div className="flex items-center gap-3 mb-5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/15">
+            <Zap className="h-5 w-5 text-violet-400" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-white">Start Power Dial Session</h2>
+            <p className="text-xs text-slate-500">Auto-dial through your queue</p>
+          </div>
+        </div>
+
+        <div className="mb-5 grid grid-cols-2 gap-3 text-center">
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3">
+            <p className="text-2xl font-bold text-white">{queueSize}</p>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">Leads in queue</p>
+          </div>
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3">
+            <p className="text-2xl font-bold text-white">~{estMin}m</p>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">Est. duration</p>
+          </div>
+        </div>
+
+        <div className="mb-5 space-y-2.5">
+          <label className="flex cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              checked={skipAlreadyCalled}
+              onChange={(e) => setSkipAlreadyCalled(e.target.checked)}
+              className="h-4 w-4 rounded accent-emerald-500"
+            />
+            <span className="text-sm text-slate-300">Skip already-called leads</span>
+          </label>
+          <label className="flex cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              checked={skipDNC}
+              onChange={(e) => setSkipDNC(e.target.checked)}
+              className="h-4 w-4 rounded accent-emerald-500"
+            />
+            <span className="text-sm text-slate-300">Skip Do Not Call leads</span>
+          </label>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 rounded-xl border border-white/[0.06] bg-white/[0.02] py-3 text-sm font-semibold text-slate-400 transition hover:text-white"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onStart}
+            disabled={queueSize === 0}
+            className="flex-[2] rounded-xl bg-gradient-to-r from-violet-500 to-violet-600 py-3 text-sm font-bold text-white shadow-lg shadow-violet-500/30 transition hover:from-violet-400 hover:to-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Start Session
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ── Session Summary Modal ─────────────────────────────────────────────────────
+function SessionSummary({
+  summary,
+  onClose,
+}: {
+  summary: PowerSession;
+  onClose: () => void;
+}) {
+  const convRate =
+    summary.connectedCalls > 0
+      ? ((summary.meetingsBooked / summary.connectedCalls) * 100).toFixed(1)
+      : '0';
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0,0,0,0.80)', backdropFilter: 'blur(6px)' }}
+    >
+      <motion.div
+        initial={{ scale: 0.94, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[oklch(0.10_0.025_282)] p-6 shadow-2xl shadow-black/70"
+      >
+        <div className="mb-6 text-center">
+          <div className="mb-3 flex justify-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15">
+              <Trophy className="h-7 w-7 text-emerald-400" />
+            </div>
+          </div>
+          <h2 className="text-xl font-bold text-white">Session Complete!</h2>
+          <p className="mt-1 text-sm text-slate-500">Here's how you did</p>
+        </div>
+
+        <div className="mb-6 grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3 text-center">
+            <PhoneCall className="mx-auto mb-1 h-4 w-4 text-slate-400" />
+            <p className="text-2xl font-bold text-white">{summary.totalCalls}</p>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">Total Calls</p>
+          </div>
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3 text-center">
+            <PhoneCall className="mx-auto mb-1 h-4 w-4 text-emerald-400" />
+            <p className="text-2xl font-bold text-white">{summary.connectedCalls}</p>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">Connected</p>
+          </div>
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] px-3 py-3 text-center">
+            <CalendarCheck className="mx-auto mb-1 h-4 w-4 text-emerald-400" />
+            <p className="text-2xl font-bold text-emerald-300">{summary.meetingsBooked}</p>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">Meetings</p>
+          </div>
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3 text-center">
+            <Clock className="mx-auto mb-1 h-4 w-4 text-slate-400" />
+            <p className="text-2xl font-bold text-white">{formatDuration(summary.talkTime)}</p>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">Talk Time</p>
+          </div>
+        </div>
+
+        <div className="mb-5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-center">
+          <p className="text-xs text-slate-500">Meeting Conversion Rate</p>
+          <p className="mt-1 text-3xl font-bold text-emerald-300">{convRate}%</p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 py-3 text-sm font-bold text-black shadow-lg shadow-emerald-500/30 transition hover:from-emerald-400 hover:to-emerald-500"
+        >
+          Done
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+
+// ── Main Dialer Content ───────────────────────────────────────────────────────
 function DialerContent() {
   const [supabase] = useState(() => createClient());
   const searchParams = useSearchParams();
 
-  // ── WebRTC phone ─────────────────────────────────────────────────────────────
   const {
     phoneStatus,
     callStatus,
@@ -169,13 +505,33 @@ function DialerContent() {
     Array<{ id: string; phone_number: string; is_default: boolean }>
   >([]);
   const [fromNumber, setFromNumber] = useState('');
+
+  // ── Disposition modal ─────────────────────────────────────────────────────────
+  const [showDispositionModal, setShowDispositionModal] = useState(false);
+
+  // ── Power dial state ──────────────────────────────────────────────────────────
+  const [dialMode, setDialMode] = useState<'manual' | 'power'>('manual');
+  const [powerSession, setPowerSession] = useState<PowerSession | null>(null);
+  const [powerCountdown, setPowerCountdown] = useState<number | null>(null);
+  const [showPowerPreFlight, setShowPowerPreFlight] = useState(false);
+  const [showSessionSummary, setShowSessionSummary] = useState(false);
+  const [sessionSummary, setSessionSummary] = useState<PowerSession | null>(null);
+  const [skipAlreadyCalled, setSkipAlreadyCalled] = useState(false);
+  const [skipDNC, setSkipDNC] = useState(true);
+  const [powerDialIndex, setPowerDialIndex] = useState(0);
+
+  // Refs to avoid closure staleness
   const hasAutoSelectedRef = useRef(false);
   const preselectedLeadId = searchParams?.get('lead_id') ?? null;
-
-  // Store the pending dial target so we can log it once we have call_control_id
   const pendingDialRef = useRef<{ to: string; leadId: string | null }>({ to: '', leadId: null });
+  const powerSessionRef = useRef<PowerSession | null>(null);
+  const powerDialQueueRef = useRef<LeadRecord[]>([]);
+  const powerDialIndexRef = useRef<number>(0);
+  const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // ── Fetch user's purchased numbers ───────────────────────────────────────────
+  useEffect(() => { powerSessionRef.current = powerSession; }, [powerSession]);
+
+  // ── Fetch purchased numbers ───────────────────────────────────────────────────
   useEffect(() => {
     supabase
       .from('purchased_numbers')
@@ -192,7 +548,7 @@ function DialerContent() {
       });
   }, [supabase]);
 
-  // ── Sync WebRTC call status → local callState ────────────────────────────────
+  // ── Sync WebRTC call status → local callState ─────────────────────────────────
   useEffect(() => {
     setCallState((prev) => {
       const statusMap: Record<typeof callStatus, CallState['status']> = {
@@ -204,7 +560,10 @@ function DialerContent() {
         ended: 'disconnected',
       };
       const newStatus = statusMap[callStatus] ?? 'idle';
-      // Don't overwrite lead info or duration — only update the status + mute/hold
+
+      // Keep 'disconnected' until the disposition modal clears it
+      if (prev.status === 'disconnected' && newStatus === 'idle') return prev;
+
       if (prev.status === newStatus && prev.isMuted === isMuted && prev.isOnHold === isOnHold) {
         return prev;
       }
@@ -213,6 +572,7 @@ function DialerContent() {
 
     if (callStatus === 'ended') {
       setHistoryRefreshKey((k) => k + 1);
+      setShowDispositionModal(true);
     }
   }, [callStatus, isMuted, isOnHold]);
 
@@ -221,11 +581,15 @@ function DialerContent() {
     const { to, leadId } = pendingDialRef.current;
     if (!activeCallId || !to) return;
 
-    // Create the DB record with the call_control_id from WebRTC
     fetch('/api/calls/dial', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, lead_id: leadId, call_control_id: activeCallId }),
+      body: JSON.stringify({
+        to,
+        lead_id: leadId,
+        call_control_id: activeCallId,
+        power_dial_session_id: powerSessionRef.current?.id ?? null,
+      }),
     })
       .then((r) => r.json())
       .then(() => {
@@ -236,7 +600,7 @@ function DialerContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCallId]);
 
-  // ── Stats ────────────────────────────────────────────────────────────────────
+  // ── Stats ─────────────────────────────────────────────────────────────────────
   const refreshStats = useCallback(() => {
     fetch('/api/stats/today')
       .then((r) => r.json())
@@ -244,9 +608,7 @@ function DialerContent() {
         if (!data.error) {
           setStats({
             calls: data.callsToday ?? 0,
-            connects:
-              data.answeredToday ??
-              Math.round(((data.callsToday ?? 0) * (data.connectRate ?? 0)) / 100),
+            connects: data.answeredToday ?? Math.round(((data.callsToday ?? 0) * (data.connectRate ?? 0)) / 100),
             meetings: data.meetingsBooked ?? 0,
             connectRate: data.connectRate ?? 0,
           });
@@ -263,9 +625,7 @@ function DialerContent() {
 
   // ── Auto-switch mobile tab when call goes active ──────────────────────────────
   useEffect(() => {
-    if (callStatus !== 'idle' && callStatus !== 'ended') {
-      setMobileTab('call');
-    }
+    if (callStatus !== 'idle' && callStatus !== 'ended') setMobileTab('call');
   }, [callStatus]);
 
   // ── Call duration timer ───────────────────────────────────────────────────────
@@ -286,18 +646,13 @@ function DialerContent() {
       .channel(`call-${cid}`)
       .on(
         'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'calls',
-          filter: `telnyx_call_id=eq.${cid}`,
-        },
+        { event: 'UPDATE', schema: 'public', table: 'calls', filter: `telnyx_call_id=eq.${cid}` },
         (payload) => {
           const s = (payload.new as { status?: string })?.status ?? '';
           if (s === 'answered' || s === 'in-progress') {
-            setCallState((prev) => (prev.status !== 'connected' ? { ...prev, status: 'connected' } : prev));
-          } else if (s === 'completed' || s === 'failed' || s === 'busy' || s === 'no-answer') {
-            setCallState((prev) => (prev.status !== 'disconnected' ? { ...prev, status: 'disconnected' } : prev));
+            setCallState((prev) => prev.status !== 'connected' ? { ...prev, status: 'connected' } : prev);
+          } else if (['completed', 'failed', 'busy', 'no-answer'].includes(s)) {
+            setCallState((prev) => prev.status !== 'disconnected' ? { ...prev, status: 'disconnected' } : prev);
             setHistoryRefreshKey((k) => k + 1);
           }
         },
@@ -312,7 +667,7 @@ function DialerContent() {
       const { data, error: queryError } = await supabase
         .from('leads')
         .select(
-          'id,name,title,company,phone,email,linkedin,ai_score,status,last_called_at,call_attempts,tags,notes,company_size,industry,revenue,activity_summary,profile_url',
+          'id,name,title,company,phone,email,linkedin,ai_score,status,last_called_at,call_attempts,tags,notes,company_size,industry,revenue,activity_summary,profile_url,dnc',
         )
         .order('ai_score', { ascending: false });
 
@@ -353,10 +708,7 @@ function DialerContent() {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       list = list.filter(
-        (l) =>
-          l.name.toLowerCase().includes(q) ||
-          l.company.toLowerCase().includes(q) ||
-          l.phone.includes(q),
+        (l) => l.name.toLowerCase().includes(q) || l.company.toLowerCase().includes(q) || l.phone.includes(q),
       );
     }
     if (filterMode === 'Queue')
@@ -365,6 +717,15 @@ function DialerContent() {
       list = list.filter((l) => l.ai_score >= 75 || l.status === 'connected' || l.status === 'meeting_booked');
     return list;
   }, [leads, searchQuery, filterMode]);
+
+  // Power dial queue — respects pre-flight filters
+  const powerDialQueue = useMemo(() => {
+    return filteredLeads.filter((l) => {
+      if (skipDNC && (l.dnc || l.status === 'do_not_call')) return false;
+      if (skipAlreadyCalled && l.call_attempts > 0) return false;
+      return true;
+    });
+  }, [filteredLeads, skipDNC, skipAlreadyCalled]);
 
   // ── Core dial function ────────────────────────────────────────────────────────
   const sanitize = useCallback((raw: string) => raw.replace(/[^\d+]/g, ''), []);
@@ -383,7 +744,6 @@ function DialerContent() {
         setError('Microphone access is blocked. Please enable it in your browser settings.');
         return;
       }
-
       if (fromNumber && !isE164(fromNumber)) {
         setError('Invalid "From" number — please select a valid purchased number.');
         return;
@@ -391,7 +751,6 @@ function DialerContent() {
 
       console.log('[DIALER] Initiating call:', { from: fromNumber || '(none)', to: destination });
 
-      // Store for later logging when activeCallId arrives
       pendingDialRef.current = { to: destination, leadId: lead?.id ?? null };
 
       setCallState({
@@ -406,7 +765,6 @@ function DialerContent() {
       });
       setError(null);
 
-      // Update lead stats optimistically
       if (lead) {
         const newAttempts = (lead.call_attempts ?? 0) + 1;
         const newStatus = lead.status === 'new' || lead.status === 'queued' ? 'contacted' : lead.status;
@@ -416,21 +774,14 @@ function DialerContent() {
           .eq('id', lead.id)
           .then(() => {
             setLeads((prev) =>
-              prev.map((l) =>
-                l.id === lead.id
-                  ? { ...l, call_attempts: newAttempts, status: newStatus as LeadRecord['status'] }
-                  : l,
-              ),
+              prev.map((l) => l.id === lead.id ? { ...l, call_attempts: newAttempts, status: newStatus as LeadRecord['status'] } : l),
             );
             setSelectedLead((prev) =>
-              prev?.id === lead.id
-                ? { ...prev, call_attempts: newAttempts, status: newStatus as LeadRecord['status'] }
-                : prev,
+              prev?.id === lead.id ? { ...prev, call_attempts: newAttempts, status: newStatus as LeadRecord['status'] } : prev,
             );
           });
       }
 
-      // Initiate WebRTC call — audio flows browser ↔ destination
       webPhoneMakeCall(destination, fromNumber || undefined);
     },
     [sanitize, countryCode, phoneStatus, micPermission, supabase, webPhoneMakeCall, fromNumber],
@@ -453,10 +804,225 @@ function DialerContent() {
     setHistoryRefreshKey((k) => k + 1);
   }, [webPhoneHangup]);
 
+  // ── Power dial helpers ────────────────────────────────────────────────────────
+  const stopCountdown = useCallback(() => {
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+    setPowerCountdown(null);
+  }, []);
+
+  const advancePowerDial = useCallback(() => {
+    stopCountdown();
+    const queue = powerDialQueueRef.current;
+    const nextIdx = powerDialIndexRef.current;
+
+    if (nextIdx >= queue.length) {
+      // No more leads — end session
+      const sess = powerSessionRef.current;
+      if (sess) {
+        fetch(`/api/power-dial/sessions/${sess.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'ended' }),
+        }).catch(console.error);
+        setSessionSummary(sess);
+        setShowSessionSummary(true);
+      }
+      setPowerSession(null);
+      setDialMode('manual');
+      return;
+    }
+
+    const next = queue[nextIdx];
+    powerDialIndexRef.current = nextIdx + 1;
+    setPowerDialIndex(nextIdx + 1);
+
+    setSelectedLead(next);
+    setNotes(next.notes ?? '');
+    setPhoneNumber(next.phone ?? '');
+    setCallState(INITIAL_CALL_STATE);
+
+    setTimeout(() => dial(next.phone, next), 250);
+  }, [stopCountdown, dial]);
+
+  const startCountdown = useCallback(() => {
+    stopCountdown();
+    setPowerCountdown(5);
+    countdownTimerRef.current = setInterval(() => {
+      setPowerCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+          countdownTimerRef.current = null;
+          advancePowerDial();
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [stopCountdown, advancePowerDial]);
+
+  const endPowerDialSession = useCallback(() => {
+    stopCountdown();
+    const sess = powerSessionRef.current;
+    if (sess) {
+      fetch(`/api/power-dial/sessions/${sess.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'ended' }),
+      }).catch(console.error);
+      setSessionSummary(sess);
+      setShowSessionSummary(true);
+    }
+    setPowerSession(null);
+    setDialMode('manual');
+  }, [stopCountdown]);
+
+  const startPowerDialSession = useCallback(async () => {
+    setShowPowerPreFlight(false);
+
+    let sessionId = 'local';
+    try {
+      const res = await fetch('/api/power-dial/sessions', { method: 'POST' });
+      const data = await res.json();
+      if (data.id) sessionId = data.id;
+    } catch (err) {
+      console.error('[power-dial] failed to create session:', err);
+    }
+
+    const session: PowerSession = {
+      id: sessionId,
+      totalCalls: 0,
+      connectedCalls: 0,
+      meetingsBooked: 0,
+      talkTime: 0,
+    };
+    setPowerSession(session);
+    powerSessionRef.current = session;
+    setDialMode('power');
+
+    // Build queue snapshot
+    const queue = powerDialQueue;
+    powerDialQueueRef.current = queue;
+    powerDialIndexRef.current = 0;
+    setPowerDialIndex(0);
+
+    if (queue.length > 0) {
+      const first = queue[0];
+      powerDialIndexRef.current = 1;
+      setPowerDialIndex(1);
+      setSelectedLead(first);
+      setNotes(first.notes ?? '');
+      setPhoneNumber(first.phone ?? '');
+      setCallState(INITIAL_CALL_STATE);
+      setTimeout(() => dial(first.phone, first), 300);
+    } else {
+      // Empty queue — end immediately
+      endPowerDialSession();
+    }
+  }, [powerDialQueue, dial, endPowerDialSession]);
+
+  // ── Disposition save ──────────────────────────────────────────────────────────
+  const handleDispositionSave = useCallback(
+    async (disp: string, dispNotes: string, callbackAt?: string) => {
+      if (!selectedLead) return;
+      const newStatus = DISPOSITION_STATUS_MAP[disp] ?? selectedLead.status;
+      const isDNC = disp === 'dnc';
+      const isMeetingBooked = disp === 'meeting_booked';
+
+      const leadUpdates: Record<string, unknown> = {
+        status: newStatus,
+        last_called_at: new Date().toISOString(),
+        notes: dispNotes,
+      };
+      if (isDNC) leadUpdates.dnc = true;
+      if (callbackAt) leadUpdates.next_callback_at = callbackAt;
+
+      await supabase.from('leads').update(leadUpdates).eq('id', selectedLead.id);
+
+      if (callState.callSid) {
+        await supabase
+          .from('calls')
+          .update({
+            disposition: disp,
+            disposition_notes: dispNotes,
+            ...(callbackAt ? { callback_at: callbackAt } : {}),
+          })
+          .eq('telnyx_call_id', callState.callSid);
+      }
+
+      setNotes(dispNotes);
+      setLeads((prev) =>
+        prev.map((l) => l.id === selectedLead.id ? { ...l, status: newStatus, notes: dispNotes, dnc: isDNC ? true : l.dnc } : l),
+      );
+
+      // Update power dial session counters
+      if (powerSession) {
+        const wasConnected = callState.status === 'connected' || callState.duration > 0;
+        const newSession: PowerSession = {
+          ...powerSession,
+          totalCalls: powerSession.totalCalls + 1,
+          connectedCalls: wasConnected ? powerSession.connectedCalls + 1 : powerSession.connectedCalls,
+          meetingsBooked: isMeetingBooked ? powerSession.meetingsBooked + 1 : powerSession.meetingsBooked,
+          talkTime: powerSession.talkTime + callState.duration,
+        };
+        setPowerSession(newSession);
+        powerSessionRef.current = newSession;
+        fetch(`/api/power-dial/sessions/${powerSession.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            total_calls: newSession.totalCalls,
+            connected_calls: newSession.connectedCalls,
+            meetings_booked: newSession.meetingsBooked,
+            total_talk_time: newSession.talkTime,
+          }),
+        }).catch(console.error);
+      }
+
+      setShowDispositionModal(false);
+      setCallState(INITIAL_CALL_STATE);
+      refreshStats();
+
+      if (dialMode === 'power') {
+        startCountdown();
+      } else {
+        // Manual: advance to next lead
+        setTimeout(() => {
+          const idx = leads.findIndex((l) => l.id === selectedLead.id);
+          const next = leads[idx + 1] ?? null;
+          if (next && next.id !== selectedLead.id) {
+            setSelectedLead(next);
+            setNotes(next.notes ?? '');
+            setPhoneNumber(next.phone ?? '');
+          }
+        }, 800);
+      }
+    },
+    [selectedLead, callState, powerSession, dialMode, leads, supabase, refreshStats, startCountdown],
+  );
+
+  const handleDispositionSkip = useCallback(() => {
+    setShowDispositionModal(false);
+    setCallState(INITIAL_CALL_STATE);
+    if (dialMode === 'power') {
+      startCountdown();
+    }
+  }, [dialMode, startCountdown]);
+
   // ── Keyboard shortcuts ────────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) return;
+
+      // Countdown shortcuts
+      if (powerCountdown !== null) {
+        if (e.code === 'Space') { e.preventDefault(); advancePowerDial(); }
+        if (e.key === 'Escape') { e.preventDefault(); stopCountdown(); }
+        return;
+      }
+
       if (e.code === 'Space') {
         e.preventDefault();
         if (callState.status === 'idle') handleDial();
@@ -466,7 +1032,7 @@ function DialerContent() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [callState.status, handleDial, hangUp, toggleMute]);
+  }, [callState.status, handleDial, hangUp, toggleMute, powerCountdown, advancePowerDial, stopCountdown]);
 
   // ── Lead selection ────────────────────────────────────────────────────────────
   const handleSelectLead = useCallback((lead: LeadRecord) => {
@@ -513,55 +1079,12 @@ function DialerContent() {
     [selectedLead, supabase],
   );
 
-  // ── Disposition ───────────────────────────────────────────────────────────────
-  const handleDisposition = useCallback(
-    async (disp: string, localNotes: string, callbackAt?: string) => {
-      if (!selectedLead) return;
-      const newStatus = (DISPOSITION_STATUS_MAP[disp] as LeadRecord['status']) ?? selectedLead.status;
-
-      const updates: Record<string, unknown> = {
-        status: newStatus,
-        last_called_at: new Date().toISOString(),
-        notes: localNotes,
-      };
-      if (callbackAt) updates.next_callback_at = callbackAt;
-
-      await supabase.from('leads').update(updates).eq('id', selectedLead.id);
-
-      if (callState.callSid) {
-        await supabase
-          .from('calls')
-          .update({ disposition: disp, notes: localNotes })
-          .eq('telnyx_call_id', callState.callSid);
-      }
-
-      setNotes(localNotes);
-      setLeads((prev) =>
-        prev.map((l) => (l.id === selectedLead.id ? { ...l, status: newStatus, notes: localNotes } : l)),
-      );
-
-      setTimeout(() => {
-        const idx = leads.findIndex((l) => l.id === selectedLead.id);
-        const next = leads[idx + 1] ?? leads[0] ?? null;
-        if (next && next.id !== selectedLead.id) {
-          setSelectedLead(next);
-          setNotes(next.notes ?? '');
-          setPhoneNumber(next.phone ?? '');
-        }
-        setCallState(INITIAL_CALL_STATE);
-        refreshStats();
-      }, 1500);
-    },
-    [selectedLead, callState.callSid, leads, supabase, refreshStats],
-  );
-
   // ── Shared props ──────────────────────────────────────────────────────────────
   const dialerPanelProps = {
     selectedLead,
     phoneNumber,
     countryCode,
     callState,
-    notes,
     onCountryChange: setCountryCode,
     onPhoneChange: setPhoneNumber,
     onDigit: (digit: string) => setPhoneNumber((prev) => `${prev}${digit}`),
@@ -572,11 +1095,11 @@ function DialerContent() {
     onRecord: () => setIsRecording((prev) => !prev),
     onNextLead: handleSkipNext,
     onEndCall: hangUp,
-    onSaveNotes: handleSaveNotes,
-    onDisposition: handleDisposition,
     isReady: phoneStatus === 'ready',
     isRecording,
     error,
+    dialMode,
+    onStartPowerDial: () => setShowPowerPreFlight(true),
   };
 
   const leadQueueProps = {
@@ -597,15 +1120,60 @@ function DialerContent() {
     { key: 'history', label: 'History' },
   ];
 
+  // Next leads preview for power dial bar
+  const nextPowerLeads = powerDialQueueRef.current.slice(powerDialIndex, powerDialIndex + 3);
+  const nextPowerLead = powerDialQueueRef.current[powerDialIndex] ?? null;
+
   return (
     <div className="flex-1 overflow-y-auto text-slate-100">
-      {/* Mic permission gate — shows modal on first visit */}
       <MicPermissionModal />
+
+      {/* ── Disposition Modal ─────────────────────────────────────────────────── */}
+      <DispositionModal
+        open={showDispositionModal}
+        leadName={selectedLead?.name ?? callState.leadName}
+        callDuration={callState.duration}
+        notes={notes}
+        onSave={handleDispositionSave}
+        onSkip={handleDispositionSkip}
+      />
+
+      {/* ── Power countdown overlay ───────────────────────────────────────────── */}
+      <AnimatePresence>
+        {powerCountdown !== null && (
+          <PowerCountdownOverlay
+            countdown={powerCountdown}
+            nextLead={nextPowerLead}
+            onSkip={advancePowerDial}
+            onPause={stopCountdown}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ── Pre-flight modal ──────────────────────────────────────────────────── */}
+      {showPowerPreFlight && (
+        <PowerPreFlight
+          queueSize={powerDialQueue.length}
+          skipAlreadyCalled={skipAlreadyCalled}
+          skipDNC={skipDNC}
+          onToggleSkipCalled={setSkipAlreadyCalled}
+          onToggleSkipDNC={setSkipDNC}
+          onStart={startPowerDialSession}
+          onCancel={() => setShowPowerPreFlight(false)}
+        />
+      )}
+
+      {/* ── Session summary modal ─────────────────────────────────────────────── */}
+      {showSessionSummary && sessionSummary && (
+        <SessionSummary
+          summary={sessionSummary}
+          onClose={() => { setShowSessionSummary(false); setSessionSummary(null); }}
+        />
+      )}
 
       {/* ── DESKTOP layout (lg+) ──────────────────────────────────────────────── */}
       <div className="hidden lg:block">
         <div className="mx-auto flex max-w-[1680px] flex-col gap-5 px-6 py-6">
-          {/* Stats + phone status */}
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
               <LiveStats
@@ -618,7 +1186,17 @@ function DialerContent() {
             <PhoneStatusBar />
           </div>
 
-          {/* Calling From */}
+          {/* Power dial bar */}
+          <AnimatePresence>
+            {powerSession && dialMode === 'power' && (
+              <PowerDialBar
+                session={powerSession}
+                nextLeads={nextPowerLeads}
+                onEnd={endPowerDialSession}
+              />
+            )}
+          </AnimatePresence>
+
           <CallingFromCard
             purchasedNumbers={purchasedNumbers}
             fromNumber={fromNumber}
@@ -652,7 +1230,6 @@ function DialerContent() {
           connectRate={stats.connectRate}
         />
 
-        {/* Phone status + tab bar */}
         <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] bg-black/20 px-3">
           <div className="flex flex-1">
             {mobileTabs.map(({ key, label }) => (
@@ -682,15 +1259,15 @@ function DialerContent() {
               <LeadQueue
                 {...leadQueueProps}
                 onSelectLead={handleSelectLeadMobile}
-                onCallLead={(phone, lead) => {
-                  handleCallLead(phone, lead);
-                  setMobileTab('call');
-                }}
+                onCallLead={(phone, lead) => { handleCallLead(phone, lead); setMobileTab('call'); }}
               />
             </div>
           )}
           {mobileTab === 'call' && (
             <div className="space-y-3 p-3">
+              {powerSession && dialMode === 'power' && (
+                <PowerDialBar session={powerSession} nextLeads={nextPowerLeads} onEnd={endPowerDialSession} />
+              )}
               <CallingFromCard
                 purchasedNumbers={purchasedNumbers}
                 fromNumber={fromNumber}

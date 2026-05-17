@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Phone, Users, CalendarCheck, DollarSign } from "lucide-react";
+import { Phone, Users, CalendarCheck, DollarSign, Zap } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, LineChart, Line, Legend,
@@ -26,6 +26,8 @@ interface DistributionData {
   statusDistribution: { status: string; label: string; count: number }[];
   hourlyConnects: { hour: number; label: string; connects: number }[];
   weeklyTrend: { week: string; calls: number; connects: number; connectRate: number }[];
+  dispositionBreakdown: { disposition: string; label: string; count: number; color: string }[];
+  powerDialStats: { totalSessions: number; avgCallsPerSession: number; totalMeetings: number };
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -88,11 +90,13 @@ function buildStats(data: StatsData) {
   ];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ChartTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
     return (
       <div className="rounded-lg border border-white/10 bg-[oklch(0.086_0.024_282)] p-3 text-xs shadow-xl shadow-black/40">
         <p className="mb-1.5 font-semibold text-foreground">{label}</p>
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {payload.map((p: any) => (
           <div key={p.name} className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full" style={{ background: p.color ?? p.fill }} />
@@ -130,13 +134,15 @@ export default function AnalyticsPage() {
       .finally(() => setDistLoading(false));
   }, []);
 
-  // Only show hours 7am–9pm for the hourly chart
   const hourlyData = distribution?.hourlyConnects.filter((h) => h.hour >= 7 && h.hour <= 21) ?? [];
+  const powerStats = distribution?.powerDialStats;
+  const hasDispositions = (distribution?.dispositionBreakdown ?? []).length > 0;
 
   return (
     <>
       <DashboardHeader title="Analytics" subtitle="Team performance and call outcomes" />
       <main className="flex-1 overflow-y-auto px-3 py-3 space-y-4 lg:px-6 lg:py-5 lg:space-y-5">
+
         {/* Stat cards */}
         <motion.div
           initial={{ opacity: 0, y: 6 }}
@@ -148,9 +154,39 @@ export default function AnalyticsPage() {
                 <div key={i} className="h-24 animate-pulse rounded-xl border border-white/10 bg-white/5" />
               ))
             : (stats ?? []).map((stat) => (
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 <StatCard key={stat.title} {...(stat as any)} />
               ))}
         </motion.div>
+
+        {/* Power Dial Sessions summary (shown only if sessions exist) */}
+        {powerStats && powerStats.totalSessions > 0 && (
+          <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-4 lg:p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
+            <div className="mb-4 flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/15">
+                <Zap className="h-3.5 w-3.5 text-violet-400" />
+              </div>
+              <div>
+                <h2 className="font-display text-sm font-semibold">Power Dial Sessions</h2>
+                <p className="text-xs text-muted-foreground">Last 30 days</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3 text-center">
+                <p className="text-2xl font-bold text-white">{powerStats.totalSessions}</p>
+                <p className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-500">Sessions</p>
+              </div>
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3 text-center">
+                <p className="text-2xl font-bold text-white">{powerStats.avgCallsPerSession}</p>
+                <p className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-500">Avg Calls / Session</p>
+              </div>
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] px-3 py-3 text-center">
+                <p className="text-2xl font-bold text-emerald-300">{powerStats.totalMeetings}</p>
+                <p className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-500">Meetings Booked</p>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Activity chart */}
         <ActivityChart />
@@ -214,6 +250,67 @@ export default function AnalyticsPage() {
             )}
           </Card>
         </div>
+
+        {/* Disposition breakdown */}
+        <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-4 lg:p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
+          <div className="mb-4 lg:mb-5">
+            <h2 className="font-display text-sm font-semibold">Disposition breakdown</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">Call outcomes from all sessions</p>
+          </div>
+          {distLoading ? (
+            <div className="flex h-[160px] items-center justify-center">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+            </div>
+          ) : !hasDispositions ? (
+            <div className="flex h-[160px] items-center justify-center text-xs text-muted-foreground">
+              No dispositioned calls yet — start making calls to see outcomes here
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {/* Bar chart */}
+              <ResponsiveContainer width="100%" height={160}>
+                <BarChart
+                  data={distribution?.dispositionBreakdown ?? []}
+                  layout="vertical"
+                  margin={{ top: 0, right: 10, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 8%)" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: "oklch(0.65 0.02 286)" }} axisLine={false} tickLine={false} />
+                  <YAxis
+                    type="category"
+                    dataKey="label"
+                    tick={{ fontSize: 10, fill: "oklch(0.65 0.02 286)" }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={72}
+                  />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                    {(distribution?.dispositionBreakdown ?? []).map((entry) => (
+                      <Cell key={entry.disposition} fill={entry.color} fillOpacity={0.85} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+
+              {/* Legend / summary tiles */}
+              <div className="flex flex-col gap-1.5">
+                {(distribution?.dispositionBreakdown ?? []).slice(0, 6).map((d) => {
+                  const total = (distribution?.dispositionBreakdown ?? []).reduce((s, x) => s + x.count, 0);
+                  const pct = total > 0 ? ((d.count / total) * 100).toFixed(1) : '0';
+                  return (
+                    <div key={d.disposition} className="flex items-center gap-2.5 rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-1.5">
+                      <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: d.color }} />
+                      <span className="flex-1 text-xs text-slate-300">{d.label}</span>
+                      <span className="font-mono text-xs font-bold text-white">{d.count}</span>
+                      <span className="text-[10px] text-slate-500">{pct}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </Card>
 
         {/* Weekly trend */}
         <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-4 lg:p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
