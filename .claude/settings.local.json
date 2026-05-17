@@ -6,7 +6,12 @@
       "Bash(node -e \"const T = require\\('telnyx'\\); console.log\\(typeof T, typeof T.default, Object.keys\\(T\\).slice\\(0,10\\)\\)\")",
       "Bash(npm run *)",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\HP\\\\Desktop\\\\growthdialer\" -Directory)",
-      "Bash(Select-Object -ExpandProperty Name)"
+      "Bash(Select-Object -ExpandProperty Name)",
+      "Bash(node -e ' *)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
 }

@@ -17,6 +17,7 @@
     "@stripe/stripe-js": "^9.1.0",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.103.0",
+    "@telnyx/webrtc": "^2.26.4",
     "@twilio/voice-sdk": "^2.18.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

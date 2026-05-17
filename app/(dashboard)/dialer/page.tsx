@@ -10,6 +10,9 @@ import LiveStats from '@/components/dialer/LiveStats';
 import LeadQueue from '@/components/dialer/LeadQueue';
 import DialerPanel from '@/components/dialer/DialerPanel';
 import CoachingSidebar from '@/components/dialer/CoachingSidebar';
+import PhoneStatusBar from '@/components/dialer/PhoneStatusBar';
+import MicPermissionModal from '@/components/dialer/MicPermissionModal';
+import { WebPhoneProvider, useWebPhone } from '@/contexts/webphone-context';
 import type { LeadRecord } from '@/components/dialer/LeadCard';
 
 interface CallState {
@@ -72,6 +75,22 @@ function MobileStatStrip({ calls, connects, meetings, connectRate }: {
 function DialerContent() {
   const [supabase] = useState(() => createClient());
   const searchParams = useSearchParams();
+
+  // ── WebRTC phone ─────────────────────────────────────────────────────────────
+  const {
+    phoneStatus,
+    callStatus,
+    activeCallId,
+    isMuted,
+    isOnHold,
+    micPermission,
+    makeCall: webPhoneMakeCall,
+    hangup: webPhoneHangup,
+    toggleMute,
+    toggleHold,
+  } = useWebPhone();
+
+  // ── UI state ─────────────────────────────────────────────────────────────────
   const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [selectedLead, setSelectedLead] = useState<LeadRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,7 +107,54 @@ function DialerContent() {
   const hasAutoSelectedRef = useRef(false);
   const preselectedLeadId = searchParams?.get('lead_id') ?? null;
 
-  // ── Stats ───────────────────────────────────────────────────────────────────
+  // Store the pending dial target so we can log it once we have call_control_id
+  const pendingDialRef = useRef<{ to: string; leadId: string | null }>({ to: '', leadId: null });
+
+  // ── Sync WebRTC call status → local callState ────────────────────────────────
+  useEffect(() => {
+    setCallState((prev) => {
+      const statusMap: Record<typeof callStatus, CallState['status']> = {
+        idle: 'idle',
+        connecting: 'connecting',
+        ringing: 'ringing',
+        active: 'connected',
+        held: 'connected',
+        ended: 'disconnected',
+      };
+      const newStatus = statusMap[callStatus] ?? 'idle';
+      // Don't overwrite lead info or duration — only update the status + mute/hold
+      if (prev.status === newStatus && prev.isMuted === isMuted && prev.isOnHold === isOnHold) {
+        return prev;
+      }
+      return { ...prev, status: newStatus, isMuted, isOnHold };
+    });
+
+    if (callStatus === 'ended') {
+      setHistoryRefreshKey((k) => k + 1);
+    }
+  }, [callStatus, isMuted, isOnHold]);
+
+  // ── Log call to DB when WebRTC gives us a call_control_id ───────────────────
+  useEffect(() => {
+    const { to, leadId } = pendingDialRef.current;
+    if (!activeCallId || !to) return;
+
+    // Create the DB record with the call_control_id from WebRTC
+    fetch('/api/calls/dial', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, lead_id: leadId, call_control_id: activeCallId }),
+    })
+      .then((r) => r.json())
+      .then(() => {
+        setCallState((prev) => ({ ...prev, callSid: activeCallId }));
+        refreshStats();
+      })
+      .catch((err) => console.error('[dialer] call log error:', err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCallId]);
+
+  // ── Stats ────────────────────────────────────────────────────────────────────
   const refreshStats = useCallback(() => {
     fetch('/api/stats/today')
       .then((r) => r.json())
@@ -113,14 +179,14 @@ function DialerContent() {
     return () => clearInterval(interval);
   }, [refreshStats]);
 
-  // ── Auto-switch mobile tab when call goes active ─────────────────────────────
+  // ── Auto-switch mobile tab when call goes active ──────────────────────────────
   useEffect(() => {
-    if (callState.status !== 'idle' && callState.status !== 'disconnected') {
+    if (callStatus !== 'idle' && callStatus !== 'ended') {
       setMobileTab('call');
     }
-  }, [callState.status]);
+  }, [callStatus]);
 
-  // ── Call duration timer ─────────────────────────────────────────────────────
+  // ── Call duration timer ───────────────────────────────────────────────────────
   useEffect(() => {
     if (callState.status !== 'connected') return;
     const timer = setInterval(
@@ -130,52 +196,26 @@ function DialerContent() {
     return () => clearInterval(timer);
   }, [callState.status]);
 
-  // ── Poll call status (2s interval while active) ─────────────────────────────
-  useEffect(() => {
-    const cid = callState.callSid;
-    if (!cid || callState.status === 'idle' || callState.status === 'disconnected') return;
-
-    const poll = async () => {
-      const { data } = await supabase
-        .from('calls')
-        .select('status')
-        .eq('telnyx_call_id', cid)
-        .maybeSingle();
-      if (!data) return;
-      const s = (data as { status: string }).status;
-      if (s === 'answered' || s === 'in-progress') {
-        setCallState((prev) => (prev.status !== 'connected' ? { ...prev, status: 'connected' } : prev));
-      } else if (s === 'completed' || s === 'failed' || s === 'no-answer' || s === 'busy') {
-        setCallState((prev) =>
-          prev.status !== 'disconnected' ? { ...prev, status: 'disconnected' } : prev,
-        );
-        setHistoryRefreshKey((k) => k + 1);
-      }
-    };
-
-    const interval = setInterval(poll, 2000);
-    return () => clearInterval(interval);
-  }, [callState.callSid, callState.status, supabase]);
-
-  // ── Supabase realtime for call status ───────────────────────────────────────
+  // ── Supabase realtime for call status ─────────────────────────────────────────
   useEffect(() => {
     if (!callState.callSid) return;
+    const cid = callState.callSid;
     const channel = supabase
-      .channel(`call-${callState.callSid}`)
+      .channel(`call-${cid}`)
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
           table: 'calls',
-          filter: `telnyx_call_id=eq.${callState.callSid}`,
+          filter: `telnyx_call_id=eq.${cid}`,
         },
         (payload) => {
           const s = (payload.new as { status?: string })?.status ?? '';
           if (s === 'answered' || s === 'in-progress') {
-            setCallState((prev) => ({ ...prev, status: 'connected' }));
+            setCallState((prev) => (prev.status !== 'connected' ? { ...prev, status: 'connected' } : prev));
           } else if (s === 'completed' || s === 'failed' || s === 'busy' || s === 'no-answer') {
-            setCallState((prev) => ({ ...prev, status: 'disconnected' }));
+            setCallState((prev) => (prev.status !== 'disconnected' ? { ...prev, status: 'disconnected' } : prev));
             setHistoryRefreshKey((k) => k + 1);
           }
         },
@@ -184,7 +224,7 @@ function DialerContent() {
     return () => { supabase.removeChannel(channel); };
   }, [callState.callSid, supabase]);
 
-  // ── Load leads ──────────────────────────────────────────────────────────────
+  // ── Load leads ────────────────────────────────────────────────────────────────
   useEffect(() => {
     const loadLeads = async () => {
       const { data, error: queryError } = await supabase
@@ -194,10 +234,7 @@ function DialerContent() {
         )
         .order('ai_score', { ascending: false });
 
-      if (queryError) {
-        console.error('Load leads error:', queryError.message);
-        return;
-      }
+      if (queryError) { console.error('Load leads error:', queryError.message); return; }
 
       const normalized = ((data ?? []) as LeadRecord[]).map((lead) => ({
         ...lead,
@@ -222,15 +259,13 @@ function DialerContent() {
 
     const channel = supabase
       .channel('leads-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () =>
-        loadLeads(),
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => loadLeads())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [supabase]);
 
-  // ── Filtered leads ──────────────────────────────────────────────────────────
+  // ── Filtered leads ────────────────────────────────────────────────────────────
   const filteredLeads = useMemo(() => {
     let list = [...leads];
     if (searchQuery) {
@@ -243,24 +278,32 @@ function DialerContent() {
       );
     }
     if (filterMode === 'Queue')
-      list = list.filter(
-        (l) => l.status === 'new' || l.status === 'contacted' || l.status === 'queued',
-      );
+      list = list.filter((l) => l.status === 'new' || l.status === 'contacted' || l.status === 'queued');
     if (filterMode === 'Hot Leads')
-      list = list.filter(
-        (l) => l.ai_score >= 75 || l.status === 'connected' || l.status === 'meeting_booked',
-      );
+      list = list.filter((l) => l.ai_score >= 75 || l.status === 'connected' || l.status === 'meeting_booked');
     return list;
   }, [leads, searchQuery, filterMode]);
 
-  // ── Core dial function ──────────────────────────────────────────────────────
+  // ── Core dial function ────────────────────────────────────────────────────────
   const sanitize = useCallback((raw: string) => raw.replace(/[^\d+]/g, ''), []);
 
   const dial = useCallback(
-    async (phone: string, lead?: LeadRecord | null) => {
+    (phone: string, lead?: LeadRecord | null) => {
       const raw = sanitize(phone);
       const destination = raw.startsWith('+') ? raw : `${countryCode}${raw}`;
       if (!destination || destination === countryCode) return;
+
+      if (phoneStatus !== 'ready') {
+        setError('Phone is not ready yet — please wait a moment and try again.');
+        return;
+      }
+      if (micPermission === 'denied') {
+        setError('Microphone access is blocked. Please enable it in your browser settings.');
+        return;
+      }
+
+      // Store for later logging when activeCallId arrives
+      pendingDialRef.current = { to: destination, leadId: lead?.id ?? null };
 
       setCallState({
         status: 'connecting',
@@ -274,27 +317,19 @@ function DialerContent() {
       });
       setError(null);
 
+      // Update lead stats optimistically
       if (lead) {
         const newAttempts = (lead.call_attempts ?? 0) + 1;
-        const newStatus =
-          lead.status === 'new' || lead.status === 'queued' ? 'contacted' : lead.status;
+        const newStatus = lead.status === 'new' || lead.status === 'queued' ? 'contacted' : lead.status;
         supabase
           .from('leads')
-          .update({
-            call_attempts: newAttempts,
-            last_called_at: new Date().toISOString(),
-            status: newStatus,
-          })
+          .update({ call_attempts: newAttempts, last_called_at: new Date().toISOString(), status: newStatus })
           .eq('id', lead.id)
           .then(() => {
             setLeads((prev) =>
               prev.map((l) =>
                 l.id === lead.id
-                  ? {
-                      ...l,
-                      call_attempts: newAttempts,
-                      status: newStatus as LeadRecord['status'],
-                    }
+                  ? { ...l, call_attempts: newAttempts, status: newStatus as LeadRecord['status'] }
                   : l,
               ),
             );
@@ -306,32 +341,13 @@ function DialerContent() {
           });
       }
 
-      try {
-        const res = await fetch('/api/calls/dial', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ to: destination, lead_id: lead?.id }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? 'Call could not be connected');
-        setCallState((prev) => ({
-          ...prev,
-          status: 'ringing',
-          callSid: data.call_control_id ?? null,
-        }));
-        refreshStats();
-      } catch (err) {
-        setCallState(INITIAL_CALL_STATE);
-        setError(err instanceof Error ? err.message : 'Call could not be connected. Try again.');
-      }
+      // Initiate WebRTC call — audio flows browser ↔ destination
+      webPhoneMakeCall(destination);
     },
-    [sanitize, countryCode, supabase, refreshStats],
+    [sanitize, countryCode, phoneStatus, micPermission, supabase, webPhoneMakeCall],
   );
 
-  const handleDial = useCallback(
-    () => dial(phoneNumber, selectedLead),
-    [dial, phoneNumber, selectedLead],
-  );
+  const handleDial = useCallback(() => dial(phoneNumber, selectedLead), [dial, phoneNumber, selectedLead]);
 
   const handleCallLead = useCallback(
     (phone: string, lead: LeadRecord) => {
@@ -343,29 +359,12 @@ function DialerContent() {
     [dial],
   );
 
-  const hangUp = useCallback(async () => {
-    const cid = callState.callSid;
-    setCallState((prev) => ({ ...prev, status: 'disconnected' }));
+  const hangUp = useCallback(() => {
+    webPhoneHangup();
     setHistoryRefreshKey((k) => k + 1);
-    if (cid) {
-      fetch('/api/calls/hangup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ call_control_id: cid }),
-      }).catch(console.error);
-    }
-  }, [callState.callSid]);
+  }, [webPhoneHangup]);
 
-  const toggleMute = useCallback(
-    () => setCallState((prev) => ({ ...prev, isMuted: !prev.isMuted })),
-    [],
-  );
-  const toggleHold = useCallback(
-    () => setCallState((prev) => ({ ...prev, isOnHold: !prev.isOnHold })),
-    [],
-  );
-
-  // ── Keyboard shortcuts ──────────────────────────────────────────────────────
+  // ── Keyboard shortcuts ────────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) return;
@@ -380,7 +379,7 @@ function DialerContent() {
     return () => window.removeEventListener('keydown', onKey);
   }, [callState.status, handleDial, hangUp, toggleMute]);
 
-  // ── Lead selection ──────────────────────────────────────────────────────────
+  // ── Lead selection ────────────────────────────────────────────────────────────
   const handleSelectLead = useCallback((lead: LeadRecord) => {
     setSelectedLead(lead);
     setNotes(lead.notes ?? '');
@@ -414,25 +413,22 @@ function DialerContent() {
     });
   }, []);
 
-  // ── Notes ───────────────────────────────────────────────────────────────────
+  // ── Notes ─────────────────────────────────────────────────────────────────────
   const handleSaveNotes = useCallback(
     async (value: string) => {
       setNotes(value);
       if (!selectedLead) return;
-      setLeads((prev) =>
-        prev.map((l) => (l.id === selectedLead.id ? { ...l, notes: value } : l)),
-      );
+      setLeads((prev) => prev.map((l) => (l.id === selectedLead.id ? { ...l, notes: value } : l)));
       await supabase.from('leads').update({ notes: value }).eq('id', selectedLead.id);
     },
     [selectedLead, supabase],
   );
 
-  // ── Disposition ─────────────────────────────────────────────────────────────
+  // ── Disposition ───────────────────────────────────────────────────────────────
   const handleDisposition = useCallback(
     async (disp: string, localNotes: string, callbackAt?: string) => {
       if (!selectedLead) return;
-      const newStatus =
-        (DISPOSITION_STATUS_MAP[disp] as LeadRecord['status']) ?? selectedLead.status;
+      const newStatus = (DISPOSITION_STATUS_MAP[disp] as LeadRecord['status']) ?? selectedLead.status;
 
       const updates: Record<string, unknown> = {
         status: newStatus,
@@ -452,9 +448,7 @@ function DialerContent() {
 
       setNotes(localNotes);
       setLeads((prev) =>
-        prev.map((l) =>
-          l.id === selectedLead.id ? { ...l, status: newStatus, notes: localNotes } : l,
-        ),
+        prev.map((l) => (l.id === selectedLead.id ? { ...l, status: newStatus, notes: localNotes } : l)),
       );
 
       setTimeout(() => {
@@ -472,7 +466,7 @@ function DialerContent() {
     [selectedLead, callState.callSid, leads, supabase, refreshStats],
   );
 
-  // Shared props for both mobile and desktop panels
+  // ── Shared props ──────────────────────────────────────────────────────────────
   const dialerPanelProps = {
     selectedLead,
     phoneNumber,
@@ -491,7 +485,7 @@ function DialerContent() {
     onEndCall: hangUp,
     onSaveNotes: handleSaveNotes,
     onDisposition: handleDisposition,
-    isReady: true,
+    isReady: phoneStatus === 'ready',
     isRecording,
     error,
   };
@@ -516,16 +510,25 @@ function DialerContent() {
 
   return (
     <div className="flex-1 overflow-y-auto text-slate-100">
+      {/* Mic permission gate — shows modal on first visit */}
+      <MicPermissionModal />
 
-      {/* ── DESKTOP layout (lg+) ─────────────────────────────────────────────── */}
+      {/* ── DESKTOP layout (lg+) ──────────────────────────────────────────────── */}
       <div className="hidden lg:block">
         <div className="mx-auto flex max-w-[1680px] flex-col gap-5 px-6 py-6">
-          <LiveStats
-            calls={stats.calls}
-            connects={stats.connects}
-            meetings={stats.meetings}
-            connectRate={stats.connectRate}
-          />
+          {/* Stats + phone status */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <LiveStats
+                calls={stats.calls}
+                connects={stats.connects}
+                meetings={stats.meetings}
+                connectRate={stats.connectRate}
+              />
+            </div>
+            <PhoneStatusBar />
+          </div>
+
           <div className="grid gap-5 xl:grid-cols-[280px_1fr_300px]">
             <LeadQueue
               {...leadQueueProps}
@@ -543,9 +546,8 @@ function DialerContent() {
         </div>
       </div>
 
-      {/* ── MOBILE layout (< lg) ─────────────────────────────────────────────── */}
+      {/* ── MOBILE layout (< lg) ──────────────────────────────────────────────── */}
       <div className="flex flex-col lg:hidden" style={{ minHeight: 'calc(100vh - 57px)' }}>
-        {/* Compact stats strip */}
         <MobileStatStrip
           calls={stats.calls}
           connects={stats.connects}
@@ -553,26 +555,30 @@ function DialerContent() {
           connectRate={stats.connectRate}
         />
 
-        {/* Tab bar */}
-        <div className="flex shrink-0 border-b border-white/[0.06] bg-black/20">
-          {mobileTabs.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setMobileTab(key)}
-              className={cn(
-                'flex-1 py-3 text-sm font-semibold transition-colors border-b-2',
-                mobileTab === key
-                  ? 'border-emerald-400 text-emerald-300'
-                  : 'border-transparent text-slate-500 hover:text-slate-300',
-              )}
-            >
-              {label}
-            </button>
-          ))}
+        {/* Phone status + tab bar */}
+        <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] bg-black/20 px-3">
+          <div className="flex flex-1">
+            {mobileTabs.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setMobileTab(key)}
+                className={cn(
+                  'flex-1 py-3 text-sm font-semibold transition-colors border-b-2',
+                  mobileTab === key
+                    ? 'border-emerald-400 text-emerald-300'
+                    : 'border-transparent text-slate-500 hover:text-slate-300',
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="ml-2 shrink-0">
+            <PhoneStatusBar />
+          </div>
         </div>
 
-        {/* Tab content */}
         <div className="flex-1 overflow-y-auto">
           {mobileTab === 'queue' && (
             <div className="p-3">
@@ -599,11 +605,6 @@ function DialerContent() {
                 onSaveNotes={handleSaveNotes}
                 refreshKey={historyRefreshKey}
               />
-              {(!selectedLead || selectedLead.id === 'empty') && (
-                <p className="mt-6 text-center text-sm text-slate-500">
-                  Select a lead from the Queue tab to see their history.
-                </p>
-              )}
             </div>
           )}
         </div>
@@ -614,8 +615,10 @@ function DialerContent() {
 
 export default function DialerPage() {
   return (
-    <Suspense fallback={<div className="flex-1" />}>
-      <DialerContent />
-    </Suspense>
+    <WebPhoneProvider>
+      <Suspense fallback={<div className="flex-1" />}>
+        <DialerContent />
+      </Suspense>
+    </WebPhoneProvider>
   );
 }
