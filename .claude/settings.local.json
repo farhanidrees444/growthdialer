@@ -20,11 +20,14 @@
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}, indent=2\\)\\)\")",
       "Bash(mkdir -p \"c:/Users/HP/Desktop/growthdialer/app/\\(dashboard\\)/recordings/[id]\")",
       "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\({recharts:p.dependencies.recharts, framer:p.dependencies['framer-motion']}\\)\\)\")",
-      "Bash(node -e \"const p=require\\('./package.json'\\); const deps={...p.dependencies,...p.devDependencies}; ['@radix-ui/react-popover','@radix-ui/react-switch','recharts','framer-motion'].forEach\\(k=>console.log\\(k+':', deps[k]??'MISSING'\\)\\)\")"
+      "Bash(node -e \"const p=require\\('./package.json'\\); const deps={...p.dependencies,...p.devDependencies}; ['@radix-ui/react-popover','@radix-ui/react-switch','recharts','framer-motion'].forEach\\(k=>console.log\\(k+':', deps[k]??'MISSING'\\)\\)\")",
+      "Bash(node -e \"const f = require\\('country-flag-icons'\\); console.log\\(Object.keys\\(f\\).slice\\(0,5\\)\\)\")",
+      "Bash(mkdir -p \"c:\\\\Users\\\\HP\\\\Desktop\\\\growthdialer\\\\components\\\\numbers\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\HP\\Desktop\\growthdialer\\app\\api\\power-dial\\sessions",
-      "c:\\Users\\HP\\Desktop\\growthdialer\\app\\(dashboard)\\recordings"
+      "c:\\Users\\HP\\Desktop\\growthdialer\\app\\(dashboard)\\recordings",
+      "c:\\Users\\HP\\Desktop\\growthdialer\\components"
     ]
   },
   "enableAllProjectMcpServers": true,
