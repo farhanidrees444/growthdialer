@@ -261,7 +261,7 @@ export default function DialerPanel({
               type="button"
               onClick={onDial}
               disabled={!phoneNumber}
-              className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 py-4 text-sm font-bold text-black shadow-lg shadow-emerald-500/30 transition hover:from-emerald-400 hover:to-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+              className="w-full rounded-xl border border-emerald-500/40 bg-emerald-500/10 py-4 font-mono text-sm font-bold uppercase tracking-wider text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.15)] transition-all duration-300 hover:border-emerald-500/60 hover:bg-emerald-500/20 hover:shadow-[0_0_25px_rgba(16,185,129,0.25)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <span className="flex items-center justify-center gap-2">
                 <Phone className="h-4 w-4" />

@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Phone, Users, CalendarCheck, DollarSign, Zap } from "lucide-react";
 import {
@@ -13,6 +13,7 @@ import DashboardHeader from "@/components/DashboardHeader";
 import StatCard from "@/components/StatCard";
 import ActivityChart from "@/components/ActivityChart";
 import { Card } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/client";
 
 interface StatsData {
   callsToday: number;
@@ -116,7 +117,7 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [distLoading, setDistLoading] = useState(true);
 
-  useEffect(() => {
+  const loadStats = useCallback(() => {
     fetch("/api/stats/today")
       .then((r) => r.json())
       .then((data: StatsData & { error?: string }) => {
@@ -124,7 +125,9 @@ export default function AnalyticsPage() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
+  }, []);
 
+  const loadDistribution = useCallback(() => {
     fetch("/api/analytics/distribution")
       .then((r) => r.json())
       .then((data: DistributionData & { error?: string }) => {
@@ -133,6 +136,31 @@ export default function AnalyticsPage() {
       .catch(console.error)
       .finally(() => setDistLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadStats();
+    loadDistribution();
+  }, [loadStats, loadDistribution]);
+
+  // Realtime: refetch when call data changes
+  useEffect(() => {
+    let supabase: ReturnType<typeof createClient> | null = null;
+    try { supabase = createClient(); } catch { return; }
+    const sb = supabase;
+
+    const channel = sb
+      .channel('analytics-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calls' }, () => {
+        loadStats();
+        loadDistribution();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'call_analytics' }, () => {
+        loadDistribution();
+      })
+      .subscribe();
+
+    return () => { sb.removeChannel(channel); };
+  }, [loadStats, loadDistribution]);
 
   const hourlyData = distribution?.hourlyConnects.filter((h) => h.hour >= 7 && h.hour <= 21) ?? [];
   const powerStats = distribution?.powerDialStats;

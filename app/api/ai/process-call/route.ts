@@ -56,7 +56,11 @@ export async function POST(request: NextRequest) {
   // Mark as in-progress to prevent duplicate runs
   await supabase
     .from('calls')
-    .update({ ai_processed: true, ai_processed_at: new Date().toISOString() })
+    .update({
+      ai_processed: true,
+      ai_processed_at: new Date().toISOString(),
+      ai_processing_status: 'processing',
+    })
     .eq('id', callId);
 
   // ── Step 2: Fetch user settings ────────────────────────────────────────────
@@ -233,10 +237,13 @@ export async function POST(request: NextRequest) {
 
   console.log('[AI] Saved analytics:', analyticsInserted.id);
 
-  // Link analytics back to call
+  // Link analytics back to call and mark processing complete
   await supabase
     .from('calls')
-    .update({ analytics_id: analyticsInserted.id })
+    .update({
+      analytics_id: analyticsInserted.id,
+      ai_processing_status: 'completed',
+    })
     .eq('id', callId);
 
   // ── Step 10: Save lead memories ────────────────────────────────────────────
@@ -285,7 +292,12 @@ async function saveError(
     error: errorMsg,
   }).select('id').single().then(({ data }) => {
     if (data?.id) {
-      supabase.from('calls').update({ analytics_id: data.id }).eq('id', callId);
+      supabase.from('calls').update({
+        analytics_id: data.id,
+        ai_processing_status: 'failed',
+      }).eq('id', callId);
+    } else {
+      supabase.from('calls').update({ ai_processing_status: 'failed' }).eq('id', callId);
     }
   });
 }

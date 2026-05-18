@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -22,6 +22,7 @@ interface Recording {
   created_at: string;
   disposition: string | null;
   analytics_id: string | null;
+  ai_processing_status: string | null;
   analytics: {
     id: string;
     sentiment: string | null;
@@ -167,39 +168,80 @@ function EmptyState() {
   );
 }
 
+const RECORDINGS_SELECT = `
+  id, to_number, from_number, recording_url, duration_seconds, created_at,
+  disposition, analytics_id, ai_processing_status,
+  leads(name, company),
+  analytics:call_analytics(id, sentiment, sentiment_score, summary, talking_points, suggested_disposition)
+`;
+
 export default function RecordingsPage() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  const [supabase] = useState(() => createClient());
+
+  const load = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) { setLoading(false); return; }
+      setUserId(session.user.id);
+
+      const { data, error } = await supabase
+        .from('calls')
+        .select(RECORDINGS_SELECT)
+        .eq('user_id', session.user.id)
+        .not('recording_url', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) { console.error('Recordings fetch error:', error); return; }
+      setRecordings((data ?? []).filter((r) => r.recording_url) as unknown as Recording[]);
+    } catch (err) {
+      console.error('Recordings load error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase]);
 
   useEffect(() => {
-    const supabase = createClient();
-    async function load() {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user?.id) { setLoading(false); return; }
-
-        const { data, error } = await supabase
-          .from('calls')
-          .select(`
-            id, to_number, from_number, recording_url, duration_seconds, created_at, disposition, analytics_id,
-            leads(name, company),
-            analytics:call_analytics(id, sentiment, sentiment_score, summary, talking_points, suggested_disposition)
-          `)
-          .eq('user_id', session.user.id)
-          .not('recording_url', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(50);
-
-        if (error) { console.error('Recordings fetch error:', error); return; }
-        setRecordings((data ?? []).filter((r) => r.recording_url) as unknown as Recording[]);
-      } catch (err) {
-        console.error('Recordings load error:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
     load();
-  }, []);
+  }, [load]);
+
+  // Realtime: update when AI processing completes
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel('recordings-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'calls',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const updated = payload.new as Partial<Recording>;
+          setRecordings((prev) =>
+            prev.map((r) =>
+              r.id === updated.id
+                ? { ...r, ...updated }
+                : r,
+            ),
+          );
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'call_analytics' },
+        () => { load(); },
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [userId, supabase, load]);
 
   return (
     <>
@@ -271,12 +313,17 @@ export default function RecordingsPage() {
 
                       {/* Right: meta */}
                       <div className="shrink-0 flex flex-col items-end gap-2">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
                           <Clock className="h-3 w-3" />
                           {formatDuration(r.duration_seconds)}
                         </div>
-                        <span className="text-[10px] text-slate-700">{formatDate(r.created_at)}</span>
+                        <span className="text-[10px] text-slate-500">{formatDate(r.created_at)}</span>
                         <div className="flex items-center gap-1.5">
+                          {r.ai_processing_status === 'processing' && !ai && (
+                            <span className="flex items-center gap-1 rounded-full bg-fuchsia-500/10 px-2 py-0.5 text-[10px] font-semibold text-fuchsia-400 animate-pulse">
+                              <Sparkles className="h-2.5 w-2.5" /> AI analyzing…
+                            </span>
+                          )}
                           {ai && (
                             <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400/80">
                               <Sparkles className="h-2.5 w-2.5" /> Analyzed

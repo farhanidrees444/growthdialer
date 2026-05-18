@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -23,6 +23,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLeads } from "@/contexts/leads-context";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
+import { createClient } from "@/lib/supabase/client";
 import type { SystemMetricsData, HourlyMetricPoint } from "@/lib/dashboard-types";
 
 const EMPTY_SPARKLINE: HourlyMetricPoint[] = Array.from({ length: 24 }, (_, h) => ({
@@ -118,6 +119,7 @@ export default function DashboardPage() {
   const session = useSupabaseSession();
   const [metrics, setMetrics] = useState<SystemMetricsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const tokenRef = useRef<string | null>(null);
 
   const fetchMetrics = useCallback(async (token: string) => {
     try {
@@ -139,8 +141,33 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!session?.access_token) return;
+    tokenRef.current = session.access_token;
     fetchMetrics(session.access_token);
   }, [session?.access_token, fetchMetrics]);
+
+  // Realtime: refetch metrics when calls or analytics change
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    let supabase: ReturnType<typeof createClient> | null = null;
+    try { supabase = createClient(); } catch { return; }
+    const sb = supabase;
+
+    const channel = sb
+      .channel('dashboard-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'calls', filter: `user_id=eq.${session.user.id}` },
+        () => { if (tokenRef.current) fetchMetrics(tokenRef.current); },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'call_analytics' },
+        () => { if (tokenRef.current) fetchMetrics(tokenRef.current); },
+      )
+      .subscribe();
+
+    return () => { sb.removeChannel(channel); };
+  }, [session?.user?.id, fetchMetrics]);
 
   const m = metrics ?? EMPTY_METRICS;
   const sparkline = m.sparkline;
