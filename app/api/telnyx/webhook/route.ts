@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
             .eq('telnyx_call_id', callControlId);
           if (error) console.error('call.recording.saved update error:', error);
 
-          // Log activity
+          // Log activity + fire AI processing
           if (callRow?.user_id) {
             await supabase.from('activities').insert({
               user_id: callRow.user_id,
@@ -162,6 +162,19 @@ export async function POST(request: NextRequest) {
               description: 'Recording saved',
               metadata: { event: 'call.recording.saved', call_id: callRow.id, recording_url: recordingUrl },
             }).select().maybeSingle();
+
+            // Fire-and-forget AI processing
+            if (process.env.AI_PROCESSING_ENABLED === 'true' && callRow.id) {
+              const baseUrl = process.env.APP_URL ?? 'http://localhost:3000';
+              void fetch(`${baseUrl}/api/ai/process-call`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-internal-secret': process.env.INTERNAL_API_SECRET ?? '',
+                },
+                body: JSON.stringify({ call_id: callRow.id }),
+              }).catch((err) => console.error('AI processing trigger failed:', err));
+            }
           }
         }
         break;

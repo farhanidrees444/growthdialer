@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Calendar, MessageSquare, Target, Phone, Clock, CheckCircle2, PhoneMissed } from 'lucide-react';
+import { Sparkles, Calendar, MessageSquare, Target, Phone, Clock, CheckCircle2, PhoneMissed, Brain } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { LeadRecord } from '@/components/dialer/LeadCard';
 
@@ -13,6 +13,14 @@ interface CallRow {
   disposition: string | null;
   answered_at: string | null;
   ended_at: string | null;
+}
+
+interface LeadMemory {
+  id: string;
+  memory_type: string;
+  content: string;
+  importance_score: number;
+  created_at: string;
 }
 
 interface AiInsightsPanelProps {
@@ -37,11 +45,23 @@ function dispositionIcon(disp: string | null) {
   return <Phone className="h-3.5 w-3.5 text-slate-500" />;
 }
 
-const TALKING_POINTS = [
-  'Ask about their current solution pain points',
-  'Mention recent growth in their industry',
-  'Reference company size for right-fit framing',
-];
+function memoryTypeDot(type: string): string {
+  switch (type) {
+    case 'objection': return 'bg-red-400/60';
+    case 'interest': return 'bg-emerald-400/60';
+    case 'preference': return 'bg-violet-400/60';
+    default: return 'bg-blue-400/60';
+  }
+}
+
+function memoryTypeColor(type: string): string {
+  switch (type) {
+    case 'objection': return 'text-red-400';
+    case 'interest': return 'text-emerald-400';
+    case 'preference': return 'text-violet-400';
+    default: return 'text-blue-400';
+  }
+}
 
 const BEST_TIMES: Record<string, string> = {
   'SaaS': 'Tue–Thu · 10–11 AM',
@@ -49,19 +69,15 @@ const BEST_TIMES: Record<string, string> = {
   'Healthcare': 'Mon–Wed · 2–4 PM',
 };
 
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.07 } },
-};
-const fadeUp = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0 },
-};
+const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
+const fadeUp = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
 const fadeUpTransition = { duration: 0.28, ease: 'easeOut' as const };
 
 export default function AiInsightsPanel({ lead, notes, refreshKey = 0 }: AiInsightsPanelProps) {
   const [supabase] = useState(() => createClient());
   const [callHistory, setCallHistory] = useState<CallRow[]>([]);
+  const [memories, setMemories] = useState<LeadMemory[]>([]);
+  const [memoriesLoading, setMemoriesLoading] = useState(false);
 
   useEffect(() => {
     if (!lead) { setCallHistory([]); return; }
@@ -74,7 +90,31 @@ export default function AiInsightsPanel({ lead, notes, refreshKey = 0 }: AiInsig
       .then(({ data }) => { if (data) setCallHistory(data as CallRow[]); });
   }, [lead?.id, refreshKey, supabase]);
 
+  useEffect(() => {
+    if (!lead) { setMemories([]); return; }
+    setMemoriesLoading(true);
+    supabase
+      .from('lead_memory')
+      .select('id, memory_type, content, importance_score, created_at')
+      .eq('lead_id', lead.id)
+      .order('importance_score', { ascending: false })
+      .limit(5)
+      .then(({ data }) => {
+        setMemories((data ?? []) as LeadMemory[]);
+        setMemoriesLoading(false);
+      });
+  }, [lead?.id, refreshKey, supabase]);
+
   const bestTime = lead?.industry ? (BEST_TIMES[lead.industry] ?? 'Tue–Thu · 10–11 AM') : 'Tue–Thu · 10–11 AM';
+
+  const interestMemories = memories.filter((m) => m.memory_type === 'interest');
+  const talkingPoints = interestMemories.length > 0
+    ? interestMemories.map((m) => m.content)
+    : [
+        'Ask about their current solution pain points',
+        'Mention recent growth in their industry',
+        'Reference company size for right-fit framing',
+      ];
 
   if (!lead) {
     return (
@@ -87,23 +127,15 @@ export default function AiInsightsPanel({ lead, notes, refreshKey = 0 }: AiInsig
   }
 
   return (
-    <motion.div
-      key={lead.id}
-      variants={stagger}
-      initial="hidden"
-      animate="show"
-      className="flex flex-col gap-3"
-    >
+    <motion.div key={lead.id} variants={stagger} initial="hidden" animate="show" className="flex flex-col gap-3">
       {/* Header */}
       <div className="flex items-center gap-2 px-1">
         <Sparkles className="h-3.5 w-3.5 text-amber-400" />
         <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/80">AI Insights</span>
       </div>
 
-      {/* Card 1 — Best Time to Call */}
-      <motion.div
-        variants={fadeUp}
-        transition={fadeUpTransition}
+      {/* Best Time to Call */}
+      <motion.div variants={fadeUp} transition={fadeUpTransition}
         className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
       >
         <div className="flex items-center gap-2 mb-2">
@@ -116,10 +148,43 @@ export default function AiInsightsPanel({ lead, notes, refreshKey = 0 }: AiInsig
         <p className="mt-0.5 text-[10px] text-slate-500">Based on industry patterns</p>
       </motion.div>
 
-      {/* Card 2 — Last Note */}
-      <motion.div
-        variants={fadeUp}
-        transition={fadeUpTransition}
+      {/* AI Memory */}
+      <motion.div variants={fadeUp} transition={fadeUpTransition}
+        className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-500/10">
+              <Brain className="h-3.5 w-3.5 text-violet-400" />
+            </div>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">What AI Remembers</span>
+          </div>
+          {memories.length > 0 && (
+            <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[9px] font-semibold text-violet-400">
+              {memories.length} facts
+            </span>
+          )}
+        </div>
+        {memoriesLoading ? (
+          <div className="space-y-1.5">
+            {[1, 2].map((i) => <div key={i} className="h-4 animate-pulse rounded bg-white/[0.04]" />)}
+          </div>
+        ) : memories.length > 0 ? (
+          <ul className="space-y-2">
+            {memories.slice(0, 3).map((mem) => (
+              <li key={mem.id} className="flex items-start gap-2">
+                <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${memoryTypeDot(mem.memory_type)}`} />
+                <span className={`text-xs leading-relaxed ${memoryTypeColor(mem.memory_type)}`}>{mem.content}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-slate-600 italic">No memories yet — AI learns from each call automatically</p>
+        )}
+      </motion.div>
+
+      {/* Last Note */}
+      <motion.div variants={fadeUp} transition={fadeUpTransition}
         className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
       >
         <div className="flex items-center gap-2 mb-2">
@@ -135,35 +200,35 @@ export default function AiInsightsPanel({ lead, notes, refreshKey = 0 }: AiInsig
         )}
       </motion.div>
 
-      {/* Card 3 — Talking Points */}
-      <motion.div
-        variants={fadeUp}
-        transition={fadeUpTransition}
+      {/* Talking Points */}
+      <motion.div variants={fadeUp} transition={fadeUpTransition}
         className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
       >
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-500/10">
-              <Target className="h-3.5 w-3.5 text-violet-400" />
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/10">
+              <Target className="h-3.5 w-3.5 text-emerald-400" />
             </div>
             <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Talking Points</span>
           </div>
-          <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[9px] font-semibold text-violet-400">AI Soon</span>
+          {interestMemories.length > 0
+            ? <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold text-emerald-400">From memory</span>
+            : <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[9px] font-semibold text-violet-400">AI Soon</span>
+          }
         </div>
         <ul className="space-y-1.5">
-          {TALKING_POINTS.map((pt) => (
+          {talkingPoints.slice(0, 3).map((pt) => (
             <li key={pt} className="flex items-start gap-2">
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400/40" />
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400/40" />
               <span className="text-xs text-slate-400">{pt}</span>
             </li>
           ))}
         </ul>
       </motion.div>
 
-      {/* Card 4 — Call History */}
+      {/* Call History */}
       {callHistory.length > 0 && (
-        <motion.div
-          variants={fadeUp}
+        <motion.div variants={fadeUp} transition={fadeUpTransition}
           className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
         >
           <div className="flex items-center gap-2 mb-3">
@@ -182,9 +247,7 @@ export default function AiInsightsPanel({ lead, notes, refreshKey = 0 }: AiInsig
                   </p>
                   <div className="flex items-center gap-2 text-[10px] text-slate-600">
                     <span>{formatDate(call.created_at)}</span>
-                    {call.answered_at && (
-                      <span>· {callDuration(call.answered_at, call.ended_at)}</span>
-                    )}
+                    {call.answered_at && <span>· {callDuration(call.answered_at, call.ended_at)}</span>}
                   </div>
                 </div>
               </div>
