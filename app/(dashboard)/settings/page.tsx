@@ -430,7 +430,7 @@ function AiTab({ settings, onChange }: { settings: UserSettings; onChange: (patc
       >
         <ToggleRow
           label="Auto-transcribe recordings"
-          description="Convert call audio to searchable text using Groq Whisper Large V3"
+          description="Convert call audio to searchable text using our speech recognition engine"
           checked={settings.ai_auto_transcribe}
           onChange={(v) => onChange({ ai_auto_transcribe: v })}
           icon={Mic}
@@ -438,7 +438,7 @@ function AiTab({ settings, onChange }: { settings: UserSettings; onChange: (patc
         />
         <ToggleRow
           label="Generate AI summaries"
-          description="Bullet-point summary, next steps, and suggested disposition using Gemini"
+          description="Bullet-point summary, next steps, and suggested disposition from the AI engine"
           checked={settings.ai_auto_summarize}
           onChange={(v) => onChange({ ai_auto_summarize: v })}
           icon={Brain}
@@ -465,10 +465,9 @@ function AiTab({ settings, onChange }: { settings: UserSettings; onChange: (patc
       <div className="flex items-start gap-3 rounded-xl border border-white/[0.05] bg-white/[0.02] p-4">
         <Sparkles className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
         <div>
-          <p className="text-xs font-semibold text-slate-300">Powered by Groq + Gemini</p>
+          <p className="text-xs font-semibold text-slate-300">Powered by AI</p>
           <p className="mt-0.5 text-[11px] text-slate-500 leading-relaxed">
-            Transcription uses Groq Whisper Large V3. Analysis uses Gemini 2.0 Flash with Groq LLaMA 3.3 as fallback.
-            Both are free-tier compatible with generous limits.
+            Transcription converts call audio to text. AI analysis generates summaries, sentiment scores, and objection detection with an automatic fallback for reliability.
           </p>
         </div>
       </div>

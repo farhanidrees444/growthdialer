@@ -5,22 +5,14 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Phone, Upload, Users, BarChart2,
-  CalendarCheck, DollarSign, Info,
-} from "lucide-react";
+import { Phone, Users, CalendarCheck, Info } from "lucide-react";
 import DashboardHeader from "@/components/DashboardHeader";
-import DialerWidget from "@/components/DialerWidget";
-import LeadsQueue from "@/components/LeadsQueue";
-import RecentActivity from "@/components/RecentActivity";
 import MetricCardWithSparkline from "@/components/dashboard/metric-card-with-sparkline";
 import AIHoursSavedCard from "@/components/dashboard/ai-hours-saved-card";
-import SpamShieldCard from "@/components/dashboard/spam-shield-card";
+import ActiveDialerPreview from "@/components/dashboard/active-dialer-preview";
+import UpNextQueue from "@/components/dashboard/up-next-queue";
 import LiveTerminal from "@/components/dashboard/live-terminal";
-import MultiLineChart from "@/components/dashboard/multi-line-chart";
 import SystemHealthDropdown from "@/components/dashboard/system-health-dropdown";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useLeads } from "@/contexts/leads-context";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { createClient } from "@/lib/supabase/client";
@@ -42,83 +34,12 @@ const EMPTY_METRICS: SystemMetricsData = {
   hasRealData: false,
 };
 
-function QuickActions() {
-  const { setImportOpen } = useLeads();
-  return (
-    <div className="grid gap-3 md:grid-cols-3">
-      <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/90 p-4 shadow-lg shadow-black/20 backdrop-blur-sm transition-colors hover:border-brand/30">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/15">
-            <Upload className="h-5 w-5 text-brand" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-display text-sm font-semibold">Import leads</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              CSV from CRM or spreadsheet — map columns on upload.
-            </p>
-            <Button
-              type="button"
-              size="sm"
-              className="mt-3 h-8 bg-brand px-3 text-xs font-semibold text-[oklch(0.08_0.04_153)] hover:bg-[oklch(0.76_0.27_153)]"
-              onClick={() => setImportOpen(true)}
-            >
-              Upload CSV
-            </Button>
-          </div>
-        </div>
-      </Card>
-      <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/90 p-4 shadow-lg shadow-black/20 backdrop-blur-sm transition-colors hover:border-brand/30">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15">
-            <Users className="h-5 w-5 text-indigo-400" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-display text-sm font-semibold">Review queue</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Prioritized by AI score — dial from the top or skip.
-            </p>
-            <Link href="/leads">
-              <Button
-                size="sm"
-                variant="outline"
-                className="mt-3 h-8 border-white/15 bg-white/5 text-xs hover:bg-white/10"
-              >
-                Open leads
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </Card>
-      <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/90 p-4 shadow-lg shadow-black/20 backdrop-blur-sm transition-colors hover:border-brand/30">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15">
-            <Phone className="h-5 w-5 text-emerald-400" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-display text-sm font-semibold">Start dialing</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Disposition sync and real-time progress tracking.
-            </p>
-            <Link href="/dialer">
-              <Button
-                size="sm"
-                variant="outline"
-                className="mt-3 h-8 border-white/15 bg-white/5 text-xs hover:bg-white/10"
-              >
-                Open dialer
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
 export default function DashboardPage() {
   const session = useSupabaseSession();
+  const { leads } = useLeads();
   const [metrics, setMetrics] = useState<SystemMetricsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [leadsInQueue, setLeadsInQueue] = useState(0);
   const tokenRef = useRef<string | null>(null);
 
   const fetchMetrics = useCallback(async (token: string) => {
@@ -144,6 +65,14 @@ export default function DashboardPage() {
     tokenRef.current = session.access_token;
     fetchMetrics(session.access_token);
   }, [session?.access_token, fetchMetrics]);
+
+  // Refresh queue count when leads context changes
+  useEffect(() => {
+    fetch('/api/leads/queue?limit=1&status=queued,new,callback')
+      .then((r) => r.json())
+      .then((data) => setLeadsInQueue(data.count ?? 0))
+      .catch(() => {});
+  }, [leads]);
 
   // Realtime: refetch metrics when calls or analytics change
   useEffect(() => {
@@ -220,20 +149,6 @@ export default function DashboardPage() {
       areaColor: "#fbbf24",
       areaGradientId: "meetings-grad",
     },
-    {
-      title: "Pipeline Value",
-      value: "$0",
-      change: "—",
-      positive: true,
-      neutral: true,
-      icon: DollarSign,
-      iconColor: "text-purple-400",
-      iconBg: "bg-purple-500/15",
-      delay: 0.21,
-      dataKey: "ai" as const,
-      areaColor: "#e879f9",
-      areaGradientId: "ai-grad",
-    },
   ];
 
   return (
@@ -265,35 +180,11 @@ export default function DashboardPage() {
           )}
         </AnimatePresence>
 
-        {/* Header row */}
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-widest text-brand">Today</p>
-            <p className="font-display text-base lg:text-lg font-semibold">Pipeline & activity</p>
-          </div>
-          <Link href="/analytics">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 border-white/15 bg-white/5 text-xs hover:bg-white/10"
-            >
-              <BarChart2 className="h-3.5 w-3.5" />
-              Full analytics
-            </Button>
-          </Link>
-        </div>
-
-        <QuickActions />
-
-        {/* Stat cards with sparklines */}
-        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4 lg:gap-4">
+        {/* Zone 1: Hero stat cards */}
+        <div className="grid grid-cols-3 gap-3 lg:gap-4">
           {loading
-            ? Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-32 animate-pulse rounded-xl border border-white/10 bg-white/5"
-                />
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-32 animate-pulse rounded-xl border border-white/10 bg-white/5" />
               ))
             : statCards.map((card) => (
                 <MetricCardWithSparkline
@@ -304,36 +195,33 @@ export default function DashboardPage() {
               ))}
         </div>
 
-        {/* Multi-line chart */}
-        {!loading && <MultiLineChart data={sparkline} />}
-        {loading && (
-          <div className="h-48 animate-pulse rounded-xl border border-white/10 bg-white/5" />
+        {/* Zone 2 + 3: Command center grid */}
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-4">
+
+          {/* Left — dialer focal point + compact activity log */}
+          <div className="flex flex-col gap-3 lg:col-span-8">
+            <ActiveDialerPreview leadsInQueue={leadsInQueue} />
+            <LiveTerminal compact />
+          </div>
+
+          {/* Right — Up next queue */}
+          <div className="lg:col-span-4">
+            <UpNextQueue />
+          </div>
+        </div>
+
+        {/* AI Hours Saved — shown only once there's real data */}
+        {!loading && m.aiHoursSaved.total > 0 && (
+          <AIHoursSavedCard data={m.aiHoursSaved} loading={false} />
         )}
 
-        {/* AI moat row */}
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
-          <AIHoursSavedCard data={m.aiHoursSaved} loading={loading} />
-          <SpamShieldCard data={m.spamShield} loading={loading} />
-        </div>
-
-        {/* Dialer + Terminal */}
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 lg:gap-4">
-          <div className="lg:col-span-1">
-            <DialerWidget />
-          </div>
-          <div className="lg:col-span-2">
-            <LiveTerminal />
-          </div>
-        </div>
-
-        {/* Leads queue + Recent activity */}
-        <div className="grid grid-cols-1 gap-3 pb-2 lg:grid-cols-3 lg:gap-4">
-          <div className="lg:col-span-2">
-            <LeadsQueue limit={5} />
-          </div>
-          <div className="lg:col-span-1">
-            <RecentActivity />
-          </div>
+        <div className="pb-2 text-center">
+          <Link
+            href="/analytics"
+            className="text-xs text-slate-600 transition-colors hover:text-slate-400"
+          >
+            View full analytics →
+          </Link>
         </div>
 
       </main>

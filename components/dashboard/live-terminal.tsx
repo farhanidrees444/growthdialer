@@ -37,18 +37,23 @@ function mkLog(type: TerminalLog["type"], message: string): TerminalLog {
   };
 }
 
-export default function LiveTerminal() {
+interface LiveTerminalProps {
+  compact?: boolean;
+}
+
+export default function LiveTerminal({ compact = false }: LiveTerminalProps) {
   const session = useSupabaseSession();
   const [logs, setLogs] = useState<TerminalLog[]>([
-    mkLog("system", "Telephony terminal initialized"),
-    mkLog("system", "Waiting for call activity..."),
+    mkLog("system", "Call activity log initialized"),
+    mkLog("system", "Waiting for call events…"),
   ]);
   const [connected, setConnected] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (compact) return; // don't auto-scroll in compact mode
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [logs]);
+  }, [logs, compact]);
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -64,12 +69,7 @@ export default function LiveTerminal() {
       .channel("live-terminal-calls")
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "calls",
-          filter: `user_id=eq.${session.user.id}`,
-        },
+        { event: "*", schema: "public", table: "calls", filter: `user_id=eq.${session.user.id}` },
         (payload) => {
           const record = payload.new as Record<string, unknown> | undefined;
           if (!record) return;
@@ -104,7 +104,7 @@ export default function LiveTerminal() {
       .subscribe((status) => {
         setConnected(status === "SUBSCRIBED");
         if (status === "SUBSCRIBED") {
-          setLogs((prev) => [...prev, mkLog("system", "Realtime connected — watching calls table")]);
+          setLogs((prev) => [...prev, mkLog("system", "Live connection established")]);
         }
       });
 
@@ -114,39 +114,44 @@ export default function LiveTerminal() {
     };
   }, [session?.user?.id]);
 
+  const visibleLogs = compact ? logs.slice(-4) : logs;
+
   return (
     <Card className="border-white/10 bg-[oklch(0.06_0.018_286)] shadow-lg shadow-black/30 overflow-hidden">
-      <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5">
-        <Terminal className="h-4 w-4 text-brand" />
-        <span className="text-xs font-mono font-semibold text-brand">telephony.log</span>
+      <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2">
+        <Terminal className="h-3.5 w-3.5 text-brand" />
+        <span className="text-[10px] font-mono font-semibold text-brand">activity.log</span>
         <div className="ml-auto flex items-center gap-1.5">
           <Circle
             className={cn(
-              "h-2 w-2 fill-current",
+              "h-1.5 w-1.5 fill-current",
               connected ? "text-emerald-400" : "text-slate-600"
             )}
           />
-          <span className="text-[10px] font-mono text-muted-foreground">
+          <span className="text-[9px] font-mono text-muted-foreground">
             {connected ? "LIVE" : "OFFLINE"}
           </span>
         </div>
       </div>
-      <div className="h-52 overflow-y-auto px-4 py-3 font-mono text-xs">
+
+      <div className={cn(
+        "overflow-y-auto px-4 py-2 font-mono text-xs",
+        compact ? "h-28" : "h-52"
+      )}>
         <AnimatePresence initial={false}>
-          {logs.map((log) => (
+          {visibleLogs.map((log) => (
             <motion.div
               key={log.id}
-              initial={{ opacity: 0, x: -8 }}
+              initial={{ opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.15 }}
+              transition={{ duration: 0.12 }}
               className="flex items-start gap-2 py-0.5"
             >
-              <span className="shrink-0 text-slate-600">{log.timestamp}</span>
+              <span className="shrink-0 text-slate-700">{log.timestamp}</span>
               <span
                 className={cn(
-                  "shrink-0 rounded px-1 font-bold",
-                  typeColor(log.type),
-                  "bg-white/5"
+                  "shrink-0 rounded px-1 font-bold bg-white/5",
+                  typeColor(log.type)
                 )}
               >
                 {typeLabel(log.type)}
@@ -155,7 +160,7 @@ export default function LiveTerminal() {
             </motion.div>
           ))}
         </AnimatePresence>
-        <div ref={bottomRef} />
+        {!compact && <div ref={bottomRef} />}
       </div>
     </Card>
   );

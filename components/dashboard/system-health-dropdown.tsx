@@ -3,80 +3,43 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
-  Activity, CheckCircle2, AlertTriangle, XCircle,
-  Mic, MicOff, RefreshCw,
+  Activity, CheckCircle2, XCircle,
+  Mic, MicOff, RefreshCw, Shield,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-interface ServiceCheck {
+interface ServiceInfo {
+  label: string;
   ok: boolean;
-  latencyMs?: number;
-  detail?: string;
+  latency: string;
 }
 
 interface HealthData {
-  status: "healthy" | "degraded";
-  checks: Record<string, ServiceCheck>;
+  services: Record<string, { ok: boolean; latency: string }>;
+  overall: 'healthy' | 'degraded';
   timestamp: string;
 }
 
 type MicState = "granted" | "denied" | "prompt" | "unknown";
 
-const serviceLabels: Record<string, string> = {
-  telnyx: "Telnyx",
-  groq: "Groq (STT)",
-  gemini: "Gemini (AI)",
-  aiPipeline: "AI Pipeline",
+const SERVICE_LABELS: Record<string, string> = {
+  voice_network: "Voice Network",
+  transcription_engine: "Transcription Engine",
+  ai_engine: "AI Engine",
+  database: "Database",
 };
 
-function StatusDot({ ok }: { ok: boolean }) {
-  return (
-    <span
-      className={cn(
-        "inline-block h-2 w-2 rounded-full",
-        ok ? "bg-emerald-400" : "bg-red-400"
-      )}
-    />
-  );
-}
-
-function ServiceRow({ name, check }: { name: string; check: ServiceCheck }) {
-  const Icon = check.ok ? CheckCircle2 : check.latencyMs === undefined ? AlertTriangle : XCircle;
-  return (
-    <div className="flex items-center gap-2 text-xs">
-      <Icon
-        className={cn(
-          "h-3.5 w-3.5 shrink-0",
-          check.ok ? "text-emerald-400" : "text-red-400"
-        )}
-      />
-      <span className="flex-1 text-muted-foreground">
-        {serviceLabels[name] ?? name}
-      </span>
-      {check.latencyMs !== undefined && (
-        <span className="font-mono text-muted-foreground">{check.latencyMs}ms</span>
-      )}
-      {check.detail && !check.latencyMs && (
-        <span className="font-mono text-muted-foreground truncate max-w-20" title={check.detail}>
-          {check.detail.slice(0, 20)}
-        </span>
-      )}
-    </div>
-  );
-}
-
 export default function SystemHealthDropdown() {
-  const [health, setHealth] = useState<HealthData | null>(null);
+  const [services, setServices] = useState<ServiceInfo[]>([]);
+  const [overall, setOverall] = useState<'healthy' | 'degraded' | null>(null);
+  const [timestamp, setTimestamp] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [micState, setMicState] = useState<MicState>("unknown");
 
   const checkMic = useCallback(async () => {
-    if (typeof navigator === "undefined" || !navigator.permissions) {
-      setMicState("unknown");
-      return;
-    }
+    if (typeof navigator === "undefined" || !navigator.permissions) return;
     try {
       const result = await navigator.permissions.query({ name: "microphone" as PermissionName });
       setMicState(result.state as MicState);
@@ -89,66 +52,79 @@ export default function SystemHealthDropdown() {
   const fetchHealth = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/telnyx/health");
+      const res = await fetch("/api/system/health");
       if (res.ok) {
         const data = await res.json() as HealthData;
-        setHealth(data);
+        setServices(
+          Object.entries(data.services).map(([key, val]) => ({
+            label: SERVICE_LABELS[key] ?? key,
+            ok: val.ok,
+            latency: val.latency,
+          }))
+        );
+        setOverall(data.overall);
+        setTimestamp(data.timestamp);
       }
     } catch {
-      // silently fail — dropdown will show stale or empty state
+      // silently fail
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    checkMic();
-  }, [checkMic]);
+  useEffect(() => { checkMic(); }, [checkMic]);
 
   useEffect(() => {
-    if (open && !health) {
-      fetchHealth();
-    }
-  }, [open, health, fetchHealth]);
+    if (open && services.length === 0) fetchHealth();
+  }, [open, services.length, fetchHealth]);
 
-  const allOk = health?.status === "healthy";
-  const ButtonIcon = loading ? RefreshCw : allOk ? Activity : AlertTriangle;
-  const buttonColor = loading
-    ? "text-muted-foreground"
-    : allOk
-    ? "text-emerald-400"
-    : "text-amber-400";
+  const allOk = overall === 'healthy';
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         className="inline-flex h-8 items-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-3 text-xs hover:bg-white/10 transition-colors"
       >
-        <ButtonIcon className={cn("h-3.5 w-3.5", buttonColor, loading && "animate-spin")} />
-        <span className={buttonColor}>
-          {loading ? "Checking..." : allOk ? "All systems go" : health ? "Degraded" : "System health"}
+        {/* Pulse dot */}
+        <span className="relative flex h-2 w-2">
+          <span className={cn(
+            "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
+            allOk || overall === null ? "bg-emerald-400" : "bg-amber-400"
+          )} />
+          <span className={cn(
+            "relative inline-flex h-2 w-2 rounded-full",
+            allOk || overall === null ? "bg-emerald-500" : "bg-amber-500"
+          )} />
         </span>
-        {!allOk && health && (
-          <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-        )}
+        <span className={cn(
+          loading ? "text-muted-foreground" : allOk || overall === null ? "text-emerald-400" : "text-amber-400"
+        )}>
+          {loading ? "Checking…" : allOk || overall === null ? "All systems go" : "Degraded"}
+        </span>
+        {loading && <RefreshCw className="h-3 w-3 animate-spin text-muted-foreground" />}
       </PopoverTrigger>
+
       <PopoverContent
         align="end"
         className="w-72 border-white/10 bg-[oklch(0.09_0.02_282)] p-4 shadow-xl shadow-black/40"
       >
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm font-semibold">System Health</p>
+          <div className="flex items-center gap-1.5">
+            <Shield className="h-3.5 w-3.5 text-emerald-400" />
+            <p className="text-sm font-semibold">System Health</p>
+          </div>
           <button
             type="button"
             onClick={fetchHealth}
+            disabled={loading}
             className="text-muted-foreground hover:text-foreground transition-colors"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           </button>
         </div>
 
-        {!health && !loading && (
-          <p className="text-xs text-muted-foreground text-center py-2">
+        {services.length === 0 && !loading && (
+          <p className="py-2 text-center text-xs text-muted-foreground">
             Click refresh to check service status.
           </p>
         )}
@@ -161,57 +137,51 @@ export default function SystemHealthDropdown() {
           </div>
         )}
 
-        {health && !loading && (
+        {services.length > 0 && !loading && (
           <motion.div
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-2"
+            className="space-y-2.5"
           >
-            {Object.entries(health.checks).map(([name, check]) => (
-              <ServiceRow key={name} name={name} check={check} />
+            {services.map((svc) => (
+              <div key={svc.label} className="flex items-center gap-2 text-xs">
+                {svc.ok
+                  ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                  : <XCircle className="h-3.5 w-3.5 shrink-0 text-red-400" />}
+                <span className="flex-1 text-muted-foreground">{svc.label}</span>
+                <span className={cn("font-mono text-muted-foreground", !svc.ok && "text-red-400")}>
+                  {svc.ok ? svc.latency : "Offline"}
+                </span>
+              </div>
             ))}
           </motion.div>
         )}
 
         <div className="mt-3 border-t border-white/10 pt-3">
           <div className="flex items-center gap-2 text-xs">
-            {micState === "granted" ? (
-              <Mic className="h-3.5 w-3.5 text-emerald-400" />
-            ) : micState === "denied" ? (
-              <MicOff className="h-3.5 w-3.5 text-red-400" />
-            ) : (
-              <Mic className="h-3.5 w-3.5 text-amber-400" />
-            )}
+            {micState === "granted"
+              ? <Mic className="h-3.5 w-3.5 text-emerald-400" />
+              : micState === "denied"
+              ? <MicOff className="h-3.5 w-3.5 text-red-400" />
+              : <Mic className="h-3.5 w-3.5 text-amber-400" />}
             <span className="flex-1 text-muted-foreground">Microphone</span>
-            <span
-              className={cn(
-                "font-mono",
-                micState === "granted"
-                  ? "text-emerald-400"
-                  : micState === "denied"
-                  ? "text-red-400"
-                  : "text-amber-400"
-              )}
-            >
-              {micState === "granted"
-                ? "Granted"
-                : micState === "denied"
-                ? "Denied"
-                : micState === "prompt"
-                ? "Not set"
-                : "Unknown"}
+            <span className={cn(
+              "font-mono",
+              micState === "granted" ? "text-emerald-400" : micState === "denied" ? "text-red-400" : "text-amber-400"
+            )}>
+              {micState === "granted" ? "Granted" : micState === "denied" ? "Denied" : micState === "prompt" ? "Not set" : "Unknown"}
             </span>
           </div>
           {micState === "denied" && (
             <p className="mt-1.5 text-[11px] text-red-400/80">
-              Microphone access is blocked. Enable it in your browser settings to make calls.
+              Enable microphone access in your browser settings to make calls.
             </p>
           )}
         </div>
 
-        {health?.timestamp && (
-          <p className="mt-2 text-[10px] text-muted-foreground/60 text-right">
-            Checked {new Date(health.timestamp).toLocaleTimeString()}
+        {timestamp && (
+          <p className="mt-2 text-right text-[10px] text-muted-foreground/60">
+            Checked {new Date(timestamp).toLocaleTimeString()}
           </p>
         )}
       </PopoverContent>

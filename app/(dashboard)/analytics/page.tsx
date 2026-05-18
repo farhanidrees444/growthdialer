@@ -12,8 +12,10 @@ import {
 import DashboardHeader from "@/components/DashboardHeader";
 import StatCard from "@/components/StatCard";
 import ActivityChart from "@/components/ActivityChart";
+import MultiLineChart from "@/components/dashboard/multi-line-chart";
 import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
+import type { HourlyMetricPoint } from "@/lib/dashboard-types";
 
 interface StatsData {
   callsToday: number;
@@ -116,6 +118,7 @@ export default function AnalyticsPage() {
   const [distribution, setDistribution] = useState<DistributionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [distLoading, setDistLoading] = useState(true);
+  const [sparkline, setSparkline] = useState<HourlyMetricPoint[]>([]);
 
   const loadStats = useCallback(() => {
     fetch("/api/stats/today")
@@ -140,6 +143,12 @@ export default function AnalyticsPage() {
   useEffect(() => {
     loadStats();
     loadDistribution();
+    // Load hourly sparkline for the multi-line chart
+    const token = typeof window !== 'undefined' ? null : null; // client-side only
+    fetch('/api/dashboard/metrics', { credentials: 'include' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data?.sparkline) setSparkline(data.sparkline); })
+      .catch(() => {});
   }, [loadStats, loadDistribution]);
 
   // Realtime: refetch when call data changes
@@ -215,6 +224,9 @@ export default function AnalyticsPage() {
             </div>
           </Card>
         )}
+
+        {/* Daily activity — hourly breakdown */}
+        {sparkline.length > 0 && <MultiLineChart data={sparkline} />}
 
         {/* Activity chart */}
         <ActivityChart />
