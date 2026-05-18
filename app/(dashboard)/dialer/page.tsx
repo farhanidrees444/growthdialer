@@ -20,6 +20,7 @@ import MicPermissionModal from '@/components/dialer/MicPermissionModal';
 import DispositionModal from '@/components/dialer/DispositionModal';
 import { useWebPhone } from '@/contexts/webphone-context';
 import { useCallContext } from '@/lib/call-context';
+import { checkConsentRequired } from '@/lib/compliance/region-detector';
 import { isE164 } from '@/lib/phone';
 import type { LeadRecord } from '@/components/dialer/LeadCard';
 import { Zap, PhoneOff, Trophy, Clock, PhoneCall, CalendarCheck, Sparkles, Keyboard, X as XIcon, PhoneMissed } from 'lucide-react';
@@ -550,6 +551,7 @@ function DialerContent() {
   // Toast + UI state
   const [noAnswerToast, setNoAnswerToast] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const [complianceWarning, setComplianceWarning] = useState<string | null>(null);
 
   useEffect(() => { powerSessionRef.current = powerSession; }, [powerSession]);
   useEffect(() => { callSidRef.current = callState.callSid; }, [callState.callSid]);
@@ -824,6 +826,10 @@ function DialerContent() {
       }
 
       console.log('[DIALER] Initiating call:', { from: fromNumber || '(none)', to: destination });
+
+      // Compliance check
+      const consent = checkConsentRequired(destination);
+      setComplianceWarning(consent.required ? consent.disclaimer : null);
 
       pendingDialRef.current = { to: destination, leadId: lead?.id ?? null };
 
@@ -1285,6 +1291,22 @@ function DialerContent() {
             <span className="text-xs text-slate-500">
               {dialMode === 'power' ? '· Moving to next lead in 5s' : '· Marked as no answer'}
             </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Compliance warning banner ────────────────────────────────────────── */}
+      <AnimatePresence>
+        {complianceWarning && callState.status !== 'idle' && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="fixed top-4 left-1/2 z-[60] -translate-x-1/2 flex max-w-md items-start gap-3 rounded-2xl border border-amber-500/30 bg-[oklch(0.10_0.025_282)] px-4 py-3 shadow-xl shadow-black/60"
+          >
+            <span className="text-amber-400 shrink-0 text-base">⚠️</span>
+            <p className="text-xs text-amber-300/90 leading-relaxed">{complianceWarning}</p>
+            <button type="button" onClick={() => setComplianceWarning(null)} className="shrink-0 text-slate-600 hover:text-slate-400 ml-1">✕</button>
           </motion.div>
         )}
       </AnimatePresence>

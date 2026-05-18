@@ -218,7 +218,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         destinationNumber: destination,
         audio: true,
         video: false,
-        // HD voice: request Opus with echo/noise cancellation
+        // HD voice: Opus with echo/noise cancellation
         mediaConstraints: {
           audio: {
             echoCancellation: true,
@@ -227,6 +227,12 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           },
           video: false,
         },
+        // Dual-channel recording: agent on left, customer on right
+        // This gives Groq Whisper accurate speaker diarization
+        custom_headers: [
+          { name: 'X-Recording-Channels', value: 'dual' },
+          { name: 'X-Recording-Format', value: 'mp3' },
+        ],
       };
       if (callerNumber) {
         callParams.callerNumber = callerNumber;
