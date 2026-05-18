@@ -11,10 +11,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { phoneNumber, monthlyCost, country } = body as {
+    const { phoneNumber, monthlyCost, country, countryName, numberType, locality, region } = body as {
       phoneNumber: string;
       monthlyCost?: number;
       country?: string;
+      countryName?: string;
+      numberType?: string;
+      locality?: string;
+      region?: string;
     };
 
     if (!phoneNumber) {
@@ -62,6 +66,11 @@ export async function POST(request: NextRequest) {
       telnyx_number_id: telnyxNumberId ?? null,
       telnyx_order_id: orderId ?? null,
       country: country ?? 'US',
+      country_code: country ?? 'US',
+      country_name: countryName ?? null,
+      number_type: numberType ?? 'local',
+      locality: locality ?? null,
+      region: region ?? null,
       monthly_cost: monthlyCost ?? 1.00,
       is_default: isDefault,
       status: 'active',
