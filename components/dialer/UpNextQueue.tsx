@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { Search, X, Phone, ChevronRight, Users } from 'lucide-react';
 import type { LeadRecord } from '@/components/dialer/LeadCard';
 
@@ -130,179 +131,107 @@ function CompactLeadCard({
 }
 
 export default function UpNextQueue({ leads, selectedLeadId, onSelectLead, onCallLead }: UpNextQueueProps) {
+  const router = useRouter();
   const [filter, setFilter] = useState<LocalFilter>('Queue');
   const [search, setSearch] = useState('');
-  const [showAll, setShowAll] = useState(false);
 
   const filtered = useMemo(() => applyFilter(leads, filter, search), [leads, filter, search]);
   const top3 = filtered.slice(0, 3);
 
   return (
-    <>
-      <div className="flex flex-col gap-3">
-        {/* Header */}
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Up Next</span>
-            <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-bold text-slate-400">
-              {filtered.length}
-            </span>
-          </div>
+    <div className="flex flex-col gap-3">
+      {/* Header */}
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Up Next</span>
+          <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-bold text-slate-400">
+            {filtered.length}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => router.push('/leads')}
+          className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 transition hover:text-emerald-300"
+        >
+          View all
+          <ChevronRight className="h-3 w-3" />
+        </button>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search leads…"
+          className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-emerald-500/25"
+        />
+        {search && (
           <button
             type="button"
-            onClick={() => setShowAll(true)}
-            className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 transition hover:text-emerald-300"
+            onClick={() => setSearch('')}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400"
           >
-            View all
-            <ChevronRight className="h-3 w-3" />
-          </button>
-        </div>
-
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search leads…"
-            className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-emerald-500/25"
-          />
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
-
-        {/* Filter tabs */}
-        <div className="flex gap-1.5">
-          {TABS.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setFilter(key)}
-              className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
-                filter === key
-                  ? 'bg-emerald-500/15 text-emerald-300'
-                  : 'text-slate-500 hover:text-slate-300'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Top 3 cards */}
-        {top3.length > 0 ? (
-          <motion.div
-            key={`${filter}-${search}`}
-            variants={staggerList}
-            initial="hidden"
-            animate="show"
-            className="flex flex-col gap-2"
-          >
-            {top3.map((lead) => (
-              <CompactLeadCard
-                key={lead.id}
-                lead={lead}
-                selected={lead.id === selectedLeadId}
-                onSelect={() => onSelectLead(lead)}
-                onCall={() => onCallLead(lead.phone, lead)}
-              />
-            ))}
-          </motion.div>
-        ) : (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-white/[0.04] bg-white/[0.01] px-4 py-8 text-center">
-            <Users className="mb-2 h-6 w-6 text-slate-600" />
-            <p className="text-xs text-slate-500">No leads in this filter</p>
-          </div>
-        )}
-
-        {filtered.length > 3 && (
-          <button
-            type="button"
-            onClick={() => setShowAll(true)}
-            className="rounded-xl border border-white/[0.06] bg-white/[0.02] py-2.5 text-xs font-semibold text-slate-400 transition hover:text-slate-200"
-          >
-            View all {filtered.length} leads →
+            <X className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
 
-      {/* ── All-leads slide-over ─────────────────────────────────────────── */}
-      <AnimatePresence>
-        {showAll && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowAll(false)}
-              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+      {/* Filter tabs */}
+      <div className="flex gap-1.5">
+        {TABS.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setFilter(key)}
+            className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
+              filter === key
+                ? 'bg-emerald-500/15 text-emerald-300'
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Top 3 cards */}
+      {top3.length > 0 ? (
+        <motion.div
+          key={`${filter}-${search}`}
+          variants={staggerList}
+          initial="hidden"
+          animate="show"
+          className="flex flex-col gap-2"
+        >
+          {top3.map((lead) => (
+            <CompactLeadCard
+              key={lead.id}
+              lead={lead}
+              selected={lead.id === selectedLeadId}
+              onSelect={() => onSelectLead(lead)}
+              onCall={() => onCallLead(lead.phone, lead)}
             />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-              className="fixed right-0 top-0 bottom-0 z-50 flex w-[380px] flex-col border-l border-white/[0.08] bg-[oklch(0.09_0.02_282)] shadow-2xl shadow-black/60"
-            >
-              {/* Slide-over header */}
-              <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
-                <div>
-                  <p className="text-sm font-bold text-white">All Leads</p>
-                  <p className="text-xs text-slate-500">{filtered.length} in current filter</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAll(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] text-slate-500 hover:text-slate-300"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
+          ))}
+        </motion.div>
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-white/[0.04] bg-white/[0.01] px-4 py-8 text-center">
+          <Users className="mb-2 h-6 w-6 text-slate-600" />
+          <p className="text-xs text-slate-500">No leads in this filter</p>
+        </div>
+      )}
 
-              {/* Search inside slide-over */}
-              <div className="px-4 py-3 border-b border-white/[0.04]">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search…"
-                    className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-2 pl-8 pr-3 text-sm text-white placeholder:text-slate-600 outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Scrollable list */}
-              <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5">
-                {filtered.map((lead) => (
-                  <CompactLeadCard
-                    key={lead.id}
-                    lead={lead}
-                    selected={lead.id === selectedLeadId}
-                    onSelect={() => { onSelectLead(lead); setShowAll(false); }}
-                    onCall={() => { onCallLead(lead.phone, lead); setShowAll(false); }}
-                  />
-                ))}
-                {filtered.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <Users className="mb-2 h-8 w-8 text-slate-600" />
-                    <p className="text-sm text-slate-500">No leads found</p>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </>
+      {filtered.length > 3 && (
+        <button
+          type="button"
+          onClick={() => router.push('/leads')}
+          className="rounded-xl border border-white/[0.06] bg-white/[0.02] py-2.5 text-xs font-semibold text-slate-400 transition hover:text-slate-200"
+        >
+          View all {filtered.length} leads →
+        </button>
+      )}
+    </div>
   );
 }

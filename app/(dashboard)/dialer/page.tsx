@@ -18,7 +18,8 @@ import AiInsightsPanel from '@/components/dialer/AiInsightsPanel';
 import ManualDialCollapsible from '@/components/dialer/ManualDialCollapsible';
 import MicPermissionModal from '@/components/dialer/MicPermissionModal';
 import DispositionModal from '@/components/dialer/DispositionModal';
-import { WebPhoneProvider, useWebPhone } from '@/contexts/webphone-context';
+import { useWebPhone } from '@/contexts/webphone-context';
+import { useCallContext } from '@/lib/call-context';
 import { isE164 } from '@/lib/phone';
 import type { LeadRecord } from '@/components/dialer/LeadCard';
 import { Zap, PhoneOff, Trophy, Clock, PhoneCall, CalendarCheck, Sparkles, Keyboard, X as XIcon, PhoneMissed } from 'lucide-react';
@@ -493,6 +494,8 @@ function DialerContent() {
     toggleHold,
   } = useWebPhone();
 
+  const { registerCallMeta } = useCallContext();
+
   // ── UI state ─────────────────────────────────────────────────────────────────
   const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [selectedLead, setSelectedLead] = useState<LeadRecord | null>(null);
@@ -853,9 +856,10 @@ function DialerContent() {
           });
       }
 
+      registerCallMeta(lead ?? null, destination);
       webPhoneMakeCall(destination, fromNumber || undefined);
     },
-    [sanitize, countryCode, phoneStatus, micPermission, supabase, webPhoneMakeCall, fromNumber],
+    [sanitize, countryCode, phoneStatus, micPermission, supabase, webPhoneMakeCall, fromNumber, registerCallMeta],
   );
 
   const handleDial = useCallback(() => dial(phoneNumber, selectedLead), [dial, phoneNumber, selectedLead]);
@@ -1560,10 +1564,8 @@ function DialerContent() {
 
 export default function DialerPage() {
   return (
-    <WebPhoneProvider>
-      <Suspense fallback={<div className="flex-1" />}>
-        <DialerContent />
-      </Suspense>
-    </WebPhoneProvider>
+    <Suspense fallback={<div className="flex-1" />}>
+      <DialerContent />
+    </Suspense>
   );
 }

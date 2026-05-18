@@ -2,20 +2,18 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Phone, Mail, Building2, Search, X, ExternalLink,
-  CalendarClock, Hash, Tag, CheckSquare, Square, AlertTriangle,
+  Phone, Mail, Search, X, ExternalLink, ChevronLeft, ChevronRight,
+  Sparkles, TrendingUp, PhoneMissed, Clock, UserPlus,
 } from "lucide-react";
 import DashboardHeader from "@/components/DashboardHeader";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useLeads } from "@/contexts/leads-context";
+import { useCallContext } from "@/lib/call-context";
 
 interface FullLead {
   id: string;
@@ -32,197 +30,220 @@ interface FullLead {
   tags: string[] | null;
   linkedin: string | null;
   created_at: string;
+  dnc?: boolean;
 }
 
-const STATUS_FILTERS = [
-  { value: "all", label: "All" },
-  { value: "new", label: "New" },
-  { value: "queued", label: "Queued" },
-  { value: "contacted", label: "Contacted" },
-  { value: "connected", label: "Connected" },
-  { value: "meeting_booked", label: "Meeting" },
-  { value: "not_interested", label: "Not Interested" },
-  { value: "invalid_phone", label: "Invalid Phone" },
-];
+const PAGE_SIZE = 20;
 
-const STATUS_BADGE: Record<string, string> = {
-  new: "bg-slate-500/15 text-slate-300 border border-slate-500/25",
-  queued: "bg-blue-500/15 text-blue-300 border border-blue-500/25",
-  contacted: "bg-amber-500/15 text-amber-300 border border-amber-500/25",
-  connected: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/25",
-  meeting_booked: "bg-violet-500/15 text-violet-300 border border-violet-500/25",
-  not_interested: "bg-red-500/15 text-red-300 border border-red-500/25",
-  do_not_call: "bg-rose-900/50 text-rose-300 border border-rose-500/25",
-  invalid_phone: "bg-amber-900/50 text-amber-300 border border-amber-500/25",
+const TAB_FILTERS = [
+  { key: "all", label: "All" },
+  { key: "new", label: "New" },
+  { key: "hot", label: "Hot" },
+  { key: "callback", label: "Callbacks" },
+  { key: "done", label: "Done" },
+  { key: "dnc", label: "DNC" },
+] as const;
+
+type TabKey = typeof TAB_FILTERS[number]["key"];
+
+const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  new:           { bg: "bg-slate-500/15",   text: "text-slate-300" },
+  queued:        { bg: "bg-blue-500/15",    text: "text-blue-300" },
+  contacted:     { bg: "bg-amber-500/15",   text: "text-amber-300" },
+  connected:     { bg: "bg-emerald-500/15", text: "text-emerald-300" },
+  callback:      { bg: "bg-amber-500/15",   text: "text-amber-300" },
+  meeting_booked:{ bg: "bg-violet-500/15",  text: "text-violet-300" },
+  not_interested:{ bg: "bg-red-500/15",     text: "text-red-400" },
+  do_not_call:   { bg: "bg-rose-900/40",    text: "text-rose-400" },
+  wrong_number:  { bg: "bg-red-500/15",     text: "text-red-400" },
 };
 
-function scoreColor(score: number | null) {
-  if (!score) return "text-muted-foreground";
-  if (score >= 85) return "text-emerald-400";
-  if (score >= 70) return "text-amber-300";
-  return "text-muted-foreground";
+const AVATAR_GRADIENTS = [
+  "from-emerald-500 to-teal-400",
+  "from-violet-500 to-purple-400",
+  "from-amber-500 to-orange-400",
+  "from-blue-500 to-cyan-400",
+  "from-rose-500 to-pink-400",
+];
+
+function scoreGradient(score: number | null): string {
+  if (!score) return "from-slate-500 to-slate-600";
+  if (score >= 80) return "from-emerald-500 to-teal-400";
+  if (score >= 50) return "from-amber-500 to-orange-400";
+  return "from-slate-500 to-slate-600";
 }
 
-function formatDate(iso: string | null) {
+function getInitials(name: string): string {
+  return name.split(" ").slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
+}
+
+function avatarGradient(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length];
+}
+
+function formatLastCall(iso: string | null): string {
   if (!iso) return "Never";
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function initials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
-interface DetailPanelProps {
-  lead: FullLead;
-  onClose: () => void;
-  onCallNow: (lead: FullLead) => void;
-  onMarkStatus: (lead: FullLead, status: string) => void;
-}
-
-function DetailPanel({ lead, onClose, onCallNow, onMarkStatus }: DetailPanelProps) {
+function StatusBadge({ status }: { status: string }) {
+  const { bg, text } = STATUS_COLORS[status] ?? { bg: "bg-slate-500/15", text: "text-slate-300" };
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-start justify-between gap-3 border-b border-white/10 p-4 lg:p-5">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 shrink-0">
-            <AvatarFallback className="bg-brand/15 text-sm font-semibold text-brand">
-              {initials(lead.name)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <p className="font-semibold">{lead.name}</p>
-            {lead.title && <p className="text-xs text-muted-foreground">{lead.title}</p>}
-          </div>
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${bg} ${text}`}>
+      {status.replace(/_/g, " ")}
+    </span>
+  );
+}
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0 },
+};
+
+function LeadCard({
+  lead,
+  onCall,
+  onView,
+}: {
+  lead: FullLead;
+  onCall: () => void;
+  onView: () => void;
+}) {
+  const grad = avatarGradient(lead.name);
+  const scoreGrad = scoreGradient(lead.ai_score);
+  const isHot = (lead.tags ?? []).includes("hot") || lead.status === "callback" || lead.status === "meeting_booked";
+
+  return (
+    <motion.div
+      variants={cardVariants}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className={cn(
+        "group relative flex flex-col gap-3 rounded-2xl border p-4 transition-all",
+        "border-white/[0.07] bg-[oklch(0.086_0.024_282)] hover:border-white/[0.12] hover:bg-white/[0.04]",
+        isHot && "border-amber-500/20 hover:border-amber-500/30",
+      )}
+    >
+      {/* Hot indicator */}
+      {isHot && (
+        <span className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/15">
+          <Sparkles className="h-3 w-3 text-amber-400" />
+        </span>
+      )}
+
+      {/* Top: avatar + score */}
+      <div className="flex items-start gap-3">
+        <div className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${grad} text-sm font-bold text-white shadow-sm`}>
+          {getInitials(lead.name)}
+          {lead.ai_score !== null && (
+            <div className={`absolute -bottom-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br ${scoreGrad} text-[9px] font-bold text-white shadow-sm`}>
+              {lead.ai_score}
+            </div>
+          )}
         </div>
+        <div className="min-w-0 flex-1 pt-0.5">
+          <p className="truncate text-sm font-semibold text-white leading-tight">{lead.name}</p>
+          {(lead.title || lead.company) && (
+            <p className="mt-0.5 truncate text-[11px] text-slate-500 leading-tight">
+              {[lead.title, lead.company].filter(Boolean).join(" · ")}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Status */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <StatusBadge status={lead.status} />
+        {lead.call_attempts != null && lead.call_attempts > 0 && (
+          <span className="flex items-center gap-1 text-[10px] text-slate-600">
+            <Phone className="h-2.5 w-2.5" /> {lead.call_attempts}×
+          </span>
+        )}
+      </div>
+
+      {/* Contact info */}
+      <div className="space-y-1">
+        <p className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
+          <Phone className="h-3 w-3 shrink-0 text-slate-600" />
+          {lead.phone}
+        </p>
+        {lead.email && (
+          <p className="flex items-center gap-1.5 text-[11px] text-slate-500 truncate">
+            <Mail className="h-3 w-3 shrink-0 text-slate-600" />
+            {lead.email}
+          </p>
+        )}
+      </div>
+
+      {/* Footer: last call + links */}
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1 text-[10px] text-slate-600">
+          <Clock className="h-2.5 w-2.5" />
+          {formatLastCall(lead.last_called_at)}
+        </span>
+        <div className="flex items-center gap-1">
+          {lead.linkedin && (
+            <a
+              href={lead.linkedin}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex h-6 w-6 items-center justify-center rounded-lg border border-white/[0.06] text-slate-600 transition hover:text-slate-300 hover:border-white/10"
+              title="LinkedIn"
+            >
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="grid grid-cols-2 gap-2 pt-1">
         <button
           type="button"
-          onClick={onClose}
-          className="rounded-md p-2 text-muted-foreground hover:bg-white/10 hover:text-foreground min-h-[44px] min-w-[44px] flex items-center justify-center"
+          onClick={(e) => { e.stopPropagation(); onCall(); }}
+          className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-2 text-xs font-semibold text-white transition hover:bg-emerald-500"
         >
-          <X className="h-4 w-4" />
+          <Phone className="h-3.5 w-3.5" />
+          Call
+        </button>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onView(); }}
+          className="flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] py-2 text-xs font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+        >
+          View
         </button>
       </div>
+    </motion.div>
+  );
+}
 
-      <div className="flex-1 space-y-4 overflow-y-auto p-4 lg:p-5">
-        {lead.company && (
-          <div className="flex items-center gap-2 text-sm">
-            <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <span>{lead.company}</span>
-          </div>
-        )}
-
-        <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Phone</span>
-            <a href={`tel:${lead.phone}`} className="font-mono text-primary hover:underline">
-              {lead.phone}
-            </a>
-          </div>
-          {lead.email && (
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Email</span>
-              <a href={`mailto:${lead.email}`} className="truncate text-primary hover:underline max-w-[180px]">
-                {lead.email}
-              </a>
-            </div>
-          )}
-          {lead.linkedin && (
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">LinkedIn</span>
-              <a
-                href={lead.linkedin}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1 text-primary hover:underline"
-              >
-                Profile <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Status</span>
-            <Badge className={cn("rounded-full px-2 py-0 text-[10px]", STATUS_BADGE[lead.status] ?? STATUS_BADGE.new)}>
-              {lead.status.replace(/_/g, " ")}
-            </Badge>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">AI Score</span>
-            <span className={cn("font-bold tabular-nums", scoreColor(lead.ai_score))}>
-              {lead.ai_score ?? "—"}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Attempts</span>
-            <span className="flex items-center gap-1">
-              <Hash className="h-3 w-3 text-muted-foreground" />
-              {lead.call_attempts ?? 0}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Last called</span>
-            <span className="flex items-center gap-1">
-              <CalendarClock className="h-3 w-3 text-muted-foreground" />
-              {formatDate(lead.last_called_at)}
-            </span>
-          </div>
-        </div>
-
-        {lead.tags && lead.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {lead.tags.map((tag) => (
-              <span
-                key={tag}
-                className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-muted-foreground"
-              >
-                <Tag className="h-2.5 w-2.5" /> {tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {lead.notes && (
-          <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
-            <p className="mb-1 text-xs font-medium text-muted-foreground">Notes</p>
-            <p className="text-sm leading-relaxed">{lead.notes}</p>
-          </div>
-        )}
+function EmptyState({ tab }: { tab: TabKey }) {
+  const msgs: Record<TabKey, { title: string; sub: string }> = {
+    all: { title: "No leads yet", sub: "Import a CSV or add leads manually to get started." },
+    new: { title: "No new leads", sub: "All leads have been contacted." },
+    hot: { title: "No hot leads", sub: "Leads tagged hot or with callback status will appear here." },
+    callback: { title: "No callbacks", sub: "Leads marked for callback will appear here." },
+    done: { title: "No completed leads", sub: "Leads marked meeting booked or not interested appear here." },
+    dnc: { title: "No DNC leads", sub: "Leads marked Do Not Call appear here." },
+  };
+  const { title, sub } = msgs[tab];
+  return (
+    <div className="flex flex-col items-center justify-center py-24 text-center">
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.03]">
+        <UserPlus className="h-7 w-7 text-slate-600" />
       </div>
-
-      <div className="border-t border-white/10 p-4 space-y-2">
-        <Button
-          className="w-full gap-2 bg-brand text-[oklch(0.08_0.04_153)] hover:bg-[oklch(0.76_0.27_153)] font-semibold min-h-[44px]"
-          onClick={() => onCallNow(lead)}
-        >
-          <Phone className="h-4 w-4" /> Call Now
-        </Button>
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-white/15 bg-white/5 text-xs hover:bg-white/10 min-h-[44px]"
-            onClick={() => onMarkStatus(lead, "not_interested")}
-          >
-            Not Interested
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-white/15 bg-white/5 text-xs hover:bg-white/10 min-h-[44px]"
-            onClick={() => onMarkStatus(lead, "meeting_booked")}
-          >
-            Meeting Booked
-          </Button>
-        </div>
-      </div>
+      <p className="text-sm font-semibold text-white">{title}</p>
+      <p className="mt-1.5 max-w-xs text-xs text-slate-500 leading-relaxed">{sub}</p>
     </div>
   );
 }
@@ -230,26 +251,36 @@ function DetailPanel({ lead, onClose, onCallNow, onMarkStatus }: DetailPanelProp
 export default function LeadsPage() {
   const router = useRouter();
   const { leads: contextLeads, setImportOpen } = useLeads();
+  const { startCall } = useCallContext();
+
   const [leads, setLeads] = useState<FullLead[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [tab, setTab] = useState<TabKey>("all");
   const [search, setSearch] = useState("");
-  const [selectedLead, setSelectedLead] = useState<FullLead | null>(null);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [selectMode, setSelectMode] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [search]);
 
   useEffect(() => {
     const supabase = createClient();
     async function load() {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user?.id) { setLoading(false); return; }
 
         const { data, error } = await supabase
           .from("leads")
-          .select("id,name,title,company,phone,email,ai_score,status,call_attempts,last_called_at,notes,tags,linkedin,created_at")
+          .select("id,name,title,company,phone,email,ai_score,status,call_attempts,last_called_at,notes,tags,linkedin,created_at,dnc")
           .eq("user_id", session.user.id)
           .order("ai_score", { ascending: false });
 
@@ -262,11 +293,29 @@ export default function LeadsPage() {
     load();
   }, [contextLeads.length]);
 
+  const tabCounts = useMemo(() => {
+    const counts: Record<TabKey, number> = { all: 0, new: 0, hot: 0, callback: 0, done: 0, dnc: 0 };
+    for (const l of leads) {
+      counts.all++;
+      if (l.status === "new" || l.status === "queued") counts.new++;
+      if (l.status === "callback" || l.status === "meeting_booked" || (l.tags ?? []).includes("hot")) counts.hot++;
+      if (l.status === "callback") counts.callback++;
+      if (l.status === "meeting_booked" || l.status === "not_interested") counts.done++;
+      if (l.dnc || l.status === "do_not_call") counts.dnc++;
+    }
+    return counts;
+  }, [leads]);
+
   const filtered = useMemo(() => {
-    let list = leads;
-    if (statusFilter !== "all") list = list.filter((l) => l.status === statusFilter);
-    if (search) {
-      const q = search.toLowerCase();
+    let list = [...leads];
+    if (tab === "new") list = list.filter((l) => l.status === "new" || l.status === "queued");
+    else if (tab === "hot") list = list.filter((l) => l.status === "callback" || l.status === "meeting_booked" || (l.tags ?? []).includes("hot"));
+    else if (tab === "callback") list = list.filter((l) => l.status === "callback");
+    else if (tab === "done") list = list.filter((l) => l.status === "meeting_booked" || l.status === "not_interested");
+    else if (tab === "dnc") list = list.filter((l) => l.dnc || l.status === "do_not_call");
+
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
       list = list.filter(
         (l) =>
           l.name.toLowerCase().includes(q) ||
@@ -275,348 +324,186 @@ export default function LeadsPage() {
       );
     }
     return list;
-  }, [leads, statusFilter, search]);
+  }, [leads, tab, debouncedSearch]);
 
-  const toggleSelect = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const handleTabChange = useCallback((t: TabKey) => { setTab(t); setPage(1); }, []);
+
+  const handleCall = useCallback((lead: FullLead) => {
+    startCall(lead.phone, {
+      id: lead.id,
+      name: lead.name,
+      company: lead.company ?? "",
+      phone: lead.phone,
+      title: lead.title ?? "",
+      email: lead.email ?? undefined,
+      linkedin: lead.linkedin ?? undefined,
+      ai_score: lead.ai_score ?? 0,
+      status: lead.status as never,
+      call_attempts: lead.call_attempts ?? 0,
+      last_called_at: lead.last_called_at ?? undefined,
+      notes: lead.notes ?? undefined,
+      tags: lead.tags ?? [],
+      company_size: undefined,
+      industry: undefined,
+      revenue: undefined,
+      activity_summary: undefined,
+      profile_url: undefined,
+      dnc: lead.dnc ?? false,
     });
-  };
+  }, [startCall]);
 
-  const handleCallNow = (lead: FullLead) => {
+  const handleView = useCallback((lead: FullLead) => {
     router.push(`/dialer?lead_id=${lead.id}`);
-  };
+  }, [router]);
 
-  const handleMarkStatus = async (lead: FullLead, status: string) => {
-    const supabase = createClient();
-    await supabase.from("leads").update({ status }).eq("id", lead.id);
-    setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, status } : l)));
-    if (selectedLead?.id === lead.id) setSelectedLead({ ...selectedLead, status });
-  };
-
-  const handleDialSelected = () => {
-    const ids = Array.from(selected);
-    if (ids.length === 0) return;
-    router.push(`/dialer?lead_id=${ids[0]}`);
-  };
-
-  const imported = contextLeads.filter((l) => l.source === "import").length;
+  const stats = useMemo(() => {
+    const connected = leads.filter((l) => l.status === "connected" || l.status === "meeting_booked").length;
+    const contacted = leads.filter((l) => (l.call_attempts ?? 0) > 0).length;
+    const rate = contacted > 0 ? Math.round((connected / contacted) * 100) : 0;
+    return { total: leads.length, contacted, connected, rate };
+  }, [leads]);
 
   return (
     <>
       <DashboardHeader
         title="Leads"
-        subtitle={`${leads.length} in queue${imported ? ` · ${imported} from CSV` : ""}`}
+        subtitle={`${leads.length} total · ${stats.contacted} contacted`}
         showImport
       />
 
-      {/* Mobile: sticky search + filters */}
-      <div className="sticky top-[57px] z-10 shrink-0 space-y-2 border-b border-white/10 bg-[oklch(0.056_0.018_286)]/90 px-3 py-3 backdrop-blur-xl lg:hidden">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, company, phone…"
-            className="w-full rounded-lg border border-white/10 bg-white/[0.04] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/20"
-          />
-        </div>
-        {/* Horizontal scroll filter chips */}
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
-          {STATUS_FILTERS.map((f) => (
-            <button
-              key={f.value}
-              type="button"
-              onClick={() => setStatusFilter(f.value)}
-              className={cn(
-                "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                statusFilter === f.value
-                  ? "bg-brand/20 text-brand border border-brand/30"
-                  : "border border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10",
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-        {/* Select mode toggle + bulk actions */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => { setSelectMode((v) => !v); setSelected(new Set()); }}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-          >
-            {selectMode ? <CheckSquare className="h-3.5 w-3.5" /> : <Square className="h-3.5 w-3.5" />}
-            {selectMode ? "Cancel" : "Select"}
-          </button>
-          {selectMode && selected.size > 0 && (
-            <>
-              <span className="text-xs text-muted-foreground">{selected.size} selected</span>
-              <Button
-                size="sm"
-                className="h-7 bg-brand text-[oklch(0.08_0.04_153)] text-xs font-semibold hover:bg-[oklch(0.76_0.27_153)]"
-                onClick={handleDialSelected}
-              >
-                <Phone className="mr-1.5 h-3 w-3" /> Dial
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={() => setSelected(new Set())}
-              >
-                Clear
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-
-      <main className="flex flex-1 overflow-hidden">
-        {/* Lead list */}
-        <div className={cn("flex flex-col flex-1 overflow-hidden", selectedLead ? "lg:border-r lg:border-white/10" : "")}>
-
-          {/* ── Desktop filters (hidden on mobile — shown in sticky bar above) ── */}
-          <div className="hidden lg:block shrink-0 space-y-3 border-b border-white/10 px-6 py-4">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, company, phone…"
-                className="w-full rounded-lg border border-white/10 bg-white/[0.04] py-2 pl-9 pr-3 text-sm outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/20"
-              />
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {STATUS_FILTERS.map((f) => (
-                <button
-                  key={f.value}
-                  type="button"
-                  onClick={() => setStatusFilter(f.value)}
-                  className={cn(
-                    "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                    statusFilter === f.value
-                      ? "bg-brand/20 text-brand border border-brand/30"
-                      : "border border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10",
-                  )}
-                >
-                  {f.label}
-                </button>
+      <main className="flex-1 overflow-y-auto">
+        {/* Stats strip */}
+        {!loading && leads.length > 0 && (
+          <div className="border-b border-white/[0.06] px-4 py-3 lg:px-6">
+            <div className="flex flex-wrap gap-4">
+              {[
+                { label: "Total", value: stats.total, color: "text-white" },
+                { label: "Contacted", value: stats.contacted, color: "text-amber-300" },
+                { label: "Connected", value: stats.connected, color: "text-emerald-300", icon: TrendingUp },
+                { label: "Connect Rate", value: `${stats.rate}%`, color: stats.rate >= 20 ? "text-emerald-300" : "text-slate-300" },
+              ].map(({ label, value, color, icon: Icon }) => (
+                <div key={label} className="flex items-center gap-2">
+                  {Icon && <Icon className="h-3.5 w-3.5 text-emerald-400/70" />}
+                  <span className={`text-lg font-bold tabular-nums ${color}`}>{value}</span>
+                  <span className="text-xs text-slate-600">{label}</span>
+                </div>
               ))}
             </div>
-            {selected.size > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">{selected.size} selected</span>
-                <Button
-                  size="sm"
-                  className="h-7 bg-brand text-[oklch(0.08_0.04_153)] text-xs font-semibold hover:bg-[oklch(0.76_0.27_153)]"
-                  onClick={handleDialSelected}
-                >
-                  <Phone className="mr-1.5 h-3 w-3" /> Start dialing
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => setSelected(new Set())}
-                >
-                  Clear
-                </Button>
-              </div>
+          </div>
+        )}
+
+        {/* Search + tabs */}
+        <div className="border-b border-white/[0.06] px-4 py-3 space-y-3 lg:px-6">
+          {/* Search */}
+          <div className="relative max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, company, phone…"
+              className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-emerald-500/25 transition"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
             )}
           </div>
 
-          {/* Lead rows / cards */}
-          <div className="flex-1 overflow-y-auto">
-            {loading ? (
-              <div className="space-y-2 px-3 py-3 lg:space-y-px lg:px-6 lg:py-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="h-16 animate-pulse rounded-xl border border-white/10 bg-white/5" />
-                ))}
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-                <p className="text-sm font-medium">No leads match this filter</p>
-                <p className="text-xs text-muted-foreground">Try a different status or clear the search.</p>
-              </div>
-            ) : (
-              <>
-                {/* Mobile: card list */}
-                <div className="space-y-2 p-3 lg:hidden">
-                  {filtered.map((lead) => (
-                    <Card
-                      key={lead.id}
-                      onClick={() => setSelectedLead(selectedLead?.id === lead.id ? null : lead)}
-                      className={cn(
-                        "cursor-pointer border-white/10 bg-[oklch(0.086_0.024_282)]/90 p-3 transition-colors hover:border-brand/30 active:scale-[0.99]",
-                        selectedLead?.id === lead.id && "border-brand/40 bg-brand/5",
-                      )}
-                    >
-                      <div className="flex items-start gap-3">
-                        {selectMode && (
-                          <div
-                            className="mt-0.5 shrink-0"
-                            onClick={(e) => { e.stopPropagation(); toggleSelect(lead.id); }}
-                          >
-                            {selected.has(lead.id)
-                              ? <CheckSquare className="h-4 w-4 text-brand" />
-                              : <Square className="h-4 w-4 text-muted-foreground" />}
-                          </div>
-                        )}
-                        <Avatar className="h-9 w-9 shrink-0">
-                          <AvatarFallback className="bg-brand/15 text-[11px] font-semibold text-brand">
-                            {initials(lead.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-sm font-semibold">{lead.name}</p>
-                            <Badge
-                              className={cn(
-                                "h-4 shrink-0 rounded-full px-1.5 py-0 text-[10px]",
-                                STATUS_BADGE[lead.status] ?? STATUS_BADGE.new,
-                              )}
-                            >
-                              {lead.status.replace(/_/g, " ")}
-                            </Badge>
-                          </div>
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                            {[lead.title, lead.company].filter(Boolean).join(" · ")}
-                          </p>
-                          <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                            {lead.status === "invalid_phone" && (
-                              <AlertTriangle className="h-3 w-3 shrink-0 text-amber-400" aria-label="Phone format could not be validated" />
-                            )}
-                            {lead.phone}
-                          </p>
-                        </div>
-                        <div className="flex shrink-0 flex-col items-end gap-1.5">
-                          <span className={cn("text-sm font-bold tabular-nums", scoreColor(lead.ai_score))}>
-                            {lead.ai_score ?? "—"}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleCallNow(lead); }}
-                            className="flex h-8 w-8 items-center justify-center rounded-full bg-brand/15 text-brand hover:bg-brand/25 transition-colors"
-                            aria-label="Call now"
-                          >
-                            <Phone className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-
-                {/* Desktop: row list */}
-                <div className="hidden lg:block divide-y divide-white/[0.06]">
-                  {filtered.map((lead) => (
-                    <div
-                      key={lead.id}
-                      onClick={() => setSelectedLead(selectedLead?.id === lead.id ? null : lead)}
-                      className={cn(
-                        "group flex cursor-pointer items-center gap-3 px-6 py-3.5 transition-colors hover:bg-white/[0.04]",
-                        selectedLead?.id === lead.id && "bg-white/[0.06]",
-                      )}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selected.has(lead.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={() => toggleSelect(lead.id)}
-                        className="h-4 w-4 rounded border-white/20 bg-white/5 accent-brand"
-                      />
-                      <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarFallback className="bg-brand/15 text-[11px] font-semibold text-brand">
-                          {initials(lead.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="truncate text-sm font-medium">{lead.name}</p>
-                          <Badge
-                            className={cn(
-                              "h-4 shrink-0 rounded-full px-1.5 py-0 text-[10px]",
-                              STATUS_BADGE[lead.status] ?? STATUS_BADGE.new,
-                            )}
-                          >
-                            {lead.status.replace(/_/g, " ")}
-                          </Badge>
-                        </div>
-                        <div className="mt-0.5 flex items-center gap-1.5">
-                          <Building2 className="h-3 w-3 shrink-0 text-muted-foreground" />
-                          <p className="truncate text-xs text-muted-foreground">
-                            {[lead.title, lead.company].filter(Boolean).join(" · ")}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-3">
-                        <div className="hidden text-right sm:block">
-                          <div className={cn("text-sm font-bold tabular-nums", scoreColor(lead.ai_score))}>
-                            {lead.ai_score ?? "—"}
-                          </div>
-                          <div className="text-[10px] text-muted-foreground">score</div>
-                        </div>
-                        <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 hover:bg-white/10"
-                            type="button"
-                            title="Call now"
-                            onClick={(e) => { e.stopPropagation(); handleCallNow(lead); }}
-                          >
-                            <Phone className="h-3.5 w-3.5" />
-                          </Button>
-                          {lead.email && (
-                            <a
-                              href={`mailto:${lead.email}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-white/10 transition-colors"
-                              title="Send email"
-                            >
-                              <Mail className="h-3.5 w-3.5" />
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="shrink-0 border-t border-white/10 px-4 py-2 text-xs text-muted-foreground lg:px-6 lg:py-3">
-            {filtered.length} of {leads.length} leads
+          {/* Tab pills */}
+          <div className="flex gap-1 overflow-x-auto pb-0.5 scrollbar-none">
+            {TAB_FILTERS.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => handleTabChange(key)}
+                className={cn(
+                  "shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition",
+                  tab === key
+                    ? "bg-emerald-500/15 text-emerald-300"
+                    : "text-slate-500 hover:text-slate-300",
+                )}
+              >
+                {label}
+                {tabCounts[key] > 0 && (
+                  <span className={cn(
+                    "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                    tab === key ? "bg-emerald-500/20 text-emerald-300" : "bg-white/[0.06] text-slate-500",
+                  )}>
+                    {tabCounts[key]}
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Desktop: right detail panel */}
-        {selectedLead && (
-          <div className="hidden lg:block w-80 shrink-0 overflow-hidden">
-            <DetailPanel
-              lead={selectedLead}
-              onClose={() => setSelectedLead(null)}
-              onCallNow={handleCallNow}
-              onMarkStatus={handleMarkStatus}
-            />
-          </div>
-        )}
+        {/* Grid */}
+        <div className="px-4 py-5 lg:px-6">
+          {loading ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-52 animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.02]" />
+              ))}
+            </div>
+          ) : paginated.length === 0 ? (
+            <EmptyState tab={tab} />
+          ) : (
+            <motion.div
+              key={`${tab}-${debouncedSearch}-${page}`}
+              className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
+              initial="hidden"
+              animate="show"
+            >
+              {paginated.map((lead) => (
+                <LeadCard
+                  key={lead.id}
+                  lead={lead}
+                  onCall={() => handleCall(lead)}
+                  onView={() => handleView(lead)}
+                />
+              ))}
+            </motion.div>
+          )}
 
-        {/* Mobile: full-screen overlay detail panel */}
-        {selectedLead && (
-          <div className="fixed inset-0 z-50 flex flex-col bg-[oklch(0.056_0.018_286)] lg:hidden">
-            <DetailPanel
-              lead={selectedLead}
-              onClose={() => setSelectedLead(null)}
-              onCallNow={handleCallNow}
-              onMarkStatus={handleMarkStatus}
-            />
-          </div>
-        )}
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-6 flex items-center justify-between">
+              <p className="text-xs text-slate-600">
+                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="text-xs text-slate-500">
+                  Page {page} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </main>
     </>
   );
