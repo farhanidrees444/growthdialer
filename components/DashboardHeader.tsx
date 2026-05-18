@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type React from "react";
 import { motion } from "framer-motion";
 import { Bell, Search, Upload, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,10 +15,12 @@ export function DashboardHeader({
   title,
   subtitle,
   showImport = true,
+  actions,
 }: {
   title: string;
   subtitle?: string;
   showImport?: boolean;
+  actions?: React.ReactNode;
 }) {
   const session = useSupabaseSession();
   const { setImportOpen } = useLeads();
@@ -64,6 +67,7 @@ export function DashboardHeader({
 
         {/* Actions */}
         <div className="flex shrink-0 items-center gap-1.5 px-3 lg:gap-2 lg:px-6">
+          {actions}
           {showImport && (
             <Button
               type="button"

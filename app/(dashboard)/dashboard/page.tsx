@@ -2,90 +2,43 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Phone, Upload, Users, BarChart2,
-  CalendarCheck, DollarSign,
+  CalendarCheck, DollarSign, Info,
 } from "lucide-react";
 import DashboardHeader from "@/components/DashboardHeader";
-import StatCard from "@/components/StatCard";
 import DialerWidget from "@/components/DialerWidget";
 import LeadsQueue from "@/components/LeadsQueue";
-import ActivityChart from "@/components/ActivityChart";
 import RecentActivity from "@/components/RecentActivity";
+import MetricCardWithSparkline from "@/components/dashboard/metric-card-with-sparkline";
+import AIHoursSavedCard from "@/components/dashboard/ai-hours-saved-card";
+import SpamShieldCard from "@/components/dashboard/spam-shield-card";
+import LiveTerminal from "@/components/dashboard/live-terminal";
+import MultiLineChart from "@/components/dashboard/multi-line-chart";
+import SystemHealthDropdown from "@/components/dashboard/system-health-dropdown";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLeads } from "@/contexts/leads-context";
+import { useSupabaseSession } from "@/lib/supabase/hooks";
+import type { SystemMetricsData, HourlyMetricPoint } from "@/lib/dashboard-types";
 
-interface StatsData {
-  callsToday: number;
-  connectRate: number;
-  meetingsBooked: number;
-  pipelineValue: number;
-  yesterday: { calls: number; connectRate: number };
-}
+const EMPTY_SPARKLINE: HourlyMetricPoint[] = Array.from({ length: 24 }, (_, h) => ({
+  hour: h,
+  label: `${String(h).padStart(2, "0")}:00`,
+  calls: 0,
+  connected: 0,
+  meetings: 0,
+  ai: 0,
+}));
 
-function buildStats(data: StatsData) {
-  const hasYesterdayData = data.yesterday.calls > 0 || data.callsToday > 0;
-  const callDelta = data.callsToday - data.yesterday.calls;
-  const rateDelta = data.connectRate - data.yesterday.connectRate;
-
-  return [
-    {
-      title: "Calls Today",
-      value: String(data.callsToday),
-      change: hasYesterdayData ? (callDelta >= 0 ? `+${callDelta}` : String(callDelta)) : "—",
-      positive: callDelta >= 0,
-      neutral: !hasYesterdayData,
-      icon: Phone,
-      iconColor: "text-indigo-400",
-      iconBg: "bg-indigo-500/15",
-      delay: 0,
-    },
-    {
-      title: "Connect Rate",
-      value: `${data.connectRate.toFixed(1)}%`,
-      change: hasYesterdayData ? (rateDelta >= 0 ? `+${rateDelta.toFixed(1)}%` : `${rateDelta.toFixed(1)}%`) : "—",
-      positive: rateDelta >= 0,
-      neutral: !hasYesterdayData,
-      icon: Users,
-      iconColor: "text-emerald-400",
-      iconBg: "bg-emerald-500/15",
-      delay: 0.07,
-    },
-    {
-      title: "Meetings Booked",
-      value: String(data.meetingsBooked),
-      change: hasYesterdayData ? `+${data.meetingsBooked}` : "—",
-      positive: data.meetingsBooked >= 0,
-      neutral: !hasYesterdayData,
-      icon: CalendarCheck,
-      iconColor: "text-amber-300",
-      iconBg: "bg-amber-500/15",
-      delay: 0.14,
-    },
-    {
-      title: "Pipeline Value",
-      value: data.pipelineValue > 0 ? `$${(data.pipelineValue / 1000).toFixed(1)}K` : "$0",
-      change: "—",
-      positive: true,
-      neutral: true,
-      icon: DollarSign,
-      iconColor: "text-purple-400",
-      iconBg: "bg-purple-500/15",
-      delay: 0.21,
-    },
-  ];
-}
-
-const EMPTY_STATS: StatsData = {
-  callsToday: 0,
-  connectRate: 0,
-  meetingsBooked: 0,
-  pipelineValue: 0,
-  yesterday: { calls: 0, connectRate: 0 },
+const EMPTY_METRICS: SystemMetricsData = {
+  sparkline: EMPTY_SPARKLINE,
+  aiHoursSaved: { total: 0, transcription: 0, disposition: 0, summary: 0, dollarValue: 0 },
+  spamShield: { health: 100, numbers: [], lastChecked: new Date().toISOString() },
+  hasRealData: false,
 };
 
 function QuickActions() {
@@ -162,39 +115,130 @@ function QuickActions() {
 }
 
 export default function DashboardPage() {
-  const [statsData, setStatsData] = useState<StatsData | null>(null);
+  const session = useSupabaseSession();
+  const [metrics, setMetrics] = useState<SystemMetricsData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch('/api/stats/today')
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data.error) {
-          setStatsData({
-            callsToday: data.callsToday ?? 0,
-            connectRate: data.connectRate ?? 0,
-            meetingsBooked: data.meetingsBooked ?? 0,
-            pipelineValue: data.pipelineValue ?? 0,
-            yesterday: {
-              calls: data.yesterday?.calls ?? 0,
-              connectRate: data.yesterday?.connectRate ?? 0,
-            },
-          });
-        } else {
-          setStatsData(EMPTY_STATS);
-        }
-      })
-      .catch(() => setStatsData(EMPTY_STATS))
-      .finally(() => setLoading(false));
+  const fetchMetrics = useCallback(async (token: string) => {
+    try {
+      const res = await fetch("/api/dashboard/metrics", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json() as SystemMetricsData;
+        setMetrics(data);
+      } else {
+        setMetrics(EMPTY_METRICS);
+      }
+    } catch {
+      setMetrics(EMPTY_METRICS);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const displayStats = buildStats(statsData ?? EMPTY_STATS);
+  useEffect(() => {
+    if (!session?.access_token) return;
+    fetchMetrics(session.access_token);
+  }, [session?.access_token, fetchMetrics]);
+
+  const m = metrics ?? EMPTY_METRICS;
+  const sparkline = m.sparkline;
+
+  const todayCalls = sparkline.reduce((s, p) => s + p.calls, 0);
+  const todayConnected = sparkline.reduce((s, p) => s + p.connected, 0);
+  const todayMeetings = sparkline.reduce((s, p) => s + p.meetings, 0);
+  const connectRate = todayCalls > 0 ? (todayConnected / todayCalls) * 100 : 0;
+
+  const statCards = [
+    {
+      title: "Calls Today",
+      value: String(todayCalls),
+      change: "—",
+      positive: true,
+      neutral: true,
+      icon: Phone,
+      iconColor: "text-indigo-400",
+      iconBg: "bg-indigo-500/15",
+      delay: 0,
+      dataKey: "calls" as const,
+      areaColor: "#818cf8",
+      areaGradientId: "calls-grad",
+    },
+    {
+      title: "Connect Rate",
+      value: `${connectRate.toFixed(1)}%`,
+      change: "—",
+      positive: true,
+      neutral: true,
+      icon: Users,
+      iconColor: "text-emerald-400",
+      iconBg: "bg-emerald-500/15",
+      delay: 0.07,
+      dataKey: "connected" as const,
+      areaColor: "#34d399",
+      areaGradientId: "connected-grad",
+    },
+    {
+      title: "Meetings Booked",
+      value: String(todayMeetings),
+      change: "—",
+      positive: true,
+      neutral: true,
+      icon: CalendarCheck,
+      iconColor: "text-amber-300",
+      iconBg: "bg-amber-500/15",
+      delay: 0.14,
+      dataKey: "meetings" as const,
+      areaColor: "#fbbf24",
+      areaGradientId: "meetings-grad",
+    },
+    {
+      title: "Pipeline Value",
+      value: "$0",
+      change: "—",
+      positive: true,
+      neutral: true,
+      icon: DollarSign,
+      iconColor: "text-purple-400",
+      iconBg: "bg-purple-500/15",
+      delay: 0.21,
+      dataKey: "ai" as const,
+      areaColor: "#e879f9",
+      areaGradientId: "ai-grad",
+    },
+  ];
 
   return (
     <>
-      <DashboardHeader title="Dashboard" />
+      <DashboardHeader
+        title="Dashboard"
+        actions={<SystemHealthDropdown />}
+      />
 
       <main className="flex-1 space-y-4 overflow-y-auto px-3 py-3 lg:space-y-5 lg:px-6 lg:py-5">
+
+        {/* Empty state banner */}
+        <AnimatePresence>
+          {!loading && !m.hasRealData && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="flex items-start gap-3 rounded-xl border border-brand/20 bg-brand/8 px-4 py-3"
+            >
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+              <div>
+                <p className="text-sm font-medium text-brand">Showing baseline data</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Start making calls to see your real metrics here. All charts will populate automatically.
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Header row */}
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
             <p className="text-xs font-medium uppercase tracking-widest text-brand">Today</p>
@@ -215,34 +259,48 @@ export default function DashboardPage() {
 
         <QuickActions />
 
-        <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25 }}
-          className="grid grid-cols-2 gap-3 xl:grid-cols-4 lg:gap-4"
-        >
+        {/* Stat cards with sparklines */}
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4 lg:gap-4">
           {loading
             ? Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-24 animate-pulse rounded-xl border border-white/10 bg-white/5"
+                  className="h-32 animate-pulse rounded-xl border border-white/10 bg-white/5"
                 />
               ))
-            : displayStats.map((stat) => (
-                <StatCard key={stat.title} {...(stat as any)} />
+            : statCards.map((card) => (
+                <MetricCardWithSparkline
+                  key={card.title}
+                  {...card}
+                  sparkline={sparkline}
+                />
               ))}
-        </motion.div>
+        </div>
 
-        <div className="grid grid-cols-1 gap-3 lg:gap-4 lg:grid-cols-3">
+        {/* Multi-line chart */}
+        {!loading && <MultiLineChart data={sparkline} />}
+        {loading && (
+          <div className="h-48 animate-pulse rounded-xl border border-white/10 bg-white/5" />
+        )}
+
+        {/* AI moat row */}
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
+          <AIHoursSavedCard data={m.aiHoursSaved} loading={loading} />
+          <SpamShieldCard data={m.spamShield} loading={loading} />
+        </div>
+
+        {/* Dialer + Terminal */}
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 lg:gap-4">
           <div className="lg:col-span-1">
             <DialerWidget />
           </div>
           <div className="lg:col-span-2">
-            <ActivityChart />
+            <LiveTerminal />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 pb-2 lg:gap-4 lg:grid-cols-3">
+        {/* Leads queue + Recent activity */}
+        <div className="grid grid-cols-1 gap-3 pb-2 lg:grid-cols-3 lg:gap-4">
           <div className="lg:col-span-2">
             <LeadsQueue limit={5} />
           </div>
@@ -250,6 +308,7 @@ export default function DashboardPage() {
             <RecentActivity />
           </div>
         </div>
+
       </main>
     </>
   );
