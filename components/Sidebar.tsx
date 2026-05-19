@@ -79,12 +79,12 @@ export default function Sidebar() {
       {/* Sidebar — fixed drawer on mobile, static on desktop */}
       <aside
         className={cn(
-          "flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border shadow-xl shadow-black/40",
-          // Mobile: fixed off-canvas drawer
-          "fixed inset-y-0 left-0 z-50 w-[280px] transition-transform duration-300 ease-in-out",
-          isOpen ? "translate-x-0" : "-translate-x-full",
-          // Desktop: static in flex flow
-          "lg:static lg:w-[228px] lg:translate-x-0 lg:z-auto lg:h-screen lg:shrink-0",
+          "flex flex-col bg-sidebar text-sidebar-foreground border-l border-sidebar-border shadow-xl shadow-black/40",
+          // Mobile: fixed off-canvas drawer from right
+          "fixed inset-y-0 right-0 z-50 w-[280px] transition-transform duration-300 ease-in-out",
+          isOpen ? "translate-x-0" : "translate-x-full",
+          // Desktop: static in flex flow (left side, restore left border)
+          "lg:static lg:border-l-0 lg:border-r lg:border-sidebar-border lg:w-[228px] lg:translate-x-0 lg:z-auto lg:h-screen lg:shrink-0",
         )}
       >
         {/* Logo row */}

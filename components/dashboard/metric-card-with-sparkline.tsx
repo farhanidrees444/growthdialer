@@ -66,7 +66,7 @@ export default function MetricCardWithSparkline({
               ) : (
                 <TrendingDown className="h-3.5 w-3.5" />
               )}
-              <span>{change} vs yesterday</span>
+              <span>{isNeutral ? "First day tracking" : `${change} vs yesterday`}</span>
             </div>
           </div>
           <div

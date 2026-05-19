@@ -6,16 +6,30 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Phone, Users, CalendarCheck, Info } from "lucide-react";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
+} from "recharts";
 import DashboardHeader from "@/components/DashboardHeader";
 import MetricCardWithSparkline from "@/components/dashboard/metric-card-with-sparkline";
 import AIHoursSavedCard from "@/components/dashboard/ai-hours-saved-card";
-import ActiveDialerPreview from "@/components/dashboard/active-dialer-preview";
 import UpNextQueue from "@/components/dashboard/up-next-queue";
 import LiveTerminal from "@/components/dashboard/live-terminal";
 import SystemHealthDropdown from "@/components/dashboard/system-health-dropdown";
 import { useLeads } from "@/contexts/leads-context";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { createClient } from "@/lib/supabase/client";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import type { SystemMetricsData, HourlyMetricPoint } from "@/lib/dashboard-types";
 
 const EMPTY_SPARKLINE: HourlyMetricPoint[] = Array.from({ length: 24 }, (_, h) => ({
@@ -34,12 +48,155 @@ const EMPTY_METRICS: SystemMetricsData = {
   hasRealData: false,
 };
 
+function fmtHour(h: number): string {
+  if (h === 0) return "12 AM";
+  if (h === 12) return "12 PM";
+  return h > 12 ? `${h - 12} PM` : `${h} AM`;
+}
+
+function CallFrequencyChart({ sparkline }: { sparkline: HourlyMetricPoint[] }) {
+  const nowHour = new Date().getHours();
+  const hourWindow = Array.from({ length: 12 }, (_, i) => (nowHour - 11 + i + 24) % 24);
+  const chartData = hourWindow.map((h) => {
+    const pt = sparkline.find((p) => p.hour === h);
+    return { hour: h, display: fmtHour(h), calls: pt?.calls ?? 0, connected: pt?.connected ?? 0 };
+  });
+  const hasData = chartData.some((p) => p.calls > 0 || p.connected > 0);
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-white/[0.07] bg-[oklch(0.07_0.02_286)] p-5">
+      <div className="mb-4 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-white">Live Call Frequency</h3>
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        <div className="ml-auto flex items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <div className="h-[2px] w-4 rounded bg-cyan-400" />
+            <span className="text-[10px] text-slate-500">Calls Made</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="h-[2px] w-4 rounded bg-violet-400" />
+            <span className="text-[10px] text-slate-500">Connected</span>
+          </div>
+        </div>
+      </div>
+
+      {hasData ? (
+        <ResponsiveContainer width="100%" height={180}>
+          <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
+            <defs>
+              <linearGradient id="calls-freq-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.2} />
+                <stop offset="95%" stopColor="#22d3ee" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="conn-freq-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#a78bfa" stopOpacity={0.2} />
+                <stop offset="95%" stopColor="#a78bfa" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+            <XAxis
+              dataKey="display"
+              tick={{ fill: "#475569", fontSize: 10 }}
+              tickLine={false}
+              axisLine={false}
+              interval={2}
+            />
+            <RechartsTooltip
+              content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null;
+                return (
+                  <div className="rounded-lg border border-white/10 bg-[oklch(0.1_0.02_282)] px-3 py-2 text-xs shadow-xl">
+                    <p className="mb-1 font-medium text-slate-300">{String(label ?? "")}</p>
+                    {payload.map((p) => (
+                      <p key={String(p.name)} style={{ color: String(p.color ?? "#fff") }}>
+                        {p.name}: {p.value}
+                      </p>
+                    ))}
+                  </div>
+                );
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey="calls"
+              name="Calls Made"
+              stroke="#22d3ee"
+              strokeWidth={2}
+              fill="url(#calls-freq-grad)"
+              dot={false}
+              isAnimationActive={false}
+            />
+            <Area
+              type="monotone"
+              dataKey="connected"
+              name="Connected"
+              stroke="#a78bfa"
+              strokeWidth={2}
+              fill="url(#conn-freq-grad)"
+              dot={false}
+              isAnimationActive={false}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="flex h-[180px] items-center justify-center">
+          <p className="text-sm text-slate-600">No calls yet today — start dialing</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FleetStatusBadge() {
+  const [activeCount, setActiveCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("purchased_numbers")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active")
+      .then(({ count }) => setActiveCount(count ?? 0));
+  }, []);
+
+  if (activeCount === null) return null;
+
+  const isActive = activeCount > 0;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger
+          className={cn(
+            "flex cursor-default items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold",
+            isActive
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+              : "border-amber-500/30 bg-amber-500/10 text-amber-400",
+          )}
+        >
+          <span
+            className={cn(
+              "inline-block h-1.5 w-1.5 rounded-full",
+              isActive ? "animate-pulse bg-emerald-400" : "bg-amber-400",
+            )}
+          />
+          {isActive
+            ? `${activeCount} Trunk Hub${activeCount !== 1 ? "s" : ""} Active`
+            : "No Hubs Configured"}
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Active SIP trunk connections</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 export default function DashboardPage() {
   const session = useSupabaseSession();
   const { leads } = useLeads();
   const [metrics, setMetrics] = useState<SystemMetricsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [leadsInQueue, setLeadsInQueue] = useState(0);
   const tokenRef = useRef<string | null>(null);
 
   const fetchMetrics = useCallback(async (token: string) => {
@@ -66,14 +223,6 @@ export default function DashboardPage() {
     fetchMetrics(session.access_token);
   }, [session?.access_token, fetchMetrics]);
 
-  // Refresh queue count when leads context changes
-  useEffect(() => {
-    fetch('/api/leads/queue?limit=1&status=queued,new,callback')
-      .then((r) => r.json())
-      .then((data) => setLeadsInQueue(data.count ?? 0))
-      .catch(() => {});
-  }, [leads]);
-
   // Realtime: refetch metrics when calls or analytics change
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -82,21 +231,24 @@ export default function DashboardPage() {
     const sb = supabase;
 
     const channel = sb
-      .channel('dashboard-realtime')
+      .channel("dashboard-realtime")
       .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'calls', filter: `user_id=eq.${session.user.id}` },
+        "postgres_changes",
+        { event: "*", schema: "public", table: "calls", filter: `user_id=eq.${session.user.id}` },
         () => { if (tokenRef.current) fetchMetrics(tokenRef.current); },
       )
       .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'call_analytics' },
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "call_analytics" },
         () => { if (tokenRef.current) fetchMetrics(tokenRef.current); },
       )
       .subscribe();
 
     return () => { sb.removeChannel(channel); };
   }, [session?.user?.id, fetchMetrics]);
+
+  // Keep leads context alive (used by other sidebar badge)
+  void leads;
 
   const m = metrics ?? EMPTY_METRICS;
   const sparkline = m.sparkline;
@@ -155,6 +307,7 @@ export default function DashboardPage() {
     <>
       <DashboardHeader
         title="Dashboard"
+        titleExtra={<FleetStatusBadge />}
         actions={<SystemHealthDropdown />}
       />
 
@@ -198,9 +351,13 @@ export default function DashboardPage() {
         {/* Zone 2 + 3: Command center grid */}
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-4">
 
-          {/* Left — dialer focal point + compact activity log */}
+          {/* Left — live frequency chart + compact activity log */}
           <div className="flex flex-col gap-3 lg:col-span-8">
-            <ActiveDialerPreview leadsInQueue={leadsInQueue} />
+            {loading ? (
+              <div className="h-[264px] animate-pulse rounded-2xl border border-white/10 bg-white/5" />
+            ) : (
+              <CallFrequencyChart sparkline={sparkline} />
+            )}
             <LiveTerminal compact />
           </div>
 

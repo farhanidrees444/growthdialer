@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 import LiveStats from '@/components/dialer/LiveStats';
 import LeadQueue from '@/components/dialer/LeadQueue';
 import DialerPanel from '@/components/dialer/DialerPanel';
-import CoachingSidebar from '@/components/dialer/CoachingSidebar';
 import PhoneStatusBar from '@/components/dialer/PhoneStatusBar';
 import UpNextQueue from '@/components/dialer/UpNextQueue';
 import CurrentLeadCard from '@/components/dialer/CurrentLeadCard';
@@ -73,7 +72,7 @@ const DISPOSITION_STATUS_MAP: Record<string, LeadRecord['status']> = {
   dnc:             'do_not_call',
 };
 
-type MobileTab = 'queue' | 'call' | 'history';
+type MobileSheet = 'queue' | 'intel' | null;
 
 interface PowerSession {
   id: string;
@@ -510,7 +509,7 @@ function DialerContent() {
   const [callState, setCallState] = useState<CallState>(INITIAL_CALL_STATE);
   const [error, setError] = useState<string | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
-  const [mobileTab, setMobileTab] = useState<MobileTab>('call');
+  const [mobileSheet, setMobileSheet] = useState<MobileSheet>(null);
   const [purchasedNumbers, setPurchasedNumbers] = useState<
     Array<{ id: string; phone_number: string; is_default: boolean }>
   >([]);
@@ -661,9 +660,9 @@ function DialerContent() {
     return () => clearInterval(interval);
   }, [refreshStats]);
 
-  // ── Auto-switch mobile tab when call goes active ──────────────────────────────
+  // ── Close bottom sheet when a call goes active ───────────────────────────────
   useEffect(() => {
-    if (callStatus !== 'idle' && callStatus !== 'ended') setMobileTab('call');
+    if (callStatus !== 'idle' && callStatus !== 'ended') setMobileSheet(null);
   }, [callStatus]);
 
   // ── Call duration timer ───────────────────────────────────────────────────────
@@ -1155,7 +1154,7 @@ function DialerContent() {
 
   const handleSelectLeadMobile = useCallback((lead: LeadRecord) => {
     handleSelectLead(lead);
-    setMobileTab('call');
+    setMobileSheet(null);
   }, [handleSelectLead]);
 
   const handleSkipNext = useCallback(() => {
@@ -1257,11 +1256,6 @@ function DialerContent() {
     tabCounts,
   };
 
-  const mobileTabs: { key: MobileTab; label: string }[] = [
-    { key: 'queue', label: 'Queue' },
-    { key: 'call', label: 'Call' },
-    { key: 'history', label: 'History' },
-  ];
 
   // ── Page title ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1513,7 +1507,7 @@ function DialerContent() {
       </div>
 
       {/* ── MOBILE layout (< lg) ──────────────────────────────────────────────── */}
-      <div className="flex flex-col lg:hidden" style={{ minHeight: 'calc(100vh - 57px)' }}>
+      <div className="flex flex-col lg:hidden" style={{ minHeight: 'calc(100dvh - 48px)' }}>
         <MobileStatStrip
           calls={stats.calls}
           connects={stats.connects}
@@ -1521,65 +1515,113 @@ function DialerContent() {
           connectRate={stats.connectRate}
         />
 
-        <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] bg-black/20 px-3">
-          <div className="flex flex-1">
-            {mobileTabs.map(({ key, label }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setMobileTab(key)}
-                className={cn(
-                  'flex-1 py-3 text-sm font-semibold transition-colors border-b-2',
-                  mobileTab === key
-                    ? 'border-emerald-400 text-emerald-300'
-                    : 'border-transparent text-slate-500 hover:text-slate-300',
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="ml-2 shrink-0">
-            <PhoneStatusBar />
+        {/* Status bar row */}
+        <div className="flex shrink-0 items-center justify-end border-b border-white/[0.06] bg-black/20 px-3 py-1.5">
+          <PhoneStatusBar />
+        </div>
+
+        {/* Main call panel — always visible on mobile */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="space-y-3 p-3">
+            {powerSession && dialMode === 'power' && (
+              <PowerDialBar session={powerSession} nextLeads={nextPowerLeads} onEnd={endPowerDialSession} />
+            )}
+            <CallingFromCard
+              purchasedNumbers={purchasedNumbers}
+              fromNumber={fromNumber}
+              onFromNumberChange={setFromNumber}
+              disabled={callState.status !== 'idle'}
+            />
+            <DialerPanel {...dialerPanelProps} />
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          {mobileTab === 'queue' && (
-            <div className="p-3">
-              <LeadQueue
-                {...leadQueueProps}
-                onSelectLead={handleSelectLeadMobile}
-                onCallLead={(phone, lead) => { handleCallLead(phone, lead); setMobileTab('call'); }}
-              />
-            </div>
-          )}
-          {mobileTab === 'call' && (
-            <div className="space-y-3 p-3">
-              {powerSession && dialMode === 'power' && (
-                <PowerDialBar session={powerSession} nextLeads={nextPowerLeads} onEnd={endPowerDialSession} />
-              )}
-              <CallingFromCard
-                purchasedNumbers={purchasedNumbers}
-                fromNumber={fromNumber}
-                onFromNumberChange={setFromNumber}
-                disabled={callState.status !== 'idle'}
-              />
-              <DialerPanel {...dialerPanelProps} />
-            </div>
-          )}
-          {mobileTab === 'history' && (
-            <div className="p-3">
-              <CoachingSidebar
-                lead={selectedLead}
-                notes={notes}
-                onSaveNotes={handleSaveNotes}
-                refreshKey={historyRefreshKey}
-              />
-            </div>
-          )}
+        {/* Bottom action buttons */}
+        <div className="shrink-0 flex gap-2 border-t border-white/[0.06] bg-[oklch(0.07_0.02_286)] px-3 py-2.5">
+          <button
+            type="button"
+            onClick={() => setMobileSheet('queue')}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+          >
+            <span>📋</span>
+            Active Queue
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileSheet('intel')}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+          >
+            <span>🧠</span>
+            Live Intel
+          </button>
         </div>
       </div>
+
+      {/* ── Mobile bottom sheets ──────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {mobileSheet !== null && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="sheet-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+              onClick={() => setMobileSheet(null)}
+            />
+            {/* Sheet panel */}
+            <motion.div
+              key="sheet-panel"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 32, stiffness: 320 }}
+              className="fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-2xl border-t border-white/[0.08] bg-[oklch(0.10_0.025_282)] lg:hidden"
+              style={{ maxHeight: '78vh' }}
+            >
+              {/* Drag handle (visual + tap to close) */}
+              <div
+                className="flex justify-center pt-3 pb-1 shrink-0 cursor-pointer"
+                onClick={() => setMobileSheet(null)}
+              >
+                <div className="h-1 w-10 rounded-full bg-white/20" />
+              </div>
+              {/* Sheet header */}
+              <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-4 py-3">
+                <span className="text-sm font-semibold text-white">
+                  {mobileSheet === 'queue' ? '📋 Active Queue' : '🧠 Live Intel'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setMobileSheet(null)}
+                  className="rounded-lg p-1 text-slate-500 transition hover:text-slate-300"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              </div>
+              {/* Sheet content */}
+              <div className="flex-1 min-h-0 overflow-y-auto p-3">
+                {mobileSheet === 'queue' && (
+                  <LeadQueue
+                    {...leadQueueProps}
+                    onSelectLead={handleSelectLeadMobile}
+                    onCallLead={(phone, lead) => { handleCallLead(phone, lead); setMobileSheet(null); }}
+                  />
+                )}
+                {mobileSheet === 'intel' && (
+                  <AiInsightsPanel
+                    lead={selectedLead}
+                    notes={notes}
+                    refreshKey={historyRefreshKey}
+                  />
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
