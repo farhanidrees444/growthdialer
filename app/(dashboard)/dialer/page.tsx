@@ -22,7 +22,8 @@ import { useCallContext } from '@/lib/call-context';
 import { checkConsentRequired } from '@/lib/compliance/region-detector';
 import { isE164 } from '@/lib/phone';
 import type { LeadRecord } from '@/components/dialer/LeadCard';
-import { Zap, PhoneOff, Trophy, Clock, PhoneCall, CalendarCheck, Sparkles, Keyboard, X as XIcon, PhoneMissed } from 'lucide-react';
+import { Zap, PhoneOff, Trophy, Clock, PhoneCall, CalendarCheck, Sparkles, Keyboard, X as XIcon, PhoneMissed, List, Brain } from 'lucide-react';
+import DialModeSegmented from '@/components/dialer/DialModeSegmented';
 import { PRODUCT_FEATURES } from '@/lib/constants';
 
 function formatPhone(phone: string): string {
@@ -72,7 +73,7 @@ const DISPOSITION_STATUS_MAP: Record<string, LeadRecord['status']> = {
   dnc:             'do_not_call',
 };
 
-type MobileSheet = 'queue' | 'intel' | null;
+type MobileSheet = 'queue' | 'intel' | 'mode' | null;
 
 interface PowerSession {
   id: string;
@@ -1536,23 +1537,39 @@ function DialerContent() {
           </div>
         </div>
 
-        {/* Bottom action buttons */}
-        <div className="shrink-0 flex gap-2 border-t border-white/[0.06] bg-[oklch(0.07_0.02_286)] px-3 py-2.5">
+        {/* Bottom action bar: Queue | Mode | Intel */}
+        <div className="shrink-0 flex border-t border-white/[0.06] bg-[oklch(0.07_0.02_286)]">
           <button
             type="button"
             onClick={() => setMobileSheet('queue')}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+            className="relative flex flex-1 flex-col items-center justify-center gap-1 py-3 text-slate-400 transition hover:text-white"
           >
-            <span>📋</span>
-            Active Queue
+            <List className="h-5 w-5" />
+            <span className="text-[10px] font-semibold">Queue</span>
+            {tabCounts.queue > 0 && (
+              <span className="absolute top-2 right-[calc(50%-16px)] flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-1 text-[9px] font-bold text-[oklch(0.08_0.04_153)]">
+                {tabCounts.queue > 99 ? '99+' : tabCounts.queue}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileSheet('mode')}
+            className={cn(
+              "flex flex-1 flex-col items-center justify-center gap-1 py-3 transition",
+              dialMode === 'power' ? "text-violet-400" : "text-slate-400 hover:text-white",
+            )}
+          >
+            <Sparkles className="h-5 w-5" />
+            <span className="text-[10px] font-semibold capitalize">{dialMode}</span>
           </button>
           <button
             type="button"
             onClick={() => setMobileSheet('intel')}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+            className="flex flex-1 flex-col items-center justify-center gap-1 py-3 text-slate-400 transition hover:text-white"
           >
-            <span>🧠</span>
-            Live Intel
+            <Brain className="h-5 w-5" />
+            <span className="text-[10px] font-semibold">Intel</span>
           </button>
         </div>
       </div>
@@ -1591,7 +1608,7 @@ function DialerContent() {
               {/* Sheet header */}
               <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-4 py-3">
                 <span className="text-sm font-semibold text-white">
-                  {mobileSheet === 'queue' ? '📋 Active Queue' : '🧠 Live Intel'}
+                  {mobileSheet === 'queue' ? 'Active Queue' : mobileSheet === 'mode' ? 'Dial Mode' : 'Live Intel'}
                 </span>
                 <button
                   type="button"
@@ -1616,6 +1633,21 @@ function DialerContent() {
                     notes={notes}
                     refreshKey={historyRefreshKey}
                   />
+                )}
+                {mobileSheet === 'mode' && (
+                  <div className="space-y-4 pb-4">
+                    <DialModeSegmented
+                      mode={dialMode === 'power' ? 'power' : 'manual'}
+                      onStartPowerDial={() => { setMobileSheet(null); setShowPowerPreFlight(true); }}
+                      disabled={phoneStatus !== 'ready' || callState.status !== 'idle'}
+                      className="w-full"
+                    />
+                    <p className="text-center text-xs text-slate-600">
+                      {dialMode === 'power'
+                        ? 'Power mode active — use "End Session" to stop'
+                        : 'Select a mode to start dialing'}
+                    </p>
+                  </div>
                 )}
               </div>
             </motion.div>

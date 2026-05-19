@@ -10,14 +10,13 @@ import {
   Pause,
   Disc,
   SkipForward,
-  Zap,
   Mail,
   Clock,
   Hash,
   PhoneCall,
-  Sparkles,
 } from 'lucide-react';
 import ManualDialer from '@/components/dialer/ManualDialer';
+import DialModeSegmented from '@/components/dialer/DialModeSegmented';
 import { LeadRecord } from '@/components/dialer/LeadCard';
 
 function formatTimer(seconds: number): string {
@@ -406,69 +405,12 @@ export default function DialerPanel({
         <div className="space-y-4">
           <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
             <p className="mb-3 text-[10px] uppercase tracking-widest text-slate-500">Dial Mode</p>
-            <div className="space-y-2">
-              <div
-                className={`flex items-center justify-between rounded-xl border px-3 py-2.5 transition ${
-                  dialMode === 'manual'
-                    ? 'border-emerald-500/25 bg-emerald-500/[0.06]'
-                    : 'border-white/[0.04] bg-white/[0.01]'
-                }`}
-              >
-                <span
-                  className={`text-xs font-semibold ${
-                    dialMode === 'manual' ? 'text-emerald-300' : 'text-slate-400'
-                  }`}
-                >
-                  Manual
-                </span>
-                {dialMode === 'manual' && (
-                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
-                    Active
-                  </span>
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={onStartPowerDial}
-                disabled={!isReady || callState.status !== 'idle'}
-                className={`flex w-full flex-col rounded-xl border px-3 py-2.5 transition ${
-                  dialMode === 'power'
-                    ? 'border-rose-500/30 bg-rose-500/[0.08]'
-                    : 'border-violet-500/20 bg-violet-500/[0.04] hover:border-violet-500/35 hover:bg-violet-500/[0.08] disabled:cursor-not-allowed disabled:opacity-40'
-                }`}
-              >
-                <div className="flex w-full items-center justify-between">
-                  <span
-                    className={`flex items-center gap-1.5 text-xs font-semibold ${
-                      dialMode === 'power' ? 'text-rose-300' : 'text-violet-300'
-                    }`}
-                  >
-                    <Sparkles className="h-3 w-3" />
-                    AI Power Dial
-                  </span>
-                  {dialMode === 'power' ? (
-                    <span className="rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold text-rose-400">
-                      Active
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] text-violet-400">
-                      Start
-                    </span>
-                  )}
-                </div>
-                {dialMode === 'power' && (
-                  <p className="mt-0.5 text-[10px] text-rose-300/60">Smart routing enabled</p>
-                )}
-              </button>
-
-              <div className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.01] px-3 py-2.5 opacity-40">
-                <span className="text-xs text-slate-500">Parallel Lines</span>
-                <span className="rounded-full bg-slate-700/60 px-2 py-0.5 text-[10px] text-slate-500">
-                  Soon
-                </span>
-              </div>
-            </div>
+            <DialModeSegmented
+              mode={dialMode === 'power' ? 'power' : 'manual'}
+              onStartPowerDial={onStartPowerDial}
+              disabled={!isReady || callState.status !== 'idle'}
+              className="w-full"
+            />
           </div>
 
           {/* Lead intel */}
