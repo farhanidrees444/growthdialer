@@ -124,14 +124,23 @@ export async function POST(request: NextRequest) {
 
   if (doTranscribe) {
     try {
-      console.log('[AI] Downloading recording:', call.recording_url);
-      const audioRes = await fetch(call.recording_url, { signal: AbortSignal.timeout(30000) });
-      if (!audioRes.ok) throw new Error(`Audio download failed: ${audioRes.status}`);
+      console.log('[AI] Downloading recording from:', call.recording_url);
+      // Telnyx recording URLs require Authorization header
+      const audioRes = await fetch(call.recording_url, {
+        headers: { Authorization: `Bearer ${process.env.TELNYX_API_KEY ?? ''}` },
+        signal: AbortSignal.timeout(30000),
+      });
+      if (!audioRes.ok) {
+        const errBody = await audioRes.text().catch(() => '');
+        throw new Error(`Audio download failed: ${audioRes.status} ${audioRes.statusText} — ${errBody.slice(0, 200)}`);
+      }
+      console.log('[AI] Recording downloaded, content-type:', audioRes.headers.get('content-type'), '| size:', audioRes.headers.get('content-length'));
 
       const audioBuffer = await audioRes.arrayBuffer();
       const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
       const audioFile = new File([audioBlob], 'recording.mp3', { type: 'audio/mpeg' });
 
+      console.log('[AI] Sending to speech recognition engine, file size:', audioBuffer.byteLength, 'bytes');
       const transcription = await groq.audio.transcriptions.create({
         file: audioFile,
         model: 'whisper-large-v3',
@@ -141,7 +150,7 @@ export async function POST(request: NextRequest) {
 
       transcript = transcription.text ?? '';
       transcriptWords = (transcription as { words?: typeof transcriptWords }).words ?? [];
-      console.log('[AI] Transcript length:', transcript.length, '| Words:', transcriptWords.length);
+      console.log('[AI] Transcription complete — length:', transcript.length, 'chars | words:', transcriptWords.length);
 
       // Save transcript to calls table immediately
       await supabase.from('calls').update({ transcript }).eq('id', callId);
@@ -173,21 +182,19 @@ export async function POST(request: NextRequest) {
   let modelUsed = 'gemini-2.0-flash';
 
   try {
+    console.log('[AI] Sending to AI analysis engine (primary)…');
     analysis = await analyzeCallWithGemini(transcript, companyName, industry, jobTitle, previousMemories);
-    console.log('[AI] Gemini response:', JSON.stringify({
-      sentiment: analysis.sentiment,
-      sentiment_score: analysis.sentiment_score,
-      suggested_disposition: analysis.suggested_disposition,
-      memories_count: analysis.memories_to_save?.length ?? 0,
-    }));
+    console.log('[AI] Analysis complete — sentiment:', analysis.sentiment, '| score:', analysis.sentiment_score, '| disposition:', analysis.suggested_disposition, '| memories:', analysis.memories_to_save?.length ?? 0);
   } catch (geminiErr) {
-    console.warn('[AI] Gemini failed, falling back to Groq Llama:', geminiErr);
+    console.warn('[AI] Primary AI engine failed, trying fallback:', String(geminiErr).slice(0, 300));
     modelUsed = 'llama-3.3-70b-versatile';
     try {
+      console.log('[AI] Sending to AI analysis engine (fallback)…');
       analysis = await analyzeCallWithGroq(transcript, companyName, industry, jobTitle, previousMemories);
+      console.log('[AI] Fallback analysis complete — sentiment:', analysis.sentiment);
     } catch (groqErr) {
-      console.error('[AI] Both AI providers failed:', groqErr);
-      await saveError(supabase, callId, call.user_id, call.lead_id, 'analysis_failed');
+      console.error('[AI] Both AI engines failed:', String(groqErr).slice(0, 300));
+      await saveError(supabase, callId, call.user_id, call.lead_id, `analysis_failed: ${String(groqErr).slice(0, 200)}`);
       return NextResponse.json({ error: 'Analysis failed' }, { status: 500 });
     }
   }
@@ -285,19 +292,21 @@ async function saveError(
   errorMsg: string,
 ) {
   if (!supabase) return;
+  console.error('[AI] Saving error for call', callId, ':', errorMsg);
+  // Write ai_error to calls table immediately for observability
+  await supabase
+    .from('calls')
+    .update({ ai_processing_status: 'failed', ai_error: errorMsg.slice(0, 500) })
+    .eq('id', callId);
+  // Also insert a minimal call_analytics row so errors are queryable
   await supabase.from('call_analytics').insert({
     call_id: callId,
     user_id: userId,
     lead_id: leadId,
-    error: errorMsg,
+    error: errorMsg.slice(0, 500),
   }).select('id').single().then(({ data }) => {
     if (data?.id) {
-      supabase.from('calls').update({
-        analytics_id: data.id,
-        ai_processing_status: 'failed',
-      }).eq('id', callId);
-    } else {
-      supabase.from('calls').update({ ai_processing_status: 'failed' }).eq('id', callId);
+      supabase.from('calls').update({ analytics_id: data.id }).eq('id', callId);
     }
   });
 }
