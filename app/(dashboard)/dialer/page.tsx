@@ -112,13 +112,32 @@ export default function DialerPage() {
 
   // Stable ref so powerDialer.onShouldDial can call initiateCall once it's defined
   const initiateCallRef = useRef<((phone: string, lead?: LeadRecord) => void) | null>(null);
+  // Stable ref for phoneStatus so the retry closure always sees the latest value
+  const phoneStatusRef = useRef(phoneStatus);
+  phoneStatusRef.current = phoneStatus;
 
   // Power dialer state machine
   const [powerConfirmOpen, setPowerConfirmOpen] = useState(false);
 
   const powerDialer = usePowerDialer({
     onLeadReady: (lead) => { selectLead(lead); },
-    onShouldDial: (lead) => { initiateCallRef.current?.(lead.phone, lead); },
+    onShouldDial: (lead) => {
+      // Retry up to 10 × 500 ms while phone warms up, then give up
+      let attempts = 0;
+      const tryCall = () => {
+        if (phoneStatusRef.current === 'ready') {
+          initiateCallRef.current?.(lead.phone, lead);
+          return;
+        }
+        if (attempts >= 10) {
+          toast.error('Phone not ready — auto-dial skipped');
+          return;
+        }
+        attempts++;
+        setTimeout(tryCall, 500);
+      };
+      tryCall();
+    },
     onSessionComplete: () => { selectLead(null); },
   });
 
@@ -296,7 +315,11 @@ export default function DialerPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ disposition, notes, callback_at: callbackAt }),
       });
-      toast.success(`Marked as ${disposition.replace(/_/g, ' ')}`);
+      if (powerDialer.isActive) {
+        toast.success('Saved · Loading next lead…', { duration: 2000 });
+      } else {
+        toast.success(`Marked as ${disposition.replace(/_/g, ' ')}`);
+      }
     } catch {
       toast.error('Failed to save disposition');
     }
@@ -496,14 +519,17 @@ export default function DialerPage() {
                 />
               </motion.div>
             )}
-            {/* Power dial preview — full-center countdown */}
+            {/* Power dial preview — full-center countdown (also shown when paused) */}
             {mode === 'preview' && selectedLead && powerDialer.isActive && (
               <motion.div key="pd-preview" className="absolute inset-0">
                 <PowerCountdownStage
                   lead={selectedLead}
                   countdown={powerDialer.countdown}
                   delaySeconds={powerDialer.config.delay_seconds ?? 5}
+                  isPaused={powerDialer.state === 'paused'}
                   onSkip={powerDialer.skipCountdown}
+                  onPause={powerDialer.pause}
+                  onResume={powerDialer.resume}
                   onStop={powerDialer.stop}
                 />
               </motion.div>
@@ -583,9 +609,9 @@ export default function DialerPage() {
         )}
       </AnimatePresence>
 
-      {/* Floating manual dial button (desktop browse) */}
+      {/* Floating manual dial button — visible in browse + preview, hidden during live call */}
       <AnimatePresence>
-        {mode === 'browse' && (
+        {mode !== 'live' && (
           <motion.button
             key="fab"
             initial={{ scale: 0, opacity: 0 }}

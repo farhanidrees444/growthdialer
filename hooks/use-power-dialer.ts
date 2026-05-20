@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { toast } from 'sonner';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
 
 export type PowerDialerState =
@@ -74,7 +75,10 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
 
   // State before pausing (to restore on resume)
   const preStateRef = useRef<PowerDialerState>('preview');
-  const countdownRef = useRef<ReturnType<typeof setInterval>>(undefined);
+  // Guards against double-fire when skipCountdown() is called
+  const autoCalledRef = useRef(false);
+  // Tracks consecutive API failures for auto-pause
+  const consecutiveErrorsRef = useRef(0);
 
   // ── localStorage helpers ───────────────────────────────────────────────────
   const saveLS = useCallback((sessionId: string, leadId?: string, countdownStart?: number) => {
@@ -87,72 +91,32 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     try { localStorage.removeItem(LS_KEY); } catch {}
   }, []);
 
-  // ── Internal: start countdown ──────────────────────────────────────────────
+  // ── Reactive countdown (useEffect+setTimeout — respects pause state) ───────
+  // Tick: fires every second only while in 'preview' and countdown > 0
+  useEffect(() => {
+    if (pdState !== 'preview' || countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown, pdState]);
+
+  // Fire: calls onShouldDial once when countdown reaches 0 in preview state
+  useEffect(() => {
+    if (pdState !== 'preview' || countdown !== 0 || autoCalledRef.current) return;
+    autoCalledRef.current = true;
+    const lead = currentLeadRef.current;
+    if (lead) onShouldDialRef.current?.(lead);
+  }, [countdown, pdState]);
+
+  // ── Internal: set countdown for a lead ────────────────────────────────────
   const startCountdown = useCallback((seconds: number, lead: LeadRecord) => {
-    clearInterval(countdownRef.current);
     const secs = Math.max(1, seconds);
+    autoCalledRef.current = false;
     setCountdown(secs);
     saveLS(sessionRef.current?.id ?? '', lead.id, Date.now());
-
-    let remaining = secs;
-    countdownRef.current = setInterval(() => {
-      remaining--;
-      setCountdown(remaining);
-      if (remaining <= 0) {
-        clearInterval(countdownRef.current);
-        setCountdown(0);
-        if (stateRef.current !== 'paused') {
-          onShouldDialRef.current?.(lead);
-        }
-      }
-    }, 1000);
   }, [saveLS]);
-
-  // ── Internal: load next lead after disposition ─────────────────────────────
-  const loadNextLead = useCallback(async (sess: PowerSession, doneLeadId: string) => {
-    setPdState('countdown');
-    const called = [...calledRef.current, doneLeadId];
-    setCalledLeadIds(called);
-
-    try {
-      const res = await fetch(`/api/dialer/power-session/${sess.id}/next`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ excludeLeadId: doneLeadId, calledLeadIds: called }),
-      });
-      const data = await res.json() as {
-        next_lead?: LeadRecord | null;
-        nextLead?: LeadRecord | null;
-        queue_remaining?: number;
-        done?: boolean;
-        ended?: boolean;
-        reason?: string;
-      };
-
-      const nextLead = data.next_lead ?? data.nextLead ?? null;
-      const isDone = data.ended ?? data.done ?? false;
-
-      if (isDone || !nextLead) {
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        await stopSession(sess);
-        return;
-      }
-
-      setQueueRemaining(data.queue_remaining ?? 0);
-      setCurrentLead(nextLead);
-      onLeadReadyRef.current?.(nextLead);
-      setPdState('preview');
-      startCountdown(configRef.current.delay_seconds ?? 5, nextLead);
-    } catch {
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      await stopSession(sess);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startCountdown]);
 
   // ── Internal: end session ──────────────────────────────────────────────────
   const stopSession = useCallback(async (sess: PowerSession) => {
-    clearInterval(countdownRef.current);
     setCountdown(0);
     clearLS();
 
@@ -185,6 +149,58 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     setCalledLeadIds([]);
     setPdState('ending');
   }, [clearLS]);
+
+  // ── Internal: load next lead after disposition ─────────────────────────────
+  const loadNextLead = useCallback(async (sess: PowerSession, doneLeadId: string) => {
+    setPdState('countdown');
+    const called = [...calledRef.current, doneLeadId];
+    setCalledLeadIds(called);
+
+    try {
+      const res = await fetch(`/api/dialer/power-session/${sess.id}/next`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ excludeLeadId: doneLeadId, calledLeadIds: called }),
+      });
+      const data = await res.json() as {
+        next_lead?: LeadRecord | null;
+        nextLead?: LeadRecord | null;
+        queue_remaining?: number;
+        done?: boolean;
+        ended?: boolean;
+        reason?: string;
+      };
+
+      const nextLead = data.next_lead ?? data.nextLead ?? null;
+      const isDone = data.ended ?? data.done ?? false;
+
+      if (isDone || !nextLead) {
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        await stopSession(sess);
+        return;
+      }
+
+      consecutiveErrorsRef.current = 0;
+      setQueueRemaining(data.queue_remaining ?? 0);
+      setCurrentLead(nextLead);
+      onLeadReadyRef.current?.(nextLead);
+      setPdState('preview');
+      startCountdown(configRef.current.delay_seconds ?? 5, nextLead);
+    } catch {
+      consecutiveErrorsRef.current += 1;
+      if (consecutiveErrorsRef.current >= 3) {
+        // Auto-pause after 3 consecutive failures
+        consecutiveErrorsRef.current = 0;
+        preStateRef.current = 'preview';
+        setPdState('paused');
+        fetch(`/api/dialer/power-session/${sess.id}/pause`, { method: 'POST' }).catch(() => {});
+        toast.error('Auto-paused: 3 consecutive errors. Resume when ready.');
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        await stopSession(sess);
+      }
+    }
+  }, [startCountdown, stopSession]);
 
   // ── Public: start ──────────────────────────────────────────────────────────
   const start = useCallback(async (cfg?: SessionConfig) => {
@@ -233,7 +249,6 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
   // ── Public: called by page when the phone call actually connects ───────────
   const onCallStarted = useCallback(() => {
     if (stateRef.current === 'paused') return;
-    clearInterval(countdownRef.current);
     setCountdown(0);
     setPdState('calling');
   }, []);
@@ -272,11 +287,11 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
   }, [loadNextLead]);
 
   // ── Public: pause ──────────────────────────────────────────────────────────
+  // Setting pdState to 'paused' causes the tick effect to stop via early return.
   const pause = useCallback(async () => {
     const sess = sessionRef.current;
     if (!sess || stateRef.current === 'paused') return;
 
-    clearInterval(countdownRef.current);
     preStateRef.current = stateRef.current;
     setPdState('paused');
 
@@ -290,12 +305,14 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     if (!sess || stateRef.current !== 'paused') return;
 
     const prev = preStateRef.current;
-    setPdState(prev);
-
     fetch(`/api/dialer/power-session/${sess.id}/resume`, { method: 'POST' }).catch(() => {});
 
     if ((prev === 'preview' || prev === 'countdown') && lead) {
+      // Restart full countdown — setPdState and setCountdown batched together
+      setPdState('preview');
       startCountdown(configRef.current.delay_seconds ?? 5, lead);
+    } else {
+      setPdState(prev);
     }
   }, [startCountdown]);
 
@@ -303,7 +320,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
   const skipCountdown = useCallback(() => {
     const lead = currentLeadRef.current;
     if (!lead) return;
-    clearInterval(countdownRef.current);
+    autoCalledRef.current = true; // prevent fire effect from also calling
     setCountdown(0);
     onShouldDialRef.current?.(lead);
   }, []);
@@ -312,7 +329,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
   const stop = useCallback(async () => {
     const sess = sessionRef.current;
     if (!sess) {
-      clearInterval(countdownRef.current);
+      setCountdown(0);
       setPdState('idle');
       setCurrentLead(null);
       clearLS();
@@ -347,7 +364,6 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
           if (activeSession.status === 'paused') {
             setPdState('paused');
           } else {
-            // Restored — enter preview, let user manually trigger next
             setPdState('preview');
           }
         })
@@ -355,11 +371,6 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     } catch {}
     return () => { mounted = false; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Cleanup ────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    return () => { clearInterval(countdownRef.current); };
-  }, []);
 
   const isActive = pdState !== 'idle' && pdState !== 'ending';
 
@@ -381,7 +392,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     skipCountdown,
     stop,
     dismissSummary,
-    // Back-compat aliases for legacy callers
+    // Back-compat aliases
     startSession: start,
     endSession: stop,
     advanceToNext: onDispositionSaved,
