@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const body = await request.json().catch(() => ({})) as {
+      delay_seconds?: number;
+      auto_stop_after?: number;
+      skip_after_disposition?: string[];
+    };
+    const { delay_seconds = 5, auto_stop_after, skip_after_disposition } = body;
+    void auto_stop_after; void skip_after_disposition; // stored client-side
 
     const userId = session.user.id;
 
@@ -44,8 +52,12 @@ export async function POST(_request: NextRequest) {
 
     return NextResponse.json({
       session: powerSession,
+      session_id: powerSession.id,
       firstLead,
+      first_lead: firstLead,
       queueSize: queue.length,
+      queue_size: queue.length,
+      delay_seconds,
     });
   } catch (err) {
     console.error('[power-session/start]', err);

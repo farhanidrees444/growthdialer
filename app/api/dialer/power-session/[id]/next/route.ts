@@ -12,7 +12,11 @@ export async function POST(
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const userId = session.user.id;
-    const body = await request.json() as { excludeLeadId?: string; calledLeadIds?: string[] };
+    const body = await request.json() as {
+      excludeLeadId?: string;
+      calledLeadIds?: string[];
+      current_disposition?: string;
+    };
     const { excludeLeadId, calledLeadIds = [] } = body;
 
     // Verify session belongs to user and is active
@@ -47,7 +51,32 @@ export async function POST(
     const { data: leads } = await query;
     const nextLead = leads?.[0] ?? null;
 
-    return NextResponse.json({ nextLead, done: !nextLead });
+    if (!nextLead) {
+      return NextResponse.json({ ended: true, reason: 'queue_empty', nextLead: null, done: true, queue_remaining: 0 });
+    }
+
+    // Count remaining leads after this one
+    let countQuery = supabase
+      .from('leads')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .not('status', 'in', '("do_not_call","meeting_booked")')
+      .eq('dnc', false);
+
+    const allExcluded = [...excluded, nextLead.id];
+    if (allExcluded.length > 0) {
+      countQuery = countQuery.not('id', 'in', `(${allExcluded.map((eid) => `"${eid}"`).join(',')})`);
+    }
+
+    const { count } = await countQuery;
+
+    return NextResponse.json({
+      next_lead: nextLead,
+      nextLead,
+      queue_remaining: count ?? 0,
+      done: false,
+      ended: false,
+    });
   } catch (err) {
     console.error('[power-session/next]', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });

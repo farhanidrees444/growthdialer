@@ -26,7 +26,19 @@ export async function POST(
       return NextResponse.json({ error: 'Could not end session' }, { status: 500 });
     }
 
-    return NextResponse.json({ session: data });
+    const startedAt = data.started_at ? new Date(data.started_at).getTime() : Date.now();
+    const endedAtMs = data.ended_at ? new Date(data.ended_at).getTime() : Date.now();
+    const durationSeconds = Math.floor((endedAtMs - startedAt) / 1000);
+
+    return NextResponse.json({
+      session: data,
+      summary: {
+        calls: data.total_calls,
+        connects: data.connected_calls,
+        meetings: data.meetings_booked,
+        duration: durationSeconds,
+      },
+    });
   } catch (err) {
     console.error('[power-session/end]', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });

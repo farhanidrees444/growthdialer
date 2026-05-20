@@ -11,7 +11,7 @@ export async function GET(_request: NextRequest) {
       .from('power_dial_sessions')
       .select('id, started_at, total_calls, connected_calls, meetings_booked, total_talk_time, status')
       .eq('user_id', session.user.id)
-      .eq('status', 'active')
+      .in('status', ['active', 'paused'])
       .order('started_at', { ascending: false })
       .limit(1)
       .maybeSingle();

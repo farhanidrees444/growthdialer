@@ -9,7 +9,7 @@ import { useWebPhone } from '@/contexts/webphone-context';
 import { useDialerMode } from '@/hooks/use-dialer-mode';
 import { useCallRealtime } from '@/hooks/use-call-realtime';
 import { useDialerHotkeys } from '@/hooks/use-dialer-hotkeys';
-import { usePowerDial } from '@/hooks/use-power-dial';
+import { usePowerDialer } from '@/hooks/use-power-dialer';
 import { createClient } from '@/lib/supabase/client';
 import { normalizePhone } from '@/lib/phone';
 
@@ -23,6 +23,8 @@ import { LiveInsightsPanel } from '@/components/dialer/live-insights-panel';
 import { DispositionModal } from '@/components/dialer/disposition-modal';
 import { ManualDialpadOverlay } from '@/components/dialer/manual-dialpad-overlay';
 import { ShortcutsHelpModal } from '@/components/dialer/shortcuts-help-modal';
+import { PowerBanner } from '@/components/dialer/power-banner';
+import { PowerCountdownStage } from '@/components/dialer/power-countdown';
 
 import type { LeadRecord, DispositionType } from '@/lib/dialer/state-machine';
 
@@ -75,6 +77,26 @@ function useTimer(running: boolean) {
   return { formatted: `${m}:${s}`, seconds: secs };
 }
 
+// ── Session summary stat cell ──────────────────────────────────────────────────
+function SummaryCell({
+  label,
+  value,
+  color = 'white',
+}: {
+  label: string;
+  value: number;
+  color?: 'white' | 'cyan' | 'green';
+}) {
+  const textColor =
+    color === 'cyan' ? 'text-cyan-400' : color === 'green' ? 'text-emerald-400' : 'text-white';
+  return (
+    <div className="flex flex-col items-center gap-0.5 p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+      <span className={`text-2xl font-light tabular-nums ${textColor}`}>{value}</span>
+      <span className="text-xs text-white/40">{label}</span>
+    </div>
+  );
+}
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface CallDot { id: string; leadName: string; disposition: string | null; time: string }
 interface TodayStats { calls: number; connects: number; meetings: number; streak: number }
@@ -88,13 +110,21 @@ export default function DialerPage() {
 
   const { mode, selectedLead, activeCallDbId, selectLead, startCall, endCall } = useDialerMode();
 
-  // Power dial session state
+  // Stable ref so powerDialer.onShouldDial can call initiateCall once it's defined
+  const initiateCallRef = useRef<((phone: string, lead?: LeadRecord) => void) | null>(null);
+
+  // Power dialer state machine
   const [powerConfirmOpen, setPowerConfirmOpen] = useState(false);
 
-  const powerDial = usePowerDial({
+  const powerDialer = usePowerDialer({
     onLeadReady: (lead) => { selectLead(lead); },
-    onSessionEnd: () => { selectLead(null); },
+    onShouldDial: (lead) => { initiateCallRef.current?.(lead.phone, lead); },
+    onSessionComplete: () => { selectLead(null); },
   });
+
+  // Stable ref so the callStatus effect always calls the latest powerDialer methods
+  const powerDialerRef = useRef(powerDialer);
+  powerDialerRef.current = powerDialer;
 
   const [userId, setUserId] = useState<string | null>(null);
   const [stats, setStats] = useState<TodayStats>({ calls: 0, connects: 0, meetings: 0, streak: 0 });
@@ -182,6 +212,7 @@ export default function DialerPage() {
     prevCallStatus.current = callStatus;
 
     if ((prev === 'connecting' || prev === 'ringing') && callStatus === 'active') {
+      powerDialerRef.current.onCallStarted();
       if (mode === 'preview' && selectedLead && pendingCallDbId) {
         startCall(pendingCallDbId, pendingCallDbId);
       }
@@ -189,6 +220,7 @@ export default function DialerPage() {
 
     if ((prev === 'active' || prev === 'connecting' || prev === 'ringing') &&
         (callStatus === 'ended' || callStatus === 'idle')) {
+      powerDialerRef.current.onCallEnd();
       endCall();
       const seconds = callTimerRef.current.seconds;
       if (seconds >= 10 && pendingCallDbId) {
@@ -226,6 +258,9 @@ export default function DialerPage() {
       toast.error('Failed to initiate call');
     }
   }, [phoneStatus, makeCall]);
+
+  // Update ref on every render so powerDialer.onShouldDial always calls latest version
+  initiateCallRef.current = initiateCall;
 
   const handleCallLead = useCallback(() => {
     if (!selectedLead) return;
@@ -269,13 +304,13 @@ export default function DialerPage() {
     loadStats();
     loadTodayCalls();
 
-    // If power dial is active, advance to next lead automatically
-    if (powerDial.isActive && selectedLead) {
+    // Power dial: advance to next lead automatically
+    if (powerDialer.isActive && selectedLead) {
       const wasConnected = ['interested','meeting_booked','callback','gatekeeper'].includes(disposition);
       const wasMeeting = disposition === 'meeting_booked';
-      powerDial.advanceToNext(selectedLead.id, wasConnected, wasMeeting);
+      powerDialer.onDispositionSaved(disposition, wasConnected, wasMeeting);
     }
-  }, [pendingCallDbId, loadStats, loadTodayCalls, powerDial, selectedLead]);
+  }, [pendingCallDbId, loadStats, loadTodayCalls, powerDialer, selectedLead]);
 
   // ── Lead actions ────────────────────────────────────────────────────────────
   const handleMarkHot = useCallback(async () => {
@@ -378,6 +413,21 @@ export default function DialerPage() {
         )}
       </AnimatePresence>
 
+      {/* Power dialer banner — visible during any active session state */}
+      <AnimatePresence>
+        {powerDialer.isActive && (
+          <PowerBanner
+            state={powerDialer.state}
+            session={powerDialer.session}
+            countdown={powerDialer.countdown}
+            queueRemaining={powerDialer.queueRemaining}
+            onPause={powerDialer.pause}
+            onResume={powerDialer.resume}
+            onStop={powerDialer.stop}
+          />
+        )}
+      </AnimatePresence>
+
       {/* 3-column layout */}
       <div className="flex flex-1 min-h-0">
 
@@ -433,7 +483,8 @@ export default function DialerPage() {
                 />
               </motion.div>
             )}
-            {mode === 'preview' && selectedLead && (
+            {/* Normal preview (no power dial) */}
+            {mode === 'preview' && selectedLead && !powerDialer.isActive && (
               <motion.div key="preview" className="absolute inset-0 overflow-y-auto scrollbar-hide">
                 <PreviewStage
                   lead={selectedLead}
@@ -442,6 +493,18 @@ export default function DialerPage() {
                   onMarkHot={handleMarkHot}
                   onDnc={handleDnc}
                   disabled={phoneStatus !== 'ready'}
+                />
+              </motion.div>
+            )}
+            {/* Power dial preview — full-center countdown */}
+            {mode === 'preview' && selectedLead && powerDialer.isActive && (
+              <motion.div key="pd-preview" className="absolute inset-0">
+                <PowerCountdownStage
+                  lead={selectedLead}
+                  countdown={powerDialer.countdown}
+                  delaySeconds={powerDialer.config.delay_seconds ?? 5}
+                  onSkip={powerDialer.skipCountdown}
+                  onStop={powerDialer.stop}
                 />
               </motion.div>
             )}
@@ -545,6 +608,7 @@ export default function DialerPage() {
       </AnimatePresence>
 
       {/* ── Overlays ── */}
+
       {/* Power Dial confirm modal */}
       <AnimatePresence>
         {powerConfirmOpen && (
@@ -582,7 +646,7 @@ export default function DialerPage() {
                   disabled={queueCounts.queue === 0}
                   onClick={() => {
                     setPowerConfirmOpen(false);
-                    powerDial.startSession(queueCounts.queue);
+                    powerDialer.start({ delay_seconds: 5 });
                   }}
                   className="flex-[2] h-10 rounded-xl text-sm font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed"
                   style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}
@@ -595,59 +659,43 @@ export default function DialerPage() {
         )}
       </AnimatePresence>
 
-      {/* Power dial countdown overlay */}
+      {/* Power session summary modal */}
       <AnimatePresence>
-        {powerDial.isActive && powerDial.countdown !== null && (
+        {powerDialer.state === 'ending' && powerDialer.summary && (
           <motion.div
-            key="pd-countdown"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-6 py-3 rounded-2xl border border-purple-500/30 bg-zinc-900/95 shadow-2xl"
-          >
-            <span className="text-sm text-white/60">Next lead in</span>
-            <span className="text-2xl font-bold text-white tabular-nums w-8 text-center">{powerDial.countdown}</span>
-            <button
-              onClick={powerDial.skipCountdown}
-              className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
-            >
-              Skip →
-            </button>
-            <button
-              onClick={powerDial.endSession}
-              className="text-xs text-red-400 hover:text-red-300 transition-colors"
-            >
-              End session
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Power dial active indicator (top-right) */}
-      <AnimatePresence>
-        {powerDial.isActive && powerDial.countdown === null && (
-          <motion.div
-            key="pd-indicator"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="fixed top-16 right-4 z-40 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium"
-            style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)' }}
+            key="pd-summary"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
           >
             <motion.div
-              className="w-1.5 h-1.5 rounded-full bg-purple-400"
-              animate={{ opacity: [1, 0.3, 1] }}
-              transition={{ duration: 1.2, repeat: Infinity }}
-            />
-            <span className="text-purple-300">Power Mode</span>
-            <span className="text-purple-400/60">{powerDial.session?.total_calls ?? 0} calls</span>
-            <button
-              onClick={powerDial.endSession}
-              className="ml-1 text-purple-400/60 hover:text-purple-300 transition-colors"
-              aria-label="End power dial session"
+              initial={{ scale: 0.92, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              className="w-full max-w-sm rounded-2xl border border-white/[0.10] p-6 bg-zinc-900 shadow-2xl space-y-5"
             >
-              ×
-            </button>
+              <div className="text-center space-y-1">
+                <div className="text-4xl mb-1">⚡</div>
+                <h2 className="text-lg font-semibold text-white">Session Complete</h2>
+                <p className="text-sm text-white/40">
+                  {Math.floor((powerDialer.summary.duration ?? 0) / 60)}m{' '}
+                  {(powerDialer.summary.duration ?? 0) % 60}s total
+                </p>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <SummaryCell label="Calls" value={powerDialer.summary.calls} />
+                <SummaryCell label="Connects" value={powerDialer.summary.connects} color="cyan" />
+                <SummaryCell label="Meetings" value={powerDialer.summary.meetings} color="green" />
+              </div>
+              <button
+                onClick={powerDialer.dismissSummary}
+                className="w-full h-10 rounded-xl text-sm font-semibold text-white"
+                style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}
+              >
+                Done
+              </button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
