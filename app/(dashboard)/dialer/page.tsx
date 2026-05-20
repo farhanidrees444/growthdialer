@@ -23,6 +23,9 @@ import { checkConsentRequired } from '@/lib/compliance/region-detector';
 import { isE164 } from '@/lib/phone';
 import type { LeadRecord } from '@/components/dialer/LeadCard';
 import { Zap, PhoneOff, Trophy, Clock, PhoneCall, CalendarCheck, Sparkles, Keyboard, X as XIcon, PhoneMissed, List, Brain } from 'lucide-react';
+import { toast } from 'sonner';
+import { getLocalTime } from '@/lib/utils/timezone';
+import CallNotesPanel from '@/components/dialer/CallNotesPanel';
 import DialModeSegmented from '@/components/dialer/DialModeSegmented';
 import { PRODUCT_FEATURES } from '@/lib/constants';
 
@@ -553,10 +556,44 @@ function DialerContent() {
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [complianceWarning, setComplianceWarning] = useState<string | null>(null);
 
+  // Feature state: VM drop, call notes, auth token
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [dbCallId, setDbCallId] = useState<string | null>(null);
+  const [vmDropping, setVmDropping] = useState(false);
+  const [showCallNotes, setShowCallNotes] = useState(false);
+  const [hasVoicemails, setHasVoicemails] = useState(false);
+
   useEffect(() => { powerSessionRef.current = powerSession; }, [powerSession]);
   useEffect(() => { callSidRef.current = callState.callSid; }, [callState.callSid]);
   useEffect(() => { dialModeRef.current = dialMode; }, [dialMode]);
   useEffect(() => { selectedLeadRef.current = selectedLead; }, [selectedLead]);
+
+  // Fetch session auth token for API calls (notes, VM drop)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setAuthToken(session?.access_token ?? null);
+    });
+  }, [supabase]);
+
+  // Check if user has any saved voicemails
+  useEffect(() => {
+    supabase
+      .from('voicemails')
+      .select('id', { count: 'exact', head: true })
+      .then(({ count }) => setHasVoicemails((count ?? 0) > 0));
+  }, [supabase]);
+
+  // Look up DB call ID when telnyx call ID is set
+  useEffect(() => {
+    if (!callState.callSid) { setDbCallId(null); return; }
+    const sid = callState.callSid;
+    void supabase
+      .from('calls')
+      .select('id')
+      .eq('telnyx_call_id', sid)
+      .single()
+      .then(({ data }) => { if (data?.id) setDbCallId(data.id as string); });
+  }, [callState.callSid, supabase]);
 
   // ── Fetch purchased numbers ───────────────────────────────────────────────────
   useEffect(() => {
@@ -611,6 +648,7 @@ function DialerContent() {
 
     if (callStatus === 'ended') {
       setHistoryRefreshKey((k) => k + 1);
+      setShowCallNotes(false);
       if (!wasAnsweredRef.current) {
         // Call never connected — auto-handle silently
         handleAutoNoAnswerRef.current();
@@ -1154,6 +1192,39 @@ function DialerContent() {
     setSelectedLead(updated);
   }, [selectedLead, supabase]);
 
+  // ── VM Drop ───────────────────────────────────────────────────────────────────
+  const handleVmDrop = useCallback(async () => {
+    if (vmDropping || !callState.callSid || !authToken) return;
+    const { data: vms } = await supabase.from('voicemails').select('id').order('created_at', { ascending: false }).limit(1);
+    if (!vms?.length) {
+      toast.error('No voicemails saved — add one in Settings → Voicemails');
+      return;
+    }
+    setVmDropping(true);
+    try {
+      const res = await fetch('/api/calls/drop-voicemail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({
+          callId: dbCallId ?? '',
+          voicemailId: vms[0].id,
+          telnyxCallControlId: callState.callSid,
+        }),
+      });
+      if (res.ok) {
+        toast.success('Voicemail dropped — hanging up');
+        setTimeout(() => hangUp(), 1000);
+      } else {
+        const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+        toast.error(`VM drop failed: ${(err as { error?: string }).error ?? res.status}`);
+      }
+    } catch {
+      toast.error('VM drop failed — check your connection');
+    } finally {
+      setVmDropping(false);
+    }
+  }, [vmDropping, callState.callSid, authToken, supabase, dbCallId, hangUp]);
+
   // ── Lead selection ────────────────────────────────────────────────────────────
   const handleSelectLead = useCallback((lead: LeadRecord) => {
     setSelectedLead(lead);
@@ -1275,6 +1346,12 @@ function DialerContent() {
   // Next leads preview for power dial bar
   const nextPowerLeads = powerDialQueueRef.current.slice(powerDialIndex, powerDialIndex + 3);
   const nextPowerLead = powerDialQueueRef.current[powerDialIndex] ?? null;
+
+  // TCPA time check for selected lead
+  const leadTimeInfo = useMemo(
+    () => (selectedLead?.phone ? getLocalTime(selectedLead.phone) : null),
+    [selectedLead?.phone],
+  );
 
   return (
     <div className="flex-1 overflow-y-auto text-slate-100">
@@ -1454,6 +1531,22 @@ function DialerContent() {
             disabled={callState.status !== 'idle'}
           />
 
+          {/* TCPA per-lead warning */}
+          {leadTimeInfo?.isUnsafe && callState.status === 'idle' && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/[0.07] px-4 py-2.5"
+            >
+              <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-red-400" />
+              <p className="text-xs font-medium text-red-300">
+                TCPA: It&apos;s currently{' '}
+                <span className="font-bold">{leadTimeInfo.time} {leadTimeInfo.stateAbbr}</span>
+                {' '}— outside safe calling hours (8am–9pm). Consider calling later.
+              </p>
+            </motion.div>
+          )}
+
           {/* ── 3-column focused layout ──────────────────────────────────── */}
           <div className="grid gap-5 lg:grid-cols-[320px_1fr_300px]">
             <UpNextQueue
@@ -1462,23 +1555,36 @@ function DialerContent() {
               onSelectLead={handleSelectLead}
               onCallLead={handleCallLead}
             />
-            <CurrentLeadCard
-              selectedLead={selectedLead}
-              callState={callState}
-              notes={notes}
-              onDial={handleDial}
-              onMute={toggleMute}
-              onHold={toggleHold}
-              onRecord={() => setIsRecording((prev) => !prev)}
-              onEndCall={hangUp}
-              onSkip={handleSkipNext}
-              onMarkHot={handleMarkHot}
-              onMarkDNC={handleMarkDNC}
-              onSaveNotes={handleSaveNotes}
-              isReady={phoneStatus === 'ready'}
-              isRecording={isRecording}
-              error={error}
-            />
+            <div className="flex flex-col gap-3">
+              <CurrentLeadCard
+                selectedLead={selectedLead}
+                callState={callState}
+                notes={notes}
+                onDial={handleDial}
+                onMute={toggleMute}
+                onHold={toggleHold}
+                onRecord={() => setIsRecording((prev) => !prev)}
+                onEndCall={hangUp}
+                onSkip={handleSkipNext}
+                onMarkHot={handleMarkHot}
+                onMarkDNC={handleMarkDNC}
+                onSaveNotes={handleSaveNotes}
+                isReady={phoneStatus === 'ready'}
+                isRecording={isRecording}
+                error={error}
+                onVmDrop={handleVmDrop}
+                vmDropping={vmDropping}
+                hasVoicemails={hasVoicemails}
+                onToggleCallNotes={() => setShowCallNotes((v) => !v)}
+                showCallNotes={showCallNotes}
+              />
+              <CallNotesPanel
+                callId={dbCallId}
+                authToken={authToken}
+                open={showCallNotes && callState.status === 'connected'}
+                onClose={() => setShowCallNotes(false)}
+              />
+            </div>
             <AiInsightsPanel
               lead={selectedLead}
               notes={notes}
@@ -1534,7 +1640,7 @@ function DialerContent() {
               onFromNumberChange={handleFromNumberChange}
               disabled={callState.status !== 'idle'}
             />
-            <DialerPanel {...dialerPanelProps} />
+            <DialerPanel {...dialerPanelProps} onVmDrop={handleVmDrop} vmDropping={vmDropping} hasVoicemails={hasVoicemails} />
           </div>
         </div>
 

@@ -16,6 +16,8 @@ import {
   Copy,
   Check,
   ChevronDown,
+  Voicemail,
+  FileText,
 } from 'lucide-react';
 import type { LeadRecord } from '@/components/dialer/LeadCard';
 
@@ -46,6 +48,11 @@ interface CurrentLeadCardProps {
   isReady: boolean;
   isRecording: boolean;
   error?: string | null;
+  onVmDrop?: () => void;
+  vmDropping?: boolean;
+  hasVoicemails?: boolean;
+  onToggleCallNotes?: () => void;
+  showCallNotes?: boolean;
 }
 
 function scoreGradient(score: number): string {
@@ -139,6 +146,11 @@ export default function CurrentLeadCard({
   isReady,
   isRecording,
   error,
+  onVmDrop,
+  vmDropping = false,
+  hasVoicemails = false,
+  onToggleCallNotes,
+  showCallNotes = false,
 }: CurrentLeadCardProps) {
   const [localNotes, setLocalNotes] = useState(notes);
   const [notesExpanded, setNotesExpanded] = useState(false);
@@ -438,44 +450,70 @@ export default function CurrentLeadCard({
             </div>
 
             {/* In-call controls */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-2">
               <button
                 type="button"
                 onClick={onMute}
-                className={`flex items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-semibold transition ${
+                className={`flex items-center justify-center gap-1.5 rounded-xl border py-3 text-xs font-semibold transition ${
                   callState.isMuted
                     ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
                     : 'border-white/[0.06] bg-white/[0.03] text-slate-300 hover:border-white/20'
                 }`}
               >
-                {callState.isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                {callState.isMuted ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
                 {callState.isMuted ? 'Unmute' : 'Mute'}
               </button>
               <button
                 type="button"
                 onClick={onHold}
-                className={`flex items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-semibold transition ${
+                className={`flex items-center justify-center gap-1.5 rounded-xl border py-3 text-xs font-semibold transition ${
                   callState.isOnHold
                     ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
                     : 'border-white/[0.06] bg-white/[0.03] text-slate-300 hover:border-white/20'
                 }`}
               >
-                <Pause className="h-4 w-4" />
+                <Pause className="h-3.5 w-3.5" />
                 {callState.isOnHold ? 'Resume' : 'Hold'}
               </button>
               <button
                 type="button"
                 onClick={onRecord}
-                className={`flex items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-semibold transition ${
+                className={`flex items-center justify-center gap-1.5 rounded-xl border py-3 text-xs font-semibold transition ${
                   isRecording
                     ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
                     : 'border-white/[0.06] bg-white/[0.03] text-slate-300 hover:border-white/20'
                 }`}
               >
-                <Disc className="h-4 w-4" />
+                <Disc className="h-3.5 w-3.5" />
                 {isRecording ? 'Recording' : 'Record'}
               </button>
+              <button
+                type="button"
+                onClick={onVmDrop}
+                disabled={vmDropping || !hasVoicemails || !onVmDrop}
+                title={!hasVoicemails ? 'No voicemails saved — add one in Settings → Voicemails' : 'Drop voicemail & hang up'}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-violet-500/25 bg-violet-500/[0.07] py-3 text-xs font-semibold text-violet-300 transition hover:border-violet-500/40 hover:bg-violet-500/[0.12] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Voicemail className="h-3.5 w-3.5" />
+                {vmDropping ? 'Dropping…' : 'VM Drop'}
+              </button>
             </div>
+
+            {/* Notes toggle */}
+            {onToggleCallNotes && (
+              <button
+                type="button"
+                onClick={onToggleCallNotes}
+                className={`flex w-full items-center justify-center gap-2 rounded-xl border py-2 text-xs font-semibold transition ${
+                  showCallNotes
+                    ? 'border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-300'
+                    : 'border-white/[0.06] bg-white/[0.02] text-slate-400 hover:border-white/15 hover:text-slate-200'
+                }`}
+              >
+                <FileText className="h-3.5 w-3.5" />
+                {showCallNotes ? 'Hide Call Notes' : 'Call Notes'}
+              </button>
+            )}
           </div>
         )}
 

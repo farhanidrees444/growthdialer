@@ -7,8 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Settings, Phone, Mic, Sparkles, Bell, CreditCard, Shield,
   CheckCircle2, Loader2, Save, Radio, MicOff, Trash2,
-  AlarmCheck, Brain, TrendingUp, Target, ChevronRight,
-  Info, HardDrive, Clock,
+  AlarmCheck, Brain, TrendingUp, Target,
+  Info, HardDrive, Clock, Voicemail, Upload, Play, X as XIcon,
 } from "lucide-react";
 import DashboardHeader from "@/components/DashboardHeader";
 import { createClient } from "@/lib/supabase/client";
@@ -24,6 +24,8 @@ interface UserSettings {
   ai_auto_summarize: boolean;
   ai_detect_sentiment: boolean;
   ai_extract_talking_points: boolean;
+  auto_drop_vm: boolean;
+  local_presence_enabled: boolean;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -36,15 +38,18 @@ const DEFAULT_SETTINGS: UserSettings = {
   ai_auto_summarize: true,
   ai_detect_sentiment: true,
   ai_extract_talking_points: true,
+  auto_drop_vm: false,
+  local_presence_enabled: false,
 };
 
-type TabKey = 'general' | 'calling' | 'recording' | 'ai' | 'notifications' | 'billing' | 'security';
+type TabKey = 'general' | 'calling' | 'recording' | 'ai' | 'voicemails' | 'notifications' | 'billing' | 'security';
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: 'general',       label: 'General',       icon: Settings },
   { key: 'calling',       label: 'Calling',        icon: Phone },
   { key: 'recording',     label: 'Recording',      icon: Mic },
   { key: 'ai',            label: 'AI',             icon: Sparkles },
+  { key: 'voicemails',    label: 'Voicemails',     icon: Voicemail },
   { key: 'notifications', label: 'Notifications',  icon: Bell },
   { key: 'billing',       label: 'Billing',        icon: CreditCard },
   { key: 'security',      label: 'Security',       icon: Shield },
@@ -475,6 +480,239 @@ function AiTab({ settings, onChange }: { settings: UserSettings; onChange: (patc
   );
 }
 
+interface VoicemailRecord {
+  id: string;
+  name: string;
+  audio_url: string;
+  duration_seconds: number;
+  drop_count: number;
+  created_at: string;
+}
+
+function formatVmDuration(s: number): string {
+  if (!s) return '—';
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return m > 0 ? `${m}m ${sec}s` : `${s}s`;
+}
+
+async function getAudioDuration(file: File): Promise<number> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const audio = new Audio(url);
+    audio.onloadedmetadata = () => { URL.revokeObjectURL(url); resolve(Math.round(audio.duration)); };
+    audio.onerror = () => { URL.revokeObjectURL(url); resolve(0); };
+  });
+}
+
+function VoicemailsTab({
+  autoDropVm,
+  onAutoDropVmChange,
+}: {
+  autoDropVm: boolean;
+  onAutoDropVmChange: (v: boolean) => void;
+}) {
+  const [voicemails, setVoicemails] = useState<VoicemailRecord[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from('voicemails')
+      .select('id, name, audio_url, duration_seconds, drop_count, created_at')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => { if (data) setVoicemails(data as VoicemailRecord[]); });
+  }, []);
+
+  const uploadFile = useCallback(async (file: File) => {
+    if (!file.type.startsWith('audio/')) return;
+    setUploading(true);
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const duration = await getAudioDuration(file);
+      const ext = file.name.split('.').pop() ?? 'mp3';
+      const path = `${session.user.id}/${Date.now()}.${ext}`;
+
+      const { data: up, error: upErr } = await supabase.storage
+        .from('voicemail-recordings')
+        .upload(path, file, { contentType: file.type, upsert: false });
+
+      if (upErr || !up) return;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('voicemail-recordings')
+        .getPublicUrl(up.path);
+
+      const name = file.name.replace(/\.[^.]+$/, '').slice(0, 100);
+      const { data: vm } = await supabase
+        .from('voicemails')
+        .insert({ user_id: session.user.id, name, audio_url: publicUrl, duration_seconds: duration })
+        .select('id, name, audio_url, duration_seconds, drop_count, created_at')
+        .single();
+
+      if (vm) setVoicemails((prev) => [vm as VoicemailRecord, ...prev]);
+    } finally {
+      setUploading(false);
+    }
+  }, []);
+
+  const handleFileInput = useCallback((e: { target: HTMLInputElement }) => {
+    const file = e.target.files?.[0];
+    if (file) uploadFile(file);
+    e.target.value = '';
+  }, [uploadFile]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) uploadFile(file);
+  }, [uploadFile]);
+
+  const handleDelete = useCallback(async (vm: VoicemailRecord) => {
+    const supabase = createClient();
+    await supabase.from('voicemails').delete().eq('id', vm.id);
+    // Also delete from storage
+    const urlParts = vm.audio_url.split('/voicemail-recordings/');
+    if (urlParts[1]) {
+      await supabase.storage.from('voicemail-recordings').remove([decodeURIComponent(urlParts[1])]);
+    }
+    setVoicemails((prev) => prev.filter((v) => v.id !== vm.id));
+  }, []);
+
+  const togglePlay = useCallback((vm: VoicemailRecord) => {
+    if (playingId === vm.id) {
+      audioRef.current?.pause();
+      setPlayingId(null);
+      return;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+    }
+    const audio = new Audio(vm.audio_url);
+    audio.onended = () => setPlayingId(null);
+    audio.play().catch(() => {});
+    audioRef.current = audio;
+    setPlayingId(vm.id);
+  }, [playingId]);
+
+  return (
+    <div className="space-y-4 max-w-2xl">
+      {/* AMD toggle */}
+      <SectionCard
+        title="Answering Machine Detection"
+        description="Automatically drop a voicemail when an answering machine is detected — no rep action needed"
+      >
+        <ToggleRow
+          label="Auto-drop voicemail on AMD"
+          description="When enabled, the dialer detects voicemail systems and drops your saved voicemail automatically"
+          checked={autoDropVm}
+          onChange={onAutoDropVmChange}
+          icon={Voicemail}
+          iconColor="text-violet-400"
+        />
+      </SectionCard>
+
+      {/* Upload zone */}
+      <SectionCard
+        title="Saved Voicemails"
+        description="Upload pre-recorded voicemail messages. During a call, hit VM Drop to leave one instantly."
+      >
+        <div
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
+          className={cn(
+            "mb-4 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition",
+            dragOver
+              ? "border-emerald-500/60 bg-emerald-500/[0.06]"
+              : "border-white/[0.08] bg-white/[0.02] hover:border-white/[0.15]",
+          )}
+        >
+          {uploading ? (
+            <>
+              <Loader2 className="h-7 w-7 animate-spin text-emerald-400" />
+              <p className="text-sm text-slate-400">Uploading…</p>
+            </>
+          ) : (
+            <>
+              <Upload className="h-7 w-7 text-slate-500" />
+              <p className="text-sm font-medium text-slate-300">
+                Drop an audio file or{' '}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-emerald-400 underline-offset-2 hover:underline"
+                >
+                  browse
+                </button>
+              </p>
+              <p className="text-xs text-slate-600">MP3, WAV, M4A, OGG · max 5 MB</p>
+            </>
+          )}
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="audio/*"
+          className="hidden"
+          onChange={handleFileInput}
+        />
+
+        {/* Voicemail list */}
+        {voicemails.length === 0 ? (
+          <p className="py-4 text-center text-sm text-slate-600">No voicemails yet — upload one above</p>
+        ) : (
+          <div className="space-y-2">
+            {voicemails.map((vm) => (
+              <div
+                key={vm.id}
+                className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3"
+              >
+                <button
+                  type="button"
+                  onClick={() => togglePlay(vm)}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/[0.10] bg-white/[0.04] text-slate-300 transition hover:border-white/25 hover:text-white"
+                  aria-label={playingId === vm.id ? 'Pause' : 'Play'}
+                >
+                  {playingId === vm.id ? (
+                    <span className="h-3 w-3 rounded-sm bg-current" />
+                  ) : (
+                    <Play className="h-3.5 w-3.5 translate-x-px" />
+                  )}
+                </button>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-white">{vm.name}</p>
+                  <p className="text-[11px] text-slate-600">
+                    {formatVmDuration(vm.duration_seconds)}
+                    {vm.drop_count > 0 && ` · ${vm.drop_count} drop${vm.drop_count !== 1 ? 's' : ''}`}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(vm)}
+                  className="shrink-0 rounded-lg p-1.5 text-slate-600 transition hover:text-rose-400"
+                  aria-label="Delete voicemail"
+                >
+                  <XIcon className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </SectionCard>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('recording');
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
@@ -515,6 +753,8 @@ export default function SettingsPage() {
           ai_auto_summarize: s.ai_auto_summarize ?? true,
           ai_detect_sentiment: s.ai_detect_sentiment ?? true,
           ai_extract_talking_points: s.ai_extract_talking_points ?? true,
+          auto_drop_vm: s.auto_drop_vm ?? false,
+          local_presence_enabled: s.local_presence_enabled ?? false,
         };
         setSettings(loaded);
         setSavedSettings(loaded);
@@ -645,6 +885,12 @@ export default function SettingsPage() {
                 )}
                 {activeTab === 'ai' && (
                   <AiTab settings={settings} onChange={handleChange} />
+                )}
+                {activeTab === 'voicemails' && (
+                  <VoicemailsTab
+                    autoDropVm={settings.auto_drop_vm}
+                    onAutoDropVmChange={(v) => handleChange({ auto_drop_vm: v })}
+                  />
                 )}
                 {(activeTab === 'calling' || activeTab === 'notifications' || activeTab === 'billing' || activeTab === 'security') && (
                   <PlaceholderTab label={TABS.find((t) => t.key === activeTab)?.label ?? ''} />

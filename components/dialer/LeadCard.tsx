@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import type { DragEvent } from 'react';
 import { Phone } from 'lucide-react';
+import TimezonePill from '@/components/dialer/TimezonePill';
 
 type LeadStatus =
   | 'new'
@@ -151,7 +152,10 @@ export default function LeadCard({
 
       {/* Phone + status badge */}
       <div className="mt-2.5 flex items-center justify-between">
-        <span className="font-mono text-[11px] text-emerald-400/70">{lead.phone || '—'}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="font-mono text-[11px] text-emerald-400/70">{lead.phone || '—'}</span>
+          {lead.phone && <TimezonePill phone={lead.phone} />}
+        </div>
         <div className="flex items-center gap-1.5">
           <span className={`h-1.5 w-1.5 rounded-full ${badge.dotColor}`} />
           <span className={`text-[10px] font-semibold ${badge.textColor}`}>{badge.label}</span>

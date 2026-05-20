@@ -228,7 +228,7 @@ export default function DispositionModal({
                     >
                       <span className="text-xl leading-none">{d.emoji}</span>
                       <span className="text-[10px] font-semibold leading-tight">{d.label}</span>
-                      <span className="absolute right-1.5 top-1 font-mono text-[8px] text-white/20">{d.shortcut}</span>
+                      <span className="absolute right-1.5 top-1.5 rounded bg-white/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white/40">{d.shortcut}</span>
                     </motion.button>
                   ))}
                 </div>

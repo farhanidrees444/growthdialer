@@ -14,6 +14,7 @@ import {
   Clock,
   Hash,
   PhoneCall,
+  Voicemail,
 } from 'lucide-react';
 import ManualDialer from '@/components/dialer/ManualDialer';
 import DialModeSegmented from '@/components/dialer/DialModeSegmented';
@@ -77,6 +78,9 @@ interface DialerPanelProps {
   error?: string | null;
   dialMode: 'manual' | 'power';
   onStartPowerDial: () => void;
+  onVmDrop?: () => void;
+  vmDropping?: boolean;
+  hasVoicemails?: boolean;
 }
 
 export default function DialerPanel({
@@ -102,6 +106,9 @@ export default function DialerPanel({
   error,
   dialMode,
   onStartPowerDial,
+  onVmDrop,
+  vmDropping = false,
+  hasVoicemails = false,
 }: DialerPanelProps) {
   const [localNotes, setLocalNotes] = useState(notes);
 
@@ -313,24 +320,38 @@ export default function DialerPanel({
 
         {/* Connected bar */}
         {isConnected && (
-          <div className="mt-4 flex items-center justify-between rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] px-4 py-3">
-            <div className="flex items-center gap-3">
-              <span className="relative flex h-3 w-3">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-400" />
-              </span>
-              <span className="text-sm font-bold text-emerald-300">
-                Connected · {formatTimer(callState.duration)}
-              </span>
+          <div className="mt-4 space-y-2 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="relative flex h-3 w-3">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-400" />
+                </span>
+                <span className="text-sm font-bold text-emerald-300">
+                  Connected · {formatTimer(callState.duration)}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={onEndCall}
+                className="flex items-center gap-1.5 rounded-lg bg-rose-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-rose-500/30 transition hover:bg-rose-400"
+              >
+                <PhoneOff className="h-3.5 w-3.5" />
+                Hang Up
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={onEndCall}
-              className="flex items-center gap-1.5 rounded-lg bg-rose-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-rose-500/30 transition hover:bg-rose-400"
-            >
-              <PhoneOff className="h-3.5 w-3.5" />
-              Hang Up
-            </button>
+            {onVmDrop && (
+              <button
+                type="button"
+                onClick={onVmDrop}
+                disabled={vmDropping || !hasVoicemails}
+                title={!hasVoicemails ? 'No voicemails saved — add one in Settings → Voicemails' : 'Drop voicemail & hang up'}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-violet-500/30 bg-violet-500/[0.08] px-4 py-2 text-xs font-semibold text-violet-300 transition hover:bg-violet-500/[0.15] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Voicemail className="h-3.5 w-3.5" />
+                {vmDropping ? 'Dropping voicemail…' : 'Drop Voicemail'}
+              </button>
+            )}
           </div>
         )}
 
