@@ -15,18 +15,34 @@ interface PowerBannerProps {
   onStop: () => void;
 }
 
-function useElapsed(startedAt?: string): string {
+function useElapsed(startedAt?: string, isPaused?: boolean): string {
   const [secs, setSecs] = useState(0);
   const ref = useRef<ReturnType<typeof setInterval>>(undefined);
+  const pausedAtRef = useRef<number | null>(null);
+  const totalPausedRef = useRef(0);
 
   useEffect(() => {
     if (!startedAt) return;
+
+    if (isPaused) {
+      clearInterval(ref.current);
+      // Record when we entered pause so we can add the gap on resume
+      if (pausedAtRef.current === null) pausedAtRef.current = Date.now();
+      return;
+    }
+
+    // Resuming from pause — accumulate the paused gap
+    if (pausedAtRef.current !== null) {
+      totalPausedRef.current += Date.now() - pausedAtRef.current;
+      pausedAtRef.current = null;
+    }
+
     const base = new Date(startedAt).getTime();
-    const tick = () => setSecs(Math.floor((Date.now() - base) / 1000));
+    const tick = () => setSecs(Math.floor((Date.now() - base - totalPausedRef.current) / 1000));
     tick();
     ref.current = setInterval(tick, 1000);
     return () => clearInterval(ref.current);
-  }, [startedAt]);
+  }, [startedAt, isPaused]);
 
   const m = Math.floor(secs / 60).toString().padStart(2, '0');
   const s = (secs % 60).toString().padStart(2, '0');
@@ -43,8 +59,8 @@ export function PowerBanner({
   onStop,
 }: PowerBannerProps) {
   const [mobileExpanded, setMobileExpanded] = useState(false);
-  const elapsed = useElapsed(session?.started_at);
   const isPaused = state === 'paused';
+  const elapsed = useElapsed(session?.started_at, isPaused);
 
   return (
     <>

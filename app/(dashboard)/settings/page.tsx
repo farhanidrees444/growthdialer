@@ -324,6 +324,12 @@ function RecordingTab({
             />
           ))}
         </div>
+        <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-blue-500/20 bg-blue-500/[0.05] p-3">
+          <Info className="h-4 w-4 shrink-0 text-blue-400 mt-0.5" />
+          <p className="text-xs text-blue-300/80 leading-relaxed">
+            <span className="font-semibold">30-second minimum:</span> Only calls lasting 30 seconds or more are saved as recordings. Recordings from shorter calls are automatically discarded — keeping your library clean and storage efficient.
+          </p>
+        </div>
       </SectionCard>
 
       {/* Compliance Engine */}
@@ -414,8 +420,8 @@ function RecordingTab({
           iconColor="text-violet-400"
         />
         <ToggleRow
-          label="Auto-delete calls under 10 seconds"
-          description="Skip processing and storage for accidental or dropped calls"
+          label="Enforce 30-second minimum"
+          description="Discard recordings from calls shorter than 30 seconds — prevents storing accidental or dropped calls"
           checked={settings.recording_auto_delete_short}
           onChange={(v) => onChange({ recording_auto_delete_short: v })}
           icon={Trash2}

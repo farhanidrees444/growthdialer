@@ -82,9 +82,13 @@ function buildStats(data: StatsData) {
     },
     {
       title: "Pipeline Value",
-      value: `$${(data.pipelineValue / 1000).toFixed(1)}K`,
-      change: data.meetingsBooked > 0 ? "+new" : "—",
-      positive: data.meetingsBooked > 0,
+      value: data.pipelineValue === 0
+        ? "$0"
+        : data.pipelineValue >= 1000
+          ? `$${(data.pipelineValue / 1000).toFixed(1)}K`
+          : `$${data.pipelineValue.toLocaleString()}`,
+      change: data.pipelineValue > 0 ? `+$${(data.pipelineValue / 1000).toFixed(1)}K` : "AI-extracted from calls",
+      positive: data.pipelineValue > 0,
       icon: DollarSign,
       iconColor: "text-purple-400",
       iconBg: "bg-purple-500/15",
@@ -252,7 +256,7 @@ export default function AnalyticsPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 8%)" />
                   <XAxis dataKey="label" tick={{ fontSize: 9, fill: "oklch(0.65 0.02 286)" }} axisLine={false} tickLine={false} interval={0} />
                   <YAxis tick={{ fontSize: 11, fill: "oklch(0.65 0.02 286)" }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
                   <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                     {(distribution?.statusDistribution ?? []).map((entry) => (
                       <Cell key={entry.status} fill={STATUS_COLORS[entry.status] ?? "#64748b"} fillOpacity={0.85} />
@@ -283,7 +287,7 @@ export default function AnalyticsPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 8%)" />
                   <XAxis dataKey="label" tick={{ fontSize: 10, fill: "oklch(0.65 0.02 286)" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: "oklch(0.65 0.02 286)" }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
                   <Bar dataKey="connects" fill="#10b981" fillOpacity={0.85} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -324,7 +328,7 @@ export default function AnalyticsPage() {
                     tickLine={false}
                     width={72}
                   />
-                  <Tooltip content={<ChartTooltip />} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                     {(distribution?.dispositionBreakdown ?? []).map((entry) => (
                       <Cell key={entry.disposition} fill={entry.color} fillOpacity={0.85} />
@@ -369,7 +373,7 @@ export default function AnalyticsPage() {
                 <XAxis dataKey="week" tick={{ fontSize: 11, fill: "oklch(0.65 0.02 286)" }} axisLine={false} tickLine={false} />
                 <YAxis yAxisId="left" tick={{ fontSize: 11, fill: "oklch(0.65 0.02 286)" }} axisLine={false} tickLine={false} />
                 <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "oklch(0.65 0.02 286)" }} axisLine={false} tickLine={false} unit="%" />
-                <Tooltip content={<ChartTooltip />} />
+                <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.08)', strokeWidth: 1 }} />
                 <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: "11px", paddingTop: "12px", color: "oklch(0.65 0.02 286)" }} />
                 <Line yAxisId="left" type="monotone" dataKey="calls" stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
                 <Line yAxisId="left" type="monotone" dataKey="connects" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />

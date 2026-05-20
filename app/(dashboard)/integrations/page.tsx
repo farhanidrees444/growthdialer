@@ -3,20 +3,12 @@
 export const dynamic = 'force-dynamic';
 
 import { useState } from "react";
-import { X, Zap, ExternalLink } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Zap, CheckCircle2, Bell } from "lucide-react";
 import DashboardHeader from "@/components/DashboardHeader";
 import { cn } from "@/lib/utils";
 
-interface Integration {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  color: string;
-  bg: string;
-  logo: React.ReactNode;
-  comingSoon?: boolean;
-}
+// ─── SVG Logos ────────────────────────────────────────────────────────────────
 
 function HubSpotLogo() {
   return (
@@ -30,6 +22,15 @@ function SalesforceLogo() {
   return (
     <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
       <path d="M10.12 4.64a4.26 4.26 0 0 1 3.07-1.3 4.3 4.3 0 0 1 3.62 1.97 3.27 3.27 0 0 1 1.47-.35 3.3 3.3 0 0 1 3.3 3.3 3.3 3.3 0 0 1-.43 1.64 2.97 2.97 0 0 1 .75 1.98 2.97 2.97 0 0 1-2.97 2.97h-.12a2.43 2.43 0 0 1-2.38 1.93 2.43 2.43 0 0 1-1.07-.25 3.64 3.64 0 0 1-3.46 2.49 3.64 3.64 0 0 1-3.37-2.27A2.73 2.73 0 0 1 3.3 14.4a2.73 2.73 0 0 1 .56-1.66 3.16 3.16 0 0 1-.6-1.87 3.16 3.16 0 0 1 3.16-3.16c.22 0 .44.02.65.06a4.26 4.26 0 0 1 3.05-3.13z" fill="#00A1E0"/>
+    </svg>
+  );
+}
+
+function PipedriveLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5z" fill="#1A1A1A"/>
+      <circle cx="12" cy="12" r="2.5" fill="#25C16F"/>
     </svg>
   );
 }
@@ -58,62 +59,319 @@ function ApolloLogo() {
   );
 }
 
+function ZapierLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
+      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0z" fill="#FF4A00"/>
+      <path d="M13.5 6l-3 6h3l-3 6 7.5-7.5H14l3-4.5H13.5z" fill="white"/>
+    </svg>
+  );
+}
+
+function MakeLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
+      <rect width="24" height="24" rx="6" fill="#6D00CC"/>
+      <path d="M5 12c0-3.866 3.134-7 7-7s7 3.134 7 7-3.134 7-7 7-7-3.134-7-7z" stroke="white" strokeWidth="1.5" fill="none"/>
+      <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function GoogleCalendarLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
+      <rect x="2" y="4" width="20" height="18" rx="2" fill="#fff" stroke="#dadce0"/>
+      <rect x="2" y="4" width="20" height="5" rx="2" fill="#4285F4"/>
+      <rect x="2" y="8" width="20" height="1" fill="#4285F4"/>
+      <circle cx="8" cy="3" r="1.5" fill="#4285F4"/>
+      <circle cx="16" cy="3" r="1.5" fill="#4285F4"/>
+      <text x="12" y="17" textAnchor="middle" fontSize="7" fontWeight="bold" fill="#4285F4">31</text>
+    </svg>
+  );
+}
+
+function CalendlyLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
+      <circle cx="12" cy="12" r="10" fill="#006BFF"/>
+      <path d="M16 10a4 4 0 1 1-4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      <path d="M14 7h2v2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    </svg>
+  );
+}
+
+function ZoomInfoLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
+      <rect width="24" height="24" rx="4" fill="#074FD6"/>
+      <text x="12" y="16" textAnchor="middle" fontSize="9" fontWeight="bold" fill="white">Zi</text>
+    </svg>
+  );
+}
+
+function GoHighLevelLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
+      <rect width="24" height="24" rx="4" fill="#F5A623"/>
+      <path d="M7 12l3 3 7-7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function N8nLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
+      <rect width="24" height="24" rx="4" fill="#E8532C"/>
+      <text x="12" y="16" textAnchor="middle" fontSize="8" fontWeight="bold" fill="white">n8n</text>
+    </svg>
+  );
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type Category = 'all' | 'crm' | 'communication' | 'data' | 'automation' | 'calendar';
+
+interface Integration {
+  id: string;
+  name: string;
+  description: string;
+  bullets: string[];
+  category: Category;
+  categoryLabel: string;
+  color: string;
+  bg: string;
+  logo: React.ReactNode;
+  comingSoon: boolean;
+  popular?: boolean;
+}
+
+// ─── Integration data ─────────────────────────────────────────────────────────
+
 const INTEGRATIONS: Integration[] = [
+  // CRM
   {
-    id: "hubspot",
-    name: "HubSpot",
-    description: "Sync contacts, deals, and call activities to your CRM automatically after every call.",
-    category: "CRM",
-    color: "text-[#FF7A59]",
-    bg: "bg-[#FF7A59]/10",
+    id: 'hubspot',
+    name: 'HubSpot',
+    description: 'Sync contacts, deals, and call activities to your CRM automatically after every call.',
+    bullets: ['Auto-sync leads after disposition', 'Push call recordings to contact timeline', 'Two-way contact sync'],
+    category: 'crm',
+    categoryLabel: 'CRM',
+    color: 'text-[#FF7A59]',
+    bg: 'bg-[#FF7A59]/10',
     logo: <HubSpotLogo />,
     comingSoon: true,
+    popular: true,
   },
   {
-    id: "salesforce",
-    name: "Salesforce",
-    description: "Bi-directional logging — call outcomes, dispositions, and recordings synced in real time.",
-    category: "CRM",
-    color: "text-[#00A1E0]",
-    bg: "bg-[#00A1E0]/10",
+    id: 'salesforce',
+    name: 'Salesforce',
+    description: 'Bi-directional logging — call outcomes, dispositions, and recordings synced in real time.',
+    bullets: ['Real-time activity logging', 'Opportunity creation from meetings booked', 'Custom field mapping'],
+    category: 'crm',
+    categoryLabel: 'CRM',
+    color: 'text-[#00A1E0]',
+    bg: 'bg-[#00A1E0]/10',
     logo: <SalesforceLogo />,
     comingSoon: true,
+    popular: true,
   },
   {
-    id: "slack",
-    name: "Slack",
-    description: "Get notified in Slack when a lead connects, books a meeting, or goes DNC.",
-    category: "Notifications",
-    color: "text-[#ECB22E]",
-    bg: "bg-[#ECB22E]/10",
-    logo: <SlackLogo />,
+    id: 'pipedrive',
+    name: 'Pipedrive',
+    description: 'Push call outcomes to deals and log activities to your pipeline automatically.',
+    bullets: ['Auto-create deals on meeting booked', 'Log calls with duration + notes', 'Stage progression triggers'],
+    category: 'crm',
+    categoryLabel: 'CRM',
+    color: 'text-emerald-400',
+    bg: 'bg-emerald-500/10',
+    logo: <PipedriveLogo />,
     comingSoon: true,
   },
   {
-    id: "apollo",
-    name: "Apollo.io",
-    description: "Import lists directly into your dialer queue and auto-enrich phone numbers.",
-    category: "Data",
-    color: "text-indigo-400",
-    bg: "bg-indigo-500/10",
+    id: 'gohighlevel',
+    name: 'GoHighLevel',
+    description: 'Sync contacts and call data to GHL workflows and pipelines.',
+    bullets: ['Contact sync with tags', 'Trigger GHL workflows on disposition', 'Call activity in timeline'],
+    category: 'crm',
+    categoryLabel: 'CRM',
+    color: 'text-amber-400',
+    bg: 'bg-amber-500/10',
+    logo: <GoHighLevelLogo />,
+    comingSoon: true,
+  },
+  // Communication
+  {
+    id: 'slack',
+    name: 'Slack',
+    description: 'Get notified in Slack when a lead connects, books a meeting, or goes DNC.',
+    bullets: ['Real-time call alerts', 'Meeting booked notifications', 'Daily digest of session stats'],
+    category: 'communication',
+    categoryLabel: 'Notifications',
+    color: 'text-[#ECB22E]',
+    bg: 'bg-[#ECB22E]/10',
+    logo: <SlackLogo />,
+    comingSoon: true,
+    popular: true,
+  },
+  // Data enrichment
+  {
+    id: 'apollo',
+    name: 'Apollo.io',
+    description: 'Import lists directly into your dialer queue and auto-enrich phone numbers.',
+    bullets: ['One-click list import', 'Phone number enrichment', 'Email sequence sync'],
+    category: 'data',
+    categoryLabel: 'Data',
+    color: 'text-indigo-400',
+    bg: 'bg-indigo-500/10',
     logo: <ApolloLogo />,
+    comingSoon: true,
+    popular: true,
+  },
+  {
+    id: 'zoominfo',
+    name: 'ZoomInfo',
+    description: 'Enrich your leads with verified phone numbers and company intelligence.',
+    bullets: ['Phone number verification', 'Company + contact enrichment', 'Intent data signals'],
+    category: 'data',
+    categoryLabel: 'Data',
+    color: 'text-blue-400',
+    bg: 'bg-blue-500/10',
+    logo: <ZoomInfoLogo />,
+    comingSoon: true,
+  },
+  // Automation
+  {
+    id: 'zapier',
+    name: 'Zapier',
+    description: 'Connect GrowthDialer to 5,000+ apps via triggers and actions — no code needed.',
+    bullets: ['Trigger on call ended', 'Trigger on meeting booked', 'Push leads from any source'],
+    category: 'automation',
+    categoryLabel: 'Automation',
+    color: 'text-orange-400',
+    bg: 'bg-orange-500/10',
+    logo: <ZapierLogo />,
+    comingSoon: true,
+    popular: true,
+  },
+  {
+    id: 'make',
+    name: 'Make (Integromat)',
+    description: 'Visual workflow automation for complex multi-step call outcome sequences.',
+    bullets: ['Advanced scenario builder', 'Conditional routing by disposition', 'Batch data processing'],
+    category: 'automation',
+    categoryLabel: 'Automation',
+    color: 'text-purple-400',
+    bg: 'bg-purple-500/10',
+    logo: <MakeLogo />,
+    comingSoon: true,
+  },
+  {
+    id: 'n8n',
+    name: 'n8n',
+    description: 'Self-hosted workflow automation with full control over your call data pipeline.',
+    bullets: ['Self-hosted option available', 'Open-source compatible', 'Custom webhook flows'],
+    category: 'automation',
+    categoryLabel: 'Automation',
+    color: 'text-red-400',
+    bg: 'bg-red-500/10',
+    logo: <N8nLogo />,
+    comingSoon: true,
+  },
+  // Calendar
+  {
+    id: 'google-calendar',
+    name: 'Google Calendar',
+    description: 'Automatically create calendar events when meetings are booked from your calls.',
+    bullets: ['Auto-create meeting events', 'Sync call callbacks to calendar', 'Remind before follow-ups'],
+    category: 'calendar',
+    categoryLabel: 'Calendar',
+    color: 'text-blue-400',
+    bg: 'bg-blue-500/10',
+    logo: <GoogleCalendarLogo />,
+    comingSoon: true,
+  },
+  {
+    id: 'calendly',
+    name: 'Calendly',
+    description: 'Send your Calendly link in post-call follow-ups and track booking attribution.',
+    bullets: ['Auto-send booking link after calls', 'Track meetings booked via link', 'Attribution to call session'],
+    category: 'calendar',
+    categoryLabel: 'Calendar',
+    color: 'text-[#006BFF]',
+    bg: 'bg-blue-600/10',
+    logo: <CalendlyLogo />,
     comingSoon: true,
   },
 ];
 
-function ComingSoonModal({ name, onClose }: { name: string; onClose: () => void }) {
+const CATEGORIES: { id: Category; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'crm', label: 'CRM' },
+  { id: 'communication', label: 'Notifications' },
+  { id: 'data', label: 'Data' },
+  { id: 'automation', label: 'Automation' },
+  { id: 'calendar', label: 'Calendar' },
+];
+
+// ─── Waitlist modal ───────────────────────────────────────────────────────────
+
+function WaitlistModal({
+  integration,
+  onClose,
+}: {
+  integration: Integration;
+  onClose: () => void;
+}) {
+  const [joined, setJoined] = useState(false);
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleJoin() {
+    if (!email.trim()) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/integrations/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), provider: integration.id }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? 'Something went wrong. Try again.');
+        return;
+      }
+      setJoined(true);
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-white/[0.08] bg-[oklch(0.10_0.02_282)] shadow-2xl">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ scale: 0.94, opacity: 0, y: 8 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-white/[0.08] bg-[oklch(0.10_0.02_282)] shadow-2xl"
+      >
         <div className="flex items-start justify-between p-6 pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand/10">
-              <Zap className="h-4 w-4 text-brand" />
+          <div className="flex items-center gap-3">
+            <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.06]", integration.bg)}>
+              {integration.logo}
             </div>
             <div>
-              <p className="text-sm font-semibold text-white">{name} Integration</p>
-              <p className="text-xs text-slate-500">Coming soon</p>
+              <p className="text-sm font-semibold text-white">{integration.name}</p>
+              <p className="text-xs text-slate-500">{integration.categoryLabel} integration</p>
             </div>
           </div>
           <button
@@ -124,78 +382,207 @@ function ComingSoonModal({ name, onClose }: { name: string; onClose: () => void 
             <X className="h-4 w-4" />
           </button>
         </div>
+
         <div className="px-6 pb-6">
-          <p className="text-sm text-slate-400">
-            {name} integration is on our roadmap. Join the waitlist to get early access when it launches.
-          </p>
-          <a
-            href="mailto:fidrees763@gmail.com?subject=Integration%20Waitlist%3A%20${encodeURIComponent(name)}"
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-          >
-            Join Waitlist
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
+          {joined ? (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center gap-3 py-4 text-center"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/15">
+                <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+              </div>
+              <p className="text-sm font-semibold text-white">You&apos;re on the list!</p>
+              <p className="text-xs text-slate-400">We&apos;ll email you when the {integration.name} integration launches.</p>
+              <button
+                type="button"
+                onClick={onClose}
+                className="mt-2 rounded-xl border border-white/10 px-5 py-2 text-sm text-slate-400 hover:text-white"
+              >
+                Close
+              </button>
+            </motion.div>
+          ) : (
+            <>
+              <p className="mb-4 text-sm text-slate-400 leading-relaxed">
+                {integration.description}
+              </p>
+              <ul className="mb-4 space-y-1.5">
+                {integration.bullets.map((b) => (
+                  <li key={b} className="flex items-center gap-2 text-xs text-slate-300">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+                    {b}
+                  </li>
+                ))}
+              </ul>
+              <div className="mb-3 space-y-2">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setError(null); }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+                  placeholder="your@email.com"
+                  className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-emerald-500/30"
+                />
+                {error && <p className="text-xs text-red-400">{error}</p>}
+              </div>
+              <button
+                type="button"
+                onClick={handleJoin}
+                disabled={!email.trim() || loading}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-40"
+              >
+                <Bell className="h-3.5 w-3.5" />
+                {loading ? 'Saving…' : 'Notify me when ready'}
+              </button>
+            </>
+          )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
 
+// ─── Integration card ─────────────────────────────────────────────────────────
+
+function IntegrationCard({ item, onClick }: { item: Integration; onClick: () => void }) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      whileHover={{ y: -1 }}
+      transition={{ duration: 0.15 }}
+      className="group flex flex-col rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 text-left transition-all hover:border-white/[0.12] hover:bg-white/[0.04] hover:shadow-lg hover:shadow-black/20"
+    >
+      {/* Header */}
+      <div className="flex items-start gap-3 mb-3">
+        <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/[0.06]", item.bg)}>
+          {item.logo}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-sm font-semibold text-white">{item.name}</h3>
+            {item.popular && (
+              <span className="rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-bold text-brand">Popular</span>
+            )}
+            <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+              Soon
+            </span>
+          </div>
+          <span className={cn("text-[10px] font-semibold uppercase tracking-wide", item.color)}>
+            {item.categoryLabel}
+          </span>
+        </div>
+      </div>
+
+      {/* Description */}
+      <p className="text-xs leading-relaxed text-slate-500 mb-3 flex-1">{item.description}</p>
+
+      {/* Feature bullets */}
+      <ul className="space-y-1 mb-4">
+        {item.bullets.map((b) => (
+          <li key={b} className="flex items-center gap-1.5 text-[11px] text-slate-500">
+            <span className="h-1 w-1 shrink-0 rounded-full bg-slate-600" />
+            {b}
+          </li>
+        ))}
+      </ul>
+
+      {/* CTA */}
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] text-slate-600">Click to join waitlist</span>
+        <span className="flex items-center gap-1 text-[11px] font-semibold text-brand opacity-0 transition-opacity group-hover:opacity-100">
+          <Bell className="h-3 w-3" />
+          Notify me
+        </span>
+      </div>
+    </motion.button>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function IntegrationsPage() {
+  const [activeCategory, setActiveCategory] = useState<Category>('all');
   const [modal, setModal] = useState<string | null>(null);
 
-  const selectedIntegration = INTEGRATIONS.find(i => i.id === modal);
+  const filtered = activeCategory === 'all'
+    ? INTEGRATIONS
+    : INTEGRATIONS.filter((i) => i.category === activeCategory);
+
+  const selectedIntegration = INTEGRATIONS.find((i) => i.id === modal);
 
   return (
     <>
-      <DashboardHeader title="Integrations" subtitle="Connect your revenue stack" />
+      <DashboardHeader
+        title="Integrations"
+        subtitle="Connect your revenue stack — one click, no webhooks needed"
+      />
 
       <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
-        <div className="mb-6 max-w-4xl">
-          <p className="text-sm text-slate-500">
-            Native integrations are coming soon. Each one will be one-click to connect — no webhooks or API keys needed.
+        {/* Category filter tabs */}
+        <div className="mb-6 flex items-center gap-1 overflow-x-auto scrollbar-hide border-b border-white/[0.06]">
+          {CATEGORIES.map(({ id, label }) => {
+            const count = id === 'all' ? INTEGRATIONS.length : INTEGRATIONS.filter((i) => i.category === id).length;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveCategory(id)}
+                className={cn(
+                  "flex items-center gap-1.5 shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
+                  activeCategory === id
+                    ? 'border-brand text-brand'
+                    : 'border-transparent text-slate-500 hover:text-slate-300',
+                )}
+              >
+                {label}
+                <span className={cn(
+                  "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                  activeCategory === id ? 'bg-brand/15 text-brand' : 'bg-white/[0.05] text-slate-600',
+                )}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Header note */}
+        <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.05] px-4 py-3 max-w-4xl">
+          <Zap className="h-4 w-4 shrink-0 text-amber-400" />
+          <p className="text-xs text-amber-300/80">
+            Native integrations are actively in development. Join the waitlist for any integration to get early access and help prioritize our roadmap.
           </p>
         </div>
 
-        <div className="grid max-w-4xl gap-4 sm:grid-cols-2">
-          {INTEGRATIONS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setModal(item.id)}
-              className="group flex items-start gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 text-left transition-colors hover:border-white/[0.10] hover:bg-white/[0.04]"
-            >
-              <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/[0.06]", item.bg)}>
-                {item.logo}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-white">{item.name}</h3>
-                  {item.comingSoon && (
-                    <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                      Soon
-                    </span>
-                  )}
-                </div>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">{item.description}</p>
-                <div className="mt-2 flex items-center gap-1">
-                  <span className={cn("text-[10px] font-semibold uppercase tracking-wide", item.color)}>
-                    {item.category}
-                  </span>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
+        {/* Grid */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeCategory}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="grid max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {filtered.map((item) => (
+              <IntegrationCard key={item.id} item={item} onClick={() => setModal(item.id)} />
+            ))}
+          </motion.div>
+        </AnimatePresence>
 
         <p className="mt-8 max-w-4xl text-xs text-slate-700">
-          Want a specific integration? Contact us and we&apos;ll prioritize it.
+          Need a specific integration? Contact us and we&apos;ll prioritize it for the roadmap.
         </p>
       </main>
 
-      {modal && selectedIntegration && (
-        <ComingSoonModal name={selectedIntegration.name} onClose={() => setModal(null)} />
-      )}
+      <AnimatePresence>
+        {modal && selectedIntegration && (
+          <WaitlistModal integration={selectedIntegration} onClose={() => setModal(null)} />
+        )}
+      </AnimatePresence>
     </>
   );
 }

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Phone, Users, CalendarCheck, Clock, TrendingUp, TrendingDown,
-  Activity, ChevronRight, Hash,
+  Activity, ChevronRight, Signal,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, CartesianGrid,
@@ -471,7 +471,7 @@ function NumberHealthList({ numbers, loading }: { numbers: PurchasedNumber[] | n
       ) : !numbers || numbers.length === 0 ? (
         <div className="flex flex-col items-center gap-3 px-5 py-10">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02]">
-            <Hash className="h-5 w-5 text-slate-600" />
+            <Signal className="h-5 w-5 text-slate-600" />
           </div>
           <p className="text-sm text-slate-600">No numbers configured</p>
           <Link href="/numbers" className="text-xs font-semibold text-brand underline-offset-2 hover:underline">

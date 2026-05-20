@@ -72,7 +72,23 @@ export async function GET(_request: NextRequest) {
     const total = callsToday ?? 0;
     const answered = answeredToday ?? 0;
     const connectRate = total ? Math.round((answered / total) * 10000) / 100 : 0;
-    const pipelineValue = (leadsCount ?? 0) * 5000;
+
+    // Pipeline value: sum of AI-extracted deal_value_usd on qualified calls
+    // Falls back to 0 if the column doesn't exist yet (migration pending)
+    let pipelineValue = 0;
+    try {
+      const { data: dealData } = await supabase
+        .from('calls')
+        .select('deal_value_usd')
+        .eq('user_id', userId)
+        .in('disposition', ['interested', 'meeting_booked', 'callback'])
+        .not('deal_value_usd', 'is', null);
+      if (dealData) {
+        pipelineValue = dealData.reduce((sum, r) => sum + (Number((r as { deal_value_usd: number | null }).deal_value_usd) || 0), 0);
+      }
+    } catch {
+      pipelineValue = 0;
+    }
 
     const totalYesterday = callsYesterday ?? 0;
     const answeredYesterdayCount = answeredYesterday ?? 0;

@@ -204,6 +204,7 @@ export default function RecordingsPage() {
         .select(RECORDINGS_SELECT)
         .eq('user_id', session.user.id)
         .not('recording_url', 'is', null)
+        .or('duration_seconds.gte.30,duration_seconds.is.null')
         .order('created_at', { ascending: false })
         .limit(50);
 

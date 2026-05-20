@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Hash, Search, Plus, Star, Sparkles,
+  Signal, Search, Plus, Star, Sparkles,
   CheckCircle2, Loader2, AlertCircle, ChevronDown, X,
   Globe,
 } from 'lucide-react';
@@ -116,7 +116,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.03]">
-          <Hash className="h-8 w-8 text-slate-600" />
+          <Signal className="h-8 w-8 text-slate-600" />
         </div>
         <div>
           <p className="text-sm font-semibold text-white">No numbers yet</p>
@@ -514,7 +514,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
       {results !== null && !searching && (
         results.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] py-14 text-center">
-            <Hash className="h-8 w-8 text-slate-600" />
+            <Signal className="h-8 w-8 text-slate-600" />
             <p className="text-sm font-semibold text-slate-400">No numbers found</p>
             <p className="text-xs text-slate-600">Try a different area code or remove the filters.</p>
           </div>

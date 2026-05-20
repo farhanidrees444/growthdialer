@@ -308,13 +308,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true });
       }
 
-      // Skip very short calls
+      // 30-second minimum rule — recordings under 30s are discarded
       const dur = callRow.duration_seconds ?? 0;
-      if (settings?.recording_auto_delete_short && dur > 0 && dur < 10) {
-        console.log(`[RECORDING SAVED] Short call (${dur}s) — skipping AI`);
+      const MIN_RECORDING_SECONDS = 30;
+      if (dur > 0 && dur < MIN_RECORDING_SECONDS) {
+        console.log(`[RECORDING SAVED] Call too short (${dur}s < ${MIN_RECORDING_SECONDS}s) — discarding recording`);
+        // Mark call as processed without saving recording URL; don't run AI
         await supabase
           .from('calls')
-          .update({ recording_url: recordingUrl, ai_processed: true, ai_processed_at: new Date().toISOString() })
+          .update({ ai_processed: true, ai_processed_at: new Date().toISOString() })
           .eq('id', callRow.id);
         return NextResponse.json({ received: true });
       }
