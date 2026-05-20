@@ -24,17 +24,10 @@ async function checkVoiceNetwork(): Promise<ServiceStatus> {
 async function checkAIEngine(): Promise<ServiceStatus> {
   const start = Date.now();
   try {
+    // GET model metadata — validates key is authorized without consuming generation quota
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY ?? ''}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: 'ping' }] }],
-          generationConfig: { maxOutputTokens: 5 },
-        }),
-        signal: AbortSignal.timeout(8000),
-      },
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash?key=${process.env.GEMINI_API_KEY ?? ''}`,
+      { signal: AbortSignal.timeout(8000) },
     );
     return { ok: res.ok, latency: Date.now() - start };
   } catch (err) {
@@ -59,10 +52,11 @@ async function checkDatabase(): Promise<ServiceStatus> {
   const start = Date.now();
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+    // service_role key is required for server-side health checks; anon key is rejected on the root endpoint
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
     const res = await fetch(`${url}/rest/v1/`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` },
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(5000),
     });
     return { ok: res.ok, latency: Date.now() - start };
   } catch (err) {
