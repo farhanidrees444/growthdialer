@@ -9,6 +9,7 @@ import { useWebPhone } from '@/contexts/webphone-context';
 import { useDialerMode } from '@/hooks/use-dialer-mode';
 import { useCallRealtime } from '@/hooks/use-call-realtime';
 import { useDialerHotkeys } from '@/hooks/use-dialer-hotkeys';
+import { usePowerDial } from '@/hooks/use-power-dial';
 import { createClient } from '@/lib/supabase/client';
 import { normalizePhone } from '@/lib/phone';
 
@@ -86,6 +87,14 @@ export default function DialerPage() {
   } = useWebPhone();
 
   const { mode, selectedLead, activeCallDbId, selectLead, startCall, endCall } = useDialerMode();
+
+  // Power dial session state
+  const [powerConfirmOpen, setPowerConfirmOpen] = useState(false);
+
+  const powerDial = usePowerDial({
+    onLeadReady: (lead) => { selectLead(lead); },
+    onSessionEnd: () => { selectLead(null); },
+  });
 
   const [userId, setUserId] = useState<string | null>(null);
   const [stats, setStats] = useState<TodayStats>({ calls: 0, connects: 0, meetings: 0, streak: 0 });
@@ -259,7 +268,14 @@ export default function DialerPage() {
     setDispositionOpen(false);
     loadStats();
     loadTodayCalls();
-  }, [pendingCallDbId, loadStats, loadTodayCalls]);
+
+    // If power dial is active, advance to next lead automatically
+    if (powerDial.isActive && selectedLead) {
+      const wasConnected = ['interested','meeting_booked','callback','gatekeeper'].includes(disposition);
+      const wasMeeting = disposition === 'meeting_booked';
+      powerDial.advanceToNext(selectedLead.id, wasConnected, wasMeeting);
+    }
+  }, [pendingCallDbId, loadStats, loadTodayCalls, powerDial, selectedLead]);
 
   // ── Lead actions ────────────────────────────────────────────────────────────
   const handleMarkHot = useCallback(async () => {
@@ -299,7 +315,7 @@ export default function DialerPage() {
       if (lead) { setQueueIndex(clamped); selectLead(lead); }
     },
     onSelectLead: () => { const lead = queueLeads[queueIndex]; if (lead) selectLead(lead); },
-    onStartPowerDial: () => toast.info('Power dial coming soon'),
+    onStartPowerDial: () => setPowerConfirmOpen(true),
     onStartCall: handleCallLead,
     onSkipLead: handleSkip,
     onMarkHot: handleMarkHot,
@@ -413,7 +429,7 @@ export default function DialerPage() {
                   queueCount={queueCounts.queue}
                   hotCount={queueCounts.hot}
                   callbackCount={queueCounts.callbacks}
-                  onStartPowerDial={() => toast.info('Power dial coming soon')}
+                  onStartPowerDial={() => setPowerConfirmOpen(true)}
                 />
               </motion.div>
             )}
@@ -496,7 +512,7 @@ export default function DialerPage() {
             <button
               className="flex-1 h-11 rounded-xl text-sm font-semibold text-white"
               style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}
-              onClick={() => toast.info('Power dial coming soon')}
+              onClick={() => setPowerConfirmOpen(true)}
             >
               Power Dial
             </button>
@@ -529,6 +545,113 @@ export default function DialerPage() {
       </AnimatePresence>
 
       {/* ── Overlays ── */}
+      {/* Power Dial confirm modal */}
+      <AnimatePresence>
+        {powerConfirmOpen && (
+          <motion.div
+            key="pd-confirm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setPowerConfirmOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.94, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.94, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-2xl border border-white/[0.10] p-6 bg-zinc-900 shadow-2xl space-y-4"
+            >
+              <div>
+                <h2 className="text-base font-semibold text-white">Start AI Power Dial</h2>
+                <p className="text-sm text-white/50 mt-1">
+                  {queueCounts.queue > 0
+                    ? `Auto-dial ${queueCounts.queue} leads in queue. You'll review each before the call connects.`
+                    : 'No leads in queue. Import leads first.'}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setPowerConfirmOpen(false)}
+                  className="flex-1 h-10 rounded-xl text-sm text-white/50 bg-white/[0.05] border border-white/[0.07] hover:bg-white/[0.09] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={queueCounts.queue === 0}
+                  onClick={() => {
+                    setPowerConfirmOpen(false);
+                    powerDial.startSession(queueCounts.queue);
+                  }}
+                  className="flex-[2] h-10 rounded-xl text-sm font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                  style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}
+                >
+                  Start Session
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Power dial countdown overlay */}
+      <AnimatePresence>
+        {powerDial.isActive && powerDial.countdown !== null && (
+          <motion.div
+            key="pd-countdown"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-6 py-3 rounded-2xl border border-purple-500/30 bg-zinc-900/95 shadow-2xl"
+          >
+            <span className="text-sm text-white/60">Next lead in</span>
+            <span className="text-2xl font-bold text-white tabular-nums w-8 text-center">{powerDial.countdown}</span>
+            <button
+              onClick={powerDial.skipCountdown}
+              className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+            >
+              Skip →
+            </button>
+            <button
+              onClick={powerDial.endSession}
+              className="text-xs text-red-400 hover:text-red-300 transition-colors"
+            >
+              End session
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Power dial active indicator (top-right) */}
+      <AnimatePresence>
+        {powerDial.isActive && powerDial.countdown === null && (
+          <motion.div
+            key="pd-indicator"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="fixed top-16 right-4 z-40 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium"
+            style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)' }}
+          >
+            <motion.div
+              className="w-1.5 h-1.5 rounded-full bg-purple-400"
+              animate={{ opacity: [1, 0.3, 1] }}
+              transition={{ duration: 1.2, repeat: Infinity }}
+            />
+            <span className="text-purple-300">Power Mode</span>
+            <span className="text-purple-400/60">{powerDial.session?.total_calls ?? 0} calls</span>
+            <button
+              onClick={powerDial.endSession}
+              className="ml-1 text-purple-400/60 hover:text-purple-300 transition-colors"
+              aria-label="End power dial session"
+            >
+              ×
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <ManualDialpadOverlay
         open={dialpadOpen}
         onClose={() => setDialpadOpen(false)}
