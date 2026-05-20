@@ -535,7 +535,8 @@ export default function SettingsPage() {
         setRecordingStats({
           count: calls.length,
           hours: totalSeconds / 3600,
-          storageMb: calls.length * 2.5, // ~2.5 MB average per recording
+          // ~8 KB/s at 64 kbps compressed phone audio
+          storageMb: totalSeconds * 0.008,
         });
       }
 

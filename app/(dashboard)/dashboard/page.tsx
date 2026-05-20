@@ -25,11 +25,10 @@ import type { SystemMetricsData, HourlyMetricPoint } from "@/lib/dashboard-types
 
 interface StatsData {
   callsToday: number;
-  answeredToday: number;
-  callsYesterday: number;
-  answeredYesterday: number;
   connectRate: number;
   meetingsBooked: number;
+  pipelineValue: number;
+  yesterday: { calls: number; connectRate: number };
 }
 
 interface RecentCall {
@@ -593,11 +592,13 @@ export default function DashboardPage() {
         if (!cancelled && !data.error) {
           setStats({
             callsToday: data.callsToday ?? 0,
-            answeredToday: data.answeredToday ?? 0,
-            callsYesterday: data.callsYesterday ?? 0,
-            answeredYesterday: data.answeredYesterday ?? 0,
             connectRate: data.connectRate ?? 0,
             meetingsBooked: data.meetingsBooked ?? 0,
+            pipelineValue: data.pipelineValue ?? 0,
+            yesterday: {
+              calls: data.yesterday?.calls ?? 0,
+              connectRate: data.yesterday?.connectRate ?? 0,
+            },
           });
         }
         if (!cancelled) setStatsLoading(false);
@@ -681,16 +682,12 @@ export default function DashboardPage() {
   const m = metrics ?? EMPTY_METRICS;
   const sparkline = m.sparkline;
 
-  const callsTrend = stats && stats.callsYesterday > 0
-    ? { pct: ((stats.callsToday - stats.callsYesterday) / stats.callsYesterday) * 100, positive: stats.callsToday >= stats.callsYesterday }
+  const callsTrend = stats && stats.yesterday.calls > 0
+    ? { pct: ((stats.callsToday - stats.yesterday.calls) / stats.yesterday.calls) * 100, positive: stats.callsToday >= stats.yesterday.calls }
     : null;
 
-  const yesterdayConnectRate = stats && stats.callsYesterday > 0
-    ? (stats.answeredYesterday / stats.callsYesterday) * 100
-    : null;
-
-  const connectRateTrend = stats && yesterdayConnectRate !== null
-    ? { pct: stats.connectRate - yesterdayConnectRate, positive: stats.connectRate >= yesterdayConnectRate }
+  const connectRateTrend = stats && stats.yesterday.connectRate > 0
+    ? { pct: stats.connectRate - stats.yesterday.connectRate, positive: stats.connectRate >= stats.yesterday.connectRate }
     : null;
 
   const activeNumberCount = (numbers ?? []).filter(n => n.status === 'active').length;

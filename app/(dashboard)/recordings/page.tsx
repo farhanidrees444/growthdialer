@@ -175,10 +175,21 @@ const RECORDINGS_SELECT = `
   analytics:call_analytics(id, sentiment, sentiment_score, summary, talking_points, suggested_disposition)
 `;
 
+const DISPOSITION_FILTERS = [
+  { id: 'interested', label: 'Interested' },
+  { id: 'callback', label: 'Callback' },
+  { id: 'meeting_booked', label: 'Meeting' },
+  { id: 'voicemail', label: 'Voicemail' },
+  { id: 'not_interested', label: 'Not Interested' },
+  { id: 'no_answer', label: 'No Answer' },
+];
+
 export default function RecordingsPage() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterDisp, setFilterDisp] = useState<string | null>(null);
 
   const [supabase] = useState(() => createClient());
 
@@ -243,10 +254,56 @@ export default function RecordingsPage() {
     return () => { supabase.removeChannel(channel); };
   }, [userId, supabase, load]);
 
+  const filteredRecordings = recordings.filter((r) => {
+    if (filterDisp && (r.disposition ?? (Array.isArray(r.analytics) ? r.analytics[0] : r.analytics)?.suggested_disposition) !== filterDisp) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const name = (r.leads?.name ?? r.to_number ?? '').toLowerCase();
+      const company = (r.leads?.company ?? '').toLowerCase();
+      if (!name.includes(q) && !company.includes(q)) return false;
+    }
+    return true;
+  });
+
   return (
     <>
       <DashboardHeader title="Recordings" subtitle="AI-analyzed call recordings" />
       <main className="flex-1 overflow-y-auto px-3 py-3 lg:px-6 lg:py-5">
+        {!loading && recordings.length > 0 && (
+          <div className="mb-4 max-w-4xl space-y-3">
+            {/* Search */}
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
+              <input
+                type="text"
+                placeholder="Search by name or company…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] py-2.5 pl-9 pr-4 text-sm text-white placeholder-slate-600 outline-none transition focus:border-white/[0.14] focus:bg-white/[0.05]"
+              />
+            </div>
+            {/* Disposition filter chips */}
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setFilterDisp(null)}
+                className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors ${!filterDisp ? 'border-brand/40 bg-brand/10 text-brand' : 'border-white/[0.07] bg-white/[0.03] text-slate-500 hover:text-slate-300'}`}
+              >
+                All
+              </button>
+              {DISPOSITION_FILTERS.map(f => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFilterDisp(prev => prev === f.id ? null : f.id)}
+                  className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors ${filterDisp === f.id ? 'border-brand/40 bg-brand/10 text-brand' : 'border-white/[0.07] bg-white/[0.03] text-slate-500 hover:text-slate-300'}`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {loading ? (
           <div className="space-y-3 max-w-4xl">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -255,12 +312,20 @@ export default function RecordingsPage() {
           </div>
         ) : recordings.length === 0 ? (
           <EmptyState />
+        ) : filteredRecordings.length === 0 ? (
+          <div className="flex max-w-4xl flex-col items-center gap-3 py-16">
+            <Search className="h-8 w-8 text-slate-700" />
+            <p className="text-sm text-slate-500">No recordings match your search</p>
+            <button type="button" onClick={() => { setSearchQuery(''); setFilterDisp(null); }} className="text-xs font-semibold text-brand hover:underline">
+              Clear filters
+            </button>
+          </div>
         ) : (
           <motion.div className="space-y-3 max-w-4xl"
             initial="hidden" animate="show"
             variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
           >
-            {recordings.map((r) => {
+            {filteredRecordings.map((r) => {
               const name = r.leads?.name ?? r.to_number ?? 'Unknown';
               const company = r.leads?.company;
               const ai = Array.isArray(r.analytics) ? r.analytics[0] : r.analytics;

@@ -569,11 +569,19 @@ function DialerContent() {
         if (qErr) { console.error('[dialer] purchased_numbers fetch error:', qErr); return; }
         if (data && data.length > 0) {
           setPurchasedNumbers(data as Array<{ id: string; phone_number: string; is_default: boolean }>);
-          const defaultNum = data.find((n) => n.is_default) ?? data[0];
-          setFromNumber(defaultNum.phone_number);
+          const stored = typeof window !== 'undefined' ? localStorage.getItem('preferred_caller_id') : null;
+          const preferred = stored && data.some(n => n.phone_number === stored)
+            ? stored
+            : (data.find((n) => n.is_default) ?? data[0]).phone_number;
+          setFromNumber(preferred);
         }
       });
   }, [supabase]);
+
+  const handleFromNumberChange = useCallback((num: string) => {
+    setFromNumber(num);
+    try { localStorage.setItem('preferred_caller_id', num); } catch { /* ignore */ }
+  }, []);
 
   // ── Sync WebRTC call status → local callState ─────────────────────────────────
   useEffect(() => {
@@ -1442,7 +1450,7 @@ function DialerContent() {
           <CallingFromCard
             purchasedNumbers={purchasedNumbers}
             fromNumber={fromNumber}
-            onFromNumberChange={setFromNumber}
+            onFromNumberChange={handleFromNumberChange}
             disabled={callState.status !== 'idle'}
           />
 
@@ -1509,13 +1517,6 @@ function DialerContent() {
 
       {/* ── MOBILE layout (< lg) ──────────────────────────────────────────────── */}
       <div className="flex flex-col lg:hidden" style={{ minHeight: 'calc(100dvh - 48px)' }}>
-        <MobileStatStrip
-          calls={stats.calls}
-          connects={stats.connects}
-          meetings={stats.meetings}
-          connectRate={stats.connectRate}
-        />
-
         {/* Status bar row */}
         <div className="flex shrink-0 items-center justify-end border-b border-white/[0.06] bg-black/20 px-3 py-1.5">
           <PhoneStatusBar />
@@ -1530,7 +1531,7 @@ function DialerContent() {
             <CallingFromCard
               purchasedNumbers={purchasedNumbers}
               fromNumber={fromNumber}
-              onFromNumberChange={setFromNumber}
+              onFromNumberChange={handleFromNumberChange}
               disabled={callState.status !== 'idle'}
             />
             <DialerPanel {...dialerPanelProps} />
