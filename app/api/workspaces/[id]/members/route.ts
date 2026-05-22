@@ -9,15 +9,15 @@ export async function GET(
 ) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   // Verify caller is a member
   const { data: caller } = await supabase
     .from('workspace_members')
     .select('role')
     .eq('workspace_id', id)
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .eq('status', 'active')
     .single();
 

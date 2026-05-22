@@ -7,14 +7,14 @@ export const dynamic = 'force-dynamic';
 // GET /api/coaching/active-calls — list active calls in the workspace for coaching
 export async function GET() {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   // Get user's workspace membership
   const { data: member } = await supabase
     .from('workspace_members')
     .select('workspace_id, role')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .eq('status', 'active')
     .order('joined_at', { ascending: false })
     .limit(1)

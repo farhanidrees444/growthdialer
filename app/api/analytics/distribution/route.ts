@@ -26,8 +26,8 @@ const DISP_COLORS: Record<string, string> = {
 export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: authData, error: authError } = await supabase.auth.getSession();
-    const userId = authData?.session?.user?.id;
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    const userId = authUser?.id;
 
     if (authError || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

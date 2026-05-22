@@ -54,15 +54,15 @@ export async function GET(
   try {
     const { leadId } = await params;
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const [{ data: lead, error: leadError }, { data: calls }] = await Promise.all([
       supabase
         .from('leads')
         .select('*')
         .eq('id', leadId)
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .single(),
       supabase
         .from('calls')

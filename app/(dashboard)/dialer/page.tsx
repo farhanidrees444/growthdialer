@@ -159,6 +159,7 @@ export default function DialerPage() {
   const [pendingCallDbId, setPendingCallDbId] = useState<string | null>(null);
   const [queueIndex, setQueueIndex] = useState(0);
   const [queueLeads, setQueueLeads] = useState<LeadRecord[]>([]);
+  const [fromNumber, setFromNumber] = useState<string>('');
 
   const searchRef = useRef<HTMLInputElement | null>(null);
   const callTimer = useTimer(callStatus === 'active');
@@ -166,11 +167,28 @@ export default function DialerPage() {
   const callTimerRef = useRef(callTimer);
   callTimerRef.current = callTimer;
 
-  // ── Auth ───────────────────────────────────────────────────────────────────
+  // ── Auth + from-number ─────────────────────────────────────────────────────
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getSession().then(({ data }) => setUserId(data.session?.user?.id ?? null));
   }, []);
+
+  // Fetch the user's outbound caller-ID number once userId is known.
+  // Passed as callerNumber to makeCall() so Telnyx uses the purchased E.164
+  // number instead of the SIP username (which caused call_rejected errors).
+  useEffect(() => {
+    if (!userId) return;
+    const supabase = createClient();
+    supabase
+      .from('purchased_numbers')
+      .select('phone_number')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .order('is_default', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => { if (data?.phone_number) setFromNumber(data.phone_number); });
+  }, [userId]);
 
   // ── Stats ──────────────────────────────────────────────────────────────────
   const loadStats = useCallback(async () => {
@@ -299,8 +317,10 @@ export default function DialerPage() {
     }
     const e164 = normalizePhone(phone) ?? phone;
     pendingRegRef.current = { e164, leadId: lead?.id };
-    makeCall(e164);
-  }, [phoneStatus, makeCall]);
+    // Pass fromNumber so Telnyx uses the purchased E.164 number as caller ID.
+    // Without this, the SDK defaults to the SIP username which Telnyx rejects.
+    makeCall(e164, fromNumber || undefined);
+  }, [phoneStatus, makeCall, fromNumber]);
 
   // Update ref on every render so powerDialer.onShouldDial always calls latest version
   initiateCallRef.current = initiateCall;

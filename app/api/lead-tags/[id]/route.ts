@@ -7,8 +7,8 @@ export async function DELETE(
 ) {
   try {
     const supabase = await createClient();
-    const { data: authData, error: authError } = await supabase.auth.getSession();
-    const userId = authData?.session?.user?.id;
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    const userId = authUser?.id;
 
     if (authError || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -39,8 +39,8 @@ export async function PATCH(
 ) {
   try {
     const supabase = await createClient();
-    const { data: authData, error: authError } = await supabase.auth.getSession();
-    const userId = authData?.session?.user?.id;
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    const userId = authUser?.id;
 
     if (authError || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

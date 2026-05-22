@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic';
 // Body: { call_id: string }
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { call_id } = await request.json() as { call_id?: string };
   if (!call_id) return NextResponse.json({ error: 'call_id required' }, { status: 400 });
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     .from('calls')
     .select('id, workspace_id, status')
     .eq('id', call_id)
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!call) return NextResponse.json({ error: 'Call not found' }, { status: 404 });
@@ -30,8 +30,8 @@ export async function POST(request: NextRequest) {
     .from('coaching_sessions')
     .upsert({
       call_id,
-      agent_id: session.user.id,
-      coach_id: session.user.id, // self-request placeholder
+      agent_id: user.id,
+      coach_id: user.id, // self-request placeholder
       workspace_id: call.workspace_id,
       mode: 'listen',
       started_at: new Date().toISOString(),

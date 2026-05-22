@@ -8,8 +8,8 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function POST(request: NextRequest, { params }: Ctx) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json() as { rating?: number; feedback?: string; notes?: string };
 
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest, { params }: Ctx) {
     .single();
 
   if (!coachSession) return NextResponse.json({ error: 'Session not found or already ended' }, { status: 404 });
-  if (coachSession.coach_id !== session.user.id) {
+  if (coachSession.coach_id !== user.id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

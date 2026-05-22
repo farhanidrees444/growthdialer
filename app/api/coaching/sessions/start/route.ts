@@ -8,8 +8,8 @@ export const dynamic = 'force-dynamic';
 // Body: { call_id: string, mode: 'listen' | 'whisper' | 'barge' }
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json() as { call_id?: string; mode?: string };
   const { call_id, mode } = body;
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   const { data: coachMember } = await supabase
     .from('workspace_members')
     .select('workspace_id, role')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .eq('status', 'active')
     .order('joined_at', { ascending: false })
     .limit(1)
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
   if (!call) return NextResponse.json({ error: 'Call not found' }, { status: 404 });
   if (call.status === 'ended') return NextResponse.json({ error: 'Call has ended' }, { status: 410 });
-  if (call.user_id === session.user.id) {
+  if (call.user_id === user.id) {
     return NextResponse.json({ error: 'Cannot coach your own call' }, { status: 400 });
   }
 
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     .from('coaching_sessions')
     .update({ ended_at: new Date().toISOString() })
     .eq('call_id', call_id)
-    .eq('coach_id', session.user.id)
+    .eq('coach_id', user.id)
     .is('ended_at', null);
 
   // Create new coaching session record
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     .insert({
       call_id,
       agent_id: call.user_id,
-      coach_id: session.user.id,
+      coach_id: user.id,
       workspace_id: coachMember.workspace_id,
       mode,
       started_at: new Date().toISOString(),

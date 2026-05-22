@@ -11,8 +11,7 @@ function stripeReadyForPlan(planData: (typeof PLANS)[PlanKey]) {
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getSession();
-  const session = data.session;
+  const { data: { user } } = await supabase.auth.getUser();
   const { plan, annual } = (await req.json()) as { plan: PlanKey; annual: boolean };
 
   if (!PLANS[plan]) {
@@ -45,11 +44,11 @@ export async function POST(req: NextRequest) {
       ],
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?upgraded=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
-      customer_email: session?.user?.email ?? undefined,
+      customer_email: user?.email ?? undefined,
       metadata: {
         plan,
         annual: annual ? "true" : "false",
-        userId: session?.user?.id ?? "guest",
+        userId: user?.id ?? "guest",
       },
       subscription_data: {
         trial_period_days: 14,

@@ -4,8 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json().catch(() => ({})) as {
       delay_seconds?: number;
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const { delay_seconds = 5, auto_stop_after, skip_after_disposition } = body;
     void auto_stop_after; void skip_after_disposition; // stored client-side
 
-    const userId = session.user.id;
+    const userId = user.id;
 
     // End any existing active session first
     await supabase

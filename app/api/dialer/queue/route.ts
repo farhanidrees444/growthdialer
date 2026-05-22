@@ -4,8 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const tab = searchParams.get('tab') ?? 'queue';
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('leads')
       .select('id, name, title, company, phone, email, status, ai_score, last_called_at, call_attempts, tags, notes, dnc, user_id')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .is('deleted_at', null)
       .not('status', 'in', '("do_not_call","meeting_booked")')
       .eq('dnc', false);
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       supabase
         .from('leads')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .is('deleted_at', null)
         .not('status', 'in', '("do_not_call","meeting_booked")')
         .eq('dnc', false)
@@ -67,13 +67,13 @@ export async function GET(request: NextRequest) {
       supabase
         .from('leads')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .is('deleted_at', null)
         .eq('status', 'callback'),
       supabase
         .from('leads')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .is('deleted_at', null)
         .not('status', 'in', '("do_not_call","meeting_booked")')
         .eq('dnc', false),

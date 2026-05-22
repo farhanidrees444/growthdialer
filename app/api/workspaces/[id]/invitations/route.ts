@@ -11,14 +11,14 @@ export async function POST(
 ) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: callerMember } = await supabase
     .from('workspace_members')
     .select('role')
     .eq('workspace_id', id)
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .eq('status', 'active')
     .single();
 
@@ -49,7 +49,7 @@ export async function POST(
     .from('workspace_members')
     .select('id')
     .eq('workspace_id', id)
-    .eq('user_id', session.user.id); // Can't do email lookup directly, handled below
+    .eq('user_id', user.id); // Can't do email lookup directly, handled below
 
   void existingMember; // silence unused warning
 
@@ -71,7 +71,7 @@ export async function POST(
       workspace_id: id,
       email,
       role: body.role ?? 'agent',
-      invited_by: session.user.id,
+      invited_by: user.id,
       token,
       expires_at: expiresAt,
     })
@@ -81,7 +81,7 @@ export async function POST(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Send email invitation
-  const inviterName = session.user.user_metadata?.full_name ?? session.user.email ?? 'A teammate';
+  const inviterName = user.user_metadata?.full_name ?? user.email ?? 'A teammate';
   const workspaceName = ws?.name ?? 'GrowthDialer';
   const emailResult = await sendInvitationEmail({
     to: email,

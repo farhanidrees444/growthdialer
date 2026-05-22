@@ -4,8 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 export async function POST(_request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: authData } = await supabase.auth.getSession();
-    const userId = authData?.session?.user?.id;
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const userId = authUser?.id;
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { data, error } = await supabase
@@ -29,8 +29,8 @@ export async function POST(_request: NextRequest) {
 export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: authData } = await supabase.auth.getSession();
-    const userId = authData?.session?.user?.id;
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const userId = authUser?.id;
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();

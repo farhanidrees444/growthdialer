@@ -10,8 +10,8 @@ export async function POST(
   try {
     const { id } = await params;
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json() as {
       disposition: DispositionType;
@@ -27,7 +27,7 @@ export async function POST(
       .from('calls')
       .select('id, lead_id, user_id')
       .eq('id', id)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (callError || !call) return NextResponse.json({ error: 'Call not found' }, { status: 404 });
@@ -65,7 +65,7 @@ export async function POST(
       ? await supabase
           .from('leads')
           .select('id, name')
-          .eq('user_id', session.user.id)
+          .eq('user_id', user.id)
           .not('status', 'in', '("do_not_call","meeting_booked")')
           .eq('dnc', false)
           .neq('id', call.lead_id)

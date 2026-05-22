@@ -19,16 +19,16 @@ async function getCallerRole(supabase: Awaited<ReturnType<typeof createClient>>,
 export async function PATCH(request: NextRequest, { params }: RouteCtx) {
   const { id, userId } = await params;
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const callerRole = await getCallerRole(supabase, id, session.user.id);
+  const callerRole = await getCallerRole(supabase, id, user.id);
   if (!callerRole || !hasPermission(callerRole, 'CHANGE_ROLES')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   // Cannot change own role or owner's role (unless you're the owner reassigning)
-  if (userId === session.user.id) {
+  if (userId === user.id) {
     return NextResponse.json({ error: 'You cannot change your own role' }, { status: 400 });
   }
 
@@ -51,12 +51,12 @@ export async function PATCH(request: NextRequest, { params }: RouteCtx) {
 export async function DELETE(_request: NextRequest, { params }: RouteCtx) {
   const { id, userId } = await params;
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const callerRole = await getCallerRole(supabase, id, session.user.id);
+  const callerRole = await getCallerRole(supabase, id, user.id);
   // Allow self-removal (leaving workspace) or admin/owner removal
-  const isSelf = userId === session.user.id;
+  const isSelf = userId === user.id;
   if (!callerRole || (!isSelf && !hasPermission(callerRole, 'REMOVE_MEMBERS'))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }

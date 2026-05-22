@@ -9,8 +9,8 @@ export async function POST(
 ) {
   const { token } = await params;
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
     return NextResponse.json({ error: 'You must be logged in to accept an invitation' }, { status: 401 });
   }
 
@@ -28,7 +28,7 @@ export async function POST(
   }
 
   // Verify the invitee's email matches
-  const userEmail = session.user.email?.toLowerCase();
+  const userEmail = user.email?.toLowerCase();
   if (invite.email.toLowerCase() !== userEmail) {
     return NextResponse.json(
       { error: `This invitation was sent to ${invite.email}. Please sign in with that email.` },
@@ -41,13 +41,13 @@ export async function POST(
     .from('workspace_members')
     .select('id')
     .eq('workspace_id', invite.workspace_id)
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!existing) {
     const { error: insertErr } = await supabase.from('workspace_members').insert({
       workspace_id: invite.workspace_id,
-      user_id: session.user.id,
+      user_id: user.id,
       role: invite.role as Role,
       status: 'active',
       invited_by: null,
@@ -61,7 +61,7 @@ export async function POST(
       .from('workspace_members')
       .update({ status: 'active', role: invite.role, joined_at: new Date().toISOString() })
       .eq('workspace_id', invite.workspace_id)
-      .eq('user_id', session.user.id);
+      .eq('user_id', user.id);
   }
 
   // Mark invitation accepted

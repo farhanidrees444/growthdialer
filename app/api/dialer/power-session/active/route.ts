@@ -4,13 +4,13 @@ import { createClient } from '@/lib/supabase/server';
 export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { data } = await supabase
       .from('power_dial_sessions')
       .select('id, started_at, total_calls, connected_calls, meetings_booked, total_talk_time, status')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .in('status', ['active', 'paused'])
       .order('started_at', { ascending: false })
       .limit(1)

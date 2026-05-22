@@ -29,8 +29,8 @@ async function telnyxCallAction(callControlId: string, action: string, payload =
 export async function POST(request: NextRequest, { params }: Ctx) {
   const { id: callControlId } = await params;
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { action } = await request.json() as { action?: string };
   if (action !== 'record_start' && action !== 'record_stop') {
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest, { params }: Ctx) {
     .from('calls')
     .select('id, telnyx_call_id')
     .or(`id.eq.${callControlId},telnyx_call_id.eq.${callControlId}`)
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!call) return NextResponse.json({ error: 'Call not found' }, { status: 404 });

@@ -20,10 +20,10 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const role = await getCallerRole(supabase, id, session.user.id);
+  const role = await getCallerRole(supabase, id, user.id);
   if (!role || !hasPermission(role, 'WORKSPACE_EDIT')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
@@ -51,10 +51,10 @@ export async function DELETE(
 ) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const role = await getCallerRole(supabase, id, session.user.id);
+  const role = await getCallerRole(supabase, id, user.id);
   if (!role || !hasPermission(role, 'WORKSPACE_DELETE')) {
     return NextResponse.json({ error: 'Only the owner can delete a workspace' }, { status: 403 });
   }

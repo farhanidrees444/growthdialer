@@ -4,13 +4,13 @@ import { createClient } from '@/lib/supabase/server';
 // GET /api/workspaces — list workspaces the current user belongs to
 export async function GET() {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: members } = await supabase
     .from('workspace_members')
     .select('workspace_id, role, status, id, joined_at')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .eq('status', 'active');
 
   if (!members?.length) return NextResponse.json({ workspaces: [] });
@@ -34,8 +34,8 @@ export async function GET() {
 // POST /api/workspaces — create a new workspace
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json() as { name: string; slug?: string };
   if (!body.name?.trim()) {
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
   const { data: ws, error: wsErr } = await supabase
     .from('workspaces')
-    .insert({ name: body.name.trim(), slug, owner_id: session.user.id })
+    .insert({ name: body.name.trim(), slug, owner_id: user.id })
     .select()
     .single();
 
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
   await supabase.from('workspace_members').insert({
     workspace_id: ws.id,
-    user_id: session.user.id,
+    user_id: user.id,
     role: 'owner',
     status: 'active',
   });
