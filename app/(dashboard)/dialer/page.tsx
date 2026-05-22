@@ -247,12 +247,20 @@ export default function DialerPage() {
       const seconds = callTimerRef.current.seconds;
       if (seconds >= 10 && pendingCallDbId) {
         setDispositionOpen(true);
-      } else if (pendingCallDbId) {
-        fetch(`/api/calls/${pendingCallDbId}/disposition`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ disposition: 'voicemail' }),
-        }).catch(() => {});
+      } else {
+        if (pendingCallDbId) {
+          fetch(`/api/calls/${pendingCallDbId}/disposition`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ disposition: 'voicemail' }),
+          }).catch(() => {});
+        }
+        // Power mode: auto-advance to next lead after short or failed call
+        if (powerDialerRef.current.isActive) {
+          setTimeout(() => {
+            powerDialerRef.current.onDispositionSaved('voicemail', false, false);
+          }, 2000);
+        }
       }
       loadStats();
       loadTodayCalls();
