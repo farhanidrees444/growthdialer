@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, DM_Sans, JetBrains_Mono } from "next/font/google";
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import CookieConsent from "@/components/CookieConsent";
 import { Toaster } from "sonner";
@@ -286,6 +287,7 @@ export default function RootLayout({
         <TooltipProvider delay={200}>{children}</TooltipProvider>
         <CookieConsent />
         <Toaster theme="dark" position="bottom-right" richColors closeButton />
+        <SpeedInsights />
       </body>
     </html>
   );
