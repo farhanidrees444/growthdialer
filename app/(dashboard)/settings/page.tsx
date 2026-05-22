@@ -9,7 +9,10 @@ import {
   CheckCircle2, Loader2, Save, Radio, MicOff, Trash2,
   AlarmCheck, Brain, TrendingUp, Target,
   Info, HardDrive, Clock, Voicemail, Upload, Play, X as XIcon,
+  Users, UserPlus, Crown, ChevronDown, Mail, MoreVertical, UserMinus,
 } from "lucide-react";
+import { useWorkspace } from "@/contexts/workspace-context";
+import { ROLE_LABELS, ROLE_COLORS, type Role } from "@/lib/auth/permissions";
 import DashboardHeader from "@/components/DashboardHeader";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -42,7 +45,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   local_presence_enabled: false,
 };
 
-type TabKey = 'general' | 'calling' | 'recording' | 'ai' | 'voicemails' | 'notifications' | 'billing' | 'security';
+type TabKey = 'general' | 'calling' | 'recording' | 'ai' | 'voicemails' | 'team' | 'notifications' | 'billing' | 'security';
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: 'general',       label: 'General',       icon: Settings },
@@ -50,6 +53,7 @@ const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: 'recording',     label: 'Recording',      icon: Mic },
   { key: 'ai',            label: 'AI',             icon: Sparkles },
   { key: 'voicemails',    label: 'Voicemails',     icon: Voicemail },
+  { key: 'team',          label: 'Team',           icon: Users },
   { key: 'notifications', label: 'Notifications',  icon: Bell },
   { key: 'billing',       label: 'Billing',        icon: CreditCard },
   { key: 'security',      label: 'Security',       icon: Shield },
@@ -719,6 +723,344 @@ function VoicemailsTab({
   );
 }
 
+const ROLE_OPTIONS: Role[] = ['owner', 'admin', 'manager', 'agent', 'viewer'];
+
+function InviteModal({ onClose }: { onClose: () => void }) {
+  const { inviteMember, can } = useWorkspace();
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState<Role>('agent');
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [sent, setSent] = useState(false);
+
+  async function handleSend() {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setError('Enter a valid email address');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    const result = await inviteMember(trimmed, role, message.trim() || undefined);
+    setBusy(false);
+    if (!result.ok) { setError(result.error ?? 'Failed to send invitation'); return; }
+    setSent(true);
+    setTimeout(onClose, 1500);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-hidden />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 8 }}
+        transition={{ duration: 0.18 }}
+        className="relative z-10 w-full max-w-md rounded-2xl border border-white/[0.10] bg-[oklch(0.086_0.024_282)] p-6 shadow-2xl"
+      >
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-bold text-white">Invite team member</h3>
+            <p className="mt-0.5 text-xs text-slate-500">They'll receive an email with a secure invite link</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-slate-600 hover:text-white transition">
+            <XIcon className="h-4 w-4" />
+          </button>
+        </div>
+
+        {sent ? (
+          <div className="flex flex-col items-center gap-3 py-6 text-center">
+            <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+            <p className="text-sm font-semibold text-white">Invitation sent!</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-400">Email address</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                placeholder="colleague@company.com"
+                autoFocus
+                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-emerald-500/40 transition"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-400">Role</label>
+              <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
+                {ROLE_OPTIONS.filter((r) => r !== 'owner').map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRole(r)}
+                    className={cn(
+                      "rounded-lg border px-2 py-1.5 text-xs font-semibold transition",
+                      role === r
+                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                        : "border-white/[0.07] bg-white/[0.02] text-slate-500 hover:border-white/[0.12] hover:text-slate-300",
+                    )}
+                  >
+                    {ROLE_LABELS[r]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-400">Personal message <span className="text-slate-700">(optional)</span></label>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={2}
+                placeholder="Looking forward to having you on the team!"
+                className="w-full resize-none rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-emerald-500/40 transition"
+              />
+            </div>
+
+            {error && <p className="text-xs text-red-400">{error}</p>}
+
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 rounded-xl border border-white/[0.08] py-2.5 text-sm font-semibold text-slate-400 transition hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={busy || !email.trim()}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #059669, #7C3AED)' }}
+              >
+                {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+                {busy ? 'Sending…' : 'Send Invite'}
+              </button>
+            </div>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  );
+}
+
+function TeamTab() {
+  const {
+    currentWorkspace, currentRole, members, membersLoading,
+    removeMember, updateMemberRole, refreshMembers, can,
+  } = useWorkspace();
+  const [showInvite, setShowInvite] = useState(false);
+  const [roleMenu, setRoleMenu] = useState<string | null>(null);
+  const [actionBusy, setActionBusy] = useState<string | null>(null);
+
+  const activeMembers = members.filter((m) => m.status === 'active');
+  const pendingInvites = members.filter((m) => m.status === 'invited');
+  const canInvite = can('INVITE_MEMBERS');
+  const canChangeRoles = can('CHANGE_ROLES');
+  const canRemove = can('REMOVE_MEMBERS');
+
+  const planLabel: Record<string, string> = {
+    free: 'Free', pro: 'Pro', team: 'Team', enterprise: 'Enterprise',
+  };
+
+  async function handleRoleChange(userId: string, role: Role) {
+    setActionBusy(userId);
+    await updateMemberRole(userId, role);
+    setRoleMenu(null);
+    setActionBusy(null);
+  }
+
+  async function handleRemove(userId: string) {
+    if (!confirm('Remove this member from the workspace?')) return;
+    setActionBusy(userId);
+    await removeMember(userId);
+    setActionBusy(null);
+  }
+
+  if (!currentWorkspace) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <p className="text-sm text-slate-600">No workspace selected</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5 max-w-2xl">
+      {/* Workspace overview */}
+      <SectionCard title="Workspace" description="Your current workspace settings and plan">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {[
+            { label: 'Name', value: currentWorkspace.name },
+            { label: 'Plan', value: planLabel[currentWorkspace.plan] ?? currentWorkspace.plan },
+            { label: 'Seats', value: `${activeMembers.length} / ${currentWorkspace.max_seats}` },
+          ].map(({ label, value }) => (
+            <div key={label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">{label}</p>
+              <p className="mt-0.5 text-sm font-bold text-white">{value}</p>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
+      {/* Members */}
+      <SectionCard title="Members" description="People who have access to this workspace">
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-xs text-slate-500">{activeMembers.length} active member{activeMembers.length !== 1 ? 's' : ''}</p>
+          {canInvite && (
+            <button
+              type="button"
+              onClick={() => setShowInvite(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/15"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              Invite member
+            </button>
+          )}
+        </div>
+
+        {membersLoading ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="h-5 w-5 animate-spin text-slate-600" />
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            {activeMembers.map((member) => {
+              const isSelf = member.role === currentRole && member.user_id === undefined;
+              const isOwner = member.role === 'owner';
+              const displayName = member.full_name || member.email || 'Unknown';
+              const ini = displayName.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
+              return (
+                <div
+                  key={member.id}
+                  className="flex items-center gap-3 rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3"
+                >
+                  {/* Avatar */}
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 text-[11px] font-bold text-white">
+                    {ini}
+                  </div>
+                  {/* Info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-medium text-white">{displayName}</p>
+                      {isOwner && <Crown className="h-3 w-3 shrink-0 text-amber-400" />}
+                    </div>
+                    {member.email && member.full_name && (
+                      <p className="truncate text-[11px] text-slate-600">{member.email}</p>
+                    )}
+                  </div>
+                  {/* Role badge */}
+                  <span className={cn(
+                    "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                    ROLE_COLORS[member.role],
+                  )}>
+                    {ROLE_LABELS[member.role]}
+                  </span>
+                  {/* Actions */}
+                  {(canChangeRoles || canRemove) && !isOwner && (
+                    <div className="relative shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setRoleMenu(roleMenu === member.id ? null : member.id)}
+                        disabled={actionBusy === member.id}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 transition hover:bg-white/[0.06] hover:text-slate-300 disabled:opacity-40"
+                      >
+                        {actionBusy === member.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                      <AnimatePresence>
+                        {roleMenu === member.id && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setRoleMenu(null)} aria-hidden />
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                              transition={{ duration: 0.12 }}
+                              className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-white/[0.10] bg-[oklch(0.10_0.024_282)] p-1.5 shadow-2xl"
+                            >
+                              {canChangeRoles && (
+                                <>
+                                  <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600">Change role</p>
+                                  {ROLE_OPTIONS.filter((r) => r !== 'owner').map((r) => (
+                                    <button
+                                      key={r}
+                                      type="button"
+                                      onClick={() => handleRoleChange(member.user_id, r)}
+                                      className={cn(
+                                        "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition",
+                                        member.role === r
+                                          ? "bg-emerald-500/10 text-emerald-300"
+                                          : "text-slate-400 hover:bg-white/[0.05] hover:text-white",
+                                      )}
+                                    >
+                                      {ROLE_LABELS[r]}
+                                    </button>
+                                  ))}
+                                  <div className="my-1 border-t border-white/[0.06]" />
+                                </>
+                              )}
+                              {canRemove && (
+                                <button
+                                  type="button"
+                                  onClick={() => { setRoleMenu(null); void handleRemove(member.user_id); }}
+                                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-red-400 transition hover:bg-red-500/10"
+                                >
+                                  <UserMinus className="h-3 w-3" />
+                                  Remove member
+                                </button>
+                              )}
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </SectionCard>
+
+      {/* Pending invitations */}
+      {pendingInvites.length > 0 && (
+        <SectionCard title="Pending Invitations" description="Waiting for acceptance">
+          <div className="space-y-1.5">
+            {pendingInvites.map((inv) => (
+              <div
+                key={inv.id}
+                className="flex items-center gap-3 rounded-xl border border-amber-500/10 bg-amber-500/[0.04] px-4 py-3"
+              >
+                <Mail className="h-4 w-4 shrink-0 text-amber-400/60" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm text-slate-300">{inv.email}</p>
+                  <p className="text-[11px] text-slate-600">Invited as {ROLE_LABELS[inv.role]}</p>
+                </div>
+                <span className="shrink-0 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
+                  Pending
+                </span>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+      )}
+
+      {/* Invite modal */}
+      <AnimatePresence>
+        {showInvite && <InviteModal onClose={() => { setShowInvite(false); void refreshMembers(); }} />}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('recording');
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
@@ -898,6 +1240,7 @@ export default function SettingsPage() {
                     onAutoDropVmChange={(v) => handleChange({ auto_drop_vm: v })}
                   />
                 )}
+                {activeTab === 'team' && <TeamTab />}
                 {(activeTab === 'calling' || activeTab === 'notifications' || activeTab === 'billing' || activeTab === 'security') && (
                   <PlaceholderTab label={TABS.find((t) => t.key === activeTab)?.label ?? ''} />
                 )}
