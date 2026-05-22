@@ -23,7 +23,7 @@ export interface WebPhoneContextValue {
   isMuted: boolean;
   isOnHold: boolean;
   micPermission: MicPermission;
-  makeCall: (destination: string, callerNumber?: string, onCallCreated?: (callId: string) => void) => void;
+  makeCall: (destination: string, callerNumber?: string) => void;
   hangup: () => void;
   toggleMute: () => void;
   toggleHold: () => void;
@@ -200,7 +200,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ── Call actions ─────────────────────────────────────────────────────────────
-  const makeCall = useCallback((destination: string, callerNumber?: string, onCallCreated?: (callId: string) => void) => {
+  const makeCall = useCallback((destination: string, callerNumber?: string) => {
     if (!clientRef.current) {
       console.warn('[WebPhone] makeCall: client not initialized');
       return;
@@ -241,11 +241,6 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       });
       const call = clientRef.current.newCall(callParams);
       activeCallRef.current = call;
-      // Fire callback immediately so the consumer can register a DB record
-      // with the correct WebRTC call_control_id (avoids duplicate server-side call)
-      if (call?.id) {
-        onCallCreated?.(call.id as string);
-      }
     } catch (err) {
       console.error('[WebPhone] newCall error:', err);
       setCallStatus('idle');

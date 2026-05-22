@@ -268,34 +268,38 @@ export default function DialerPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callStatus]);
 
+  // Pending call info for DB registration (set before makeCall, consumed by effect below)
+  const pendingRegRef = useRef<{ e164: string; leadId?: string } | null>(null);
+
+  // When WebRTC assigns a call_control_id (activeCallId), register the DB record.
+  // This fires once per call and avoids the double-call bug: no server-side dial
+  // is made in initiateCall, so only the WebRTC call goes out.
+  useEffect(() => {
+    if (!activeCallId || !pendingRegRef.current) return;
+    const { e164, leadId } = pendingRegRef.current;
+    pendingRegRef.current = null;
+    fetch('/api/calls/dial', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: e164, lead_id: leadId, call_control_id: activeCallId }),
+    })
+      .then((r) => r.json())
+      .then((data: { db_id?: string; call_control_id?: string }) => {
+        const id = data.db_id ?? data.call_control_id ?? null;
+        if (id) setPendingCallDbId(id);
+      })
+      .catch(() => { /* non-fatal */ });
+  }, [activeCallId]);
+
   // ── Call initiation ─────────────────────────────────────────────────────────
-  // Flow: makeCall() → WebRTC call starts → onCallCreated fires with Telnyx
-  // call_control_id → we register the DB record using that ID → get back the
-  // DB UUID → store as pendingCallDbId for notes/disposition.
-  // This prevents the double-call bug where both a server-side Telnyx call AND
-  // a WebRTC call were made simultaneously to the same number.
   const initiateCall = useCallback((phone: string, lead?: LeadRecord) => {
     if (phoneStatus !== 'ready') {
       toast.error('Phone not ready — please wait a moment');
       return;
     }
     const e164 = normalizePhone(phone) ?? phone;
-    makeCall(e164, undefined, async (callId) => {
-      // Immediately store call_control_id as a fallback (overwritten by DB UUID below)
-      setPendingCallDbId(callId);
-      try {
-        const res = await fetch('/api/calls/dial', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ to: e164, lead_id: lead?.id, call_control_id: callId }),
-        });
-        const data = await res.json() as { call_control_id?: string; db_id?: string };
-        // Use DB UUID for notes/disposition APIs; fall back to call_control_id
-        if (data.db_id) setPendingCallDbId(data.db_id);
-      } catch {
-        // Non-fatal — call proceeds even if DB registration fails
-      }
-    });
+    pendingRegRef.current = { e164, leadId: lead?.id };
+    makeCall(e164);
   }, [phoneStatus, makeCall]);
 
   // Update ref on every render so powerDialer.onShouldDial always calls latest version
