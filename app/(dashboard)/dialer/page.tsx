@@ -12,6 +12,7 @@ import { useDialerHotkeys } from '@/hooks/use-dialer-hotkeys';
 import { usePowerDialer } from '@/hooks/use-power-dialer';
 import { createClient } from '@/lib/supabase/client';
 import { normalizePhone } from '@/lib/phone';
+import { Users, Sparkles, X as XIcon } from 'lucide-react';
 
 import { HeaderStrip } from '@/components/dialer/header-strip';
 import { QueueColumn } from '@/components/dialer/queue-column';
@@ -153,6 +154,8 @@ export default function DialerPage() {
   const [dialpadOpen, setDialpadOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [dtmfOpen, setDtmfOpen] = useState(false);
+  const [mobileQueueOpen, setMobileQueueOpen] = useState(false);
+  const [mobileAiBriefOpen, setMobileAiBriefOpen] = useState(false);
   const [pendingCallDbId, setPendingCallDbId] = useState<string | null>(null);
   const [queueIndex, setQueueIndex] = useState(0);
   const [queueLeads, setQueueLeads] = useState<LeadRecord[]>([]);
@@ -398,7 +401,7 @@ export default function DialerPage() {
   const showAiPanel = mode === 'preview' || mode === 'live';
 
   return (
-    <div className="flex flex-col h-screen bg-zinc-950 overflow-hidden" aria-label="AI Dialer">
+    <div className="flex flex-col h-full bg-zinc-950 overflow-hidden" aria-label="AI Dialer">
 
       {/* Header strip — always visible */}
       <HeaderStrip
@@ -751,6 +754,131 @@ export default function DialerPage() {
             onSend={(d) => { sendDTMF(d); toast.info(`DTMF: ${d}`, { duration: 800 }); }}
             onClose={() => setDtmfOpen(false)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* ── Mobile floating buttons (Queue + AI Brief) — hidden on lg+ ── */}
+      <AnimatePresence>
+        {mode !== 'live' && (
+          <motion.div
+            key="mobile-fabs"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="lg:hidden fixed bottom-20 right-4 z-30 flex flex-col gap-2.5"
+            style={{ bottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}
+          >
+            {/* AI Brief button */}
+            {(mode === 'preview') && selectedLead && (
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setMobileAiBriefOpen(true)}
+                className="flex h-12 w-12 items-center justify-center rounded-full shadow-xl text-white"
+                style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)', border: '1px solid rgba(255,255,255,0.15)' }}
+                aria-label="Open AI Brief"
+              >
+                <Sparkles className="h-5 w-5" />
+              </motion.button>
+            )}
+            {/* Queue button */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setMobileQueueOpen(true)}
+              className="relative flex h-12 w-12 items-center justify-center rounded-full shadow-xl text-white"
+              style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.12)' }}
+              aria-label="Open Queue"
+            >
+              <Users className="h-5 w-5" />
+              {queueCounts.queue > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">
+                  {queueCounts.queue > 99 ? '99+' : queueCounts.queue}
+                </span>
+              )}
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Mobile Queue Drawer ── */}
+      <AnimatePresence>
+        {mobileQueueOpen && (
+          <>
+            <motion.div
+              key="queue-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+              onClick={() => setMobileQueueOpen(false)}
+            />
+            <motion.div
+              key="queue-drawer"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-3xl border-t border-white/[0.10] bg-zinc-900 overflow-hidden"
+              style={{ height: '80vh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+            >
+              <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
+                <span className="text-sm font-semibold text-white">Call Queue</span>
+                <button
+                  type="button"
+                  onClick={() => setMobileQueueOpen(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 hover:text-white"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <QueueColumn
+                  selectedLeadId={selectedLead?.id}
+                  onSelectLead={(lead) => { selectLead(lead); setMobileQueueOpen(false); }}
+                  searchRef={searchRef}
+                  onCountsChange={setQueueCounts}
+                />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Mobile AI Brief Drawer ── */}
+      <AnimatePresence>
+        {mobileAiBriefOpen && selectedLead && (
+          <>
+            <motion.div
+              key="ai-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+              onClick={() => setMobileAiBriefOpen(false)}
+            />
+            <motion.div
+              key="ai-drawer"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-3xl border-t border-white/[0.10] bg-zinc-900 overflow-hidden"
+              style={{ height: '80vh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+            >
+              <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
+                <span className="text-sm font-semibold text-white">AI Brief</span>
+                <button
+                  type="button"
+                  onClick={() => setMobileAiBriefOpen(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 hover:text-white"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto scrollbar-thin">
+                <AiBriefPanel lead={selectedLead} />
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>

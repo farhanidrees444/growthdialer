@@ -192,7 +192,7 @@ function SecondaryButton({
     <motion.button
       onClick={onClick}
       whileTap={{ scale: 0.95 }}
-      className={`flex items-center justify-center gap-2 h-10 rounded-lg text-sm font-medium border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+      className={`flex items-center justify-center gap-2 h-11 rounded-lg text-sm font-medium border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
         active
           ? 'bg-yellow-400/10 border-yellow-400/30 text-yellow-400'
           : danger

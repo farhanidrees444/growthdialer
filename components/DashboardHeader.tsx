@@ -82,16 +82,24 @@ export function DashboardHeader({
             <Search className="h-3.5 w-3.5" />
             Search
           </Button>
-          <Button
+          {/* Mobile search & bell — 44px tap target */}
+          <button
             type="button"
-            variant="outline"
-            size="icon"
-            className="relative h-8 w-8 border-white/15 bg-white/5 hover:bg-white/10"
+            className="sm:hidden flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors"
             onClick={() => setSearchOpen(true)}
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            className="relative hidden sm:flex h-8 w-8 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 transition-colors"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Notifications"
           >
             <Bell className="h-4 w-4" />
             <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-red-500" />
-          </Button>
+          </button>
           <Badge className="hidden sm:flex gap-1.5 bg-emerald-500/90 px-2.5 text-xs text-white">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-white" />
             Online

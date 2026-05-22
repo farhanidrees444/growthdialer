@@ -113,7 +113,7 @@ export function HeaderStrip({
         )}
 
         <button
-          className="p-1.5 rounded text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400"
           aria-label="Dialer preferences"
         >
           <Settings className="w-4 h-4" />
@@ -121,7 +121,7 @@ export function HeaderStrip({
 
         <button
           onClick={onOpenShortcuts}
-          className="p-1.5 rounded text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400"
           aria-label="Keyboard shortcuts"
         >
           <HelpCircle className="w-4 h-4" />

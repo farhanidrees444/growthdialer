@@ -160,9 +160,9 @@ function LeadMenu({
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
-        className="flex h-6 w-6 items-center justify-center rounded-lg border border-white/[0.07] text-slate-600 hover:text-white hover:border-white/10 transition opacity-0 group-hover:opacity-100"
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.07] text-slate-600 hover:text-white hover:border-white/10 transition sm:opacity-0 sm:group-hover:opacity-100"
       >
-        <MoreHorizontal className="h-3 w-3" />
+        <MoreHorizontal className="h-3.5 w-3.5" />
       </button>
       <AnimatePresence>
         {open && (
@@ -177,7 +177,7 @@ function LeadMenu({
                 key={label}
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setOpen(false); onClick(); }}
-                className={cn("flex w-full items-center gap-2.5 px-3.5 py-2 text-xs text-slate-300 hover:bg-white/[0.05] transition", cls)}
+                className={cn("flex w-full items-center gap-2.5 px-3.5 py-2.5 text-xs text-slate-300 hover:bg-white/[0.05] transition min-h-[40px]", cls)}
               >
                 {icon}
                 {label}
@@ -252,16 +252,16 @@ function LeadCard({
         selected && "border-emerald-500/30 bg-emerald-500/5",
       )}
     >
-      {/* Checkbox top-left */}
+      {/* Checkbox top-left — larger tap area on mobile */}
       <div
-        className="absolute left-3 top-3"
+        className="absolute left-2 top-2 flex h-7 w-7 items-center justify-center"
         onClick={(e) => { e.stopPropagation(); onSelect(); }}
       >
         <div className={cn(
           "flex h-4 w-4 items-center justify-center rounded border transition",
           selected
             ? "border-emerald-500 bg-emerald-500"
-            : "border-white/[0.15] bg-white/[0.03] opacity-0 group-hover:opacity-100",
+            : "border-white/[0.15] bg-white/[0.03] sm:opacity-0 sm:group-hover:opacity-100",
         )}>
           {selected && <Check className="h-2.5 w-2.5 text-black" />}
         </div>

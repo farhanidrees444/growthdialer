@@ -86,7 +86,7 @@ export function DispositionModal({ open, lead, callDuration, onSave, onClose }: 
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-[480px] bg-zinc-900/95 border-white/10 text-white p-0 overflow-hidden">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-[480px] bg-zinc-900/95 border-white/10 text-white p-0 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
           <div>
@@ -97,14 +97,14 @@ export function DispositionModal({ open, lead, callDuration, onSave, onClose }: 
               </p>
             )}
           </div>
-          <button onClick={onClose} className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/[0.06]" aria-label="Close">
+          <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/[0.06]" aria-label="Close">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Disposition grid */}
-        <div className="px-5 pb-4 grid grid-cols-4 gap-2">
-          {ORDERED.map((disp, idx) => {
+        {/* Disposition grid — 2 cols on mobile, 4 on sm+ */}
+        <div className="px-5 pb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {ORDERED.map((disp) => {
             const info = DISPOSITION_LABELS[disp];
             const isSelected = selected === disp;
             return (
@@ -113,7 +113,7 @@ export function DispositionModal({ open, lead, callDuration, onSave, onClose }: 
                 onClick={() => handleSelect(disp)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.96 }}
-                className={`relative flex flex-col items-center gap-1.5 p-3 rounded-lg border text-center transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                className={`relative flex flex-col items-center gap-1.5 p-3 rounded-lg border text-center transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 min-h-[64px] ${
                   isSelected
                     ? 'border-cyan-500/60 bg-cyan-500/10'
                     : COLOR_CLASS[info.color]
@@ -123,7 +123,7 @@ export function DispositionModal({ open, lead, callDuration, onSave, onClose }: 
               >
                 <span className="text-xl leading-none">{info.icon}</span>
                 <span className="text-[11px] text-white/80 leading-tight">{info.label}</span>
-                <kbd className="absolute top-1 right-1 text-[9px] text-white/30 font-mono">{info.hotkey}</kbd>
+                <kbd className="absolute top-1 right-1 text-[9px] text-white/30 font-mono hidden sm:block">{info.hotkey}</kbd>
               </motion.button>
             );
           })}
@@ -152,7 +152,7 @@ export function DispositionModal({ open, lead, callDuration, onSave, onClose }: 
                     <button
                       key={opt.label}
                       onClick={() => setCallbackAt(opt.value())}
-                      className="px-2.5 py-1 text-xs rounded bg-white/[0.06] border border-white/[0.08] hover:bg-white/[0.10] text-white/70 transition-colors"
+                      className="flex h-9 items-center px-3 text-xs rounded-lg bg-white/[0.06] border border-white/[0.08] hover:bg-white/[0.10] text-white/70 transition-colors"
                     >
                       {opt.label}
                     </button>

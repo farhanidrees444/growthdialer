@@ -342,13 +342,32 @@ export default function RecordingsPage() {
                   <Link href={`/recordings/${r.id}`}
                     className="group block rounded-2xl border border-white/[0.07] bg-[oklch(0.086_0.024_282)] p-4 transition-all hover:border-white/10 hover:bg-white/[0.04]"
                   >
-                    <div className="flex items-start gap-4">
-                      {/* Left: player */}
-                      <div className="shrink-0">
-                        <MiniPlayer url={r.recording_url} />
+                    {/* Mobile: stacked layout. Desktop: side-by-side */}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+
+                      {/* Top row on mobile: player + meta inline */}
+                      <div className="flex items-center justify-between sm:contents">
+                        {/* Player */}
+                        <div className="shrink-0">
+                          <MiniPlayer url={r.recording_url} />
+                        </div>
+                        {/* Meta — inline on mobile (right side), column on desktop */}
+                        <div className="flex items-center gap-2 sm:hidden">
+                          <div className="flex items-center gap-1 text-xs text-slate-400">
+                            <Clock className="h-3 w-3" />
+                            {formatDuration(r.duration_seconds)}
+                          </div>
+                          <a href={r.recording_url} download target="_blank" rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] text-slate-600 hover:text-slate-300"
+                            title="Download"
+                          >
+                            <Download className="w-3 h-3" />
+                          </a>
+                        </div>
                       </div>
 
-                      {/* Center: info */}
+                      {/* Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-sm text-white">{name}</span>
@@ -356,18 +375,17 @@ export default function RecordingsPage() {
                           <DispositionBadge disp={disp} />
                           {ai && <SentimentBadge score={ai.sentiment_score ?? null} />}
                         </div>
+                        <p className="mt-0.5 text-[10px] text-slate-600 sm:hidden">{formatDate(r.created_at)}</p>
 
-                        {/* AI summary bullet */}
                         {bullets.length > 0 && (
-                          <p className="mt-1.5 text-xs text-slate-400 leading-relaxed line-clamp-1">
+                          <p className="mt-1.5 text-xs text-slate-400 leading-relaxed line-clamp-2 sm:line-clamp-1">
                             <Sparkles className="inline h-3 w-3 text-amber-400/80 mr-1" />
                             {bullets[0]}
                           </p>
                         )}
 
-                        {/* Talking point chips */}
                         {talkingPoints.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
+                          <div className="mt-2 hidden flex-wrap gap-1.5 sm:flex">
                             {talkingPoints.map((pt: string) => (
                               <span key={pt} className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2 py-0.5 text-[10px] text-slate-500">
                                 {pt}
@@ -377,8 +395,8 @@ export default function RecordingsPage() {
                         )}
                       </div>
 
-                      {/* Right: meta */}
-                      <div className="shrink-0 flex flex-col items-end gap-2">
+                      {/* Right meta — desktop only */}
+                      <div className="hidden sm:flex shrink-0 flex-col items-end gap-2">
                         <div className="flex items-center gap-1.5 text-xs text-slate-400">
                           <Clock className="h-3 w-3" />
                           {formatDuration(r.duration_seconds)}

@@ -148,57 +148,61 @@ export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
         )}
       </AnimatePresence>
 
+      {/* Mobile: full-width bar above bottom tab. Desktop: floating pill */}
       <motion.div
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 80, opacity: 0 }}
         transition={{ type: 'spring', damping: 24, stiffness: 280 }}
-        className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 flex items-center gap-2 rounded-2xl border border-white/[0.12] bg-[oklch(0.09_0.02_282)]/96 px-4 py-2.5 shadow-2xl shadow-black/60 backdrop-blur-xl"
+        className="fixed left-3 right-3 z-40 flex flex-wrap items-center gap-2 rounded-2xl border border-white/[0.12] bg-[oklch(0.09_0.02_282)]/96 px-4 py-3 shadow-2xl shadow-black/60 backdrop-blur-xl lg:bottom-6 lg:left-1/2 lg:right-auto lg:w-auto lg:-translate-x-1/2 lg:flex-nowrap"
+        style={{ bottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}
       >
         {/* Selection count */}
-        <div className="flex items-center gap-2 pr-2">
+        <div className="flex items-center gap-2">
           <div className="flex h-5 w-5 items-center justify-center rounded bg-emerald-500 text-[10px] font-bold text-black">
             <Check className="h-3 w-3" />
           </div>
           <span className="text-sm font-semibold text-white tabular-nums">{count} selected</span>
         </div>
 
-        <div className="h-5 w-px bg-white/[0.08]" />
+        <div className="hidden h-5 w-px bg-white/[0.08] lg:block" />
 
         {/* Action buttons */}
-        {ACTIONS.map(({ id, label, icon, className, action, onClick }) => (
+        <div className="flex flex-wrap items-center gap-2">
+          {ACTIONS.map(({ id, label, icon, className, action, onClick }) => (
+            <button
+              key={id}
+              type="button"
+              disabled={!!busy}
+              onClick={onClick ?? (() => execute(id, action as Record<string, unknown>))}
+              className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:opacity-50 min-h-[36px] ${className}`}
+            >
+              {busy === id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : icon}
+              {label}
+            </button>
+          ))}
+
           <button
-            key={id}
             type="button"
             disabled={!!busy}
-            onClick={onClick ?? (() => execute(id, action as Record<string, unknown>))}
-            className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition disabled:opacity-50 ${className}`}
+            onClick={() => setShowDeleteConfirm(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-red-500/25 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-500/15 transition disabled:opacity-50 min-h-[36px]"
           >
-            {busy === id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : icon}
-            {label}
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete
           </button>
-        ))}
+        </div>
 
-        <button
-          type="button"
-          disabled={!!busy}
-          onClick={() => setShowDeleteConfirm(true)}
-          className="flex items-center gap-1.5 rounded-xl border border-red-500/25 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-300 hover:bg-red-500/15 transition disabled:opacity-50"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-          Delete
-        </button>
-
-        <div className="h-5 w-px bg-white/[0.08]" />
-
-        <button
-          type="button"
-          onClick={onClear}
-          className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.07] text-slate-500 hover:text-white transition"
-          aria-label="Clear selection"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
+        <div className="ml-auto flex items-center">
+          <button
+            type="button"
+            onClick={onClear}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.07] text-slate-500 hover:text-white transition"
+            aria-label="Clear selection"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </motion.div>
     </>
   );
