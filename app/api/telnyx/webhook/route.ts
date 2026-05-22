@@ -143,17 +143,29 @@ export async function POST(request: NextRequest) {
     }
 
     // ── call.initiated ──────────────────────────────────────────────────────
+    // Use upsert so the row exists even when this webhook fires before
+    // /api/calls/dial has created the DB record (common race in WebRTC flow).
+    // /api/calls/dial also upserts, so whichever arrives first wins on creation
+    // and the second fills in the remaining fields.
     if (event_type === 'call.initiated') {
-      // Save telnyx_session_id so all subsequent events can look up by it
-      const update: Record<string, unknown> = { status: 'ringing' };
-      if (callSessionId) update.telnyx_session_id = callSessionId;
-
-      const { error } = await supabase
-        .from('calls')
-        .update(update)
-        .eq('telnyx_call_id', callControlId ?? '');
-      if (error) console.error('[WEBHOOK] call.initiated update error:', error);
-      else console.log('[WEBHOOK] call.initiated — saved session_id:', callSessionId);
+      if (!callControlId) {
+        console.warn('[WEBHOOK] call.initiated missing call_control_id — skipping');
+      } else {
+        const { error } = await supabase
+          .from('calls')
+          .upsert(
+            {
+              telnyx_call_id: callControlId,
+              telnyx_session_id: callSessionId ?? null,
+              status: 'ringing',
+              from_number: payload.from ?? null,
+              to_number: payload.to ?? null,
+            },
+            { onConflict: 'telnyx_call_id', ignoreDuplicates: false },
+          );
+        if (error) console.error('[WEBHOOK] call.initiated upsert error:', error);
+        else console.log('[WEBHOOK] call.initiated — upserted, session_id:', callSessionId);
+      }
     }
 
     // ── call.ringing ────────────────────────────────────────────────────────

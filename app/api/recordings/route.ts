@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     let recordingsQuery = supabase
       .from('calls')
-      .select('id,twilio_call_sid,status,disposition,notes,duration,recording_url,recording_duration,started_at,ended_at,lead_id,leads(id,name,company,phone)')
+      .select('id,status,disposition,notes,duration_seconds,recording_url,started_at,ended_at,lead_id,leads(id,name,company,phone)')
       .eq('user_id', userId)
       .not('recording_url', 'is', null);
 
