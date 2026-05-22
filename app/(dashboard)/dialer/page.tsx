@@ -26,6 +26,7 @@ import { ManualDialpadOverlay } from '@/components/dialer/manual-dialpad-overlay
 import { ShortcutsHelpModal } from '@/components/dialer/shortcuts-help-modal';
 import { PowerBanner } from '@/components/dialer/power-banner';
 import { PowerCountdownStage } from '@/components/dialer/power-countdown';
+import MicPermissionModal from '@/components/dialer/MicPermissionModal';
 
 import type { LeadRecord, DispositionType } from '@/lib/dialer/state-machine';
 
@@ -107,9 +108,23 @@ export default function DialerPage() {
   const {
     callStatus, isMuted, isOnHold, phoneStatus, activeCallId,
     makeCall, hangup, toggleMute, toggleHold, sendDTMF,
+    micPermission, requestMicPermission, reconnect,
   } = useWebPhone();
 
   const { mode, selectedLead, activeCallDbId, selectLead, startCall, endCall } = useDialerMode();
+
+  // Show mic permission modal on first visit if permission unknown
+  const [showMicModal, setShowMicModal] = useState(false);
+  useEffect(() => {
+    // Show modal after a short delay if mic permission is unknown
+    if (micPermission === 'unknown') {
+      const timer = setTimeout(() => setShowMicModal(true), 1500);
+      return () => clearTimeout(timer);
+    }
+    if (micPermission === 'granted') {
+      setShowMicModal(false);
+    }
+  }, [micPermission]);
 
   // Stable ref so powerDialer.onShouldDial can call initiateCall once it's defined
   const initiateCallRef = useRef<((phone: string, lead?: LeadRecord) => void) | null>(null);
@@ -292,15 +307,44 @@ export default function DialerPage() {
   }, [activeCallId]);
 
   // ── Call initiation ─────────────────────────────────────────────────────────
-  const initiateCall = useCallback((phone: string, lead?: LeadRecord) => {
+  const initiateCall = useCallback(async (phone: string, lead?: LeadRecord) => {
+    // Check mic permission first
+    if (micPermission === 'denied') {
+      toast.error('Microphone access is blocked. Please allow mic access in your browser settings.');
+      return;
+    }
+    if (micPermission === 'unknown') {
+      const granted = await requestMicPermission();
+      if (!granted) {
+        toast.error('Microphone access is required to make calls');
+        return;
+      }
+    }
+    
+    if (phoneStatus === 'error') {
+      toast.error('Phone connection failed. Attempting to reconnect...');
+      reconnect();
+      return;
+    }
+    if (phoneStatus === 'initializing') {
+      toast.info('Phone is connecting... please wait');
+      return;
+    }
     if (phoneStatus !== 'ready') {
       toast.error('Phone not ready — please wait a moment');
       return;
     }
+    
     const e164 = normalizePhone(phone) ?? phone;
+    if (!e164) {
+      toast.error('Invalid phone number format');
+      return;
+    }
+    
+    toast.info(`Calling ${lead?.name ?? e164}...`, { duration: 2000 });
     pendingRegRef.current = { e164, leadId: lead?.id };
     makeCall(e164);
-  }, [phoneStatus, makeCall]);
+  }, [phoneStatus, micPermission, makeCall, requestMicPermission, reconnect]);
 
   // Update ref on every render so powerDialer.onShouldDial always calls latest version
   initiateCallRef.current = initiateCall;
@@ -359,7 +403,7 @@ export default function DialerPage() {
     }
   }, [pendingCallDbId, loadStats, loadTodayCalls, powerDialer, selectedLead]);
 
-  // ── Lead actions ────────────────────────────────────────────────────────────
+  // ── Lead actions ───────────────────────────────��────────────────────────────
   const handleMarkHot = useCallback(async () => {
     if (!selectedLead) return;
     const supabase = createClient();
@@ -777,6 +821,9 @@ export default function DialerPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* Mic permission modal */}
+      {showMicModal && <MicPermissionModal />}
 
       {/* ── Mobile floating buttons (Queue + AI Brief) — hidden on lg+ ── */}
       <AnimatePresence>

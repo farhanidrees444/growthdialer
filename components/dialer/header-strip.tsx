@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, HelpCircle } from 'lucide-react';
+import { Settings, HelpCircle, Wifi, WifiOff, Loader2, RefreshCw } from 'lucide-react';
 import { SessionReplayMap } from './session-replay-map';
+import { useWebPhone, type PhoneStatus } from '@/contexts/webphone-context';
 
 interface CallDot {
   id: string;
@@ -39,7 +40,63 @@ export function HeaderStrip({
   onDotClick,
 }: HeaderStripProps) {
   const [statsExpanded, setStatsExpanded] = useState(false);
+  const { phoneStatus, reconnect, micPermission, requestMicPermission } = useWebPhone();
   const isLive = callStatus === 'active' || callStatus === 'connecting' || callStatus === 'ringing';
+
+  // Phone status indicator component
+  const PhoneStatusIndicator = () => {
+    if (phoneStatus === 'ready') {
+      return (
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-medium">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-50" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-400" />
+          </span>
+          Ready
+        </div>
+      );
+    }
+    if (phoneStatus === 'initializing') {
+      return (
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Connecting...
+        </div>
+      );
+    }
+    if (phoneStatus === 'error') {
+      return (
+        <button
+          onClick={reconnect}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium hover:bg-rose-500/20 transition-colors"
+        >
+          <WifiOff className="h-3 w-3" />
+          Offline
+          <RefreshCw className="h-2.5 w-2.5 ml-1" />
+        </button>
+      );
+    }
+    // idle
+    return (
+      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-white/40 text-xs font-medium">
+        <Wifi className="h-3 w-3" />
+        Idle
+      </div>
+    );
+  };
+
+  // Mic permission warning
+  const MicWarning = () => {
+    if (micPermission !== 'denied') return null;
+    return (
+      <button
+        onClick={requestMicPermission}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-medium hover:bg-orange-500/20 transition-colors"
+      >
+        Mic blocked
+      </button>
+    );
+  };
 
   return (
     <header
@@ -90,7 +147,10 @@ export function HeaderStrip({
 
       {/* Right group */}
       <div className="flex items-center gap-2 flex-shrink-0">
-        {/* Status pill */}
+        {/* Mic warning */}
+        <MicWarning />
+
+        {/* Status pill - shows live call or phone connection status */}
         {isLive ? (
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -102,14 +162,11 @@ export function HeaderStrip({
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 1.2, repeat: Infinity }}
             />
-            {callTimer ? `${callTimer}` : 'On Call'}
+            {callTimer ? `${callTimer}` : callStatus === 'connecting' ? 'Connecting...' : callStatus === 'ringing' ? 'Ringing...' : 'On Call'}
             {activeLeadName && <span className="text-red-300/70 hidden lg:inline"> · {activeLeadName}</span>}
           </motion.div>
         ) : (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-medium">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-            Ready
-          </div>
+          <PhoneStatusIndicator />
         )}
 
         <button
