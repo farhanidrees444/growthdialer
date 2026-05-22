@@ -49,6 +49,7 @@ const navItems: NavItem[] = [
   { icon: BarChart2, label: "Analytics", href: "/analytics" },
   { icon: Headphones, label: "Recordings", href: "/recordings" },
   { icon: Hash, label: "My Numbers", href: "/numbers" },
+  { icon: Building2, label: "Team", href: "/team" },
 ];
 
 const bottomItems = [

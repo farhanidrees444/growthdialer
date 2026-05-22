@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Zap, Menu, LayoutDashboard, Phone, Users, Headphones, Settings } from "lucide-react";
+import { Zap, Menu, LayoutDashboard, Phone, Users, Headphones, Settings, Building2 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import { LeadsProvider } from "@/contexts/leads-context";
 import { ImportLeadsDialog } from "@/components/ImportLeadsDialog";
@@ -18,6 +18,7 @@ const BOTTOM_TABS = [
   { icon: LayoutDashboard, label: "Home",     href: "/dashboard" },
   { icon: Phone,           label: "Dialer",   href: "/dialer" },
   { icon: Users,           label: "Leads",    href: "/leads" },
+  { icon: Building2,       label: "Team",     href: "/team" },
   { icon: Headphones,      label: "Recordings", href: "/recordings" },
   { icon: Settings,        label: "Settings", href: "/settings" },
 ] as const;
