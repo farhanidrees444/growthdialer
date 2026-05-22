@@ -235,8 +235,8 @@ export default function DialerPage() {
 
     if ((prev === 'connecting' || prev === 'ringing') && callStatus === 'active') {
       powerDialerRef.current.onCallStarted();
-      if (mode === 'preview' && selectedLead && pendingCallDbId) {
-        startCall(pendingCallDbId, pendingCallDbId);
+      if (mode === 'preview' && selectedLead) {
+        startCall(pendingCallDbId ?? '', pendingCallDbId ?? '');
       }
     }
 
