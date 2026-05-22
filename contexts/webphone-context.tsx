@@ -23,6 +23,7 @@ export interface WebPhoneContextValue {
   isMuted: boolean;
   isOnHold: boolean;
   micPermission: MicPermission;
+  lastError: string | null;
   makeCall: (destination: string, callerNumber?: string) => void;
   hangup: () => void;
   toggleMute: () => void;
@@ -72,6 +73,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const [isMuted, setIsMuted] = useState(false);
   const [isOnHold, setIsOnHold] = useState(false);
   const [micPermission, setMicPermission] = useState<MicPermission>('unknown');
+  const [lastError, setLastError] = useState<string | null>(null);
 
   // Refs hold live objects that should NOT trigger re-renders
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,19 +89,23 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   // ── Init / Reconnect ─────────────────────────────────────────────────────────
   const initClient = useCallback(async () => {
     safeSet(setPhoneStatus, 'initializing');
+    safeSet(setLastError, null);
     try {
       // Dynamic import prevents SSR from pulling in browser-only code
       const { TelnyxRTC } = await import('@telnyx/webrtc');
 
       const res = await fetch('/api/voice/token', { method: 'POST' });
       if (!res.ok) {
-        console.error('[WebPhone] token fetch failed:', res.status);
+        const errorText = await res.text().catch(() => 'Unknown error');
+        console.error('[WebPhone] token fetch failed:', res.status, errorText);
+        safeSet(setLastError, `Token fetch failed: ${res.status}`);
         safeSet(setPhoneStatus, 'error');
         return;
       }
       const creds = await res.json();
       if (creds.error) {
-        console.error('[WebPhone] token error:', creds.error);
+        console.error('[WebPhone] token error:', creds.error, creds.details);
+        safeSet(setLastError, creds.details || creds.error);
         safeSet(setPhoneStatus, 'error');
         return;
       }
@@ -113,9 +119,16 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       const opts: IClientOptions = {};
       if (creds.login_token) {
         opts.login_token = creds.login_token;
-      } else {
+        console.log('[WebPhone] Using login_token authentication');
+      } else if (creds.login && creds.password) {
         opts.login = creds.login;
         opts.password = creds.password;
+        console.log('[WebPhone] Using SIP credentials authentication');
+      } else {
+        console.error('[WebPhone] No valid credentials received');
+        safeSet(setLastError, 'No valid credentials received from server');
+        safeSet(setPhoneStatus, 'error');
+        return;
       }
 
       const client = new TelnyxRTC(opts);
@@ -131,6 +144,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
       client.on('telnyx.error', (err: unknown) => {
         console.error('[WebPhone] error event:', err);
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        safeSet(setLastError, `Connection error: ${errorMsg}`);
         safeSet(setPhoneStatus, 'error');
       });
 
@@ -159,6 +174,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       client.connect();
     } catch (err) {
       console.error('[WebPhone] init error:', err);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      safeSet(setLastError, `Initialization error: ${errorMsg}`);
       safeSet(setPhoneStatus, 'error');
     }
   }, [safeSet]);
@@ -302,6 +319,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         isMuted,
         isOnHold,
         micPermission,
+        lastError,
         makeCall,
         hangup,
         toggleMute,

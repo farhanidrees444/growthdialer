@@ -108,10 +108,17 @@ export default function DialerPage() {
   const {
     callStatus, isMuted, isOnHold, phoneStatus, activeCallId,
     makeCall, hangup, toggleMute, toggleHold, sendDTMF,
-    micPermission, requestMicPermission, reconnect,
+    micPermission, requestMicPermission, reconnect, lastError,
   } = useWebPhone();
 
   const { mode, selectedLead, activeCallDbId, selectLead, startCall, endCall } = useDialerMode();
+
+  // Show error toast when phone has error
+  useEffect(() => {
+    if (phoneStatus === 'error' && lastError) {
+      toast.error(lastError, { duration: 8000 });
+    }
+  }, [phoneStatus, lastError]);
 
   // Show mic permission modal on first visit if permission unknown
   const [showMicModal, setShowMicModal] = useState(false);

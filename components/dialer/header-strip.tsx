@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, HelpCircle, Wifi, WifiOff, Loader2, RefreshCw } from 'lucide-react';
-import { SessionReplayMap } from './session-replay-map';
 import { useWebPhone, type PhoneStatus } from '@/contexts/webphone-context';
 
 interface CallDot {
@@ -140,9 +139,16 @@ export function HeaderStrip({
         </div>
       </div>
 
-      {/* Center: Session replay map */}
-      <div className="flex-1 min-w-0 flex items-center justify-center overflow-hidden" style={{ height: 36 }}>
-        <SessionReplayMap calls={todayCalls} onDotClick={onDotClick} />
+      {/* Center: Session stats - clean display instead of bubbles */}
+      <div className="flex-1 min-w-0 flex items-center justify-center">
+        {todayCalls.length > 0 ? (
+          <div className="flex items-center gap-2 text-xs text-white/40">
+            <span className="text-white/20">|</span>
+            <span>{todayCalls.length} calls today</span>
+          </div>
+        ) : (
+          <span className="text-[11px] text-white/20">Ready to dial</span>
+        )}
       </div>
 
       {/* Right group */}
