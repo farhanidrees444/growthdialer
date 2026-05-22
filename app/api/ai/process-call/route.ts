@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import {
-  groq, generateEmbedding,
+  generateEmbedding,
   analyzeCallWithGemini, analyzeCallWithGroq,
+  getGroqClient,
 } from '@/lib/ai/clients';
 import { checkAIRateLimit } from '@/lib/ai/rate-limiter';
 
@@ -141,6 +142,7 @@ export async function POST(request: NextRequest) {
       const audioFile = new File([audioBlob], 'recording.mp3', { type: 'audio/mpeg' });
 
       console.log('[AI] Sending to speech recognition engine, file size:', audioBuffer.byteLength, 'bytes');
+      const groq = getGroqClient();
       const transcription = await groq.audio.transcriptions.create({
         file: audioFile,
         model: 'whisper-large-v3',
@@ -169,7 +171,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ skipped: true, reason: 'transcription_disabled' });
   }
 
-  // ── Step 7: Transcript embedding ───────────────────────────────────────────
+  // ── Step 7: Transcript embedding ────────────────────────���──────────────────
   const transcriptEmbedding = await generateEmbedding(transcript);
 
   // ── Step 8: AI analysis (conditional) ─────────────────────────────────────

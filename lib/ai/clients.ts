@@ -1,9 +1,15 @@
 import Groq from 'groq-sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-export const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+let _groq: Groq | null = null;
+export function getGroqClient(): Groq {
+  if (!_groq) {
+    _groq = new Groq({
+      apiKey: process.env.GROQ_API_KEY,
+    });
+  }
+  return _groq;
+}
 
 export const geminiAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -101,6 +107,7 @@ export async function analyzeCallWithGroq(
   jobTitle: string,
   previousMemories: string,
 ): Promise<AIAnalysis> {
+  const groq = getGroqClient();
   const prompt = ANALYSIS_PROMPT(transcript, companyName, industry, jobTitle, previousMemories);
   const response = await groq.chat.completions.create({
     model: 'llama-3.3-70b-versatile',

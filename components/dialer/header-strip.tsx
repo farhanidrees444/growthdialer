@@ -39,7 +39,7 @@ export function HeaderStrip({
   onDotClick,
 }: HeaderStripProps) {
   const [statsExpanded, setStatsExpanded] = useState(false);
-  const { phoneStatus, reconnect, micPermission, requestMicPermission } = useWebPhone();
+  const { phoneStatus, reconnect, micPermission, requestMicPermission, lastError } = useWebPhone();
   const isLive = callStatus === 'active' || callStatus === 'connecting' || callStatus === 'ringing';
 
   // Phone status indicator component
@@ -67,10 +67,11 @@ export function HeaderStrip({
       return (
         <button
           onClick={reconnect}
+          title={lastError || undefined}
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium hover:bg-rose-500/20 transition-colors"
         >
           <WifiOff className="h-3 w-3" />
-          Offline
+          {lastError ? 'Error' : 'Offline'}
           <RefreshCw className="h-2.5 w-2.5 ml-1" />
         </button>
       );

@@ -79,6 +79,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const clientRef = useRef<any>(null);
   const activeCallRef = useRef<Call | null>(null);
+  const lastDestinationRef = useRef<string>('');
   // Track whether we are mounted to avoid setState after unmount
   const mountedRef = useRef(true);
 
@@ -159,6 +160,32 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         safeSet(setActiveCallId, call.id ?? null);
         safeSet(setCallStatus, mapped);
 
+        // Register the call with the backend when it transitions to connecting/ringing
+        if ((mapped === 'connecting' || mapped === 'ringing') && call.id) {
+          const registerCallToBackend = async () => {
+            try {
+              const res = await fetch('/api/calls/dial', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  to: lastDestinationRef.current,
+                  call_control_id: call.id,
+                }),
+              });
+              if (!res.ok) {
+                const error = await res.text();
+                console.error('[WebPhone] Call registration failed:', res.status, error);
+              } else {
+                const data = await res.json();
+                console.log('[WebPhone] Call registered with db_id:', data.db_id);
+              }
+            } catch (err) {
+              console.error('[WebPhone] Call registration error:', err);
+            }
+          };
+          registerCallToBackend();
+        }
+
         if (mapped === 'ended') {
           activeCallRef.current = null;
           safeSet(setActiveCallId, null);
@@ -220,12 +247,17 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const makeCall = useCallback((destination: string, callerNumber?: string) => {
     if (!clientRef.current) {
       console.warn('[WebPhone] makeCall: client not initialized');
+      safeSet(setLastError, 'Phone client not initialized');
       return;
     }
     if (phoneStatus !== 'ready') {
       console.warn('[WebPhone] makeCall: phone not ready, status:', phoneStatus);
+      safeSet(setLastError, `Phone not ready: ${phoneStatus}`);
       return;
     }
+    // Store destination for backend registration
+    lastDestinationRef.current = destination;
+    
     setCallStatus('connecting');
     setIsMuted(false);
     setIsOnHold(false);
@@ -254,15 +286,18 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       }
       console.log('[WebPhone] initiating call:', {
         destinationNumber: destination,
-        callerNumber: callerNumber ?? '(none)',
+        callerNumber: callerNumber ?? '(system default)',
       });
       const call = clientRef.current.newCall(callParams);
       activeCallRef.current = call;
+      console.log('[WebPhone] call created with ID:', call.id);
     } catch (err) {
       console.error('[WebPhone] newCall error:', err);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      safeSet(setLastError, `Call failed: ${errorMsg}`);
       setCallStatus('idle');
     }
-  }, [phoneStatus]);
+  }, [phoneStatus, safeSet]);
 
   const hangup = useCallback(() => {
     if (activeCallRef.current) {
