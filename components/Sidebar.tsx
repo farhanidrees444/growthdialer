@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
   Phone,
@@ -17,14 +17,21 @@ import {
   X,
   Hash,
   Sparkles,
+  Building2,
+  ChevronsUpDown,
+  Check,
+  Headset,
 } from "lucide-react";
+import { useState } from "react";
 import { useLeads } from "@/contexts/leads-context";
 import { useMobileNav } from "@/contexts/mobile-nav-context";
+import { useWorkspace } from "@/contexts/workspace-context";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
+import { ROLE_LABELS } from "@/lib/auth/permissions";
 
 type NavItem = {
   icon: LucideIcon;

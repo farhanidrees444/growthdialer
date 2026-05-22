@@ -11,6 +11,7 @@ import { WebPhoneProvider } from "@/contexts/webphone-context";
 import { CallProvider, useCallContext } from "@/lib/call-context";
 import ActiveCallOverlay from "@/components/active-call-overlay";
 import SaveAsLeadModal from "@/components/save-as-lead-modal";
+import { WorkspaceProvider } from "@/contexts/workspace-context";
 import { cn } from "@/lib/utils";
 
 const BOTTOM_TABS = [
@@ -95,10 +96,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <WebPhoneProvider>
-      <CallProvider>
-        <LeadsProvider>
-          <MobileNavProvider>
+    <WorkspaceProvider>
+      <WebPhoneProvider>
+        <CallProvider>
+          <LeadsProvider>
+            <MobileNavProvider>
             <ImportLeadsDialog />
             <div className="dashboard-shell relative flex h-screen overflow-hidden bg-background text-foreground">
               <div className="pointer-events-none absolute inset-0 grid-bg opacity-[0.35]" aria-hidden />
@@ -119,9 +121,10 @@ export default function DashboardLayout({
             </div>
             <MobileBottomTabBar />
             <DashboardOverlays />
-          </MobileNavProvider>
-        </LeadsProvider>
-      </CallProvider>
-    </WebPhoneProvider>
+            </MobileNavProvider>
+          </LeadsProvider>
+        </CallProvider>
+      </WebPhoneProvider>
+    </WorkspaceProvider>
   );
 }
