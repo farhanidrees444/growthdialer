@@ -40,22 +40,29 @@ export async function POST(request: NextRequest) {
     }
 
     // ── WebRTC mode: browser already dialed via SDK ──────────────────────────
-    // call_control_id comes from the TelnyxRTC notification event on the client.
-    // We just persist the call record here; Telnyx webhooks update it from here.
+    // call_control_id comes from the TelnyxRTC newCall() return value.
+    // We just persist the DB record here; Telnyx webhooks update status.
+    // Returns db_id (UUID) so the client can use it for notes/disposition APIs.
     if (call_control_id) {
+      let dbId: string | null = null;
       if (userId) {
-        const { error: insertError } = await supabase.from('calls').insert({
-          user_id: userId,
-          lead_id: lead_id ?? null,
-          to_number: e164,
-          from_number: fromNumber,
-          telnyx_call_id: call_control_id,
-          status: 'initiated',
-          created_at: new Date().toISOString(),
-        });
+        const { data: insertedRow, error: insertError } = await supabase
+          .from('calls')
+          .insert({
+            user_id: userId,
+            lead_id: lead_id ?? null,
+            to_number: e164,
+            from_number: fromNumber,
+            telnyx_call_id: call_control_id,
+            status: 'initiated',
+            created_at: new Date().toISOString(),
+          })
+          .select('id')
+          .single();
         if (insertError) console.error('[dial] insert error:', insertError);
+        dbId = insertedRow?.id ?? null;
       }
-      return NextResponse.json({ call_control_id, to: e164, status: 'initiated' });
+      return NextResponse.json({ call_control_id, db_id: dbId, to: e164, status: 'initiated' });
     }
 
     // ── Server-side dial (legacy / fallback when WebRTC unavailable) ─────────

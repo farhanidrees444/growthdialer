@@ -105,7 +105,7 @@ interface TodayStats { calls: number; connects: number; meetings: number; streak
 // ══════════════════════════════════════════════════════════════════════════════
 export default function DialerPage() {
   const {
-    callStatus, isMuted, isOnHold, phoneStatus,
+    callStatus, isMuted, isOnHold, phoneStatus, activeCallId,
     makeCall, hangup, toggleMute, toggleHold, sendDTMF,
   } = useWebPhone();
 
@@ -269,24 +269,33 @@ export default function DialerPage() {
   }, [callStatus]);
 
   // ── Call initiation ─────────────────────────────────────────────────────────
-  const initiateCall = useCallback(async (phone: string, lead?: LeadRecord) => {
+  // Flow: makeCall() → WebRTC call starts → onCallCreated fires with Telnyx
+  // call_control_id → we register the DB record using that ID → get back the
+  // DB UUID → store as pendingCallDbId for notes/disposition.
+  // This prevents the double-call bug where both a server-side Telnyx call AND
+  // a WebRTC call were made simultaneously to the same number.
+  const initiateCall = useCallback((phone: string, lead?: LeadRecord) => {
     if (phoneStatus !== 'ready') {
       toast.error('Phone not ready — please wait a moment');
       return;
     }
     const e164 = normalizePhone(phone) ?? phone;
-    try {
-      const res = await fetch('/api/calls/dial', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: e164, lead_id: lead?.id }),
-      });
-      const data = await res.json() as { call_control_id?: string };
-      setPendingCallDbId(data.call_control_id ?? null);
-      makeCall(e164);
-    } catch {
-      toast.error('Failed to initiate call');
-    }
+    makeCall(e164, undefined, async (callId) => {
+      // Immediately store call_control_id as a fallback (overwritten by DB UUID below)
+      setPendingCallDbId(callId);
+      try {
+        const res = await fetch('/api/calls/dial', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: e164, lead_id: lead?.id, call_control_id: callId }),
+        });
+        const data = await res.json() as { call_control_id?: string; db_id?: string };
+        // Use DB UUID for notes/disposition APIs; fall back to call_control_id
+        if (data.db_id) setPendingCallDbId(data.db_id);
+      } catch {
+        // Non-fatal — call proceeds even if DB registration fails
+      }
+    });
   }, [phoneStatus, makeCall]);
 
   // Update ref on every render so powerDialer.onShouldDial always calls latest version
@@ -300,18 +309,18 @@ export default function DialerPage() {
   const handleEndCall = useCallback(() => { hangup(); }, [hangup]);
 
   const handleDropVoicemail = useCallback(async () => {
-    if (!pendingCallDbId) return;
+    if (!activeCallId) return;
     try {
       await fetch('/api/calls/drop-voicemail', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ call_control_id: pendingCallDbId }),
+        body: JSON.stringify({ call_control_id: activeCallId }),
       });
       toast.success('Voicemail dropped');
     } catch {
       toast.error('Failed to drop voicemail');
     }
-  }, [pendingCallDbId]);
+  }, [activeCallId]);
 
   // ── Disposition ─────────────────────────────────────────────────────────────
   const handleDispositionSave = useCallback(async (
@@ -557,7 +566,7 @@ export default function DialerPage() {
                   onDropVoicemail={handleDropVoicemail}
                   onOpenKeypad={() => setDtmfOpen((p) => !p)}
                   onEndCall={handleEndCall}
-                  callDbId={activeCallDbId}
+                  callDbId={pendingCallDbId}
                 />
               </motion.div>
             )}

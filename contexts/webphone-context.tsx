@@ -23,7 +23,7 @@ export interface WebPhoneContextValue {
   isMuted: boolean;
   isOnHold: boolean;
   micPermission: MicPermission;
-  makeCall: (destination: string, callerNumber?: string) => void;
+  makeCall: (destination: string, callerNumber?: string, onCallCreated?: (callId: string) => void) => void;
   hangup: () => void;
   toggleMute: () => void;
   toggleHold: () => void;
@@ -200,7 +200,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ── Call actions ─────────────────────────────────────────────────────────────
-  const makeCall = useCallback((destination: string, callerNumber?: string) => {
+  const makeCall = useCallback((destination: string, callerNumber?: string, onCallCreated?: (callId: string) => void) => {
     if (!clientRef.current) {
       console.warn('[WebPhone] makeCall: client not initialized');
       return;
@@ -218,7 +218,6 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         destinationNumber: destination,
         audio: true,
         video: false,
-        // HD voice: Opus with echo/noise cancellation
         mediaConstraints: {
           audio: {
             echoCancellation: true,
@@ -227,8 +226,6 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           },
           video: false,
         },
-        // Dual-channel recording: agent on left, customer on right
-        // This gives Groq Whisper accurate speaker diarization
         custom_headers: [
           { name: 'X-Recording-Channels', value: 'dual' },
           { name: 'X-Recording-Format', value: 'mp3' },
@@ -241,10 +238,14 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       console.log('[WebPhone] initiating call:', {
         destinationNumber: destination,
         callerNumber: callerNumber ?? '(none)',
-        callerName: callerNumber ? 'GrowthDialer' : '(none)',
       });
       const call = clientRef.current.newCall(callParams);
       activeCallRef.current = call;
+      // Fire callback immediately so the consumer can register a DB record
+      // with the correct WebRTC call_control_id (avoids duplicate server-side call)
+      if (call?.id) {
+        onCallCreated?.(call.id as string);
+      }
     } catch (err) {
       console.error('[WebPhone] newCall error:', err);
       setCallStatus('idle');
