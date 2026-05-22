@@ -5,17 +5,18 @@ export const dynamic = 'force-dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Signal, Search, Plus, Star, Sparkles,
+  Signal, Search, Sparkles,
   CheckCircle2, Loader2, AlertCircle, ChevronDown, X,
-  Globe,
+  AlertTriangle, RefreshCw,
 } from 'lucide-react';
 import DashboardHeader from '@/components/DashboardHeader';
 import CountryCard from '@/components/numbers/country-card';
 import OwnedNumberCard from '@/components/numbers/owned-number-card';
 import AvailableNumberCard from '@/components/numbers/available-number-card';
 import CountryFlag from '@/components/numbers/country-flag';
+import { toast } from 'sonner';
 import {
-  TELNYX_COUNTRIES, POPULAR_COUNTRIES, getCountryByCode, NUMBER_TYPE_LABELS,
+  TELNYX_COUNTRIES, POPULAR_COUNTRIES, NUMBER_TYPE_LABELS,
   type TelnyxCountry,
 } from '@/lib/telnyx-countries';
 
@@ -34,6 +35,10 @@ interface PurchasedNumber {
   is_default: boolean;
   status: string;
   purchased_at: string;
+  billing_status?: string | null;
+  next_billing_date?: string | null;
+  auto_renew?: boolean | null;
+  stripe_subscription_id?: string | null;
 }
 
 interface AvailableNumber {
@@ -67,6 +72,7 @@ interface MyNumbersProps {
 function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
   const [numbers, setNumbers] = useState<PurchasedNumber[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -82,6 +88,24 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
   }, []);
 
   useEffect(() => { load(); }, [load, refreshSignal]);
+
+  async function handleSync() {
+    setSyncing(true);
+    try {
+      const res = await fetch('/api/numbers/sync', { method: 'POST' });
+      const data = await res.json();
+      if (data.error) {
+        toast.error(data.error);
+      } else {
+        toast.success(`Synced ${data.synced} number${data.synced !== 1 ? 's' : ''} from your account`);
+        await load();
+      }
+    } catch {
+      toast.error('Sync failed — check your connection');
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   async function handleSetDefault(id: string) {
     await fetch(`/api/numbers/${id}`, {
@@ -124,20 +148,61 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
             Buy a number to start making outbound calls with your own caller ID.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onBuyNew}
-          className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-600/20 to-violet-600/10 px-5 py-2.5 text-sm font-semibold text-emerald-300 transition hover:from-emerald-600/30"
-        >
-          <Sparkles className="h-4 w-4" />
-          Buy New Number
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-400 transition hover:text-white disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing...' : 'Sync'}
+          </button>
+          <button
+            type="button"
+            onClick={onBuyNew}
+            className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-600/20 to-violet-600/10 px-5 py-2.5 text-sm font-semibold text-emerald-300 transition hover:from-emerald-600/30"
+          >
+            <Sparkles className="h-4 w-4" />
+            Buy New Number
+          </button>
+        </div>
       </div>
     );
   }
 
+  const expiringNumbers = active.filter((n) => {
+    if (!n.next_billing_date || n.stripe_subscription_id) return false;
+    const days = Math.ceil((new Date(n.next_billing_date).getTime() - Date.now()) / 86400000);
+    return days <= 7 && days >= 0;
+  });
+
   return (
     <div className="space-y-4 max-w-2xl">
+      {/* Expiry warning banner */}
+      {expiringNumbers.length > 0 && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="text-amber-400 w-5 h-5 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-amber-300">
+                {expiringNumbers.length} number{expiringNumbers.length > 1 ? 's' : ''} expire{expiringNumbers.length === 1 ? 's' : ''} soon
+              </p>
+              <p className="text-xs text-amber-400/70 mt-0.5">
+                Numbers without an active subscription are released after 30 days. Set up billing to keep them permanently.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="shrink-0 text-xs text-amber-300 hover:text-white border border-amber-500/50 rounded-lg px-3 py-1.5 transition"
+              onClick={() => toast.info('Billing setup coming soon')}
+            >
+              Set up billing →
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-xs text-slate-400">
         <span>
           <span className="font-bold text-white">{active.length}</span> active number{active.length !== 1 ? 's' : ''}
@@ -146,6 +211,15 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
         <span>
           Monthly cost: <span className="font-bold text-white">${totalCost.toFixed(2)}</span>
         </span>
+        <button
+          type="button"
+          onClick={handleSync}
+          disabled={syncing}
+          className="ml-auto flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-medium text-slate-400 transition hover:border-white/20 hover:text-white disabled:opacity-50"
+        >
+          <RefreshCw className={`h-3 w-3 ${syncing ? 'animate-spin' : ''}`} />
+          {syncing ? 'Syncing...' : 'Sync Numbers'}
+        </button>
       </div>
 
       <motion.div
@@ -581,14 +655,16 @@ export default function NumbersPage() {
           </div>
 
           {tab === 'my' && (
-            <button
-              type="button"
-              onClick={() => setTab('buy')}
-              className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-600/20 to-violet-600/10 px-4 py-2 text-xs font-bold text-emerald-300 transition hover:from-emerald-600/30"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              Buy New Number
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setTab('buy')}
+                className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-600/20 to-violet-600/10 px-4 py-2 text-xs font-bold text-emerald-300 transition hover:from-emerald-600/30"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Buy New Number
+              </button>
+            </div>
           )}
         </div>
 

@@ -1,17 +1,19 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Pause, MicOff, Mic, FileText, PhoneForwarded, Grid3X3, Plus } from 'lucide-react';
+import { Pause, MicOff, Mic, FileText, PhoneForwarded, Grid3X3, Circle, Square } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 
 interface ActionDockProps {
   isMuted: boolean;
   isOnHold: boolean;
+  isRecording?: boolean;
   onToggleMute: () => void;
   onToggleHold: () => void;
   onOpenNotes: () => void;
   onDropVoicemail: () => void;
   onOpenKeypad: () => void;
+  onToggleRecord?: () => void;
 }
 
 function DockButton({
@@ -61,14 +63,16 @@ function DockButton({
 export function ActionDock({
   isMuted,
   isOnHold,
+  isRecording = false,
   onToggleMute,
   onToggleHold,
   onOpenNotes,
   onDropVoicemail,
   onOpenKeypad,
+  onToggleRecord,
 }: ActionDockProps) {
   return (
-    <div className="flex items-center justify-center gap-3" role="toolbar" aria-label="Call controls">
+    <div className="flex items-center justify-center gap-3 flex-wrap" role="toolbar" aria-label="Call controls">
       <DockButton label={isOnHold ? 'Resume' : 'Hold'} hotkey="O" onClick={onToggleHold} active={isOnHold}>
         <Pause className="w-4 h-4" />
       </DockButton>
@@ -81,31 +85,24 @@ export function ActionDock({
         <FileText className="w-4 h-4" />
       </DockButton>
 
-      <DockButton label="Voicemail Drop" hotkey="V" onClick={onDropVoicemail}>
-        <PhoneForwarded className="w-4 h-4" />
-      </DockButton>
-
       <DockButton label="DTMF Keypad" hotkey="K" onClick={onOpenKeypad}>
         <Grid3X3 className="w-4 h-4" />
       </DockButton>
 
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <button
-                className="relative w-12 h-12 rounded-full flex items-center justify-center bg-white/[0.04] border border-white/[0.06] text-white/30 cursor-not-allowed"
-                disabled
-                aria-label="Add to conference (coming soon)"
-              />
-            }
-          >
-            <Plus className="w-4 h-4" />
-            <span className="absolute -top-1 -right-1 text-[8px] bg-purple-500/80 text-white rounded px-1">v2</span>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="text-xs">Transfer / Conference — Coming in v2</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <DockButton label="Voicemail Drop" hotkey="V" onClick={onDropVoicemail}>
+        <PhoneForwarded className="w-4 h-4" />
+      </DockButton>
+
+      {onToggleRecord && (
+        <DockButton
+          label={isRecording ? 'Stop Recording' : 'Record'}
+          hotkey="R"
+          onClick={onToggleRecord}
+          active={isRecording}
+        >
+          {isRecording ? <Square className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
+        </DockButton>
+      )}
     </div>
   );
 }

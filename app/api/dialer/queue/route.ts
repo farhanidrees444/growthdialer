@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
       .from('leads')
       .select('id, name, title, company, phone, email, status, ai_score, last_called_at, call_attempts, tags, notes, dnc, user_id')
       .eq('user_id', session.user.id)
+      .is('deleted_at', null)
       .not('status', 'in', '("do_not_call","meeting_booked")')
       .eq('dnc', false);
 
@@ -59,6 +60,7 @@ export async function GET(request: NextRequest) {
         .from('leads')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', session.user.id)
+        .is('deleted_at', null)
         .not('status', 'in', '("do_not_call","meeting_booked")')
         .eq('dnc', false)
         .gte('ai_score', 70),
@@ -66,11 +68,13 @@ export async function GET(request: NextRequest) {
         .from('leads')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', session.user.id)
+        .is('deleted_at', null)
         .eq('status', 'callback'),
       supabase
         .from('leads')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', session.user.id)
+        .is('deleted_at', null)
         .not('status', 'in', '("do_not_call","meeting_booked")')
         .eq('dnc', false),
     ]);

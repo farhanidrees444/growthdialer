@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const status = url.searchParams.get('status') ?? 'queued';
     const offset = Math.max(page - 1, 0) * limit;
 
-    let query = supabase.from('leads').select('*', { count: 'exact' }).eq('user_id', userId);
+    let query = supabase.from('leads').select('*', { count: 'exact' }).eq('user_id', userId).is('deleted_at', null);
     if (status !== 'all') {
       query = query.in('status', status.split(',').map((value) => value.trim()).filter(Boolean));
     }

@@ -100,16 +100,26 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const { error } = await supabase.from('leads').delete().eq('id', id).eq('user_id', userId);
+    console.log('[LEADS-DELETE] Soft deleting lead:', id, 'user:', userId);
+
+    const { error } = await supabase
+      .from('leads')
+      .update({
+        deleted_at: new Date().toISOString(),
+        deleted_by: userId,
+      })
+      .eq('id', id)
+      .eq('user_id', userId);
 
     if (error) {
-      console.error('Lead delete failed:', error);
-      return NextResponse.json({ error: 'Unable to delete lead' }, { status: 500 });
+      console.error('[LEADS-DELETE] Error:', error);
+      return NextResponse.json({ error: error.message, code: error.code }, { status: 500 });
     }
 
+    console.log('[LEADS-DELETE] Success');
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Lead delete error:', error);
+    console.error('[LEADS-DELETE] Exception:', error);
     return NextResponse.json({ error: 'Unable to delete lead' }, { status: 500 });
   }
 }

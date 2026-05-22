@@ -50,6 +50,7 @@ export function LiveCallStage({
   const [noteOpen, setNoteOpen] = useState(false);
   const [notes, setNotes] = useState('');
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const saveDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Auto-save notes
@@ -144,11 +145,23 @@ export function LiveCallStage({
       <ActionDock
         isMuted={isMuted}
         isOnHold={isOnHold}
+        isRecording={isRecording}
         onToggleMute={onToggleMute}
         onToggleHold={onToggleHold}
         onOpenNotes={() => setNoteOpen((p) => !p)}
         onDropVoicemail={onDropVoicemail}
         onOpenKeypad={onOpenKeypad}
+        onToggleRecord={callDbId ? async () => {
+          try {
+            const action = isRecording ? 'record_stop' : 'record_start';
+            const res = await fetch(`/api/calls/${callDbId}/record`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action }),
+            });
+            if (res.ok) setIsRecording((r) => !r);
+          } catch { /* silent */ }
+        } : undefined}
       />
 
       {/* End call */}

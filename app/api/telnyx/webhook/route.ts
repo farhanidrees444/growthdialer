@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     const callControlId = payload.call_control_id;
     const callSessionId = payload.call_session_id;
 
-    console.log(`[WEBHOOK] ${event_type} | session=${callSessionId} | control=${callControlId}`);
+    console.log(`[WEBHOOK] ${event_type} | session=${callSessionId} | control=${callControlId} | from=${payload.from} | to=${payload.to}`);
 
     const supabase = createServiceClient();
     if (!supabase) {
@@ -154,6 +154,22 @@ export async function POST(request: NextRequest) {
         .eq('telnyx_call_id', callControlId ?? '');
       if (error) console.error('[WEBHOOK] call.initiated update error:', error);
       else console.log('[WEBHOOK] call.initiated — saved session_id:', callSessionId);
+    }
+
+    // ── call.ringing ────────────────────────────────────────────────────────
+    // This confirms the receiver's phone is actually ringing (AMD is disabled)
+    else if (event_type === 'call.ringing') {
+      console.log('[WEBHOOK] call.ringing — receiver phone is ringing:', {
+        callControlId,
+        from: payload.from,
+        to: payload.to,
+      });
+      if (callControlId) {
+        await supabase
+          .from('calls')
+          .update({ status: 'ringing', ...(callSessionId ? { telnyx_session_id: callSessionId } : {}) })
+          .eq('telnyx_call_id', callControlId);
+      }
     }
 
     // ── call.answered ───────────────────────────────────────────────────────

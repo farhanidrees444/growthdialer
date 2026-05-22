@@ -60,6 +60,9 @@ export async function POST(request: NextRequest) {
 
     const isDefault = !existingCount || existingCount === 0;
 
+    const purchasedAt = new Date().toISOString();
+    const nextBillingDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
     const { error: insertError } = await supabase.from('purchased_numbers').insert({
       user_id: userId,
       phone_number: phoneNumber,
@@ -74,12 +77,24 @@ export async function POST(request: NextRequest) {
       monthly_cost: monthlyCost ?? 1.00,
       is_default: isDefault,
       status: 'active',
-      purchased_at: new Date().toISOString(),
+      billing_status: 'unpaid',
+      auto_renew: true,
+      purchased_at: purchasedAt,
+      next_billing_date: nextBillingDate,
     });
 
     if (insertError) {
-      console.error('Failed to save purchased number:', insertError);
-      return NextResponse.json({ error: 'Number purchased but could not be saved' }, { status: 500 });
+      // CRITICAL: Number was purchased from provider but DB insert failed.
+      // Don't show generic error — this needs visibility.
+      console.error('[NUMBERS-PURCHASE] DB INSERT FAILED:', insertError);
+      console.error('[NUMBERS-PURCHASE] Provider number was purchased:', phoneNumber);
+      // Return success with warning so user knows to check dashboard
+      return NextResponse.json({
+        success: true,
+        phoneNumber,
+        isDefault,
+        warning: 'Number purchased but may not show immediately. Try the Sync button.',
+      });
     }
 
     return NextResponse.json({ success: true, phoneNumber, isDefault });

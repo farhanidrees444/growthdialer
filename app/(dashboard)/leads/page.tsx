@@ -204,7 +204,7 @@ function DeleteConfirmModal({ name, onConfirm, onCancel }: { name: string; onCon
         </div>
         <h3 className="text-base font-bold text-white mb-1.5">Delete {name}?</h3>
         <p className="text-sm text-slate-400 mb-5 leading-relaxed">
-          Moved to trash — recoverable for 30 days from the Trash tab.
+          This lead will be moved to trash and automatically deleted after 7 days. Restore from the Trash tab.
         </p>
         <div className="flex gap-2">
           <button type="button" onClick={onCancel}
@@ -363,6 +363,74 @@ function LeadCard({
   );
 }
 
+// ─── Trash Lead Card ──────────────────────────────────────────────────────────
+
+function TrashLeadCard({
+  lead,
+  onRestore,
+  onDeleteForever,
+}: {
+  lead: FullLead;
+  onRestore: () => void;
+  onDeleteForever: () => void;
+}) {
+  const grad = avatarGradient(lead.name);
+  const deletedAt = lead.deleted_at ? new Date(lead.deleted_at) : null;
+  const daysAgo = deletedAt
+    ? Math.max(0, Math.floor((Date.now() - deletedAt.getTime()) / 86400000))
+    : 0;
+  const daysLeft = Math.max(0, 7 - daysAgo);
+
+  return (
+    <div className="relative flex flex-col gap-3 rounded-2xl border border-red-500/10 bg-red-500/[0.03] p-4 opacity-70 transition-all hover:opacity-90 hover:border-red-500/20">
+      {/* Deleted badge */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold text-red-400">
+          Deleted {daysAgo === 0 ? "today" : `${daysAgo}d ago`}
+        </span>
+        <span className="text-[10px] text-slate-600">
+          Auto-deletes in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      {/* Avatar + name */}
+      <div className="flex items-center gap-3">
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${grad} text-sm font-bold text-white`}>
+          {getInitials(lead.name)}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-white">{lead.name}</p>
+          {(lead.title || lead.company) && (
+            <p className="truncate text-[11px] text-slate-500">
+              {[lead.title, lead.company].filter(Boolean).join(" · ")}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <p className="font-mono text-[11px] text-slate-500">{lead.phone}</p>
+
+      {/* Actions */}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={onRestore}
+          className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600/20 border border-emerald-500/25 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-600/30"
+        >
+          Restore
+        </button>
+        <button
+          type="button"
+          onClick={onDeleteForever}
+          className="flex items-center justify-center gap-1.5 rounded-xl bg-red-600/15 border border-red-500/25 py-2 text-xs font-semibold text-red-400 transition hover:bg-red-600/25"
+        >
+          Delete Forever
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyState({ tab }: { tab: TabKey }) {
@@ -373,7 +441,7 @@ function EmptyState({ tab }: { tab: TabKey }) {
     callback: { title: "No callbacks", sub: "Leads marked for callback appear here." },
     done:     { title: "No completed leads", sub: "Meeting booked or not interested leads appear here." },
     dnc:      { title: "No DNC leads", sub: "Leads marked Do Not Call appear here." },
-    trash:    { title: "Trash is empty", sub: "Deleted leads appear here for 30 days." },
+    trash:    { title: "Trash is empty", sub: "Deleted leads appear here for 7 days before permanent removal." },
   };
   const { title, sub } = msgs[tab];
   return (
@@ -568,14 +636,22 @@ export default function LeadsPage() {
   }, []);
 
   const handleRestoreFromTrash = useCallback(async (lead: FullLead) => {
-    const res = await fetch("/api/leads/bulk", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: [lead.id], action: { type: "restore" } }),
-    });
+    const res = await fetch(`/api/leads/${lead.id}/restore`, { method: "POST" });
     if (!res.ok) { toast.error("Restore failed"); return; }
     setLeads((p) => p.map((l) => l.id === lead.id ? { ...l, deleted_at: null } : l));
     toast.success(`${lead.name} restored`);
+  }, []);
+
+  const handleDeleteForever = useCallback(async (lead: FullLead) => {
+    const confirmed = window.confirm(
+      `Permanently delete ${lead.name}? This cannot be undone. All call history will be lost.`
+    );
+    if (!confirmed) return;
+    const supabase = createClient();
+    const { error } = await supabase.from("leads").delete().eq("id", lead.id);
+    if (error) { toast.error("Delete failed: " + error.message); return; }
+    setLeads((p) => p.filter((l) => l.id !== lead.id));
+    toast.success(`${lead.name} permanently deleted`);
   }, []);
 
   const handleToggleSelect = useCallback((id: string) => {
@@ -887,18 +963,27 @@ export default function LeadsPage() {
                 initial="hidden"
                 animate="show"
               >
-                {paginated.map((lead) => (
-                  <LeadCard
-                    key={lead.id}
-                    lead={lead}
-                    selected={selectedIds.has(lead.id)}
-                    onSelect={() => handleToggleSelect(lead.id)}
-                    onCall={() => handleCall(lead)}
-                    onView={() => tab === "trash" ? undefined : handleView(lead)}
-                    onEdit={() => setEditLead(lead)}
-                    onDelete={() => tab === "trash" ? handleRestoreFromTrash(lead) : setDeleteLead(lead)}
-                  />
-                ))}
+                {paginated.map((lead) =>
+                  tab === "trash" ? (
+                    <TrashLeadCard
+                      key={lead.id}
+                      lead={lead}
+                      onRestore={() => handleRestoreFromTrash(lead)}
+                      onDeleteForever={() => handleDeleteForever(lead)}
+                    />
+                  ) : (
+                    <LeadCard
+                      key={lead.id}
+                      lead={lead}
+                      selected={selectedIds.has(lead.id)}
+                      onSelect={() => handleToggleSelect(lead.id)}
+                      onCall={() => handleCall(lead)}
+                      onView={() => handleView(lead)}
+                      onEdit={() => setEditLead(lead)}
+                      onDelete={() => setDeleteLead(lead)}
+                    />
+                  )
+                )}
               </motion.div>
             </>
           )}

@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Trash2, Loader2 } from 'lucide-react';
+import { Star, Trash2, Loader2, AlertTriangle } from 'lucide-react';
 import CountryFlag from './country-flag';
 import { NUMBER_TYPE_LABELS } from '@/lib/telnyx-countries';
+import { calculateRetailPrice } from '@/lib/pricing/calculate-price';
 
 interface PurchasedNumber {
   id: string;
@@ -19,6 +20,10 @@ interface PurchasedNumber {
   is_default: boolean;
   status: string;
   purchased_at: string;
+  billing_status?: string | null;
+  next_billing_date?: string | null;
+  auto_renew?: boolean | null;
+  stripe_subscription_id?: string | null;
 }
 
 function fmtPhone(phone: string): string {
@@ -36,6 +41,11 @@ function typeLabel(type: string | null): string {
   return NUMBER_TYPE_LABELS[type] ?? type;
 }
 
+function daysUntil(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  return Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);
+}
+
 interface OwnedNumberCardProps {
   num: PurchasedNumber;
   isOnlyNumber: boolean;
@@ -50,6 +60,11 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
 
   const countryCode = num.country_code ?? num.country;
   const countryName = num.country_name ?? num.country;
+  const retailPrice = calculateRetailPrice(Number(num.monthly_cost));
+  const renewDays = daysUntil(num.next_billing_date);
+  const isExpiringSoon = renewDays !== null && renewDays <= 7 && renewDays >= 0;
+  const billingStatus = num.billing_status ?? 'unpaid';
+  const hasBilling = !!num.stripe_subscription_id;
 
   async function handleSetDefault() {
     setSettingDefault(true);
@@ -66,12 +81,16 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
     <motion.div
       variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
-      className="group relative rounded-2xl border border-white/[0.07] bg-[oklch(0.086_0.024_282)] p-4 shadow-lg shadow-black/20 transition-all hover:border-emerald-500/20 hover:shadow-emerald-900/10"
+      className={`group relative rounded-2xl border p-4 shadow-lg shadow-black/20 transition-all ${
+        isExpiringSoon
+          ? 'border-amber-500/30 bg-amber-500/[0.04] hover:border-amber-500/50'
+          : 'border-white/[0.07] bg-[oklch(0.086_0.024_282)] hover:border-emerald-500/20'
+      }`}
     >
       <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,oklch(0.5_0.2_145_/_0.06),transparent_60%)]" />
 
       <div className="relative flex items-start gap-3">
-        {/* SVG Flag avatar */}
+        {/* Flag avatar */}
         <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.04]">
           <CountryFlag code={countryCode} className="w-full h-full object-cover" />
         </div>
@@ -93,14 +112,31 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
             {countryName}
             {num.number_type ? ` · ${typeLabel(num.number_type)}` : ''}
             {num.region ? ` · ${num.region}` : ''}
-            {num.locality ? ` · ${num.locality}` : ''}
           </p>
-          <div className="mt-1.5 flex items-center gap-2 flex-wrap text-[11px]">
-            <span className="text-emerald-500 font-semibold">${Number(num.monthly_cost).toFixed(2)}/mo</span>
-            <span className="text-slate-700">·</span>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+            <span className="text-emerald-400 font-semibold">${retailPrice.toFixed(2)}/mo</span>
             <span className="capitalize text-slate-500">{num.status}</span>
-            <span className="text-slate-700">·</span>
             <span className="text-slate-600">Since {fmtDate(num.purchased_at)}</span>
+          </div>
+          {/* Billing status */}
+          <div className="mt-1.5 flex items-center gap-2 flex-wrap text-[11px]">
+            {hasBilling ? (
+              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-emerald-400 font-semibold">
+                Subscription active
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 rounded-full bg-amber-500/12 px-2 py-0.5 text-amber-400">
+                <AlertTriangle className="h-2.5 w-2.5" />
+                No subscription
+              </span>
+            )}
+            {num.next_billing_date && (
+              <span className={`text-[11px] ${isExpiringSoon ? 'text-amber-400 font-semibold' : 'text-slate-600'}`}>
+                {renewDays !== null && renewDays >= 0
+                  ? `Renews in ${renewDays}d`
+                  : `Expired ${Math.abs(renewDays ?? 0)}d ago`}
+              </span>
+            )}
           </div>
         </div>
 
@@ -114,7 +150,7 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
               disabled={settingDefault}
             >
               {settingDefault ? <Loader2 className="h-3 w-3 animate-spin" /> : <Star className="h-3 w-3" />}
-              <span className="hidden sm:inline">Set Default</span>
+              <span className="hidden sm:inline">Default</span>
             </button>
           )}
           <button
@@ -128,6 +164,14 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
           </button>
         </div>
       </div>
+
+      {/* Expiry warning inline */}
+      {isExpiringSoon && !hasBilling && (
+        <div className="mt-3 flex items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-3 py-2 text-[11px] text-amber-300">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          Expires in {renewDays}d — set up billing to keep this number
+        </div>
+      )}
 
       {/* Release confirm */}
       <AnimatePresence>

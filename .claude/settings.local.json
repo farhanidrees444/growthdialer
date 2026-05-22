@@ -22,12 +22,14 @@
       "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\({recharts:p.dependencies.recharts, framer:p.dependencies['framer-motion']}\\)\\)\")",
       "Bash(node -e \"const p=require\\('./package.json'\\); const deps={...p.dependencies,...p.devDependencies}; ['@radix-ui/react-popover','@radix-ui/react-switch','recharts','framer-motion'].forEach\\(k=>console.log\\(k+':', deps[k]??'MISSING'\\)\\)\")",
       "Bash(node -e \"const f = require\\('country-flag-icons'\\); console.log\\(Object.keys\\(f\\).slice\\(0,5\\)\\)\")",
-      "Bash(mkdir -p \"c:\\\\Users\\\\HP\\\\Desktop\\\\growthdialer\\\\components\\\\numbers\")"
+      "Bash(mkdir -p \"c:\\\\Users\\\\HP\\\\Desktop\\\\growthdialer\\\\components\\\\numbers\")",
+      "Bash(mkdir -p \"c:/Users/HP/Desktop/growthdialer/app/api/leads/[id]/restore\" 2>/dev/null; echo done)"
     ],
     "additionalDirectories": [
       "C:\\Users\\HP\\Desktop\\growthdialer\\app\\api\\power-dial\\sessions",
       "c:\\Users\\HP\\Desktop\\growthdialer\\app\\(dashboard)\\recordings",
-      "c:\\Users\\HP\\Desktop\\growthdialer\\components"
+      "c:\\Users\\HP\\Desktop\\growthdialer\\components",
+      "c:\\Users\\HP\\Desktop\\growthdialer\\app\\api\\leads\\[id]"
     ]
   },
   "enableAllProjectMcpServers": true,
