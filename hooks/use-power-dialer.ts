@@ -248,7 +248,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
 
   // ── Public: called by page when the phone call actually connects ───────────
   const onCallStarted = useCallback(() => {
-    if (stateRef.current === 'paused') return;
+    if (stateRef.current === 'idle' || stateRef.current === 'paused') return;
     setCountdown(0);
     setPdState('calling');
   }, []);
