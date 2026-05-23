@@ -46,27 +46,21 @@ export async function POST(request: NextRequest) {
     if (call_control_id) {
       let dbId: string | null = null;
       if (userId) {
-        // Upsert on telnyx_call_id: the webhook's call.initiated handler may have
-        // already created a skeleton row before this request arrived. If so, merge
-        // user_id/lead_id into the existing row; otherwise create it fresh.
-        const { data: upsertedRow, error: upsertError } = await supabase
+        const { data: insertedRow, error: insertError } = await supabase
           .from('calls')
-          .upsert(
-            {
-              user_id: userId,
-              lead_id: lead_id ?? null,
-              to_number: e164,
-              from_number: fromNumber,
-              telnyx_call_id: call_control_id,
-              status: 'initiated',
-              created_at: new Date().toISOString(),
-            },
-            { onConflict: 'telnyx_call_id', ignoreDuplicates: false },
-          )
+          .insert({
+            user_id: userId,
+            lead_id: lead_id ?? null,
+            to_number: e164,
+            from_number: fromNumber,
+            telnyx_call_id: call_control_id,
+            status: 'initiated',
+            created_at: new Date().toISOString(),
+          })
           .select('id')
           .single();
-        if (upsertError) console.error('[dial] upsert error:', upsertError);
-        dbId = upsertedRow?.id ?? null;
+        if (insertError) console.error('[dial] insert error:', insertError);
+        dbId = insertedRow?.id ?? null;
       }
       return NextResponse.json({ call_control_id, db_id: dbId, to: e164, status: 'initiated' });
     }

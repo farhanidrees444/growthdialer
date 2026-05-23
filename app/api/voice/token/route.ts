@@ -9,7 +9,8 @@ export async function POST(_request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Preferred: short-lived JWT via Telnyx telephony credential
+    // Preferred: short-lived JWT via Telnyx telephony credential.
+    // The endpoint expects no body and returns the JWT as plain text.
     const credentialId = process.env.TELNYX_CREDENTIAL_ID;
     if (credentialId) {
       const res = await fetch(
@@ -18,14 +19,11 @@ export async function POST(_request: NextRequest) {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${process.env.TELNYX_API_KEY}`,
-            'Content-Type': 'application/json',
           },
-          body: '{}',
         },
       );
       if (res.ok) {
-        const body = await res.json();
-        const token = body.token ?? body.data?.token;
+        const token = (await res.text()).trim();
         if (token) {
           return NextResponse.json({ login_token: token });
         }
