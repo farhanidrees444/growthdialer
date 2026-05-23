@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+interface Filters {
+  hasPhone?: boolean;
+  hot?: boolean;
+  callbacks?: boolean;
+  hasNotes?: boolean;
+  recentlyContacted?: boolean;
+  // tzSafe intentionally omitted — applied client-side
+}
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -14,6 +23,12 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') ?? '50', 10);
     const offset = parseInt(searchParams.get('offset') ?? '0', 10);
 
+    let filters: Filters = {};
+    try {
+      const raw = searchParams.get('filters');
+      if (raw) filters = JSON.parse(raw) as Filters;
+    } catch { /* malformed JSON — ignore, use defaults */ }
+
     let query = supabase
       .from('leads')
       .select('id, name, title, company, phone, email, status, ai_score, last_called_at, call_attempts, tags, notes, dnc, user_id')
@@ -22,10 +37,29 @@ export async function GET(request: NextRequest) {
       .not('status', 'in', '("do_not_call","meeting_booked")')
       .eq('dnc', false);
 
+    // Tab-based filtering
     if (tab === 'hot') {
       query = query.gte('ai_score', 70);
     } else if (tab === 'callbacks') {
       query = query.eq('status', 'callback');
+    }
+
+    // Additional server-side filters from the filter dropdown
+    if (filters.hasPhone) {
+      query = query.not('phone', 'is', null).neq('phone', '');
+    }
+    if (filters.hot && tab !== 'hot') {
+      query = query.gte('ai_score', 70);
+    }
+    if (filters.callbacks && tab !== 'callbacks') {
+      query = query.eq('status', 'callback');
+    }
+    if (filters.hasNotes) {
+      query = query.not('notes', 'is', null).neq('notes', '');
+    }
+    if (filters.recentlyContacted) {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      query = query.gte('last_called_at', sevenDaysAgo);
     }
 
     if (search) {
@@ -34,7 +68,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (sort === 'priority') {
+    if (sort === 'priority' || sort === 'tz_safe') {
       query = query.order('ai_score', { ascending: false }).order('last_called_at', { ascending: true, nullsFirst: true });
     } else if (sort === 'recent') {
       query = query.order('last_called_at', { ascending: false, nullsFirst: false });
