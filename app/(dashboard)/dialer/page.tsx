@@ -263,7 +263,7 @@ export default function DialerPage() {
       powerDialerRef.current.onCallEnd();
       endCall();
       const seconds = callTimerRef.current.seconds;
-      if (seconds >= 10 && pendingCallDbId) {
+      if (seconds >= 10) {
         setDispositionOpen(true);
       } else {
         if (pendingCallDbId) {
@@ -352,21 +352,25 @@ export default function DialerPage() {
     notes?: string,
     callbackAt?: string,
   ) => {
-    if (!pendingCallDbId) return;
-    try {
-      await fetch(`/api/calls/${pendingCallDbId}/disposition`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ disposition, notes, callback_at: callbackAt }),
-      });
-      if (powerDialer.isActive) {
-        toast.success('Saved · Loading next lead…', { duration: 2000 });
-      } else {
-        toast.success(`Marked as ${disposition.replace(/_/g, ' ')}`);
+    // Save to DB only if we have an ID — don't let a missing ID block the power dialer
+    if (pendingCallDbId) {
+      try {
+        await fetch(`/api/calls/${pendingCallDbId}/disposition`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ disposition, notes, callback_at: callbackAt }),
+        });
+      } catch {
+        toast.error('Failed to save disposition');
       }
-    } catch {
-      toast.error('Failed to save disposition');
     }
+
+    if (powerDialer.isActive) {
+      toast.success('Saved · Loading next lead…', { duration: 2000 });
+    } else {
+      toast.success(`Marked as ${disposition.replace(/_/g, ' ')}`);
+    }
+
     setDispositionOpen(false);
     loadStats();
     loadTodayCalls();
@@ -399,10 +403,17 @@ export default function DialerPage() {
   }, [selectedLead, selectLead]);
 
   const handleSkip = useCallback(() => {
-    const next = queueLeads[queueIndex + 1];
-    if (next) { setQueueIndex((i) => i + 1); selectLead(next); }
-    else { selectLead(null); }
-  }, [queueLeads, queueIndex, selectLead]);
+    if (!selectedLead) return;
+    const currentIndex = queueLeads.findIndex((l) => l.id === selectedLead.id);
+    const next = queueLeads[currentIndex + 1];
+    if (next) {
+      setQueueIndex(currentIndex + 1);
+      selectLead(next);
+    } else {
+      selectLead(null);
+      toast.info('End of queue reached');
+    }
+  }, [queueLeads, selectedLead, selectLead]);
 
   // ── Hotkeys ─────────────────────────────────────────────────────────────────
   useDialerHotkeys({
@@ -533,6 +544,7 @@ export default function DialerPage() {
               onSelectLead={selectLead}
               searchRef={searchRef}
               onCountsChange={setQueueCounts}
+              onLeadsChange={setQueueLeads}
             />
           )}
         </div>
@@ -559,6 +571,7 @@ export default function DialerPage() {
                   onSkip={handleSkip}
                   onMarkHot={handleMarkHot}
                   onDnc={handleDnc}
+                  onClose={() => selectLead(null)}
                   disabled={phoneStatus !== 'ready'}
                 />
               </motion.div>
@@ -877,6 +890,7 @@ export default function DialerPage() {
                   onSelectLead={(lead) => { selectLead(lead); setMobileQueueOpen(false); }}
                   searchRef={searchRef}
                   onCountsChange={setQueueCounts}
+                  onLeadsChange={setQueueLeads}
                 />
               </div>
             </motion.div>

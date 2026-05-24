@@ -62,9 +62,10 @@ interface QueueColumnProps {
   onSelectLead: (lead: LeadRecord) => void;
   searchRef?: React.RefObject<HTMLInputElement | null>;
   onCountsChange?: (counts: QueueCounts) => void;
+  onLeadsChange?: (leads: LeadRecord[]) => void;
 }
 
-export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsChange }: QueueColumnProps) {
+export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsChange, onLeadsChange }: QueueColumnProps) {
   const [tab, setTab] = useState<QueueTab>('queue');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -76,6 +77,8 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const onCountsRef = useRef(onCountsChange);
   onCountsRef.current = onCountsChange;
+  const onLeadsRef = useRef(onLeadsChange);
+  onLeadsRef.current = onLeadsChange;
 
   // Restore sort + filters from localStorage on mount
   useEffect(() => {
@@ -118,6 +121,7 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
       setLeads(data.leads);
       setCounts(data.counts);
       onCountsRef.current?.(data.counts);
+      onLeadsRef.current?.(data.leads);
     } catch { /* silent */ } finally {
       setLoading(false);
     }

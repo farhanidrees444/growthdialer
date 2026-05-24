@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, SkipForward, Star, Ban, FileText, Globe } from 'lucide-react';
+import { Phone, SkipForward, Star, Ban, FileText, Globe, X } from 'lucide-react';
 import { getAvatarGradient, getInitials } from '@/lib/dialer/avatar-color';
 import { getLocalTime } from '@/lib/utils/timezone';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
@@ -13,6 +13,7 @@ interface PreviewStageProps {
   onSkip: () => void;
   onMarkHot: () => void;
   onDnc: () => void;
+  onClose?: () => void;
   disabled?: boolean;
 }
 
@@ -36,7 +37,7 @@ function timeAgo(iso: string | undefined): string {
   return `${days}d ago`;
 }
 
-export function PreviewStage({ lead, onCall, onSkip, onMarkHot, onDnc, disabled }: PreviewStageProps) {
+export function PreviewStage({ lead, onCall, onSkip, onMarkHot, onDnc, onClose, disabled }: PreviewStageProps) {
   const [noteOpen, setNoteOpen] = useState(false);
   const [note, setNote] = useState('');
   const gradient = getAvatarGradient(lead.id);
@@ -55,9 +56,18 @@ export function PreviewStage({ lead, onCall, onSkip, onMarkHot, onDnc, disabled 
     >
       {/* Hero card */}
       <div
-        className="rounded-2xl p-6 border border-white/[0.07]"
+        className="relative rounded-2xl p-6 border border-white/[0.07]"
         style={{ background: 'rgba(255,255,255,0.02)' }}
       >
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white/80 hover:bg-white/[0.06] transition-all"
+            aria-label="Close lead preview"
+          >
+            <X size={16} />
+          </button>
+        )}
         <div className="flex items-start gap-5">
           {/* Avatar */}
           <div
