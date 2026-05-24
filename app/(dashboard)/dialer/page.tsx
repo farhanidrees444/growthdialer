@@ -334,23 +334,28 @@ export default function DialerPage() {
 
   const handleDropVoicemail = useCallback(async () => {
     if (!activeCallId) return;
-    try {
-      await fetch('/api/calls/drop-voicemail', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ call_control_id: activeCallId }),
-      });
-      toast.success('Voicemail dropped');
-    } catch {
-      toast.error('Failed to drop voicemail');
+    const res = await fetch('/api/calls/drop-voicemail', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        call_control_id: activeCallId,
+        call_db_id: pendingCallDbId ?? undefined,
+      }),
+    });
+    const data = await res.json().catch(() => ({})) as { error?: string; voicemail_name?: string };
+    if (!res.ok) {
+      toast.error(data.error ?? 'Failed to drop voicemail');
+    } else {
+      toast.success(`Voicemail dropped${data.voicemail_name ? ` · ${data.voicemail_name}` : ''}`);
     }
-  }, [activeCallId]);
+  }, [activeCallId, pendingCallDbId]);
 
   // ── Disposition ─────────────────────────────────────────────────────────────
   const handleDispositionSave = useCallback(async (
     disposition: DispositionType,
     notes?: string,
     callbackAt?: string,
+    meetingAt?: string,
   ) => {
     // Save to DB only if we have an ID — don't let a missing ID block the power dialer
     if (pendingCallDbId) {
@@ -358,7 +363,7 @@ export default function DialerPage() {
         await fetch(`/api/calls/${pendingCallDbId}/disposition`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ disposition, notes, callback_at: callbackAt }),
+          body: JSON.stringify({ disposition, notes, callback_at: callbackAt, meeting_at: meetingAt }),
         });
       } catch {
         toast.error('Failed to save disposition');

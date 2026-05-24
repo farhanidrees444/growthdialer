@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const tab = searchParams.get('tab') ?? 'queue';
     const search = searchParams.get('search') ?? '';
     const sort = searchParams.get('sort') ?? 'priority';
-    const limit = parseInt(searchParams.get('limit') ?? '50', 10);
+    const limit = parseInt(searchParams.get('limit') ?? '500', 10);
     const offset = parseInt(searchParams.get('offset') ?? '0', 10);
 
     let filters: Filters = {};

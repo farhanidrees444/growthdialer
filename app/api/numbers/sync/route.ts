@@ -44,7 +44,7 @@ export async function POST(_request: NextRequest) {
           number_type: (num.phone_number_type as string | null) ?? 'local',
           status: (num.status as string) === 'active' ? 'active' : 'inactive',
           monthly_cost: wholesale,
-          billing_status: 'unpaid',
+          billing_status: 'active',
           auto_renew: true,
           purchased_at: purchasedAt,
           next_billing_date: nextBillingDate,
@@ -54,6 +54,33 @@ export async function POST(_request: NextRequest) {
         synced++;
       } else {
         console.error('[NUMBERS-SYNC] Upsert error for', phoneNumber, ':', error);
+      }
+    }
+
+    // Auto-set default number if user has none
+    if (synced > 0) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('default_number')
+        .eq('user_id', userId)
+        .single();
+
+      if (!profile?.default_number) {
+        const { data: firstNumber } = await supabase
+          .from('purchased_numbers')
+          .select('phone_number')
+          .eq('user_id', userId)
+          .eq('status', 'active')
+          .order('purchased_at', { ascending: true })
+          .limit(1)
+          .single();
+
+        if (firstNumber?.phone_number) {
+          await supabase
+            .from('profiles')
+            .update({ default_number: firstNumber.phone_number })
+            .eq('user_id', userId);
+        }
       }
     }
 

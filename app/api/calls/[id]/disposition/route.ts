@@ -17,12 +17,13 @@ export async function POST(
       disposition: DispositionType;
       notes?: string;
       callback_at?: string;
+      meeting_at?: string;
     };
-    const { disposition, notes, callback_at } = body;
+    const { disposition, notes, callback_at, meeting_at } = body;
 
     if (!disposition) return NextResponse.json({ error: 'Missing disposition' }, { status: 400 });
 
-    // Get the call to find the lead
+    // Get call + current lead data in one shot
     const { data: call, error: callError } = await supabase
       .from('calls')
       .select('id, lead_id, user_id')
@@ -33,50 +34,83 @@ export async function POST(
     if (callError || !call) return NextResponse.json({ error: 'Call not found' }, { status: 404 });
 
     const leadStatus = LEAD_STATUS_TO_DISPOSITION[disposition];
+    const now = new Date().toISOString();
 
-    // Update call disposition
+    // Update call record
     const callUpdate: Record<string, unknown> = {
       disposition,
       disposition_notes: notes ?? null,
-      updated_at: new Date().toISOString(),
+      notes: notes ?? null,
+      updated_at: now,
     };
-    if (notes) callUpdate.notes = notes;
+    await supabase.from('calls').update(callUpdate).eq('id', id);
 
-    const [{ error: callUpdateError }, leadUpdateResult] = await Promise.all([
-      supabase.from('calls').update(callUpdate).eq('id', id),
-      call.lead_id
-        ? supabase
-            .from('leads')
-            .update({
-              status: leadStatus,
-              ...(disposition === 'dnc' ? { dnc: true } : {}),
-              ...(callback_at ? { callback_at } : {}),
-              last_called_at: new Date().toISOString(),
-            })
-            .eq('id', call.lead_id)
-        : Promise.resolve({ error: null }),
-    ]);
+    if (call.lead_id) {
+      // Fetch current lead to append notes properly
+      const { data: currentLead } = await supabase
+        .from('leads')
+        .select('notes, call_attempts')
+        .eq('id', call.lead_id)
+        .single();
 
-    if (callUpdateError) throw callUpdateError;
-    if (leadUpdateResult?.error) throw leadUpdateResult.error;
+      // Append note with timestamp + disposition label
+      let updatedNotes: string | null = currentLead?.notes ?? null;
+      if (notes && notes.trim()) {
+        const label = disposition.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+        const stamp = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        const entry = `[${stamp} · ${label}] ${notes.trim()}`;
+        updatedNotes = updatedNotes ? `${updatedNotes}\n${entry}` : entry;
+      }
 
-    // Find next lead for auto-advance
-    const { data: nextLead } = call.lead_id
-      ? await supabase
-          .from('leads')
-          .select('id, name')
-          .eq('user_id', user.id)
-          .not('status', 'in', '("do_not_call","meeting_booked")')
-          .eq('dnc', false)
-          .neq('id', call.lead_id)
-          .order('ai_score', { ascending: false })
-          .limit(1)
-          .single()
-      : { data: null };
+      const leadUpdate: Record<string, unknown> = {
+        status: leadStatus,
+        last_called_at: now,
+        call_attempts: (currentLead?.call_attempts ?? 0) + 1,
+        ...(updatedNotes !== null ? { notes: updatedNotes } : {}),
+        ...(disposition === 'dnc' ? { dnc: true } : {}),
+        ...(disposition === 'wrong_number' ? { status: 'wrong_number' } : {}),
+        ...(callback_at ? { callback_at } : {}),
+        ...(meeting_at ? { meeting_at } : {}),
+      };
 
-    return NextResponse.json({ success: true, nextLeadId: nextLead?.id ?? null });
+      // wrong_number overrides generic leadStatus
+      if (disposition === 'wrong_number') {
+        leadUpdate.status = 'wrong_number';
+      }
+
+      await supabase.from('leads').update(leadUpdate).eq('id', call.lead_id);
+
+      // Activity log entry
+      const activitySummary = buildActivitySummary(disposition, notes);
+      await supabase.from('lead_activities').insert({
+        lead_id: call.lead_id,
+        user_id: user.id,
+        call_id: id,
+        type: 'call',
+        disposition,
+        notes: activitySummary,
+        created_at: now,
+      }).then(() => { /* fire-and-forget — don't fail disposition save if activity table missing */ });
+    }
+
+    return NextResponse.json({ success: true });
   } catch (err) {
     console.error('[calls/disposition]', err);
     return NextResponse.json({ error: 'Failed to save disposition' }, { status: 500 });
   }
+}
+
+function buildActivitySummary(disposition: DispositionType, notes?: string): string {
+  const labels: Record<DispositionType, string> = {
+    interested: 'Lead expressed interest',
+    meeting_booked: 'Meeting booked',
+    callback: 'Callback scheduled',
+    voicemail: 'Left voicemail',
+    gatekeeper: 'Reached gatekeeper',
+    not_interested: 'Not interested',
+    wrong_number: 'Wrong number',
+    dnc: 'Added to do-not-call list',
+  };
+  const base = labels[disposition] ?? disposition;
+  return notes?.trim() ? `${base}: ${notes.trim()}` : base;
 }

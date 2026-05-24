@@ -531,13 +531,13 @@ export default function LeadsPage() {
   const loadLeads = useCallback(async () => {
     const supabase = createClient();
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) { setLoading(false); return; }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) { setLoading(false); return; }
 
       const { data, error } = await supabase
         .from("leads")
         .select("id,name,first_name,last_name,title,company,phone,email,ai_score,status,call_attempts,last_called_at,notes,tags,linkedin,source,created_at,dnc,deleted_at")
-        .eq("user_id", session.user.id)
+        .eq("user_id", user.id)
         .order("ai_score", { ascending: false });
 
       if (error) { console.error("Leads load error:", error); return; }
@@ -548,6 +548,30 @@ export default function LeadsPage() {
   }, []);
 
   useEffect(() => { loadLeads(); }, [loadLeads, contextLeads.length]);
+
+  // Real-time: reflect lead changes (status, call_attempts, dnc, deleted_at) without full reload
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel('leads-rt')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'leads' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setLeads((prev) => [payload.new as FullLead, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setLeads((prev) =>
+              prev.map((l) => l.id === (payload.new as FullLead).id ? { ...l, ...payload.new as FullLead } : l),
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setLeads((prev) => prev.filter((l) => l.id !== (payload.old as { id: string }).id));
+          }
+        },
+      )
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, []);
 
   // Tab counts
   const tabCounts = useMemo(() => {

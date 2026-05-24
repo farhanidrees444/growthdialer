@@ -63,8 +63,11 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
   const retailPrice = calculateRetailPrice(Number(num.monthly_cost));
   const renewDays = daysUntil(num.next_billing_date);
   const isExpiringSoon = renewDays !== null && renewDays <= 7 && renewDays >= 0;
-  const billingStatus = num.billing_status ?? 'unpaid';
   const hasBilling = !!num.stripe_subscription_id;
+  // Numbers synced from provider account without Stripe are "active" (paid at provider level)
+  const billingStatus = num.billing_status ?? 'unpaid';
+  const isProviderActive = billingStatus === 'active' && !hasBilling;
+  const isTrial = billingStatus === 'trial';
 
   async function handleSetDefault() {
     setSettingDefault(true);
@@ -124,6 +127,14 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
               <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-emerald-400 font-semibold">
                 Subscription active
               </span>
+            ) : isProviderActive ? (
+              <span className="rounded-full bg-blue-500/15 px-2 py-0.5 text-blue-400 font-semibold">
+                Active
+              </span>
+            ) : isTrial ? (
+              <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-violet-400 font-semibold">
+                Trial
+              </span>
             ) : (
               <span className="flex items-center gap-1 rounded-full bg-amber-500/12 px-2 py-0.5 text-amber-400">
                 <AlertTriangle className="h-2.5 w-2.5" />
@@ -169,7 +180,9 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
       {isExpiringSoon && !hasBilling && (
         <div className="mt-3 flex items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-3 py-2 text-[11px] text-amber-300">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          Expires in {renewDays}d — set up billing to keep this number
+          {isTrial
+            ? `Trial ends in ${renewDays}d — add billing to keep this number`
+            : `Expires in ${renewDays}d — renew to keep this number`}
         </div>
       )}
 
