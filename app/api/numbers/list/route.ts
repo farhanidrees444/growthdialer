@@ -12,7 +12,7 @@ export async function GET(_request: NextRequest) {
 
     const { data, error } = await supabase
       .from('purchased_numbers')
-      .select('id, phone_number, country, country_code, country_name, number_type, region, locality, monthly_cost, is_default, status, purchased_at, billing_status, next_billing_date, auto_renew, stripe_subscription_id')
+      .select('id, phone_number, country, country_name, number_type, region, locality, monthly_cost, is_default, status, purchased_at, billing_status, next_billing_date, auto_renew, stripe_subscription_id')
       .eq('user_id', userId)
       .neq('status', 'released')
       .order('is_default', { ascending: false })

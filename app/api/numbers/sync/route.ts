@@ -69,7 +69,6 @@ export async function POST(_request: NextRequest) {
             telnyx_number_id: telnyxNumberId,
             phone_number: phoneNumber,
             country: (num.country_code as string | null) ?? 'US',
-            country_code: (num.country_code as string | null) ?? 'US',
             number_type: (num.phone_number_type as string | null) ?? 'local',
             status: (num.status as string) === 'active' ? 'active' : 'inactive',
             monthly_cost: wholesale,

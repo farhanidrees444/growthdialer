@@ -69,7 +69,6 @@ export async function POST(request: NextRequest) {
       telnyx_number_id: telnyxNumberId ?? null,
       telnyx_order_id: orderId ?? null,
       country: country ?? 'US',
-      country_code: country ?? 'US',
       country_name: countryName ?? null,
       number_type: numberType ?? 'local',
       locality: locality ?? null,
