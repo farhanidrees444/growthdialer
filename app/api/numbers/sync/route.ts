@@ -27,33 +27,59 @@ export async function POST(_request: NextRequest) {
 
     for (const num of telnyxNumbers ?? []) {
       const phoneNumber = num.phone_number as string;
+      const telnyxNumberId = num.id as string;
       const wholesale = parseFloat(
         ((num.costs as { monthly?: { amount?: string } } | null)?.monthly?.amount) ?? '1.00'
       );
       const purchasedAt = (num.created_at as string | null) ?? new Date().toISOString();
       const nextBillingDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-      const { error } = await supabase
+      // Check if this telnyx_number_id already exists in DB
+      const { data: existing } = await supabase
         .from('purchased_numbers')
-        .upsert({
-          user_id: userId,
-          telnyx_number_id: num.id as string,
-          phone_number: phoneNumber,
-          country: (num.country_code as string | null) ?? 'US',
-          country_code: (num.country_code as string | null) ?? 'US',
-          number_type: (num.phone_number_type as string | null) ?? 'local',
-          status: (num.status as string) === 'active' ? 'active' : 'inactive',
-          monthly_cost: wholesale,
-          billing_status: 'active',
-          auto_renew: true,
-          purchased_at: purchasedAt,
-          next_billing_date: nextBillingDate,
-        }, { onConflict: 'telnyx_number_id' });
+        .select('id, user_id')
+        .eq('telnyx_number_id', telnyxNumberId)
+        .maybeSingle();
 
-      if (!error) {
-        synced++;
+      if (existing) {
+        if (existing.user_id === userId) {
+          // Belongs to current user — update status/cost fields only
+          const { error } = await supabase
+            .from('purchased_numbers')
+            .update({
+              phone_number: phoneNumber,
+              status: (num.status as string) === 'active' ? 'active' : 'inactive',
+              monthly_cost: wholesale,
+              billing_status: 'active',
+              next_billing_date: nextBillingDate,
+            })
+            .eq('id', existing.id);
+          if (!error) synced++;
+          else console.error('[NUMBERS-SYNC] Update error for', phoneNumber, ':', error);
+        } else {
+          // Belongs to a different user — never reassign ownership
+          console.warn('[NUMBERS-SYNC] Number', phoneNumber, 'belongs to another user — skipping');
+        }
       } else {
-        console.error('[NUMBERS-SYNC] Upsert error for', phoneNumber, ':', error);
+        // New number — insert and assign to the authenticated user
+        const { error } = await supabase
+          .from('purchased_numbers')
+          .insert({
+            user_id: userId,
+            telnyx_number_id: telnyxNumberId,
+            phone_number: phoneNumber,
+            country: (num.country_code as string | null) ?? 'US',
+            country_code: (num.country_code as string | null) ?? 'US',
+            number_type: (num.phone_number_type as string | null) ?? 'local',
+            status: (num.status as string) === 'active' ? 'active' : 'inactive',
+            monthly_cost: wholesale,
+            billing_status: 'active',
+            auto_renew: true,
+            purchased_at: purchasedAt,
+            next_billing_date: nextBillingDate,
+          });
+        if (!error) synced++;
+        else console.error('[NUMBERS-SYNC] Insert error for', phoneNumber, ':', error);
       }
     }
 
@@ -85,7 +111,7 @@ export async function POST(_request: NextRequest) {
     }
 
     console.log('[NUMBERS-SYNC] Synced:', synced, 'numbers for user:', userId);
-    return NextResponse.json({ synced });
+    return NextResponse.json({ synced, total: telnyxNumbers?.length ?? 0 });
   } catch (err) {
     console.error('[NUMBERS-SYNC] Exception:', err);
     return NextResponse.json({ error: 'Sync failed' }, { status: 500 });

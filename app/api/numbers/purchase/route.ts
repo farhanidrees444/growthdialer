@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       monthly_cost: monthlyCost ?? 1.00,
       is_default: isDefault,
       status: 'active',
-      billing_status: 'unpaid',
+      billing_status: 'active',
       auto_renew: true,
       purchased_at: purchasedAt,
       next_billing_date: nextBillingDate,
