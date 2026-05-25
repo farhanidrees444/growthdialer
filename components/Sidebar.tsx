@@ -24,8 +24,8 @@ import {
   Building2,
 } from "lucide-react";
 import { useState } from "react";
-import { useLeads } from "@/contexts/leads-context";
 import { useMobileNav } from "@/contexts/mobile-nav-context";
+import { useSidebarCounts, formatSidebarCount } from "@/hooks/use-sidebar-counts";
 import { useWorkspace, type Workspace } from "@/contexts/workspace-context";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -34,12 +34,14 @@ import { createClient } from "@/lib/supabase/client";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { ROLE_LABELS } from "@/lib/auth/permissions";
 
+type CountKey = 'leads' | 'recordings' | 'numbers';
+
 type NavItem = {
   icon: LucideIcon;
   label: string;
   href: string;
   badge?: "Live";
-  showCount?: boolean;
+  countKey?: CountKey;
   sparkle?: boolean;
   managerOnly?: boolean;
 };
@@ -47,10 +49,10 @@ type NavItem = {
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
   { icon: Phone, label: "AI Dialer", href: "/dialer", badge: "Live", sparkle: true },
-  { icon: Users, label: "Leads", href: "/leads", showCount: true },
+  { icon: Users, label: "Leads", href: "/leads", countKey: 'leads' },
   { icon: BarChart2, label: "Analytics", href: "/analytics" },
-  { icon: Headphones, label: "Recordings", href: "/recordings" },
-  { icon: Hash, label: "My Numbers", href: "/numbers" },
+  { icon: Headphones, label: "Recordings", href: "/recordings", countKey: 'recordings' },
+  { icon: Hash, label: "My Numbers", href: "/numbers", countKey: 'numbers' },
   { icon: Headset, label: "Coaching", href: "/coaching/live", managerOnly: true },
 ];
 
@@ -165,8 +167,8 @@ function WorkspaceSwitcher() {
 export default function Sidebar() {
   const pathname = usePathname();
   const session = useSupabaseSession();
-  const { leads } = useLeads();
   const { isOpen, close } = useMobileNav();
+  const sidebarCounts = useSidebarCounts();
   const { currentRole } = useWorkspace();
 
   const displayName = session?.user?.user_metadata?.full_name ?? session?.user?.email ?? "User";
@@ -248,9 +250,15 @@ export default function Sidebar() {
                       Live
                     </Badge>
                   )}
-                  {item.showCount && (
-                    <span className="text-xs tabular-nums text-sidebar-foreground/60">{leads.length}</span>
-                  )}
+                  {item.countKey && (() => {
+                    const raw = sidebarCounts[item.countKey];
+                    const formatted = formatSidebarCount(raw);
+                    return raw === null ? (
+                      <span className="w-7 h-3.5 rounded bg-white/[0.05] animate-pulse" />
+                    ) : formatted ? (
+                      <span className="text-xs tabular-nums text-sidebar-foreground/60">{formatted}</span>
+                    ) : null;
+                  })()}
                   {active && <ChevronRight className="w-3.5 h-3.5 text-white/50" />}
                 </Link>
               </motion.div>
