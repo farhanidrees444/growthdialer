@@ -1,437 +1,590 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Play, Pause, Clock, Mic, Download, Sparkles, FileText, Search, Phone,
-  TrendingUp, TrendingDown, Minus,
+  Play, Pause, Clock, Mic, Sparkles, FileText, Search, Phone,
+  TrendingUp, TrendingDown, Minus, RefreshCw, ChevronDown,
+  ChevronRight, Volume2, X,
 } from 'lucide-react';
 import DashboardHeader from '@/components/DashboardHeader';
-import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface RecordingLead {
+  first_name: string | null;
+  last_name: string | null;
+  company: string | null;
+}
 
 interface Recording {
   id: string;
-  to_number: string | null;
-  from_number: string | null;
   recording_url: string;
   duration_seconds: number | null;
-  created_at: string;
+  transcript: string | null;
+  started_at: string;
   disposition: string | null;
-  analytics_id: string | null;
+  was_recorded: boolean;
   ai_processing_status: string | null;
-  analytics: {
-    id: string;
-    sentiment: string | null;
-    sentiment_score: number | null;
-    summary: unknown;
-    talking_points: string[] | null;
-    suggested_disposition: string | null;
-  } | null;
-  leads: { name: string | null; company: string | null } | null;
+  analytics_id: string | null;
+  from_number: string | null;
+  to_number: string | null;
+  leads: RecordingLead | null;
+  // Enriched
+  ai_sentiment: string | null;
+  ai_sentiment_score: number | null;
+  ai_summary_raw: unknown;
+  ai_next_steps_raw: unknown;
+  ai_keywords: string[] | null;
+  ai_objections: string[] | null;
 }
 
-function formatDuration(seconds: number | null): string {
-  if (!seconds) return '—';
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function fmtDuration(s: number | null): string {
+  if (!s) return '—';
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
-function formatDate(iso: string): string {
+function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
+    month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
 }
 
-function getSummaryBullets(summary: unknown): string[] {
-  if (!summary) return [];
-  if (Array.isArray(summary)) return summary.slice(0, 1);
-  if (typeof summary === 'object' && summary !== null && 'bullets' in summary) {
-    const b = (summary as { bullets: unknown }).bullets;
-    if (Array.isArray(b)) return b.slice(0, 1);
+function getLeadName(lead: RecordingLead | null, fallback: string | null): string {
+  if (!lead) return fallback ?? 'Unknown';
+  const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ');
+  return name || fallback || 'Unknown';
+}
+
+function getSummaryBullets(raw: unknown): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.slice(0, 3).map(String);
+  if (typeof raw === 'object' && raw !== null) {
+    const b = (raw as Record<string, unknown>).bullets;
+    if (Array.isArray(b)) return b.slice(0, 3).map(String);
+  }
+  if (typeof raw === 'string' && raw.trim()) return [raw];
+  return [];
+}
+
+function getNextSteps(raw: unknown): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.slice(0, 4).map(String);
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.slice(0, 4).map(String);
+    } catch { /* not JSON */ }
+    return raw.trim() ? [raw.trim()] : [];
   }
   return [];
 }
 
-function SentimentBadge({ score }: { score: number | null }) {
-  if (score === null) return null;
-  if (score > 0.2) return (
-    <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400">
-      <TrendingUp className="h-3 w-3" /> Positive
-    </span>
-  );
-  if (score < -0.2) return (
-    <span className="flex items-center gap-1 text-[10px] font-semibold text-red-400">
-      <TrendingDown className="h-3 w-3" /> Negative
-    </span>
-  );
-  return (
-    <span className="flex items-center gap-1 text-[10px] font-semibold text-slate-400">
-      <Minus className="h-3 w-3" /> Neutral
-    </span>
-  );
-}
+// ─── Sentiment ────────────────────────────────────────────────────────────────
 
-function DispositionBadge({ disp }: { disp: string | null }) {
-  if (!disp) return null;
-  const colors: Record<string, string> = {
-    interested: 'bg-emerald-500/15 text-emerald-400',
-    callback: 'bg-amber-500/15 text-amber-400',
-    meeting_booked: 'bg-violet-500/15 text-violet-400',
-    not_interested: 'bg-slate-500/15 text-slate-400',
-    voicemail: 'bg-blue-500/15 text-blue-400',
-    no_answer: 'bg-slate-500/10 text-slate-600',
-    wrong_number: 'bg-red-500/15 text-red-400',
-  };
-  return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${colors[disp] ?? 'bg-white/[0.05] text-slate-500'}`}>
-      {disp.replace(/_/g, ' ')}
-    </span>
-  );
-}
+const SENTIMENT = {
+  positive: { icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', label: 'Positive' },
+  neutral:  { icon: Minus,      color: 'text-slate-400',   bg: 'bg-white/[0.04]',   border: 'border-white/[0.08]',    label: 'Neutral'  },
+  negative: { icon: TrendingDown, color: 'text-red-400',   bg: 'bg-red-500/10',     border: 'border-red-500/20',      label: 'Negative' },
+} as const;
 
-function MiniPlayer({ url }: { url: string }) {
+type SentimentKey = keyof typeof SENTIMENT;
+
+// ─── MiniPlayer ───────────────────────────────────────────────────────────────
+
+function MiniPlayer({ url, id, activeId, onActivate }: {
+  url: string; id: string;
+  activeId: string | null;
+  onActivate: (id: string | null) => void;
+}) {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+  const isPlaying = activeId === id;
 
-  const toggle = async (e: React.MouseEvent) => {
-    e.preventDefault();
+  useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
-    if (playing) { el.pause(); setPlaying(false); }
-    else { await el.play().catch(() => {}); setPlaying(true); }
+    if (isPlaying) {
+      el.play().catch(() => { toast.error('Playback failed'); onActivate(null); });
+    } else {
+      el.pause();
+    }
+  }, [isPlaying, onActivate]);
+
+  const toggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onActivate(isPlaying ? null : id);
   };
 
   return (
     <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-      <audio ref={audioRef} src={url} preload="none"
-        onEnded={() => { setPlaying(false); setProgress(0); }}
+      <audio
+        ref={audioRef}
+        src={url}
+        preload="none"
+        onEnded={() => { setProgress(0); onActivate(null); }}
         onTimeUpdate={() => {
           const el = audioRef.current;
           if (el?.duration) setProgress((el.currentTime / el.duration) * 100);
         }}
       />
-      <button type="button" onClick={toggle}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-400 transition hover:bg-emerald-500/15"
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={isPlaying ? 'Pause' : 'Play'}
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-all
+                   border-violet-500/30 bg-gradient-to-br from-violet-500/15 to-cyan-500/15
+                   hover:from-violet-500/25 hover:to-cyan-500/25 active:scale-95"
       >
-        {playing ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 translate-x-px" />}
+        {isPlaying
+          ? <Pause className="h-4 w-4 text-cyan-400" />
+          : <Play className="h-4 w-4 translate-x-0.5 text-violet-400" />}
       </button>
-      <div className="w-20 h-1 rounded-full bg-white/[0.06] overflow-hidden">
-        <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${progress}%` }} />
+      <div className="h-1 w-16 overflow-hidden rounded-full bg-white/[0.07] sm:w-24">
+        <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 transition-all"
+          style={{ width: `${progress}%` }} />
       </div>
     </div>
   );
 }
 
-const FEATURE_BADGES = [
-  { icon: Mic, label: 'Auto-recording' },
-  { icon: FileText, label: 'Transcription' },
-  { icon: Sparkles, label: 'AI Insights' },
-  { icon: Search, label: 'Searchable' },
-];
+// ─── Disposition badge ────────────────────────────────────────────────────────
+
+const DISP_COLORS: Record<string, string> = {
+  interested:    'bg-emerald-500/15 text-emerald-400',
+  callback:      'bg-amber-500/15 text-amber-400',
+  meeting_booked:'bg-violet-500/15 text-violet-400',
+  not_interested:'bg-slate-500/15 text-slate-400',
+  voicemail:     'bg-blue-500/15 text-blue-400',
+  no_answer:     'bg-slate-500/10 text-slate-600',
+  wrong_number:  'bg-red-500/15 text-red-400',
+  dnc:           'bg-red-600/15 text-red-500',
+};
+
+function DispositionBadge({ disp }: { disp: string | null }) {
+  if (!disp) return null;
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${DISP_COLORS[disp] ?? 'bg-white/[0.05] text-slate-500'}`}>
+      {disp.replace(/_/g, ' ')}
+    </span>
+  );
+}
+
+// ─── Recording Card ───────────────────────────────────────────────────────────
+
+function RecordingCard({
+  rec, activePlayId, onActivatePlay, onReprocess,
+}: {
+  rec: Recording;
+  activePlayId: string | null;
+  onActivatePlay: (id: string | null) => void;
+  onReprocess: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  const name = getLeadName(rec.leads, rec.to_number);
+  const sentKey = (rec.ai_sentiment ?? '') as SentimentKey;
+  const sent = SENTIMENT[sentKey];
+  const summaryBullets = getSummaryBullets(rec.ai_summary_raw);
+  const nextSteps = getNextSteps(rec.ai_next_steps_raw);
+  const isProcessing = rec.ai_processing_status === 'processing';
+  const hasAi = !!rec.analytics_id && !!sent;
+  const needsAi = !rec.analytics_id && !isProcessing;
+
+  return (
+    <motion.div
+      variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}
+      transition={{ duration: 0.2 }}
+      className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[oklch(0.086_0.024_282)] transition-all hover:border-white/[0.11]"
+    >
+      {/* ── Main row ── */}
+      <div className="flex items-center gap-3 p-4">
+        {/* Player */}
+        <MiniPlayer
+          url={rec.recording_url}
+          id={rec.id}
+          activeId={activePlayId}
+          onActivate={onActivatePlay}
+        />
+
+        {/* Info */}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="text-sm font-semibold text-white truncate">{name}</span>
+            {rec.leads?.company && (
+              <span className="text-xs text-slate-500 truncate">· {rec.leads.company}</span>
+            )}
+          </div>
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />{fmtDuration(rec.duration_seconds)}
+            </span>
+            <span className="hidden sm:inline">·</span>
+            <span className="hidden sm:inline">{fmtDate(rec.started_at)}</span>
+            <DispositionBadge disp={rec.disposition} />
+          </div>
+        </div>
+
+        {/* Right side — sentiment + expand */}
+        <div className="flex shrink-0 items-center gap-2">
+          {sent && (
+            <span className={`hidden sm:flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${sent.bg} ${sent.border} ${sent.color}`}>
+              <sent.icon className="h-3 w-3" />{sent.label}
+            </span>
+          )}
+          {isProcessing && (
+            <span className="hidden sm:flex items-center gap-1 text-[11px] text-slate-500">
+              <RefreshCw className="h-3 w-3 animate-spin" /> Analyzing…
+            </span>
+          )}
+          <Link
+            href={`/recordings/${rec.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.07] text-slate-600 transition hover:border-white/[0.12] hover:text-slate-300"
+            title="View full recording"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.07] text-slate-600 transition hover:border-white/[0.12] hover:text-slate-300"
+            aria-label={expanded ? 'Collapse' : 'Expand'}
+          >
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Expanded panel ── */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="overflow-hidden border-t border-white/[0.06]"
+          >
+            <div className="space-y-4 p-4">
+
+              {/* Mobile date + sentiment row */}
+              <div className="flex flex-wrap items-center gap-2 sm:hidden text-[11px] text-slate-500">
+                <span>{fmtDate(rec.started_at)}</span>
+                {sent && (
+                  <span className={`flex items-center gap-1 rounded-full border px-2 py-0.5 font-semibold ${sent.bg} ${sent.border} ${sent.color}`}>
+                    <sent.icon className="h-2.5 w-2.5" />{sent.label}
+                  </span>
+                )}
+              </div>
+
+              {/* AI Summary */}
+              {hasAi && summaryBullets.length > 0 && (
+                <div className="rounded-xl border border-violet-500/15 bg-gradient-to-br from-violet-500/[0.07] to-cyan-500/[0.05] p-4">
+                  <div className="mb-2.5 flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-violet-300">AI Summary</span>
+                  </div>
+                  <ul className="space-y-1.5">
+                    {summaryBullets.map((b, i) => (
+                      <li key={i} className="flex gap-2 text-sm text-white/75 leading-relaxed">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400/60" />
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Keywords */}
+                  {rec.ai_keywords && rec.ai_keywords.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {rec.ai_keywords.slice(0, 6).map((kw, i) => (
+                        <span key={i} className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[11px] text-slate-400">
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Next steps */}
+                  {nextSteps.length > 0 && (
+                    <div className="mt-3 border-t border-white/[0.06] pt-3">
+                      <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Next Steps</p>
+                      <ul className="space-y-1">
+                        {nextSteps.map((s, i) => (
+                          <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                            <span className="mt-0.5 shrink-0 text-cyan-400">→</span>{s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Processing indicator */}
+              {isProcessing && (
+                <div className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-sm text-slate-500">
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  AI is transcribing and analyzing this call…
+                </div>
+              )}
+
+              {/* Reprocess button */}
+              {needsAi && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onReprocess(rec.id); }}
+                  className="flex items-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/[0.08] px-4 py-2.5 text-sm font-semibold text-violet-300 transition hover:bg-violet-500/15"
+                >
+                  <Sparkles className="h-4 w-4" /> Transcribe & Analyze with AI
+                </button>
+              )}
+
+              {/* Transcript */}
+              {rec.transcript && (
+                <div>
+                  <div className="mb-2 flex items-center gap-2">
+                    <FileText className="h-3.5 w-3.5 text-slate-500" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Transcript</span>
+                  </div>
+                  <div className="max-h-52 overflow-y-auto rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-400">
+                      {rec.transcript}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// ─── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
       <div className="relative mb-8">
-        <motion.div animate={{ scale: [1, 1.12, 1], opacity: [0.15, 0.3, 0.15] }}
+        <motion.div
+          animate={{ scale: [1, 1.15, 1], opacity: [0.12, 0.25, 0.12] }}
           transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute inset-0 -m-6 rounded-full bg-emerald-500/20" />
-        <motion.div animate={{ scale: [1, 1.06, 1], opacity: [0.2, 0.4, 0.2] }}
-          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
-          className="absolute inset-0 -m-3 rounded-full bg-emerald-500/15" />
+          className="absolute inset-0 -m-6 rounded-full bg-emerald-500/20"
+        />
         <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/[0.06]">
-          <Mic className="h-9 w-9 text-emerald-400" />
+          <Volume2 className="h-9 w-9 text-emerald-400/70" />
         </div>
       </div>
-      <h2 className="text-xl font-bold text-white">Your call library is ready</h2>
-      <p className="mt-2 max-w-sm text-sm text-slate-500 leading-relaxed">
-        Every call you make will be recorded, transcribed, and analyzed by AI automatically.
+      <h2 className="text-xl font-bold text-white">Your call library is empty</h2>
+      <p className="mt-2 max-w-xs text-sm leading-relaxed text-slate-500">
+        Calls 30 seconds or longer are automatically recorded. Enable recording in Settings.
       </p>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-        {FEATURE_BADGES.map(({ icon: Icon, label }) => (
+        {[
+          { icon: Mic,      label: 'Auto-recording' },
+          { icon: FileText, label: 'Transcription' },
+          { icon: Sparkles, label: 'AI Insights' },
+          { icon: Search,   label: 'Full-text search' },
+        ].map(({ icon: Icon, label }) => (
           <span key={label} className="flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 text-xs text-slate-400">
-            <Icon className="h-3 w-3 text-emerald-400" />{label}
+            <Icon className="h-3 w-3 text-emerald-400" /> {label}
           </span>
         ))}
       </div>
-      <Link href="/dialer" className="mt-8 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-600/20 to-teal-600/10 px-6 py-3 text-sm font-bold text-emerald-300 transition hover:from-emerald-600/30">
+      <Link
+        href="/dialer"
+        className="mt-8 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-600/20 to-teal-600/10 px-6 py-3 text-sm font-bold text-emerald-300 transition hover:from-emerald-600/30"
+      >
         <Phone className="h-4 w-4" /> Start your first call
       </Link>
     </div>
   );
 }
 
-const RECORDINGS_SELECT = `
-  id, to_number, from_number, recording_url, duration_seconds, created_at,
-  disposition, analytics_id, ai_processing_status,
-  leads(name, company),
-  analytics:call_analytics(id, sentiment, sentiment_score, summary, talking_points, suggested_disposition)
-`;
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
-const DISPOSITION_FILTERS = [
-  { id: 'interested', label: 'Interested' },
-  { id: 'callback', label: 'Callback' },
-  { id: 'meeting_booked', label: 'Meeting' },
-  { id: 'voicemail', label: 'Voicemail' },
-  { id: 'not_interested', label: 'Not Interested' },
-  { id: 'no_answer', label: 'No Answer' },
+const SENTIMENT_FILTERS = [
+  { key: '',         label: 'All' },
+  { key: 'positive', label: 'Positive' },
+  { key: 'neutral',  label: 'Neutral' },
+  { key: 'negative', label: 'Negative' },
 ];
 
 export default function RecordingsPage() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [sentimentFilter, setSentimentFilter] = useState('');
+  const [activePlayId, setActivePlayId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterDisp, setFilterDisp] = useState<string | null>(null);
 
-  const [supabase] = useState(() => createClient());
-
-  const load = useCallback(async () => {
+  const fetchRecordings = useCallback(async (searchVal = search, sentimentVal = sentimentFilter) => {
+    setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) { setLoading(false); return; }
-      setUserId(session.user.id);
-
-      const { data, error } = await supabase
-        .from('calls')
-        .select(RECORDINGS_SELECT)
-        .eq('user_id', session.user.id)
-        .not('recording_url', 'is', null)
-        .or('duration_seconds.gte.30,duration_seconds.is.null')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) { console.error('Recordings fetch error:', error); return; }
-      setRecordings((data ?? []).filter((r) => r.recording_url) as unknown as Recording[]);
+      const params = new URLSearchParams();
+      if (searchVal) params.set('search', searchVal);
+      if (sentimentVal) params.set('sentiment', sentimentVal);
+      const res = await fetch(`/api/recordings/list?${params}`);
+      const data = await res.json() as { recordings?: Recording[]; error?: string };
+      if (data.error) { console.error('Recordings fetch error:', data.error); return; }
+      setRecordings(data.recordings ?? []);
     } catch (err) {
       console.error('Recordings load error:', err);
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [search, sentimentFilter]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    void fetchRecordings('', '');
+    // Get userId for realtime
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Realtime: update when AI processing completes
+  // Realtime: refresh when AI processing completes
   useEffect(() => {
     if (!userId) return;
+    const supabase = createClient();
     const channel = supabase
-      .channel('recordings-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'calls',
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          const updated = payload.new as Partial<Recording>;
-          setRecordings((prev) =>
-            prev.map((r) =>
-              r.id === updated.id
-                ? { ...r, ...updated }
-                : r,
-            ),
-          );
-        },
-      )
+      .channel('recordings-rt')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'call_analytics' },
-        () => { load(); },
+        () => { void fetchRecordings(); },
       )
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
-  }, [userId, supabase, load]);
+  }, [userId, fetchRecordings]);
 
-  const filteredRecordings = recordings.filter((r) => {
-    if (filterDisp && (r.disposition ?? (Array.isArray(r.analytics) ? r.analytics[0] : r.analytics)?.suggested_disposition) !== filterDisp) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const name = (r.leads?.name ?? r.to_number ?? '').toLowerCase();
-      const company = (r.leads?.company ?? '').toLowerCase();
-      if (!name.includes(q) && !company.includes(q)) return false;
+  const handleSearch = () => void fetchRecordings(search, sentimentFilter);
+
+  const handleSentimentChange = (s: string) => {
+    setSentimentFilter(s);
+    void fetchRecordings(search, s);
+  };
+
+  const handleReprocess = async (id: string) => {
+    toast.loading('Queuing AI analysis…', { id: `rp-${id}` });
+    try {
+      const res = await fetch(`/api/recordings/${id}/reprocess`, { method: 'POST' });
+      const data = await res.json() as { error?: string };
+      if (data.error) {
+        toast.error(data.error, { id: `rp-${id}` });
+      } else {
+        toast.success('Processing started — refresh in a moment', { id: `rp-${id}` });
+        setTimeout(() => void fetchRecordings(), 8000);
+      }
+    } catch {
+      toast.error('Failed to start processing', { id: `rp-${id}` });
     }
-    return true;
-  });
+  };
 
   return (
     <>
-      <DashboardHeader title="Recordings" subtitle="AI-analyzed call recordings" />
-      <main className="flex-1 overflow-y-auto px-3 py-3 lg:px-6 lg:py-5">
-        {!loading && recordings.length > 0 && (
-          <div className="mb-4 max-w-4xl space-y-3">
-            {/* Search */}
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
-              <input
-                type="text"
-                placeholder="Search by name or company…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] py-2.5 pl-9 pr-4 text-sm text-white placeholder-slate-600 outline-none transition focus:border-white/[0.14] focus:bg-white/[0.05]"
-              />
-            </div>
-            {/* Disposition filter chips */}
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => setFilterDisp(null)}
-                className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors ${!filterDisp ? 'border-brand/40 bg-brand/10 text-brand' : 'border-white/[0.07] bg-white/[0.03] text-slate-500 hover:text-slate-300'}`}
-              >
-                All
-              </button>
-              {DISPOSITION_FILTERS.map(f => (
+      <DashboardHeader
+        title="Recordings"
+        subtitle="AI-analyzed call recordings — transcripts, summaries, sentiment"
+      />
+      <main className="flex-1 overflow-y-auto px-3 py-4 lg:px-6 lg:py-5">
+        <div className="mx-auto max-w-4xl">
+
+          {/* Controls */}
+          {(!loading || recordings.length > 0) && (
+            <div className="mb-5 space-y-3">
+              {/* Search */}
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
+                <input
+                  type="text"
+                  placeholder="Search transcript, name, company…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+                  className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] py-2.5 pl-9 pr-10 text-sm text-white placeholder-slate-600 outline-none transition focus:border-white/[0.14] focus:bg-white/[0.05]"
+                />
+                {search && (
+                  <button type="button" onClick={() => { setSearch(''); void fetchRecordings('', sentimentFilter); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-300">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Filters row */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Sentiment:</span>
+                {SENTIMENT_FILTERS.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => handleSentimentChange(key)}
+                    className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition-all ${
+                      sentimentFilter === key
+                        ? 'border-violet-500/40 bg-violet-500/10 text-violet-300'
+                        : 'border-white/[0.07] bg-white/[0.03] text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
                 <button
-                  key={f.id}
                   type="button"
-                  onClick={() => setFilterDisp(prev => prev === f.id ? null : f.id)}
-                  className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors ${filterDisp === f.id ? 'border-brand/40 bg-brand/10 text-brand' : 'border-white/[0.07] bg-white/[0.03] text-slate-500 hover:text-slate-300'}`}
+                  onClick={() => void fetchRecordings()}
+                  className="ml-auto flex items-center gap-1.5 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 text-[11px] font-semibold text-slate-500 transition hover:text-slate-300"
                 >
-                  {f.label}
+                  <RefreshCw className="h-3 w-3" /> Refresh
                 </button>
+              </div>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-[72px] animate-pulse rounded-2xl border border-white/[0.07] bg-white/[0.03]" />
               ))}
             </div>
-          </div>
-        )}
-        {loading ? (
-          <div className="space-y-3 max-w-4xl">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-28 animate-pulse rounded-2xl border border-white/10 bg-white/[0.03]" />
-            ))}
-          </div>
-        ) : recordings.length === 0 ? (
-          <EmptyState />
-        ) : filteredRecordings.length === 0 ? (
-          <div className="flex max-w-4xl flex-col items-center gap-3 py-16">
-            <Search className="h-8 w-8 text-slate-700" />
-            <p className="text-sm text-slate-500">No recordings match your search</p>
-            <button type="button" onClick={() => { setSearchQuery(''); setFilterDisp(null); }} className="text-xs font-semibold text-brand hover:underline">
-              Clear filters
-            </button>
-          </div>
-        ) : (
-          <motion.div className="space-y-3 max-w-4xl"
-            initial="hidden" animate="show"
-            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
-          >
-            {filteredRecordings.map((r) => {
-              const name = r.leads?.name ?? r.to_number ?? 'Unknown';
-              const company = r.leads?.company;
-              const ai = Array.isArray(r.analytics) ? r.analytics[0] : r.analytics;
-              const bullets = getSummaryBullets(ai?.summary);
-              const talkingPoints = ai?.talking_points?.slice(0, 3) ?? [];
-              const disp = ai?.suggested_disposition ?? r.disposition;
-
-              return (
-                <motion.div key={r.id}
-                  variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}
-                  transition={{ duration: 0.22 }}
-                >
-                  <Link href={`/recordings/${r.id}`}
-                    className="group block rounded-2xl border border-white/[0.07] bg-[oklch(0.086_0.024_282)] p-4 transition-all hover:border-white/10 hover:bg-white/[0.04]"
-                  >
-                    {/* Mobile: stacked layout. Desktop: side-by-side */}
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
-
-                      {/* Top row on mobile: player + meta inline */}
-                      <div className="flex items-center justify-between sm:contents">
-                        {/* Player */}
-                        <div className="shrink-0">
-                          <MiniPlayer url={r.recording_url} />
-                        </div>
-                        {/* Meta — inline on mobile (right side), column on desktop */}
-                        <div className="flex items-center gap-2 sm:hidden">
-                          <div className="flex items-center gap-1 text-xs text-slate-400">
-                            <Clock className="h-3 w-3" />
-                            {formatDuration(r.duration_seconds)}
-                          </div>
-                          <a href={r.recording_url} download target="_blank" rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] text-slate-600 hover:text-slate-300"
-                            title="Download"
-                          >
-                            <Download className="w-3 h-3" />
-                          </a>
-                        </div>
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-sm text-white">{name}</span>
-                          {company && <span className="text-xs text-slate-500">{company}</span>}
-                          <DispositionBadge disp={disp} />
-                          {ai && <SentimentBadge score={ai.sentiment_score ?? null} />}
-                        </div>
-                        <p className="mt-0.5 text-[10px] text-slate-600 sm:hidden">{formatDate(r.created_at)}</p>
-
-                        {bullets.length > 0 && (
-                          <p className="mt-1.5 text-xs text-slate-400 leading-relaxed line-clamp-2 sm:line-clamp-1">
-                            <Sparkles className="inline h-3 w-3 text-amber-400/80 mr-1" />
-                            {bullets[0]}
-                          </p>
-                        )}
-
-                        {talkingPoints.length > 0 && (
-                          <div className="mt-2 hidden flex-wrap gap-1.5 sm:flex">
-                            {talkingPoints.map((pt: string) => (
-                              <span key={pt} className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2 py-0.5 text-[10px] text-slate-500">
-                                {pt}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right meta — desktop only */}
-                      <div className="hidden sm:flex shrink-0 flex-col items-end gap-2">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                          <Clock className="h-3 w-3" />
-                          {formatDuration(r.duration_seconds)}
-                        </div>
-                        <span className="text-[10px] text-slate-500">{formatDate(r.created_at)}</span>
-                        <div className="flex items-center gap-1.5">
-                          {r.ai_processing_status === 'processing' && !ai && (
-                            <span className="flex items-center gap-1 rounded-full bg-fuchsia-500/10 px-2 py-0.5 text-[10px] font-semibold text-fuchsia-400 animate-pulse">
-                              <Sparkles className="h-2.5 w-2.5" /> AI analyzing…
-                            </span>
-                          )}
-                          {ai && (
-                            <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400/80">
-                              <Sparkles className="h-2.5 w-2.5" /> Analyzed
-                            </span>
-                          )}
-                          <a href={r.recording_url} download target="_blank" rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.06] text-slate-600 transition hover:bg-white/[0.04] hover:text-slate-300"
-                            title="Download"
-                          >
-                            <Download className="w-3 h-3" />
-                          </a>
-                        </div>
-                        <span className="text-[10px] text-emerald-500/70 group-hover:text-emerald-400 transition">
-                          View Analysis →
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        )}
+          ) : recordings.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <>
+              <p className="mb-3 text-[11px] text-slate-600">
+                {recordings.length} recording{recordings.length !== 1 ? 's' : ''}
+                {sentimentFilter ? ` · ${sentimentFilter}` : ''}
+                {search ? ` · "${search}"` : ''}
+              </p>
+              <motion.div
+                className="space-y-3"
+                initial="hidden"
+                animate="show"
+                variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
+              >
+                {recordings.map((rec) => (
+                  <RecordingCard
+                    key={rec.id}
+                    rec={rec}
+                    activePlayId={activePlayId}
+                    onActivatePlay={setActivePlayId}
+                    onReprocess={handleReprocess}
+                  />
+                ))}
+              </motion.div>
+            </>
+          )}
+        </div>
       </main>
     </>
   );
