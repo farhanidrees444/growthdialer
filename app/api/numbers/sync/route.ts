@@ -11,7 +11,7 @@ export async function POST(_request: NextRequest) {
     const userId = authUser?.id;
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    console.log('[NUMBERS-SYNC] Fetching numbers from provider for user:', userId);
+    console.log('[NUMBERS-SYNC] Starting for user:', userId);
 
     const res = await fetch('https://api.telnyx.com/v2/phone_numbers?page[size]=250', {
       headers: { Authorization: `Bearer ${process.env.TELNYX_API_KEY}` },
@@ -24,17 +24,30 @@ export async function POST(_request: NextRequest) {
 
     const { data: telnyxNumbers } = await res.json() as { data?: Record<string, unknown>[] };
     let synced = 0;
+    let skipped = 0;
 
     for (const num of telnyxNumbers ?? []) {
       const phoneNumber = num.phone_number as string;
       const telnyxNumberId = num.id as string;
+      const tags = (num.tags as string[] | null) ?? [];
       const wholesale = parseFloat(
         ((num.costs as { monthly?: { amount?: string } } | null)?.monthly?.amount) ?? '1.00'
       );
       const purchasedAt = (num.created_at as string | null) ?? new Date().toISOString();
       const nextBillingDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-      // Check if this telnyx_number_id already exists in DB
+      // Determine ownership from Telnyx tag
+      const userTag = tags.find((t) => t.startsWith('user:'));
+      const tagUserId = userTag?.replace('user:', '') ?? null;
+
+      // If tagged to a different user — never touch this number
+      if (tagUserId && tagUserId !== userId) {
+        console.log('[NUMBERS-SYNC] Skipping', phoneNumber, '— tagged to another user');
+        skipped++;
+        continue;
+      }
+
+      // If untagged and not in DB under this user — do not auto-claim
       const { data: existing } = await supabase
         .from('purchased_numbers')
         .select('id, user_id')
@@ -43,7 +56,7 @@ export async function POST(_request: NextRequest) {
 
       if (existing) {
         if (existing.user_id === userId) {
-          // Belongs to current user — update status/cost fields only
+          // Already mine — refresh status fields
           const { error } = await supabase
             .from('purchased_numbers')
             .update({
@@ -56,12 +69,22 @@ export async function POST(_request: NextRequest) {
             .eq('id', existing.id);
           if (!error) synced++;
           else console.error('[NUMBERS-SYNC] Update error for', phoneNumber, ':', error);
+        } else if (tagUserId === userId) {
+          // Tagged to me but DB has wrong owner — correct it
+          console.log('[NUMBERS-SYNC] Correcting ownership for', phoneNumber);
+          const { error } = await supabase
+            .from('purchased_numbers')
+            .update({ user_id: userId, status: 'active', billing_status: 'active' })
+            .eq('id', existing.id);
+          if (!error) synced++;
+          else console.error('[NUMBERS-SYNC] Ownership correction error:', error);
         } else {
-          // Belongs to a different user — never reassign ownership
-          console.warn('[NUMBERS-SYNC] Number', phoneNumber, 'belongs to another user — skipping');
+          // In DB under a different user, not tagged to me — skip
+          skipped++;
         }
-      } else {
-        // New number — insert and assign to the authenticated user
+      } else if (tagUserId === userId) {
+        // Tagged to me, not in DB at all — recover it
+        console.log('[NUMBERS-SYNC] Recovering tagged number:', phoneNumber);
         const { error } = await supabase
           .from('purchased_numbers')
           .insert({
@@ -78,11 +101,14 @@ export async function POST(_request: NextRequest) {
             next_billing_date: nextBillingDate,
           });
         if (!error) synced++;
-        else console.error('[NUMBERS-SYNC] Insert error for', phoneNumber, ':', error);
+        else console.error('[NUMBERS-SYNC] Recovery insert error for', phoneNumber, ':', error);
+      } else {
+        // Untagged number not in DB — do not auto-claim
+        skipped++;
       }
     }
 
-    // Auto-set default number if user has none
+    // Auto-set default if user has none
     if (synced > 0) {
       const { data: profile } = await supabase
         .from('profiles')
@@ -109,8 +135,12 @@ export async function POST(_request: NextRequest) {
       }
     }
 
-    console.log('[NUMBERS-SYNC] Synced:', synced, 'numbers for user:', userId);
-    return NextResponse.json({ synced, total: telnyxNumbers?.length ?? 0 });
+    const message = synced > 0
+      ? `Recovered ${synced} number${synced !== 1 ? 's' : ''} tagged to your account`
+      : 'No numbers to recover. Buy new numbers through the app.';
+
+    console.log('[NUMBERS-SYNC] Done. Synced:', synced, 'Skipped:', skipped);
+    return NextResponse.json({ synced, skipped, total: telnyxNumbers?.length ?? 0, message });
   } catch (err) {
     console.error('[NUMBERS-SYNC] Exception:', err);
     return NextResponse.json({ error: 'Sync failed' }, { status: 500 });

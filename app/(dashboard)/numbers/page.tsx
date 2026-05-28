@@ -339,11 +339,11 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
     setSyncing(true);
     try {
       const res = await fetch('/api/numbers/sync', { method: 'POST' });
-      const data = await res.json() as { synced?: number; error?: string };
+      const data = await res.json() as { synced?: number; message?: string; error?: string };
       if (data.error) {
         toast.error(data.error);
       } else {
-        toast.success(`Synced ${data.synced ?? 0} number${(data.synced ?? 0) !== 1 ? 's' : ''} from your account`);
+        toast.success(data.message ?? 'Sync complete');
         await load();
       }
     } catch {
@@ -404,7 +404,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
             className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-white/60 transition hover:border-white/[0.14] hover:text-white disabled:opacity-50"
           >
             <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-            {syncing ? 'Syncing...' : 'Sync Numbers'}
+            {syncing ? 'Recovering...' : 'Recover Numbers'}
           </button>
           <button
             type="button"
@@ -469,7 +469,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
           className="ml-auto flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[11px] font-medium transition hover:border-white/[0.16] hover:text-white/80 disabled:opacity-50"
         >
           <RefreshCw className={`h-3 w-3 ${syncing ? 'animate-spin' : ''}`} />
-          {syncing ? 'Syncing...' : 'Sync Numbers'}
+          {syncing ? 'Recovering...' : 'Recover Numbers'}
         </button>
       </div>
 
