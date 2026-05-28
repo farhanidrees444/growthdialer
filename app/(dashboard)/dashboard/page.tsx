@@ -7,8 +7,9 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Phone, Users, CalendarCheck, Clock, TrendingUp, TrendingDown,
-  Activity, ChevronRight, Signal,
+  Activity, ChevronRight,
 } from "lucide-react";
+import { NumberHealthCard } from "@/components/dashboard/number-health-card";
 import {
   AreaChart, Area, XAxis, CartesianGrid,
   ResponsiveContainer, Tooltip as RechartsTooltip,
@@ -40,14 +41,6 @@ interface RecentCall {
   leads: { name: string; company: string } | null;
 }
 
-interface PurchasedNumber {
-  id: string;
-  phone_number: string;
-  country_name: string | null;
-  number_type: string | null;
-  is_default: boolean;
-  status: string;
-}
 
 interface DailyPoint {
   label: string;
@@ -444,68 +437,6 @@ function RecentCallsList({ calls, loading }: { calls: RecentCall[] | null; loadi
   );
 }
 
-// ── Number Health ─────────────────────────────────────────────────────────────
-
-function NumberHealthList({ numbers, loading }: { numbers: PurchasedNumber[] | null; loading: boolean }) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
-      <div className="flex items-center justify-between px-5 py-4">
-        <h3 className="text-sm font-semibold text-white">Number Health</h3>
-        <Link href="/numbers" className="flex items-center gap-1 text-xs text-slate-600 transition-colors hover:text-slate-400">
-          Manage <ChevronRight className="h-3 w-3" />
-        </Link>
-      </div>
-
-      {loading ? (
-        <div className="space-y-px">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex items-center justify-between px-5 py-3">
-              <div className="space-y-1.5">
-                <Skeleton className="h-3 w-32" />
-                <Skeleton className="h-2.5 w-20" />
-              </div>
-              <Skeleton className="h-5 w-20 rounded-full" />
-            </div>
-          ))}
-        </div>
-      ) : !numbers || numbers.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 px-5 py-10">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02]">
-            <Signal className="h-5 w-5 text-slate-600" />
-          </div>
-          <p className="text-sm text-slate-600">No numbers configured</p>
-          <Link href="/numbers" className="text-xs font-semibold text-brand underline-offset-2 hover:underline">
-            Get a number →
-          </Link>
-        </div>
-      ) : (
-        <div className="divide-y divide-white/[0.04]">
-          {numbers.map(num => (
-            <Link
-              key={num.id}
-              href="/numbers"
-              className="flex items-center justify-between px-5 py-3 transition-colors hover:bg-white/[0.02]"
-            >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-mono text-sm font-medium text-white">{formatPhone(num.phone_number)}</p>
-                  {num.is_default && <span className="text-xs text-amber-400">★</span>}
-                </div>
-                <p className="text-xs text-slate-500">
-                  {[num.country_name, num.number_type].filter(Boolean).join(' · ')}
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[10px] font-semibold">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                <span className="text-emerald-400">Monitoring</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -526,9 +457,6 @@ export default function DashboardPage() {
 
   const [recentCallsLoading, setRecentCallsLoading] = useState(true);
   const [recentCalls, setRecentCalls] = useState<RecentCall[] | null>(null);
-
-  const [numbersLoading, setNumbersLoading] = useState(true);
-  const [numbers, setNumbers] = useState<PurchasedNumber[] | null>(null);
 
   const [weeklyData, setWeeklyData] = useState<DailyPoint[] | null>(null);
   const [weeklyLoading, setWeeklyLoading] = useState(false);
@@ -630,17 +558,6 @@ export default function DashboardPage() {
         }
       });
 
-    void supabase
-      .from('purchased_numbers')
-      .select('id, phone_number, country_name, number_type, is_default, status')
-      .order('is_default', { ascending: false })
-      .then(({ data }) => {
-        if (!cancelled) {
-          setNumbers((data ?? []) as PurchasedNumber[]);
-          setNumbersLoading(false);
-        }
-      });
-
     return () => { cancelled = true; };
   }, []);
 
@@ -690,7 +607,6 @@ export default function DashboardPage() {
     ? { pct: stats.connectRate - stats.yesterday.connectRate, positive: stats.connectRate >= stats.yesterday.connectRate }
     : null;
 
-  const activeNumberCount = (numbers ?? []).filter(n => n.status === 'active').length;
   const allLoading = metricsLoading || statsLoading;
 
   return (
@@ -707,12 +623,7 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-light text-white md:text-3xl">
             {greeting}{firstName ? ', ' : ''}<span className="font-semibold">{firstName}</span>
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {dateStr}
-            {activeNumberCount > 0 && (
-              <> · <span className="text-slate-400">{activeNumberCount} active number{activeNumberCount !== 1 ? 's' : ''}</span></>
-            )}
-          </p>
+          <p className="mt-1 text-sm text-slate-500">{dateStr}</p>
         </div>
 
         {/* KPI Grid — 2×2 mobile, 4×1 desktop */}
@@ -789,7 +700,7 @@ export default function DashboardPage() {
         {/* Bottom Row — Recent Calls + Number Health */}
         <div className="mt-4 grid grid-cols-1 gap-4 px-4 pb-6 lg:mt-5 lg:grid-cols-2 lg:px-6">
           <RecentCallsList calls={recentCalls} loading={recentCallsLoading} />
-          <NumberHealthList numbers={numbers} loading={numbersLoading} />
+          <NumberHealthCard />
         </div>
       </main>
     </>
