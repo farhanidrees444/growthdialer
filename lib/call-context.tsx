@@ -28,8 +28,8 @@ export interface CallContextValue {
   /** When the call was INITIATED (makeCall triggered) */
   callInitiatedAt: Date | null;
 
-  /** Start a call from anywhere (leads page, etc.) */
-  startCall: (phone: string, lead?: LeadRecord | null, callerNumber?: string) => void;
+  /** Start a call from anywhere (leads page, etc.) — async: fetches default caller number if not provided */
+  startCall: (phone: string, lead?: LeadRecord | null, callerNumber?: string) => Promise<void>;
   /** Dialer page calls this right before it calls makeCall() directly */
   registerCallMeta: (lead: LeadRecord | null, phone: string) => void;
 
@@ -95,9 +95,20 @@ export function CallProvider({ children }: { children: ReactNode }) {
     activePhoneRef.current = phone;
   }, []);
 
-  const startCall = useCallback((phone: string, lead?: LeadRecord | null, callerNumber?: string) => {
+  const startCall = useCallback(async (phone: string, lead?: LeadRecord | null, callerNumber?: string) => {
+    let fromNumber = callerNumber;
+    if (!fromNumber) {
+      // Auto-fetch the user's default purchased number so Telnyx accepts the call
+      try {
+        const res = await fetch('/api/numbers/list');
+        const data = await res.json() as { numbers?: Array<{ phone_number: string; is_default: boolean }> };
+        const nums = data.numbers ?? [];
+        const defaultNum = nums.find((n) => n.is_default) ?? nums[0];
+        fromNumber = defaultNum?.phone_number;
+      } catch { /* proceed without — call may be rejected by Telnyx */ }
+    }
     registerCallMeta(lead ?? null, phone);
-    makeCall(phone, callerNumber);
+    makeCall(phone, fromNumber);
   }, [registerCallMeta, makeCall]);
 
   const dismissSaveAsLead = useCallback(() => setShowSaveAsLead(false), []);

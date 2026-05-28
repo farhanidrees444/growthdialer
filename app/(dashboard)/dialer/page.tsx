@@ -253,7 +253,8 @@ export default function DialerPage() {
 
     if ((prev === 'connecting' || prev === 'ringing') && callStatus === 'active') {
       powerDialerRef.current.onCallStarted();
-      if (mode === 'preview' && selectedLead) {
+      // Update call IDs now that DB record exists (mode already 'live' from initiateCall)
+      if (selectedLead) {
         startCall(pendingCallDbId ?? '', pendingCallDbId ?? '');
       }
     }
@@ -315,12 +316,12 @@ export default function DialerPage() {
       toast.error('Phone not ready — please wait a moment');
       return;
     }
+    // Switch center column to live stage immediately — shows during connecting/ringing
+    startCall('', '');
     const e164 = normalizePhone(phone) ?? phone;
     pendingRegRef.current = { e164, leadId: lead?.id };
-    // Pass fromNumber so Telnyx uses the purchased E.164 number as caller ID.
-    // Without this, the SDK defaults to the SIP username which Telnyx rejects.
     makeCall(e164, fromNumber || undefined);
-  }, [phoneStatus, makeCall, fromNumber]);
+  }, [phoneStatus, makeCall, fromNumber, startCall]);
 
   // Update ref on every render so powerDialer.onShouldDial always calls latest version
   initiateCallRef.current = initiateCall;

@@ -427,7 +427,7 @@ export default function LeadDetailPage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => startCall(lead.phone, {
+            onClick={() => void startCall(lead.phone, {
               id: lead.id, name: lead.name, company: lead.company ?? '',
               phone: lead.phone, title: lead.title ?? '',
               email: lead.email ?? undefined, linkedin: lead.linkedin ?? undefined,

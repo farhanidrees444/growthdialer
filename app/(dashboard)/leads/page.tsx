@@ -632,7 +632,7 @@ export default function LeadsPage() {
   }, []);
 
   const handleCall = useCallback((lead: FullLead) => {
-    startCall(lead.phone, {
+    void startCall(lead.phone, {
       id: lead.id, name: lead.name, company: lead.company ?? "",
       phone: lead.phone, title: lead.title ?? "",
       email: lead.email ?? undefined, linkedin: lead.linkedin ?? undefined,
