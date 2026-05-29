@@ -25,6 +25,7 @@ export interface WebPhoneContextValue {
   micPermission: MicPermission;
   makeCall: (destination: string, callerNumber?: string) => void;
   hangup: () => void;
+  answerIncomingCall: () => void;
   toggleMute: () => void;
   toggleHold: () => void;
   sendDTMF: (digit: string) => void;
@@ -247,6 +248,18 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     }
   }, [phoneStatus]);
 
+  const answerIncomingCall = useCallback(() => {
+    if (activeCallRef.current) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (activeCallRef.current as any).answer?.();
+        console.log('[WebPhone] answered inbound call');
+      } catch (err) {
+        console.error('[WebPhone] answerIncomingCall error:', err);
+      }
+    }
+  }, []);
+
   const hangup = useCallback(() => {
     if (activeCallRef.current) {
       try { activeCallRef.current.hangup(); } catch { /* ignore */ }
@@ -304,6 +317,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         micPermission,
         makeCall,
         hangup,
+        answerIncomingCall,
         toggleMute,
         toggleHold,
         sendDTMF,

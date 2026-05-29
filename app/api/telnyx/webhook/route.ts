@@ -36,7 +36,9 @@ interface CallRow {
   user_id: string;
   lead_id: string | null;
   to_number: string | null;
+  from_number: string | null;
   answered_at: string | null;
+  direction: string | null;
   ai_processed: boolean | null;
   analytics_id: string | null;
   duration_seconds: number | null;
@@ -93,6 +95,33 @@ async function ensureRecordingsBucket(supabase: NonNullable<SupabaseClient>) {
   }
 }
 
+async function telnyxCallAction(
+  callControlId: string,
+  action: string,
+  body: Record<string, unknown> = {},
+): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `https://api.telnyx.com/v2/calls/${encodeURIComponent(callControlId)}/actions/${action}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.TELNYX_API_KEY ?? ''}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+    );
+    if (!res.ok) {
+      console.error(`[TELNYX] ${action} failed:`, res.status, (await res.text()).slice(0, 200));
+    }
+    return res.ok;
+  } catch (err) {
+    console.error(`[TELNYX] ${action} exception:`, err);
+    return false;
+  }
+}
+
 async function startProgrammaticRecording(callControlId: string): Promise<boolean> {
   try {
     const res = await fetch(
@@ -143,14 +172,89 @@ export async function POST(request: NextRequest) {
     }
 
     // ── call.initiated ──────────────────────────────────────────────────────
-    // Use upsert so the row exists even when this webhook fires before
-    // /api/calls/dial has created the DB record (common race in WebRTC flow).
-    // /api/calls/dial also upserts, so whichever arrives first wins on creation
-    // and the second fills in the remaining fields.
     if (event_type === 'call.initiated') {
       if (!callControlId) {
         console.warn('[WEBHOOK] call.initiated missing call_control_id — skipping');
+      } else if (payload.direction === 'incoming') {
+        // ── INBOUND CALL ────────────────────────────────────────────────────
+        const toNumber = payload.to ?? '';
+        const fromNumber = payload.from ?? '';
+        console.log('[INBOUND] Incoming call:', fromNumber, '→', toNumber);
+
+        // Find which user owns this GrowthDialer number
+        const { data: ownedNumber } = await supabase
+          .from('purchased_numbers')
+          .select('user_id')
+          .eq('phone_number', toNumber)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (!ownedNumber) {
+          console.log('[INBOUND] No owner for number — rejecting:', toNumber);
+          await telnyxCallAction(callControlId, 'reject', { cause: 'CALL_REJECTED' });
+          return NextResponse.json({ received: true });
+        }
+
+        const userId = ownedNumber.user_id as string;
+
+        // Match caller to an existing lead by phone number
+        const { data: lead } = await supabase
+          .from('leads')
+          .select('id, first_name, last_name, company')
+          .eq('user_id', userId)
+          .eq('phone', fromNumber)
+          .is('deleted_at', null)
+          .maybeSingle();
+
+        // Create inbound call record (realtime subscription in browser will pick this up)
+        const { data: newCall } = await supabase
+          .from('calls')
+          .insert({
+            user_id: userId,
+            lead_id: lead?.id ?? null,
+            direction: 'inbound',
+            telnyx_call_id: callControlId,
+            telnyx_session_id: callSessionId ?? null,
+            from_number: fromNumber,
+            to_number: toNumber,
+            status: 'ringing',
+            started_at: new Date().toISOString(),
+          })
+          .select('id')
+          .single();
+
+        console.log('[INBOUND] Call record created:', newCall?.id, '| lead:', lead?.id ?? 'unknown');
+
+        // Get user routing settings
+        const { data: inboundSettings } = await supabase
+          .from('user_settings')
+          .select('inbound_mode, inbound_forward_number, inbound_ring_seconds')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        const mode = (inboundSettings?.inbound_mode as string | null) ?? 'browser';
+
+        if (mode === 'off') {
+          await telnyxCallAction(callControlId, 'reject', { cause: 'CALL_REJECTED' });
+          console.log('[INBOUND] Rejected (off mode)');
+        } else if (mode === 'forward' && inboundSettings?.inbound_forward_number) {
+          // Answer then bridge/transfer to user's personal number
+          await telnyxCallAction(callControlId, 'answer');
+          await new Promise((r) => setTimeout(r, 600));
+          await telnyxCallAction(callControlId, 'transfer', {
+            to: inboundSettings.inbound_forward_number as string,
+            from: toNumber,
+          });
+          console.log('[INBOUND] Forwarded to:', inboundSettings.inbound_forward_number);
+        } else {
+          // browser mode (default): Telnyx routes to registered WebRTC SIP endpoint.
+          // The frontend popup appears via Supabase realtime subscription on the call record.
+          console.log('[INBOUND] Ringing browser for user:', userId);
+        }
       } else {
+        // ── OUTBOUND CALL (existing upsert logic) ────────────────────────────
+        // Use upsert so the row exists even when this webhook fires before
+        // /api/calls/dial has created the DB record (common race in WebRTC flow).
         const { error } = await supabase
           .from('calls')
           .upsert(
@@ -238,7 +342,7 @@ export async function POST(request: NextRequest) {
     else if (event_type === 'call.hangup') {
       const callRow = await findCall(
         supabase, callSessionId, callControlId,
-        'id, user_id, lead_id, answered_at, to_number, ai_processed, analytics_id, duration_seconds, was_recorded, ai_processing_status',
+        'id, user_id, lead_id, answered_at, to_number, from_number, direction, ai_processed, analytics_id, duration_seconds, was_recorded, ai_processing_status',
       );
 
       const endedAt = new Date().toISOString();
@@ -282,6 +386,32 @@ export async function POST(request: NextRequest) {
           description: durStr ? `Call ended — ${durStr}` : `Call ended${hangupCause ? ` (${hangupCause})` : ''}`,
           metadata: { event: 'call.hangup', call_id: callRow.id, duration_seconds: durationSeconds, hangup_cause: hangupCause },
         }).maybeSingle();
+
+        // Detect missed inbound call (hung up before answered)
+        if (callRow.direction === 'inbound' && !callRow.answered_at) {
+          await supabase
+            .from('calls')
+            .update({ disposition: 'missed', status: 'missed' })
+            .eq('id', callRow.id);
+
+          const { data: notifSettings } = await supabase
+            .from('user_settings')
+            .select('missed_call_notify')
+            .eq('user_id', callRow.user_id)
+            .maybeSingle();
+
+          if ((notifSettings?.missed_call_notify as boolean | null) !== false) {
+            const callerLabel = callRow.from_number ?? 'unknown number';
+            await supabase.from('notifications').insert({
+              user_id: callRow.user_id,
+              type: 'call',
+              title: 'Missed Call',
+              body: `Missed inbound call from ${callerLabel}`,
+              metadata: { call_id: callRow.id, from_number: callRow.from_number, lead_id: callRow.lead_id },
+            }).maybeSingle();
+          }
+          console.log('[INBOUND] Missed call logged:', callRow.from_number);
+        }
       } else {
         // Fallback: update by control id without row lookup
         if (callControlId) {

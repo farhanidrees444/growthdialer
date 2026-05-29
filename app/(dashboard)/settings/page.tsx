@@ -10,6 +10,7 @@ import {
   AlarmCheck, Brain, TrendingUp, Target,
   Info, HardDrive, Clock, Voicemail, Upload, Play, X as XIcon,
   Users, UserPlus, Crown, ChevronDown, Mail, MoreVertical, UserMinus,
+  Monitor, Smartphone, PhoneOff, PhoneIncoming,
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { ROLE_LABELS, ROLE_COLORS, type Role } from "@/lib/auth/permissions";
@@ -29,6 +30,11 @@ interface UserSettings {
   ai_extract_talking_points: boolean;
   auto_drop_vm: boolean;
   local_presence_enabled: boolean;
+  // Inbound calling
+  inbound_mode: 'browser' | 'forward' | 'voicemail' | 'off';
+  inbound_forward_number: string;
+  inbound_ring_seconds: number;
+  missed_call_notify: boolean;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -43,6 +49,10 @@ const DEFAULT_SETTINGS: UserSettings = {
   ai_extract_talking_points: true,
   auto_drop_vm: false,
   local_presence_enabled: false,
+  inbound_mode: 'browser',
+  inbound_forward_number: '',
+  inbound_ring_seconds: 25,
+  missed_call_notify: true,
 };
 
 type TabKey = 'general' | 'calling' | 'recording' | 'ai' | 'voicemails' | 'team' | 'notifications' | 'billing' | 'security';
@@ -220,6 +230,105 @@ function RecordingModeCard({
         </div>
       </div>
     </button>
+  );
+}
+
+const INBOUND_MODES = [
+  { id: 'browser',  title: 'Ring in Browser',  desc: 'Answer calls right here in the app', icon: Monitor },
+  { id: 'forward',  title: 'Forward to Phone', desc: 'Route to your personal number', icon: Smartphone },
+  { id: 'voicemail',title: 'Voicemail Only',    desc: 'Send straight to voicemail', icon: Voicemail },
+  { id: 'off',      title: 'Reject All',        desc: 'Decline all incoming calls', icon: PhoneOff },
+] as const;
+
+function InboundCallingTab({ settings, onChange }: { settings: UserSettings; onChange: (patch: Partial<UserSettings>) => void }) {
+  return (
+    <div className="space-y-5">
+      {/* Inbound mode */}
+      <SectionCard
+        title="Inbound Calls"
+        description="How incoming calls to your GrowthDialer numbers are handled"
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-5">
+          {INBOUND_MODES.map(({ id, title, desc, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onChange({ inbound_mode: id })}
+              className={`flex flex-col gap-2 rounded-xl border p-4 text-left transition-all ${
+                settings.inbound_mode === id
+                  ? 'border-cyan-500/40 bg-cyan-500/[0.06]'
+                  : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]'
+              }`}
+            >
+              <Icon className={`h-5 w-5 ${settings.inbound_mode === id ? 'text-cyan-400' : 'text-white/40'}`} />
+              <p className={`text-sm font-semibold ${settings.inbound_mode === id ? 'text-white' : 'text-white/70'}`}>{title}</p>
+              <p className="text-xs text-white/40">{desc}</p>
+            </button>
+          ))}
+        </div>
+
+        {/* Forward number */}
+        {settings.inbound_mode === 'forward' && (
+          <div className="mb-5 space-y-1.5">
+            <label className="block text-xs font-semibold text-white/50">Personal phone number</label>
+            <input
+              type="tel"
+              value={settings.inbound_forward_number}
+              onChange={(e) => onChange({ inbound_forward_number: e.target.value })}
+              placeholder="+1 555 123 4567"
+              className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-cyan-500/40"
+            />
+            <p className="text-xs text-white/30">All incoming calls forward to this number</p>
+          </div>
+        )}
+
+        {/* Ring duration slider */}
+        {(settings.inbound_mode === 'browser' || settings.inbound_mode === 'forward') && (
+          <div className="mb-5 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-white/50">Ring duration before voicemail</label>
+              <span className="text-xs font-mono text-cyan-400">{settings.inbound_ring_seconds}s</span>
+            </div>
+            <input
+              type="range" min={10} max={45} step={5}
+              value={settings.inbound_ring_seconds}
+              onChange={(e) => onChange({ inbound_ring_seconds: Number(e.target.value) })}
+              className="w-full accent-cyan-500"
+            />
+            <div className="flex justify-between text-[10px] text-white/25">
+              <span>10s</span><span>45s</span>
+            </div>
+          </div>
+        )}
+
+        {/* Missed call notifications */}
+        <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-white/80">Notify me of missed calls</p>
+            <p className="text-xs text-white/40">In-app notification when you miss an inbound call</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChange({ missed_call_notify: !settings.missed_call_notify })}
+            aria-checked={settings.missed_call_notify}
+            role="switch"
+            className={`relative h-6 w-11 rounded-full transition-all ${settings.missed_call_notify ? 'bg-cyan-500' : 'bg-white/10'}`}
+          >
+            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${settings.missed_call_notify ? 'left-[22px]' : 'left-0.5'}`} />
+          </button>
+        </div>
+      </SectionCard>
+
+      {/* Call history note */}
+      <SectionCard title="Call History">
+        <div className="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+          <PhoneIncoming className="mt-0.5 h-4 w-4 shrink-0 text-white/40" />
+          <p className="text-sm text-white/50 leading-relaxed">
+            Inbound calls appear in your call history with an <span className="text-green-400">incoming arrow</span>. Missed calls are marked in red. All calls are AI-analyzed using the same recording pipeline as outbound calls.
+          </p>
+        </div>
+      </SectionCard>
+    </div>
   );
 }
 
@@ -1103,6 +1212,10 @@ export default function SettingsPage() {
           ai_extract_talking_points: s.ai_extract_talking_points ?? true,
           auto_drop_vm: s.auto_drop_vm ?? false,
           local_presence_enabled: s.local_presence_enabled ?? false,
+          inbound_mode: (s.inbound_mode as UserSettings['inbound_mode']) ?? 'browser',
+          inbound_forward_number: s.inbound_forward_number ?? '',
+          inbound_ring_seconds: s.inbound_ring_seconds ?? 25,
+          missed_call_notify: s.missed_call_notify ?? true,
         };
         setSettings(loaded);
         setSavedSettings(loaded);
@@ -1241,7 +1354,10 @@ export default function SettingsPage() {
                   />
                 )}
                 {activeTab === 'team' && <TeamTab />}
-                {(activeTab === 'calling' || activeTab === 'notifications' || activeTab === 'billing' || activeTab === 'security') && (
+                {activeTab === 'calling' && (
+                  <InboundCallingTab settings={settings} onChange={handleChange} />
+                )}
+                {(activeTab === 'notifications' || activeTab === 'billing' || activeTab === 'security') && (
                   <PlaceholderTab label={TABS.find((t) => t.key === activeTab)?.label ?? ''} />
                 )}
               </motion.div>

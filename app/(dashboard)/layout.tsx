@@ -12,6 +12,8 @@ import { CallProvider, useCallContext } from "@/lib/call-context";
 import ActiveCallOverlay from "@/components/active-call-overlay";
 import SaveAsLeadModal from "@/components/save-as-lead-modal";
 import { WorkspaceProvider } from "@/contexts/workspace-context";
+import { IncomingCallPopup } from "@/components/call/incoming-call-popup";
+import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { cn } from "@/lib/utils";
 
 const BOTTOM_TABS = [
@@ -81,9 +83,12 @@ function MobileTopBar() {
 
 function DashboardOverlays() {
   const { showSaveAsLead, activePhone, dismissSaveAsLead } = useCallContext();
+  const session = useSupabaseSession();
+  const userId = session?.user?.id;
   return (
     <>
       <ActiveCallOverlay />
+      {userId && <IncomingCallPopup userId={userId} />}
       {showSaveAsLead && activePhone && (
         <SaveAsLeadModal phone={activePhone} onClose={dismissSaveAsLead} />
       )}
