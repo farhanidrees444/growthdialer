@@ -413,14 +413,60 @@ export async function POST(request: NextRequest) {
           console.log('[INBOUND] Missed call logged:', callRow.from_number);
         }
       } else {
-        // Fallback: update by control id without row lookup
+        // findCall returned null — try direct lookup by telnyx_call_id for inbound calls
+        // (inbound calls are inserted with telnyx_call_id; session_id may differ between events)
         if (callControlId) {
-          await supabase
+          const { data: inboundRow } = await supabase
             .from('calls')
-            .update({ status: 'completed', ended_at: endedAt, hangup_cause: hangupCause })
-            .eq('telnyx_call_id', callControlId);
+            .select('id, user_id, lead_id, answered_at, direction, from_number')
+            .eq('telnyx_call_id', callControlId)
+            .maybeSingle();
+
+          if (inboundRow) {
+            await supabase
+              .from('calls')
+              .update({
+                status: 'completed',
+                ended_at: endedAt,
+                hangup_cause: hangupCause,
+                ...(durationSeconds !== null ? { duration_seconds: durationSeconds } : {}),
+              })
+              .eq('id', inboundRow.id);
+
+            // Apply missed-call logic for unanswered inbound
+            if (inboundRow.direction === 'inbound' && !inboundRow.answered_at) {
+              await supabase
+                .from('calls')
+                .update({ disposition: 'missed', status: 'missed' })
+                .eq('id', inboundRow.id);
+
+              const { data: notifSettings } = await supabase
+                .from('user_settings')
+                .select('missed_call_notify')
+                .eq('user_id', inboundRow.user_id)
+                .maybeSingle();
+
+              if ((notifSettings?.missed_call_notify as boolean | null) !== false) {
+                await supabase.from('notifications').insert({
+                  user_id: inboundRow.user_id,
+                  type: 'call',
+                  title: 'Missed Call',
+                  body: `Missed inbound call from ${inboundRow.from_number ?? 'unknown'}`,
+                  metadata: { call_id: inboundRow.id, from_number: inboundRow.from_number, lead_id: inboundRow.lead_id },
+                }).maybeSingle();
+              }
+              console.log('[INBOUND] Missed call (fallback path):', inboundRow.from_number);
+            }
+            console.log('[WEBHOOK] call.hangup — resolved via telnyx_call_id fallback:', inboundRow.id);
+          } else {
+            // Last resort: blind update by control id
+            await supabase
+              .from('calls')
+              .update({ status: 'completed', ended_at: endedAt, hangup_cause: hangupCause })
+              .eq('telnyx_call_id', callControlId);
+            console.warn('[WEBHOOK] call.hangup — call not found, updated by control id');
+          }
         }
-        console.warn('[WEBHOOK] call.hangup — call not found, updated by control id');
       }
     }
 

@@ -11,12 +11,16 @@ export async function GET(request: NextRequest) {
     const sentiment = searchParams.get('sentiment') ?? '';
     const search = searchParams.get('search') ?? '';
 
+    // Select only verified calls columns (42703 fix: removed ai_processing_status, analytics_id)
     const { data: calls, error } = await supabase
       .from('calls')
       .select(`
         id, recording_url, duration_seconds, transcript,
-        started_at, disposition, was_recorded, ai_processing_status,
-        analytics_id, from_number, to_number,
+        started_at, disposition, was_recorded,
+        from_number, to_number, direction,
+        ai_summary, ai_sentiment, ai_intent,
+        ai_next_steps, ai_keywords, ai_analysis_status,
+        lead_id,
         leads:lead_id (first_name, last_name, company)
       `)
       .eq('user_id', user.id)
@@ -30,36 +34,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message, recordings: [] }, { status: 500 });
     }
 
-    const rows = calls ?? [];
-
-    // Batch-fetch analytics (no FK constraint, so manual join)
-    const analyticsIds = rows
-      .map((r) => r.analytics_id as string | null)
-      .filter(Boolean) as string[];
-
-    const analyticsMap: Record<string, Record<string, unknown>> = {};
-    if (analyticsIds.length > 0) {
-      const { data: analyticsRows } = await supabase
-        .from('call_analytics')
-        .select('id, sentiment, sentiment_score, summary, next_steps, talking_points, objections')
-        .in('id', analyticsIds);
-      for (const row of analyticsRows ?? []) {
-        analyticsMap[row.id as string] = row as Record<string, unknown>;
-      }
-    }
-
-    let enriched = rows.map((r) => {
-      const a = r.analytics_id ? analyticsMap[r.analytics_id as string] : null;
-      return {
-        ...r,
-        ai_sentiment: (a?.sentiment as string | null) ?? null,
-        ai_sentiment_score: (a?.sentiment_score as number | null) ?? null,
-        ai_summary_raw: a?.summary ?? null,
-        ai_next_steps_raw: a?.next_steps ?? null,
-        ai_keywords: Array.isArray(a?.talking_points) ? a.talking_points : null,
-        ai_objections: Array.isArray(a?.objections) ? a.objections : null,
-      };
-    });
+    // Map directly from calls columns — no batch analytics fetch needed
+    let enriched = (calls ?? []).map((r) => ({
+      ...r,
+      ai_sentiment: (r.ai_sentiment as string | null) ?? null,
+      ai_summary_raw: r.ai_summary ?? null,
+      ai_next_steps_raw: r.ai_next_steps ?? null,
+      ai_keywords: Array.isArray(r.ai_keywords) ? r.ai_keywords as string[] : null,
+    }));
 
     if (sentiment) {
       enriched = enriched.filter((r) => r.ai_sentiment === sentiment);

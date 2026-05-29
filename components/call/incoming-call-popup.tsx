@@ -77,6 +77,7 @@ export function IncomingCallPopup({ userId }: Props) {
         { event: 'INSERT', schema: 'public', table: 'calls', filter: `user_id=eq.${userId}` },
         async (payload) => {
           const row = payload.new as Record<string, unknown>;
+          console.log('[POPUP] Inbound INSERT received:', row.id, '| direction:', row.direction, '| status:', row.status);
           if (row.direction !== 'inbound' || row.status !== 'ringing') return;
           callIdRef.current = row.id as string;
 
@@ -113,7 +114,9 @@ export function IncomingCallPopup({ userId }: Props) {
           }
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[POPUP] Realtime status:', status, '| userId:', userId);
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -133,6 +136,9 @@ export function IncomingCallPopup({ userId }: Props) {
 
   const handleAccept = () => {
     stopRingtone();
+    const callId = call.id;
+    setCall(null);
+
     // Register with CallContext so ActiveCallOverlay shows caller info
     registerCallMeta(
       call.lead
@@ -145,9 +151,14 @@ export function IncomingCallPopup({ userId }: Props) {
         : null,
       call.from_number,
     );
-    // Answer via Telnyx WebRTC SDK
+
+    // Answer via Telnyx REST (updates DB + signals Telnyx to bridge audio)
+    void fetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch(
+      (err) => console.error('[POPUP] REST answer failed:', err),
+    );
+
+    // Also answer via WebRTC SDK so browser audio connects
     answerIncomingCall();
-    setCall(null);
   };
 
   const handleDecline = async () => {
