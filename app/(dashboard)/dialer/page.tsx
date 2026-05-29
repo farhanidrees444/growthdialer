@@ -6,6 +6,7 @@ import { Phone } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useWebPhone } from '@/contexts/webphone-context';
+import { useCallContext } from '@/lib/call-context';
 import { useDialerMode } from '@/hooks/use-dialer-mode';
 import { useCallRealtime } from '@/hooks/use-call-realtime';
 import { useDialerHotkeys } from '@/hooks/use-dialer-hotkeys';
@@ -110,6 +111,7 @@ export default function DialerPage() {
   } = useWebPhone();
 
   const { mode, selectedLead, activeCallDbId, selectLead, startCall, endCall } = useDialerMode();
+  const { registerCallMeta } = useCallContext();
 
   // Stable ref so powerDialer.onShouldDial can call initiateCall once it's defined
   const initiateCallRef = useRef<((phone: string, lead?: LeadRecord) => void) | null>(null);
@@ -316,12 +318,17 @@ export default function DialerPage() {
       toast.error('Phone not ready — please wait a moment');
       return;
     }
-    // Switch center column to live stage immediately — shows during connecting/ringing
-    startCall('', '');
     const e164 = normalizePhone(phone) ?? phone;
+    if (lead) {
+      // Lead call: switch center column to live stage immediately
+      startCall('', '');
+    } else {
+      // Manual dial (no lead): register in CallContext so floating overlay shows
+      registerCallMeta(null, e164);
+    }
     pendingRegRef.current = { e164, leadId: lead?.id };
     makeCall(e164, fromNumber || undefined);
-  }, [phoneStatus, makeCall, fromNumber, startCall]);
+  }, [phoneStatus, makeCall, fromNumber, startCall, registerCallMeta]);
 
   // Update ref on every render so powerDialer.onShouldDial always calls latest version
   initiateCallRef.current = initiateCall;

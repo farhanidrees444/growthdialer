@@ -578,10 +578,12 @@ export default function ActiveCallOverlay() {
 
   // ── Guard ──────────────────────────────────────────────────────────────────
   const isVisible = ['connecting', 'ringing', 'active', 'held'].includes(callStatus);
-  if (pathname?.startsWith('/dialer')) return null;
+  // Hide on /dialer when a lead is selected (dialer page has its own LiveCallStage).
+  // For manual calls from dialer (no activeLead), show the floating overlay.
+  if (pathname?.startsWith('/dialer') && activeLead) return null;
   if (!isVisible) return null;
 
-  const displayName = activeLead?.name || 'Unknown Contact';
+  const displayName = activeLead?.name || activePhone || 'Manual Dial';
   const displayCompany = activeLead?.company || '';
   const displayPhone = activePhone || activeLead?.phone || '';
   const isCallActive = callStatus === 'active' || callStatus === 'held';
