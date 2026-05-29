@@ -9,7 +9,6 @@ import {
   Clock, Loader2, Users, CheckCircle2, XCircle,
   ChevronDown, Star, X as XIcon,
 } from 'lucide-react';
-import DashboardHeader from '@/components/DashboardHeader';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/lib/utils';
 
@@ -413,16 +412,13 @@ export default function CoachingLivePage() {
 
   if (!canCoach) {
     return (
-      <>
-        <DashboardHeader title="Live Coaching" subtitle="Real-time call coaching for your team" />
-        <div className="flex flex-1 items-center justify-center">
+      <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
             <Headset className="mx-auto mb-3 h-10 w-10 text-slate-700" />
             <p className="text-sm font-semibold text-white">Access restricted</p>
             <p className="mt-1 text-xs text-slate-600">Manager role or above required to access live coaching</p>
           </div>
-        </div>
-      </>
+      </div>
     );
   }
 
@@ -430,7 +426,6 @@ export default function CoachingLivePage() {
 
   return (
     <>
-      <DashboardHeader title="Live Coaching" subtitle="Real-time call coaching for your team" />
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Toolbar */}

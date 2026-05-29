@@ -14,8 +14,6 @@ import {
   AreaChart, Area, XAxis, CartesianGrid,
   ResponsiveContainer, Tooltip as RechartsTooltip,
 } from "recharts";
-import DashboardHeader from "@/components/DashboardHeader";
-import SystemHealthDropdown from "@/components/dashboard/system-health-dropdown";
 import { useLeads } from "@/contexts/leads-context";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { createClient } from "@/lib/supabase/client";
@@ -610,14 +608,7 @@ export default function DashboardPage() {
   const allLoading = metricsLoading || statsLoading;
 
   return (
-    <>
-      <DashboardHeader
-        title="Dashboard"
-        showImport
-        actions={<SystemHealthDropdown />}
-      />
-
-      <main className="flex-1 overflow-y-auto">
+    <main className="flex-1 overflow-y-auto">
         {/* Hero */}
         <div className="px-4 pt-6 pb-4 lg:px-6 lg:pt-8 lg:pb-5">
           <h1 className="text-2xl font-light text-white md:text-3xl">
@@ -702,7 +693,6 @@ export default function DashboardPage() {
           <RecentCallsList calls={recentCalls} loading={recentCallsLoading} />
           <NumberHealthCard />
         </div>
-      </main>
-    </>
+    </main>
   );
 }

@@ -8,7 +8,6 @@ import {
   TrendingUp, TrendingDown, Minus, RefreshCw, ChevronDown,
   ChevronRight, Volume2, X,
 } from 'lucide-react';
-import DashboardHeader from '@/components/DashboardHeader';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
@@ -493,12 +492,7 @@ export default function RecordingsPage() {
   };
 
   return (
-    <>
-      <DashboardHeader
-        title="Recordings"
-        subtitle="AI-analyzed call recordings — transcripts, summaries, sentiment"
-      />
-      <main className="flex-1 overflow-y-auto px-3 py-4 lg:px-6 lg:py-5">
+    <main className="flex-1 overflow-y-auto px-3 py-4 lg:px-6 lg:py-5">
         <div className="mx-auto max-w-4xl">
 
           {/* Controls */}
@@ -585,7 +579,6 @@ export default function RecordingsPage() {
             </>
           )}
         </div>
-      </main>
-    </>
+    </main>
   );
 }

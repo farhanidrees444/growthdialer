@@ -13,7 +13,6 @@ import {
   Trash2, Eye, Filter, Download, Plus, Tag, Check,
 } from "lucide-react";
 import { toast } from "sonner";
-import DashboardHeader from "@/components/DashboardHeader";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useLeads } from "@/contexts/leads-context";
@@ -782,13 +781,6 @@ export default function LeadsPage() {
           />
         )}
       </AnimatePresence>
-
-      {/* Header */}
-      <DashboardHeader
-        title="Leads"
-        subtitle={`${stats.total} total · ${stats.contacted} contacted`}
-        showImport
-      />
 
       <main className="flex-1 overflow-y-auto">
         {/* Stats strip */}

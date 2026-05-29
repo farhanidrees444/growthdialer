@@ -8,7 +8,6 @@ import {
   X, AlertTriangle, Zap, Clock, Shield,
   Search, Signal, TrendingUp, Edit2, Check,
 } from 'lucide-react';
-import DashboardHeader from '@/components/DashboardHeader';
 import CountryCard from '@/components/numbers/country-card';
 import AvailableNumberCard from '@/components/numbers/available-number-card';
 import CountryFlag from '@/components/numbers/country-flag';
@@ -830,12 +829,7 @@ export default function NumbersPage() {
   }
 
   return (
-    <>
-      <DashboardHeader
-        title="My Numbers"
-        subtitle="Manage caller IDs, monitor spam health, track per-number analytics"
-      />
-      <main className="flex-1 overflow-y-auto px-3 py-3 lg:px-6 lg:py-5">
+    <main className="flex-1 overflow-y-auto px-3 py-3 lg:px-6 lg:py-5">
         <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex gap-1 border-b border-white/[0.06]">
             {([
@@ -864,7 +858,6 @@ export default function NumbersPage() {
         {tab === 'my'
           ? <MyNumbers refreshSignal={refreshSignal} onBuyNew={() => setTab('buy')} />
           : <BuyNew onPurchased={handlePurchased} />}
-      </main>
-    </>
+    </main>
   );
 }

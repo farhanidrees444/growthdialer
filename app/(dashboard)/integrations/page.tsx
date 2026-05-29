@@ -5,7 +5,6 @@ export const dynamic = 'force-dynamic';
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Zap, CheckCircle2, Bell } from "lucide-react";
-import DashboardHeader from "@/components/DashboardHeader";
 import { cn } from "@/lib/utils";
 
 // ─── SVG Logos ────────────────────────────────────────────────────────────────
@@ -515,11 +514,6 @@ export default function IntegrationsPage() {
 
   return (
     <>
-      <DashboardHeader
-        title="Integrations"
-        subtitle="Connect your revenue stack — one click, no webhooks needed"
-      />
-
       <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
         {/* Category filter tabs */}
         <div className="mb-6 flex items-center gap-1 overflow-x-auto scrollbar-hide border-b border-white/[0.06]">

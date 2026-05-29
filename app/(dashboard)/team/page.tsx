@@ -10,7 +10,6 @@ import {
   ChevronDown, Ban, Trash2, Crown, Building2,
   Zap, ExternalLink, X, AlertTriangle,
 } from "lucide-react";
-import DashboardHeader from "@/components/DashboardHeader";
 import { useWorkspace, type WorkspaceMember } from "@/contexts/workspace-context";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import {
@@ -328,11 +327,6 @@ export default function TeamPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <DashboardHeader
-        title="Team"
-        subtitle="Manage your workspace members and invitations."
-      />
-
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Workspace banner */}
         {currentWorkspace && (

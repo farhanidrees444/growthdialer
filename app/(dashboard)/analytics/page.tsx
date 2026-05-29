@@ -9,7 +9,6 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, LineChart, Line, Legend,
 } from "recharts";
-import DashboardHeader from "@/components/DashboardHeader";
 import StatCard from "@/components/StatCard";
 import ActivityChart from "@/components/ActivityChart";
 import MultiLineChart from "@/components/dashboard/multi-line-chart";
@@ -180,9 +179,7 @@ export default function AnalyticsPage() {
   const hasDispositions = (distribution?.dispositionBreakdown ?? []).length > 0;
 
   return (
-    <>
-      <DashboardHeader title="Analytics" subtitle="Team performance and call outcomes" />
-      <main className="flex-1 overflow-y-auto px-3 py-3 space-y-4 lg:px-6 lg:py-5 lg:space-y-5">
+    <main className="flex-1 overflow-y-auto px-3 py-3 space-y-4 lg:px-6 lg:py-5 lg:space-y-5">
 
         {/* Stat cards */}
         <motion.div
@@ -382,7 +379,6 @@ export default function AnalyticsPage() {
             </ResponsiveContainer>
           )}
         </Card>
-      </main>
-    </>
+    </main>
   );
 }

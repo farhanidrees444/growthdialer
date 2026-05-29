@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { ROLE_LABELS, ROLE_COLORS, type Role } from "@/lib/auth/permissions";
-import DashboardHeader from "@/components/DashboardHeader";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -1271,8 +1270,6 @@ export default function SettingsPage() {
 
   return (
     <>
-      <DashboardHeader title="Settings" subtitle="Manage your account and workspace" />
-
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar tabs */}
         <nav className="hidden w-52 shrink-0 flex-col gap-0.5 border-r border-white/[0.06] p-3 lg:flex">
