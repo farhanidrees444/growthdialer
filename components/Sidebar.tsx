@@ -9,11 +9,9 @@ import {
   LayoutDashboard,
   Users,
   BarChart2,
-  Settings,
   Headphones,
   Zap,
   ChevronRight,
-  LogOut,
   X,
   Hash,
   Sparkles,
@@ -26,12 +24,9 @@ import {
 import { useState } from "react";
 import { useMobileNav } from "@/contexts/mobile-nav-context";
 import { useSidebarCounts, formatSidebarCount } from "@/hooks/use-sidebar-counts";
-import { useWorkspace, type Workspace } from "@/contexts/workspace-context";
+import { useWorkspace } from "@/contexts/workspace-context";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
-import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { ROLE_LABELS } from "@/lib/auth/permissions";
 
 type CountKey = 'leads' | 'recordings' | 'numbers';
@@ -58,7 +53,6 @@ const navItems: NavItem[] = [
 
 const bottomItems = [
   { icon: Zap, label: "Integrations", href: "/integrations" },
-  { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
 const PLAN_BADGES: Record<string, { label: string; className: string }> = {
@@ -166,13 +160,9 @@ function WorkspaceSwitcher() {
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const session = useSupabaseSession();
   const { isOpen, close } = useMobileNav();
   const sidebarCounts = useSidebarCounts();
   const { currentRole } = useWorkspace();
-
-  const displayName = session?.user?.user_metadata?.full_name ?? session?.user?.email ?? "User";
-  const roleLabel = currentRole ? ROLE_LABELS[currentRole] : "Agent";
 
   const canCoach = currentRole && ["owner", "admin", "manager"].includes(currentRole);
 
@@ -289,31 +279,6 @@ export default function Sidebar() {
             );
           })}
 
-          {/* User profile */}
-          <div className="flex items-center gap-3 px-3 py-2.5 mt-2 rounded-lg bg-sidebar-accent/30">
-            <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-[11px] font-bold text-white shrink-0">
-              {initials(displayName)}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-white truncate">{displayName}</p>
-              <p className="text-[10px] text-sidebar-foreground/50 truncate">{roleLabel}</p>
-            </div>
-          </div>
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:text-white hover:bg-sidebar-accent/50 mt-1"
-            onClick={async () => {
-              const supabase = createClient();
-              await supabase.auth.signOut();
-              window.location.href = "/login";
-            }}
-          >
-            <LogOut className="w-4 h-4" />
-            Sign out
-          </Button>
         </div>
       </aside>
     </>
