@@ -14,7 +14,15 @@ interface TelnyxEventPayload {
   hangup_cause?: string;
   start_time?: string;
   end_time?: string;
+  // recording.saved: private Telnyx storage URL (requires auth header)
   recording_urls?: { mp3?: string; wav?: string };
+  // recording.saved: public Telnyx S3 storage URL (no auth needed) — used when
+  // storage is set to "Telnyx S3" in the portal; this is often the only URL populated
+  public_recording_urls?: { mp3?: string; wav?: string };
+  // recording.saved duration fields
+  recording_duration_millis?: number;
+  recording_started_at?: string;
+  recording_ended_at?: string;
   duration_millis?: number;
   duration_seconds?: number;
 }
@@ -83,18 +91,6 @@ async function findCall(
   return null;
 }
 
-async function ensureRecordingsBucket(supabase: NonNullable<SupabaseClient>) {
-  try {
-    await supabase.storage.createBucket('call-recordings', {
-      public: false,
-      fileSizeLimit: 50 * 1024 * 1024,
-      allowedMimeTypes: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/webm'],
-    });
-  } catch {
-    // Bucket already exists — ignore
-  }
-}
-
 async function telnyxCallAction(
   callControlId: string,
   action: string,
@@ -136,14 +132,14 @@ async function startProgrammaticRecording(callControlId: string): Promise<boolea
       },
     );
     if (res.ok) {
-      console.log('[RECORDING] record_start accepted for control id:', callControlId);
+      console.log('[REC-A] record_start accepted for control id:', callControlId);
       return true;
     }
     const errText = await res.text();
-    console.error('[RECORDING] record_start failed:', res.status, errText.slice(0, 300));
+    console.error('[REC-A] record_start failed:', res.status, errText.slice(0, 300));
     return false;
   } catch (err) {
-    console.error('[RECORDING] record_start exception:', err);
+    console.error('[REC-A] record_start exception:', err);
     return false;
   }
 }
@@ -253,8 +249,6 @@ export async function POST(request: NextRequest) {
         }
       } else {
         // ── OUTBOUND CALL (existing upsert logic) ────────────────────────────
-        // Use upsert so the row exists even when this webhook fires before
-        // /api/calls/dial has created the DB record (common race in WebRTC flow).
         const { error } = await supabase
           .from('calls')
           .upsert(
@@ -273,7 +267,6 @@ export async function POST(request: NextRequest) {
     }
 
     // ── call.ringing ────────────────────────────────────────────────────────
-    // This confirms the receiver's phone is actually ringing (AMD is disabled)
     else if (event_type === 'call.ringing') {
       console.log('[WEBHOOK] call.ringing — receiver phone is ringing:', {
         callControlId,
@@ -316,16 +309,18 @@ export async function POST(request: NextRequest) {
         .single();
 
       const recordingMode = settings?.recording_mode ?? 'always';
-      console.log('[WEBHOOK] Recording mode:', recordingMode);
+      console.log('[REC-A] Answered. mode:', recordingMode, '| control_id:', callControlId, '| call_id:', callRow.id);
 
       if (recordingMode !== 'never' && callControlId) {
         // START PROGRAMMATIC RECORDING — triggers call.recording.saved webhook
         const started = await startProgrammaticRecording(callControlId);
         if (started) {
           await supabase.from('calls').update({ was_recorded: true }).eq('id', callRow.id);
+        } else {
+          console.warn('[REC-A] record_start failed — recording NOT started');
         }
-      } else if (recordingMode === 'never') {
-        console.log('[WEBHOOK] Skipping recording — user set recording_mode=never');
+      } else {
+        console.log('[REC-A] Recording NOT started — mode:', recordingMode, '| has_control_id:', !!callControlId);
       }
 
       // Activity log
@@ -414,7 +409,6 @@ export async function POST(request: NextRequest) {
         }
       } else {
         // findCall returned null — try direct lookup by telnyx_call_id for inbound calls
-        // (inbound calls are inserted with telnyx_call_id; session_id may differ between events)
         if (callControlId) {
           const { data: inboundRow } = await supabase
             .from('calls')
@@ -433,7 +427,6 @@ export async function POST(request: NextRequest) {
               })
               .eq('id', inboundRow.id);
 
-            // Apply missed-call logic for unanswered inbound
             if (inboundRow.direction === 'inbound' && !inboundRow.answered_at) {
               await supabase
                 .from('calls')
@@ -472,30 +465,45 @@ export async function POST(request: NextRequest) {
 
     // ── call.recording.saved ─────────────────────────────────────────────────
     else if (event_type === 'call.recording.saved') {
-      const recordingUrl = payload.recording_urls?.mp3 ?? payload.recording_urls?.wav ?? null;
-      console.log('[RECORDING SAVED] URL:', recordingUrl);
+      // Log full payload shape once so we can see exact Telnyx response structure
+      console.log('[REC-B] FULL payload:', JSON.stringify(payload).slice(0, 1500));
+
+      // Telnyx S3 storage sends URLs in public_recording_urls (no auth required).
+      // Private storage sends them in recording_urls (needs Telnyx API key auth).
+      // Handle both: prefer public first (works with any storage config).
+      const recordingUrl =
+        payload.public_recording_urls?.mp3 ??
+        payload.public_recording_urls?.wav ??
+        payload.recording_urls?.mp3 ??
+        payload.recording_urls?.wav ??
+        null;
+
+      console.log('[REC-B] recording.saved fired. session:', callSessionId,
+        '| public_urls:', JSON.stringify(payload.public_recording_urls),
+        '| private_urls:', JSON.stringify(payload.recording_urls),
+        '| resolved url:', recordingUrl);
 
       if (!recordingUrl) {
-        console.warn('[RECORDING SAVED] No recording URL in payload — skipping');
+        console.error('[REC-B] NO recording URL in payload — both recording_urls and public_recording_urls are empty. Full payload:', JSON.stringify(payload));
         return NextResponse.json({ received: true });
       }
 
       const callRow = await findCall(supabase, callSessionId, callControlId);
       if (!callRow) {
-        console.error('[RECORDING SAVED] Call not found. session:', callSessionId, '| control:', callControlId);
+        console.error('[REC-B] Call not found. session:', callSessionId, '| control:', callControlId);
         return NextResponse.json({ received: true });
       }
 
-      console.log('[RECORDING SAVED] Call:', callRow.id, '| ai_processing_status:', callRow.ai_processing_status);
+      console.log('[REC-B] Call:', callRow.id, '| ai_processing_status:', callRow.ai_processing_status);
 
-      // Idempotency
+      // Idempotency — don't process the same recording twice
       if (
         callRow.ai_processed ||
         callRow.analytics_id ||
         callRow.ai_processing_status === 'completed' ||
         callRow.ai_processing_status === 'processing'
       ) {
-        console.log('[RECORDING SAVED] Already processed/processing — skipping');
+        console.log('[REC-B] Already processed/processing — skipping');
         return NextResponse.json({ received: true });
       }
 
@@ -508,16 +516,23 @@ export async function POST(request: NextRequest) {
 
       const recordingMode = settings?.recording_mode ?? 'always';
       if (recordingMode === 'never') {
-        console.log('[RECORDING SAVED] recording_mode=never — skipping');
+        console.log('[REC-B] recording_mode=never — skipping');
         return NextResponse.json({ received: true });
       }
 
-      // 30-second minimum rule — recordings under 30s are discarded
-      const dur = callRow.duration_seconds ?? 0;
+      // 30-second minimum rule.
+      // Use payload duration first (most accurate for this recording),
+      // fall back to call duration_seconds (set by hangup event, usually already populated).
+      const payloadDuration = payload.recording_duration_millis
+        ? Math.round(payload.recording_duration_millis / 1000)
+        : null;
+      const dur = payloadDuration ?? callRow.duration_seconds ?? 0;
       const MIN_RECORDING_SECONDS = 30;
-      if (dur > 0 && dur < MIN_RECORDING_SECONDS) {
-        console.log(`[RECORDING SAVED] Call too short (${dur}s < ${MIN_RECORDING_SECONDS}s) — discarding recording`);
-        // Mark call as processed without saving recording URL; don't run AI
+
+      console.log('[REC-B] duration resolved:', dur, 's (payload:', payloadDuration, '| db:', callRow.duration_seconds, ')');
+
+      if (dur > 0 && dur < MIN_RECORDING_SECONDS && settings?.recording_auto_delete_short !== false) {
+        console.log(`[REC-B] Call too short (${dur}s < ${MIN_RECORDING_SECONDS}s) — skipping recording`);
         await supabase
           .from('calls')
           .update({ ai_processed: true, ai_processed_at: new Date().toISOString() })
@@ -525,11 +540,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true });
       }
 
-      // Save URL + mark processing
-      await supabase
+      // Save recording URL + mark as processing
+      const { error: updateErr } = await supabase
         .from('calls')
-        .update({ recording_url: recordingUrl, ai_processing_status: 'processing' })
+        .update({ recording_url: recordingUrl, was_recorded: true, ai_processing_status: 'processing' })
         .eq('id', callRow.id);
+
+      if (updateErr) {
+        console.error('[REC-B] Failed to save recording_url:', updateErr);
+      } else {
+        console.log('[REC-C] recording_url saved to DB for call:', callRow.id);
+      }
 
       // Determine if any AI feature is enabled (default to true when no settings row exists)
       const anyAiEnabled =
@@ -540,10 +561,12 @@ export async function POST(request: NextRequest) {
 
       if (anyAiEnabled) {
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? 'http://localhost:3000';
-        console.log('[RECORDING SAVED] Firing AI pipeline for call:', callRow.id, '| baseUrl:', baseUrl);
+        const aiUrl = `${baseUrl}/api/ai/process-call`;
+        console.log('[REC-D] Triggering AI pipeline for call:', callRow.id, '| endpoint:', aiUrl);
 
-        // Fire-and-forget — Telnyx needs a fast 200 response
-        void fetch(`${baseUrl}/api/ai/process-call`, {
+        // Fire-and-forget — Telnyx needs a fast 200 response.
+        // process-call runs in its own serverless invocation with maxDuration=120.
+        void fetch(aiUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -553,21 +576,18 @@ export async function POST(request: NextRequest) {
         })
           .then(async (r) => {
             const text = await r.text().catch(() => '');
-            console.log('[RECORDING SAVED] AI trigger response:', r.status, text.slice(0, 300));
+            console.log('[REC-D] AI trigger response status:', r.status, '| body:', text.slice(0, 300));
           })
           .catch((err) => {
-            console.error('[RECORDING SAVED] AI trigger error:', err);
+            console.error('[REC-D] AI trigger error:', err);
           });
       } else {
-        console.log('[RECORDING SAVED] All AI settings disabled — recording saved, skipping AI');
+        console.log('[REC-B] All AI settings disabled — recording saved, skipping AI');
         await supabase
           .from('calls')
           .update({ ai_processing_status: 'completed' })
           .eq('id', callRow.id);
       }
-
-      // Ensure bucket exists (async, non-blocking)
-      void ensureRecordingsBucket(supabase);
 
       // Log activity
       await supabase.from('activities').insert({

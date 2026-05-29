@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  console.log('[AI] Starting processing for call:', callId);
+  console.log('[AI-0] keys present: GROQ:', !!process.env.GROQ_API_KEY, '| GEMINI:', !!process.env.GEMINI_API_KEY, '| INTERNAL_SECRET:', !!process.env.INTERNAL_API_SECRET);
+  console.log('[AI-1] Process started for call:', callId);
   const startedAt = Date.now();
 
   // ── Step 1: Fetch call + idempotency check ─────────────────────────────────
@@ -126,21 +127,34 @@ export async function POST(request: NextRequest) {
     try {
       console.log('[AI] Downloading recording from:', call.recording_url);
       // Telnyx recording URLs require Authorization header
-      const audioRes = await fetch(call.recording_url, {
-        headers: { Authorization: `Bearer ${process.env.TELNYX_API_KEY ?? ''}` },
+      console.log('[AI-2] Downloading recording from:', call.recording_url);
+      // Try without auth first (public_recording_urls from Telnyx S3 are unauthenticated).
+      // Fall back to Telnyx API key auth for private storage URLs.
+      let audioRes = await fetch(call.recording_url, {
         signal: AbortSignal.timeout(30000),
       });
+      if (!audioRes.ok && audioRes.status === 401) {
+        console.log('[AI-2] Public URL failed 401, retrying with Telnyx auth...');
+        audioRes = await fetch(call.recording_url, {
+          headers: { Authorization: `Bearer ${process.env.TELNYX_API_KEY ?? ''}` },
+          signal: AbortSignal.timeout(30000),
+        });
+      }
       if (!audioRes.ok) {
         const errBody = await audioRes.text().catch(() => '');
         throw new Error(`Audio download failed: ${audioRes.status} ${audioRes.statusText} — ${errBody.slice(0, 200)}`);
       }
-      console.log('[AI] Recording downloaded, content-type:', audioRes.headers.get('content-type'), '| size:', audioRes.headers.get('content-length'));
+      console.log('[AI-2] Recording downloaded, content-type:', audioRes.headers.get('content-type'), '| size:', audioRes.headers.get('content-length'));
 
       const audioBuffer = await audioRes.arrayBuffer();
       const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
       const audioFile = new File([audioBlob], 'recording.mp3', { type: 'audio/mpeg' });
 
-      console.log('[AI] Sending to speech recognition engine, file size:', audioBuffer.byteLength, 'bytes');
+      console.log('[AI-2] Audio bytes:', audioBuffer.byteLength, '— sending to Whisper');
+      if (audioBuffer.byteLength === 0) {
+        throw new Error('Downloaded audio is 0 bytes — recording URL may be invalid or expired');
+      }
+
       const transcription = await groq.audio.transcriptions.create({
         file: audioFile,
         model: 'whisper-large-v3',
@@ -150,10 +164,11 @@ export async function POST(request: NextRequest) {
 
       transcript = transcription.text ?? '';
       transcriptWords = (transcription as { words?: typeof transcriptWords }).words ?? [];
-      console.log('[AI] Transcription complete — length:', transcript.length, 'chars | words:', transcriptWords.length);
+      console.log('[AI-3] Whisper complete — transcript length:', transcript.length, 'chars | words:', transcriptWords.length);
 
-      // Save transcript to calls table immediately
+      // Save transcript to calls table immediately so it shows even if AI analysis fails
       await supabase.from('calls').update({ transcript }).eq('id', callId);
+      console.log('[AI-4] Transcript saved to calls table');
     } catch (err) {
       console.error('[AI] Transcription failed:', err);
       await saveError(supabase, callId, call.user_id, call.lead_id, `transcription_failed: ${String(err)}`);
@@ -182,18 +197,17 @@ export async function POST(request: NextRequest) {
   let modelUsed = 'gemini-2.0-flash';
 
   try {
-    console.log('[AI] Sending to AI analysis engine (primary)…');
+    console.log('[AI-5] Sending to Gemini for analysis…');
     analysis = await analyzeCallWithGemini(transcript, companyName, industry, jobTitle, previousMemories);
-    console.log('[AI] Analysis complete — sentiment:', analysis.sentiment, '| score:', analysis.sentiment_score, '| disposition:', analysis.suggested_disposition, '| memories:', analysis.memories_to_save?.length ?? 0);
+    console.log('[AI-5] Gemini complete — sentiment:', analysis.sentiment, '| score:', analysis.sentiment_score, '| disposition:', analysis.suggested_disposition, '| memories:', analysis.memories_to_save?.length ?? 0);
   } catch (geminiErr) {
-    console.warn('[AI] Primary AI engine failed, trying fallback:', String(geminiErr).slice(0, 300));
+    console.warn('[AI-5] Gemini failed:', String(geminiErr).slice(0, 300), '— trying Groq fallback');
     modelUsed = 'llama-3.3-70b-versatile';
     try {
-      console.log('[AI] Sending to AI analysis engine (fallback)…');
       analysis = await analyzeCallWithGroq(transcript, companyName, industry, jobTitle, previousMemories);
-      console.log('[AI] Fallback analysis complete — sentiment:', analysis.sentiment);
+      console.log('[AI-5] Groq fallback complete — sentiment:', analysis.sentiment);
     } catch (groqErr) {
-      console.error('[AI] Both AI engines failed:', String(groqErr).slice(0, 300));
+      console.error('[AI-5] Both AI engines failed:', String(groqErr).slice(0, 300));
       await saveError(supabase, callId, call.user_id, call.lead_id, `analysis_failed: ${String(groqErr).slice(0, 200)}`);
       return NextResponse.json({ error: 'Analysis failed' }, { status: 500 });
     }
@@ -242,16 +256,42 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Save failed' }, { status: 500 });
   }
 
-  console.log('[AI] Saved analytics:', analyticsInserted.id);
+  console.log('[AI-5] Saved analytics row:', analyticsInserted.id);
 
-  // Link analytics back to call and mark processing complete
-  await supabase
+  // Write key AI results directly to calls table so the recordings list can
+  // read them without a separate call_analytics join.
+  const callsAiUpdate: Record<string, unknown> = {
+    analytics_id: analyticsInserted.id,
+    ai_processing_status: 'completed',
+  };
+  if (doSummarize) {
+    callsAiUpdate.ai_summary = analysis.summary;
+    callsAiUpdate.ai_next_steps = analysis.next_steps;
+    callsAiUpdate.ai_objections = analysis.objections;
+  }
+  if (doSentiment) {
+    callsAiUpdate.ai_sentiment = analysis.sentiment;
+    callsAiUpdate.ai_sentiment_score = analysis.sentiment_score;
+  }
+  if (doTalkingPoints) {
+    callsAiUpdate.ai_keywords = analysis.talking_points;
+  }
+
+  const { error: callUpdateErr } = await supabase
     .from('calls')
-    .update({
-      analytics_id: analyticsInserted.id,
-      ai_processing_status: 'completed',
-    })
+    .update(callsAiUpdate)
     .eq('id', callId);
+
+  if (callUpdateErr) {
+    console.warn('[AI-5] calls table AI update failed (may be missing columns):', callUpdateErr.message);
+    // Non-fatal: analytics_id is set separately below
+    await supabase
+      .from('calls')
+      .update({ analytics_id: analyticsInserted.id, ai_processing_status: 'completed' })
+      .eq('id', callId);
+  } else {
+    console.log('[AI-5] AI results written to calls table');
+  }
 
   // ── Step 10: Save lead memories ────────────────────────────────────────────
   if (call.lead_id && analysis.memories_to_save?.length > 0) {
