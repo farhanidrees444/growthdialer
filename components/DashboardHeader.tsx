@@ -3,12 +3,14 @@
 import { useState } from "react";
 import type React from "react";
 import { motion } from "framer-motion";
-import { Search, Upload, Sparkles, Gift, HelpCircle, Bell } from "lucide-react";
+import { Search, Upload, Sparkles, HelpCircle, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { LeadSearchDialog } from "@/components/LeadSearchDialog";
 import { useLeads } from "@/contexts/leads-context";
+import { usePathname } from "next/navigation";
 import { UserMenu } from "@/components/layout/user-menu";
+
+const IMPORT_PATHS = ["/dashboard", "/leads"];
 
 export function DashboardHeader({
   title,
@@ -25,6 +27,12 @@ export function DashboardHeader({
 }) {
   const { setImportOpen } = useLeads();
   const [searchOpen, setSearchOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Show Import only on Dashboard + Leads; respect explicit showImport=false override
+  const showImportButton =
+    showImport &&
+    IMPORT_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   return (
     <>
@@ -47,11 +55,11 @@ export function DashboardHeader({
         </div>
 
         {/* Right actions */}
-        <div className="flex shrink-0 items-center gap-1 px-3 lg:gap-1.5 lg:px-4">
+        <div className="flex shrink-0 items-center gap-1.5 px-3 lg:gap-2 lg:px-4">
           {actions}
 
-          {/* Import leads */}
-          {showImport && (
+          {/* Context-aware Import button */}
+          {showImportButton && (
             <Button
               type="button"
               size="sm"
@@ -59,7 +67,7 @@ export function DashboardHeader({
               onClick={() => setImportOpen(true)}
             >
               <Upload className="h-3.5 w-3.5" />
-              Import
+              Import leads
             </Button>
           )}
 
@@ -75,71 +83,53 @@ export function DashboardHeader({
             Search
           </Button>
 
-          {/* Search — mobile */}
+          {/* Search — mobile icon only */}
           <button
             type="button"
-            className="sm:hidden flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors"
+            className="sm:hidden flex h-10 w-10 items-center justify-center rounded-xl text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
             onClick={() => setSearchOpen(true)}
             aria-label="Search"
           >
             <Search className="h-4 w-4" />
           </button>
 
-          {/* Online badge */}
-          <Badge className="hidden md:flex gap-1.5 bg-emerald-500/90 px-2.5 text-xs text-white">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-white" />
-            Online
-          </Badge>
+          {/* Ask AI — sm+ */}
+          <button
+            type="button"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl
+                       bg-gradient-to-r from-violet-600/20 to-cyan-500/20
+                       border border-violet-500/25 hover:border-violet-500/50
+                       text-xs font-semibold text-white/80 hover:text-white transition-all"
+            aria-label="Ask AI"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+            Ask AI
+          </button>
 
-          {/* ─── Smartlead-style cluster ─── */}
-          <div className="flex items-center gap-0.5 border-l border-white/[0.08] pl-2 lg:gap-1 lg:pl-3">
+          {/* Help — md+ */}
+          <button
+            type="button"
+            className="hidden md:flex items-center gap-1.5 h-8 px-2 rounded-xl
+                       text-white/50 hover:text-white/90 hover:bg-white/[0.06] transition-all"
+            aria-label="Help"
+          >
+            <HelpCircle className="h-4 w-4" />
+            <span className="hidden lg:inline text-xs font-medium">Help</span>
+          </button>
 
-            {/* Ask AI — desktop only */}
-            <button
-              type="button"
-              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl
-                         bg-gradient-to-r from-violet-600/20 to-cyan-500/20
-                         border border-violet-500/25 hover:border-violet-500/50
-                         text-xs font-semibold text-white/80 hover:text-white
-                         transition-all"
-              aria-label="Ask AI"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-violet-400" />
-              Ask AI
-            </button>
+          {/* Notifications */}
+          <button
+            type="button"
+            className="relative flex h-8 w-8 items-center justify-center rounded-xl
+                       text-white/50 hover:text-white/90 hover:bg-white/[0.06] transition-all"
+            aria-label="Notifications"
+          >
+            <Bell className="h-4 w-4" />
+            <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+          </button>
 
-            {/* Gift — hidden on mobile */}
-            <button
-              type="button"
-              className="hidden sm:flex h-8 w-8 items-center justify-center rounded-xl text-white/50 hover:text-white/90 hover:bg-white/[0.06] transition-all"
-              aria-label="Refer a friend"
-            >
-              <Gift className="h-4 w-4" />
-            </button>
-
-            {/* Help — hidden on mobile */}
-            <button
-              type="button"
-              className="hidden sm:flex items-center gap-1.5 h-8 px-2 rounded-xl text-white/50 hover:text-white/90 hover:bg-white/[0.06] transition-all"
-              aria-label="Help"
-            >
-              <HelpCircle className="h-4 w-4" />
-              <span className="hidden xl:inline text-xs font-medium">Help</span>
-            </button>
-
-            {/* Notifications */}
-            <button
-              type="button"
-              className="relative flex h-8 w-8 items-center justify-center rounded-xl text-white/50 hover:text-white/90 hover:bg-white/[0.06] transition-all"
-              aria-label="Notifications"
-            >
-              <Bell className="h-4 w-4" />
-              <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
-            </button>
-
-            {/* User dropdown */}
-            <UserMenu />
-          </div>
+          {/* User dropdown */}
+          <UserMenu />
         </div>
       </motion.header>
     </>

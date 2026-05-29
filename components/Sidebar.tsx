@@ -48,11 +48,8 @@ const navItems: NavItem[] = [
   { icon: BarChart2, label: "Analytics", href: "/analytics" },
   { icon: Headphones, label: "Recordings", href: "/recordings", countKey: 'recordings' },
   { icon: Hash, label: "My Numbers", href: "/numbers", countKey: 'numbers' },
-  { icon: Headset, label: "Coaching", href: "/coaching/live", managerOnly: true },
-];
-
-const bottomItems = [
   { icon: Zap, label: "Integrations", href: "/integrations" },
+  { icon: Headset, label: "Coaching", href: "/coaching/live", managerOnly: true },
 ];
 
 const PLAN_BADGES: Record<string, { label: string; className: string }> = {
@@ -256,30 +253,6 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Bottom section */}
-        <div className="px-3 py-4 border-t border-sidebar-border space-y-0.5">
-          {bottomItems.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-            return (
-              <motion.div key={item.href} whileHover={{ x: 2 }}>
-                <Link
-                  href={item.href}
-                  onClick={close}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                    active
-                      ? "bg-sidebar-accent text-white"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-white"
-                  )}
-                >
-                  <item.icon className="w-4 h-4 shrink-0" />
-                  <span>{item.label}</span>
-                </Link>
-              </motion.div>
-            );
-          })}
-
-        </div>
       </aside>
     </>
   );
