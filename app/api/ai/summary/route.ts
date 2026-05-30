@@ -1,9 +1,27 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
+import { createClient } from "@/lib/supabase/server";
+import { checkAIRateLimit } from "@/lib/ai/rate-limiter";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
 export async function POST(req: NextRequest) {
+  // SECURITY: same as follow-up — require auth + rate limit to prevent
+  // anonymous OpenAI bill drain.
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.id) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { allowed, used, limit } = await checkAIRateLimit(user.id);
+  if (!allowed) {
+    return Response.json(
+      { error: "Rate limit exceeded", used, limit },
+      { status: 429 },
+    );
+  }
+
   const { transcript, contactName, company, duration } =
     await req.json() as {
       transcript: string;

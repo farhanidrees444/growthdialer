@@ -1,9 +1,28 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
+import { createClient } from "@/lib/supabase/server";
+import { checkAIRateLimit } from "@/lib/ai/rate-limiter";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
 
 export async function POST(req: NextRequest) {
+  // SECURITY: require an authenticated user. Without this, an unauth POST
+  // loop straight to OpenAI would drain the workspace API credits.
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.id) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Per-user rate limit (uses the existing rate-limiter that backs process-call)
+  const { allowed, used, limit } = await checkAIRateLimit(user.id);
+  if (!allowed) {
+    return Response.json(
+      { error: "Rate limit exceeded", used, limit },
+      { status: 429 },
+    );
+  }
+
   const { outcome, contactName, company, notes } =
     await req.json() as {
       outcome: string;

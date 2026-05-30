@@ -48,6 +48,7 @@ interface CallRow {
   answered_at: string | null;
   direction: string | null;
   ai_processed: boolean | null;
+  ai_processed_at: string | null;
   analytics_id: string | null;
   duration_seconds: number | null;
   was_recorded: boolean | null;
@@ -66,7 +67,7 @@ async function findCall(
   supabase: NonNullable<SupabaseClient>,
   sessionId: string | undefined,
   callControlId: string | undefined,
-  select = 'id, user_id, lead_id, to_number, answered_at, ai_processed, analytics_id, duration_seconds, was_recorded, ai_processing_status',
+  select = 'id, user_id, lead_id, to_number, answered_at, ai_processed, ai_processed_at, analytics_id, duration_seconds, was_recorded, ai_processing_status',
 ): Promise<CallRow | null> {
   // Try session ID first (more stable across call legs)
   if (sessionId) {
@@ -496,15 +497,26 @@ export async function POST(request: NextRequest) {
 
       console.log('[REC-B] Call:', callRow.id, '| ai_processing_status:', callRow.ai_processing_status);
 
-      // Idempotency — don't process the same recording twice
+      // Idempotency — don't process the same recording twice.
+      // Allow retry if previous run failed or is older than 5 minutes (a
+      // stuck-processing row probably means a serverless timeout).
+      const FIVE_MIN_MS = 5 * 60 * 1000;
+      const stuckProcessing =
+        callRow.ai_processing_status === 'processing' &&
+        callRow.ai_processed_at &&
+        Date.now() - new Date(callRow.ai_processed_at).getTime() > FIVE_MIN_MS;
+
       if (
-        callRow.ai_processed ||
-        callRow.analytics_id ||
         callRow.ai_processing_status === 'completed' ||
-        callRow.ai_processing_status === 'processing'
+        (callRow.ai_processing_status === 'processing' && !stuckProcessing) ||
+        (callRow.ai_processed && callRow.analytics_id)
       ) {
-        console.log('[REC-B] Already processed/processing — skipping');
+        console.log('[REC-B] Already processed/processing — skipping. status:',
+          callRow.ai_processing_status, 'ai_processed:', callRow.ai_processed);
         return NextResponse.json({ received: true });
+      }
+      if (stuckProcessing) {
+        console.warn('[REC-B] Previous run stuck >5min — retrying call:', callRow.id);
       }
 
       // Fetch user settings
@@ -578,25 +590,37 @@ export async function POST(request: NextRequest) {
       if (anyAiEnabled) {
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? 'http://localhost:3000';
         const aiUrl = `${baseUrl}/api/ai/process-call`;
-        console.log('[REC-D] Triggering AI pipeline for call:', callRow.id, '| endpoint:', aiUrl);
+        const internalSecret = process.env.INTERNAL_API_SECRET?.trim();
 
-        // Fire-and-forget — Telnyx needs a fast 200 response.
-        // process-call runs in its own serverless invocation with maxDuration=120.
-        void fetch(aiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-internal-secret': process.env.INTERNAL_API_SECRET ?? '',
-          },
-          body: JSON.stringify({ call_id: callRow.id }),
-        })
-          .then(async (r) => {
-            const text = await r.text().catch(() => '');
-            console.log('[REC-D] AI trigger response status:', r.status, '| body:', text.slice(0, 300));
+        if (!internalSecret) {
+          console.error('[REC-D] INTERNAL_API_SECRET not set — cannot trigger AI pipeline for call:', callRow.id);
+          await supabase
+            .from('calls')
+            .update({
+              ai_processing_status: 'failed',
+              ai_error: 'INTERNAL_API_SECRET not configured',
+            })
+            .eq('id', callRow.id);
+        } else {
+          console.log('[REC-D] Triggering AI pipeline for call:', callRow.id, '| endpoint:', aiUrl);
+
+          // Fire-and-forget — Telnyx needs a fast 200 response.
+          void fetch(aiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-internal-secret': internalSecret,
+            },
+            body: JSON.stringify({ call_id: callRow.id }),
           })
-          .catch((err) => {
-            console.error('[REC-D] AI trigger error:', err);
-          });
+            .then(async (r) => {
+              const text = await r.text().catch(() => '');
+              console.log('[REC-D] AI trigger response status:', r.status, '| body:', text.slice(0, 300));
+            })
+            .catch((err) => {
+              console.error('[REC-D] AI trigger error:', err);
+            });
+        }
       } else {
         console.log('[REC-B] All AI settings disabled — recording saved, skipping AI');
         await supabase

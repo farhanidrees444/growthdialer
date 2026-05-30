@@ -9,8 +9,16 @@ import { checkAIRateLimit } from '@/lib/ai/rate-limiter';
 export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
+  // SECURITY: must come from our own webhook with a real shared secret.
+  // Previously, if INTERNAL_API_SECRET was unset both sides became
+  // undefined and the comparison passed (`undefined === undefined`).
+  const expected = process.env.INTERNAL_API_SECRET?.trim();
+  if (!expected) {
+    console.error('[AI] INTERNAL_API_SECRET is not configured — refusing to process');
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 503 });
+  }
   const secret = request.headers.get('x-internal-secret');
-  if (secret !== process.env.INTERNAL_API_SECRET) {
+  if (secret !== expected) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -54,13 +62,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ skipped: true, reason: 'no_recording' });
   }
 
-  // Mark as in-progress to prevent duplicate runs
+  // Mark as in-progress to prevent duplicate runs.
+  // IMPORTANT: do NOT set ai_processed=true here — if transcription / analysis
+  // later throws, the row would be permanently flagged as done and never
+  // retry-able. ai_processed flips to true ONLY at the very end (after the
+  // call_analytics insert succeeds).
   await supabase
     .from('calls')
     .update({
-      ai_processed: true,
-      ai_processed_at: new Date().toISOString(),
       ai_processing_status: 'processing',
+      ai_processed_at: new Date().toISOString(),
     })
     .eq('id', callId);
 
@@ -260,8 +271,11 @@ export async function POST(request: NextRequest) {
 
   // Write key AI results directly to calls table so the recordings list can
   // read them without a separate call_analytics join.
+  // ai_processed flips to true HERE — only after the analytics row has been
+  // successfully inserted. This makes the whole pipeline retry-safe.
   const callsAiUpdate: Record<string, unknown> = {
     analytics_id: analyticsInserted.id,
+    ai_processed: true,
     ai_processing_status: 'completed',
   };
   if (doSummarize) {
