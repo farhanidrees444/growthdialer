@@ -48,12 +48,9 @@ interface CallRow {
   from_number: string | null;
   answered_at: string | null;
   direction: string | null;
-  ai_processed: boolean | null;
-  ai_processed_at: string | null;
-  analytics_id: string | null;
   duration_seconds: number | null;
   was_recorded: boolean | null;
-  ai_processing_status: string | null;
+  ai_analysis_status: string | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -68,7 +65,7 @@ async function findCall(
   supabase: NonNullable<SupabaseClient>,
   sessionId: string | undefined,
   callControlId: string | undefined,
-  select = 'id, user_id, lead_id, to_number, answered_at, ai_processed, ai_processed_at, analytics_id, duration_seconds, was_recorded, ai_processing_status',
+  select = 'id, user_id, lead_id, to_number, from_number, answered_at, direction, duration_seconds, was_recorded, ai_analysis_status',
 ): Promise<CallRow | null> {
   // Try session ID first (more stable across call legs)
   if (sessionId) {
@@ -351,7 +348,7 @@ export async function POST(request: NextRequest) {
     else if (event_type === 'call.hangup') {
       const callRow = await findCall(
         supabase, callSessionId, callControlId,
-        'id, user_id, lead_id, answered_at, to_number, from_number, direction, ai_processed, analytics_id, duration_seconds, was_recorded, ai_processing_status',
+        'id, user_id, lead_id, answered_at, to_number, from_number, direction, duration_seconds, was_recorded',
       );
 
       const endedAt = new Date().toISOString();
@@ -508,28 +505,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true });
       }
 
-      console.log('[REC-B] Call:', callRow.id, '| ai_processing_status:', callRow.ai_processing_status);
+      console.log('[REC-B] Call:', callRow.id, '| ai_analysis_status:', callRow.ai_analysis_status);
 
-      // Idempotency — don't process the same recording twice.
-      // Allow retry if previous run failed or is older than 5 minutes (a
-      // stuck-processing row probably means a serverless timeout).
-      const FIVE_MIN_MS = 5 * 60 * 1000;
-      const stuckProcessing =
-        callRow.ai_processing_status === 'processing' &&
-        callRow.ai_processed_at &&
-        Date.now() - new Date(callRow.ai_processed_at).getTime() > FIVE_MIN_MS;
-
+      // Idempotency — skip if already completed or in-flight
       if (
-        callRow.ai_processing_status === 'completed' ||
-        (callRow.ai_processing_status === 'processing' && !stuckProcessing) ||
-        (callRow.ai_processed && callRow.analytics_id)
+        callRow.ai_analysis_status === 'completed' ||
+        callRow.ai_analysis_status === 'processing'
       ) {
-        console.log('[REC-B] Already processed/processing — skipping. status:',
-          callRow.ai_processing_status, 'ai_processed:', callRow.ai_processed);
+        console.log('[REC-B] Already processed/processing — skipping. status:', callRow.ai_analysis_status);
         return NextResponse.json({ received: true });
-      }
-      if (stuckProcessing) {
-        console.warn('[REC-B] Previous run stuck >5min — retrying call:', callRow.id);
       }
 
       // Fetch user settings
@@ -563,11 +547,7 @@ export async function POST(request: NextRequest) {
         console.log(`[REC-B] Call too short (${dur}s < ${MIN_RECORDING_SECONDS}s) — skipping recording AND AI`);
         await supabase
           .from('calls')
-          .update({
-            ai_processed: true,
-            ai_processed_at: new Date().toISOString(),
-            ai_processing_status: 'skipped_short',
-          })
+          .update({ ai_analysis_status: 'skipped_short' })
           .eq('id', callRow.id);
         return NextResponse.json({ received: true, skipped: 'short_call' });
       }
@@ -576,7 +556,7 @@ export async function POST(request: NextRequest) {
       const recordingUpdate: Record<string, unknown> = {
         recording_url: recordingUrl,
         was_recorded: true,
-        ai_processing_status: 'processing',
+        ai_analysis_status: 'processing',
       };
       if (payloadDuration && payloadDuration > 0) {
         recordingUpdate.recording_duration_seconds = payloadDuration;
@@ -609,10 +589,7 @@ export async function POST(request: NextRequest) {
           console.error('[REC-D] INTERNAL_API_SECRET not set — cannot trigger AI pipeline for call:', callRow.id);
           await supabase
             .from('calls')
-            .update({
-              ai_processing_status: 'failed',
-              ai_error: 'INTERNAL_API_SECRET not configured',
-            })
+            .update({ ai_analysis_status: 'failed' })
             .eq('id', callRow.id);
         } else {
           console.log('[REC-D] Triggering AI pipeline for call:', callRow.id, '| endpoint:', aiUrl);
@@ -638,7 +615,7 @@ export async function POST(request: NextRequest) {
         console.log('[REC-B] All AI settings disabled — recording saved, skipping AI');
         await supabase
           .from('calls')
-          .update({ ai_processing_status: 'completed' })
+          .update({ ai_analysis_status: 'completed' })
           .eq('id', callRow.id);
       }
 

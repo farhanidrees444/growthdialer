@@ -66,6 +66,18 @@ export function IncomingCallPopup({ userId }: Props) {
   const { answerIncomingCall, hangup } = useWebPhone();
   const { registerCallMeta } = useCallContext();
 
+  // Keyboard: Enter = answer, Esc = decline (Space reserved for outbound dial)
+  useEffect(() => {
+    if (!call) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') { e.preventDefault(); handleAccept(); }
+      if (e.key === 'Escape') { e.preventDefault(); void handleDecline(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [call]);
+
   useEffect(() => {
     if (!userId) return;
     const supabase = createClient();

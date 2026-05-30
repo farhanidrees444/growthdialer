@@ -19,32 +19,38 @@ export async function POST(
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (!call?.telnyx_call_id) {
+    if (!call) {
       return NextResponse.json({ error: 'Call not found' }, { status: 404 });
     }
 
-    const res = await fetch(
-      `https://api.telnyx.com/v2/calls/${call.telnyx_call_id}/actions/answer`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.TELNYX_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: '{}',
-      },
-    );
-
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error('[ANSWER] Telnyx error:', res.status, errText.slice(0, 200));
-      return NextResponse.json({ error: 'Answer failed' }, { status: 500 });
-    }
-
+    // Update DB immediately — must happen regardless of whether REST answer succeeds.
+    // Browser/WebRTC mode answers via the SDK (not REST), so REST may return an error
+    // for browser-delivered calls; that is expected and non-fatal.
     await supabase
       .from('calls')
       .update({ status: 'in_progress', answered_at: new Date().toISOString() })
       .eq('id', id);
+
+    // Attempt Telnyx Call Control answer — needed for forward/transfer modes.
+    // For WebRTC browser mode, the SDK has already answered the call; this is a no-op.
+    if (call.telnyx_call_id) {
+      const res = await fetch(
+        `https://api.telnyx.com/v2/calls/${call.telnyx_call_id}/actions/answer`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${process.env.TELNYX_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: '{}',
+        },
+      );
+      if (!res.ok) {
+        const errText = await res.text();
+        // 4xx from Telnyx for a browser-answered call is expected; just log it.
+        console.warn('[ANSWER] Telnyx REST answer returned', res.status, errText.slice(0, 200), '— browser WebRTC answer is primary');
+      }
+    }
 
     console.log('[ANSWER] Inbound call answered:', id);
     return NextResponse.json({ success: true });
