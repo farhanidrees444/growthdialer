@@ -184,20 +184,30 @@ export async function POST(request: NextRequest) {
         console.warn('[WEBHOOK] call.initiated missing call_control_id — skipping');
       } else if (payload.direction === 'incoming') {
         // ── INBOUND CALL ────────────────────────────────────────────────────
-        const toNumber = payload.to ?? '';
-        const fromNumber = payload.from ?? '';
-        console.log('[INBOUND] Incoming call:', fromNumber, '→', toNumber);
+        // Normalize both numbers to E.164 (+digits only) to avoid format
+        // mismatches between Telnyx payload and what's stored in purchased_numbers.
+        const normalizeE164 = (raw: string): string => {
+          const digits = raw.replace(/\D/g, '');
+          return digits ? `+${digits}` : raw.trim();
+        };
+        const toNumber = normalizeE164(payload.to ?? '');
+        const fromNumber = normalizeE164(payload.from ?? '');
+        console.log('[INBOUND] Incoming call:', fromNumber, '→', toNumber, '| raw_to:', payload.to, '| raw_from:', payload.from);
 
-        // Find which user owns this GrowthDialer number
-        const { data: ownedNumber } = await supabase
+        // Look up the user who owns toNumber in purchased_numbers — same table
+        // and column the My Numbers page uses. Use neq('released') so suspended
+        // or other non-released statuses still resolve correctly.
+        const { data: ownedNumber, error: numErr } = await supabase
           .from('purchased_numbers')
-          .select('user_id')
+          .select('user_id, phone_number, status')
           .eq('phone_number', toNumber)
-          .eq('status', 'active')
+          .neq('status', 'released')
           .maybeSingle();
 
+        console.log('[INBOUND] Number lookup — to:', toNumber, '| found:', ownedNumber?.phone_number ?? 'none', '| status:', ownedNumber?.status ?? 'n/a', '| err:', numErr?.message ?? 'none');
+
         if (!ownedNumber) {
-          console.log('[INBOUND] No owner for number — rejecting:', toNumber);
+          console.log('[INBOUND] No active owner for number — rejecting:', toNumber);
           await telnyxCallAction(callControlId, 'reject', { cause: 'CALL_REJECTED' });
           return NextResponse.json({ received: true });
         }
