@@ -27,15 +27,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine from number (user's default purchased number or env fallback)
+    // .maybeSingle() is used (not .single()) so the route doesn't throw when
+    // the user has multiple active numbers but none are flagged is_default —
+    // we pick the most recent active one in that case instead of leaking the
+    // shared env-fallback number across users.
     let fromNumber = process.env.TELNYX_FROM_NUMBER ?? '';
     if (userId) {
       const { data: defaultNum } = await supabase
         .from('purchased_numbers')
         .select('phone_number')
         .eq('user_id', userId)
-        .eq('is_default', true)
         .eq('status', 'active')
-        .single();
+        .order('is_default', { ascending: false })
+        .order('purchased_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
       if (defaultNum?.phone_number) fromNumber = defaultNum.phone_number;
     }
 
@@ -46,16 +52,22 @@ export async function POST(request: NextRequest) {
     if (call_control_id) {
       let dbId: string | null = null;
       if (userId) {
+        const nowIso = new Date().toISOString();
         const { data: insertedRow, error: insertError } = await supabase
           .from('calls')
           .insert({
             user_id: userId,
             lead_id: lead_id ?? null,
+            direction: 'outbound',
             to_number: e164,
             from_number: fromNumber,
             telnyx_call_id: call_control_id,
             status: 'initiated',
-            created_at: new Date().toISOString(),
+            // started_at is required for numbers/list stats, recordings ordering,
+            // analytics distribution, dashboard charts. Without it, every outbound
+            // call is invisible to those queries.
+            started_at: nowIso,
+            created_at: nowIso,
           })
           .select('id')
           .single();
@@ -88,14 +100,17 @@ export async function POST(request: NextRequest) {
     const newCallControlId = result.data?.call_control_id;
 
     if (userId && newCallControlId) {
+      const nowIso = new Date().toISOString();
       const { error: insertError } = await supabase.from('calls').insert({
         user_id: userId,
         lead_id: lead_id ?? null,
+        direction: 'outbound',
         to_number: e164,
         from_number: fromNumber,
         telnyx_call_id: newCallControlId,
         status: 'initiated',
-        created_at: new Date().toISOString(),
+        started_at: nowIso,
+        created_at: nowIso,
       });
       if (insertError) console.error('[dial] insert error:', insertError);
     }

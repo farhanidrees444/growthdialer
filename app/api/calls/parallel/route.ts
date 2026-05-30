@@ -53,14 +53,17 @@ export async function POST(request: NextRequest) {
           const callControlId = result.data?.call_control_id;
 
           if (userId && callControlId) {
+            const nowIso = new Date().toISOString();
             const { error: insertError } = await supabase.from('calls').insert({
               user_id: userId,
               lead_id: target.lead_id ?? null,
+              direction: 'outbound',
               to_number: e164,
               from_number: process.env.TELNYX_FROM_NUMBER,
               telnyx_call_id: callControlId,
               status: 'initiated',
-              created_at: new Date().toISOString(),
+              started_at: nowIso,
+              created_at: nowIso,
             });
             if (insertError) {
               console.error(`Failed to insert call record for ${e164}:`, insertError);
