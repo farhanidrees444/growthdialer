@@ -1,9 +1,39 @@
 import Stripe from "stripe";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "sk_test_placeholder", {
-  apiVersion: "2026-03-25.dahlia",
-  typescript: true,
+// We do NOT instantiate at module load with a placeholder key — that hides
+// missing-key bugs in production and makes every Stripe call return 401
+// with no clear cause. Instead, export a lazy getter that throws a clear
+// error when callers actually try to use Stripe without a real key.
+const STRIPE_API_VERSION = "2026-05-27.dahlia";
+
+let _stripe: Stripe | null = null;
+function getStripe(): Stripe {
+  const key = process.env.STRIPE_SECRET_KEY?.trim();
+  if (!key || key.includes("placeholder")) {
+    throw new Error(
+      "STRIPE_SECRET_KEY is not configured. Set it in Vercel → Settings → Environment Variables.",
+    );
+  }
+  if (!_stripe) {
+    _stripe = new Stripe(key, { apiVersion: STRIPE_API_VERSION, typescript: true });
+  }
+  return _stripe;
+}
+
+// Proxy keeps the old `stripe.<method>(...)` call style working everywhere
+// without changing every consumer. The getter throws only when used.
+export const stripe = new Proxy({} as Stripe, {
+  get(_target, prop) {
+    const real = getStripe() as unknown as Record<string | symbol, unknown>;
+    const value = real[prop as string];
+    return typeof value === "function" ? (value as (...args: unknown[]) => unknown).bind(real) : value;
+  },
 });
+
+export function isStripeConfigured(): boolean {
+  const key = process.env.STRIPE_SECRET_KEY?.trim();
+  return !!key && !key.includes("placeholder");
+}
 
 export const PLANS = {
   starter: {

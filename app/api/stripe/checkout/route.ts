@@ -1,10 +1,9 @@
 import { NextRequest } from "next/server";
-import { stripe, PLANS, type PlanKey } from "@/lib/stripe";
+import { stripe, isStripeConfigured, PLANS, type PlanKey } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 
 function stripeReadyForPlan(planData: (typeof PLANS)[PlanKey]) {
-  const key = process.env.STRIPE_SECRET_KEY ?? "";
-  if (!key || key.includes("placeholder")) return false;
+  if (!isStripeConfigured()) return false;
   if (!planData.priceId?.trim()) return false;
   return true;
 }
