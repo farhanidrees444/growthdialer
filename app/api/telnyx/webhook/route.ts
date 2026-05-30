@@ -263,6 +263,17 @@ export async function POST(request: NextRequest) {
             from: toNumber,
           });
           console.log('[INBOUND] Forwarded to:', inboundSettings.inbound_forward_number);
+        } else if (mode === 'voicemail') {
+          // Answer + immediately start recording with a beep — caller hears
+          // the beep and knows to leave a message. Recording saved via
+          // call.recording.saved → existing AI pipeline processes it.
+          await telnyxCallAction(callControlId, 'answer');
+          await telnyxCallAction(callControlId, 'record_start', {
+            format: 'mp3',
+            channels: 'single',
+            play_beep: true,
+          });
+          console.log('[INBOUND] Voicemail: answered + recording started for user:', userId);
         } else {
           // browser mode (default): Telnyx routes to registered WebRTC SIP endpoint.
           // The frontend popup appears via Supabase realtime subscription on the call record.
