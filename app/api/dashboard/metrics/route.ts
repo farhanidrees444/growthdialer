@@ -21,13 +21,40 @@ export async function GET(req: NextRequest) {
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-  // Hourly sparkline data for today (last 24 points)
-  const { data: hourlyCalls } = await supabase
-    .from('calls')
-    .select('created_at, status, disposition, duration_seconds, analytics_id')
-    .eq('user_id', userId)
-    .gte('created_at', todayStart)
-    .order('created_at', { ascending: true });
+  // Hourly sparkline data for today (last 24 points).
+  // We try to read analytics_id (used to count AI-processed calls per hour),
+  // but if migration 033 hasn't been run yet that column may not exist —
+  // we retry without it and silently set ai counts to 0.
+  let hourlyCalls: Array<{
+    created_at: string;
+    status: string | null;
+    disposition: string | null;
+    duration_seconds: number | null;
+    analytics_id?: string | null;
+    ai_processed?: boolean | null;
+  }> | null = null;
+
+  {
+    const { data, error } = await supabase
+      .from('calls')
+      .select('created_at, status, disposition, duration_seconds, analytics_id, ai_processed')
+      .eq('user_id', userId)
+      .gte('created_at', todayStart)
+      .order('created_at', { ascending: true });
+
+    if (error && /column .* does not exist/i.test(error.message)) {
+      console.warn('[dashboard/metrics] analytics_id missing — retrying without it. Run migration 033.');
+      const retry = await supabase
+        .from('calls')
+        .select('created_at, status, disposition, duration_seconds, ai_processed')
+        .eq('user_id', userId)
+        .gte('created_at', todayStart)
+        .order('created_at', { ascending: true });
+      hourlyCalls = retry.data;
+    } else {
+      hourlyCalls = data;
+    }
+  }
 
   // Build hourly buckets
   const hourlyBuckets: Record<number, { calls: number; connected: number; meetings: number; ai: number }> = {};
@@ -42,7 +69,7 @@ export async function GET(req: NextRequest) {
       hourlyBuckets[h].connected++;
     }
     if (c.disposition === 'meeting_booked') hourlyBuckets[h].meetings++;
-    if (c.analytics_id) hourlyBuckets[h].ai++;
+    if (c.analytics_id || c.ai_processed) hourlyBuckets[h].ai++;
   }
 
   const sparklineData = Object.entries(hourlyBuckets).map(([h, v]) => ({
@@ -51,13 +78,34 @@ export async function GET(req: NextRequest) {
     ...v,
   }));
 
-  // AI hours saved (month)
-  const { data: aiCalls } = await supabase
-    .from('calls')
-    .select('duration_seconds, analytics_id, disposition')
-    .eq('user_id', userId)
-    .eq('ai_processed', true)
-    .gte('created_at', monthStart);
+  // AI hours saved (month).
+  // Same fallback as above — try with analytics_id, retry without it.
+  let aiCalls: Array<{
+    duration_seconds: number | null;
+    analytics_id?: string | null;
+    disposition: string | null;
+  }> | null = null;
+
+  {
+    const { data, error } = await supabase
+      .from('calls')
+      .select('duration_seconds, analytics_id, disposition')
+      .eq('user_id', userId)
+      .eq('ai_processed', true)
+      .gte('created_at', monthStart);
+
+    if (error && /column .* does not exist/i.test(error.message)) {
+      const retry = await supabase
+        .from('calls')
+        .select('duration_seconds, disposition')
+        .eq('user_id', userId)
+        .eq('ai_processed', true)
+        .gte('created_at', monthStart);
+      aiCalls = retry.data;
+    } else {
+      aiCalls = data;
+    }
+  }
 
   let transcriptionHours = 0;
   let dispositionMinutes = 0;
