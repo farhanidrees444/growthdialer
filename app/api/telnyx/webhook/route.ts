@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { verifyTelnyxSignature } from '@/lib/telnyx-signature';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -149,7 +150,19 @@ async function startProgrammaticRecording(callControlId: string): Promise<boolea
 
 export async function POST(request: NextRequest) {
   try {
-    const body: TelnyxWebhookBody = await request.json();
+    // Read raw body FIRST so we can verify the signature over the exact bytes
+    // Telnyx signed. Re-parse JSON from the string.
+    const rawBody = await request.text();
+    const signature = request.headers.get('telnyx-signature-ed25519');
+    const timestamp = request.headers.get('telnyx-timestamp');
+
+    const verify = verifyTelnyxSignature(rawBody, signature, timestamp);
+    if (!verify.ok) {
+      console.error('[WEBHOOK] Signature verification FAILED:', verify.reason);
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+
+    const body: TelnyxWebhookBody = JSON.parse(rawBody);
     const event = body.data;
 
     if (!event?.event_type) {
