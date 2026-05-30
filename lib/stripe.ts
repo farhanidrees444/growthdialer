@@ -4,7 +4,7 @@ import Stripe from "stripe";
 // missing-key bugs in production and makes every Stripe call return 401
 // with no clear cause. Instead, export a lazy getter that throws a clear
 // error when callers actually try to use Stripe without a real key.
-const STRIPE_API_VERSION = "2026-03-25.dahlia";
+const STRIPE_API_VERSION = "2026-05-27.dahlia";
 
 let _stripe: Stripe | null = null;
 function getStripe(): Stripe {
