@@ -428,18 +428,30 @@ export default function RecordingsPage() {
   const [activePlayId, setActivePlayId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const fetchRecordings = useCallback(async (searchVal = search, sentimentVal = sentimentFilter) => {
     setLoading(true);
+    setLoadError(null);
     try {
       const params = new URLSearchParams();
       if (searchVal) params.set('search', searchVal);
       if (sentimentVal) params.set('sentiment', sentimentVal);
       const res = await fetch(`/api/recordings/list?${params}`);
       const data = await res.json() as { recordings?: Recording[]; error?: string };
-      if (data.error) { console.error('Recordings fetch error:', data.error); return; }
+      if (!res.ok || data.error) {
+        const msg = data.error ?? `Server returned ${res.status}`;
+        console.error('Recordings fetch error:', msg);
+        setLoadError(msg);
+        toast.error(`Could not load recordings: ${msg}`);
+        return;
+      }
       setRecordings(data.recordings ?? []);
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Network error';
       console.error('Recordings load error:', err);
+      setLoadError(msg);
+      toast.error(`Could not load recordings: ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -542,6 +554,20 @@ export default function RecordingsPage() {
                   <RefreshCw className="h-3 w-3" /> Refresh
                 </button>
               </div>
+            </div>
+          )}
+
+          {loadError && !loading && (
+            <div className="mb-5 rounded-2xl border border-red-500/30 bg-red-500/[0.06] p-4">
+              <p className="text-sm font-semibold text-red-300">Couldn&apos;t load recordings</p>
+              <p className="mt-1 text-xs text-red-300/70 break-all">{loadError}</p>
+              <button
+                type="button"
+                onClick={() => void fetchRecordings()}
+                className="mt-3 rounded-lg border border-red-500/30 bg-red-500/[0.08] px-3 py-1.5 text-[11px] font-semibold text-red-300 hover:bg-red-500/15"
+              >
+                Retry
+              </button>
             </div>
           )}
 

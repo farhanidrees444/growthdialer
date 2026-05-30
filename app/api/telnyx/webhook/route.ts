@@ -531,19 +531,35 @@ export async function POST(request: NextRequest) {
 
       console.log('[REC-B] duration resolved:', dur, 's (payload:', payloadDuration, '| db:', callRow.duration_seconds, ')');
 
+      // Skip ONLY when we have a confirmed-short duration. Unknown duration (0)
+      // means the call hung up before duration was written — fall through and
+      // save the recording so the user can hear what was actually captured.
       if (dur > 0 && dur < MIN_RECORDING_SECONDS && settings?.recording_auto_delete_short !== false) {
-        console.log(`[REC-B] Call too short (${dur}s < ${MIN_RECORDING_SECONDS}s) — skipping recording`);
+        console.log(`[REC-B] Call too short (${dur}s < ${MIN_RECORDING_SECONDS}s) — skipping recording AND AI`);
         await supabase
           .from('calls')
-          .update({ ai_processed: true, ai_processed_at: new Date().toISOString() })
+          .update({
+            ai_processed: true,
+            ai_processed_at: new Date().toISOString(),
+            ai_processing_status: 'skipped_short',
+          })
           .eq('id', callRow.id);
-        return NextResponse.json({ received: true });
+        return NextResponse.json({ received: true, skipped: 'short_call' });
       }
 
-      // Save recording URL + mark as processing
+      // Save recording URL + duration + mark as processing
+      const recordingUpdate: Record<string, unknown> = {
+        recording_url: recordingUrl,
+        was_recorded: true,
+        ai_processing_status: 'processing',
+      };
+      if (payloadDuration && payloadDuration > 0) {
+        recordingUpdate.recording_duration_seconds = payloadDuration;
+      }
+
       const { error: updateErr } = await supabase
         .from('calls')
-        .update({ recording_url: recordingUrl, was_recorded: true, ai_processing_status: 'processing' })
+        .update(recordingUpdate)
         .eq('id', callRow.id);
 
       if (updateErr) {

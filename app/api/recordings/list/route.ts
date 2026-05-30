@@ -11,18 +11,23 @@ export async function GET(request: NextRequest) {
     const sentiment = searchParams.get('sentiment') ?? '';
     const search = searchParams.get('search') ?? '';
 
+    // NOTE: SELECT contains ONLY columns that actually exist in the calls table
+    // (verified against migrations 001 → 029). Adding a non-existent column
+    // here causes Supabase to return an error and the page renders empty.
     const { data: calls, error } = await supabase
       .from('calls')
       .select(`
-        id, recording_url, recording_supabase_path, recording_duration_seconds,
-        duration_seconds, transcript, transcript_status, ai_summary, ai_sentiment,
-        ai_intent, ai_keywords, ai_next_steps, ai_objections, ai_analysis_status,
-        from_number, to_number, started_at, disposition, direction, lead_id,
-        leads:lead_id (first_name, last_name, company)
+        id, recording_url, recording_supabase_path,
+        duration_seconds, transcript, ai_summary, ai_sentiment, ai_sentiment_score,
+        ai_keywords, ai_next_steps, ai_objections, ai_processing_status, ai_error,
+        analytics_id, was_recorded,
+        from_number, to_number, started_at, created_at, disposition, direction, lead_id,
+        leads:lead_id (id, name, first_name, last_name, company, phone)
       `)
       .eq('user_id', user.id)
       .not('recording_url', 'is', null)
-      .order('started_at', { ascending: false })
+      .order('started_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
       .limit(100);
 
     if (error) {
@@ -30,32 +35,57 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message, recordings: [] }, { status: 500 });
     }
 
-    let enriched = (calls ?? []).map((r) => ({
-      id: r.id,
-      recording_url: r.recording_url,
-      recording_supabase_path: r.recording_supabase_path ?? null,
-      recording_duration_seconds: (r.recording_duration_seconds as number | null) ?? null,
-      duration_seconds: r.duration_seconds,
-      transcript: r.transcript,
-      transcript_status: (r.transcript_status as string | null) ?? null,
-      started_at: r.started_at,
-      disposition: r.disposition,
-      // analytics_id doesn't exist on calls — always null so frontend falls back gracefully
-      analytics_id: null as string | null,
-      // ai_analysis_status maps to ai_processing_status expected by frontend
-      ai_processing_status: (r.ai_analysis_status as string | null) ?? null,
-      from_number: r.from_number,
-      to_number: r.to_number,
-      direction: r.direction,
-      lead_id: r.lead_id,
-      leads: r.leads as unknown as { first_name: string | null; last_name: string | null; company: string | null } | null,
-      ai_sentiment: (r.ai_sentiment as string | null) ?? null,
-      ai_sentiment_score: null as number | null,
-      ai_summary_raw: r.ai_summary ?? null,
-      ai_next_steps_raw: r.ai_next_steps ?? null,
-      ai_keywords: Array.isArray(r.ai_keywords) ? (r.ai_keywords as string[]) : null,
-      ai_objections: Array.isArray(r.ai_objections) ? (r.ai_objections as string[]) : null,
-    }));
+    type LeadRow = {
+      id?: string | null;
+      name?: string | null;
+      first_name?: string | null;
+      last_name?: string | null;
+      company?: string | null;
+      phone?: string | null;
+    } | null;
+
+    let enriched = (calls ?? []).map((r) => {
+      // Supabase can return `leads` as a single object OR an array depending on the FK shape.
+      const rawLead = r.leads as LeadRow | LeadRow[] | null;
+      const leadObj: LeadRow = Array.isArray(rawLead) ? (rawLead[0] ?? null) : rawLead;
+
+      // Compose first_name / last_name from the singular `name` column when those
+      // columns are empty (older imports only populate `name`).
+      let firstName = leadObj?.first_name ?? null;
+      let lastName = leadObj?.last_name ?? null;
+      if (!firstName && !lastName && leadObj?.name) {
+        const parts = leadObj.name.trim().split(/\s+/);
+        firstName = parts[0] ?? null;
+        lastName = parts.slice(1).join(' ') || null;
+      }
+
+      return {
+        id: r.id,
+        recording_url: r.recording_url,
+        recording_supabase_path: r.recording_supabase_path ?? null,
+        duration_seconds: r.duration_seconds,
+        transcript: r.transcript,
+        started_at: r.started_at ?? r.created_at,
+        disposition: r.disposition,
+        was_recorded: (r.was_recorded as boolean | null) ?? false,
+        analytics_id: (r.analytics_id as string | null) ?? null,
+        ai_processing_status: (r.ai_processing_status as string | null) ?? null,
+        ai_error: (r.ai_error as string | null) ?? null,
+        from_number: r.from_number,
+        to_number: r.to_number,
+        direction: r.direction,
+        lead_id: r.lead_id,
+        leads: leadObj
+          ? { first_name: firstName, last_name: lastName, company: leadObj.company ?? null }
+          : null,
+        ai_sentiment: (r.ai_sentiment as string | null) ?? null,
+        ai_sentiment_score: (r.ai_sentiment_score as number | null) ?? null,
+        ai_summary_raw: r.ai_summary ?? null,
+        ai_next_steps_raw: r.ai_next_steps ?? null,
+        ai_keywords: Array.isArray(r.ai_keywords) ? (r.ai_keywords as string[]) : null,
+        ai_objections: Array.isArray(r.ai_objections) ? (r.ai_objections as string[]) : null,
+      };
+    });
 
     if (sentiment) {
       enriched = enriched.filter((r) => r.ai_sentiment === sentiment);
@@ -72,7 +102,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.log('[RECORDINGS-LIST]', user.email, 'count:', enriched.length);
+    console.log('[RECORDINGS-LIST]', user.email, 'returned:', enriched.length);
     return NextResponse.json({ recordings: enriched });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
