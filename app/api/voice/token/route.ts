@@ -11,7 +11,15 @@ export async function POST(_request: NextRequest) {
 
     // Preferred: short-lived JWT via Telnyx telephony credential.
     // The endpoint expects no body and returns the JWT as plain text.
-    const credentialId = process.env.TELNYX_CREDENTIAL_ID;
+    // Accept both the documented env name and the legacy short alias so this
+    // works regardless of which one is set in Vercel.
+    const credentialId =
+      process.env.TELNYX_TELEPHONY_CREDENTIAL_ID ?? process.env.TELNYX_CREDENTIAL_ID;
+    if (!credentialId) {
+      console.warn(
+        '[voice/token] no TELNYX_TELEPHONY_CREDENTIAL_ID set — falling back to SIP password auth',
+      );
+    }
     if (credentialId) {
       const res = await fetch(
         `https://api.telnyx.com/v2/telephony_credentials/${credentialId}/token`,
