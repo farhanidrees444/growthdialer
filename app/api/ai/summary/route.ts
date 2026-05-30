@@ -3,7 +3,12 @@ import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { checkAIRateLimit } from "@/lib/ai/rate-limiter";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
+// Lazy init — see follow-up route for rationale
+function getOpenAI(): OpenAI | null {
+  const key = process.env.OPENAI_API_KEY?.trim();
+  if (!key) return null;
+  return new OpenAI({ apiKey: key });
+}
 
 export async function POST(req: NextRequest) {
   // SECURITY: same as follow-up — require auth + rate limit to prevent
@@ -38,6 +43,11 @@ export async function POST(req: NextRequest) {
       nextAction: "Send ROI calculator and schedule follow-up demo",
       keyTopics: ["Pricing", "Team size", "CRM integration"],
     });
+  }
+
+  const openai = getOpenAI();
+  if (!openai) {
+    return Response.json({ error: "OpenAI not configured" }, { status: 503 });
   }
 
   const completion = await openai.chat.completions.create({

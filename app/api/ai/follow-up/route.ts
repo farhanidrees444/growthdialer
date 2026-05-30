@@ -3,7 +3,13 @@ import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { checkAIRateLimit } from "@/lib/ai/rate-limiter";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? "" });
+// Lazy init — newer OpenAI SDK throws at module load if no key is set.
+// We have a graceful no-key fallback below, so don't crash the build.
+function getOpenAI(): OpenAI | null {
+  const key = process.env.OPENAI_API_KEY?.trim();
+  if (!key) return null;
+  return new OpenAI({ apiKey: key });
+}
 
 export async function POST(req: NextRequest) {
   // SECURITY: require an authenticated user. Without this, an unauth POST
@@ -55,6 +61,11 @@ export async function POST(req: NextRequest) {
       },
     };
     return Response.json(suggestions[outcome] ?? suggestions.callback);
+  }
+
+  const openai = getOpenAI();
+  if (!openai) {
+    return Response.json({ error: "OpenAI not configured" }, { status: 503 });
   }
 
   const completion = await openai.chat.completions.create({
