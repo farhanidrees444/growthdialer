@@ -98,7 +98,7 @@ export default function DashboardLayout({
               <Sidebar />
               <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
                 <TopHeader />
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-bottom-bar lg:pb-0">
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                   {children}
                 </div>
               </div>

@@ -215,6 +215,19 @@ html {
   }
 }
 
+/* ─── Dashboard scroll fix ─────────────────────────────────────────────────
+   All dashboard pages use <main class="flex-1 overflow-y-auto">.
+   On mobile, the fixed bottom tab bar (64px) would cover the last card.
+   Add padding-bottom so the scrollbar runs the full viewport height and the
+   last content row is fully visible. Applies only below the lg breakpoint
+   (1024px) where the bottom tab bar is visible.
+   ── */
+@media (max-width: 1023px) {
+  .dashboard-shell main {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* ─── Inputs: prevent iOS zoom (≥16px font) ─── */
 @media (max-width: 768px) {
   input[type="text"],
