@@ -37,7 +37,7 @@ const COMING_SOON = ['Parallel dialing', 'Real-time coaching', 'AI voice agent']
 
 export function Features() {
   return (
-    <section id="features" className="relative px-5 py-28 lg:px-8 lg:py-36">
+    <section id="features" className="relative px-5 py-16 lg:px-8 lg:py-24">
       <div className="mx-auto max-w-7xl">
         <motion.div
           initial="hidden"
@@ -65,7 +65,7 @@ export function Features() {
           {/* Hero feature — AI Dialer, spans 2 cols on lg, with living waveform */}
           <motion.article
             variants={reveal}
-            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12] sm:col-span-2 lg:row-span-2"
+            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12] hover:bg-white/[0.03] sm:col-span-2 lg:row-span-2"
           >
             <div>
               <div className="mb-5 flex items-center gap-3">
@@ -104,7 +104,7 @@ export function Features() {
               <motion.article
                 key={f.title}
                 variants={reveal}
-                className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12]"
+                className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12] hover:bg-white/[0.03]"
               >
                 <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04] text-zinc-300 transition-colors group-hover:text-[#F5F5F7]">
                   <Icon className="h-5 w-5" />

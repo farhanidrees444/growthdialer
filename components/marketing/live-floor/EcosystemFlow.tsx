@@ -15,7 +15,7 @@ const NODES = [
 
 export function EcosystemFlow() {
   return (
-    <section className="relative px-5 py-28 lg:px-8 lg:py-36">
+    <section className="relative px-5 py-16 lg:px-8 lg:py-24">
       <div className="mx-auto max-w-7xl">
         <motion.div
           initial="hidden"

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, Phone } from 'lucide-react';
 import { LiveWaveform } from './LiveWaveform';
@@ -8,7 +7,7 @@ import { EASE_OUT } from './motion';
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden px-5 pb-24 pt-36 lg:px-8 lg:pb-32 lg:pt-44">
+    <section className="relative overflow-hidden px-5 pb-12 pt-32 lg:px-8 lg:pb-16 lg:pt-40">
       {/* Ambient violet glow — single, restrained */}
       <div
         aria-hidden
@@ -65,18 +64,18 @@ export function Hero() {
             transition={{ duration: 0.9, ease: EASE_OUT, delay: 0.26 }}
             className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
           >
-            <Link
-              href="/signup"
-              className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#8B5CF6] px-6 text-sm font-medium text-white transition-all hover:bg-[#7C3AED] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A]"
+            <a
+              href="https://app.growthdialer.com/signup"
+              className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#8B5CF6] px-6 text-sm font-medium text-white transition-all hover:bg-[#7C3AED] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A]"
             >
               Start Free
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
+            </a>
             <a
-              href="https://app.growthdialer.com"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.08] px-6 text-sm font-medium text-zinc-300 transition-colors hover:border-white/[0.16] hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+              href="https://app.growthdialer.com/signin"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.08] px-6 text-sm font-medium text-zinc-300 transition-all hover:border-white/[0.16] hover:text-[#F5F5F7] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
             >
-              Open the app
+              Log in
             </a>
           </motion.div>
 

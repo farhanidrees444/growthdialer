@@ -7,7 +7,8 @@ import { Menu, X } from 'lucide-react';
 import { MiniWave } from './LiveWaveform';
 import { EASE_OUT } from './motion';
 
-const APP_URL = 'https://app.growthdialer.com';
+const APP_SIGNIN = 'https://app.growthdialer.com/signin';
+const APP_SIGNUP = 'https://app.growthdialer.com/signup';
 
 const LINKS = [
   { label: 'Features', href: '/#features' },
@@ -66,17 +67,17 @@ export function Nav() {
         {/* Desktop CTAs */}
         <div className="hidden items-center gap-2 md:flex">
           <a
-            href={APP_URL}
+            href={APP_SIGNIN}
             className="rounded-lg px-3.5 py-2 text-sm text-zinc-300 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
           >
             Log in
           </a>
-          <Link
-            href="/signup"
-            className="group relative rounded-lg bg-[#8B5CF6] px-4 py-2 text-sm font-medium text-white transition-all hover:bg-[#7C3AED] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A]"
+          <a
+            href={APP_SIGNUP}
+            className="group relative rounded-lg bg-[#8B5CF6] px-4 py-2 text-sm font-medium text-white transition-all hover:bg-[#7C3AED] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A]"
           >
             Start Free
-          </Link>
+          </a>
         </div>
 
         {/* Mobile toggle */}
@@ -112,16 +113,16 @@ export function Nav() {
                 </Link>
               ))}
               <div className="mt-3 flex flex-col gap-2 border-t border-white/[0.06] pt-3">
-                <a href={APP_URL} className="rounded-lg px-3 py-2.5 text-sm text-zinc-300 hover:bg-white/[0.03]">
+                <a href={APP_SIGNIN} className="rounded-lg px-3 py-2.5 text-sm text-zinc-300 hover:bg-white/[0.03]">
                   Log in
                 </a>
-                <Link
-                  href="/signup"
+                <a
+                  href={APP_SIGNUP}
                   onClick={() => setOpen(false)}
-                  className="rounded-lg bg-[#8B5CF6] px-3 py-2.5 text-center text-sm font-medium text-white"
+                  className="rounded-lg bg-[#8B5CF6] px-3 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-[#7C3AED]"
                 >
                   Start Free
-                </Link>
+                </a>
               </div>
             </div>
           </motion.div>

@@ -7,6 +7,8 @@ import { LiveWaveform, MiniWave } from './LiveWaveform';
 import { EASE_OUT } from './motion';
 
 const APP_URL = 'https://app.growthdialer.com';
+const APP_SIGNIN = 'https://app.growthdialer.com/signin';
+const APP_SIGNUP = 'https://app.growthdialer.com/signup';
 
 const FOOTER_COLS = [
   {
@@ -40,7 +42,7 @@ export function FinalCTA() {
   return (
     <>
       {/* CTA */}
-      <section className="relative overflow-hidden px-5 py-32 lg:px-8 lg:py-44">
+      <section className="relative overflow-hidden px-5 py-24 lg:px-8 lg:py-32">
         <div
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[min(92vw,820px)] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.12] blur-[130px]"
@@ -66,16 +68,16 @@ export function FinalCTA() {
             setup call — just dial.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              href="/signup"
-              className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#8B5CF6] px-7 text-sm font-medium text-white transition-all hover:bg-[#7C3AED] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A]"
+            <a
+              href={APP_SIGNUP}
+              className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#8B5CF6] px-7 text-sm font-medium text-white transition-all hover:bg-[#7C3AED] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A]"
             >
               Start Free
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
+            </a>
             <a
-              href={APP_URL}
-              className="inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.08] px-7 text-sm font-medium text-zinc-300 transition-colors hover:border-white/[0.16] hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+              href={APP_SIGNIN}
+              className="inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.08] px-7 text-sm font-medium text-zinc-300 transition-all hover:border-white/[0.16] hover:text-[#F5F5F7] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
             >
               Log in
             </a>

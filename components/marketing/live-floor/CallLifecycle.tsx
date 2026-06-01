@@ -29,7 +29,7 @@ export function CallLifecycle() {
   });
 
   return (
-    <section ref={ref} className="relative" style={{ height: '420vh' }}>
+    <section ref={ref} className="relative" style={{ height: '300vh' }}>
       {/* Sticky stage */}
       <div className="sticky top-0 flex min-h-screen items-center overflow-hidden px-5 lg:px-8">
         <div className="mx-auto grid w-full max-w-7xl items-center gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
