@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/marketing/Navbar";
 import Footer from "@/components/marketing/Footer";
+import { SmoothScroll } from "@/components/marketing/live-floor/SmoothScroll";
 
 export default function MarketingLayout({
   children,
@@ -12,10 +13,15 @@ export default function MarketingLayout({
   const pathname = usePathname();
 
   // The homepage ("/") is the cinematic "Live Floor" experience — it brings
-  // its own nav + footer. Every other marketing page keeps the shared chrome,
-  // exactly as before.
+  // its own nav + footer, plus Lenis smooth scrolling scoped to this route
+  // only (app routes are a separate layout tree and stay untouched).
   if (pathname === "/") {
-    return <>{children}</>;
+    return (
+      <>
+        <SmoothScroll />
+        {children}
+      </>
+    );
   }
 
   return (

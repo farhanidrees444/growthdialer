@@ -1,9 +1,10 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useSpring, useMotionValueEvent } from 'framer-motion';
 import { Phone, Radio, Ear, Sparkles, BarChart3, Check, TrendingUp } from 'lucide-react';
 import { LiveWaveform } from './LiveWaveform';
+import { Spotlight } from './Spotlight';
 import { EASE_OUT } from './motion';
 
 const STAGES = [
@@ -20,6 +21,8 @@ export function CallLifecycle() {
     target: ref,
     offset: ['start start', 'end end'],
   });
+  // Weighted, spring-smoothed progress for the narrative rail
+  const progress = useSpring(scrollYProgress, { stiffness: 200, damping: 25 });
   const [stage, setStage] = useState(0);
 
   useMotionValueEvent(scrollYProgress, 'change', (v) => {
@@ -32,6 +35,12 @@ export function CallLifecycle() {
     <section ref={ref} className="relative" style={{ height: '300vh' }}>
       {/* Sticky stage */}
       <div className="sticky top-0 flex min-h-screen items-center overflow-hidden px-5 lg:px-8">
+        {/* Scroll-progress beam — the scroll itself drives the narrative */}
+        <motion.div
+          aria-hidden
+          style={{ scaleX: progress }}
+          className="absolute left-0 top-0 h-px w-full origin-left bg-gradient-to-r from-[#8B5CF6] via-[#06B6D4] to-[#8B5CF6]"
+        />
         <div className="mx-auto grid w-full max-w-7xl items-center gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
           {/* ── Left: narrative rail ── */}
           <div>
@@ -98,6 +107,7 @@ export function CallLifecycle() {
           {/* ── Right: evolving call surface ── */}
           <div className="relative flex h-[420px] items-center justify-center sm:h-[460px]">
             <div className="relative w-full max-w-md rounded-2xl border border-white/[0.06] bg-[#0C0C0F]/80 p-6 backdrop-blur-xl">
+              <Spotlight color="#06B6D4" />
               <AnimatePresence mode="wait">
                 <StageVisual key={STAGES[stage].id} stage={stage} />
               </AnimatePresence>

@@ -3,7 +3,8 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, Phone } from 'lucide-react';
 import { LiveWaveform } from './LiveWaveform';
-import { EASE_OUT } from './motion';
+import { Spotlight } from './Spotlight';
+import { EASE_OUT, SPRING } from './motion';
 
 export function Hero() {
   return (
@@ -91,9 +92,9 @@ export function Hero() {
 
         {/* ── Right: the living call card (border-beam) ── */}
         <motion.div
-          initial={{ opacity: 0, y: 28, scale: 0.98 }}
+          initial={{ opacity: 0, y: 32, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 1, ease: EASE_OUT, delay: 0.2 }}
+          transition={{ ...SPRING, delay: 0.34 }}
           className="relative"
         >
           <BorderBeamCard>
@@ -158,8 +159,9 @@ function BorderBeamCard({ children }: { children: React.ReactNode }) {
       {/* Static subtle border under the beam */}
       <div className="absolute inset-0 rounded-2xl border border-white/[0.06]" />
       {/* Content surface */}
-      <div className="relative rounded-2xl border border-white/[0.06] bg-[#0C0C0F]/90 p-6 backdrop-blur-xl">
-        {children}
+      <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0C0C0F]/90 p-6 backdrop-blur-xl">
+        <Spotlight color="#06B6D4" />
+        <div className="relative z-10">{children}</div>
       </div>
     </div>
   );

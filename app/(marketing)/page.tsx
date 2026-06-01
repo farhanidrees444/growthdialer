@@ -1,3 +1,4 @@
+import { MotionShell } from '@/components/marketing/live-floor/MotionShell';
 import { Nav } from '@/components/marketing/live-floor/Nav';
 import { Grain } from '@/components/marketing/live-floor/Grain';
 import { Hero } from '@/components/marketing/live-floor/Hero';
@@ -11,17 +12,19 @@ import { FinalCTA } from '@/components/marketing/live-floor/FinalCTA';
 // through real-time motion and a scroll-driven story.
 export default function LandingPage() {
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#08080A] text-[#F5F5F7] antialiased">
-      <Grain />
-      <Nav />
-      <main className="relative z-[2]">
-        <Hero />
-        <CallLifecycle />
-        <EcosystemFlow />
-        <Features />
-        <ConversationIntelligence />
-        <FinalCTA />
-      </main>
-    </div>
+    <MotionShell>
+      <div className="relative min-h-screen overflow-x-hidden bg-[#08080A] text-[#F5F5F7] antialiased">
+        <Grain />
+        <Nav />
+        <main className="relative z-[2]">
+          <Hero />
+          <CallLifecycle />
+          <EcosystemFlow />
+          <Features />
+          <ConversationIntelligence />
+          <FinalCTA />
+        </main>
+      </div>
+    </MotionShell>
   );
 }

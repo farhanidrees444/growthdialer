@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Target, Zap, Brain, Users, BarChart3, ShieldCheck, Clock } from 'lucide-react';
 import { LiveWaveform } from './LiveWaveform';
+import { Spotlight } from './Spotlight';
 import { reveal, revealContainer } from './motion';
 
 const FEATURES = [
@@ -67,6 +68,7 @@ export function Features() {
             variants={reveal}
             className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12] hover:bg-white/[0.03] sm:col-span-2 lg:row-span-2"
           >
+            <Spotlight />
             <div>
               <div className="mb-5 flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8B5CF6]/10 text-[#8B5CF6]">
@@ -104,8 +106,9 @@ export function Features() {
               <motion.article
                 key={f.title}
                 variants={reveal}
-                className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12] hover:bg-white/[0.03]"
+                className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12] hover:bg-white/[0.03]"
               >
+                <Spotlight />
                 <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04] text-zinc-300 transition-colors group-hover:text-[#F5F5F7]">
                   <Icon className="h-5 w-5" />
                 </span>

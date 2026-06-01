@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 interface LiveWaveformProps {
   bars?: number;
@@ -31,6 +31,8 @@ export function LiveWaveform({
   gap = 3,
   speed = 1,
 }: LiveWaveformProps) {
+  const reduce = useReducedMotion();
+
   // Deterministic per-bar variation so it reads like real voice frequency,
   // not a uniform equalizer. A center-weighted envelope keeps it organic.
   const items = Array.from({ length: bars }, (_, i) => {
@@ -51,31 +53,37 @@ export function LiveWaveform({
       style={{ gap, height }}
       aria-hidden
     >
-      {items.map((b, i) => (
-        <motion.span
-          key={i}
-          className="rounded-full"
-          style={{
-            width: barWidth,
-            background: `linear-gradient(to top, ${color}40, ${color})`,
-            boxShadow: `0 0 ${barWidth * 2}px ${color}55`,
-          }}
-          initial={{ height: `${b.min * 100}%` }}
-          animate={{ height: [`${b.min * 100}%`, `${b.max * 100}%`, `${b.min * 100}%`] }}
-          transition={{
-            duration: b.dur,
-            delay: b.delay,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-      ))}
+      {items.map((b, i) => {
+        const mid = ((b.min + b.max) / 2) * 100;
+        return (
+          <motion.span
+            key={i}
+            className="rounded-full"
+            style={{
+              width: barWidth,
+              // Static mid-height when the user prefers reduced motion
+              height: reduce ? `${mid}%` : undefined,
+              background: `linear-gradient(to top, ${color}40, ${color})`,
+              boxShadow: `0 0 ${barWidth * 2}px ${color}55`,
+            }}
+            initial={reduce ? false : { height: `${b.min * 100}%` }}
+            animate={reduce ? undefined : { height: [`${b.min * 100}%`, `${b.max * 100}%`, `${b.min * 100}%`] }}
+            transition={reduce ? undefined : {
+              duration: b.dur,
+              delay: b.delay,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+        );
+      })}
     </div>
   );
 }
 
-/** A single static mini-waveform glyph for inline/label use. */
+/** A single mini-waveform glyph for inline/label use. */
 export function MiniWave({ color = '#06B6D4', className = '' }: { color?: string; className?: string }) {
+  const reduce = useReducedMotion();
   return (
     <div className={`flex items-center gap-[2px] ${className}`} aria-hidden>
       {[0.4, 0.9, 0.6, 1, 0.5, 0.8, 0.35].map((h, i) => (
@@ -83,9 +91,9 @@ export function MiniWave({ color = '#06B6D4', className = '' }: { color?: string
           key={i}
           className="w-[2px] rounded-full"
           style={{ background: color, height: 14 }}
-          initial={{ scaleY: h * 0.4 }}
-          animate={{ scaleY: [h * 0.4, h, h * 0.4] }}
-          transition={{ duration: 0.8 + i * 0.07, repeat: Infinity, ease: 'easeInOut' }}
+          initial={reduce ? false : { scaleY: h * 0.4 }}
+          animate={reduce ? { scaleY: h } : { scaleY: [h * 0.4, h, h * 0.4] }}
+          transition={reduce ? undefined : { duration: 0.8 + i * 0.07, repeat: Infinity, ease: 'easeInOut' }}
         />
       ))}
     </div>

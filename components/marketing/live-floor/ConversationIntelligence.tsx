@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Sparkles, TrendingUp, Target, ListChecks } from 'lucide-react';
+import { Spotlight } from './Spotlight';
 import { reveal, revealContainer, EASE_OUT } from './motion';
 
 const CAPABILITIES = [
@@ -83,6 +84,7 @@ export function ConversationIntelligence() {
           transition={{ duration: 0.9, ease: EASE_OUT }}
           className="relative rounded-2xl border border-white/[0.06] bg-[#0C0C0F]/80 p-6 backdrop-blur-xl"
         >
+          <Spotlight />
           <div className="mb-5 flex items-center justify-between border-b border-white/[0.05] pb-4">
             <div>
               <p className="text-sm font-medium text-[#F5F5F7]">Call with Acme Co.</p>
