@@ -7,7 +7,7 @@ import { Menu, X } from 'lucide-react';
 import { MiniWave } from './LiveWaveform';
 import { EASE_OUT } from './motion';
 
-const APP_SIGNIN = 'https://app.growthdialer.com/signin';
+const APP_SIGNIN = 'https://app.growthdialer.com/login';
 const APP_SIGNUP = 'https://app.growthdialer.com/signup';
 
 const LINKS = [

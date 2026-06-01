@@ -8,7 +8,10 @@ const nextConfig: NextConfig = {
     ],
   },
   async redirects() {
-    return []
+    return [
+      // Align legacy/alias auth path to the canonical /login route
+      { source: "/signin", destination: "/login", permanent: false },
+    ]
   },
 };
 

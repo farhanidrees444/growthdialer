@@ -1,15 +1,8 @@
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  // Full-bleed matte black — each auth page owns its own 50/50 split layout.
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16 bg-background text-foreground relative overflow-hidden">
-      <div
-        className="absolute inset-0 opacity-20 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.82 0.27 153) 0%, transparent 65%)",
-        }}
-      />
-      <div className="absolute inset-0 grid-bg opacity-40 pointer-events-none" />
-      <div className="relative z-10 w-full flex justify-center">{children}</div>
+    <div className="min-h-screen bg-[#08080A] text-[#F5F5F7] antialiased">
+      {children}
     </div>
   );
 }

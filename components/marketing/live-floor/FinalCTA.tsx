@@ -7,7 +7,7 @@ import { LiveWaveform, MiniWave } from './LiveWaveform';
 import { EASE_OUT } from './motion';
 
 const APP_URL = 'https://app.growthdialer.com';
-const APP_SIGNIN = 'https://app.growthdialer.com/signin';
+const APP_SIGNIN = 'https://app.growthdialer.com/login';
 const APP_SIGNUP = 'https://app.growthdialer.com/signup';
 
 const FOOTER_COLS = [

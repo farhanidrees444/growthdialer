@@ -73,7 +73,7 @@ export function Hero() {
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </a>
             <a
-              href="https://app.growthdialer.com/signin"
+              href="https://app.growthdialer.com/login"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.08] px-6 text-sm font-medium text-zinc-300 transition-all hover:border-white/[0.16] hover:text-[#F5F5F7] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
             >
               Log in
