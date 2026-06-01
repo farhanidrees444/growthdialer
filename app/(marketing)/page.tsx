@@ -1,33 +1,27 @@
-import HeroSection from "@/components/marketing/HeroSection";
-import TrustBadges from "@/components/marketing/TrustBadges";
-import Ticker from "@/components/marketing/Ticker";
-import IntegrationsBar from "@/components/marketing/IntegrationsBar";
-import HowItWorks from "@/components/marketing/HowItWorks";
-import FeaturesSection from "@/components/marketing/FeaturesSection";
-import StatsBand from "@/components/marketing/StatsBand";
-import CompareTable from "@/components/marketing/CompareTable";
-import PricingSection from "@/components/marketing/PricingSection";
-import TestimonialsSection from "@/components/marketing/TestimonialsSection";
-import FAQSection from "@/components/marketing/FAQSection";
-import CompareSection from "@/components/marketing/CompareSection";
-import CTASection from "@/components/marketing/CTASection";
+import { Nav } from '@/components/marketing/live-floor/Nav';
+import { Grain } from '@/components/marketing/live-floor/Grain';
+import { Hero } from '@/components/marketing/live-floor/Hero';
+import { CallLifecycle } from '@/components/marketing/live-floor/CallLifecycle';
+import { EcosystemFlow } from '@/components/marketing/live-floor/EcosystemFlow';
+import { Features } from '@/components/marketing/live-floor/Features';
+import { ConversationIntelligence } from '@/components/marketing/live-floor/ConversationIntelligence';
+import { FinalCTA } from '@/components/marketing/live-floor/FinalCTA';
 
+// "The Live Floor" — the homepage is a living dialer that demonstrates itself
+// through real-time motion and a scroll-driven story.
 export default function LandingPage() {
   return (
-    <>
-      <HeroSection />
-      <TrustBadges />
-      <Ticker />
-      <IntegrationsBar />
-      <HowItWorks />
-      <FeaturesSection />
-      <StatsBand />
-      <CompareTable />
-      <PricingSection />
-      <TestimonialsSection />
-      <FAQSection />
-      <CompareSection />
-      <CTASection />
-    </>
+    <div className="relative min-h-screen overflow-x-hidden bg-[#08080A] text-[#F5F5F7] antialiased">
+      <Grain />
+      <Nav />
+      <main className="relative z-[2]">
+        <Hero />
+        <CallLifecycle />
+        <EcosystemFlow />
+        <Features />
+        <ConversationIntelligence />
+        <FinalCTA />
+      </main>
+    </div>
   );
 }
