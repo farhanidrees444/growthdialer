@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { PremiumLayout } from "@/components/ui/premium-layout";
+import { GlobalHeader } from "@/components/ui/global-header";
 import CookieConsent from "@/components/CookieConsent";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -188,7 +190,12 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <TooltipProvider delay={200}>{children}</TooltipProvider>
+        <TooltipProvider delay={200}>
+          <PremiumLayout>
+            <GlobalHeader />
+            {children}
+          </PremiumLayout>
+        </TooltipProvider>
         <CookieConsent />
         <Toaster theme="dark" position="bottom-right" richColors closeButton />
       </body>
