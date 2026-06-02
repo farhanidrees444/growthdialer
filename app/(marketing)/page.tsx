@@ -13,6 +13,10 @@ import { IntegrationsShowcase } from '@/components/marketing/home/IntegrationsSh
 import { StatsStrip } from '@/components/marketing/home/StatsStrip';
 import { EarlyAccess } from '@/components/marketing/home/EarlyAccess';
 import { HomeFAQ } from '@/components/marketing/home/HomeFAQ';
+import { AIIntelligenceSection } from '@/components/marketing/home/AIIntelligenceSection';
+import { PowerDialerSection } from '@/components/marketing/home/PowerDialerSection';
+import { AnalyticsSection } from '@/components/marketing/home/AnalyticsSection';
+import { CRMIntegrationSection } from '@/components/marketing/home/CRMIntegrationSection';
 
 // "The Live Floor" — the homepage is a living dialer that demonstrates itself
 // through real-time motion and a scroll-driven story.
@@ -26,6 +30,10 @@ export default function LandingPage() {
           <Hero />
           <SocialProof />
           <DashboardPreview />
+          <AIIntelligenceSection />
+          <PowerDialerSection />
+          <AnalyticsSection />
+          <CRMIntegrationSection />
           <CallLifecycle />
           <EcosystemFlow />
           <Features />
