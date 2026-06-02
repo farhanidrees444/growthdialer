@@ -2,10 +2,36 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // Skip middleware for marketing pages and public routes
+  const publicRoutes = ['/', '/about', '/pricing', '/features', '/contact', '/docs']
+  const path = request.nextUrl.pathname
+  
+  // Allow public routes to pass through without Supabase check
+  if (publicRoutes.includes(path) || path.startsWith('/_next') || path.startsWith('/public')) {
+    return NextResponse.next({ request })
+  }
+
+  // Only run auth checks on protected routes
+  const protectedRoutes = [
+    '/dashboard', '/dialer', '/leads', '/sequences',
+    '/analytics', '/recordings', '/integrations', '/settings',
+    '/team'
+  ]
+  const authRoutes = ['/login', '/signup']
+  
+  // Check if Supabase credentials exist
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (!supabaseUrl || !supabaseKey) {
+    // If no Supabase config, allow access to continue (development mode)
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() { return request.cookies.getAll() },
@@ -21,14 +47,6 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-
-  const protectedRoutes = [
-    '/dashboard', '/dialer', '/leads', '/sequences',
-    '/analytics', '/recordings', '/integrations', '/settings',
-    '/team'
-  ]
-  const authRoutes = ['/login', '/signup']
-  const path = request.nextUrl.pathname
 
   if (!user && protectedRoutes.some(r => path.startsWith(r))) {
     return NextResponse.redirect(new URL('/login', request.url))
