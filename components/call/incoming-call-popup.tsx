@@ -166,7 +166,7 @@ export function IncomingCallPopup({ userId }: Props) {
         { event: 'INSERT', schema: 'public', table: 'calls', filter: `user_id=eq.${userId}` },
         async (payload) => {
           const row = payload.new as Record<string, unknown>;
-          console.log('[POPUP] Inbound INSERT received:', row.id| direction:', row.direction| status:', row.status);
+          console.log('[POPUP] Inbound INSERT received:', row.id, 'direction:', row.direction, 'status:', row.status);
           if (row.direction !== 'inbound' || row.status !== 'ringing') return;
           callIdRef.current = row.id as string;
 

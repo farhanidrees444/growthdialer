@@ -185,7 +185,7 @@ export default function DialerPage() {
       .from('purchased_numbers')
       .select('phone_number')
       .eq('user_id', userId)
-      .eq('status'active')
+      .eq('status', 'active')
       .order('is_default', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -358,7 +358,7 @@ export default function DialerPage() {
     }
   }, [activeCallId, pendingCallDbId]);
 
-  // ── Disposition ──────────────────────────────────────��──────────────────────
+  // ── Disposition ────────────────────────────────────��─��──────────────────────
   const handleDispositionSave = useCallback(async (
     disposition: DispositionType,
     notes?: string,
