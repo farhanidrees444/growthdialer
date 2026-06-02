@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useReducedMotion } from 'framer-motion';
+import { useMounted } from '@/hooks/use-mounted';
 
 interface SpotlightProps {
   /** Glow color — violet by default, cyan on live/active cards */
@@ -20,7 +21,9 @@ interface SpotlightProps {
  */
 export function Spotlight({ color = '#8B5CF6', size = 380, radiusClass = 'rounded-2xl' }: SpotlightProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
+  const prefersReduced = useReducedMotion();
+  const mounted = useMounted();
+  const reduce = mounted && prefersReduced;
   const [p, setP] = useState({ x: 0, y: 0, on: false });
 
   useEffect(() => {

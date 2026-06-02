@@ -1,6 +1,7 @@
 'use client';
 
 import { motion, useReducedMotion } from 'framer-motion';
+import { useMounted } from '@/hooks/use-mounted';
 
 interface LiveWaveformProps {
   bars?: number;
@@ -31,7 +32,11 @@ export function LiveWaveform({
   gap = 3,
   speed = 1,
 }: LiveWaveformProps) {
-  const reduce = useReducedMotion();
+  const prefersReduced = useReducedMotion();
+  const mounted = useMounted();
+  // Treat motion as enabled until mounted so the first client render matches
+  // the server (which has no access to the reduced-motion media query).
+  const reduce = mounted && prefersReduced;
 
   // Deterministic per-bar variation so it reads like real voice frequency,
   // not a uniform equalizer. A center-weighted envelope keeps it organic.
@@ -83,7 +88,9 @@ export function LiveWaveform({
 
 /** A single mini-waveform glyph for inline/label use. */
 export function MiniWave({ color = '#06B6D4', className = '' }: { color?: string; className?: string }) {
-  const reduce = useReducedMotion();
+  const prefersReduced = useReducedMotion();
+  const mounted = useMounted();
+  const reduce = mounted && prefersReduced;
   return (
     <div className={`flex items-center gap-[2px] ${className}`} aria-hidden>
       {[0.4, 0.9, 0.6, 1, 0.5, 0.8, 0.35].map((h, i) => (
