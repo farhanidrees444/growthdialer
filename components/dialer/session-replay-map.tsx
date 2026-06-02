@@ -52,7 +52,7 @@ export function SessionReplayMap({ calls, onDotClick }: SessionReplayMapProps) {
             <TooltipTrigger
               render={
                 <button
-                  className={`w-2 h-2 rounded-full transition-all duration-150 ${dotColor(call.disposition)} ${hoveredId === call.id ? 'scale-150' : 'scale-100'} cursor-pointer`}
+                  className={`w-2 h-2 rounded-full transition-all duration-150 ${dotColor(call.disposition)} ${hoveredId === call.id ? 'scale-150' : ', 'scale-100'} cursor-pointer`}
                   onMouseEnter={() => setHoveredId(call.id)}
                   onMouseLeave={() => setHoveredId(null)}
                   onClick={() => onDotClick?.(call.id)}

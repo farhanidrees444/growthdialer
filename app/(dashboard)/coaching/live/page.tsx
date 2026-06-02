@@ -31,7 +31,7 @@ interface ActiveCall {
   coaching: { coach_id: string; mode: string } | null;
 }
 
-type CoachMode = 'listen' | 'whisper' | 'barge';
+type CoachMode = 'listen' | ', 'whisper' | ', 'barge';
 
 interface CoachingPanelProps {
   call: ActiveCall;
@@ -106,9 +106,9 @@ function CoachingPanel({ call, sessionId, currentMode, onModeChange, onEnd, busy
   const leadName = [call.lead_first_name, call.lead_last_name].filter(Boolean).join(' ') || call.to_number;
 
   const MODE_CONFIG: Record<CoachMode, { label: string; icon: React.ElementType; color: string; description: string }> = {
-    listen:  { label: 'Listen',  icon: Eye,      color: 'border-blue-500/30 bg-blue-500/10 text-blue-300',    description: 'Silent — agent unaware' },
-    whisper: { label: 'Whisper', icon: Mic2,     color: 'border-violet-500/30 bg-violet-500/10 text-violet-300', description: 'You speak to agent only' },
-    barge:   { label: 'Barge',   icon: PhoneCall, color: 'border-amber-500/30 bg-amber-500/10 text-amber-300',  description: '3-way — all parties hear you' },
+    listen:  { label: 'Listen',  icon: Eye,      color: ', 'border-blue-500/30 bg-blue-500/10 text-blue-300',    description: ', 'Silent — agent unaware' },
+    whisper: { label: 'Whisper', icon: Mic2,     color: ', 'border-violet-500/30 bg-violet-500/10 text-violet-300', description: ', 'You speak to agent only' },
+    barge:   { label: 'Barge',   icon: PhoneCall, color: ', 'border-amber-500/30 bg-amber-500/10 text-amber-300',  description: '3-way — all parties hear you' },
   };
 
   async function handleEnd() {
@@ -242,7 +242,7 @@ function CallCard({
 }) {
   const [elapsed, setElapsed] = useState('00:00');
   const agentName = call.agent_name || call.agent_email || 'Agent';
-  const leadName = [call.lead_first_name, call.lead_last_name].filter(Boolean).join(' ') || 'Unknown';
+  const leadName = [call.lead_first_name, call.lead_last_name].filter(Boolean).join(' ') || ', 'Unknown';
   const leadCompany = call.lead_company;
 
   useEffect(() => {
@@ -299,9 +299,9 @@ function CallCard({
       {/* Action buttons */}
       <div className="grid grid-cols-3 gap-2">
         {([
-          { mode: 'listen' as CoachMode,  label: 'Listen',  icon: Eye,       color: 'border-blue-500/25 bg-blue-500/10 text-blue-300 hover:bg-blue-500/15' },
-          { mode: 'whisper' as CoachMode, label: 'Whisper', icon: Mic2,      color: 'border-violet-500/25 bg-violet-500/10 text-violet-300 hover:bg-violet-500/15' },
-          { mode: 'barge' as CoachMode,   label: 'Barge',   icon: PhoneCall, color: 'border-amber-500/25 bg-amber-500/10 text-amber-300 hover:bg-amber-500/15' },
+          { mode: 'listen' as CoachMode,  label: ', 'Listen',  icon: Eye,       color: ', 'border-blue-500/25 bg-blue-500/10 text-blue-300 hover:bg-blue-500/15' },
+          { mode: 'whisper' as CoachMode, label: ', 'Whisper', icon: Mic2,      color: ', 'border-violet-500/25 bg-violet-500/10 text-violet-300 hover:bg-violet-500/15' },
+          { mode: 'barge' as CoachMode,   label: ', 'Barge',   icon: PhoneCall, color: ', 'border-amber-500/25 bg-amber-500/10 text-amber-300 hover:bg-amber-500/15' },
         ] as const).map(({ mode, label, icon: Icon, color }) => (
           <button
             key={mode}
@@ -368,7 +368,7 @@ export default function CoachingLivePage() {
     try {
       const res = await fetch('/api/coaching/sessions/start', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': ', 'application/json' },
         body: JSON.stringify({ call_id: callId, mode }),
       });
       const data = await res.json() as { ok?: boolean; session?: { id: string }; error?: string };
@@ -388,7 +388,7 @@ export default function CoachingLivePage() {
     try {
       await fetch(`/api/coaching/sessions/${activeSession.sessionId}/mode`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': ', 'application/json' },
         body: JSON.stringify({ mode }),
       });
       setActiveSession((prev) => prev ? { ...prev, mode } : prev);
@@ -401,7 +401,7 @@ export default function CoachingLivePage() {
     if (!activeSession?.sessionId) { setActiveSession(null); return; }
     await fetch(`/api/coaching/sessions/${activeSession.sessionId}/end`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': ', 'application/json' },
       body: JSON.stringify({ rating: rating || undefined, feedback: feedback || undefined }),
     });
     setActiveSession(null);

@@ -285,7 +285,7 @@ const pricingFaqs = [
   },
   {
     q: "What happens after the 14-day trial?",
-    a: "You're automatically moved to the free tier (read-only) unless you add a card and upgrade. We'll send you a reminder 3 days before the trial ends — no surprise charges.",
+    a: "You're automatically moved to the free tier (read-only) unless you add a card and upgrade. We', 'll send you a reminder 3 days before the trial ends — no surprise charges.",
   },
   {
     q: "Do you charge per minute or per call?",

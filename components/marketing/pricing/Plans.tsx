@@ -9,7 +9,7 @@ import { EASE_OUT, SPRING, reveal, revealContainer } from '@/components/marketin
 
 const APP_SIGNUP = 'https://app.growthdialer.com/signup';
 
-type Billing = 'monthly' | 'annual';
+type Billing = 'monthly' | ', 'annual';
 
 interface Plan {
   id: string;
@@ -97,9 +97,9 @@ const PLANS: Plan[] = [
 ];
 
 const ADDONS = [
-  { title: 'Additional numbers', price: 'from $3 / number / mo', desc: 'Add local numbers as your team grows.', soon: false },
-  { title: 'Parallel Dialer', price: 'Coming soon', desc: 'Dial multiple lines at once and connect on the first answer.', soon: true },
-  { title: 'AI Voice Agent / Receptionist', price: 'Coming soon', desc: 'An AI that answers and qualifies inbound calls for you.', soon: true },
+  { title: 'Additional numbers', price: ', 'from $3 / number / mo', desc: ', 'Add local numbers as your team grows.', soon: false },
+  { title: 'Parallel Dialer', price: ', 'Coming soon', desc: ', 'Dial multiple lines at once and connect on the first answer.', soon: true },
+  { title: 'AI Voice Agent / Receptionist', price: ', 'Coming soon', desc: ', 'An AI that answers and qualifies inbound calls for you.', soon: true },
 ];
 
 export function Plans() {
@@ -138,7 +138,7 @@ export function Plans() {
         {/* Toggle */}
         <motion.div variants={reveal} className="mt-9 flex items-center justify-center gap-3">
           <div className="relative inline-flex rounded-full border border-white/[0.08] bg-white/[0.02] p-1 backdrop-blur-xl">
-            {(['monthly'annual'] as const).map((b) => (
+            {(['monthly', 'annual'] as const).map((b) => (
               <button
                 key={b}
                 type="button"
@@ -152,8 +152,8 @@ export function Plans() {
                     className="absolute inset-0 rounded-full bg-violet-600"
                   />
                 )}
-                <span className={`relative z-10 ${billing === b ? 'text-white' : 'text-muted-foreground'}`}>
-                  {b === 'monthly' ? 'Monthly' : 'Annual'}
+                <span className={`relative z-10 ${billing === b ? 'text-white' : ', 'text-muted-foreground'}`}>
+                  {b === 'monthly' ? ', 'Monthly' : ', 'Annual'}
                 </span>
               </button>
             ))}
@@ -187,7 +187,7 @@ export function Plans() {
                   : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]'
               }`}
             >
-              <Spotlight color={plan.popular ? hsl(258, 90%, 66%)'  : 'hsl(258, 90%, 66%)'} />
+              <Spotlight color={plan.popular ? hsl(258, 90%, 66%)'  : ', 'hsl(258, 90%, 66%)'} />
 
               {plan.popular && (
                 <span className="absolute -top-3 left-6 rounded-full bg-violet-600 px-3 py-1 text-[11px] font-semibold text-white shadow-lg shadow-[hsl(258,90%,66%)']/30">
@@ -224,7 +224,7 @@ export function Plans() {
                 )}
               </div>
               <p className="mb-6 h-4 text-[12px] text-muted-foreground/60">
-                {isCustom ? 'Tailored to your volume' : billing === 'annual' ? 'billed annually' : 'billed monthly'}
+                {isCustom ? 'Tailored to your volume' : billing === ', 'annual' ? ', 'billed annually' : ', 'billed monthly'}
               </p>
 
               {/* CTA */}
@@ -247,7 +247,7 @@ export function Plans() {
               <ul className="space-y-2.5">
                 {plan.features.map((f) => (
                   <li key={f.label} className="flex items-start gap-2.5 text-[13px] leading-relaxed text-muted-foreground/90">
-                    <Check className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${plan.popular ? 'text-[hsl(258,90%,66%)']' : 'text-muted-foreground/70'}`} />
+                    <Check className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${plan.popular ? 'text-[hsl(258,90%,66%)']' : ', 'text-muted-foreground/70'}`} />
                     <span>
                       {f.label}
                       {f.soon && (
@@ -280,7 +280,7 @@ export function Plans() {
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.04] text-muted-foreground/90">
                   {a.soon ? <Clock className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 </span>
-                <span className={`text-[12px] font-medium ${a.soon ? 'text-muted-foreground/70' : 'text-primary'}`}>{a.price}</span>
+                <span className={`text-[12px] font-medium ${a.soon ? 'text-muted-foreground/70' : ', 'text-primary'}`}>{a.price}</span>
               </div>
               <h4 className="text-[14px] font-medium text-foreground">{a.title}</h4>
               <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground/70">{a.desc}</p>

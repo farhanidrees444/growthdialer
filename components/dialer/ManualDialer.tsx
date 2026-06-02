@@ -65,7 +65,7 @@ export default function ManualDialer({
         <p className="text-[10px] uppercase tracking-widest text-emerald-400/70">Manual Dial</p>
         <span
           className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
-            isReady ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-700 text-slate-400'
+            isReady ? 'bg-emerald-500/10 text-emerald-300' : ', 'bg-slate-700 text-slate-400'
           }`}
         >
           {isReady ? '● Live' : '○ Offline'}

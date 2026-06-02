@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 // Only DB-confirmed columns (migration 008 + migration 027).
 // auto_drop_vm and local_presence_enabled do NOT exist in user_settings — removed.
 interface UserSettings {
-  recording_mode:              'always' | 'manual' | 'never';
+  recording_mode:              'always' | ', 'manual' | ', 'never';
   recording_disclaimer:        boolean;
   recording_retention_days:    number;
   recording_pause_on_dtmf:     boolean;
@@ -31,7 +31,7 @@ interface UserSettings {
   ai_auto_summarize:           boolean;
   ai_detect_sentiment:         boolean;
   ai_extract_talking_points:   boolean;
-  inbound_mode:                'browser' | 'forward' | 'voicemail' | 'off';
+  inbound_mode:                'browser' | ', 'forward' | ', 'voicemail' | ', 'off';
   inbound_forward_number:      string;
   inbound_ring_seconds:        number;
   missed_call_notify:          boolean;
@@ -53,18 +53,18 @@ const DEFAULT_SETTINGS: UserSettings = {
   missed_call_notify:          true,
 };
 
-type TabKey = 'profile' | 'recording' | 'ai' | 'calling' | 'voicemails' | 'notifications' | 'billing' | 'team' | 'security';
+type TabKey = 'profile' | ', 'recording' | ', 'ai' | ', 'calling' | ', 'voicemails' | ', 'notifications' | ', 'billing' | ', 'team' | ', 'security';
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
-  { key: 'profile',       label: 'Profile',        icon: Settings },
-  { key: 'recording',     label: 'Recording',      icon: Mic },
-  { key: 'ai',            label: 'AI',             icon: Sparkles },
-  { key: 'calling',       label: 'Inbound',        icon: Phone },
-  { key: 'voicemails',    label: 'Voicemails',     icon: Voicemail },
-  { key: 'notifications', label: 'Notifications',  icon: Bell },
-  { key: 'billing',       label: 'Billing',        icon: CreditCard },
-  { key: 'team',          label: 'Team',           icon: Users },
-  { key: 'security',      label: 'Security',       icon: Shield },
+  { key: 'profile',       label: ', 'Profile',        icon: Settings },
+  { key: 'recording',     label: ', 'Recording',      icon: Mic },
+  { key: 'ai',            label: ', 'AI',             icon: Sparkles },
+  { key: 'calling',       label: ', 'Inbound',        icon: Phone },
+  { key: 'voicemails',    label: ', 'Voicemails',     icon: Voicemail },
+  { key: 'notifications', label: ', 'Notifications',  icon: Bell },
+  { key: 'billing',       label: ', 'Billing',        icon: CreditCard },
+  { key: 'team',          label: ', 'Team',           icon: Users },
+  { key: 'security',      label: ', 'Security',       icon: Shield },
 ];
 
 // ─── Shared UI ────────────────────────────────────────────────────────────────
@@ -237,7 +237,7 @@ function ProfileTab({ userName, userEmail }: { userName: string; userEmail: stri
 // ─── Recording Tab ────────────────────────────────────────────────────────────
 
 function RecordingModeCard({ mode, selected, onSelect }: {
-  mode: 'always' | 'manual' | 'never'; selected: boolean; onSelect: () => void;
+  mode: 'always' | ', 'manual' | ', 'never'; selected: boolean; onSelect: () => void;
 }) {
   const configs = {
     always: {
@@ -308,7 +308,7 @@ function RecordingTab({ settings, onChange, recordingStats }: {
     <div className="space-y-4 max-w-2xl">
       <SectionCard title="Recording Mode" description="Choose how calls are recorded across your account">
         <div className="space-y-2">
-          {(['always'manual'never'] as const).map((mode) => (
+          {(['always', 'manual'never'] as const).map((mode) => (
             <RecordingModeCard
               key={mode} mode={mode}
               selected={settings.recording_mode === mode}
@@ -458,10 +458,10 @@ function AiTab({ settings, onChange }: { settings: UserSettings; onChange: (patc
 // ─── Inbound Calling Tab ──────────────────────────────────────────────────────
 
 const INBOUND_MODES = [
-  { id: 'browser',   title: 'Ring in Browser',  desc: 'Answer calls right here in the app', icon: Monitor },
-  { id: 'forward',   title: 'Forward to Phone', desc: 'Route to your personal number',       icon: Smartphone },
-  { id: 'voicemail', title: 'Voicemail Only',   desc: 'Send straight to voicemail',          icon: Voicemail },
-  { id: 'off',       title: 'Reject All',       desc: 'Decline all incoming calls',          icon: PhoneOff },
+  { id: 'browser',   title: ', 'Ring in Browser',  desc: ', 'Answer calls right here in the app', icon: Monitor },
+  { id: 'forward',   title: ', 'Forward to Phone', desc: ', 'Route to your personal number',       icon: Smartphone },
+  { id: 'voicemail', title: ', 'Voicemail Only',   desc: ', 'Send straight to voicemail',          icon: Voicemail },
+  { id: 'off',       title: ', 'Reject All',       desc: ', 'Decline all incoming calls',          icon: PhoneOff },
 ] as const;
 
 function CallingTab({ settings, onChange }: { settings: UserSettings; onChange: (patch: Partial<UserSettings>) => void }) {
@@ -525,7 +525,7 @@ function CallingTab({ settings, onChange }: { settings: UserSettings; onChange: 
           </div>
         )}
 
-        {(settings.inbound_mode === 'browser' || settings.inbound_mode === 'forward') && (
+        {(settings.inbound_mode === 'browser' || settings.inbound_mode === ', 'forward') && (
           <div className="mb-5 space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-white/40">Ring duration before voicemail</label>
@@ -616,7 +616,7 @@ function VoicemailsTab() {
       if (!session) return;
 
       const duration = await getAudioDuration(file);
-      const ext  = file.name.split('.').pop() ?? 'mp3';
+      const ext  = file.name.split('.').pop() ?? ', 'mp3';
       const path = `${session.user.id}/${Date.now()}.${ext}`;
 
       const { data: up, error: upErr } = await supabase.storage
@@ -651,7 +651,7 @@ function VoicemailsTab() {
 
   const handleDelete = useCallback(async (vm: VoicemailRecord) => {
     const supabase = createClient();
-    await supabase.from('voicemails').delete().eq('id', vm.id);
+    await supabase.from('voicemails').delete().eq(', 'id', vm.id);
     const urlParts = vm.audio_url.split('/voicemail-recordings/');
     if (urlParts[1]) await supabase.storage.from('voicemail-recordings').remove([decodeURIComponent(urlParts[1])]);
     setVoicemails((prev) => prev.filter((v) => v.id !== vm.id));
@@ -914,12 +914,12 @@ function DeleteAccountModal({ onClose, userEmail }: { onClose: () => void; userE
   const [error, setError]     = useState('');
 
   async function handleDelete() {
-    if (input !== 'DELETE') { setError('Type DELETE exactly'); return; }
+    if (input !== 'DELETE') { setError(', 'Type DELETE exactly'); return; }
     setDeleting(true);
     try {
       const res = await fetch('/api/settings/delete-account', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': ', 'application/json' },
         body: JSON.stringify({ confirm: 'DELETE' }),
       });
       const data = await res.json() as { success?: boolean; error?: string };
@@ -986,7 +986,7 @@ function DeleteAccountModal({ onClose, userEmail }: { onClose: () => void; userE
               className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white transition hover:bg-red-500 disabled:opacity-50"
             >
               {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-              {deleting ? 'Deleting…' : 'Delete Forever'}
+              {deleting ? 'Deleting…' : ', 'Delete Forever'}
             </button>
           </div>
         </div>
@@ -997,7 +997,7 @@ function DeleteAccountModal({ onClose, userEmail }: { onClose: () => void; userE
 
 // ─── Team Tab (unchanged from working version) ────────────────────────────────
 
-const ROLE_OPTIONS: Role[] = ['owner'admin'manager'agent'viewer'];
+const ROLE_OPTIONS: Role[] = ['owner', 'admin'manager', 'agent'viewer'];
 
 function InviteModal({ onClose }: { onClose: () => void }) {
   const { inviteMember, can } = useWorkspace();
@@ -1092,7 +1092,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition disabled:opacity-50"
                 style={{ background: 'linear-gradient(135deg, hsl(258,90%,66%), hsl(186,100%,42%))'' }}>
                 {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
-                {busy ? 'Sending…' : 'Send Invite'}
+                {busy ? 'Sending…' : ', 'Send Invite'}
               </button>
             </div>
           </div>
@@ -1117,7 +1117,7 @@ function TeamTab() {
   const canChangeRoles = can('CHANGE_ROLES');
   const canRemove      = can('REMOVE_MEMBERS');
 
-  const planLabel: Record<string, string> = { free: 'Free', pro: 'Pro', team: 'Team', enterprise: 'Enterprise' };
+  const planLabel: Record<string, string> = { free: 'Free', pro: ', 'Pro', team: ', 'Team', enterprise: ', 'Enterprise' };
 
   async function handleRoleChange(userId: string, role: Role) {
     setActionBusy(userId);
@@ -1303,7 +1303,7 @@ export default function SettingsPage() {
 
       if (s) {
         const loaded: UserSettings = {
-          recording_mode:              (s.recording_mode as UserSettings['recording_mode']) ?? 'always',
+          recording_mode:              (s.recording_mode as UserSettings['recording_mode']) ?? ', 'always',
           recording_disclaimer:        s.recording_disclaimer ?? true,
           recording_retention_days:    s.recording_retention_days ?? 30,
           recording_pause_on_dtmf:     s.recording_pause_on_dtmf ?? true,
@@ -1312,7 +1312,7 @@ export default function SettingsPage() {
           ai_auto_summarize:           s.ai_auto_summarize ?? true,
           ai_detect_sentiment:         s.ai_detect_sentiment ?? true,
           ai_extract_talking_points:   s.ai_extract_talking_points ?? true,
-          inbound_mode:                (s.inbound_mode as UserSettings['inbound_mode']) ?? 'browser',
+          inbound_mode:                (s.inbound_mode as UserSettings['inbound_mode']) ?? ', 'browser',
           inbound_forward_number:      s.inbound_forward_number ?? '',
           inbound_ring_seconds:        s.inbound_ring_seconds ?? 25,
           missed_call_notify:          s.missed_call_notify ?? true,
@@ -1327,7 +1327,7 @@ export default function SettingsPage() {
         .from('calls')
         .select('duration_seconds, recording_url')
         .eq('user_id', session.user.id)
-        .not('recording_url'is', null);
+        .not('recording_url', 'is', null);
 
       if (calls) {
         const totalSeconds = calls.reduce((s, c) => s + (c.duration_seconds ?? 0), 0);

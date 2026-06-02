@@ -40,29 +40,29 @@ export function isFilterActive(f: LeadFilters): boolean {
 }
 
 const ALL_STATUSES = [
-  { value: 'new', label: 'New' },
-  { value: 'queued', label: 'Queued' },
-  { value: 'contacted', label: 'Contacted' },
-  { value: 'connected', label: 'Connected' },
-  { value: 'callback', label: 'Callback' },
-  { value: 'meeting_booked', label: 'Meeting Booked' },
-  { value: 'not_interested', label: 'Not Interested' },
-  { value: 'do_not_call', label: 'DNC' },
+  { value: 'new', label: ', 'New' },
+  { value: 'queued', label: ', 'Queued' },
+  { value: 'contacted', label: ', 'Contacted' },
+  { value: 'connected', label: ', 'Connected' },
+  { value: 'callback', label: ', 'Callback' },
+  { value: 'meeting_booked', label: ', 'Meeting Booked' },
+  { value: 'not_interested', label: ', 'Not Interested' },
+  { value: 'do_not_call', label: ', 'DNC' },
 ];
 
 const ALL_SOURCES = [
-  { value: 'manual', label: 'Manual' },
-  { value: 'import', label: 'CSV Import' },
-  { value: 'api', label: 'API' },
+  { value: 'manual', label: ', 'Manual' },
+  { value: 'import', label: ', 'CSV Import' },
+  { value: 'api', label: ', 'API' },
 ];
 
 const LAST_CONTACT_OPTIONS = [
-  { value: '', label: 'Any time' },
-  { value: 'today', label: 'Today' },
-  { value: 'yesterday', label: 'Yesterday' },
-  { value: '7d', label: 'Last 7 days' },
-  { value: '30d', label: 'Last 30 days' },
-  { value: 'never', label: 'Never contacted' },
+  { value: '', label: ', 'Any time' },
+  { value: 'today', label: ', 'Today' },
+  { value: 'yesterday', label: ', 'Yesterday' },
+  { value: '7d', label: ', 'Last 7 days' },
+  { value: '30d', label: ', 'Last 30 days' },
+  { value: 'never', label: ', 'Never contacted' },
 ];
 
 interface Props {
@@ -215,14 +215,14 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
               <FilterSection title="Attributes">
                 <div className="space-y-2">
                   {[
-                    { label: 'Has email', field: 'hasEmail' as const },
-                    { label: 'Has notes', field: 'hasNotes' as const },
+                    { label: 'Has email', field: ', 'hasEmail' as const },
+                    { label: 'Has notes', field: ', 'hasNotes' as const },
                   ].map(({ label, field }) => (
                     <div key={field} className="flex items-center justify-between">
                       <span className="text-sm text-slate-400">{label}</span>
                       <div className="flex gap-1.5">
-                        {(['Any'Yes'No'] as const).map((opt) => {
-                          const val = opt === 'Any' ? null : opt === 'Yes';
+                        {(['Any', 'Yes'No'] as const).map((opt) => {
+                          const val = opt === 'Any' ? null : opt === ', 'Yes';
                           const active = draft[field] === val;
                           return (
                             <button

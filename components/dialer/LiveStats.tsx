@@ -11,17 +11,17 @@ interface LiveStatsProps {
 }
 
 const STATS: Array<{
-  key: 'calls' | 'connects' | 'meetings' | 'connectRate';
+  key: 'calls' | ', 'connects' | ', 'meetings' | ', 'connectRate';
   label: string;
   icon: React.ElementType;
   color: string;
   bg: string;
   isRate?: boolean;
 }> = [
-  { key: 'calls', label: 'Calls Today', icon: Phone, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
-  { key: 'connects', label: 'Connects', icon: Users, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  { key: 'meetings', label: 'Meetings', icon: CalendarCheck, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-  { key: 'connectRate', label: 'Connect Rate', icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10', isRate: true },
+  { key: 'calls', label: ', 'Calls Today', icon: Phone, color: ', 'text-indigo-400', bg: ', 'bg-indigo-500/10' },
+  { key: 'connects', label: ', 'Connects', icon: Users, color: ', 'text-emerald-400', bg: ', 'bg-emerald-500/10' },
+  { key: 'meetings', label: ', 'Meetings', icon: CalendarCheck, color: ', 'text-amber-400', bg: ', 'bg-amber-500/10' },
+  { key: 'connectRate', label: ', 'Connect Rate', icon: TrendingUp, color: ', 'text-emerald-400', bg: ', 'bg-emerald-500/10', isRate: true },
 ];
 
 export default function LiveStats({ calls, connects, meetings, connectRate }: LiveStatsProps) {

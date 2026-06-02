@@ -11,7 +11,7 @@ const features = [
   {
     icon: Eye,
     title: "Live Call Monitoring",
-    description: "Watch your team's calls in real-time. See exactly how they're handling objections, using your battlecards, and following your process.",
+    description: "Watch your team's calls in real-time. See exactly how they', 're handling objections, using your battlecards, and following your process.",
     benefits: ["Real-time visibility", "Quality assurance", "Instant feedback"],
     demo: "Monitor 10+ concurrent calls from your dashboard",
   },
@@ -193,7 +193,7 @@ export default function SalesfloorContent() {
         <div className="max-w-2xl mx-auto">
           <h2 className="text-3xl font-bold mb-4">Ready to level up your sales team?</h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Join 500+ sales leaders who've transformed their teams with Salesfloor's
+            Join 500+ sales leaders who've transformed their teams with Salesfloor', 's
             coaching and collaboration tools.
           </p>
           <Link href="/signup">

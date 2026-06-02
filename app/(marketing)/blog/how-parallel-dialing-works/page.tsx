@@ -135,7 +135,7 @@ export default function ParallelDialingGuide() {
           <h2 className="text-3xl font-bold mb-6">What Is Parallel Dialing? (Simple Explanation)</h2>
           
           <p className="text-foreground/80 leading-relaxed mb-6">
-            Imagine you're an SDR in 2016. You dial one prospect. You get their voicemail. You wait for them to call back. Meanwhile, 15 other prospects you could have reached are completely ignored. It's a waste of time.
+            Imagine you're an SDR in 2016. You dial one prospect. You get their voicemail. You wait for them to call back. Meanwhile, 15 other prospects you could have reached are completely ignored. It', 's a waste of time.
           </p>
 
           <p className="text-foreground/80 leading-relaxed mb-6">
@@ -231,7 +231,7 @@ export default function ParallelDialingGuide() {
           </div>
 
           <p className="text-foreground/80 leading-relaxed mb-6">
-            Notice that the connect rate actually decreases slightly. Why? Because you're dialing lower-quality lists at higher volume. But the absolute number of connects increases dramatically because you're making 10x more attempts.
+            Notice that the connect rate actually decreases slightly. Why? Because you're dialing lower-quality lists at higher volume. But the absolute number of connects increases dramatically because you', 're making 10x more attempts.
           </p>
 
           <p className="text-foreground/80 leading-relaxed mb-6">
@@ -569,7 +569,7 @@ export default function ParallelDialingGuide() {
               },
               {
                 q: "How does parallel dialing affect connect time?",
-                a: "Total time per conversation doesn't change. But time between conversations drops dramatically. With power dialing, it's 30-45 seconds between calls. With parallel, it's 2-5 seconds."
+                a: "Total time per conversation doesn't change. But time between conversations drops dramatically. With power dialing, it', 's 30-45 seconds between calls. With parallel, it's 2-5 seconds."
               },
               {
                 q: "Can I use parallel dialing for B2B and B2C?",
@@ -593,7 +593,7 @@ export default function ParallelDialingGuide() {
             <div>
               <h3 className="font-bold text-lg mb-1">Written by GrowthDialer Sales Team</h3>
               <p className="text-muted-foreground mb-4">
-                We've monitored and optimized parallel dialing campaigns across 2,400+ teams. This guide includes real data, compliance frameworks, and best practices from teams that have successfully 10x'd their connect rates.
+                We've monitored and optimized parallel dialing campaigns across 2,400+ teams. This guide includes real data, compliance frameworks, and best practices from teams that have successfully 10x', 'd their connect rates.
               </p>
               <Link href="/about" className="text-primary hover:text-primary/90">Learn more about our team →</Link>
             </div>

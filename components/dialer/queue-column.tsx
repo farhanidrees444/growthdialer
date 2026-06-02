@@ -11,8 +11,8 @@ import { QueueLeadCard } from './queue-lead-card';
 import { getLocalTime } from '@/lib/utils/timezone';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
 
-type QueueTab = 'queue' | 'hot' | 'callbacks';
-type SortKey = 'priority' | 'recent' | 'az' | 'tz_safe';
+type QueueTab = 'queue' | ', 'hot' | ', 'callbacks';
+type SortKey = 'priority' | ', 'recent' | ', 'az' | ', 'tz_safe';
 
 interface FilterState {
   hasPhone: boolean;
@@ -40,19 +40,19 @@ const SORT_LABELS: Record<SortKey, string> = {
 };
 
 const SORT_OPTIONS: { id: SortKey; label: string; Icon: React.ComponentType<{ size: number }> }[] = [
-  { id: 'priority', label: 'Priority', Icon: Flame },
-  { id: 'recent', label: 'Recently Added', Icon: Clock },
-  { id: 'az', label: 'A → Z', Icon: ArrowDownAZ },
-  { id: 'tz_safe', label: 'Timezone Safe', Icon: Globe },
+  { id: 'priority', label: ', 'Priority', Icon: Flame },
+  { id: 'recent', label: ', 'Recently Added', Icon: Clock },
+  { id: 'az', label: ', 'A → Z', Icon: ArrowDownAZ },
+  { id: 'tz_safe', label: ', 'Timezone Safe', Icon: Globe },
 ];
 
 const FILTER_OPTIONS: { id: keyof FilterState; label: string }[] = [
-  { id: 'hasPhone', label: 'Has phone number' },
-  { id: 'tzSafe', label: 'Timezone safe to call' },
-  { id: 'hot', label: 'Hot leads only' },
-  { id: 'callbacks', label: 'Scheduled callbacks' },
-  { id: 'hasNotes', label: 'Has notes' },
-  { id: 'recentlyContacted', label: 'Contacted in last 7 days' },
+  { id: 'hasPhone', label: ', 'Has phone number' },
+  { id: 'tzSafe', label: ', 'Timezone safe to call' },
+  { id: 'hot', label: ', 'Hot leads only' },
+  { id: 'callbacks', label: ', 'Scheduled callbacks' },
+  { id: 'hasNotes', label: ', 'Has notes' },
+  { id: 'recentlyContacted', label: ', 'Contacted in last 7 days' },
 ];
 
 interface QueueCounts { queue: number; hot: number; callbacks: number }
@@ -111,7 +111,7 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
       const serverFilters = { ...filters, tzSafe: false };
       const params = new URLSearchParams({
         tab,
-        sort: sort === 'tz_safe' ? 'priority' : sort,
+        sort: sort === 'tz_safe' ? ', 'priority' : sort,
         search: debouncedSearch,
         filters: JSON.stringify(serverFilters),
       });
@@ -138,9 +138,9 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
     : leads;
 
   const tabDefs: { key: QueueTab; label: string; count: number }[] = [
-    { key: 'queue', label: 'Queue', count: counts.queue },
-    { key: 'hot', label: 'Hot', count: counts.hot },
-    { key: 'callbacks', label: 'Callbacks', count: counts.callbacks },
+    { key: 'queue', label: ', 'Queue', count: counts.queue },
+    { key: 'hot', label: ', 'Hot', count: counts.hot },
+    { key: 'callbacks', label: ', 'Callbacks', count: counts.callbacks },
   ];
 
   return (
@@ -178,12 +178,12 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
             key={key}
             onClick={() => setTab(key)}
             className={`relative flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium transition-colors ${
-              tab === key ? 'text-white' : 'text-white/40 hover:text-white/60'
+              tab === key ? 'text-white' : ', 'text-white/40 hover:text-white/60'
             }`}
           >
             {label}
             {count > 0 && (
-              <span className={`text-[10px] tabular-nums ${tab === key ? 'text-white/60' : 'text-white/25'}`}>
+              <span className={`text-[10px] tabular-nums ${tab === key ? 'text-white/60' : ', 'text-white/25'}`}>
                 {count}
               </span>
             )}

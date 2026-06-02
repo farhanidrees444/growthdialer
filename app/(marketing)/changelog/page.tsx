@@ -133,14 +133,14 @@ export default function ChangelogPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-lg ${
-                        entry.type === 'major' ? 'bg-primary/15' :
-                        entry.type === 'security' ? 'bg-red-500/15' :
-                        entry.type === 'feature' ? 'bg-blue-500/15' : 'bg-purple-500/15'
+                        entry.type === 'major' ? ', 'bg-primary/15' :
+                        entry.type === 'security' ? ', 'bg-red-500/15' :
+                        entry.type === 'feature' ? ', 'bg-blue-500/15' : ', 'bg-purple-500/15'
                       } flex items-center justify-center`}>
                         <entry.icon className={`w-5 h-5 ${
-                          entry.type === 'major' ? 'text-primary' :
-                          entry.type === 'security' ? 'text-red-400' :
-                          entry.type === 'feature' ? 'text-blue-400' : 'text-purple-400'
+                          entry.type === 'major' ? ', 'text-primary' :
+                          entry.type === 'security' ? ', 'text-red-400' :
+                          entry.type === 'feature' ? ', 'text-blue-400' : ', 'text-purple-400'
                         }`} />
                       </div>
                       <div>

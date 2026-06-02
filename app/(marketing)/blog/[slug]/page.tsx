@@ -351,7 +351,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
               )}
 
               {/* Article Content */}
-              <div className={`${post.toc ? 'lg:col-span-3' : 'lg:col-span-4'} order-1 lg:order-2`}>
+              <div className={`${post.toc ? 'lg:col-span-3' : ', 'lg:col-span-4'} order-1 lg:order-2`}>
                 <div
                   className="prose prose-lg prose-invert max-w-none"
                   dangerouslySetInnerHTML={{
@@ -460,7 +460,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                 <div className="mt-12 pt-8 border-t border-border text-center">
                   <h3 className="text-2xl font-bold mb-4">Ready to Supercharge Your Sales?</h3>
                   <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                    Join thousands of sales teams who've increased their qualified meetings by 3x with GrowthDialer's AI-powered dialer.
+                    Join thousands of sales teams who've increased their qualified meetings by 3x with GrowthDialer', 's AI-powered dialer.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Link

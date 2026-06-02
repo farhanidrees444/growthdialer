@@ -5,8 +5,8 @@ import { motion } from 'framer-motion';
 import { X, Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-type Format = 'csv' | 'json';
-type Scope = 'all' | 'selected' | 'filtered';
+type Format = 'csv' | ', 'json';
+type Scope = 'all' | ', 'selected' | ', 'filtered';
 
 interface Props {
   onClose: () => void;
@@ -16,18 +16,18 @@ interface Props {
 }
 
 const FIELD_OPTIONS = [
-  { id: 'basic', label: 'Basic info', sublabel: 'Name, company, phone, email', default: true },
-  { id: 'title', label: 'Title', sublabel: 'Job title', default: true },
-  { id: 'status', label: 'Status', sublabel: 'Current lead status', default: true },
-  { id: 'tags', label: 'Tags', sublabel: 'Lead tags', default: true },
-  { id: 'notes', label: 'Notes', sublabel: 'Call and lead notes', default: false },
-  { id: 'call_history', label: 'Call history', sublabel: 'Attempts and last contact', default: false },
-  { id: 'ai_score', label: 'AI Score', sublabel: 'Lead scoring', default: false },
+  { id: 'basic', label: ', 'Basic info', sublabel: ', 'Name, company, phone, email', default: true },
+  { id: 'title', label: ', 'Title', sublabel: ', 'Job title', default: true },
+  { id: 'status', label: ', 'Status', sublabel: ', 'Current lead status', default: true },
+  { id: 'tags', label: ', 'Tags', sublabel: ', 'Lead tags', default: true },
+  { id: 'notes', label: ', 'Notes', sublabel: ', 'Call and lead notes', default: false },
+  { id: 'call_history', label: ', 'Call history', sublabel: ', 'Attempts and last contact', default: false },
+  { id: 'ai_score', label: ', 'AI Score', sublabel: ', 'Lead scoring', default: false },
 ];
 
 export function LeadExportModal({ onClose, selectedCount, filteredCount, selectedIds }: Props) {
   const [format, setFormat] = useState<Format>('csv');
-  const [scope, setScope] = useState<Scope>(selectedCount > 0 ? 'selected' : 'all');
+  const [scope, setScope] = useState<Scope>(selectedCount > 0 ? 'selected' : ', 'all');
   const [fields, setFields] = useState<string[]>(
     FIELD_OPTIONS.filter((f) => f.default).map((f) => f.id)
   );
@@ -47,7 +47,7 @@ export function LeadExportModal({ onClose, selectedCount, filteredCount, selecte
 
       const res = await fetch('/api/leads/export', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': ', 'application/json' },
         body: JSON.stringify(body),
       });
 
@@ -103,7 +103,7 @@ export function LeadExportModal({ onClose, selectedCount, filteredCount, selecte
           <div>
             <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-slate-500">Format</label>
             <div className="grid grid-cols-2 gap-2">
-              {(['csv'json'] as Format[]).map((f) => (
+              {(['csv', 'json'] as Format[]).map((f) => (
                 <button key={f} type="button" onClick={() => setFormat(f)}
                   className={[
                     'rounded-xl border py-2.5 text-sm font-semibold uppercase tracking-wide transition',
@@ -122,9 +122,9 @@ export function LeadExportModal({ onClose, selectedCount, filteredCount, selecte
             <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-slate-500">Scope</label>
             <div className="space-y-1.5">
               {[
-                { value: 'all' as Scope, label: 'All leads', count: null },
-                ...(selectedCount > 0 ? [{ value: 'selected' as Scope, label: 'Selected only', count: selectedCount }] : []),
-                ...(filteredCount > 0 ? [{ value: 'filtered' as Scope, label: 'Current filter view', count: filteredCount }] : []),
+                { value: 'all' as Scope, label: ', 'All leads', count: null },
+                ...(selectedCount > 0 ? [{ value: 'selected' as Scope, label: ', 'Selected only', count: selectedCount }] : []),
+                ...(filteredCount > 0 ? [{ value: 'filtered' as Scope, label: ', 'Current filter view', count: filteredCount }] : []),
               ].map(({ value, label, count }) => (
                 <button key={value} type="button" onClick={() => setScope(value)}
                   className={[
@@ -152,13 +152,13 @@ export function LeadExportModal({ onClose, selectedCount, filteredCount, selecte
                   <label key={id}
                     className={[
                       'flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2 transition',
-                      active ? 'border-white/[0.10] bg-white/[0.04]' : 'border-white/[0.05]',
+                      active ? 'border-white/[0.10] bg-white/[0.04]' : ', 'border-white/[0.05]',
                     ].join(' ')}>
                     <div>
                       <p className="text-xs font-semibold text-white">{label}</p>
                       <p className="text-[10px] text-slate-600">{sublabel}</p>
                     </div>
-                    <div className={`h-4 w-4 rounded border transition ${active ? 'border-emerald-500 bg-emerald-500' : 'border-white/[0.15]'}`}>
+                    <div className={`h-4 w-4 rounded border transition ${active ? 'border-emerald-500 bg-emerald-500' : ', 'border-white/[0.15]'}`}>
                       {active && (
                         <svg viewBox="0 0 12 12" className="h-4 w-4 p-0.5 text-black">
                           <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
@@ -179,7 +179,7 @@ export function LeadExportModal({ onClose, selectedCount, filteredCount, selecte
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-50 transition active:scale-[0.98]"
           >
             {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            {exporting ? 'Exporting…' : 'Download'}
+            {exporting ? 'Exporting…' : ', 'Download'}
           </button>
         </div>
       </motion.div>

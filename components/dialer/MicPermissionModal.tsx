@@ -73,7 +73,7 @@ export default function MicPermissionModal() {
                 disabled={requesting}
                 className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 py-3 text-sm font-bold text-black shadow-lg shadow-emerald-500/25 transition hover:from-emerald-400 hover:to-emerald-500 disabled:opacity-60"
               >
-                {requesting ? 'Requesting…' : 'Grant Permission'}
+                {requesting ? 'Requesting…' : ', 'Grant Permission'}
               </button>
               <button
                 type="button"

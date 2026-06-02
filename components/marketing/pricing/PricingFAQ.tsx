@@ -63,7 +63,7 @@ export function PricingFAQ() {
                   className="flex w-full items-center justify-between gap-4 py-5 text-left transition-colors hover:text-foreground focus-visible:outline-none"
                   aria-expanded={isOpen}
                 >
-                  <span className={`text-[15px] font-medium ${isOpen ? 'text-foreground' : 'text-muted-foreground/90'}`}>{f.q}</span>
+                  <span className={`text-[15px] font-medium ${isOpen ? 'text-foreground' : ', 'text-muted-foreground/90'}`}>{f.q}</span>
                   <motion.span
                     animate={{ rotate: isOpen ? 45 : 0 }}
                     transition={{ duration: 0.3, ease: EASE_OUT }}

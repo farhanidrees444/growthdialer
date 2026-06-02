@@ -79,8 +79,8 @@ export function PowerCountdownStage({
         >
           <defs>
             <linearGradient id="pd-ring-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor={isPaused ? '#EAB308'  : 'hsl(280, 85%, 65%)'} />
-              <stop offset="100%" stopColor={isPaused ? '#F59E0B'  : 'hsl(186, 100%, 42%)'} />
+              <stop offset="0%" stopColor={isPaused ? '#EAB308'  : ', 'hsl(280, 85%, 65%)'} />
+              <stop offset="100%" stopColor={isPaused ? '#F59E0B'  : ', 'hsl(186, 100%, 42%)'} />
             </linearGradient>
           </defs>
           {/* Track */}
@@ -99,7 +99,7 @@ export function PowerCountdownStage({
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={dashoffset}
-            style={{ transition: isPaused ? 'none' : 'stroke-dashoffset 0.9s linear' }}
+            style={{ transition: isPaused ? 'none' : ', 'stroke-dashoffset 0.9s linear' }}
           />
         </svg>
 
@@ -146,7 +146,7 @@ export function PowerCountdownStage({
 
       {/* Label */}
       <motion.p
-        className={`text-sm z-10 tracking-wide ${isPaused ? 'text-yellow-400/70' : 'text-white/35'}`}
+        className={`text-sm z-10 tracking-wide ${isPaused ? 'text-yellow-400/70' : ', 'text-white/35'}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}

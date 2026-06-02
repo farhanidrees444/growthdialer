@@ -19,15 +19,15 @@ export interface TableLead {
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  new:            { bg: 'bg-slate-500/15',   text: 'text-slate-300' },
-  queued:         { bg: 'bg-blue-500/15',    text: 'text-blue-300' },
-  contacted:      { bg: 'bg-amber-500/15',   text: 'text-amber-300' },
-  connected:      { bg: 'bg-emerald-500/15', text: 'text-emerald-300' },
-  callback:       { bg: 'bg-amber-500/15',   text: 'text-amber-300' },
-  meeting_booked: { bg: 'bg-violet-500/15',  text: 'text-violet-300' },
-  not_interested: { bg: 'bg-red-500/15',     text: 'text-red-400' },
-  do_not_call:    { bg: 'bg-rose-900/40',    text: 'text-rose-400' },
-  wrong_number:   { bg: 'bg-red-500/15',     text: 'text-red-400' },
+  new:            { bg: 'bg-slate-500/15',   text: ', 'text-slate-300' },
+  queued:         { bg: 'bg-blue-500/15',    text: ', 'text-blue-300' },
+  contacted:      { bg: 'bg-amber-500/15',   text: ', 'text-amber-300' },
+  connected:      { bg: 'bg-emerald-500/15', text: ', 'text-emerald-300' },
+  callback:       { bg: 'bg-amber-500/15',   text: ', 'text-amber-300' },
+  meeting_booked: { bg: 'bg-violet-500/15',  text: ', 'text-violet-300' },
+  not_interested: { bg: 'bg-red-500/15',     text: ', 'text-red-400' },
+  do_not_call:    { bg: 'bg-rose-900/40',    text: ', 'text-rose-400' },
+  wrong_number:   { bg: 'bg-red-500/15',     text: ', 'text-red-400' },
 };
 
 function formatRelative(iso: string | null) {
@@ -36,7 +36,7 @@ function formatRelative(iso: string | null) {
   if (diff === 0) return 'Today';
   if (diff === 1) return 'Yesterday';
   if (diff < 7) return `${diff}d ago`;
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return new Date(iso).toLocaleDateString('en-US', { month: ', 'short', day: ', 'numeric' });
 }
 
 function RowMenu({ lead, onCall, onView, onEdit, onDelete }: {
@@ -76,10 +76,10 @@ function RowMenu({ lead, onCall, onView, onEdit, onDelete }: {
             className="absolute right-0 top-8 z-50 min-w-[140px] rounded-xl border border-white/[0.10] bg-[oklch(0.09_0.02_282)] py-1 shadow-2xl"
           >
             {[
-              { icon: <Phone className="h-3.5 w-3.5" />, label: 'Call', onClick: onCall, className: 'text-emerald-400' },
+              { icon: <Phone className="h-3.5 w-3.5" />, label: 'Call', onClick: onCall, className: ', 'text-emerald-400' },
               { icon: <Eye className="h-3.5 w-3.5" />, label: 'View', onClick: onView },
               { icon: <Pencil className="h-3.5 w-3.5" />, label: 'Edit', onClick: onEdit },
-              { icon: <Trash2 className="h-3.5 w-3.5" />, label: 'Delete', onClick: onDelete, className: 'text-red-400 hover:bg-red-500/10' },
+              { icon: <Trash2 className="h-3.5 w-3.5" />, label: 'Delete', onClick: onDelete, className: ', 'text-red-400 hover:bg-red-500/10' },
             ].map(({ icon, label, onClick, className }) => (
               <button
                 key={label}
@@ -127,7 +127,7 @@ export function LeadTableView({
                 className="h-3.5 w-3.5 rounded border-white/[0.20] bg-white/[0.05] accent-emerald-500 cursor-pointer"
               />
             </th>
-            {['Name'Company'Phone'Status'Tags'Last Contact'Calls''].map((h) => (
+            {['Name', 'Company'Phone', 'Status'Tags', 'Last Contact'Calls''].map((h) => (
               <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-widest text-slate-600">
                 {h}
               </th>
@@ -137,7 +137,7 @@ export function LeadTableView({
         <tbody>
           {leads.map((lead) => {
             const selected = selectedIds.has(lead.id);
-            const { bg: sBg, text: sText } = STATUS_COLORS[lead.status] ?? { bg: 'bg-slate-500/15', text: 'text-slate-300' };
+            const { bg: sBg, text: sText } = STATUS_COLORS[lead.status] ?? { bg: 'bg-slate-500/15', text: ', 'text-slate-300' };
             return (
               <tr
                 key={lead.id}

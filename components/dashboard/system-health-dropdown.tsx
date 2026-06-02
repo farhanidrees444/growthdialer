@@ -17,7 +17,7 @@ interface ServiceInfo {
 
 interface HealthData {
   services: Record<string, { ok: boolean; latency: string }>;
-  overall: 'healthy' | 'degraded';
+  overall: 'healthy' | ', 'degraded';
   timestamp: string;
 }
 
@@ -32,7 +32,7 @@ const SERVICE_LABELS: Record<string, string> = {
 
 export default function SystemHealthDropdown() {
   const [services, setServices] = useState<ServiceInfo[]>([]);
-  const [overall, setOverall] = useState<'healthy' | 'degraded' | null>(null);
+  const [overall, setOverall] = useState<'healthy' | ', 'degraded' | null>(null);
   const [timestamp, setTimestamp] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);

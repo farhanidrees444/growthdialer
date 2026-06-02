@@ -22,7 +22,7 @@ const BAR_COUNT = 28;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type OverlayMode = 'full' | 'minimized' | 'popout';
+type OverlayMode = 'full' | ', 'minimized' | ', 'popout';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -151,7 +151,7 @@ function LiveWaveform({ active }: { active: boolean }) {
             transform: 'scaleY(0.07)',
             transformOrigin: 'bottom',
             willChange: 'transform',
-            transition: active ? 'none' : 'transform 0.4s ease',
+            transition: active ? 'none' : ', 'transform 0.4s ease',
           }}
         />
       ))}
@@ -161,7 +161,7 @@ function LiveWaveform({ active }: { active: boolean }) {
 
 // ─── Network Quality Hook ─────────────────────────────────────────────────────
 
-type QualityLevel = 'good' | 'fair' | 'poor';
+type QualityLevel = 'good' | ', 'fair' | ', 'poor';
 
 function useConnectionQuality(): QualityLevel {
   const [quality, setQuality] = useState<QualityLevel>('good');
@@ -177,7 +177,7 @@ function useConnectionQuality(): QualityLevel {
         setQuality('good');
       } else if (effectiveType === '3g' || (rtt !== undefined && rtt >= 150 && rtt < 400)) {
         setQuality('fair');
-      } else if (effectiveType === '2g' || effectiveType === 'slow-2g' || (rtt !== undefined && rtt >= 400)) {
+      } else if (effectiveType === '2g' || effectiveType === ', 'slow-2g' || (rtt !== undefined && rtt >= 400)) {
         setQuality('poor');
       }
     }
@@ -302,7 +302,7 @@ function MinimizedPill({
       <div className="min-w-0 flex-1">
         <p className="truncate text-[11px] font-semibold text-white" style={{ maxWidth: 92 }}>{name}</p>
         <p className="text-[10px] text-slate-500 tabular-nums">
-          {callStatus === 'connecting' ? 'Dialing…' : callStatus === 'ringing' ? 'Ringing…' : fmtTime(elapsed)}
+          {callStatus === 'connecting' ? ', 'Dialing…' : callStatus === ', 'ringing' ? ', 'Ringing…' : fmtTime(elapsed)}
         </p>
       </div>
       <button type="button" onClick={onExpand} aria-label="Expand"
@@ -343,7 +343,7 @@ function MobileMinimizedBar({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-white">{name}</p>
         <p className="text-[11px] text-slate-500 tabular-nums">
-          {callStatus === 'connecting' ? 'Dialing…' : callStatus === 'ringing' ? 'Ringing…' : fmtTime(elapsed)}
+          {callStatus === 'connecting' ? ', 'Dialing…' : callStatus === ', 'ringing' ? ', 'Ringing…' : fmtTime(elapsed)}
         </p>
       </div>
       <button type="button" onClick={onExpand} aria-label="Expand"
@@ -439,7 +439,7 @@ export default function ActiveCallOverlay() {
       }, 1000);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (callStatus !== 'active' && callStatus !== 'held') setElapsed(0);
+      if (callStatus !== 'active' && callStatus !== ', 'held') setElapsed(0);
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [callStatus, callAnsweredAt]);
@@ -475,7 +475,7 @@ export default function ActiveCallOverlay() {
 
   // ── Document title pulse ───────────────────────────────────────────────────
   useEffect(() => {
-    const isActive = callStatus === 'active' || callStatus === 'held';
+    const isActive = callStatus === 'active' || callStatus === ', 'held';
     if (!isActive) { document.title = 'GrowthDialer'; return; }
     const name = activeLead?.name || activePhone || 'Call';
     const interval = setInterval(() => {
@@ -497,7 +497,7 @@ export default function ActiveCallOverlay() {
       if (!session?.access_token) return;
       await fetch(`/api/calls/${dbCallId}/notes`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        headers: { 'Content-Type': ', 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({ notes: v }),
       });
     }, 800);
@@ -510,7 +510,7 @@ export default function ActiveCallOverlay() {
     try {
       await fetch('/api/calls/drop-voicemail', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': ', 'application/json' },
         body: JSON.stringify({ call_control_id: telnyxCallId }),
       });
       setVmDropped(true);
@@ -525,31 +525,31 @@ export default function ActiveCallOverlay() {
     setCoachRequested(true);
     await fetch('/api/coaching/request', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': ', 'application/json' },
       body: JSON.stringify({ call_id: dbCallId }),
     }).catch(() => {});
   }, [coachRequested, dbCallId]);
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────────
   useEffect(() => {
-    const isVisible = ['connecting'ringing'active'held'].includes(callStatus);
+    const isVisible = ['connecting', 'ringing'active', 'held'].includes(callStatus);
     if (!isVisible) return;
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
       switch (e.key) {
-        case 'Escape': e.preventDefault(); setMode((m) => m === 'full' ? 'minimized' : 'full'); break;
-        case 'm': case 'M': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); toggleMute(); } break;
-        case 'h': case 'H': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); toggleHold(); } break;
-        case 'n': case 'N':
+        case 'Escape': e.preventDefault(); setMode((m) => m === ', 'full' ? ', 'minimized' : ', 'full'); break;
+        case 'm': case ', 'M': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); toggleMute(); } break;
+        case 'h': case ', 'H': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); toggleHold(); } break;
+        case 'n': case ', 'N':
           if (!e.metaKey && !e.ctrlKey) {
             e.preventDefault();
             setShowNotes((v) => !v);
             setTimeout(() => notesRef.current?.focus(), 50);
           }
           break;
-        case 'v': case 'V': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); void handleVmDrop(); } break;
-        case 'c': case 'C': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); void handleRequestCoach(); } break;
+        case 'v': case ', 'V': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); void handleVmDrop(); } break;
+        case 'c': case ', 'C': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); void handleRequestCoach(); } break;
       }
     };
     window.addEventListener('keydown', handler);
@@ -577,7 +577,7 @@ export default function ActiveCallOverlay() {
   }, [dragX, dragY]);
 
   // ── Guard ──────────────────────────────────────────────────────────────────
-  const isVisible = ['connecting'ringing'active'held'].includes(callStatus);
+  const isVisible = ['connecting', 'ringing'active', 'held'].includes(callStatus);
   // Hide on /dialer when a lead is selected (dialer page has its own LiveCallStage).
   // For manual calls from dialer (no activeLead), show the floating overlay.
   if (pathname?.startsWith('/dialer') && activeLead) return null;
@@ -586,19 +586,19 @@ export default function ActiveCallOverlay() {
   const displayName = activeLead?.name || activePhone || 'Manual Dial';
   const displayCompany = activeLead?.company || '';
   const displayPhone = activePhone || activeLead?.phone || '';
-  const isCallActive = callStatus === 'active' || callStatus === 'held';
+  const isCallActive = callStatus === 'active' || callStatus === ', 'held';
 
   const statusLabel =
-    callStatus === 'connecting' ? 'Dialing…'
-    : callStatus === 'ringing'  ? 'Ringing…'
-    : callStatus === 'held'     ? 'On Hold'
+    callStatus === 'connecting' ? ', 'Dialing…'
+    : callStatus === 'ringing'  ? ', 'Ringing…'
+    : callStatus === 'held'     ? ', 'On Hold'
     : displayName;
 
   // ── Control buttons config ─────────────────────────────────────────────────
   const controls = [
     {
       icon: isMuted ? MicOff : Mic,
-      label: isMuted ? 'Unmute' : 'Mute',
+      label: isMuted ? 'Unmute' : ', 'Mute',
       active: isMuted,
       activeClass: 'border-red-500/30 bg-red-500/15 text-red-400',
       onClick: toggleMute,
@@ -607,7 +607,7 @@ export default function ActiveCallOverlay() {
     },
     {
       icon: isOnHold ? Play : Pause,
-      label: isOnHold ? 'Resume' : 'Hold',
+      label: isOnHold ? 'Resume' : ', 'Hold',
       active: isOnHold,
       activeClass: 'border-amber-500/30 bg-amber-500/15 text-amber-400',
       onClick: toggleHold,
@@ -634,7 +634,7 @@ export default function ActiveCallOverlay() {
     },
     {
       icon: Voicemail,
-      label: vmDropped ? 'Dropped!' : 'VM Drop',
+      label: vmDropped ? 'Dropped!' : ', 'VM Drop',
       active: vmDropped,
       activeClass: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400',
       onClick: handleVmDrop,
@@ -643,7 +643,7 @@ export default function ActiveCallOverlay() {
     },
     {
       icon: Headset,
-      label: coachRequested ? 'Requested' : 'Coach',
+      label: coachRequested ? 'Requested' : ', 'Coach',
       active: coachRequested,
       activeClass: 'border-violet-500/30 bg-violet-500/15 text-violet-400',
       onClick: handleRequestCoach,
@@ -702,7 +702,7 @@ export default function ActiveCallOverlay() {
           className={[
             'z-50 w-full max-w-[480px] rounded-3xl border border-white/[0.12]',
             'bg-[oklch(0.085_0.02_282)]/98 shadow-2xl shadow-black/70 backdrop-blur-2xl overflow-hidden',
-            isMobile ? 'fixed bottom-4 left-4 right-4 mx-auto' : 'cursor-default select-none',
+            isMobile ? 'fixed bottom-4 left-4 right-4 mx-auto' : ', 'cursor-default select-none',
           ].join(' ')}
           aria-label="Active call overlay"
           aria-live="polite"
@@ -716,13 +716,13 @@ export default function ActiveCallOverlay() {
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
                   )}
                   <span className={`relative inline-flex h-2 w-2 rounded-full ${
-                    callStatus === 'active' ? 'bg-emerald-500'
-                    : callStatus === 'held' ? 'bg-amber-500'
+                    callStatus === 'active' ? ', 'bg-emerald-500'
+                    : callStatus === 'held' ? ', 'bg-amber-500'
                     : 'bg-slate-500'
                   }`} />
                 </div>
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                  {callStatus === 'active' ? 'Live' : callStatus === 'held' ? 'Held' : 'Connecting'}
+                  {callStatus === 'active' ? ', 'Live' : callStatus === ', 'held' ? ', 'Held' : ', 'Connecting'}
                 </span>
               </div>
               {isCallActive && <QualityDot level={quality} />}
@@ -756,7 +756,7 @@ export default function ActiveCallOverlay() {
           {/* ── Lead info + timer ───────────────────────────────────── */}
           <div className="flex items-center gap-4 px-5 py-4">
             <div className="relative shrink-0">
-              {(callStatus === 'ringing' || callStatus === 'connecting') && <PulseRings />}
+              {(callStatus === 'ringing' || callStatus === ', 'connecting') && <PulseRings />}
               {callStatus === 'held' && (
                 <motion.div
                   animate={{ opacity: [0.2, 0.6, 0.2] }}
@@ -765,7 +765,7 @@ export default function ActiveCallOverlay() {
                 />
               )}
               <div className={`relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 text-lg font-bold text-white shadow-lg ${
-                callStatus === 'active' ? 'shadow-emerald-900/40' : ''
+                callStatus === 'active' ? ', 'shadow-emerald-900/40' : ''
               }`}>
                 {getInitials(displayName)}
                 {callStatus === 'active' && !isOnHold && (
@@ -787,7 +787,7 @@ export default function ActiveCallOverlay() {
               <p className="mt-0.5 text-[11px] text-slate-600 font-mono">{displayPhone}</p>
             </div>
 
-            <div className={`shrink-0 text-xl font-mono font-bold tabular-nums ${callStatus === 'held' ? 'text-amber-400' : 'text-white'}`}>
+            <div className={`shrink-0 text-xl font-mono font-bold tabular-nums ${callStatus === 'held' ? ', 'text-amber-400' : ', 'text-white'}`}>
               {isCallActive ? fmtTime(elapsed) : (
                 <motion.span
                   animate={{ opacity: [1, 0.3, 1] }}
@@ -858,7 +858,7 @@ export default function ActiveCallOverlay() {
                     aria-label="Call notes"
                   />
                   <p className="mt-1 text-[10px] text-slate-700">
-                    {dbCallId ? 'Auto-saves to call record' : 'Saving locally…'}
+                    {dbCallId ? 'Auto-saves to call record' : ', 'Saving locally…'}
                   </p>
                 </motion.div>
               )}

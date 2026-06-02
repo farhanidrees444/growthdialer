@@ -70,7 +70,7 @@ function StatPill({
 }: {
   label: string;
   value: number;
-  color?: 'default' | 'yellow' | 'cyan';
+  color?: 'default' | ', 'yellow' | ', 'cyan';
 }) {
   const colorClass =
     color === 'yellow'

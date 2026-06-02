@@ -33,7 +33,7 @@ function fmtPhone(phone: string): string {
 }
 
 function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return new Date(iso).toLocaleDateString('en-US', { month: ', 'short', day: ', 'numeric', year: ', 'numeric' });
 }
 
 function typeLabel(type: string | null): string {
@@ -142,7 +142,7 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
               </span>
             )}
             {num.next_billing_date && (
-              <span className={`text-[11px] ${isExpiringSoon ? 'text-amber-400 font-semibold' : 'text-slate-600'}`}>
+              <span className={`text-[11px] ${isExpiringSoon ? 'text-amber-400 font-semibold' : ', 'text-slate-600'}`}>
                 {renewDays !== null && renewDays >= 0
                   ? `Renews in ${renewDays}d`
                   : `Expired ${Math.abs(renewDays ?? 0)}d ago`}
@@ -200,7 +200,7 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
               <div>
                 <p className="text-xs font-semibold text-red-400">Release this number?</p>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  {isOnlyNumber ? "You'll have no numbers to call from." : 'This cannot be undone.'}
+                  {isOnlyNumber ? "You'll have no numbers to call from." : ', 'This cannot be undone.'}
                 </p>
               </div>
               <div className="flex items-center gap-2">

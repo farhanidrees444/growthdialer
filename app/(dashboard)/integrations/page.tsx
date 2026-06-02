@@ -129,7 +129,7 @@ function N8nLogo() {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Category = 'all' | 'crm' | 'communication' | 'data' | 'automation' | 'calendar';
+type Category = 'all' | ', 'crm' | ', 'communication' | ', 'data' | ', 'automation' | ', 'calendar';
 
 interface Integration {
   id: string;
@@ -153,7 +153,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'hubspot',
     name: 'HubSpot',
     description: 'Sync contacts, deals, and call activities to your CRM automatically after every call.',
-    bullets: ['Auto-sync leads after disposition'Push call recordings to contact timeline'Two-way contact sync'],
+    bullets: ['Auto-sync leads after disposition', 'Push call recordings to contact timeline'Two-way contact sync'],
     category: 'crm',
     categoryLabel: 'CRM',
     color: 'text-[#FF7A59]',
@@ -166,7 +166,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'salesforce',
     name: 'Salesforce',
     description: 'Bi-directional logging — call outcomes, dispositions, and recordings synced in real time.',
-    bullets: ['Real-time activity logging'Opportunity creation from meetings booked'Custom field mapping'],
+    bullets: ['Real-time activity logging', 'Opportunity creation from meetings booked'Custom field mapping'],
     category: 'crm',
     categoryLabel: 'CRM',
     color: 'text-[#00A1E0]',
@@ -179,7 +179,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'pipedrive',
     name: 'Pipedrive',
     description: 'Push call outcomes to deals and log activities to your pipeline automatically.',
-    bullets: ['Auto-create deals on meeting booked'Log calls with duration + notes'Stage progression triggers'],
+    bullets: ['Auto-create deals on meeting booked', 'Log calls with duration + notes'Stage progression triggers'],
     category: 'crm',
     categoryLabel: 'CRM',
     color: 'text-emerald-400',
@@ -191,7 +191,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'gohighlevel',
     name: 'GoHighLevel',
     description: 'Sync contacts and call data to GHL workflows and pipelines.',
-    bullets: ['Contact sync with tags'Trigger GHL workflows on disposition'Call activity in timeline'],
+    bullets: ['Contact sync with tags', 'Trigger GHL workflows on disposition'Call activity in timeline'],
     category: 'crm',
     categoryLabel: 'CRM',
     color: 'text-amber-400',
@@ -204,7 +204,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'slack',
     name: 'Slack',
     description: 'Get notified in Slack when a lead connects, books a meeting, or goes DNC.',
-    bullets: ['Real-time call alerts'Meeting booked notifications'Daily digest of session stats'],
+    bullets: ['Real-time call alerts', 'Meeting booked notifications'Daily digest of session stats'],
     category: 'communication',
     categoryLabel: 'Notifications',
     color: 'text-[#ECB22E]',
@@ -218,7 +218,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'apollo',
     name: 'Apollo.io',
     description: 'Import lists directly into your dialer queue and auto-enrich phone numbers.',
-    bullets: ['One-click list import'Phone number enrichment'Email sequence sync'],
+    bullets: ['One-click list import', 'Phone number enrichment'Email sequence sync'],
     category: 'data',
     categoryLabel: 'Data',
     color: 'text-indigo-400',
@@ -231,7 +231,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'zoominfo',
     name: 'ZoomInfo',
     description: 'Enrich your leads with verified phone numbers and company intelligence.',
-    bullets: ['Phone number verification'Company + contact enrichment'Intent data signals'],
+    bullets: ['Phone number verification', 'Company + contact enrichment'Intent data signals'],
     category: 'data',
     categoryLabel: 'Data',
     color: 'text-blue-400',
@@ -244,7 +244,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'zapier',
     name: 'Zapier',
     description: 'Connect GrowthDialer to 5,000+ apps via triggers and actions — no code needed.',
-    bullets: ['Trigger on call ended'Trigger on meeting booked'Push leads from any source'],
+    bullets: ['Trigger on call ended', 'Trigger on meeting booked'Push leads from any source'],
     category: 'automation',
     categoryLabel: 'Automation',
     color: 'text-orange-400',
@@ -257,7 +257,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'make',
     name: 'Make (Integromat)',
     description: 'Visual workflow automation for complex multi-step call outcome sequences.',
-    bullets: ['Advanced scenario builder'Conditional routing by disposition'Batch data processing'],
+    bullets: ['Advanced scenario builder', 'Conditional routing by disposition'Batch data processing'],
     category: 'automation',
     categoryLabel: 'Automation',
     color: 'text-purple-400',
@@ -269,7 +269,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'n8n',
     name: 'n8n',
     description: 'Self-hosted workflow automation with full control over your call data pipeline.',
-    bullets: ['Self-hosted option available'Open-source compatible'Custom webhook flows'],
+    bullets: ['Self-hosted option available', 'Open-source compatible'Custom webhook flows'],
     category: 'automation',
     categoryLabel: 'Automation',
     color: 'text-red-400',
@@ -282,7 +282,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'google-calendar',
     name: 'Google Calendar',
     description: 'Automatically create calendar events when meetings are booked from your calls.',
-    bullets: ['Auto-create meeting events'Sync call callbacks to calendar'Remind before follow-ups'],
+    bullets: ['Auto-create meeting events', 'Sync call callbacks to calendar'Remind before follow-ups'],
     category: 'calendar',
     categoryLabel: 'Calendar',
     color: 'text-blue-400',
@@ -294,7 +294,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'calendly',
     name: 'Calendly',
     description: 'Send your Calendly link in post-call follow-ups and track booking attribution.',
-    bullets: ['Auto-send booking link after calls'Track meetings booked via link'Attribution to call session'],
+    bullets: ['Auto-send booking link after calls', 'Track meetings booked via link'Attribution to call session'],
     category: 'calendar',
     categoryLabel: 'Calendar',
     color: 'text-[#006BFF]',
@@ -305,12 +305,12 @@ const INTEGRATIONS: Integration[] = [
 ];
 
 const CATEGORIES: { id: Category; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'crm', label: 'CRM' },
-  { id: 'communication', label: 'Notifications' },
-  { id: 'data', label: 'Data' },
-  { id: 'automation', label: 'Automation' },
-  { id: 'calendar', label: 'Calendar' },
+  { id: 'all', label: ', 'All' },
+  { id: 'crm', label: ', 'CRM' },
+  { id: 'communication', label: ', 'Notifications' },
+  { id: 'data', label: ', 'Data' },
+  { id: 'automation', label: ', 'Automation' },
+  { id: 'calendar', label: ', 'Calendar' },
 ];
 
 // ─── Waitlist modal ───────────────────────────────────────────────────────────
@@ -334,7 +334,7 @@ function WaitlistModal({
     try {
       const res = await fetch('/api/integrations/waitlist', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': ', 'application/json' },
         body: JSON.stringify({ email: email.trim(), provider: integration.id }),
       });
       if (!res.ok) {
@@ -433,7 +433,7 @@ function WaitlistModal({
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-40"
               >
                 <Bell className="h-3.5 w-3.5" />
-                {loading ? 'Saving…' : 'Notify me when ready'}
+                {loading ? 'Saving…' : ', 'Notify me when ready'}
               </button>
             </>
           )}
@@ -534,7 +534,7 @@ export default function IntegrationsPage() {
                 {label}
                 <span className={cn(
                   "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                  activeCategory === id ? 'bg-brand/15 text-brand' : 'bg-white/[0.05] text-slate-600',
+                  activeCategory === id ? 'bg-brand/15 text-brand' : ', 'bg-white/[0.05] text-slate-600',
                 )}>
                   {count}
                 </span>

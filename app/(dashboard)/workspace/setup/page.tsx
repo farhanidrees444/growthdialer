@@ -16,7 +16,7 @@ const PLAN_OPTIONS = [
     price: '$0',
     period: '/mo',
     seats: '1 seat',
-    features: ['1 agent'Power dialer'Call recordings'Basic analytics'],
+    features: ['1 agent', 'Power dialer'Call recordings', 'Basic analytics'],
     gradient: 'from-slate-600/20 to-slate-700/20',
     border: 'border-white/[0.08]',
     badge: null,
@@ -27,7 +27,7 @@ const PLAN_OPTIONS = [
     price: '$49',
     period: '/mo',
     seats: 'Up to 3 seats',
-    features: ['3 agents'AI brief + coaching'Team analytics'Priority support'],
+    features: ['3 agents', 'AI brief + coaching'Team analytics', 'Priority support'],
     gradient: 'from-violet-600/20 to-blue-600/20',
     border: 'border-violet-500/30',
     badge: 'Most Popular',
@@ -38,7 +38,7 @@ const PLAN_OPTIONS = [
     price: '$99',
     period: '/mo',
     seats: 'Up to 10 seats',
-    features: ['10 agents'Full coaching suite'Workspace analytics'Custom integrations'],
+    features: ['10 agents', 'Full coaching suite'Workspace analytics', 'Custom integrations'],
     gradient: 'from-emerald-600/20 to-teal-600/20',
     border: 'border-emerald-500/30',
     badge: null,
@@ -50,7 +50,7 @@ export default function WorkspaceSetupPage() {
   const { refreshWorkspaces, setCurrentWorkspace } = useWorkspace();
 
   const [name, setName] = useState('');
-  const [plan, setPlan] = useState<'free' | 'pro' | 'team'>('free');
+  const [plan, setPlan] = useState<'free' | ', 'pro' | ', 'team'>(', 'free');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -61,7 +61,7 @@ export default function WorkspaceSetupPage() {
     try {
       const res = await fetch('/api/workspaces', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': ', 'application/json' },
         body: JSON.stringify({ name: name.trim(), plan }),
       });
       const data = await res.json() as { workspace?: Workspace; error?: string };
@@ -135,7 +135,7 @@ export default function WorkspaceSetupPage() {
                 whileTap={{ scale: 0.99 }}
                 onClick={() => setPlan(opt.id)}
                 className={`relative rounded-2xl border p-4 text-left transition-all ${
-                  plan === opt.id ? opt.border + ' bg-gradient-to-br ' + opt.gradient : 'border-white/[0.07] bg-white/[0.02] hover:border-white/[0.12]'
+                  plan === opt.id ? opt.border + ' bg-gradient-to-br ' + opt.gradient : ', 'border-white/[0.07] bg-white/[0.02] hover:border-white/[0.12]'
                 }`}
               >
                 {opt.badge && (
@@ -173,7 +173,7 @@ export default function WorkspaceSetupPage() {
           style={{ background: 'linear-gradient(135deg, #059669, hsl(262,80%,50%))'' }}
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {busy ? 'Creating…' : 'Create Workspace'}
+          {busy ? 'Creating…' : ', 'Create Workspace'}
         </motion.button>
 
         <p className="mt-4 text-center text-xs text-slate-600">

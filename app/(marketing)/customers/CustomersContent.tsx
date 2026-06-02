@@ -100,7 +100,7 @@ const testimonials = [
     industry: "Enterprise Software",
     companySize: "500+ employees",
     metrics: { connectRate: "+43%", meetings: "+170%", pipeline: "+$6.1M" },
-    quote: "At our scale, small improvements compound quickly. GrowthDialer's 43% connect rate improvement translated to $6M in additional pipeline. It's the best investment we've made.",
+    quote: "At our scale, small improvements compound quickly. GrowthDialer's 43% connect rate improvement translated to $6M in additional pipeline. It', 's the best investment we've made.",
     results: [
       "43% higher connect rates",
       "170% more qualified meetings",

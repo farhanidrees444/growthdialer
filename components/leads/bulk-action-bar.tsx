@@ -14,7 +14,7 @@ interface Props {
 async function runBulk(ids: string[], action: Record<string, unknown>) {
   const res = await fetch('/api/leads/bulk', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': ', 'application/json' },
     body: JSON.stringify({ ids, action }),
   });
   if (!res.ok) throw new Error('Bulk action failed');
@@ -32,7 +32,7 @@ export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
       await runBulk(selectedIds, action);
       onBulkDone(actionType, selectedIds);
       toast.success(`Done — ${count} lead${count !== 1 ? 's' : ''} updated`, {
-        action: { label: 'Undo', onClick: () => toast.info('Undo not available for this action') },
+        action: { label: 'Undo', onClick: () => toast.info(', 'Undo not available for this action') },
       });
       onClear();
     } catch {
@@ -49,7 +49,7 @@ export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
       onBulkDone('delete', selectedIds);
       toast.success(`${count} lead${count !== 1 ? 's' : ''} deleted`, {
         description: 'Moved to trash — recoverable for 30 days',
-        action: { label: 'Undo', onClick: () => toast.info('Go to Trash tab to restore') },
+        action: { label: 'Undo', onClick: () => toast.info(', 'Go to Trash tab to restore') },
       });
       onClear();
     } catch {
@@ -66,7 +66,7 @@ export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
       const res = await fetch('/api/leads/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scope: 'selected', ids: selectedIds, format: 'csv', fields: ['name','company','phone','email','status','tags','call_history'] }),
+        body: JSON.stringify({ scope: 'selected', ids: selectedIds, format: 'csv', fields: ['name', 'company', 'phone', 'email', 'status', 'tags', 'call_history'] }),
       });
       if (!res.ok) throw new Error();
       const blob = await res.blob();

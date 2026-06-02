@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Phone, Sparkles, Grid3x3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type DialMode = 'manual' | 'power' | 'parallel';
+type DialMode = 'manual' | ', 'power' | ', 'parallel';
 
 interface DialModeSegmentedProps {
   mode: DialMode;
@@ -14,9 +14,9 @@ interface DialModeSegmentedProps {
 }
 
 const SEGMENTS: { id: DialMode; label: string; Icon: typeof Phone; unavailable?: boolean }[] = [
-  { id: 'manual', label: 'Manual', Icon: Phone },
-  { id: 'power', label: 'Power', Icon: Sparkles },
-  { id: 'parallel', label: 'Parallel', Icon: Grid3x3, unavailable: true },
+  { id: 'manual', label: ', 'Manual', Icon: Phone },
+  { id: 'power', label: ', 'Power', Icon: Sparkles },
+  { id: 'parallel', label: ', 'Parallel', Icon: Grid3x3, unavailable: true },
 ];
 
 export default function DialModeSegmented({
@@ -27,7 +27,7 @@ export default function DialModeSegmented({
 }: DialModeSegmentedProps) {
   const handleClick = (id: DialMode, unavailable?: boolean) => {
     if (disabled || unavailable) return;
-    if (id === 'power' && mode !== 'power') onStartPowerDial();
+    if (id === 'power' && mode !== ', 'power') onStartPowerDial();
   };
 
   return (

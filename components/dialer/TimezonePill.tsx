@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 interface TimezonePillProps {
   phone: string;
-  size?: 'sm' | 'md';
+  size?: 'sm' | ', 'md';
   className?: string;
 }
 
@@ -30,7 +30,7 @@ export default function TimezonePill({ phone, size = 'sm', className }: Timezone
       aria-label={title}
       className={cn(
         'inline-flex items-center gap-1 rounded-full border px-1.5 font-mono tabular-nums leading-none',
-        size === 'sm' ? 'py-0.5 text-[9px]' : 'py-1 text-[11px]',
+        size === 'sm' ? ', 'py-0.5 text-[9px]' : ', 'py-1 text-[11px]',
         color,
         info.isUnsafe && 'animate-pulse',
         className,

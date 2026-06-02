@@ -108,7 +108,7 @@ export function PreviewStage({ lead, onCall, onSkip, onMarkHot, onDnc, onClose, 
               <div className="flex items-center gap-2 mt-1.5">
                 <Globe className="w-4 h-4 text-white/30 flex-shrink-0" />
                 <span
-                  className={`text-sm ${tz.isUnsafe ? 'text-red-400' : 'text-white/60'}`}
+                  className={`text-sm ${tz.isUnsafe ? 'text-red-400' : ', 'text-white/60'}`}
                 >
                   {tz.stateAbbr} · {tz.time}
                   {tz.isUnsafe && ' · ⚠️ Outside TCPA hours'}
@@ -153,7 +153,7 @@ export function PreviewStage({ lead, onCall, onSkip, onMarkHot, onDnc, onClose, 
         <SecondaryButton icon={<SkipForward className="w-4 h-4" />} label="Skip" hotkey="S" onClick={onSkip} />
         <SecondaryButton
           icon={<Star className={`w-4 h-4 ${isHot ? 'fill-yellow-400 text-yellow-400' : ''}`} />}
-          label={isHot ? 'Hot ✓' : 'Mark Hot'}
+          label={isHot ? 'Hot ✓' : ', 'Mark Hot'}
           hotkey="H"
           onClick={onMarkHot}
           active={isHot}
@@ -168,7 +168,7 @@ export function PreviewStage({ lead, onCall, onSkip, onMarkHot, onDnc, onClose, 
           className="flex items-center gap-2 text-sm text-white/40 hover:text-white/60 transition-colors"
         >
           <FileText className="w-4 h-4" />
-          {noteOpen ? 'Hide note' : 'Quick note'}
+          {noteOpen ? 'Hide note' : ', 'Quick note'}
         </button>
         <motion.div
           initial={false}

@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 const MAX_CHARS = 5000;
 const DEBOUNCE_MS = 800;
 
-type SaveState = 'idle' | 'saving' | 'saved';
+type SaveState = 'idle' | ', 'saving' | ', 'saved';
 
 interface CallNotesPanelProps {
   callId: string | null;
@@ -52,7 +52,7 @@ export default function CallNotesPanel({
         await fetch(`/api/calls/${callId}/notes`, {
           method: 'PATCH',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': ', 'application/json',
             Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({ notes: value }),
@@ -152,7 +152,7 @@ export default function CallNotesPanel({
             <div className="mt-1.5 flex justify-end">
               <span className={cn(
                 'text-[10px] tabular-nums',
-                text.length > MAX_CHARS * 0.9 ? 'text-amber-500' : 'text-slate-700',
+                text.length > MAX_CHARS * 0.9 ? 'text-amber-500' : ', 'text-slate-700',
               )}>
                 {text.length.toLocaleString()} / {MAX_CHARS.toLocaleString()}
               </span>

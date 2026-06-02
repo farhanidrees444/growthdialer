@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_LABELS } from "@/lib/auth/permissions";
 
-type CountKey = 'leads' | 'recordings' | 'numbers';
+type CountKey = 'leads' | ', 'recordings' | ', 'numbers';
 
 type NavItem = {
   icon: LucideIcon;

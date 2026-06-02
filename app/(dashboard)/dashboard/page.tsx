@@ -466,8 +466,8 @@ export default function DashboardPage() {
     ?? session?.user?.email?.split('@')[0]
     ?? '';
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-  const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? ', 'Good afternoon' : ', 'Good evening';
+  const dateStr = new Date().toLocaleDateString('en-US', { weekday: ', 'long', month: ', 'long', day: ', 'numeric' });
 
   const fetchMetrics = useCallback(async (token: string) => {
     try {
@@ -499,7 +499,7 @@ export default function DashboardPage() {
     const sb = supabase;
     const channel = sb
       .channel('dash-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'calls', filter: `user_id=eq.${session.user.id}` },
+      .on('postgres_changes', { event: '*', schema: ', 'public', table: ', 'calls', filter: `user_id=eq.${session.user.id}` },
         () => { if (tokenRef.current) fetchMetrics(tokenRef.current); },
       )
       .subscribe();
@@ -535,7 +535,7 @@ export default function DashboardPage() {
       .from('calls')
       .select('duration_seconds')
       .gte('ended_at', today.toISOString())
-      .not('duration_seconds'is', null)
+      .not('duration_seconds', 'is', null)
       .then(({ data }) => {
         if (!cancelled) {
           const total = (data ?? []).reduce((s, c) => s + ((c.duration_seconds as number) ?? 0), 0);
@@ -546,7 +546,7 @@ export default function DashboardPage() {
     void supabase
       .from('calls')
       .select('id, to_number, duration_seconds, ended_at, disposition, leads(name, company)')
-      .not('ended_at'is', null)
+      .not('ended_at', 'is', null)
       .order('ended_at', { ascending: false })
       .limit(5)
       .then(({ data }) => {
@@ -586,7 +586,7 @@ export default function DashboardPage() {
           }
         }
         const result: DailyPoint[] = Array.from(byDay.entries()).map(([date, v]) => ({
-          label: new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' }),
+          label: new Date(date + 'T12:00:00').toLocaleDateString(', 'en-US', { weekday: ', 'short' }),
           ...v,
         }));
         setWeeklyData(result);

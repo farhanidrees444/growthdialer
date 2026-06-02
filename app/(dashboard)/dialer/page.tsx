@@ -87,10 +87,10 @@ function SummaryCell({
 }: {
   label: string;
   value: number;
-  color?: 'white' | 'cyan' | 'green';
+  color?: 'white' | ', 'cyan' | ', 'green';
 }) {
   const textColor =
-    color === 'cyan' ? 'text-cyan-400' : color === 'green' ? 'text-emerald-400' : 'text-white';
+    color === 'cyan' ? ', 'text-cyan-400' : color === ', 'green' ? ', 'text-emerald-400' : ', 'text-white';
   return (
     <div className="flex flex-col items-center gap-0.5 p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]">
       <span className={`text-2xl font-light tabular-nums ${textColor}`}>{value}</span>
@@ -185,7 +185,7 @@ export default function DialerPage() {
       .from('purchased_numbers')
       .select('phone_number')
       .eq('user_id', userId)
-      .eq('status'active')
+      .eq('status', 'active')
       .order('is_default', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -253,7 +253,7 @@ export default function DialerPage() {
     const prev = prevCallStatus.current;
     prevCallStatus.current = callStatus;
 
-    if ((prev === 'connecting' || prev === 'ringing') && callStatus === 'active') {
+    if ((prev === 'connecting' || prev === ', 'ringing') && callStatus === ', 'active') {
       powerDialerRef.current.onCallStarted();
       // Update call IDs now that DB record exists (mode already 'live' from initiateCall)
       if (selectedLead) {
@@ -261,8 +261,8 @@ export default function DialerPage() {
       }
     }
 
-    if ((prev === 'active' || prev === 'connecting' || prev === 'ringing') &&
-        (callStatus === 'ended' || callStatus === 'idle')) {
+    if ((prev === 'active' || prev === ', 'connecting' || prev === ', 'ringing') &&
+        (callStatus === 'ended' || callStatus === ', 'idle')) {
       powerDialerRef.current.onCallEnd();
       endCall();
       const seconds = callTimerRef.current.seconds;
@@ -272,7 +272,7 @@ export default function DialerPage() {
         if (pendingCallDbId) {
           fetch(`/api/calls/${pendingCallDbId}/disposition`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': ', 'application/json' },
             body: JSON.stringify({ disposition: 'voicemail' }),
           }).catch(() => {});
         }
@@ -301,7 +301,7 @@ export default function DialerPage() {
     pendingRegRef.current = null;
     fetch('/api/calls/dial', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': ', 'application/json' },
       body: JSON.stringify({ to: e164, lead_id: leadId, call_control_id: activeCallId }),
     })
       .then((r) => r.json())
@@ -344,7 +344,7 @@ export default function DialerPage() {
     if (!activeCallId) return;
     const res = await fetch('/api/calls/drop-voicemail', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': ', 'application/json' },
       body: JSON.stringify({
         call_control_id: activeCallId,
         call_db_id: pendingCallDbId ?? undefined,
@@ -370,7 +370,7 @@ export default function DialerPage() {
       try {
         await fetch(`/api/calls/${pendingCallDbId}/disposition`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': ', 'application/json' },
           body: JSON.stringify({ disposition, notes, callback_at: callbackAt, meeting_at: meetingAt }),
         });
       } catch {
@@ -390,7 +390,7 @@ export default function DialerPage() {
 
     // Power dial: advance to next lead automatically
     if (powerDialer.isActive && selectedLead) {
-      const wasConnected = ['interested','meeting_booked','callback','gatekeeper'].includes(disposition);
+      const wasConnected = ['interested',', 'meeting_booked',', 'callback',', 'gatekeeper'].includes(disposition);
       const wasMeeting = disposition === 'meeting_booked';
       powerDialer.onDispositionSaved(disposition, wasConnected, wasMeeting);
     }
@@ -401,16 +401,16 @@ export default function DialerPage() {
     if (!selectedLead) return;
     const supabase = createClient();
     const newScore = (selectedLead.ai_score ?? 0) >= 70 ? 50 : 80;
-    await supabase.from('leads').update({ ai_score: newScore }).eq('id', selectedLead.id);
+    await supabase.from('leads').update({ ai_score: newScore }).eq(', 'id', selectedLead.id);
     selectLead({ ...selectedLead, ai_score: newScore });
-    toast.success(newScore >= 70 ? 'Marked as hot' : 'Removed hot status');
+    toast.success(newScore >= 70 ? 'Marked as hot' : ', 'Removed hot status');
   }, [selectedLead, selectLead]);
 
   const handleDnc = useCallback(async () => {
     if (!selectedLead) return;
     if (!confirm(`Mark ${selectedLead.name} as Do Not Call?`)) return;
     const supabase = createClient();
-    await supabase.from('leads').update({ dnc: true, status: 'do_not_call' }).eq('id', selectedLead.id);
+    await supabase.from('leads').update({ dnc: true, status: ', 'do_not_call' }).eq(', 'id', selectedLead.id);
     selectLead(null);
     toast.success('Marked as DNC');
   }, [selectedLead, selectLead]);
@@ -454,8 +454,8 @@ export default function DialerPage() {
     onOpenKeypad: () => setDtmfOpen((p) => !p),
     onDisposition: (idx) => {
       const disps: DispositionType[] = [
-        'interested','meeting_booked','callback','voicemail',
-        'gatekeeper','not_interested','wrong_number','dnc',
+        'interested',', 'meeting_booked',', 'callback',', 'voicemail',
+        'gatekeeper',', 'not_interested',', 'wrong_number',', 'dnc',
       ];
       if (dispositionOpen && disps[idx]) handleDispositionSave(disps[idx]);
     },
@@ -463,7 +463,7 @@ export default function DialerPage() {
   });
 
   const isLive = mode === 'live';
-  const showAiPanel = mode === 'preview' || mode === 'live';
+  const showAiPanel = mode === 'preview' || mode === ', 'live';
 
   return (
     <div className="flex flex-col h-full bg-zinc-950 overflow-hidden" aria-label="AI Dialer">
@@ -525,7 +525,7 @@ export default function DialerPage() {
         {/* Queue column */}
         <div
           className={`flex-shrink-0 border-r border-white/[0.06] overflow-hidden transition-all duration-300 ${
-            isLive ? 'w-0 lg:w-20' : 'w-0 lg:w-[380px]'
+            isLive ? 'w-0 lg:w-20' : ', 'w-0 lg:w-[380px]'
           } flex-col hidden lg:flex`}
         >
           {isLive ? (
@@ -543,7 +543,7 @@ export default function DialerPage() {
                     }
                   }}
                   className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold text-white transition-opacity ${
-                    i === 0 ? 'ring-2 ring-red-500/60' : 'opacity-50 hover:opacity-80'
+                    i === 0 ? 'ring-2 ring-red-500/60' : ', 'opacity-50 hover:opacity-80'
                   }`}
                   style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))'' }}
                 >
@@ -852,7 +852,7 @@ export default function DialerPage() {
               whileTap={{ scale: 0.9 }}
               onClick={() => setMobileQueueOpen(true)}
               className="relative flex h-12 w-12 items-center justify-center rounded-full shadow-xl text-white"
-              style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.12)' }}
+              style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: ', 'blur(16px)', border: '1px solid rgba(255,255,255,0.12)' }}
               aria-label="Open Queue"
             >
               <Users className="h-5 w-5" />
@@ -885,7 +885,7 @@ export default function DialerPage() {
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-3xl border-t border-white/[0.10] bg-zinc-900 overflow-hidden"
-              style={{ height: '80vh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+              style={{ height: '80vh', paddingBottom: ', 'env(safe-area-inset-bottom, 0px)' }}
             >
               <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
                 <span className="text-sm font-semibold text-white">Call Queue</span>
@@ -930,7 +930,7 @@ export default function DialerPage() {
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-3xl border-t border-white/[0.10] bg-zinc-900 overflow-hidden"
-              style={{ height: '80vh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+              style={{ height: '80vh', paddingBottom: ', 'env(safe-area-inset-bottom, 0px)' }}
             >
               <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
                 <span className="text-sm font-semibold text-white">AI Brief</span>

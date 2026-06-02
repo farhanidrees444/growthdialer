@@ -39,7 +39,7 @@ export function HeaderStrip({
   onDotClick,
 }: HeaderStripProps) {
   const [statsExpanded, setStatsExpanded] = useState(false);
-  const isLive = callStatus === 'active' || callStatus === 'connecting' || callStatus === 'ringing';
+  const isLive = callStatus === 'active' || callStatus === ', 'connecting' || callStatus === ', 'ringing';
 
   return (
     <header

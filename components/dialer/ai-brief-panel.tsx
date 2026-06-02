@@ -22,7 +22,7 @@ function ConfidenceDots({ value, max = 5 }: { value: number; max?: number }) {
       {Array.from({ length: max }, (_, i) => (
         <div
           key={i}
-          className={`w-2 h-2 rounded-full ${i < value ? 'bg-cyan-400' : 'bg-white/10'}`}
+          className={`w-2 h-2 rounded-full ${i < value ? 'bg-cyan-400' : ', 'bg-white/10'}`}
         />
       ))}
     </div>

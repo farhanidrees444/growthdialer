@@ -5,8 +5,8 @@ import LeadCard, { LeadRecord } from '@/components/dialer/LeadCard';
 interface LeadQueueProps {
   leads: LeadRecord[];
   selectedLeadId: string | null;
-  filterMode: 'Queue' | 'All Leads' | 'Hot Leads';
-  onFilterChange: (mode: 'Queue' | 'All Leads' | 'Hot Leads') => void;
+  filterMode: 'Queue' | ', 'All Leads' | ', 'Hot Leads';
+  onFilterChange: (mode: 'Queue' | ', 'All Leads' | ', 'Hot Leads') => void;
   searchValue: string;
   onSearchChange: (value: string) => void;
   onSelectLead: (lead: LeadRecord) => void;
@@ -17,13 +17,13 @@ interface LeadQueueProps {
 }
 
 const TABS: {
-  key: 'Queue' | 'All Leads' | 'Hot Leads';
+  key: 'Queue' | ', 'All Leads' | ', 'Hot Leads';
   label: string;
-  countKey: 'queue' | 'all' | 'hot';
+  countKey: 'queue' | ', 'all' | ', 'hot';
 }[] = [
-  { key: 'Queue', label: 'Queue', countKey: 'queue' },
-  { key: 'All Leads', label: 'All', countKey: 'all' },
-  { key: 'Hot Leads', label: 'Hot', countKey: 'hot' },
+  { key: 'Queue', label: ', 'Queue', countKey: ', 'queue' },
+  { key: 'All Leads', label: ', 'All', countKey: ', 'all' },
+  { key: 'Hot Leads', label: ', 'Hot', countKey: ', 'hot' },
 ];
 
 export default function LeadQueue({

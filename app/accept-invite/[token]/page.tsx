@@ -18,7 +18,7 @@ interface InviteDetails {
   workspace_name: string;
 }
 
-type PageState = 'loading' | 'ready' | 'accepted' | 'error';
+type PageState = 'loading' | ', 'ready' | ', 'accepted' | ', 'error';
 
 export default function AcceptInvitePage() {
   const { token } = useParams<{ token: string }>();
