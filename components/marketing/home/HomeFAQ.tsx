@@ -40,8 +40,8 @@ export function HomeFAQ() {
           viewport={{ once: true }}
           transition={{ duration: 0.7, ease: EASE_OUT }}
         >
-          <p className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">FAQ</p>
-          <h2 className="font-display text-[clamp(1.9rem,4vw,2.75rem)] font-light leading-[1.05] tracking-tight text-[#F5F5F7]">
+          <p className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-muted-foreground/60">FAQ</p>
+          <h2 className="font-display text-[clamp(1.9rem,4vw,2.75rem)] font-light leading-[1.05] tracking-tight text-foreground">
             Good to
             <br />
             <span className="font-medium">know.</span>
@@ -56,14 +56,14 @@ export function HomeFAQ() {
                 <button
                   type="button"
                   onClick={() => setOpen(isOpen ? null : i)}
-                  className="flex w-full items-center justify-between gap-4 py-5 text-left transition-colors hover:text-[#F5F5F7] focus-visible:outline-none"
+                  className="flex w-full items-center justify-between gap-4 py-5 text-left transition-colors hover:text-foreground focus-visible:outline-none"
                   aria-expanded={isOpen}
                 >
-                  <span className={`text-[15px] font-medium ${isOpen ? 'text-[#F5F5F7]' : 'text-zinc-300'}`}>{f.q}</span>
+                  <span className={`text-[15px] font-medium ${isOpen ? 'text-foreground' : 'text-muted-foreground/90'}`}>{f.q}</span>
                   <motion.span
                     animate={{ rotate: isOpen ? 45 : 0 }}
                     transition={{ duration: 0.3, ease: EASE_OUT }}
-                    className="shrink-0 text-zinc-500"
+                    className="shrink-0 text-muted-foreground/70"
                   >
                     <Plus className="h-4 w-4" />
                   </motion.span>
@@ -77,7 +77,7 @@ export function HomeFAQ() {
                       transition={{ duration: 0.4, ease: EASE_OUT }}
                       className="overflow-hidden"
                     >
-                      <p className="pb-5 pr-8 text-[14px] leading-relaxed text-zinc-400">{f.a}</p>
+                      <p className="pb-5 pr-8 text-[14px] leading-relaxed text-muted-foreground">{f.a}</p>
                     </motion.div>
                   )}
                 </AnimatePresence>

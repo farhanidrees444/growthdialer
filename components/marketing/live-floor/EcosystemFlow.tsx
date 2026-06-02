@@ -25,13 +25,13 @@ export function EcosystemFlow() {
           variants={revealContainer}
           className="mb-16 max-w-2xl"
         >
-          <motion.p variants={reveal} className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
+          <motion.p variants={reveal} className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-muted-foreground/60">
             One connected pipeline
           </motion.p>
-          <motion.h2 variants={reveal} className="font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.05] tracking-tight text-[#F5F5F7]">
+          <motion.h2 variants={reveal} className="font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.05] tracking-tight text-foreground">
             From raw lead to <span className="font-medium">revenue intelligence</span>.
           </motion.h2>
-          <motion.p variants={reveal} className="mt-5 text-[16px] leading-relaxed text-zinc-400">
+          <motion.p variants={reveal} className="mt-5 text-[16px] leading-relaxed text-muted-foreground">
             No glue code, no exports. Every stage hands off to the next inside one
             platform — the conversation becomes data the instant it ends.
           </motion.p>
@@ -63,7 +63,7 @@ export function EcosystemFlow() {
                     {!reduce && (
                       <motion.span
                         aria-hidden
-                        className="absolute top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-[#06B6D4]"
+                        className="absolute top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-primary"
                         style={{ boxShadow: '0 0 8px #06B6D4' }}
                         initial={{ left: '0%', opacity: 0 }}
                         animate={{ left: ['0%', '100%'], opacity: [0, 1, 1, 0] }}
@@ -74,15 +74,15 @@ export function EcosystemFlow() {
                 )}
                 <div className="group relative flex flex-col items-center gap-3 px-2 text-center lg:px-3">
                   <div className="relative flex h-[4.3rem] w-[4.3rem] items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl transition-colors group-hover:border-white/[0.12]">
-                    <Icon className="h-5 w-5 text-zinc-300" />
+                    <Icon className="h-5 w-5 text-muted-foreground/90" />
                     {/* node index dot */}
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full border border-white/[0.08] bg-[#0C0C0F] font-mono text-[9px] tabular-nums text-zinc-500">
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full border border-white/[0.08] bg-[#0C0C0F] font-mono text-[9px] tabular-nums text-muted-foreground/70">
                       {i + 1}
                     </span>
                   </div>
                   <div>
-                    <p className="text-[13px] font-medium text-[#F5F5F7]">{n.title}</p>
-                    <p className="text-[11px] text-zinc-600">{n.sub}</p>
+                    <p className="text-[13px] font-medium text-foreground">{n.title}</p>
+                    <p className="text-[11px] text-muted-foreground/60">{n.sub}</p>
                   </div>
                 </div>
               </motion.div>

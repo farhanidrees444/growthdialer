@@ -29,10 +29,10 @@ export function StatsStrip() {
       >
         {STATS.map((s, i) => (
           <motion.div key={i} variants={reveal} className="text-center">
-            <p className="font-display text-[clamp(2rem,4vw,3rem)] font-light tracking-tight text-[#F5F5F7]">
+            <p className="font-display text-[clamp(2rem,4vw,3rem)] font-light tracking-tight text-foreground">
               {s.value}
             </p>
-            <p className="mt-1.5 text-[13px] text-zinc-500">{s.label}</p>
+            <p className="mt-1.5 text-[13px] text-muted-foreground/70">{s.label}</p>
           </motion.div>
         ))}
       </motion.div>

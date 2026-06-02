@@ -47,10 +47,10 @@ export function Features() {
           variants={revealContainer}
           className="mb-14 max-w-2xl"
         >
-          <motion.p variants={reveal} className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
+          <motion.p variants={reveal} className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-muted-foreground/60">
             What you get today
           </motion.p>
-          <motion.h2 variants={reveal} className="font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.05] tracking-tight text-[#F5F5F7]">
+          <motion.h2 variants={reveal} className="font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.05] tracking-tight text-foreground">
             A dialer that does the <span className="font-medium">listening</span> for you.
           </motion.h2>
         </motion.div>
@@ -74,14 +74,14 @@ export function Features() {
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8B5CF6]/10 text-[#8B5CF6]">
                   <Target className="h-5 w-5" />
                 </span>
-                <span className="rounded-full border border-white/[0.08] px-2.5 py-1 text-[11px] font-medium text-zinc-400">
+                <span className="rounded-full border border-white/[0.08] px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
                   3-mode Focus Stage
                 </span>
               </div>
-              <h3 className="font-display text-2xl font-medium tracking-tight text-[#F5F5F7]">
+              <h3 className="font-display text-2xl font-medium tracking-tight text-foreground">
                 AI Dialer
               </h3>
-              <p className="mt-3 max-w-md text-[15px] leading-relaxed text-zinc-400">
+              <p className="mt-3 max-w-md text-[15px] leading-relaxed text-muted-foreground">
                 A focused calling surface built for outbound. Move through leads
                 with a clean three-mode stage, live call controls and instant
                 recording — designed so the rep only has to talk.
@@ -91,10 +91,10 @@ export function Features() {
             {/* Living waveform anchored in the card */}
             <div className="mt-8 rounded-xl border border-white/[0.05] bg-black/30 p-5">
               <div className="mb-3 flex items-center justify-between">
-                <span className="flex items-center gap-2 text-xs font-medium text-[#06B6D4]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#06B6D4]" /> On call
+                <span className="flex items-center gap-2 text-xs font-medium text-primary">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" /> On call
                 </span>
-                <span className="font-mono text-xs tabular-nums text-zinc-600">01:08</span>
+                <span className="font-mono text-xs tabular-nums text-muted-foreground/60">01:08</span>
               </div>
               <LiveWaveform bars={52} height={48} barWidth={2.5} gap={2.5} />
             </div>
@@ -109,11 +109,11 @@ export function Features() {
                 className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12] hover:bg-white/[0.03]"
               >
                 <Spotlight />
-                <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04] text-zinc-300 transition-colors group-hover:text-[#F5F5F7]">
+                <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04] text-muted-foreground/90 transition-colors group-hover:text-foreground">
                   <Icon className="h-5 w-5" />
                 </span>
-                <h3 className="text-[15px] font-medium text-[#F5F5F7]">{f.title}</h3>
-                <p className="mt-2 text-[14px] leading-relaxed text-zinc-400">{f.body}</p>
+                <h3 className="text-[15px] font-medium text-foreground">{f.title}</h3>
+                <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">{f.body}</p>
               </motion.article>
             );
           })}
@@ -127,12 +127,12 @@ export function Features() {
           transition={{ duration: 0.7 }}
           className="mt-8 flex flex-col items-start gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.01] px-6 py-4 sm:flex-row sm:items-center"
         >
-          <span className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.15em] text-zinc-500">
+          <span className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.15em] text-muted-foreground/70">
             <Clock className="h-3.5 w-3.5" /> On the roadmap
           </span>
           <div className="flex flex-wrap gap-2">
             {COMING_SOON.map((c) => (
-              <span key={c} className="rounded-full border border-white/[0.08] px-3 py-1 text-[12px] text-zinc-400">
+              <span key={c} className="rounded-full border border-white/[0.08] px-3 py-1 text-[12px] text-muted-foreground">
                 {c}
               </span>
             ))}

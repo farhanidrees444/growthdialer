@@ -54,22 +54,22 @@ export function SiteFooter() {
             <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03]">
               <MiniWave className="scale-90" />
             </span>
-            <span className="text-[15px] font-medium tracking-tight text-[#F5F5F7]">GrowthDialer</span>
+            <span className="text-[15px] font-medium tracking-tight text-foreground">GrowthDialer</span>
           </div>
-          <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-zinc-500">
+          <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-muted-foreground/70">
             The AI sales dialer that turns every conversation into searchable revenue intelligence.
           </p>
         </div>
 
         {FOOTER_COLS.map((col) => (
           <div key={col.heading}>
-            <p className="mb-4 text-[12px] font-medium uppercase tracking-[0.15em] text-zinc-600">
+            <p className="mb-4 text-[12px] font-medium uppercase tracking-[0.15em] text-muted-foreground/60">
               {col.heading}
             </p>
             <ul className="space-y-2.5">
               {col.links.map((l) => (
                 <li key={l.label}>
-                  <Link href={l.href} className="text-[13px] text-zinc-400 transition-colors hover:text-[#F5F5F7]">
+                  <Link href={l.href} className="text-[13px] text-muted-foreground transition-colors hover:text-foreground">
                     {l.label}
                   </Link>
                 </li>
@@ -80,10 +80,10 @@ export function SiteFooter() {
       </div>
 
       <div className="mx-auto mt-12 flex max-w-7xl flex-col items-center justify-between gap-4 border-t border-white/[0.06] pt-7 sm:flex-row">
-        <p className="text-[12px] text-zinc-600">
+        <p className="text-[12px] text-muted-foreground/60">
           © {new Date().getFullYear()} GrowthDialer. All rights reserved.
         </p>
-        <a href={APP_URL} className="text-[12px] text-zinc-500 transition-colors hover:text-[#F5F5F7]">
+        <a href={APP_URL} className="text-[12px] text-muted-foreground/70 transition-colors hover:text-foreground">
           app.growthdialer.com
         </a>
       </div>

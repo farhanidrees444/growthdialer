@@ -26,7 +26,7 @@ export function PricingCTA() {
         variants={revealContainer}
         className="mx-auto max-w-6xl"
       >
-        <motion.p variants={reveal} className="mb-8 text-center text-[13px] uppercase tracking-[0.2em] text-zinc-600">
+        <motion.p variants={reveal} className="mb-8 text-center text-[13px] uppercase tracking-[0.2em] text-muted-foreground/60">
           Built for modern sales teams
         </motion.p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -38,11 +38,11 @@ export function PricingCTA() {
                 variants={reveal}
                 className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl"
               >
-                <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.04] text-zinc-300">
+                <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.04] text-muted-foreground/90">
                   <Icon className="h-4 w-4" />
                 </span>
-                <h3 className="text-[14px] font-medium text-[#F5F5F7]">{v.title}</h3>
-                <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">{v.body}</p>
+                <h3 className="text-[14px] font-medium text-foreground">{v.title}</h3>
+                <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground/70">{v.body}</p>
               </motion.div>
             );
           })}
@@ -66,10 +66,10 @@ export function PricingCTA() {
           <div className="mb-7 flex justify-center">
             <LiveWaveform bars={24} height={32} barWidth={2.5} gap={3} />
           </div>
-          <h2 className="font-display text-[clamp(2rem,4.5vw,3.25rem)] font-light leading-[1.04] tracking-tight text-[#F5F5F7]">
+          <h2 className="font-display text-[clamp(2rem,4.5vw,3.25rem)] font-light leading-[1.04] tracking-tight text-foreground">
             Try it on your next call.
           </h2>
-          <p className="mx-auto mt-5 max-w-md text-[16px] leading-relaxed text-zinc-400">
+          <p className="mx-auto mt-5 max-w-md text-[16px] leading-relaxed text-muted-foreground">
             Start free — no credit card. Upgrade when the AI has already paid for itself.
           </p>
           <div className="mt-9 flex justify-center">

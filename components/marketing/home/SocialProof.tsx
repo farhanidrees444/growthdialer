@@ -12,7 +12,7 @@ export function SocialProof() {
 
   return (
     <section className="relative px-5 py-10 lg:px-8">
-      <p className="mb-7 text-center text-[12px] uppercase tracking-[0.2em] text-zinc-600">
+      <p className="mb-7 text-center text-[12px] uppercase tracking-[0.2em] text-muted-foreground/60">
         Built for modern sales teams
       </p>
 
@@ -25,7 +25,7 @@ export function SocialProof() {
           {row.map((name, i) => (
             <span
               key={`${name}-${i}`}
-              className="select-none whitespace-nowrap font-display text-xl font-medium tracking-tight text-zinc-600 transition-colors hover:text-zinc-400"
+              className="select-none whitespace-nowrap font-display text-xl font-medium tracking-tight text-muted-foreground/60 transition-colors hover:text-muted-foreground"
             >
               {name}
             </span>

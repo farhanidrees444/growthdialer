@@ -47,12 +47,12 @@ export function ConversationIntelligence() {
             <span className="text-[12px] font-medium text-[#8B5CF6]">AI-native</span>
           </motion.div>
 
-          <motion.h2 variants={reveal} className="font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.05] tracking-tight text-[#F5F5F7]">
+          <motion.h2 variants={reveal} className="font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.05] tracking-tight text-foreground">
             Conversation intelligence,<br />
             <span className="font-medium">built in</span> — not bolted on.
           </motion.h2>
 
-          <motion.p variants={reveal} className="mt-5 max-w-md text-[16px] leading-relaxed text-zinc-400">
+          <motion.p variants={reveal} className="mt-5 max-w-md text-[16px] leading-relaxed text-muted-foreground">
             Most dialers stop at the recording. GrowthDialer reads every call and
             hands back the part that matters — what happened, how it felt, and
             what to do next.
@@ -67,8 +67,8 @@ export function ConversationIntelligence() {
                     <Icon className="h-[18px] w-[18px]" />
                   </span>
                   <div>
-                    <h3 className="text-[15px] font-medium text-[#F5F5F7]">{c.title}</h3>
-                    <p className="mt-1 max-w-sm text-[14px] leading-relaxed text-zinc-400">{c.body}</p>
+                    <h3 className="text-[15px] font-medium text-foreground">{c.title}</h3>
+                    <p className="mt-1 max-w-sm text-[14px] leading-relaxed text-muted-foreground">{c.body}</p>
                   </div>
                 </motion.div>
               );
@@ -87,15 +87,15 @@ export function ConversationIntelligence() {
           <Spotlight />
           <div className="mb-5 flex items-center justify-between border-b border-white/[0.05] pb-4">
             <div>
-              <p className="text-sm font-medium text-[#F5F5F7]">Call with Acme Co.</p>
-              <p className="font-mono text-xs tabular-nums text-zinc-600">Outbound · 2:14 · analyzed</p>
+              <p className="text-sm font-medium text-foreground">Call with Acme Co.</p>
+              <p className="font-mono text-xs tabular-nums text-muted-foreground/60">Outbound · 2:14 · analyzed</p>
             </div>
             <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-400">
               <TrendingUp className="h-3 w-3" /> Positive
             </span>
           </div>
 
-          <p className="mb-2 text-[11px] font-medium uppercase tracking-widest text-zinc-600">Summary</p>
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">Summary</p>
           <ul className="space-y-2">
             {[
               'Prospect evaluating tools for a 12-person team',
@@ -108,7 +108,7 @@ export function ConversationIntelligence() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.1 + i * 0.1, ease: EASE_OUT }}
-                className="flex items-start gap-2.5 text-[13px] leading-relaxed text-zinc-300"
+                className="flex items-start gap-2.5 text-[13px] leading-relaxed text-muted-foreground/90"
               >
                 <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[#8B5CF6]" />
                 {t}
@@ -118,12 +118,12 @@ export function ConversationIntelligence() {
 
           <div className="mt-5 grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3">
-              <p className="text-[11px] uppercase tracking-wider text-zinc-600">Intent</p>
-              <p className="mt-1 text-[13px] font-medium text-[#F5F5F7]">Pricing + demo</p>
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground/60">Intent</p>
+              <p className="mt-1 text-[13px] font-medium text-foreground">Pricing + demo</p>
             </div>
             <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3">
-              <p className="text-[11px] uppercase tracking-wider text-zinc-600">Next step</p>
-              <p className="mt-1 text-[13px] font-medium text-[#F5F5F7]">Send quote</p>
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground/60">Next step</p>
+              <p className="mt-1 text-[13px] font-medium text-foreground">Send quote</p>
             </div>
           </div>
         </motion.div>

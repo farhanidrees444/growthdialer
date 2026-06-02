@@ -44,7 +44,7 @@ export function CallLifecycle() {
         <div className="mx-auto grid w-full max-w-7xl items-center gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
           {/* ── Left: narrative rail ── */}
           <div>
-            <p className="mb-8 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
+            <p className="mb-8 text-[12px] font-medium uppercase tracking-[0.2em] text-muted-foreground/60">
               The life of one call
             </p>
             <ol className="space-y-1">
@@ -68,7 +68,7 @@ export function CallLifecycle() {
                           {done ? (
                             <Check className="h-4 w-4 text-[#8B5CF6]" />
                           ) : (
-                            <Icon className={`h-4 w-4 ${active ? 'text-[#06B6D4]' : 'text-zinc-600'}`} />
+                            <Icon className={`h-4 w-4 ${active ? 'text-primary' : 'text-muted-foreground/60'}`} />
                           )}
                         </motion.span>
                         {i < STAGES.length - 1 && (
@@ -90,7 +90,7 @@ export function CallLifecycle() {
                               animate={{ opacity: 1, height: 'auto' }}
                               exit={{ opacity: 0, height: 0 }}
                               transition={{ duration: 0.4, ease: EASE_OUT }}
-                              className="overflow-hidden text-sm leading-relaxed text-zinc-500"
+                              className="overflow-hidden text-sm leading-relaxed text-muted-foreground/70"
                             >
                               <span className="block pt-1">{s.desc}</span>
                             </motion.p>
@@ -139,12 +139,12 @@ function StageVisual({ stage }: { stage: number }) {
               transition={{ duration: 1.8, repeat: Infinity, delay: i * 0.6, ease: 'easeOut' }}
             />
           ))}
-          <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.04] text-zinc-300">
+          <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.04] text-muted-foreground/90">
             <Phone className="h-5 w-5" />
           </span>
         </div>
-        <p className="text-sm font-medium text-[#F5F5F7]">Dialing prospect…</p>
-        <p className="mt-1 font-mono text-xs tabular-nums text-zinc-600">+1 (415) 555‑0117</p>
+        <p className="text-sm font-medium text-foreground">Dialing prospect…</p>
+        <p className="mt-1 font-mono text-xs tabular-nums text-muted-foreground/60">+1 (415) 555‑0117</p>
       </motion.div>
     );
   }
@@ -153,16 +153,16 @@ function StageVisual({ stage }: { stage: number }) {
     return (
       <motion.div {...common} className="py-6">
         <div className="mb-6 flex items-center justify-between">
-          <span className="flex items-center gap-2 text-sm font-medium text-[#F5F5F7]">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#06B6D4]/10 text-[#06B6D4]">
+          <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
               <Radio className="h-4 w-4" />
             </span>
             Connected
           </span>
-          <span className="font-mono text-xs tabular-nums text-[#06B6D4]">00:03</span>
+          <span className="font-mono text-xs tabular-nums text-primary">00:03</span>
         </div>
         <LiveWaveform bars={48} height={96} />
-        <p className="mt-6 text-center text-xs text-zinc-600">Recording started automatically</p>
+        <p className="mt-6 text-center text-xs text-muted-foreground/60">Recording started automatically</p>
       </motion.div>
     );
   }
@@ -175,8 +175,8 @@ function StageVisual({ stage }: { stage: number }) {
     ];
     return (
       <motion.div {...common} className="py-4">
-        <p className="mb-4 flex items-center gap-2 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
-          <Ear className="h-3.5 w-3.5 text-[#06B6D4]" /> Transcribing live
+        <p className="mb-4 flex items-center gap-2 text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">
+          <Ear className="h-3.5 w-3.5 text-primary" /> Transcribing live
         </p>
         <div className="space-y-2.5">
           {lines.map((l, i) => (
@@ -185,7 +185,7 @@ function StageVisual({ stage }: { stage: number }) {
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: i * 0.35, ease: EASE_OUT }}
-              className="text-[13px] leading-relaxed text-zinc-400"
+              className="text-[13px] leading-relaxed text-muted-foreground"
             >
               {l}
             </motion.p>
@@ -201,12 +201,12 @@ function StageVisual({ stage }: { stage: number }) {
   if (stage === 3) {
     return (
       <motion.div {...common} className="py-4">
-        <p className="mb-4 flex items-center gap-2 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
+        <p className="mb-4 flex items-center gap-2 text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">
           <Sparkles className="h-3.5 w-3.5 text-[#8B5CF6]" /> AI summary
         </p>
         <div className="space-y-3">
           <div className="flex items-center justify-between rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2.5">
-            <span className="text-xs text-zinc-400">Sentiment</span>
+            <span className="text-xs text-muted-foreground">Sentiment</span>
             <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-400">
               <TrendingUp className="h-3.5 w-3.5" /> Positive
             </span>
@@ -217,7 +217,7 @@ function StageVisual({ stage }: { stage: number }) {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.15 + i * 0.12, ease: EASE_OUT }}
-              className="flex items-start gap-2.5 text-[13px] text-zinc-300"
+              className="flex items-start gap-2.5 text-[13px] text-muted-foreground/90"
             >
               <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#8B5CF6]" />
               {t}
@@ -233,16 +233,16 @@ function StageVisual({ stage }: { stage: number }) {
       <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#8B5CF6]/10 text-[#8B5CF6]">
         <BarChart3 className="h-6 w-6" />
       </span>
-      <p className="text-sm font-medium text-[#F5F5F7]">Logged to Analytics</p>
-      <p className="mt-1 max-w-[16rem] text-xs leading-relaxed text-zinc-500">
+      <p className="text-sm font-medium text-foreground">Logged to Analytics</p>
+      <p className="mt-1 max-w-[16rem] text-xs leading-relaxed text-muted-foreground/70">
         Disposition, duration, transcript and AI insights — searchable across
         every call you make.
       </p>
       <div className="mt-6 grid w-full grid-cols-3 gap-2">
         {[['Calls', '1'], ['Sentiment', '+'], ['Talk time', '2:14']].map(([k, v]) => (
           <div key={k} className="rounded-lg border border-white/[0.05] bg-white/[0.02] py-2">
-            <p className="font-mono text-sm tabular-nums text-[#F5F5F7]">{v}</p>
-            <p className="text-[10px] uppercase tracking-wider text-zinc-600">{k}</p>
+            <p className="font-mono text-sm tabular-nums text-foreground">{v}</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60">{k}</p>
           </div>
         ))}
       </div>

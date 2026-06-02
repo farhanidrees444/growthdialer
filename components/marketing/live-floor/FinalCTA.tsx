@@ -29,12 +29,12 @@ export function FinalCTA() {
           <div className="mb-8 flex justify-center">
             <LiveWaveform bars={28} height={36} barWidth={2.5} gap={3} />
           </div>
-          <h2 className="font-display text-[clamp(2.4rem,5.5vw,4rem)] font-light leading-[1.02] tracking-tight text-[#F5F5F7]">
+          <h2 className="font-display text-[clamp(2.4rem,5.5vw,4rem)] font-light leading-[1.02] tracking-tight text-foreground">
             Stop taking notes.
             <br />
             <span className="font-medium">Start hearing everything.</span>
           </h2>
-          <p className="mx-auto mt-6 max-w-lg text-[17px] leading-relaxed text-zinc-400">
+          <p className="mx-auto mt-6 max-w-lg text-[17px] leading-relaxed text-muted-foreground">
             Spin up your first AI-analyzed call in minutes. No credit card, no
             setup call — just dial.
           </p>
@@ -48,7 +48,7 @@ export function FinalCTA() {
             </a>
             <a
               href={APP_SIGNIN}
-              className="inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.08] px-7 text-sm font-medium text-zinc-300 transition-all hover:border-white/[0.16] hover:text-[#F5F5F7] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+              className="inline-flex h-12 items-center justify-center rounded-xl border border-white/[0.08] px-7 text-sm font-medium text-muted-foreground/90 transition-all hover:border-white/[0.16] hover:text-foreground active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
             >
               Log in
             </a>

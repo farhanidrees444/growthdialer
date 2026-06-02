@@ -123,14 +123,14 @@ export function Plans() {
       >
         <motion.div variants={reveal} className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] py-1 pl-2 pr-3 backdrop-blur-xl">
           <MiniWave className="scale-90" />
-          <span className="text-[12px] text-zinc-400">Pricing</span>
+          <span className="text-[12px] text-muted-foreground">Pricing</span>
         </motion.div>
-        <motion.h1 variants={reveal} className="font-display text-[clamp(2.4rem,5vw,3.75rem)] font-light leading-[1.02] tracking-tight text-[#F5F5F7]">
+        <motion.h1 variants={reveal} className="font-display text-[clamp(2.4rem,5vw,3.75rem)] font-light leading-[1.02] tracking-tight text-foreground">
           Simple pricing that
           <br />
           <span className="font-medium">scales with you</span>.
         </motion.h1>
-        <motion.p variants={reveal} className="mx-auto mt-5 max-w-md text-[16px] leading-relaxed text-zinc-400">
+        <motion.p variants={reveal} className="mx-auto mt-5 max-w-md text-[16px] leading-relaxed text-muted-foreground">
           Start free, upgrade when you&apos;re ready. Every plan includes call
           recording and AI call summaries — no add-ons required to get value.
         </motion.p>
@@ -152,13 +152,13 @@ export function Plans() {
                     className="absolute inset-0 rounded-full bg-[#8B5CF6]"
                   />
                 )}
-                <span className={`relative z-10 ${billing === b ? 'text-white' : 'text-zinc-400'}`}>
+                <span className={`relative z-10 ${billing === b ? 'text-white' : 'text-muted-foreground'}`}>
                   {b === 'monthly' ? 'Monthly' : 'Annual'}
                 </span>
               </button>
             ))}
           </div>
-          <span className="rounded-full border border-[#06B6D4]/25 bg-[#06B6D4]/10 px-2.5 py-1 text-[11px] font-medium text-[#06B6D4]">
+          <span className="rounded-full border border-[#06B6D4]/25 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
             Save up to 30%
           </span>
         </motion.div>
@@ -196,17 +196,17 @@ export function Plans() {
               )}
 
               <div className="mb-5">
-                <h3 className="text-[15px] font-semibold text-[#F5F5F7]">{plan.name}</h3>
-                <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">{plan.tagline}</p>
+                <h3 className="text-[15px] font-semibold text-foreground">{plan.name}</h3>
+                <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground/70">{plan.tagline}</p>
               </div>
 
               {/* Price */}
               <div className="mb-1 flex items-end gap-1.5">
                 {isCustom ? (
-                  <span className="font-display text-4xl font-light tracking-tight text-[#F5F5F7]">Custom</span>
+                  <span className="font-display text-4xl font-light tracking-tight text-foreground">Custom</span>
                 ) : (
                   <>
-                    <span className="mb-1 text-lg text-zinc-500">$</span>
+                    <span className="mb-1 text-lg text-muted-foreground/70">$</span>
                     <AnimatePresence mode="wait">
                       <motion.span
                         key={`${plan.id}-${billing}`}
@@ -214,16 +214,16 @@ export function Plans() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.3, ease: EASE_OUT }}
-                        className="font-display text-5xl font-light tabular-nums tracking-tight text-[#F5F5F7]"
+                        className="font-display text-5xl font-light tabular-nums tracking-tight text-foreground"
                       >
                         {price}
                       </motion.span>
                     </AnimatePresence>
-                    <span className="mb-1.5 text-[13px] text-zinc-500">/user/mo</span>
+                    <span className="mb-1.5 text-[13px] text-muted-foreground/70">/user/mo</span>
                   </>
                 )}
               </div>
-              <p className="mb-6 h-4 text-[12px] text-zinc-600">
+              <p className="mb-6 h-4 text-[12px] text-muted-foreground/60">
                 {isCustom ? 'Tailored to your volume' : billing === 'annual' ? 'billed annually' : 'billed monthly'}
               </p>
 
@@ -242,16 +242,16 @@ export function Plans() {
 
               {/* Features */}
               {plan.lead && (
-                <p className="mb-3 text-[12px] font-medium uppercase tracking-wider text-zinc-600">{plan.lead}</p>
+                <p className="mb-3 text-[12px] font-medium uppercase tracking-wider text-muted-foreground/60">{plan.lead}</p>
               )}
               <ul className="space-y-2.5">
                 {plan.features.map((f) => (
-                  <li key={f.label} className="flex items-start gap-2.5 text-[13px] leading-relaxed text-zinc-300">
-                    <Check className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${plan.popular ? 'text-[#8B5CF6]' : 'text-zinc-500'}`} />
+                  <li key={f.label} className="flex items-start gap-2.5 text-[13px] leading-relaxed text-muted-foreground/90">
+                    <Check className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${plan.popular ? 'text-[#8B5CF6]' : 'text-muted-foreground/70'}`} />
                     <span>
                       {f.label}
                       {f.soon && (
-                        <span className="ml-1.5 rounded border border-white/[0.08] px-1.5 py-0.5 text-[10px] text-zinc-500">
+                        <span className="ml-1.5 rounded border border-white/[0.08] px-1.5 py-0.5 text-[10px] text-muted-foreground/70">
                           Coming soon
                         </span>
                       )}
@@ -277,13 +277,13 @@ export function Plans() {
             <div key={a.title} className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl transition-colors hover:border-white/[0.12]">
               <Spotlight />
               <div className="mb-2 flex items-center justify-between">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.04] text-zinc-300">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.04] text-muted-foreground/90">
                   {a.soon ? <Clock className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 </span>
-                <span className={`text-[12px] font-medium ${a.soon ? 'text-zinc-500' : 'text-[#06B6D4]'}`}>{a.price}</span>
+                <span className={`text-[12px] font-medium ${a.soon ? 'text-muted-foreground/70' : 'text-primary'}`}>{a.price}</span>
               </div>
-              <h4 className="text-[14px] font-medium text-[#F5F5F7]">{a.title}</h4>
-              <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">{a.desc}</p>
+              <h4 className="text-[14px] font-medium text-foreground">{a.title}</h4>
+              <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground/70">{a.desc}</p>
             </div>
           ))}
         </motion.div>

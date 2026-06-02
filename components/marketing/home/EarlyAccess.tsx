@@ -30,12 +30,12 @@ export function EarlyAccess() {
           <span className="text-[12px] font-medium text-[#8B5CF6]">Early access</span>
         </span>
 
-        <h2 className="relative font-display text-[clamp(2rem,4.5vw,3.25rem)] font-light leading-[1.04] tracking-tight text-[#F5F5F7]">
+        <h2 className="relative font-display text-[clamp(2rem,4.5vw,3.25rem)] font-light leading-[1.04] tracking-tight text-foreground">
           Be among the first teams
           <br />
           <span className="font-medium">on GrowthDialer.</span>
         </h2>
-        <p className="relative mx-auto mt-5 max-w-lg text-[16px] leading-relaxed text-zinc-400">
+        <p className="relative mx-auto mt-5 max-w-lg text-[16px] leading-relaxed text-muted-foreground">
           We&apos;re onboarding our first sales teams now. Create an account, make
           a call, and help shape what comes next — no credit card required.
         </p>

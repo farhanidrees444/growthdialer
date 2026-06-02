@@ -48,7 +48,7 @@ export function Nav() {
           <span className="relative flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03]">
             <MiniWave className="scale-90" />
           </span>
-          <span className="text-[15px] font-medium tracking-tight text-[#F5F5F7]">
+          <span className="text-[15px] font-medium tracking-tight text-foreground">
             GrowthDialer
           </span>
         </Link>
@@ -59,7 +59,7 @@ export function Nav() {
             <Link
               key={l.label}
               href={l.href}
-              className="rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
+              className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
             >
               {l.label}
             </Link>
@@ -70,7 +70,7 @@ export function Nav() {
         <div className="hidden items-center gap-2 md:flex">
           <a
             href={APP_SIGNIN}
-            className="rounded-lg px-3.5 py-2 text-sm text-zinc-300 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
+            className="rounded-lg px-3.5 py-2 text-sm text-muted-foreground/90 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
           >
             Log in
           </a>
@@ -86,7 +86,7 @@ export function Nav() {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.06] text-zinc-300 md:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.06] text-muted-foreground/90 md:hidden"
           aria-label="Toggle menu"
         >
           {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -109,13 +109,13 @@ export function Nav() {
                   key={l.label}
                   href={l.href}
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg px-3 py-2.5 text-sm text-zinc-300 hover:bg-white/[0.03] hover:text-[#F5F5F7]"
+                  className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground/90 hover:bg-white/[0.03] hover:text-foreground"
                 >
                   {l.label}
                 </Link>
               ))}
               <div className="mt-3 flex flex-col gap-2 border-t border-white/[0.06] pt-3">
-                <a href={APP_SIGNIN} className="rounded-lg px-3 py-2.5 text-sm text-zinc-300 hover:bg-white/[0.03]">
+                <a href={APP_SIGNIN} className="rounded-lg px-3 py-2.5 text-sm text-muted-foreground/90 hover:bg-white/[0.03]">
                   Log in
                 </a>
                 <a
