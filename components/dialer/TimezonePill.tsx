@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 interface TimezonePillProps {
   phone: string;
-  size?: 'sm' | ', 'md';
+  size?: 'sm' | 'md';
   className?: string;
 }
 

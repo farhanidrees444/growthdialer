@@ -47,7 +47,7 @@ const reasons = [
 
 const testimonial = {
   quote:
-    "We evaluated Nooks and nearly signed. Then we saw GrowthDialer offered the same AI capabilities for a tenth of the price. We've been on GrowthDialer for 6 months and haven', 't looked back.",
+    "We evaluated Nooks and nearly signed. Then we saw GrowthDialer offered the same AI capabilities for a tenth of the price. We've been on GrowthDialer for 6 months and haven't looked back.",
   author: "Samantha Torres",
   role: "Director of Sales, PipeGen",
 };

@@ -9,7 +9,7 @@ import { EASE_OUT, SPRING, reveal, revealContainer } from '@/components/marketin
 
 const APP_SIGNUP = 'https://app.growthdialer.com/signup';
 
-type Billing = 'monthly' | ', 'annual';
+type Billing = 'monthly' | 'annual';
 
 interface Plan {
   id: string;
@@ -138,7 +138,7 @@ export function Plans() {
         {/* Toggle */}
         <motion.div variants={reveal} className="mt-9 flex items-center justify-center gap-3">
           <div className="relative inline-flex rounded-full border border-white/[0.08] bg-white/[0.02] p-1 backdrop-blur-xl">
-            {(['monthly', 'annual'] as const).map((b) => (
+            {(['monthly'annual'] as const).map((b) => (
               <button
                 key={b}
                 type="button"
@@ -224,7 +224,7 @@ export function Plans() {
                 )}
               </div>
               <p className="mb-6 h-4 text-[12px] text-muted-foreground/60">
-                {isCustom ? 'Tailored to your volume' : billing === ', 'annual' ? 'billed annually' : 'billed monthly'}
+                {isCustom ? 'Tailored to your volume' : billing === 'annual' ? 'billed annually' : 'billed monthly'}
               </p>
 
               {/* CTA */}

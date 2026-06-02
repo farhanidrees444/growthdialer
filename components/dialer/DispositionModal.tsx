@@ -112,7 +112,7 @@ export default function DispositionModal({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
+      if (['INPUT'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
       if (!isQuickMode) {
         const idx = parseInt(e.key) - 1;
         if (idx >= 0 && idx < DISPOSITIONS.length) {

@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 const MAX_CHARS = 5000;
 const DEBOUNCE_MS = 800;
 
-type SaveState = 'idle' | ', 'saving' | ', 'saved';
+type SaveState = 'idle' | 'saving' | 'saved';
 
 interface CallNotesPanelProps {
   callId: string | null;

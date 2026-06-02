@@ -30,7 +30,7 @@ function useCycle(length: number, ms: number) {
 
 // ── AI Dialer — animated 3-mode switch + live waveform ──────────────────────
 function DialerVisual() {
-  const modes = ['Browse', ', 'Focus', ', 'Power'];
+  const modes = ['Browse', 'Focus', 'Power'];
   const { ref, i } = useCycle(modes.length, 1900);
   return (
     <div ref={ref} className="space-y-4" aria-hidden>
@@ -63,7 +63,7 @@ function DialerVisual() {
 
 // ── Power Dialer — auto-advancing call queue ────────────────────────────────
 function PowerVisual() {
-  const rows = ['Maya Chen', ', 'Tom Becker', ', 'Priya Nair', ', 'Diego Ruiz', ', 'Sam Okafor'];
+  const rows = ['Maya Chen', 'Tom Becker', 'Priya Nair', 'Diego Ruiz', 'Sam Okafor'];
   const { ref, i: active } = useCycle(rows.length, 1500);
   return (
     <div ref={ref} className="space-y-2" aria-hidden>

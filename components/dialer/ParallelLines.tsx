@@ -4,7 +4,7 @@ import { CheckCircle2, XCircle, Phone } from 'lucide-react';
 interface LineStatus {
   id: number;
   label: string;
-  status: 'ringing' | ', 'connected' | ', 'no-answer' | ', 'voicemail' | ', 'idle';
+  status: 'ringing' | 'connected' | 'no-answer' | 'voicemail' | 'idle';
   timer: string;
 }
 

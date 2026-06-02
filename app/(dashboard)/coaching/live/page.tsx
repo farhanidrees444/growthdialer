@@ -31,7 +31,7 @@ interface ActiveCall {
   coaching: { coach_id: string; mode: string } | null;
 }
 
-type CoachMode = 'listen' | ', 'whisper' | ', 'barge';
+type CoachMode = 'listen' | 'whisper' | 'barge';
 
 interface CoachingPanelProps {
   call: ActiveCall;
@@ -242,7 +242,7 @@ function CallCard({
 }) {
   const [elapsed, setElapsed] = useState('00:00');
   const agentName = call.agent_name || call.agent_email || 'Agent';
-  const leadName = [call.lead_first_name, call.lead_last_name].filter(Boolean).join(' ') || ', 'Unknown';
+  const leadName = [call.lead_first_name, call.lead_last_name].filter(Boolean).join(' ') || 'Unknown';
   const leadCompany = call.lead_company;
 
   useEffect(() => {

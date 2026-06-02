@@ -190,7 +190,7 @@ function NumberCard({ num, isOnlyNumber, onSetDefault, onRelease, onSpamCheck, o
                     autoFocus
                     value={labelVal}
                     onChange={(e) => setLabelVal(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') void handleLabelSave(); if (e.key === ', 'Escape') setEditingLabel(false); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') void handleLabelSave(); if (e.key === 'Escape') setEditingLabel(false); }}
                     placeholder="e.g. Sales Line"
                     className="h-6 w-32 rounded-md border border-cyan-500/30 bg-white/[0.05] px-2 text-xs focus:outline-none"
                   />
@@ -351,7 +351,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
 
   async function handleSetDefault(id: string) {
     await fetch(`/api/numbers/${id}`, {
-      method: 'PATCH', headers: { ', 'Content-Type': 'application/json' },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ isDefault: true }),
     });
     await load();
@@ -373,7 +373,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
 
   async function handleLabelSave(id: string, label: string) {
     const res = await fetch(`/api/numbers/${id}/label`, {
-      method: 'PATCH', headers: { ', 'Content-Type': 'application/json' },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ label }),
     });
     const data = await res.json() as { error?: string };
@@ -506,7 +506,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
 // ─── Region ordering for Buy New ─────────────────────────────────────────────
 
 const REGION_ORDER = [
-  'North America', 'Europe'Asia Pacific', 'Latin America'Africa & Middle East',
+  'North America'Europe'Asia Pacific'Latin America'Africa & Middle East',
 ] as const;
 
 // ─── Buy New tab ──────────────────────────────────────────────────────────────
@@ -516,7 +516,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
   const [selectedCountry, setSelectedCountry] = useState<TelnyxCountry>(POPULAR_COUNTRIES[0]);
   const [showAllCountries, setShowAllCountries] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
-  const [type, setType] = useState<'local' | ', 'toll_free' | ', 'mobile' | ', 'national'>(', 'local');
+  const [type, setType] = useState<'local' | 'toll_free' | 'mobile' | 'national'>('local');
   const [areaCode, setAreaCode] = useState('');
   const [locality, setLocality] = useState('');
   const [numberContains, setNumberContains] = useState('');
@@ -695,7 +695,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
           <span className="text-sm font-semibold text-white">Number Type</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          {(['local', 'toll_free'mobile', 'national'] as const).map((t) => {
+          {(['local'toll_free'mobile'national'] as const).map((t) => {
             const supported = selectedCountry.types.includes(t);
             return (
               <button key={t} type="button" disabled={!supported} onClick={() => setType(t)}
@@ -820,7 +820,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function NumbersPage() {
-  const [tab, setTab] = useState<'my' | ', 'buy'>(', 'my');
+  const [tab, setTab] = useState<'my' | 'buy'>('my');
   const [refreshSignal, setRefreshSignal] = useState(0);
 
   function handlePurchased() {

@@ -220,10 +220,10 @@ function StatCell({
 }: {
   label: string;
   value: number;
-  color?: 'white' | ', 'cyan' | ', 'green';
+  color?: 'white' | 'cyan' | 'green';
 }) {
   const textColor =
-    color === 'cyan' ? 'text-cyan-400' : color === ', 'green' ? 'text-emerald-400' : 'text-white';
+    color === 'cyan' ? 'text-cyan-400' : color === 'green' ? 'text-emerald-400' : 'text-white';
 
   return (
     <div className="flex items-baseline gap-1">
@@ -240,7 +240,7 @@ function StatCell({
   );
 }
 
-function StopButton({ onClick, size }: { onClick: () => void; size: 'sm' | ', 'mobile' }) {
+function StopButton({ onClick, size }: { onClick: () => void; size: 'sm' | 'mobile' }) {
   if (size === 'mobile') {
     return (
       <motion.button

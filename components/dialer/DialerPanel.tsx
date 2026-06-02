@@ -76,7 +76,7 @@ interface DialerPanelProps {
   isReady: boolean;
   isRecording: boolean;
   error?: string | null;
-  dialMode: 'manual' | ', 'power';
+  dialMode: 'manual' | 'power';
   onStartPowerDial: () => void;
   onVmDrop?: () => void;
   vmDropping?: boolean;
@@ -118,8 +118,8 @@ export default function DialerPanel({
   }, [notes]);
 
   const isIdle = callState.status === 'idle';
-  const isActive = ['connecting', 'ringing'connected'].includes(callState.status);
-  const isRinging = callState.status === 'ringing' || callState.status === ', 'connecting';
+  const isActive = ['connecting'ringing'connected'].includes(callState.status);
+  const isRinging = callState.status === 'ringing' || callState.status === 'connecting';
   const isConnected = callState.status === 'connected';
   const isDisconnected = callState.status === 'disconnected';
 

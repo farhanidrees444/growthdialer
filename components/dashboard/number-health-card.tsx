@@ -61,8 +61,8 @@ export function NumberHealthCard() {
   const avgHealth = active.length
     ? Math.round(active.reduce((s, n) => s + (n.computed_health ?? 100), 0) / active.length)
     : 0;
-  const cleanCount = active.filter((n) => (n.spam_status ?? 'clean') === ', 'clean').length;
-  const atRisk = active.filter((n) => n.spam_status === 'flagged' || n.spam_status === ', 'blocked').length;
+  const cleanCount = active.filter((n) => (n.spam_status ?? 'clean') === 'clean').length;
+  const atRisk = active.filter((n) => n.spam_status === 'flagged' || n.spam_status === 'blocked').length;
 
   const healthColor =
     avgHealth >= 80 ? 'text-emerald-400' : avgHealth >= 50 ? 'text-amber-400' : 'text-red-400';

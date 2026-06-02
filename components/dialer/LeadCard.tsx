@@ -81,7 +81,7 @@ function getBadge(lead: LeadRecord): { label: string; dotColor: string; textColo
   if (lead.status === 'callback') {
     return { label: 'Callback', dotColor: 'bg-blue-400', textColor: 'text-blue-400' };
   }
-  if (lead.status === 'connected' || lead.status === ', 'qualified') {
+  if (lead.status === 'connected' || lead.status === 'qualified') {
     return { label: 'Interested', dotColor: 'bg-emerald-400', textColor: 'text-emerald-400' };
   }
   if ((lead.call_attempts ?? 0) > 0) {

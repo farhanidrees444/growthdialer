@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { Search, X, Phone, ChevronRight, Users } from 'lucide-react';
 import type { LeadRecord } from '@/components/dialer/LeadCard';
 
-type LocalFilter = 'Queue' | ', 'Hot' | ', 'Callbacks';
+type LocalFilter = 'Queue' | 'Hot' | 'Callbacks';
 
 interface UpNextQueueProps {
   leads: LeadRecord[];

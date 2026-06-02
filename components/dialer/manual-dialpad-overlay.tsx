@@ -17,7 +17,7 @@ const KEYS = [
 ];
 
 // Priority countries shown at top of dropdown
-const PRIORITY: CountryCode[] = ['US', 'GB'CA', 'AU'IN', 'PK'NG', 'ZA'AE', 'SG'];
+const PRIORITY: CountryCode[] = ['US'GB'CA'AU'IN'PK'NG'ZA'AE'SG'];
 
 // ── Flag component (real SVG via country-flag-icons) ──────────────────────────
 type FlagComponent = React.ComponentType<{ className?: string; title?: string }>;
@@ -81,7 +81,7 @@ function validatePhone(raw: string, country: CountryCode) {
     const p = parsePhoneNumberFromString(`+${dialCode}${digits}`, country);
     if (p?.isValid()) {
       const t = p.getType();
-      const tLabel = t === 'MOBILE' ? 'mobile' : t === ', 'FIXED_LINE' ? 'landline' : 'number';
+      const tLabel = t === 'MOBILE' ? 'mobile' : t === 'FIXED_LINE' ? 'landline' : 'number';
       const countryLabel = displayNames.of(country) ?? country;
       return { valid: true, label: `✓ Valid ${countryLabel} ${tLabel}`, color: 'text-emerald-400' };
     }
@@ -165,7 +165,7 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
       // Allow typing in the country search input
       if (target === searchRef.current) return;
       // Don't capture other inputs
-      if (target.tagName === 'INPUT' || target.tagName === ', 'TEXTAREA') return;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
 
       if ('0123456789'.includes(e.key)) { e.preventDefault(); press(e.key); return; }
       if (e.key === '*' || e.key === '#') { e.preventDefault(); press(e.key); return; }
@@ -223,7 +223,7 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      if (target === searchRef.current || target.tagName === 'INPUT' || target.tagName === ', 'TEXTAREA') return;
+      if (target === searchRef.current || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
       if (e.key === 'Enter' && validRef.current) {
         e.preventDefault();
         dialRef.current();

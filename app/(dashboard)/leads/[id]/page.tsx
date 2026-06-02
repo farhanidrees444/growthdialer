@@ -144,7 +144,7 @@ function InlineField({
             type={type}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === ', 'Escape') cancel(); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel(); }}
             className="flex-1 rounded-lg border border-emerald-500/30 bg-white/[0.04] px-2.5 py-1.5 text-sm text-white outline-none"
             placeholder={placeholder}
           />
@@ -184,8 +184,8 @@ function TimelineItem({ event }: { event: TimelineEvent }) {
 
   const colors: Record<string, string> = {
     call:              'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-    'call.hangup':     ', 'bg-red-500/15 text-red-400 border-red-500/20',
-    'call.answered':   ', 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+    'call.hangup':     'bg-red-500/15 text-red-400 border-red-500/20',
+    'call.answered':   'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
     'recording.saved': 'bg-violet-500/15 text-violet-400 border-violet-500/20',
     note_added:        'bg-blue-500/15 text-blue-400 border-blue-500/20',
     import:            'bg-amber-500/15 text-amber-400 border-amber-500/20',
@@ -550,7 +550,7 @@ export default function LeadDetailPage() {
                 onChange={(e) => patchLead({ status: e.target.value })}
                 className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-emerald-500/25 appearance-none cursor-pointer"
               >
-                {['new',', 'queued',', 'contacted',', 'connected',', 'callback',', 'meeting_booked',', 'not_interested',', 'do_not_call',', 'wrong_number'].map((s) => (
+                {['new','queued','contacted','connected','callback','meeting_booked','not_interested','do_not_call','wrong_number'].map((s) => (
                   <option key={s} value={s} className="bg-[#111] capitalize">{s.replace(/_/g ')}</option>
                 ))}
               </select>

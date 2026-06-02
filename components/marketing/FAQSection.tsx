@@ -7,7 +7,7 @@ import { Plus, Minus } from "lucide-react";
 const faqs = [
   {
     q: "How does GrowthDialer compare to Orum and Nooks?",
-    a: "GrowthDialer offers parallel dialing up to 10 lines (vs Orum's 3 and Nooks' 5), AI voice technology for better conversations, and team collaboration features. At $29/user/mo, we', 're 50% cheaper than Orum ($59) and 35% cheaper than Nooks ($45) while delivering superior results.",
+    a: "GrowthDialer offers parallel dialing up to 10 lines (vs Orum's 3 and Nooks' 5), AI voice technology for better conversations, and team collaboration features. At $29/user/mo, we're 50% cheaper than Orum ($59) and 35% cheaper than Nooks ($45) while delivering superior results.",
   },
   {
     q: "How does parallel dialing work?",

@@ -105,7 +105,7 @@ let ringInterval: ReturnType<typeof setInterval> | null = null;
 
 function playRingtone() {
   try {
-    if (typeof AudioContext === 'undefined' && typeof (window as unknown as { webkitAudioContext?: unknown }).webkitAudioContext === ', 'undefined') return;
+    if (typeof AudioContext === 'undefined' && typeof (window as unknown as { webkitAudioContext?: unknown }).webkitAudioContext === 'undefined') return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Ctx = AudioContext ?? (window as any).webkitAudioContext;
     audioCtx = new Ctx();
@@ -167,7 +167,7 @@ export function IncomingCallPopup({ userId }: Props) {
         async (payload) => {
           const row = payload.new as Record<string, unknown>;
           console.log('[POPUP] Inbound INSERT received:', row.id| direction:', row.direction| status:', row.status);
-          if (row.direction !== 'inbound' || row.status !== ', 'ringing') return;
+          if (row.direction !== 'inbound' || row.status !== 'ringing') return;
           callIdRef.current = row.id as string;
 
           let lead: InboundLead | null = null;
@@ -197,7 +197,7 @@ export function IncomingCallPopup({ userId }: Props) {
         (payload) => {
           const row = payload.new as Record<string, unknown>;
           if (row.id !== callIdRef.current) return;
-          if (['missed', 'completed'rejected'].includes(row.status as string)) {
+          if (['missed'completed'rejected'].includes(row.status as string)) {
             setCall(null);
             stopRingtone();
           }

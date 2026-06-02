@@ -22,7 +22,7 @@ const BAR_COUNT = 28;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type OverlayMode = 'full' | ', 'minimized' | ', 'popout';
+type OverlayMode = 'full' | 'minimized' | 'popout';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -161,7 +161,7 @@ function LiveWaveform({ active }: { active: boolean }) {
 
 // ─── Network Quality Hook ─────────────────────────────────────────────────────
 
-type QualityLevel = 'good' | ', 'fair' | ', 'poor';
+type QualityLevel = 'good' | 'fair' | 'poor';
 
 function useConnectionQuality(): QualityLevel {
   const [quality, setQuality] = useState<QualityLevel>('good');
@@ -177,7 +177,7 @@ function useConnectionQuality(): QualityLevel {
         setQuality('good');
       } else if (effectiveType === '3g' || (rtt !== undefined && rtt >= 150 && rtt < 400)) {
         setQuality('fair');
-      } else if (effectiveType === '2g' || effectiveType === ', 'slow-2g' || (rtt !== undefined && rtt >= 400)) {
+      } else if (effectiveType === '2g' || effectiveType === 'slow-2g' || (rtt !== undefined && rtt >= 400)) {
         setQuality('poor');
       }
     }
@@ -302,7 +302,7 @@ function MinimizedPill({
       <div className="min-w-0 flex-1">
         <p className="truncate text-[11px] font-semibold text-white" style={{ maxWidth: 92 }}>{name}</p>
         <p className="text-[10px] text-slate-500 tabular-nums">
-          {callStatus === 'connecting' ? 'Dialing…' : callStatus === ', 'ringing' ? 'Ringing…' : fmtTime(elapsed)}
+          {callStatus === 'connecting' ? 'Dialing…' : callStatus === 'ringing' ? 'Ringing…' : fmtTime(elapsed)}
         </p>
       </div>
       <button type="button" onClick={onExpand} aria-label="Expand"
@@ -343,7 +343,7 @@ function MobileMinimizedBar({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-white">{name}</p>
         <p className="text-[11px] text-slate-500 tabular-nums">
-          {callStatus === 'connecting' ? 'Dialing…' : callStatus === ', 'ringing' ? 'Ringing…' : fmtTime(elapsed)}
+          {callStatus === 'connecting' ? 'Dialing…' : callStatus === 'ringing' ? 'Ringing…' : fmtTime(elapsed)}
         </p>
       </div>
       <button type="button" onClick={onExpand} aria-label="Expand"
@@ -439,7 +439,7 @@ export default function ActiveCallOverlay() {
       }, 1000);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (callStatus !== 'active' && callStatus !== ', 'held') setElapsed(0);
+      if (callStatus !== 'active' && callStatus !== 'held') setElapsed(0);
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [callStatus, callAnsweredAt]);
@@ -475,7 +475,7 @@ export default function ActiveCallOverlay() {
 
   // ── Document title pulse ───────────────────────────────────────────────────
   useEffect(() => {
-    const isActive = callStatus === 'active' || callStatus === ', 'held';
+    const isActive = callStatus === 'active' || callStatus === 'held';
     if (!isActive) { document.title = 'GrowthDialer'; return; }
     const name = activeLead?.name || activePhone || 'Call';
     const interval = setInterval(() => {
@@ -532,24 +532,24 @@ export default function ActiveCallOverlay() {
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────────
   useEffect(() => {
-    const isVisible = ['connecting', 'ringing'active', 'held'].includes(callStatus);
+    const isVisible = ['connecting'ringing'active'held'].includes(callStatus);
     if (!isVisible) return;
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
       switch (e.key) {
-        case 'Escape': e.preventDefault(); setMode((m) => m === ', 'full' ? 'minimized' : 'full'); break;
-        case 'm': case ', 'M': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); toggleMute(); } break;
-        case 'h': case ', 'H': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); toggleHold(); } break;
-        case 'n': case ', 'N':
+        case 'Escape': e.preventDefault(); setMode((m) => m === 'full' ? 'minimized' : 'full'); break;
+        case 'm': case 'M': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); toggleMute(); } break;
+        case 'h': case 'H': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); toggleHold(); } break;
+        case 'n': case 'N':
           if (!e.metaKey && !e.ctrlKey) {
             e.preventDefault();
             setShowNotes((v) => !v);
             setTimeout(() => notesRef.current?.focus(), 50);
           }
           break;
-        case 'v': case ', 'V': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); void handleVmDrop(); } break;
-        case 'c': case ', 'C': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); void handleRequestCoach(); } break;
+        case 'v': case 'V': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); void handleVmDrop(); } break;
+        case 'c': case 'C': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); void handleRequestCoach(); } break;
       }
     };
     window.addEventListener('keydown', handler);
@@ -577,7 +577,7 @@ export default function ActiveCallOverlay() {
   }, [dragX, dragY]);
 
   // ── Guard ──────────────────────────────────────────────────────────────────
-  const isVisible = ['connecting', 'ringing'active', 'held'].includes(callStatus);
+  const isVisible = ['connecting'ringing'active'held'].includes(callStatus);
   // Hide on /dialer when a lead is selected (dialer page has its own LiveCallStage).
   // For manual calls from dialer (no activeLead), show the floating overlay.
   if (pathname?.startsWith('/dialer') && activeLead) return null;
@@ -586,7 +586,7 @@ export default function ActiveCallOverlay() {
   const displayName = activeLead?.name || activePhone || 'Manual Dial';
   const displayCompany = activeLead?.company || '';
   const displayPhone = activePhone || activeLead?.phone || '';
-  const isCallActive = callStatus === 'active' || callStatus === ', 'held';
+  const isCallActive = callStatus === 'active' || callStatus === 'held';
 
   const statusLabel =
     callStatus === 'connecting' ? 'Dialing…'
@@ -722,7 +722,7 @@ export default function ActiveCallOverlay() {
                   }`} />
                 </div>
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                  {callStatus === 'active' ? 'Live' : callStatus === ', 'held' ? 'Held' : 'Connecting'}
+                  {callStatus === 'active' ? 'Live' : callStatus === 'held' ? 'Held' : 'Connecting'}
                 </span>
               </div>
               {isCallActive && <QualityDot level={quality} />}
@@ -756,7 +756,7 @@ export default function ActiveCallOverlay() {
           {/* ── Lead info + timer ───────────────────────────────────── */}
           <div className="flex items-center gap-4 px-5 py-4">
             <div className="relative shrink-0">
-              {(callStatus === 'ringing' || callStatus === ', 'connecting') && <PulseRings />}
+              {(callStatus === 'ringing' || callStatus === 'connecting') && <PulseRings />}
               {callStatus === 'held' && (
                 <motion.div
                   animate={{ opacity: [0.2, 0.6, 0.2] }}

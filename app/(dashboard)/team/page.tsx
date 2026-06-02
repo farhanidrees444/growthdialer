@@ -58,7 +58,7 @@ function InviteModal({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!open) { setEmail(''); setRole(', 'agent'); setMessage(''); setError(''); }
+    if (!open) { setEmail(''); setRole('agent'); setMessage(''); setError(''); }
   }, [open]);
 
   async function handleSubmit() {
@@ -193,7 +193,7 @@ function ConfirmDialog({
   title: string;
   message: string;
   confirmLabel: string;
-  confirmVariant?: 'danger' | ', 'default';
+  confirmVariant?: 'danger' | 'default';
   onConfirm: () => void;
   onCancel: () => void;
   busy: boolean;
@@ -490,7 +490,7 @@ export default function TeamPage() {
       <ConfirmDialog
         open={!!confirmRemove}
         title="Remove member"
-        message={`Are you sure you want to remove ${confirmRemove?.full_name || confirmRemove?.email || 'this member'}? They', 'll lose access to this workspace.`}
+        message={`Are you sure you want to remove ${confirmRemove?.full_name || confirmRemove?.email || 'this member'}? They'll lose access to this workspace.`}
         confirmLabel="Remove"
         confirmVariant="danger"
         busy={actionBusy}
@@ -501,7 +501,7 @@ export default function TeamPage() {
       <ConfirmDialog
         open={!!confirmRoleChange}
         title="Change role"
-        message={`Change ${confirmRoleChange?.member.full_name || confirmRoleChange?.member.email || 'this member'}', 's role to ${confirmRoleChange?.role ? ROLE_LABELS[confirmRoleChange.role] : ''}?`}
+        message={`Change ${confirmRoleChange?.member.full_name || confirmRoleChange?.member.email || 'this member'}'s role to ${confirmRoleChange?.role ? ROLE_LABELS[confirmRoleChange.role] : ''}?`}
         confirmLabel="Change role"
         busy={actionBusy}
         onConfirm={() => confirmRoleChange && handleRoleChange(confirmRoleChange.member, confirmRoleChange.role)}
@@ -555,7 +555,7 @@ function MemberRow({
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <p className="text-sm font-semibold text-white truncate">
-              {member.full_name || member.email?.split('@')[0] || ', 'Unknown'}
+              {member.full_name || member.email?.split('@')[0] || 'Unknown'}
             </p>
             {isOwnerMember && (
               <Crown className="h-3 w-3 shrink-0 text-amber-400" />

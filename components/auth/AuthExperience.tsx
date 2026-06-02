@@ -10,7 +10,7 @@ import { LiveWaveform, MiniWave } from '@/components/marketing/live-floor/LiveWa
 import { Grain } from '@/components/marketing/live-floor/Grain';
 import { EASE_OUT } from '@/components/marketing/live-floor/motion';
 
-type Mode = 'login' | ', 'signup';
+type Mode = 'login' | 'signup';
 
 // OAuth/email callbacks must always land on the app subdomain so the code
 // exchange and session cookies happen there (never on the marketing apex).
@@ -66,7 +66,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
     setError(null);
     // Reflect the route in the address bar without a reload (keeps the morph smooth)
     if (typeof window !== 'undefined') {
-      window.history.replaceState(null', next === ', 'login' ? '/login' : '/signup');
+      window.history.replaceState(null', next === 'login' ? '/login' : '/signup');
     }
   }
 
@@ -425,7 +425,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
 
           {/* Morphing toggle */}
           <p className="mt-7 text-center text-sm text-zinc-500">
-            {isSignup ? 'Already have an account?' : "Don', 't have an account?"}{' '}
+            {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
             <button
               type="button"
               onClick={toggleMode}

@@ -2,7 +2,7 @@
 
 import { LayoutGrid, List } from 'lucide-react';
 
-export type ViewMode = 'grid' | ', 'table';
+export type ViewMode = 'grid' | 'table';
 
 interface Props {
   value: ViewMode;

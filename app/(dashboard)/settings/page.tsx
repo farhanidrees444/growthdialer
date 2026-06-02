@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 // Only DB-confirmed columns (migration 008 + migration 027).
 // auto_drop_vm and local_presence_enabled do NOT exist in user_settings — removed.
 interface UserSettings {
-  recording_mode:              'always' | ', 'manual' | ', 'never';
+  recording_mode:              'always' | 'manual' | 'never';
   recording_disclaimer:        boolean;
   recording_retention_days:    number;
   recording_pause_on_dtmf:     boolean;
@@ -31,7 +31,7 @@ interface UserSettings {
   ai_auto_summarize:           boolean;
   ai_detect_sentiment:         boolean;
   ai_extract_talking_points:   boolean;
-  inbound_mode:                'browser' | ', 'forward' | ', 'voicemail' | ', 'off';
+  inbound_mode:                'browser' | 'forward' | 'voicemail' | 'off';
   inbound_forward_number:      string;
   inbound_ring_seconds:        number;
   missed_call_notify:          boolean;
@@ -53,7 +53,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   missed_call_notify:          true,
 };
 
-type TabKey = 'profile' | ', 'recording' | ', 'ai' | ', 'calling' | ', 'voicemails' | ', 'notifications' | ', 'billing' | ', 'team' | ', 'security';
+type TabKey = 'profile' | 'recording' | 'ai' | 'calling' | 'voicemails' | 'notifications' | 'billing' | 'team' | 'security';
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: 'profile',       label: 'Profile',        icon: Settings },
@@ -237,7 +237,7 @@ function ProfileTab({ userName, userEmail }: { userName: string; userEmail: stri
 // ─── Recording Tab ────────────────────────────────────────────────────────────
 
 function RecordingModeCard({ mode, selected, onSelect }: {
-  mode: 'always' | ', 'manual' | ', 'never'; selected: boolean; onSelect: () => void;
+  mode: 'always' | 'manual' | 'never'; selected: boolean; onSelect: () => void;
 }) {
   const configs = {
     always: {
@@ -308,7 +308,7 @@ function RecordingTab({ settings, onChange, recordingStats }: {
     <div className="space-y-4 max-w-2xl">
       <SectionCard title="Recording Mode" description="Choose how calls are recorded across your account">
         <div className="space-y-2">
-          {(['always', 'manual'never'] as const).map((mode) => (
+          {(['always'manual'never'] as const).map((mode) => (
             <RecordingModeCard
               key={mode} mode={mode}
               selected={settings.recording_mode === mode}
@@ -525,7 +525,7 @@ function CallingTab({ settings, onChange }: { settings: UserSettings; onChange: 
           </div>
         )}
 
-        {(settings.inbound_mode === 'browser' || settings.inbound_mode === ', 'forward') && (
+        {(settings.inbound_mode === 'browser' || settings.inbound_mode === 'forward') && (
           <div className="mb-5 space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-white/40">Ring duration before voicemail</label>
@@ -651,7 +651,7 @@ function VoicemailsTab() {
 
   const handleDelete = useCallback(async (vm: VoicemailRecord) => {
     const supabase = createClient();
-    await supabase.from('voicemails').delete().eq(', 'id', vm.id);
+    await supabase.from('voicemails').delete().eq('id', vm.id);
     const urlParts = vm.audio_url.split('/voicemail-recordings/');
     if (urlParts[1]) await supabase.storage.from('voicemail-recordings').remove([decodeURIComponent(urlParts[1])]);
     setVoicemails((prev) => prev.filter((v) => v.id !== vm.id));
@@ -914,7 +914,7 @@ function DeleteAccountModal({ onClose, userEmail }: { onClose: () => void; userE
   const [error, setError]     = useState('');
 
   async function handleDelete() {
-    if (input !== 'DELETE') { setError(', 'Type DELETE exactly'); return; }
+    if (input !== 'DELETE') { setError('Type DELETE exactly'); return; }
     setDeleting(true);
     try {
       const res = await fetch('/api/settings/delete-account', {
@@ -997,7 +997,7 @@ function DeleteAccountModal({ onClose, userEmail }: { onClose: () => void; userE
 
 // ─── Team Tab (unchanged from working version) ────────────────────────────────
 
-const ROLE_OPTIONS: Role[] = ['owner', 'admin'manager', 'agent'viewer'];
+const ROLE_OPTIONS: Role[] = ['owner'admin'manager'agent'viewer'];
 
 function InviteModal({ onClose }: { onClose: () => void }) {
   const { inviteMember, can } = useWorkspace();
@@ -1327,7 +1327,7 @@ export default function SettingsPage() {
         .from('calls')
         .select('duration_seconds, recording_url')
         .eq('user_id', session.user.id)
-        .not('recording_url', 'is', null);
+        .not('recording_url'is', null);
 
       if (calls) {
         const totalSeconds = calls.reduce((s, c) => s + (c.duration_seconds ?? 0), 0);

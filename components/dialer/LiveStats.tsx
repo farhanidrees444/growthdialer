@@ -11,7 +11,7 @@ interface LiveStatsProps {
 }
 
 const STATS: Array<{
-  key: 'calls' | ', 'connects' | ', 'meetings' | ', 'connectRate';
+  key: 'calls' | 'connects' | 'meetings' | 'connectRate';
   label: string;
   icon: React.ElementType;
   color: string;

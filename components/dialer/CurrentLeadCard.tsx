@@ -22,8 +22,8 @@ import {
 import type { LeadRecord } from '@/components/dialer/LeadCard';
 
 interface CallState {
-  status: 'idle' | ', 'connecting' | ', 'ringing' | ', 'connected' | ', 'disconnected';
-  direction: 'inbound' | ', 'outbound' | null;
+  status: 'idle' | 'connecting' | 'ringing' | 'connected' | 'disconnected';
+  direction: 'inbound' | 'outbound' | null;
   callSid: string | null;
   duration: number;
   isMuted: boolean;
@@ -103,11 +103,11 @@ function statusLabel(status: LeadRecord['status']): string {
 }
 
 function statusColor(status: LeadRecord['status']): string {
-  if (status === 'meeting_booked') return ', 'border-emerald-400/40 bg-emerald-500/10 text-emerald-300';
-  if (status === 'callback') return ', 'border-amber-400/40 bg-amber-500/10 text-amber-300';
-  if (status === 'not_interested' || status === ', 'do_not_call') return ', 'border-red-400/40 bg-red-500/10 text-red-300';
-  if (status === 'connected') return ', 'border-blue-400/40 bg-blue-500/10 text-blue-300';
-  if (status === 'contacted') return ', 'border-slate-400/40 bg-slate-500/10 text-slate-400';
+  if (status === 'meeting_booked') return 'border-emerald-400/40 bg-emerald-500/10 text-emerald-300';
+  if (status === 'callback') return 'border-amber-400/40 bg-amber-500/10 text-amber-300';
+  if (status === 'not_interested' || status === 'do_not_call') return 'border-red-400/40 bg-red-500/10 text-red-300';
+  if (status === 'connected') return 'border-blue-400/40 bg-blue-500/10 text-blue-300';
+  if (status === 'contacted') return 'border-slate-400/40 bg-slate-500/10 text-slate-400';
   return 'border-white/10 bg-white/[0.03] text-slate-400';
 }
 
@@ -158,8 +158,8 @@ export default function CurrentLeadCard({
   useEffect(() => { setLocalNotes(notes); }, [notes]);
 
   const isIdle = callState.status === 'idle';
-  const isActive = ['connecting', 'ringing'connected'].includes(callState.status);
-  const isRinging = callState.status === 'connecting' || callState.status === ', 'ringing';
+  const isActive = ['connecting'ringing'connected'].includes(callState.status);
+  const isRinging = callState.status === 'connecting' || callState.status === 'ringing';
   const isConnected = callState.status === 'connected';
   const isDisconnected = callState.status === 'disconnected';
   const isHot = (selectedLead?.tags ?? []).includes('hot');

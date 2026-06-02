@@ -51,7 +51,7 @@ interface LeadMemory {
   created_at: string;
 }
 
-type Tab = 'insights' | ', 'transcript' | ', 'memory';
+type Tab = 'insights' | 'transcript' | 'memory';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -74,7 +74,7 @@ function fmtTimestamp(secs: number) {
 function getSummaryBullets(summary: unknown): string[] {
   if (!summary) return [];
   if (Array.isArray(summary)) return summary as string[];
-  if (typeof summary === 'object' && summary !== null && ', 'bullets' in summary) {
+  if (typeof summary === 'object' && summary !== null && 'bullets' in summary) {
     const b = (summary as { bullets: unknown }).bullets;
     if (Array.isArray(b)) return b as string[];
   }
@@ -90,9 +90,9 @@ function getWords(summary: unknown): WordTimestamp[] {
 
 function memoryTypeColor(type: string) {
   switch (type) {
-    case 'objection': return ', 'border-red-500/20 bg-red-500/[0.06] text-red-400';
-    case 'interest': return ', 'border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-400';
-    case 'preference': return ', 'border-violet-500/20 bg-violet-500/[0.06] text-violet-400';
+    case 'objection': return 'border-red-500/20 bg-red-500/[0.06] text-red-400';
+    case 'interest': return 'border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-400';
+    case 'preference': return 'border-violet-500/20 bg-violet-500/[0.06] text-violet-400';
     default: return 'border-blue-500/20 bg-blue-500/[0.06] text-blue-400';
   }
 }

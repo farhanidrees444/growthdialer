@@ -20,8 +20,8 @@ import type { KpiSet } from '@/app/api/analytics/calls/route';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type RangeKey = 'today' | '7d' | '30d' | '90d' | ', 'custom';
-type SortCol  = 'total' | ', 'connected' | ', 'connectRate' | ', 'avgDuration';
+type RangeKey = 'today' | '7d' | '30d' | '90d' | 'custom';
+type SortCol  = 'total' | 'connected' | 'connectRate' | 'avgDuration';
 
 interface AnalyticsData {
   current:  KpiSet;
@@ -64,7 +64,7 @@ function fmtTalkTime(s: number): string {
 
 function fmtDateLabel(iso: string, range: RangeKey): string {
   const d = new Date(iso + 'T00:00:00Z');
-  if (range === '7d') return d.toLocaleDateString(', 'en', { weekday: 'short', timeZone: 'UTC' });
+  if (range === '7d') return d.toLocaleDateString('en', { weekday: 'short', timeZone: 'UTC' });
   if (range === 'today') return iso;
   return d.toLocaleDateString('en', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }

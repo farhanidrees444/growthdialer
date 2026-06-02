@@ -17,7 +17,7 @@ export default function TestDialerPage() {
   const [connection, setConnection] = useState<any>(null);
   const [callState, setCallState] = useState({
     status: 'idle', // idle, connecting, ringing, connected, disconnected
-    direction: null as 'inbound' | ', 'outbound' | null,
+    direction: null as 'inbound' | 'outbound' | null,
     callSid: null as string | null,
     duration: 0,
     isMuted: false,

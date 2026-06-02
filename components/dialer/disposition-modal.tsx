@@ -16,9 +16,9 @@ interface DispositionModalProps {
 }
 
 const ORDERED: DispositionType[] = [
-  'interested', 'meeting_booked'callback',
-  'voicemail', 'gatekeeper'not_interested',
-  'wrong_number', 'dnc',
+  'interested'meeting_booked'callback',
+  'voicemail'gatekeeper'not_interested',
+  'wrong_number'dnc',
 ];
 
 const COLOR_CLASS: Record<string, string> = {
@@ -74,7 +74,7 @@ export function DispositionModal({ open, lead, callDuration, onSave, onClose }: 
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === ', 'TEXTAREA') return;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
       const digit = parseInt(e.key, 10);
       if (digit >= 1 && digit <= 8) {
         e.preventDefault();

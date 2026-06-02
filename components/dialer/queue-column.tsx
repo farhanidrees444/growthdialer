@@ -11,8 +11,8 @@ import { QueueLeadCard } from './queue-lead-card';
 import { getLocalTime } from '@/lib/utils/timezone';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
 
-type QueueTab = 'queue' | ', 'hot' | ', 'callbacks';
-type SortKey = 'priority' | ', 'recent' | ', 'az' | ', 'tz_safe';
+type QueueTab = 'queue' | 'hot' | 'callbacks';
+type SortKey = 'priority' | 'recent' | 'az' | 'tz_safe';
 
 interface FilterState {
   hasPhone: boolean;

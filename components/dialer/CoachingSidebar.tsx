@@ -28,7 +28,7 @@ interface CoachingSidebarProps {
   refreshKey?: number;
 }
 
-type SaveState = 'idle' | ', 'saving' | ', 'saved';
+type SaveState = 'idle' | 'saving' | 'saved';
 
 function computeDuration(answered_at: string | null, ended_at: string | null): string {
   if (!answered_at || !ended_at) return '—';
@@ -49,10 +49,10 @@ function formatDate(iso: string): string {
 }
 
 function StatusIcon({ status }: { status: string }) {
-  if (status === 'completed' || status === ', 'answered') {
+  if (status === 'completed' || status === 'answered') {
     return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />;
   }
-  if (status === 'no-answer' || status === ', 'no_answer' || status === ', 'busy') {
+  if (status === 'no-answer' || status === 'no_answer' || status === 'busy') {
     return <PhoneMissed className="h-3.5 w-3.5 text-amber-400" />;
   }
   return <PhoneOff className="h-3.5 w-3.5 text-slate-500" />;

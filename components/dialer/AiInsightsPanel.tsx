@@ -50,24 +50,24 @@ function formatDate(iso: string): string {
 
 function dispositionIcon(disp: string | null) {
   if (!disp || disp === 'no_answer') return <PhoneMissed className="h-3.5 w-3.5 text-slate-500" />;
-  if (disp === 'meeting_booked' || disp === ', 'interested') return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />;
+  if (disp === 'meeting_booked' || disp === 'interested') return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />;
   return <Phone className="h-3.5 w-3.5 text-slate-500" />;
 }
 
 function memoryTypeDot(type: string): string {
   switch (type) {
-    case 'objection': return ', 'bg-red-400/60';
-    case 'interest': return ', 'bg-emerald-400/60';
-    case 'preference': return ', 'bg-violet-400/60';
+    case 'objection': return 'bg-red-400/60';
+    case 'interest': return 'bg-emerald-400/60';
+    case 'preference': return 'bg-violet-400/60';
     default: return 'bg-blue-400/60';
   }
 }
 
 function memoryTypeColor(type: string): string {
   switch (type) {
-    case 'objection': return ', 'text-red-400';
-    case 'interest': return ', 'text-emerald-400';
-    case 'preference': return ', 'text-violet-400';
+    case 'objection': return 'text-red-400';
+    case 'interest': return 'text-emerald-400';
+    case 'preference': return 'text-violet-400';
     default: return 'text-blue-400';
   }
 }
@@ -129,7 +129,7 @@ export default function AiInsightsPanel({ lead, notes, refreshKey = 0 }: AiInsig
   const aiSummaryBullets: string[] = (() => {
     if (!latestAI?.summary) return [];
     if (Array.isArray(latestAI.summary)) return latestAI.summary.slice(0, 2);
-    if (typeof latestAI.summary === 'object' && latestAI.summary !== null && ', 'bullets' in latestAI.summary) {
+    if (typeof latestAI.summary === 'object' && latestAI.summary !== null && 'bullets' in latestAI.summary) {
       const b = (latestAI.summary as { bullets: unknown }).bullets;
       if (Array.isArray(b)) return b.slice(0, 2);
     }
@@ -265,8 +265,8 @@ export default function AiInsightsPanel({ lead, notes, refreshKey = 0 }: AiInsig
             <div className="mt-2.5 flex items-center gap-1.5">
               <span className="text-[10px] text-slate-600">Sentiment:</span>
               {sentimentHistory.map((s, i) => {
-                const Icon = s === 'positive' ? TrendingUp : s === ', 'negative' ? TrendingDown : Minus;
-                const color = s === 'positive' ? 'text-emerald-400' : s === ', 'negative' ? 'text-red-400' : 'text-slate-500';
+                const Icon = s === 'positive' ? TrendingUp : s === 'negative' ? TrendingDown : Minus;
+                const color = s === 'positive' ? 'text-emerald-400' : s === 'negative' ? 'text-red-400' : 'text-slate-500';
                 return <Icon key={i} className={`h-3 w-3 ${color}`} />;
               })}
             </div>

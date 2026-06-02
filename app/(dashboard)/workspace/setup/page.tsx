@@ -16,7 +16,7 @@ const PLAN_OPTIONS = [
     price: '$0',
     period: '/mo',
     seats: '1 seat',
-    features: ['1 agent', 'Power dialer'Call recordings', 'Basic analytics'],
+    features: ['1 agent'Power dialer'Call recordings'Basic analytics'],
     gradient: 'from-slate-600/20 to-slate-700/20',
     border: 'border-white/[0.08]',
     badge: null,
@@ -27,7 +27,7 @@ const PLAN_OPTIONS = [
     price: '$49',
     period: '/mo',
     seats: 'Up to 3 seats',
-    features: ['3 agents', 'AI brief + coaching'Team analytics', 'Priority support'],
+    features: ['3 agents'AI brief + coaching'Team analytics'Priority support'],
     gradient: 'from-violet-600/20 to-blue-600/20',
     border: 'border-violet-500/30',
     badge: 'Most Popular',
@@ -38,7 +38,7 @@ const PLAN_OPTIONS = [
     price: '$99',
     period: '/mo',
     seats: 'Up to 10 seats',
-    features: ['10 agents', 'Full coaching suite'Workspace analytics', 'Custom integrations'],
+    features: ['10 agents'Full coaching suite'Workspace analytics'Custom integrations'],
     gradient: 'from-emerald-600/20 to-teal-600/20',
     border: 'border-emerald-500/30',
     badge: null,
@@ -50,7 +50,7 @@ export default function WorkspaceSetupPage() {
   const { refreshWorkspaces, setCurrentWorkspace } = useWorkspace();
 
   const [name, setName] = useState('');
-  const [plan, setPlan] = useState<'free' | ', 'pro' | ', 'team'>(', 'free');
+  const [plan, setPlan] = useState<'free' | 'pro' | 'team'>('free');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 

@@ -4,7 +4,7 @@ import { MessageSquare, ShieldCheck, TrendingUp } from 'lucide-react';
 interface BattleCard {
   title: string;
   response: string;
-  variant: 'danger' | ', 'info' | ', 'strategy';
+  variant: 'danger' | 'info' | 'strategy';
 }
 
 const battlecards: BattleCard[] = [

@@ -5,8 +5,8 @@ import { motion } from 'framer-motion';
 import { X, Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-type Format = 'csv' | ', 'json';
-type Scope = 'all' | ', 'selected' | ', 'filtered';
+type Format = 'csv' | 'json';
+type Scope = 'all' | 'selected' | 'filtered';
 
 interface Props {
   onClose: () => void;
@@ -103,7 +103,7 @@ export function LeadExportModal({ onClose, selectedCount, filteredCount, selecte
           <div>
             <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-slate-500">Format</label>
             <div className="grid grid-cols-2 gap-2">
-              {(['csv', 'json'] as Format[]).map((f) => (
+              {(['csv'json'] as Format[]).map((f) => (
                 <button key={f} type="button" onClick={() => setFormat(f)}
                   className={[
                     'rounded-xl border py-2.5 text-sm font-semibold uppercase tracking-wide transition',

@@ -87,10 +87,10 @@ function SummaryCell({
 }: {
   label: string;
   value: number;
-  color?: 'white' | ', 'cyan' | ', 'green';
+  color?: 'white' | 'cyan' | 'green';
 }) {
   const textColor =
-    color === 'cyan' ? 'text-cyan-400' : color === ', 'green' ? 'text-emerald-400' : 'text-white';
+    color === 'cyan' ? 'text-cyan-400' : color === 'green' ? 'text-emerald-400' : 'text-white';
   return (
     <div className="flex flex-col items-center gap-0.5 p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]">
       <span className={`text-2xl font-light tabular-nums ${textColor}`}>{value}</span>
@@ -185,7 +185,7 @@ export default function DialerPage() {
       .from('purchased_numbers')
       .select('phone_number')
       .eq('user_id', userId)
-      .eq('status', 'active')
+      .eq('status'active')
       .order('is_default', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -253,7 +253,7 @@ export default function DialerPage() {
     const prev = prevCallStatus.current;
     prevCallStatus.current = callStatus;
 
-    if ((prev === 'connecting' || prev === ', 'ringing') && callStatus === ', 'active') {
+    if ((prev === 'connecting' || prev === 'ringing') && callStatus === 'active') {
       powerDialerRef.current.onCallStarted();
       // Update call IDs now that DB record exists (mode already 'live' from initiateCall)
       if (selectedLead) {
@@ -261,8 +261,8 @@ export default function DialerPage() {
       }
     }
 
-    if ((prev === 'active' || prev === ', 'connecting' || prev === ', 'ringing') &&
-        (callStatus === 'ended' || callStatus === ', 'idle')) {
+    if ((prev === 'active' || prev === 'connecting' || prev === 'ringing') &&
+        (callStatus === 'ended' || callStatus === 'idle')) {
       powerDialerRef.current.onCallEnd();
       endCall();
       const seconds = callTimerRef.current.seconds;
@@ -390,7 +390,7 @@ export default function DialerPage() {
 
     // Power dial: advance to next lead automatically
     if (powerDialer.isActive && selectedLead) {
-      const wasConnected = ['interested',', 'meeting_booked',', 'callback',', 'gatekeeper'].includes(disposition);
+      const wasConnected = ['interested','meeting_booked','callback','gatekeeper'].includes(disposition);
       const wasMeeting = disposition === 'meeting_booked';
       powerDialer.onDispositionSaved(disposition, wasConnected, wasMeeting);
     }
@@ -401,7 +401,7 @@ export default function DialerPage() {
     if (!selectedLead) return;
     const supabase = createClient();
     const newScore = (selectedLead.ai_score ?? 0) >= 70 ? 50 : 80;
-    await supabase.from('leads').update({ ai_score: newScore }).eq(', 'id', selectedLead.id);
+    await supabase.from('leads').update({ ai_score: newScore }).eq('id', selectedLead.id);
     selectLead({ ...selectedLead, ai_score: newScore });
     toast.success(newScore >= 70 ? 'Marked as hot' : 'Removed hot status');
   }, [selectedLead, selectLead]);
@@ -410,7 +410,7 @@ export default function DialerPage() {
     if (!selectedLead) return;
     if (!confirm(`Mark ${selectedLead.name} as Do Not Call?`)) return;
     const supabase = createClient();
-    await supabase.from('leads').update({ dnc: true, status: 'do_not_call' }).eq(', 'id', selectedLead.id);
+    await supabase.from('leads').update({ dnc: true, status: 'do_not_call' }).eq('id', selectedLead.id);
     selectLead(null);
     toast.success('Marked as DNC');
   }, [selectedLead, selectLead]);
@@ -454,8 +454,8 @@ export default function DialerPage() {
     onOpenKeypad: () => setDtmfOpen((p) => !p),
     onDisposition: (idx) => {
       const disps: DispositionType[] = [
-        'interested',', 'meeting_booked',', 'callback',', 'voicemail',
-        'gatekeeper',', 'not_interested',', 'wrong_number',', 'dnc',
+        'interested','meeting_booked','callback','voicemail',
+        'gatekeeper','not_interested','wrong_number','dnc',
       ];
       if (dispositionOpen && disps[idx]) handleDispositionSave(disps[idx]);
     },
@@ -463,7 +463,7 @@ export default function DialerPage() {
   });
 
   const isLive = mode === 'live';
-  const showAiPanel = mode === 'preview' || mode === ', 'live';
+  const showAiPanel = mode === 'preview' || mode === 'live';
 
   return (
     <div className="flex flex-col h-full bg-zinc-950 overflow-hidden" aria-label="AI Dialer">

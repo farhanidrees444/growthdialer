@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   keywords: "orum alternative, growthdialer vs orum, orum pricing, sales ai comparison, affordable ai sales",
   openGraph: {
     title: "GrowthDialer vs Orum — 88% Cheaper for AI Sales",
-    description: "See why teams move from Orum's premium pricing to GrowthDialer', 's autonomous AI and save 88%.",
+    description: "See why teams move from Orum's premium pricing to GrowthDialer's autonomous AI and save 88%.",
     type: "website",
   },
 };

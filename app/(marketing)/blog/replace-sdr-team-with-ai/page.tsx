@@ -211,7 +211,7 @@ export default function ReplaceSDRTeamWithAI() {
 
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-6">
             <h3 className="font-bold text-yellow-400 mb-2">⚠️ The Honest Truth</h3>
-            <p className="text-foreground/80">These numbers are real, but they don't capture everything. An SDR brings contextual thinking, relationship building, and decision-making that AI still struggles with. The best approach isn', 't pure replacement — it's strategic replacement focused on high-volume objection handling and meeting booking.</p>
+            <p className="text-foreground/80">These numbers are real, but they don't capture everything. An SDR brings contextual thinking, relationship building, and decision-making that AI still struggles with. The best approach isn't pure replacement — it's strategic replacement focused on high-volume objection handling and meeting booking.</p>
           </div>
         </section>
 
@@ -672,7 +672,7 @@ export default function ReplaceSDRTeamWithAI() {
 
           <div className="bg-primary/10 border border-primary/30 rounded-lg p-6 mt-8">
             <h3 className="font-bold text-primary mb-2">💡 Pro Tip</h3>
-            <p className="text-foreground/80">The key to smooth transition: communicate early and honestly. Tell your team "We're deploying AI to handle 80% of the grunt work so you can focus on what you', 're actually good at — building relationships and closing deals." Good SDRs see this as a promotion, not a threat.</p>
+            <p className="text-foreground/80">The key to smooth transition: communicate early and honestly. Tell your team "We're deploying AI to handle 80% of the grunt work so you can focus on what you're actually good at — building relationships and closing deals." Good SDRs see this as a promotion, not a threat.</p>
           </div>
         </section>
 
@@ -688,15 +688,15 @@ export default function ReplaceSDRTeamWithAI() {
               },
               {
                 obj: "Our prospects will know they're talking to AI",
-                answer: "In 2026, 68% of B2B buyers expect they might reach AI. The real question is: does it matter? Most prospects don't care if it', 's AI, they care if (1) you sound professional and (2) you're offering real value. AI agents do both better than struggling SDRs. Plus, once you reach a decision maker, handoff to your human sales team — they take the relationship from there."
+                answer: "In 2026, 68% of B2B buyers expect they might reach AI. The real question is: does it matter? Most prospects don't care if it's AI, they care if (1) you sound professional and (2) you're offering real value. AI agents do both better than struggling SDRs. Plus, once you reach a decision maker, handoff to your human sales team — they take the relationship from there."
               },
               {
                 obj: "AI won't understand our complex sales process",
-                answer: "You're right. That', 's why implementation takes 4-8 weeks, not 4-8 days. The transition plan builds in extensive configuration: define your qualification criteria, create multiple objection scripts, test against real prospect lists. AI learns your rules and follows them perfectly. No SDR does that."
+                answer: "You're right. That's why implementation takes 4-8 weeks, not 4-8 days. The transition plan builds in extensive configuration: define your qualification criteria, create multiple objection scripts, test against real prospect lists. AI learns your rules and follows them perfectly. No SDR does that."
               },
               {
                 obj: "We'll lose competitive advantage if we replace SDRs",
-                answer: "The opposite is true. Your competitors are getting faster at sales development. If you're still using pure human SDRs in 2026, you', 're 40-60% slower than competition using AI. You lose advantage by staying behind, not by moving forward."
+                answer: "The opposite is true. Your competitors are getting faster at sales development. If you're still using pure human SDRs in 2026, you're 40-60% slower than competition using AI. You lose advantage by staying behind, not by moving forward."
               },
               {
                 obj: "What if the AI makes mistakes or says something wrong?",
@@ -798,7 +798,7 @@ export default function ReplaceSDRTeamWithAI() {
         <div className="text-center">
           <h2 className="text-3xl font-bold mb-4">The Future of Sales Development Is AI</h2>
           <p className="text-foreground/80 mb-8 max-w-2xl mx-auto">
-            The question isn't whether to replace SDRs with AI. It', 's when — and whether you'll do it before your competitors do.
+            The question isn't whether to replace SDRs with AI. It's when — and whether you'll do it before your competitors do.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="https://app.growthdialer.com/signup">
