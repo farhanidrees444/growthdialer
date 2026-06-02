@@ -7,6 +7,13 @@ import { EcosystemFlow } from '@/components/marketing/live-floor/EcosystemFlow';
 import { Features } from '@/components/marketing/live-floor/Features';
 import { ConversationIntelligence } from '@/components/marketing/live-floor/ConversationIntelligence';
 import { FinalCTA } from '@/components/marketing/live-floor/FinalCTA';
+import { SocialProof } from '@/components/marketing/home/SocialProof';
+import { DashboardPreview } from '@/components/marketing/home/DashboardPreview';
+import { FeatureSections } from '@/components/marketing/home/FeatureSections';
+import { IntegrationsShowcase } from '@/components/marketing/home/IntegrationsShowcase';
+import { StatsStrip } from '@/components/marketing/home/StatsStrip';
+import { EarlyAccess } from '@/components/marketing/home/EarlyAccess';
+import { HomeFAQ } from '@/components/marketing/home/HomeFAQ';
 
 // "The Live Floor" — the homepage is a living dialer that demonstrates itself
 // through real-time motion and a scroll-driven story.
@@ -18,10 +25,17 @@ export default function LandingPage() {
         <Nav />
         <main className="relative z-[2]">
           <Hero />
+          <SocialProof />
+          <DashboardPreview />
           <CallLifecycle />
           <EcosystemFlow />
           <Features />
+          <FeatureSections />
           <ConversationIntelligence />
+          <IntegrationsShowcase />
+          <StatsStrip />
+          <EarlyAccess />
+          <HomeFAQ />
           <FinalCTA />
         </main>
       </div>
