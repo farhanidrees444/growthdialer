@@ -148,6 +148,7 @@ function BorderBeamCard({ children }: { children: React.ReactNode }) {
       {/* Beam */}
       <motion.div
         aria-hidden
+        suppressHydrationWarning
         className="absolute inset-0 rounded-2xl"
         style={{
           background:

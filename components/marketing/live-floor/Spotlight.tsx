@@ -22,9 +22,14 @@ export function Spotlight({ color = '#8B5CF6', size = 380, radiusClass = 'rounde
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const [p, setP] = useState({ x: 0, y: 0, on: false });
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (reduce) return;
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (reduce || !mounted) return;
     const el = ref.current?.parentElement;
     if (!el) return;
     const move = (e: MouseEvent) => {
@@ -38,14 +43,16 @@ export function Spotlight({ color = '#8B5CF6', size = 380, radiusClass = 'rounde
       el.removeEventListener('mousemove', move);
       el.removeEventListener('mouseleave', leave);
     };
-  }, [reduce]);
+  }, [reduce, mounted]);
 
   if (reduce) return null;
+  if (!mounted) return null;
 
   return (
     <div
       ref={ref}
       aria-hidden
+      suppressHydrationWarning
       className={`pointer-events-none absolute inset-0 ${radiusClass} transition-opacity duration-500`}
       style={{
         // Sits above the card surface but below content (cards establish a

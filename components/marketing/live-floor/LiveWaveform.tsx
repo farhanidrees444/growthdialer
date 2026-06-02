@@ -1,6 +1,7 @@
 'use client';
 
 import { motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
 interface LiveWaveformProps {
   bars?: number;
@@ -84,13 +85,33 @@ export function LiveWaveform({
 /** A single mini-waveform glyph for inline/label use. */
 export function MiniWave({ color = '#06B6D4', className = '' }: { color?: string; className?: string }) {
   const reduce = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  if (!mounted) {
+    return (
+      <div className={`flex items-center gap-[2px] ${className}`} aria-hidden>
+        {[0.4, 0.9, 0.6, 1, 0.5, 0.8, 0.35].map((h, i) => (
+          <span
+            key={i}
+            className="w-[2px] rounded-full"
+            style={{ background: color, height: '14px', scaleY: h }}
+          />
+        ))}
+      </div>
+    );
+  }
+  
   return (
     <div className={`flex items-center gap-[2px] ${className}`} aria-hidden>
       {[0.4, 0.9, 0.6, 1, 0.5, 0.8, 0.35].map((h, i) => (
         <motion.span
           key={i}
           className="w-[2px] rounded-full"
-          style={{ background: color, height: 14 }}
+          style={{ background: color, height: '14px' }}
           initial={reduce ? false : { scaleY: h * 0.4 }}
           animate={reduce ? { scaleY: h } : { scaleY: [h * 0.4, h, h * 0.4] }}
           transition={reduce ? undefined : { duration: 0.8 + i * 0.07, repeat: Infinity, ease: 'easeInOut' }}
