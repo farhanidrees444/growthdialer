@@ -200,7 +200,7 @@ function AnalyticsVisual() {
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: i * 0.07, ease: EASE_OUT }}
             className="flex-1 rounded-t-md"
-            style={{ background: i === 5 ? 'linear-gradient(to top,hsl(258,90%,66%),hsl(186,100%,42%))'' : 'rgba(255,255,255,0.08)' }}
+            style={{ background: i === 5 ? 'linear-gradient(to top,hsl(258,90%,66%),hsl(186,100%,42%))' : 'rgba(255,255,255,0.08)' }}
           />
         ))}
       </div>

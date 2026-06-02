@@ -39,7 +39,7 @@ export function Nav() {
       <div
         className={`mx-auto flex h-16 max-w-7xl items-center justify-between px-5 transition-all duration-500 lg:px-8 ${
           scrolled
-            ? 'border-b border-white/[0.06] bg-[hsl(200,50%,3%)']/80 backdrop-blur-xl'
+            ? 'border-b border-white/[0.06] bg-[hsl(200,50%,3%)]/80 backdrop-blur-xl'
             : 'border-b border-transparent'
         }`}
       >

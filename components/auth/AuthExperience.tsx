@@ -42,7 +42,7 @@ function getPasswordStrength(password: string) {
 }
 
 const inputClass =
-  'w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-[hsl(200,7%,96%)] placeholder:text-zinc-600 outline-none transition focus:border-[hsl(258,90%,66%)]/50 focus:ring-2 focus:ring-[hsl(258,90%,66%)']/20';
+  'w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-[hsl(200,7%,96%)] placeholder:text-zinc-600 outline-none transition focus:border-[hsl(258,90%,66%)]/50 focus:ring-2 focus:ring-[hsl(258,90%,66%)]/20';
 
 export function AuthExperience({ initialMode }: { initialMode: Mode }) {
   const router = useRouter();
