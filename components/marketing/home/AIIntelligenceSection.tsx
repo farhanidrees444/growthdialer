@@ -1,15 +1,16 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { SiOpenai, SiMicrosoft, SiGoogle, SiPython, SiTwilio, SiZapier } from 'react-icons/si';
+import { SiOpenai, SiGoogletranslate, SiPython, SiTwilio, SiZapier, SiPostgresql } from 'react-icons/si';
+import { AnimatedSection, type StepContent } from './AnimatedSection';
 
 const AI_LOGOS: [typeof SiOpenai, string][] = [
   [SiOpenai, 'OpenAI'],
-  [SiMicrosoft, 'Azure'],
-  [SiGoogle, 'Google AI'],
+  [SiGoogletranslate, 'Google'],
   [SiPython, 'Python'],
   [SiTwilio, 'Twilio'],
   [SiZapier, 'Zapier'],
+  [SiPostgresql, 'PostgreSQL'],
 ];
 
 const AI_STEPS: StepContent[] = [
