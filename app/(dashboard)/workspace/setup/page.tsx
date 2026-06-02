@@ -16,7 +16,7 @@ const PLAN_OPTIONS = [
     price: '$0',
     period: '/mo',
     seats: '1 seat',
-    features: ['1 agent'Power dialer'Call recordings'Basic analytics'],
+    features: ['1 agent', 'Power dialer', 'Call recordings', 'Basic analytics'],
     gradient: 'from-slate-600/20 to-slate-700/20',
     border: 'border-white/[0.08]',
     badge: null,

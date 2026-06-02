@@ -74,8 +74,8 @@ function useTimer(running: boolean) {
     }
     return () => clearInterval(ref.current);
   }, [running]);
-  const m = Math.floor(secs / 60).toString().padStart(20');
-  const s = (secs % 60).toString().padStart(20');
+  const m = Math.floor(secs / 60).toString().padStart(2, '0');
+  const s = (secs % 60).toString().padStart(2, '0');
   return { formatted: `${m}:${s}`, seconds: secs };
 }
 
@@ -358,7 +358,7 @@ export default function DialerPage() {
     }
   }, [activeCallId, pendingCallDbId]);
 
-  // ── Disposition ─────────────────────────────────────────────────────────────
+  // ── Disposition ──────────────────────────────────────��──────────────────────
   const handleDispositionSave = useCallback(async (
     disposition: DispositionType,
     notes?: string,

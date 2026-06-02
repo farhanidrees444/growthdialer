@@ -532,7 +532,7 @@ export default function ActiveCallOverlay() {
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────────
   useEffect(() => {
-    const isVisible = ['connecting'ringing'active'held'].includes(callStatus);
+    const isVisible = ['connecting', 'ringing', 'active', 'held'].includes(callStatus);
     if (!isVisible) return;
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;

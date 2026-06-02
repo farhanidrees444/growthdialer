@@ -360,8 +360,8 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                       .map(line => {
                         // Convert markdown-style headers to HTML with IDs
                         if (line.startsWith('## ')) {
-                          const text = line.replace('## '');
-                          const id = text.toLowerCase().replace(/[^a-z0-9]+/g-');
+                          const text = line.replace('## ', '');
+                          const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-');
                           return `<h2 id="${id}" class="text-2xl font-bold mt-8 mb-4">${text}</h2>`;
                         }
                         if (line.startsWith('**') && line.endsWith('**')) {

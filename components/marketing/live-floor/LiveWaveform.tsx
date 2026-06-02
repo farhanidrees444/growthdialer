@@ -27,7 +27,7 @@ export function LiveWaveform({
   bars = 48,
   className = '',
   height = 64,
-  color = hsl(186, 100%, 42%)',
+  color = 'hsl(186, 100%, 42%)',
   barWidth = 3,
   gap = 3,
   speed = 1,

@@ -256,7 +256,7 @@ function NumberCard({ num, isOnlyNumber, onSetDefault, onRelease, onSpamCheck, o
         {isExpiringSoon && !hasBilling && (
           <div className="mt-3 flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-3 py-2 text-[11px] text-amber-300">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-            {renewDays === 0 ? 'Expires today' : `Expires in ${renewDays}d`} — add billing to keep this number
+            {renewDays === 0 ? 'Expires today' : `Expires in ${renewDays}d`} ��� add billing to keep this number
           </div>
         )}
 
@@ -408,7 +408,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
         </div>
         <button onClick={onBuyNew}
           className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
-          style={{ background: 'linear-gradient(135deg,hsl(262,80%,50%),hsl(186,100%,42%))'' }}>
+          style={{ background: 'linear-gradient(135deg,hsl(262,80%,50%),hsl(186,100%,42%))' }}>
           <Plus className="h-4 w-4" /> Buy Number
         </button>
       </div>
@@ -509,7 +509,7 @@ const REGION_ORDER = [
   'North America'Europe'Asia Pacific'Latin America'Africa & Middle East',
 ] as const;
 
-// ─── Buy New tab ──────────────────────────────────────────────────────────────
+// ─── Buy New tab ─────────────────────────────────────────���────────────────────
 
 function BuyNew({ onPurchased }: { onPurchased: () => void }) {
   const [detectedCountry, setDetectedCountry] = useState<string | null>(null);

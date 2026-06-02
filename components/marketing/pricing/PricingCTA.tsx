@@ -54,7 +54,7 @@ export function PricingCTA() {
         <div
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[min(92vw,780px)] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.12] blur-[130px]"
-          style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)'' }}
+          style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)' }}
         />
         <motion.div
           initial={{ opacity: 0, y: 24 }}

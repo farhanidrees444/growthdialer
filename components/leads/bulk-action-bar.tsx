@@ -66,7 +66,7 @@ export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
       const res = await fetch('/api/leads/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scope: 'selected', ids: selectedIds, format: 'csv', fields: ['name'company'phone'email'status'tags'call_history'] }),
+        body: JSON.stringify({ scope: 'selected', ids: selectedIds, format: 'csv', fields: ['name', 'company', 'phone', 'email', 'status', 'tags', 'call_history'] }),
       });
       if (!res.ok) throw new Error();
       const blob = await res.blob();

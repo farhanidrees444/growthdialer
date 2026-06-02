@@ -277,7 +277,7 @@ function CallActivityChart({
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
         </div>
         <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-black/20 p-0.5">
-          {(['24H'7D'] as const).map(r => (
+          {(['24H', '7D'] as const).map(r => (
             <button
               key={r}
               type="button"

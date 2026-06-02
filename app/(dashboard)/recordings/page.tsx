@@ -47,7 +47,7 @@ function fmtDuration(s: number | null): string {
   if (!s) return '—';
   const m = Math.floor(s / 60);
   const sec = s % 60;
-  return `${m}:${sec.toString().padStart(20')}`;
+  return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
 function fmtDate(iso: string): string {

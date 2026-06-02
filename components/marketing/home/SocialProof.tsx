@@ -19,7 +19,7 @@ export function SocialProof() {
       <div className="relative mx-auto max-w-5xl overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]">
         <motion.div
           className="flex w-max items-center gap-14"
-          animate={reduce ? undefined : { x: ['0%'-50%'] }}
+          animate={reduce ? undefined : { x: ['0%', '-50%'] }}
           transition={reduce ? undefined : { duration: 28, repeat: Infinity, ease: 'linear' }}
         >
           {row.map((name, i) => (

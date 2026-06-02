@@ -232,7 +232,7 @@ export default function AcceptInvitePage() {
                   <Link
                     href={`/login?redirect=/accept-invite/${token}`}
                     className="flex w-full items-center justify-center gap-2.5 rounded-xl py-3.5 text-sm font-bold text-white shadow-xl transition"
-                    style={{ background: 'linear-gradient(135deg, #059669, hsl(262,80%,50%))'' }}
+            style={{ background: 'linear-gradient(135deg, #059669, hsl(262,80%,50%))' }}
                   >
                     <LogIn className="h-4 w-4" />
                     Sign in to Accept

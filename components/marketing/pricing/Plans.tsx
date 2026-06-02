@@ -111,7 +111,7 @@ export function Plans() {
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-10 h-[420px] w-[min(90vw,820px)] -translate-x-1/2 rounded-full opacity-[0.09] blur-[120px]"
-        style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)'' }}
+        style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)' }}
       />
 
       {/* Header */}

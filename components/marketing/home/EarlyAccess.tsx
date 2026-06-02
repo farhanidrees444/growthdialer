@@ -21,9 +21,9 @@ export function EarlyAccess() {
         <div
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-0 h-[260px] w-[min(80vw,560px)] -translate-x-1/2 rounded-full opacity-[0.12] blur-[110px]"
-          style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)'' }}
+          style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)' }}
         />
-        <span className="relative mb-6 inline-flex items-center gap-2 rounded-full border border-[hsl(258,90%,66%)']/25 bg-violet-600/[0.06] py-1 pl-1.5 pr-3">
+        <span className="relative mb-6 inline-flex items-center gap-2 rounded-full border border-[hsl(258,90%,66%)]/25 bg-violet-600/[0.06] py-1 pl-1.5 pr-3">
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-600/20 text-[hsl(258,90%,66%)']">
             <Sparkles className="h-3 w-3" />
           </span>

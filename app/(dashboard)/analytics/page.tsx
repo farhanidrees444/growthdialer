@@ -51,8 +51,7 @@ function fmtDuration(s: number): string {
   if (s <= 0) return '0:00';
   const m = Math.floor(s / 60);
   const sec = s % 60;
-  return `${m}:${String(sec).padStart(20')}`;
-}
+  return `${m}:${String(sec).padStart(2, '0')}`;
 
 function fmtTalkTime(s: number): string {
   if (s <= 0) return '0m';

@@ -66,7 +66,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
     setError(null);
     // Reflect the route in the address bar without a reload (keeps the morph smooth)
     if (typeof window !== 'undefined') {
-      window.history.replaceState(null', next === 'login' ? '/login' : '/signup');
+      window.history.replaceState(null, '', next === 'login' ? '/login' : '/signup');
     }
   }
 

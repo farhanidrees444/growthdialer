@@ -120,8 +120,8 @@ export function LeadEditModal({ lead, onClose, onSaved }: Props) {
               onChange={set('status')}
               className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-500/25 transition appearance-none"
             >
-              {['new','queued','contacted','connected','callback','meeting_booked','not_interested','do_not_call','wrong_number'].map((s) => (
-                <option key={s} value={s} className="bg-[#111] capitalize">{s.replace(/_/g ')}</option>
+              {['new', 'queued', 'contacted', 'connected', 'callback', 'meeting_booked', 'not_interested', 'do_not_call', 'wrong_number'].map((s) => (
+                <option key={s} value={s} className="bg-[#111] capitalize">{s.replace(/_/g, ' ')}</option>
               ))}
             </select>
           </div>

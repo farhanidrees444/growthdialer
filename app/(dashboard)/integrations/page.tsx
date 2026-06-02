@@ -153,7 +153,7 @@ const INTEGRATIONS: Integration[] = [
     id: 'hubspot',
     name: 'HubSpot',
     description: 'Sync contacts, deals, and call activities to your CRM automatically after every call.',
-    bullets: ['Auto-sync leads after disposition'Push call recordings to contact timeline'Two-way contact sync'],
+    bullets: ['Auto-sync leads after disposition', 'Push call recordings to contact timeline', 'Two-way contact sync'],
     category: 'crm',
     categoryLabel: 'CRM',
     color: 'text-[#FF7A59]',

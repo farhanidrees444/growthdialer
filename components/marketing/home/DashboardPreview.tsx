@@ -20,8 +20,7 @@ function useTicker(start: number, stepMs: number, inc: number, reduce: boolean |
 
 function fmtClock(s: number) {
   const m = Math.floor(s / 60);
-  return `${m}:${String(s % 60).padStart(20')}`;
-}
+  return `${m}:${String(s % 60).padStart(2, '0')}`;
 
 export function DashboardPreview() {
   const reduce = useReducedMotion();

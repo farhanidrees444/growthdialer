@@ -475,7 +475,7 @@ export default function LeadDetailPage() {
                   </p>
                 )}
                 <span className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold capitalize ${sBg} ${sText}`}>
-                  {lead.status.replace(/_/g ')}
+                  {lead.status.replace(/_/g, ' ')}
                 </span>
               </div>
             </div>

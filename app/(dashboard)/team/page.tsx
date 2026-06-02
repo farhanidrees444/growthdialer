@@ -177,7 +177,7 @@ function InviteModal({
   );
 }
 
-// ── Confirm Dialog ───────────────────────────────────────────────────────────
+// ── Confirm Dialog ─────────────────────────────────────────────���─────────────
 
 function ConfirmDialog({
   open,
@@ -384,7 +384,7 @@ export default function TeamPage() {
               type="button"
               onClick={() => setInviteOpen(true)}
               className="flex items-center gap-2 rounded-xl py-2 px-4 text-sm font-bold text-white shadow-xl"
-              style={{ background: 'linear-gradient(135deg, #059669, hsl(262,80%,50%))'' }}
+          style={{ background: 'linear-gradient(135deg, #059669, hsl(262,80%,50%))' }}
             >
               <UserPlus className="h-4 w-4" />
               Invite member

@@ -57,7 +57,7 @@ type Tab = 'insights' | 'transcript' | 'memory';
 
 function formatDuration(seconds: number | null) {
   if (!seconds) return '—';
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(20')}`;
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
 function formatDate(iso: string) {
