@@ -148,7 +148,7 @@ function LeadsVisual() {
   const leads = [
     { n: 'Acme Co.', s: 'Interested', c: 'text-emerald-400' },
     { n: 'Globex', s: 'Callback', c: 'text-amber-400' },
-    { n: 'Initech', s: 'Meeting booked', c: 'text-[hsl(258,90%,66%)']' },
+    { n: 'Initech', s: 'Meeting booked', c: 'text-[hsl(258,90%,66%)]' },
     { n: 'Umbrella', s: 'New', c: 'text-muted-foreground' },
   ];
   return (
