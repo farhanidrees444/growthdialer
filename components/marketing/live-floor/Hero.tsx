@@ -1,7 +1,8 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { ArrowRight, Phone } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ArrowRight, Phone, Check, TrendingUp } from 'lucide-react';
 import { LiveWaveform } from './LiveWaveform';
 import { Spotlight } from './Spotlight';
 import { EASE_OUT, SPRING } from './motion';
@@ -104,8 +105,8 @@ export function Hero() {
                   <Phone className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-medium text-[#F5F5F7]">Outbound call</p>
-                  <p className="text-xs text-zinc-500">Connected · 02:14</p>
+                  <p className="text-sm font-medium text-[#F5F5F7]">Jordan at Acme Co.</p>
+                  <p className="font-mono text-xs tabular-nums text-zinc-500">Connected 2:17</p>
                 </div>
               </div>
               <span className="flex items-center gap-1.5 rounded-full bg-[#06B6D4]/10 px-2.5 py-1 text-[11px] font-medium text-[#06B6D4]">
@@ -115,8 +116,8 @@ export function Hero() {
             </div>
 
             {/* The living waveform — the centerpiece */}
-            <div className="my-8">
-              <LiveWaveform bars={56} height={88} />
+            <div className="my-6">
+              <LiveWaveform bars={56} height={76} />
             </div>
 
             {/* Streaming transcript hint */}
@@ -134,10 +135,59 @@ export function Hero() {
                 />
               </p>
             </div>
+
+            {/* AI insights — cards stagger in on an endless loop */}
+            <div className="mt-3">
+              <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#8B5CF6]" /> AI insights
+              </p>
+              <AiInsights />
+            </div>
           </BorderBeamCard>
         </motion.div>
       </div>
     </section>
+  );
+}
+
+const INSIGHTS = [
+  { icon: TrendingUp, label: 'Positive sentiment', tone: 'text-emerald-400' },
+  { icon: Check, label: 'Evaluating 12-seat team', tone: 'text-[#8B5CF6]' },
+  { icon: Check, label: 'Follow up Thursday', tone: 'text-[#8B5CF6]' },
+];
+
+/** AI insight chips that stagger in on a smooth endless loop (static if reduced motion). */
+function AiInsights() {
+  const reduce = useReducedMotion();
+  const [shown, setShown] = useState(reduce ? INSIGHTS.length : 0);
+
+  useEffect(() => {
+    if (reduce) return;
+    let i = 0;
+    const tick = () => setShown((i = i >= INSIGHTS.length ? 0 : i + 1));
+    const id = setInterval(tick, 1100);
+    return () => clearInterval(id);
+  }, [reduce]);
+
+  return (
+    <div className="space-y-1.5">
+      {INSIGHTS.map((ins, idx) => {
+        const Icon = ins.icon;
+        const visible = idx < shown;
+        return (
+          <motion.div
+            key={ins.label}
+            initial={false}
+            animate={{ opacity: visible ? 1 : 0.15, x: visible ? 0 : -6 }}
+            transition={{ duration: 0.45, ease: EASE_OUT }}
+            className="flex items-center gap-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2"
+          >
+            <Icon className={`h-3.5 w-3.5 shrink-0 ${ins.tone}`} />
+            <span className="text-[13px] text-zinc-300">{ins.label}</span>
+          </motion.div>
+        );
+      })}
+    </div>
   );
 }
 

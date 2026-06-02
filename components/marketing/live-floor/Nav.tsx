@@ -19,6 +19,7 @@ const LINKS = [
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -51,14 +52,25 @@ export function Nav() {
           </span>
         </Link>
 
-        {/* Desktop links */}
-        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
+        {/* Desktop links — layoutId pill glides under the hovered link */}
+        <nav
+          className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex"
+          onMouseLeave={() => setHovered(null)}
+        >
           {LINKS.map((l) => (
             <Link
               key={l.label}
               href={l.href}
-              className="rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
+              onMouseEnter={() => setHovered(l.label)}
+              className="relative rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
             >
+              {hovered === l.label && (
+                <motion.span
+                  layoutId="nav-hover-pill"
+                  className="absolute inset-0 -z-10 rounded-lg bg-white/[0.06]"
+                  transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+                />
+              )}
               {l.label}
             </Link>
           ))}
@@ -74,7 +86,7 @@ export function Nav() {
           </a>
           <a
             href={APP_SIGNUP}
-            className="group relative rounded-lg bg-[#8B5CF6] px-4 py-2 text-sm font-medium text-white transition-all hover:bg-[#7C3AED] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A]"
+            className="group relative rounded-lg bg-[#8B5CF6] px-4 py-2 text-sm font-medium text-white ring-1 ring-inset ring-white/15 transition-all hover:bg-[#7C3AED] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A]"
           >
             Start Free
           </a>

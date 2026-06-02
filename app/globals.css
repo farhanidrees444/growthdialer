@@ -156,6 +156,13 @@
       linear-gradient(90deg, oklch(1 0 0 / 3%) 1px, transparent 1px);
     background-size: 60px 60px;
   }
+  /* Premium canvas depth — 40px grid, white at ~5% */
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
 }
 
 /* ─── Ticker animation ─── */
