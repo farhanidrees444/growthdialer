@@ -76,8 +76,10 @@ export function DashboardPreview() {
   const contact = CONTACTS[loop % CONTACTS.length];
 
   // Advance stages on a timer; bump the loop counter when a cycle completes.
+  // Gate behind mounted so the first client render matches the server (stage 0),
+  // then the effect kicks in post-hydration and advances normally.
   useEffect(() => {
-    if (reduce) return;
+    if (reduce || !mounted) return;
     const t = setTimeout(() => {
       setStageIndex((i) => {
         const next = (i + 1) % STAGES.length;
@@ -86,13 +88,14 @@ export function DashboardPreview() {
       });
     }, STAGES[stageIndex].dwell);
     return () => clearTimeout(t);
-  }, [stageIndex, reduce]);
+  }, [stageIndex, reduce, mounted]);
 
   // Call timer — runs while the call is active, freezes after.
+  // Gate behind mounted to ensure the first client render matches the server state.
   const [seconds, setSeconds] = useState(0);
   useEffect(() => {
-    if (reduce) {
-      setSeconds(137);
+    if (reduce || !mounted) {
+      if (reduce) setSeconds(137);
       return;
     }
     if (stage.key === 'dialing') {
@@ -102,7 +105,7 @@ export function DashboardPreview() {
     if (!isLive) return;
     const id = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(id);
-  }, [stage.key, isLive, reduce]);
+  }, [stage.key, isLive, reduce, mounted]);
 
   const callsBase = 47 + loop;
 
