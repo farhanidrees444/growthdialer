@@ -7,24 +7,38 @@ const FOOTER_COLS = [
   {
     heading: 'Product',
     links: [
-      { label: 'Features', href: '/#features' },
+      { label: 'Features', href: '/features' },
       { label: 'Pricing', href: '/pricing' },
+      { label: 'Integrations', href: '/features/integrations' },
+      { label: 'Salesfloor', href: '/features/salesfloor' },
       { label: 'Docs', href: '/docs' },
       { label: 'Changelog', href: '/changelog' },
+    ],
+  },
+  {
+    heading: 'Compare',
+    links: [
+      { label: 'vs Orum', href: '/compare/vs-orum' },
+      { label: 'vs Nooks', href: '/compare/vs-nooks' },
+      { label: 'vs KrispCall', href: '/compare/vs-krispcall' },
+      { label: 'vs PhoneBurner', href: '/compare/vs-phoneburner' },
+      { label: 'vs DandyDialer', href: '/compare/vs-dandydialer' },
+      { label: 'vs PowerDialer', href: '/compare/vs-powerdialer' },
+    ],
+  },
+  {
+    heading: 'Resources',
+    links: [
+      { label: 'Blog', href: '/blog' },
+      { label: 'Customers', href: '/customers' },
+      { label: 'Contact Sales', href: '/contact-sales' },
     ],
   },
   {
     heading: 'Company',
     links: [
       { label: 'About', href: '/about' },
-      { label: 'Customers', href: '/customers' },
       { label: 'Careers', href: '/careers' },
-      { label: 'Contact', href: '/contact-sales' },
-    ],
-  },
-  {
-    heading: 'Legal',
-    links: [
       { label: 'Privacy', href: '/privacy' },
       { label: 'Terms', href: '/terms' },
     ],
@@ -34,7 +48,7 @@ const FOOTER_COLS = [
 export function SiteFooter() {
   return (
     <footer className="relative border-t border-white/[0.06] px-5 py-14 lg:px-8">
-      <div className="mx-auto grid max-w-7xl gap-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_repeat(3,1fr)]">
+      <div className="mx-auto grid max-w-7xl gap-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_repeat(4,1fr)]">
         <div>
           <div className="flex items-center gap-2.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03]">

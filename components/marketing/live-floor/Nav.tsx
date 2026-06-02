@@ -11,9 +11,11 @@ const APP_SIGNIN = 'https://app.growthdialer.com/login';
 const APP_SIGNUP = 'https://app.growthdialer.com/signup';
 
 const LINKS = [
-  { label: 'Features', href: '/#features' },
+  { label: 'Features', href: '/features' },
   { label: 'Pricing', href: '/pricing' },
+  { label: 'Customers', href: '/customers' },
   { label: 'Docs', href: '/docs' },
+  { label: 'Blog', href: '/blog' },
 ];
 
 export function Nav() {

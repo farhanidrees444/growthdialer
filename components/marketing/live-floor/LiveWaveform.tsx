@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 
 interface LiveWaveformProps {
@@ -84,16 +85,25 @@ export function LiveWaveform({
 /** A single mini-waveform glyph for inline/label use. */
 export function MiniWave({ color = '#06B6D4', className = '' }: { color?: string; className?: string }) {
   const reduce = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Static heights for SSR and reduced motion
+  const heights = [0.4, 0.9, 0.6, 1, 0.5, 0.8, 0.35];
+  
   return (
     <div className={`flex items-center gap-[2px] ${className}`} aria-hidden>
-      {[0.4, 0.9, 0.6, 1, 0.5, 0.8, 0.35].map((h, i) => (
+      {heights.map((h, i) => (
         <motion.span
           key={i}
           className="w-[2px] rounded-full"
           style={{ background: color, height: 14 }}
-          initial={reduce ? false : { scaleY: h * 0.4 }}
-          animate={reduce ? { scaleY: h } : { scaleY: [h * 0.4, h, h * 0.4] }}
-          transition={reduce ? undefined : { duration: 0.8 + i * 0.07, repeat: Infinity, ease: 'easeInOut' }}
+          initial={false}
+          animate={{ scaleY: mounted && !reduce ? [h * 0.4, h, h * 0.4] : h }}
+          transition={mounted && !reduce ? { duration: 0.8 + i * 0.07, repeat: Infinity, ease: 'easeInOut' } : { duration: 0 }}
         />
       ))}
     </div>

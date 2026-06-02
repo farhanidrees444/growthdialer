@@ -60,7 +60,7 @@ export function CallLifecycle() {
                           className="flex h-9 w-9 items-center justify-center rounded-full border"
                           animate={{
                             borderColor: active ? '#06B6D4' : done ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.08)',
-                            backgroundColor: active ? 'rgba(6,182,212,0.12)' : 'transparent',
+                            backgroundColor: active ? 'rgba(6,182,212,0.12)' : 'rgba(0,0,0,0)',
                             scale: active ? 1 : 0.94,
                           }}
                           transition={{ duration: 0.5, ease: EASE_OUT }}

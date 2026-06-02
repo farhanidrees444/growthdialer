@@ -46,15 +46,16 @@ export function Spotlight({ color = '#8B5CF6', size = 380, radiusClass = 'rounde
     <div
       ref={ref}
       aria-hidden
-      className={`pointer-events-none absolute inset-0 ${radiusClass} transition-opacity duration-500`}
+      className={`pointer-events-none absolute inset-0 ${radiusClass}`}
       style={{
         // Sits above the card surface but below content (cards establish a
         // stacking context via backdrop-blur). The element's own border-radius
         // clips the gradient, so no parent overflow-hidden is required.
         zIndex: -1,
         opacity: p.on ? 1 : 0,
+        transition: 'opacity 500ms ease',
         // ~8% center alpha, fading to transparent — subtle, refined, not bright
-        background: `radial-gradient(${size}px circle at ${p.x}px ${p.y}px, ${color}14, transparent 65%)`,
+        background: `radial-gradient(${size}px circle at ${p.x}px ${p.y}px, ${color}14, rgba(0,0,0,0) 65%)`,
       }}
     />
   );
