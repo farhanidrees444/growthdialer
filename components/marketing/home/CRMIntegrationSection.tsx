@@ -1,12 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { SiSalesforce, SiHubspot, SiPipedrive, SiNotion, SiAirtable, SiZapier } from 'react-icons/si';
+import { SiSalesforce, SiHubspot, SiIntercom, SiNotion, SiAirtable, SiZapier } from 'react-icons/si';
+import { AnimatedSection, type StepContent } from './AnimatedSection';
 
 const CRM_LOGOS: [typeof SiSalesforce, string][] = [
   [SiSalesforce, 'Salesforce'],
   [SiHubspot, 'HubSpot'],
-  [SiPipedrive, 'Pipedrive'],
+  [SiIntercom, 'Intercom'],
   [SiNotion, 'Notion'],
   [SiAirtable, 'Airtable'],
   [SiZapier, 'Zapier'],
