@@ -68,7 +68,7 @@ export function DashboardPreview() {
           {/* Top bar */}
           <div className="mb-3 flex items-center justify-between rounded-2xl border border-white/[0.05] bg-white/[0.02] px-4 py-3">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: 'linear-gradient(135deg,hsl(258,90%,66%),hsl(186,100%,42%))'' }}>
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: 'linear-gradient(135deg,hsl(258,90%,66%),hsl(186,100%,42%))' }}>
                 <Phone className="h-3.5 w-3.5 text-white" />
               </span>
               <span className="text-sm font-medium text-foreground">Dialer</span>

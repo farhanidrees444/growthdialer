@@ -59,7 +59,7 @@ export function CallLifecycle() {
                         <motion.span
                           className="flex h-9 w-9 items-center justify-center rounded-full border"
                           animate={{
-                            borderColor: active ? 'hsl(186, 100%, 42%)'' : done ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.08)',
+                            borderColor: active ? 'hsl(186, 100%, 42%)' : done ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.08)',
                             backgroundColor: active ? 'rgba(6,182,212,0.12)' : 'rgba(0,0,0,0)',
                             scale: active ? 1 : 0.94,
                           }}
@@ -211,7 +211,7 @@ function StageVisual({ stage }: { stage: number }) {
               <TrendingUp className="h-3.5 w-3.5" /> Positive
             </span>
           </div>
-          {['Interested in team plan (12 seats)'Wants pricing sent over'Follow up Thursday'].map((t, i) => (
+          {['Interested in team plan (12 seats)', 'Wants pricing sent over', 'Follow up Thursday'].map((t, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 8 }}
@@ -239,7 +239,7 @@ function StageVisual({ stage }: { stage: number }) {
         every call you make.
       </p>
       <div className="mt-6 grid w-full grid-cols-3 gap-2">
-        {[['Calls'1'], ['Sentiment'+'], ['Talk time'2:14']].map(([k, v]) => (
+        {[['Calls', '1'], ['Sentiment', '+'], ['Talk time', '2:14']].map(([k, v]) => (
           <div key={k} className="rounded-lg border border-white/[0.05] bg-white/[0.02] py-2">
             <p className="font-mono text-sm tabular-nums text-foreground">{v}</p>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60">{k}</p>
