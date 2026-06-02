@@ -146,65 +146,44 @@ export function Hero() {
 }
 
 /**
- * Decorative circular signal behind the hero call card.
- * - Concentric pulse rings that breathe outward (the "radar"/looping visual).
- * - A single dot orbiting the rings on a slow linear loop.
- * SSR-safe: every motion element has a fixed `initial`, so the server and the
- * client's first paint render identical markup. Animations are purely
- * transform/opacity based and honor reduced-motion via MotionConfig.
+ * Subtle animated wave backdrop — gentle curves behind the call card,
+ * matching Smartlead's restrained aesthetic. SSR-safe: fixed initial states.
  */
 function OrbitSignal() {
-  const rings = [0, 1, 2];
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2"
-    >
-      {/* Soft core glow */}
+    <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 overflow-hidden">
+      {/* Soft core glow — subtle violet */}
       <div
-        className="absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.20] blur-3xl"
-        style={{ background: 'radial-gradient(circle, #8B5CF6 0%, transparent 70%)' }}
+        className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.15] blur-3xl"
+        style={{ background: 'radial-gradient(circle, #8B5CF6 0%, transparent 60%)' }}
       />
 
-      {/* Breathing pulse rings — large enough to sweep past the card edges */}
-      {rings.map((i) => (
-        <motion.span
-          key={i}
-          className="absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#8B5CF6]/25"
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: [0.5, 1.7], opacity: [0.55, 0] }}
-          transition={{
-            duration: 4.5,
-            repeat: Infinity,
-            ease: 'easeOut',
-            delay: i * 1.5,
-          }}
+      {/* Animated wave curves — gentle, non-distracting */}
+      <svg
+        className="absolute inset-0 h-full w-full opacity-[0.08]"
+        viewBox="0 0 500 500"
+        preserveAspectRatio="xMidYMid slice"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <motion.path
+          d="M 0 200 Q 125 150 250 200 T 500 200"
+          stroke="#8B5CF6"
+          strokeWidth="1.5"
+          fill="none"
+          initial={{ pathLength: 0, opacity: 0.3 }}
+          animate={{ pathLength: 1, opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
         />
-      ))}
-
-      {/* Static guide rings */}
-      <div className="absolute left-1/2 top-1/2 h-[440px] w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.05]" />
-      <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.03]" />
-
-      {/* Orbiting dot — rides the outer guide ring, visible beyond the card */}
-      <motion.div
-        className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2"
-        initial={{ rotate: 0 }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 16, repeat: Infinity, ease: 'linear' }}
-      >
-        <span className="absolute left-1/2 top-0 h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-[#06B6D4] shadow-[0_0_14px_3px_rgba(6,182,212,0.6)]" />
-      </motion.div>
-
-      {/* Counter-orbit dot for a layered, living feel */}
-      <motion.div
-        className="absolute left-1/2 top-1/2 h-[440px] w-[440px] -translate-x-1/2 -translate-y-1/2"
-        initial={{ rotate: 180 }}
-        animate={{ rotate: -180 }}
-        transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
-      >
-        <span className="absolute left-1/2 top-0 h-2 w-2 -translate-x-1/2 rounded-full bg-[#8B5CF6] shadow-[0_0_12px_2px_rgba(139,92,246,0.6)]" />
-      </motion.div>
+        <motion.path
+          d="M 0 250 Q 125 200 250 250 T 500 250"
+          stroke="#06B6D4"
+          strokeWidth="1"
+          fill="none"
+          initial={{ pathLength: 0, opacity: 0.2 }}
+          animate={{ pathLength: 1, opacity: [0.2, 0.4, 0.2] }}
+          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+        />
+      </svg>
     </div>
   );
 }
