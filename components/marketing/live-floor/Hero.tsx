@@ -1,218 +1,178 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowRight, Phone, Check, TrendingUp } from 'lucide-react';
-import { LiveWaveform } from './LiveWaveform';
-import { Spotlight } from './Spotlight';
-import { EASE_OUT, SPRING } from './motion';
+import { motion } from 'framer-motion';
+import { Phone, Sparkles, ArrowRight, ShieldCheck, Activity } from 'lucide-react';
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden px-5 pb-12 pt-32 lg:px-8 lg:pb-16 lg:pt-40">
-      {/* Ambient violet glow — single, restrained */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-0 h-[520px] w-[min(90vw,900px)] -translate-x-1/2 rounded-full opacity-[0.10] blur-[120px]"
-        style={{ background: 'radial-gradient(circle, #8B5CF6 0%, transparent 70%)' }}
-      />
+    <section className="relative min-h-screen bg-[#050507] text-white flex flex-col justify-center items-center overflow-hidden px-6 md:px-12 py-20">
+      
+      {/* Deep Space Atmospheric Glow */}
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-600/[0.06] blur-[140px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[0%] right-[-10%] w-[700px] h-[700px] bg-blue-600/[0.04] blur-[160px] rounded-full pointer-events-none" />
 
-      <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
-        {/* ── Left: editorial copy ── */}
-        <div>
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
+      {/* Micro-Dot Matrix Layer */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+
+      <div className="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center z-10">
+        
+        {/* LEFT COLUMN: Crisp, Authoritative Copy & CTAs */}
+        <div className="lg:col-span-6 space-y-8 text-left">
+          
+          {/* Floating Live Indicator Badge */}
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: EASE_OUT }}
-            className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] py-1.5 pl-2 pr-3.5 backdrop-blur-xl"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.02] border border-white/[0.06] backdrop-blur-md"
           >
-            <span className="flex h-5 items-center gap-1.5 rounded-full bg-[#06B6D4]/10 px-2 text-[11px] font-medium text-[#06B6D4]">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#06B6D4] opacity-75" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#06B6D4]" />
-              </span>
-              Live
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
             </span>
-            <span className="text-[13px] text-zinc-400">AI Sales Dialer</span>
+            <span className="text-[11px] font-mono tracking-wider text-zinc-400 uppercase flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-purple-400" /> Live AI Sales Dialer
+            </span>
           </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 22 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, ease: EASE_OUT, delay: 0.06 }}
-            className="font-display text-[clamp(2.6rem,6vw,4.75rem)] font-light leading-[0.98] tracking-tight text-[#F5F5F7]"
-          >
-            Every call,
-            <br />
-            <span className="font-medium">understood</span> the
-            <br />
-            moment it ends.
-          </motion.h1>
+          {/* Cinematic Shimmer Header */}
+          <div className="space-y-4">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter leading-[1.1] bg-gradient-to-b from-white via-zinc-200 to-zinc-500 bg-clip-text text-transparent">
+              Every call,<br />understood the<br />moment it ends.
+            </h1>
+            <p className="text-zinc-400 text-base md:text-lg max-w-lg leading-relaxed font-normal">
+              GrowthDialer is the AI dialer that records, transcribes, and analyzes every conversation—turning raw calls into summaries, sentiment, and next steps without a single note.
+            </p>
+          </div>
 
-          <motion.p
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, ease: EASE_OUT, delay: 0.16 }}
-            className="mt-7 max-w-md text-[17px] leading-relaxed text-zinc-400"
-          >
-            GrowthDialer is the AI dialer that records, transcribes and analyzes
-            every conversation — turning raw calls into summaries, sentiment and
-            next steps without a single note.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, ease: EASE_OUT, delay: 0.26 }}
-            className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
-          >
-            <a
+          {/* Premium Interaction Buttons */}
+          <div className="flex flex-wrap items-center gap-4">
+            <a 
               href="https://app.growthdialer.com/signup"
-              className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#8B5CF6] px-6 text-sm font-medium text-white transition-all hover:bg-[#7C3AED] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A]"
+              className="group relative flex items-center gap-2 bg-white text-black font-semibold text-sm px-8 py-4 rounded-xl transition-all duration-300 hover:bg-zinc-100 hover:shadow-[0_0_35px_rgba(255,255,255,0.15)] active:scale-[0.99]"
             >
-              Start Free
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              Start Free Today
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </a>
-            <a
+            
+            <a 
               href="https://app.growthdialer.com/login"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.08] px-6 text-sm font-medium text-zinc-300 transition-all hover:border-white/[0.16] hover:text-[#F5F5F7] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+              className="px-7 py-4 rounded-xl font-medium text-sm text-zinc-300 bg-white/[0.02] border border-white/[0.06] backdrop-blur-md hover:bg-white/[0.05] hover:text-white transition-colors"
             >
               Log in
             </a>
-          </motion.div>
+          </div>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, ease: EASE_OUT, delay: 0.4 }}
-            className="mt-5 text-[13px] text-zinc-600"
-          >
-            No credit card required · Built for outbound teams
-          </motion.p>
+          {/* Micro Trust Badges */}
+          <div className="flex items-center gap-6 pt-4 border-t border-white/[0.04] max-w-md">
+            <div className="flex items-center gap-2 text-xs font-mono text-zinc-500">
+              <ShieldCheck className="w-4 h-4 text-emerald-500/70" /> 10DLC Registered Compliance
+            </div>
+            <div className="flex items-center gap-2 text-xs font-mono text-zinc-500">
+              <Activity className="w-4 h-4 text-purple-500/70" /> Tier-1 Carrier Networks
+            </div>
+          </div>
+
         </div>
 
-        {/* ── Right: the living call card (border-beam) ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 32, scale: 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ ...SPRING, delay: 0.34 }}
-          className="relative"
-        >
-          <BorderBeamCard>
-            <div className="flex items-center justify-between">
+        {/* RIGHT COLUMN: The Hyper-Relevant "Live Dialer" App Mockup */}
+        <div className="lg:col-span-6 flex justify-center lg:justify-end">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.96, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 90, damping: 20 }}
+            className="w-full max-w-xl bg-[#0b0b0e]/50 backdrop-blur-2xl border border-white/[0.08] rounded-2xl p-6 shadow-[0_25px_60px_rgba(0,0,0,0.5)] relative overflow-hidden group"
+          >
+            {/* Top Border Light Pulse */}
+            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
+            
+            {/* Mockup Windows Controls */}
+            <div className="flex items-center justify-between border-b border-white/[0.05] pb-4 mb-6">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-zinc-800" />
+                <span className="w-2.5 h-2.5 rounded-full bg-zinc-800" />
+                <span className="w-2.5 h-2.5 rounded-full bg-zinc-800" />
+                <span className="text-[10px] font-mono text-zinc-500 ml-2">active_dialer_node_v1.0</span>
+              </div>
+              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-md">
+                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                <span className="text-[10px] font-mono font-medium text-red-400 tracking-wider uppercase">Live Stream</span>
+              </div>
+            </div>
+
+            {/* Active Contact State Header */}
+            <div className="bg-white/[0.01] border border-white/[0.04] rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#06B6D4]/10 text-[#06B6D4]">
-                  <Phone className="h-4 w-4" />
-                </span>
+                <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                  <Phone className="w-4 h-4 animate-bounce" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-[#F5F5F7]">Jordan at Acme Co.</p>
-                  <p className="font-mono text-xs tabular-nums text-zinc-500">Connected 2:17</p>
+                  <h4 className="text-sm font-semibold text-white">Jordan at Acme Co.</h4>
+                  <p className="text-[11px] font-mono text-zinc-500">Connected 2:37</p>
                 </div>
               </div>
-              <span className="flex items-center gap-1.5 rounded-full bg-[#06B6D4]/10 px-2.5 py-1 text-[11px] font-medium text-[#06B6D4]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#06B6D4]" />
-                Recording
+              <span className="text-xs font-mono text-zinc-400 bg-white/[0.04] px-2.5 py-1 rounded border border-white/[0.04]">
+                Line 1 Active
               </span>
             </div>
 
-            {/* The living waveform — the centerpiece */}
-            <div className="my-6">
-              <LiveWaveform bars={56} height={76} />
+            {/* Dynamic Real-Time Waveform Visualization */}
+            <div className="my-6 space-y-2">
+              <p className="text-[10px] font-mono text-zinc-500 tracking-wider uppercase">Voice Stream Tokenizer</p>
+              <div className="h-16 w-full bg-zinc-950/60 rounded-xl border border-white/[0.02] flex items-center justify-center gap-1 px-4">
+                {[40, 70, 25, 60, 90, 45, 30, 85, 50, 75, 20, 60, 40, 80, 95, 35, 55, 30].map((h, i) => (
+                  <motion.div
+                    key={i}
+                    className="w-[3px] bg-gradient-to-t from-purple-600 via-purple-400 to-indigo-400 rounded-full"
+                    animate={{ height: [h * 0.3, h, h * 0.3] }}
+                    transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.04, ease: "easeInOut" }}
+                  />
+                ))}
+              </div>
+              <p className="text-xs italic text-zinc-400 pl-1 font-mono">&ldquo;...pricing for a seat of twelve?&rdquo;</p>
             </div>
 
-            {/* Streaming transcript hint */}
-            <div className="space-y-2 rounded-xl border border-white/[0.05] bg-black/30 p-4">
-              <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-600">
-                Transcribing
-              </p>
-              <p className="text-[13px] leading-relaxed text-zinc-400">
-                &ldquo;…that actually solves the follow-up problem for us. Can you
-                send pricing for a team of twelve?&rdquo;
-                <motion.span
-                  className="ml-0.5 inline-block h-3.5 w-[2px] translate-y-0.5 bg-[#06B6D4]"
-                  animate={{ opacity: [1, 0, 1] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                />
-              </p>
+            {/* AI Core Extraction Engine Layer */}
+            <div className="space-y-3">
+              <p className="text-[10px] font-mono text-zinc-500 tracking-wider uppercase">Realtime AI Insights</p>
+              
+              {/* Pill 1 */}
+              <motion.div 
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="flex items-center gap-3 p-3 bg-emerald-500/[0.03] border border-emerald-500/20 rounded-xl"
+              >
+                <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="text-xs font-medium text-emerald-300">Positive sentiment</span>
+              </motion.div>
+
+              {/* Pill 2 */}
+              <motion.div 
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+                className="flex items-center gap-3 p-3 bg-purple-500/[0.03] border border-purple-500/20 rounded-xl"
+              >
+                <div className="w-2 h-2 rounded-full bg-purple-400" />
+                <span className="text-xs font-medium text-purple-300">Evaluating 12-seat team</span>
+              </motion.div>
+
+              {/* Pill 3 */}
+              <motion.div 
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.7 }}
+                className="flex items-center gap-3 p-3 bg-blue-500/[0.03] border border-blue-500/20 rounded-xl"
+              >
+                <div className="w-2 h-2 rounded-full bg-blue-400" />
+                <span className="text-xs font-medium text-blue-300">Follow up Thursday</span>
+              </motion.div>
             </div>
 
-            {/* AI insights — cards stagger in on an endless loop */}
-            <div className="mt-3">
-              <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#8B5CF6]" /> AI insights
-              </p>
-              <AiInsights />
-            </div>
-          </BorderBeamCard>
-        </motion.div>
+          </motion.div>
+        </div>
+
       </div>
     </section>
-  );
-}
-
-const INSIGHTS = [
-  { icon: TrendingUp, label: 'Positive sentiment', tone: 'text-emerald-400' },
-  { icon: Check, label: 'Evaluating 12-seat team', tone: 'text-[#8B5CF6]' },
-  { icon: Check, label: 'Follow up Thursday', tone: 'text-[#8B5CF6]' },
-];
-
-/** AI insight chips that stagger in on a smooth endless loop (static if reduced motion). */
-function AiInsights() {
-  const reduce = useReducedMotion();
-  const [shown, setShown] = useState(reduce ? INSIGHTS.length : 0);
-
-  useEffect(() => {
-    if (reduce) return;
-    let i = 0;
-    const tick = () => setShown((i = i >= INSIGHTS.length ? 0 : i + 1));
-    const id = setInterval(tick, 1100);
-    return () => clearInterval(id);
-  }, [reduce]);
-
-  return (
-    <div className="space-y-1.5">
-      {INSIGHTS.map((ins, idx) => {
-        const Icon = ins.icon;
-        const visible = idx < shown;
-        return (
-          <motion.div
-            key={ins.label}
-            initial={false}
-            animate={{ opacity: visible ? 1 : 0.15, x: visible ? 0 : -6 }}
-            transition={{ duration: 0.45, ease: EASE_OUT }}
-            className="flex items-center gap-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2"
-          >
-            <Icon className={`h-3.5 w-3.5 shrink-0 ${ins.tone}`} />
-            <span className="text-[13px] text-zinc-300">{ins.label}</span>
-          </motion.div>
-        );
-      })}
-    </div>
-  );
-}
-
-/** Glass card with a single animated violet border-beam traveling its edge. */
-function BorderBeamCard({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="relative rounded-2xl p-[1px]">
-      {/* Beam */}
-      <motion.div
-        aria-hidden
-        className="absolute inset-0 rounded-2xl"
-        style={{
-          background:
-            'conic-gradient(from 0deg, transparent 0deg, transparent 300deg, #8B5CF6 340deg, #06B6D4 360deg)',
-        }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-      />
-      {/* Static subtle border under the beam */}
-      <div className="absolute inset-0 rounded-2xl border border-white/[0.06]" />
-      {/* Content surface */}
-      <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0C0C0F]/90 p-6 backdrop-blur-xl">
-        <Spotlight color="#06B6D4" />
-        <div className="relative z-10">{children}</div>
-      </div>
-    </div>
   );
 }
