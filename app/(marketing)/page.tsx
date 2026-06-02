@@ -2,17 +2,12 @@ import { MotionShell } from '@/components/marketing/live-floor/MotionShell';
 import { Nav } from '@/components/marketing/live-floor/Nav';
 import { Grain } from '@/components/marketing/live-floor/Grain';
 import { Hero } from '@/components/marketing/live-floor/Hero';
-import { CallLifecycle } from '@/components/marketing/live-floor/CallLifecycle';
-import { EcosystemFlow } from '@/components/marketing/live-floor/EcosystemFlow';
-import { Features } from '@/components/marketing/live-floor/Features';
-import { FinalCTA } from '@/components/marketing/live-floor/FinalCTA';
-import { SocialProof } from '@/components/marketing/home/SocialProof';
+import { TabbedFeatures } from '@/components/marketing/live-floor/TabbedFeatures';
+import { SocialProofSection } from '@/components/marketing/live-floor/SocialProofSection';
+import { EnterpriseCTA } from '@/components/marketing/live-floor/EnterpriseCTA';
+import { IntegrationsSection } from '@/components/marketing/live-floor/IntegrationsSection';
+import { FAQSection, FinalCTA } from '@/components/marketing/live-floor/EnhancedCTA';
 import { DashboardPreview } from '@/components/marketing/home/DashboardPreview';
-import { FeatureSections } from '@/components/marketing/home/FeatureSections';
-import { IntegrationsShowcase } from '@/components/marketing/home/IntegrationsShowcase';
-import { StatsStrip } from '@/components/marketing/home/StatsStrip';
-import { EarlyAccess } from '@/components/marketing/home/EarlyAccess';
-import { HomeFAQ } from '@/components/marketing/home/HomeFAQ';
 
 // "The Live Floor" — the homepage is a living dialer that demonstrates itself
 // through real-time motion and a scroll-driven story.
@@ -23,17 +18,28 @@ export default function LandingPage() {
         <Grain />
         <Nav />
         <main className="relative z-[2]">
+          {/* Hero with animated dashboard preview */}
           <Hero />
-          <SocialProof />
+          
+          {/* Social proof with logo ticker and testimonials */}
+          <SocialProofSection />
+          
+          {/* Live dashboard preview */}
           <DashboardPreview />
-          <CallLifecycle />
-          <EcosystemFlow />
-          <Features />
-          <FeatureSections />
-          <IntegrationsShowcase />
-          <StatsStrip />
-          <EarlyAccess />
-          <HomeFAQ />
+          
+          {/* Tabbed features section - Smartlead style */}
+          <TabbedFeatures />
+          
+          {/* Enterprise CTA with animated metrics */}
+          <EnterpriseCTA />
+          
+          {/* Integrations with animated flow diagram */}
+          <IntegrationsSection />
+          
+          {/* FAQ Section */}
+          <FAQSection />
+          
+          {/* Final CTA with footer */}
           <FinalCTA />
         </main>
       </div>
