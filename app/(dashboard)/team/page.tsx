@@ -167,7 +167,7 @@ function InviteModal({
           onClick={handleSubmit}
           disabled={busy || !email.trim()}
           className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white shadow-xl disabled:opacity-40"
-          style={{ background: 'linear-gradient(135deg, #059669, hsl(262,80%,50%))' }}
+          style={{ background: 'linear-gradient(135deg, #059669, hsl(262,80%,50%))'' }}
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
           {busy ? 'Sending invitation…' : 'Send invitation'}
@@ -384,7 +384,7 @@ export default function TeamPage() {
               type="button"
               onClick={() => setInviteOpen(true)}
               className="flex items-center gap-2 rounded-xl py-2 px-4 text-sm font-bold text-white shadow-xl"
-              style={{ background: 'linear-gradient(135deg, #059669, hsl(262,80%,50%))' }}
+              style={{ background: 'linear-gradient(135deg, #059669, hsl(262,80%,50%))'' }}
             >
               <UserPlus className="h-4 w-4" />
               Invite member

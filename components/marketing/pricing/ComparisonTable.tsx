@@ -7,7 +7,7 @@ import { EASE_OUT } from '@/components/marketing/live-floor/motion';
 
 type Cell = boolean | string | 'soon';
 
-const PLANS = ['Starter', 'Pro', 'Scale', 'Enterprise'];
+const PLANS = ['Starter'Pro'Scale'Enterprise'];
 
 const GROUPS: { group: string; rows: { label: string; cells: [Cell, Cell, Cell, Cell] }[] }[] = [
   {
@@ -23,7 +23,7 @@ const GROUPS: { group: string; rows: { label: string; cells: [Cell, Cell, Cell, 
   {
     group: 'Numbers',
     rows: [
-      { label: 'Local numbers', cells: ['1', 'Multiple', 'Multiple', 'Custom'] },
+      { label: 'Local numbers', cells: ['1'Multiple'Multiple'Custom'] },
       { label: 'Number health & spam monitoring', cells: [false, true, true, true] },
     ],
   },
@@ -40,21 +40,21 @@ const GROUPS: { group: string; rows: { label: string; cells: [Cell, Cell, Cell, 
     group: 'Data & insights',
     rows: [
       { label: 'Leads management', cells: [true, true, true, true] },
-      { label: 'Analytics', cells: ['Basic', 'Advanced', 'Advanced', 'Advanced'] },
+      { label: 'Analytics', cells: ['Basic'Advanced'Advanced'Advanced'] },
     ],
   },
   {
     group: 'Team & platform',
     rows: [
-      { label: 'Support', cells: ['Email', 'Email', 'Priority', 'Dedicated'] },
-      { label: 'Team workspaces', cells: [false, false, 'soon', 'soon'] },
-      { label: 'Public API', cells: [false, false, 'soon', 'soon'] },
+      { label: 'Support', cells: ['Email'Email'Priority'Dedicated'] },
+      { label: 'Team workspaces', cells: [false, falsesoon'soon'] },
+      { label: 'Public API', cells: [false, falsesoon'soon'] },
     ],
   },
 ];
 
 function CellContent({ v, popular }: { v: Cell; popular: boolean }) {
-  if (v === true) return <Check className={`mx-auto h-4 w-4 ${popular ? 'text-[hsl(258,90%,66%)]' : 'text-muted-foreground/90'}`} />;
+  if (v === true) return <Check className={`mx-auto h-4 w-4 ${popular ? 'text-[hsl(258,90%,66%)']' : 'text-muted-foreground/90'}`} />;
   if (v === false) return <Minus className="mx-auto h-4 w-4 text-zinc-700" />;
   if (v === 'soon')
     return (
@@ -86,17 +86,17 @@ export function ComparisonTable() {
           {/* Sticky header — sits just below the fixed nav (h-16) */}
           <thead className="sticky top-16 z-20">
             <tr>
-              <th className="bg-[hsl(200,50%,3%)]/95 py-4 pr-4 text-left align-bottom backdrop-blur-xl">
+              <th className="bg-[hsl(200,50%,3%)']/95 py-4 pr-4 text-left align-bottom backdrop-blur-xl">
                 <span className="text-[13px] font-medium text-muted-foreground/70">Features</span>
               </th>
               {PLANS.map((p, i) => (
                 <th
                   key={p}
-                  className={`bg-[hsl(200,50%,3%)]/95 px-4 py-4 text-center align-bottom backdrop-blur-xl ${
-                    i === 1 ? 'rounded-t-xl border-x border-t border-[hsl(258,90%,66%)]/20' : ''
+                  className={`bg-[hsl(200,50%,3%)']/95 px-4 py-4 text-center align-bottom backdrop-blur-xl ${
+                    i === 1 ? 'rounded-t-xl border-x border-t border-[hsl(258,90%,66%)']/20' : ''
                   }`}
                 >
-                  <span className={`text-[14px] font-semibold ${i === 1 ? 'text-[hsl(258,90%,66%)]' : 'text-foreground'}`}>{p}</span>
+                  <span className={`text-[14px] font-semibold ${i === 1 ? 'text-[hsl(258,90%,66%)']' : 'text-foreground'}`}>{p}</span>
                 </th>
               ))}
             </tr>
@@ -118,7 +118,7 @@ export function ComparisonTable() {
                     {row.cells.map((c, i) => (
                       <td
                         key={i}
-                        className={`px-4 py-3 text-center ${i === 1 ? 'border-x border-[hsl(258,90%,66%)]/15 bg-violet-600/[0.03]' : ''}`}
+                        className={`px-4 py-3 text-center ${i === 1 ? 'border-x border-[hsl(258,90%,66%)']/15 bg-violet-600/[0.03]' : ''}`}
                       >
                         <CellContent v={c} popular={i === 1} />
                       </td>

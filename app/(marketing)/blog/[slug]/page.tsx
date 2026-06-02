@@ -360,18 +360,18 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                       .map(line => {
                         // Convert markdown-style headers to HTML with IDs
                         if (line.startsWith('## ')) {
-                          const text = line.replace('## ', '');
-                          const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                          const text = line.replace('## '');
+                          const id = text.toLowerCase().replace(/[^a-z0-9]+/g-');
                           return `<h2 id="${id}" class="text-2xl font-bold mt-8 mb-4">${text}</h2>`;
                         }
                         if (line.startsWith('**') && line.endsWith('**')) {
-                          return `<p class="font-bold text-lg mt-6 mb-2">${line.replace(/\*\*/g, '')}</p>`;
+                          return `<p class="font-bold text-lg mt-6 mb-2">${line.replace(/\*\*/g')}</p>`;
                         }
                         if (line.startsWith('- ')) {
-                          return `<li class="ml-4">${line.replace('- ', '')}</li>`;
+                          return `<li class="ml-4">${line.replace('- '')}</li>`;
                         }
                         if (line.startsWith('**') && line.includes(':**')) {
-                          return `<p class="font-semibold mt-4">${line.replace(/\*\*/g, '')}</p>`;
+                          return `<p class="font-semibold mt-4">${line.replace(/\*\*/g')}</p>`;
                         }
                         if (line.trim() === '') {
                           return '<br/>';
@@ -379,9 +379,9 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                         return `<p class="mb-4 leading-relaxed">${line}</p>`;
                       })
                       .join('')
-                      .replace(/<li class="ml-4">/g, '<ul class="list-disc ml-6 mb-4"><li>')
-                      .replace(/<\/li>\n<li class="ml-4">/g, '</li><li>')
-                      .replace(/<\/li>\n<p/g, '</li></ul><p')
+                      .replace(/<li class="ml-4">/g<ul class="list-disc ml-6 mb-4"><li>')
+                      .replace(/<\/li>\n<li class="ml-4">/g</li><li>')
+                      .replace(/<\/li>\n<p/g</li></ul><p')
                   }}
                 />
 

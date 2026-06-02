@@ -191,7 +191,7 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
               <motion.div
                 layoutId="queue-tab-indicator"
                 className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full"
-                style={{ background: 'linear-gradient(90deg, hsl(262,80%,50%), hsl(186,100%,42%))' }}
+                style={{ background: 'linear-gradient(90deg, hsl(262,80%,50%), hsl(186,100%,42%))'' }}
               />
             )}
           </button>

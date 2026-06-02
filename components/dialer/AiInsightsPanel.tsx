@@ -342,7 +342,7 @@ export default function AiInsightsPanel({ lead, notes, refreshKey = 0 }: AiInsig
                 <div className="mt-0.5 shrink-0">{dispositionIcon(call.disposition)}</div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-semibold capitalize text-slate-300">
-                    {call.disposition?.replace(/_/g, ' ') ?? call.status}
+                    {call.disposition?.replace(/_/g ') ?? call.status}
                   </p>
                   <div className="flex items-center gap-2 text-[10px] text-slate-600">
                     <span>{formatDate(call.created_at)}</span>

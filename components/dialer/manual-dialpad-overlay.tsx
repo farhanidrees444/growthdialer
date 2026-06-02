@@ -17,7 +17,7 @@ const KEYS = [
 ];
 
 // Priority countries shown at top of dropdown
-const PRIORITY: CountryCode[] = ['US', 'GB', 'CA', 'AU', 'IN', 'PK', 'NG', 'ZA', 'AE', 'SG'];
+const PRIORITY: CountryCode[] = ['US'GB'CA'AU'IN'PK'NG'ZA'AE'SG'];
 
 // ── Flag component (real SVG via country-flag-icons) ──────────────────────────
 type FlagComponent = React.ComponentType<{ className?: string; title?: string }>;
@@ -61,7 +61,7 @@ function countryFromE164(e164: string): CountryCode {
 }
 
 function formatDisplay(raw: string, country: CountryCode): string {
-  const digits = raw.replace(/\D/g, '');
+  const digits = raw.replace(/\D/g');
   if (!digits) return '';
   try {
     const dialCode = getCountryCallingCode(country);
@@ -74,7 +74,7 @@ function formatDisplay(raw: string, country: CountryCode): string {
 }
 
 function validatePhone(raw: string, country: CountryCode) {
-  const digits = raw.replace(/\D/g, '');
+  const digits = raw.replace(/\D/g');
   if (!digits) return { valid: false, label: '', color: '' };
   try {
     const dialCode = getCountryCallingCode(country);
@@ -191,7 +191,7 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
 
   // ── Dial ────────────────────────────────────────────────────────────────────
   const dial = useCallback(() => {
-    const digits = raw.replace(/\D/g, '');
+    const digits = raw.replace(/\D/g');
     if (!digits || isDialing) return;
     const dialCode = getCountryCallingCode(country);
     const e164 = `+${dialCode}${digits}`;
@@ -243,7 +243,7 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
         if (cc) setCountry(cc);
         setRaw(p.nationalNumber as string);
       } else {
-        const digits = text.replace(/\D/g, '');
+        const digits = text.replace(/\D/g');
         if (digits.length >= 7) {
           setRaw(digits);
         } else {
@@ -338,7 +338,7 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
                 <a
                   href="/numbers"
                   className="px-4 py-2 rounded-xl text-sm font-semibold text-white"
-                  style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))' }}
+                  style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))'' }}
                 >
                   Buy a Number
                 </a>
@@ -547,7 +547,7 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
                               const dialCodeNum = getCountryCallingCode(cc);
                               const stripped = num.startsWith(`+${dialCodeNum}`)
                                 ? num.slice(String(dialCodeNum).length + 1)
-                                : num.replace(/^\+\d{1,4}/, '');
+                                : num.replace(/^\+\d{1,4}/');
                               setCountry(cc);
                               setRaw(stripped);
                             }}

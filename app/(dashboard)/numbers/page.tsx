@@ -408,7 +408,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
         </div>
         <button onClick={onBuyNew}
           className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
-          style={{ background: 'linear-gradient(135deg,hsl(262,80%,50%),hsl(186,100%,42%))' }}>
+          style={{ background: 'linear-gradient(135deg,hsl(262,80%,50%),hsl(186,100%,42%))'' }}>
           <Plus className="h-4 w-4" /> Buy Number
         </button>
       </div>
@@ -506,7 +506,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
 // ─── Region ordering for Buy New ─────────────────────────────────────────────
 
 const REGION_ORDER = [
-  'North America', 'Europe', 'Asia Pacific', 'Latin America', 'Africa & Middle East',
+  'North America'Europe'Asia Pacific'Latin America'Africa & Middle East',
 ] as const;
 
 // ─── Buy New tab ──────────────────────────────────────────────────────────────
@@ -695,7 +695,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
           <span className="text-sm font-semibold text-white">Number Type</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          {(['local', 'toll_free', 'mobile', 'national'] as const).map((t) => {
+          {(['local'toll_free'mobile'national'] as const).map((t) => {
             const supported = selectedCountry.types.includes(t);
             return (
               <button key={t} type="button" disabled={!supported} onClick={() => setType(t)}
@@ -712,7 +712,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
           })}
         </div>
         <p className="mt-2 text-[10px] text-white/30">
-          {selectedCountry.name} supports: {selectedCountry.types.map((t) => NUMBER_TYPE_LABELS[t]).join(', ')}
+          {selectedCountry.name} supports: {selectedCountry.types.map((t) => NUMBER_TYPE_LABELS[t]).join(')}
         </p>
       </div>
 
@@ -729,7 +729,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
               <label className="text-[11px] font-medium text-white/40">Area Code</label>
               <input
                 type="text" value={areaCode}
-                onChange={(e) => setAreaCode(e.target.value.replace(/\D/g, '').slice(0, 3))}
+                onChange={(e) => setAreaCode(e.target.value.replace(/\D/g').slice(0, 3))}
                 placeholder="e.g. 415" maxLength={3}
                 className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-violet-500/25"
               />
@@ -746,7 +746,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
             <label className="text-[11px] font-medium text-white/40">Number Contains</label>
             <input
               type="text" value={numberContains}
-              onChange={(e) => setNumberContains(e.target.value.replace(/\D/g, ''))}
+              onChange={(e) => setNumberContains(e.target.value.replace(/\D/g'))}
               placeholder="e.g. 777"
               className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-violet-500/25"
             />

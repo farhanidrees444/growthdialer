@@ -51,7 +51,7 @@ function fmtDuration(s: number): string {
   if (s <= 0) return '0:00';
   const m = Math.floor(s / 60);
   const sec = s % 60;
-  return `${m}:${String(sec).padStart(2, '0')}`;
+  return `${m}:${String(sec).padStart(20')}`;
 }
 
 function fmtTalkTime(s: number): string {
@@ -124,13 +124,13 @@ function MiniSpark({ data, color }: { data: number[]; color: string }) {
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={pts} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
         <defs>
-          <linearGradient id={`sg-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={`sg-${color.replace('#'')}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={color} stopOpacity={0.35} />
             <stop offset="100%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
         <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.5}
-          fill={`url(#sg-${color.replace('#', '')})`} dot={false} isAnimationActive={false} />
+          fill={`url(#sg-${color.replace('#'')})`} dot={false} isAnimationActive={false} />
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -320,7 +320,7 @@ export default function AnalyticsPage() {
         value: c.totalCalls.toLocaleString(),
         delta: delta(c.totalCalls, p.totalCalls),
         spark: data.sparklines.totalCalls,
-        color: hsl(258, 90%, 66%),
+        color : 'hsl(258, 90%, 66%)',
         icon:  Phone,
       },
       {
@@ -328,7 +328,7 @@ export default function AnalyticsPage() {
         value: `${c.connectRate.toFixed(1)}%`,
         delta: delta(c.connectRate, p.connectRate),
         spark: data.sparklines.connectRate,
-        color: hsl(186, 100%, 42%),
+        color : 'hsl(186, 100%, 42%)',
         icon:  Activity,
       },
       {
@@ -389,10 +389,10 @@ export default function AnalyticsPage() {
               className="flex items-center gap-2 overflow-hidden"
             >
               <input type="date" value={cStart} onChange={(e) => setCStart(e.target.value)}
-                className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs text-white/70 outline-none focus:border-[hsl(258,90%,66%)]/50 backdrop-blur-xl" />
+                className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs text-white/70 outline-none focus:border-[hsl(258,90%,66%)']/50 backdrop-blur-xl" />
               <span className="text-xs text-white/30">to</span>
               <input type="date" value={cEnd} onChange={(e) => setCEnd(e.target.value)}
-                className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs text-white/70 outline-none focus:border-[hsl(258,90%,66%)]/50 backdrop-blur-xl" />
+                className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs text-white/70 outline-none focus:border-[hsl(258,90%,66%)']/50 backdrop-blur-xl" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -415,7 +415,7 @@ export default function AnalyticsPage() {
               <select
                 value={sel.value}
                 onChange={(e) => sel.onChange(e.target.value)}
-                className="appearance-none cursor-pointer rounded-xl border border-white/[0.06] bg-white/[0.02] py-1.5 pl-3 pr-8 text-xs text-white/60 outline-none hover:border-white/[0.12] focus:border-[hsl(258,90%,66%)]/50 backdrop-blur-xl transition-colors"
+                className="appearance-none cursor-pointer rounded-xl border border-white/[0.06] bg-white/[0.02] py-1.5 pl-3 pr-8 text-xs text-white/60 outline-none hover:border-white/[0.12] focus:border-[hsl(258,90%,66%)']/50 backdrop-blur-xl transition-colors"
               >
                 {sel.opts.map((o) => (
                   <option key={o.value} value={o.value} className="bg-[oklch(0.09_0.02_282)] text-white">
@@ -433,7 +433,7 @@ export default function AnalyticsPage() {
               <select
                 value={numFilter}
                 onChange={(e) => setNum(e.target.value)}
-                className="appearance-none cursor-pointer rounded-xl border border-white/[0.06] bg-white/[0.02] py-1.5 pl-3 pr-8 text-xs text-white/60 outline-none hover:border-white/[0.12] focus:border-[hsl(258,90%,66%)]/50 backdrop-blur-xl transition-colors"
+                className="appearance-none cursor-pointer rounded-xl border border-white/[0.06] bg-white/[0.02] py-1.5 pl-3 pr-8 text-xs text-white/60 outline-none hover:border-white/[0.12] focus:border-[hsl(258,90%,66%)']/50 backdrop-blur-xl transition-colors"
               >
                 <option value="" className="bg-[oklch(0.09_0.02_282)] text-white">All Numbers</option>
                 {data!.perNumber.map((n) => (
@@ -485,12 +485,12 @@ export default function AnalyticsPage() {
                   <AreaChart data={timeData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gOut" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(258,90%,66%)" stopOpacity={0.45} />
-                        <stop offset="100%" stopColor="hsl(258,90%,66%)" stopOpacity={0} />
+                        <stop offset="0%" stopColor="hsl(258,90%,66%)'" stopOpacity={0.45} />
+                        <stop offset="100%" stopColor="hsl(258,90%,66%)'" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(186,100%,42%)" stopOpacity={0.35} />
-                        <stop offset="100%" stopColor="hsl(186,100%,42%)" stopOpacity={0} />
+                        <stop offset="0%" stopColor="hsl(186,100%,42%)'" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="hsl(186,100%,42%)'" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -498,8 +498,8 @@ export default function AnalyticsPage() {
                     <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} allowDecimals={false} />
                     <Tooltip content={<GlassTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.07)', strokeWidth: 1 }} />
                     <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 12, color: 'rgba(255,255,255,0.45)' }} />
-                    <Area type="monotone" dataKey="outbound" name="Outbound" stroke="hsl(258,90%,66%)" strokeWidth={2} fill="url(#gOut)" dot={false} />
-                    <Area type="monotone" dataKey="inbound"  name="Inbound"  stroke="hsl(186,100%,42%)" strokeWidth={2} fill="url(#gIn)"  dot={false} />
+                    <Area type="monotone" dataKey="outbound" name="Outbound" stroke="hsl(258,90%,66%)" strokeWidth={2} fill="url(#gOut)'" dot={false} />
+                    <Area type="monotone" dataKey="inbound"  name="Inbound"  stroke="hsl(186,100%,42%)" strokeWidth={2} fill="url(#gIn)'"  dot={false} />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
@@ -561,8 +561,8 @@ export default function AnalyticsPage() {
                         <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} allowDecimals={false} />
                         <Tooltip content={<GlassTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
                         <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 10, color: 'rgba(255,255,255,0.45)' }} />
-                        <Bar dataKey="outbound" name="Outbound" stackId="a" fill="hsl(258,90%,66%)" fillOpacity={0.75} radius={[0, 0, 0, 0]} />
-                        <Bar dataKey="inbound"  name="Inbound"  stackId="a" fill="hsl(186,100%,42%)" fillOpacity={0.75} radius={[3, 3, 0, 0]} />
+                        <Bar dataKey="outbound" name="Outbound" stackId="a" fill="hsl(258,90%,66%)'" fillOpacity={0.75} radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="inbound"  name="Inbound"  stackId="a" fill="hsl(186,100%,42%)'" fillOpacity={0.75} radius={[3, 3, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
@@ -588,8 +588,8 @@ export default function AnalyticsPage() {
                         <XAxis dataKey="label" tick={{ fontSize: 9, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} allowDecimals={false} />
                         <Tooltip content={<GlassTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-                        <Bar dataKey="total" name="Total" fill="hsl(258,90%,66%)" fillOpacity={0.5} radius={[3, 3, 0, 0]} />
-                        <Bar dataKey="connected" name="Connected" fill="hsl(186,100%,42%)" fillOpacity={0.85} radius={[3, 3, 0, 0]} />
+                        <Bar dataKey="total" name="Total" fill="hsl(258,90%,66%)'" fillOpacity={0.5} radius={[3, 3, 0, 0]} />
+                        <Bar dataKey="connected" name="Connected" fill="hsl(186,100%,42%)'" fillOpacity={0.85} radius={[3, 3, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
@@ -611,7 +611,7 @@ export default function AnalyticsPage() {
                           fill="url(#gOut)"
                         >
                           {(data?.dayOfWeek ?? []).map((entry) => (
-                            <Cell key={entry.day} fill="hsl(258,90%,66%)" fillOpacity={entry.calls > 0 ? 0.75 : 0.2} />
+                            <Cell key={entry.day} fill="hsl(258,90%,66%)'" fillOpacity={entry.calls > 0 ? 0.75 : 0.2} />
                           ))}
                         </Bar>
                       </BarChart>
@@ -653,7 +653,7 @@ export default function AnalyticsPage() {
                           >
                             <span className="flex items-center gap-1">
                               {label}
-                              {col && <ArrowUpDown className={cn('h-3 w-3', sortCol === col ? 'text-[hsl(258,90%,66%)]' : 'text-white/20')} />}
+                              {col && <ArrowUpDown className={cn('h-3 w-3', sortCol === col ? 'text-[hsl(258,90%,66%)']' : 'text-white/20')} />}
                             </span>
                           </th>
                         ))}
@@ -687,10 +687,10 @@ export default function AnalyticsPage() {
           {/* ── AI Insights ─────────────────────────────────────────── */}
           <div>
             <div className="mb-3 flex items-center gap-2">
-              <Brain className="h-4 w-4 text-[hsl(258,90%,66%)]" />
+              <Brain className="h-4 w-4 text-[hsl(258,90%,66%)']" />
               <p className="text-sm font-semibold text-white">AI Insights</p>
               {data && (
-                <span className="rounded-full border border-[hsl(258,90%,66%)]/30 bg-violet-600/10 px-2 py-0.5 text-[10px] text-[hsl(258,90%,66%)]">
+                <span className="rounded-full border border-[hsl(258,90%,66%)]/30 bg-violet-600/10 px-2 py-0.5 text-[10px] text-[hsl(258,90%,66%)']">
                   {data.ai.totalAnalyzed} calls analyzed
                 </span>
               )}
@@ -704,7 +704,7 @@ export default function AnalyticsPage() {
               </div>
             ) : !hasAiData ? (
               <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02] py-12 text-center">
-                <Sparkles className="mb-3 h-8 w-8 text-[hsl(258,90%,66%)]/30" />
+                <Sparkles className="mb-3 h-8 w-8 text-[hsl(258,90%,66%)']/30" />
                 <p className="text-sm font-medium text-white/40">AI analysis in progress</p>
                 <p className="mt-1 text-xs text-white/20">
                   Insights appear once calls have been transcribed and analyzed.
@@ -757,7 +757,7 @@ export default function AnalyticsPage() {
                         return (
                           <div key={intent.intent} className="flex items-center gap-2">
                             <span className="tabular-nums text-[10px] text-white/25 w-4">{i + 1}</span>
-                            <span className="flex-1 min-w-0 truncate text-xs capitalize text-white/60">{intent.intent.replace(/_/g, ' ')}</span>
+                            <span className="flex-1 min-w-0 truncate text-xs capitalize text-white/60">{intent.intent.replace(/_/g ')}</span>
                             <div className="w-16 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                               <div className="h-full rounded-full bg-violet-600" style={{ width: `${(intent.count / max) * 100}%` }} />
                             </div>
@@ -784,7 +784,7 @@ export default function AnalyticsPage() {
                           <span
                             key={kw.word}
                             className={cn(
-                              'inline-flex items-center rounded-lg border border-[hsl(258,90%,66%)]/20 bg-violet-600/10 px-2 py-1 capitalize leading-none',
+                              'inline-flex items-center rounded-lg border border-[hsl(258,90%,66%)']/20 bg-violet-600/10 px-2 py-1 capitalize leading-none',
                               size,
                             )}
                             style={{ color: `rgba(167,139,250,${opacity})` }}

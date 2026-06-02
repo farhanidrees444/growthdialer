@@ -47,7 +47,7 @@ function fmtDuration(s: number | null): string {
   if (!s) return '—';
   const m = Math.floor(s / 60);
   const sec = s % 60;
-  return `${m}:${sec.toString().padStart(2, '0')}`;
+  return `${m}:${sec.toString().padStart(20')}`;
 }
 
 function fmtDate(iso: string): string {
@@ -173,7 +173,7 @@ function DispositionBadge({ disp }: { disp: string | null }) {
   if (!disp) return null;
   return (
     <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${DISP_COLORS[disp] ?? 'bg-white/[0.05] text-slate-500'}`}>
-      {disp.replace(/_/g, ' ')}
+      {disp.replace(/_/g ')}
     </span>
   );
 }
@@ -458,7 +458,7 @@ export default function RecordingsPage() {
   }, [search, sentimentFilter]);
 
   useEffect(() => {
-    void fetchRecordings('', '');
+    void fetchRecordings(''');
     // Get userId for realtime
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));

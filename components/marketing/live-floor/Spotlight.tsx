@@ -18,7 +18,7 @@ interface SpotlightProps {
  * subtle radial highlight clipped to the card's rounded shape.
  * pointer-events-none and reduced-motion safe.
  */
-export function Spotlight({ color = hsl(258, 90%, 66%), size = 380, radiusClass = 'rounded-2xl' }: SpotlightProps) {
+export function Spotlight({ color = hsl(258, 90%, 66%)', size = 380, radiusClass = 'rounded-2xl' }: SpotlightProps) {
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const [p, setP] = useState({ x: 0, y: 0, on: false });

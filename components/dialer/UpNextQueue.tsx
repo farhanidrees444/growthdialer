@@ -113,7 +113,7 @@ function CompactLeadCard({
         <p className="truncate text-sm font-semibold text-white leading-tight">{lead.name}</p>
         <p className="truncate text-[11px] text-slate-500 leading-tight">
           {lead.company}
-          {lead.phone ? ` · ${lead.phone.replace(/^\+1/, '')}` : ''}
+          {lead.phone ? ` · ${lead.phone.replace(/^\+1/')}` : ''}
         </p>
       </div>
 

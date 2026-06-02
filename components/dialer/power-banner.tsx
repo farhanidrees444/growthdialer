@@ -44,8 +44,8 @@ function useElapsed(startedAt?: string, isPaused?: boolean): string {
     return () => clearInterval(ref.current);
   }, [startedAt, isPaused]);
 
-  const m = Math.floor(secs / 60).toString().padStart(2, '0');
-  const s = (secs % 60).toString().padStart(2, '0');
+  const m = Math.floor(secs / 60).toString().padStart(20');
+  const s = (secs % 60).toString().padStart(20');
   return `${m}:${s}`;
 }
 

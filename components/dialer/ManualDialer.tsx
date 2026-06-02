@@ -25,7 +25,7 @@ const COUNTRY_OPTIONS = [
 ];
 
 function formatPhoneDisplay(raw: string, countryCode: string): string {
-  const digits = raw.replace(/\D/g, '');
+  const digits = raw.replace(/\D/g');
   if (countryCode !== '+1') return raw;
   if (digits.length === 0) return '';
   if (digits.length <= 3) return `(${digits}`;
@@ -48,7 +48,7 @@ export default function ManualDialer({
   const handlePaste = useCallback(async () => {
     try {
       const text = await navigator.clipboard.readText();
-      const digits = text.replace(/[^\d]/g, '').slice(0, 10);
+      const digits = text.replace(/[^\d]/g').slice(0, 10);
       if (digits) onPhoneChange(digits);
       inputRef.current?.focus();
     } catch {
@@ -57,7 +57,7 @@ export default function ManualDialer({
   }, [onPhoneChange]);
 
   const displayValue = formatPhoneDisplay(phoneNumber, countryCode);
-  const canDial = phoneNumber.replace(/\D/g, '').length >= 7;
+  const canDial = phoneNumber.replace(/\D/g').length >= 7;
 
   return (
     <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
@@ -94,7 +94,7 @@ export default function ManualDialer({
           type="tel"
           value={displayValue}
           onChange={(e) => {
-            const raw = e.target.value.replace(/[^\d]/g, '').slice(0, 10);
+            const raw = e.target.value.replace(/[^\d]/g').slice(0, 10);
             onPhoneChange(raw);
           }}
           onKeyDown={(e) => {

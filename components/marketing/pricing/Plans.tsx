@@ -111,7 +111,7 @@ export function Plans() {
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-10 h-[420px] w-[min(90vw,820px)] -translate-x-1/2 rounded-full opacity-[0.09] blur-[120px]"
-        style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)' }}
+        style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)'' }}
       />
 
       {/* Header */}
@@ -138,12 +138,12 @@ export function Plans() {
         {/* Toggle */}
         <motion.div variants={reveal} className="mt-9 flex items-center justify-center gap-3">
           <div className="relative inline-flex rounded-full border border-white/[0.08] bg-white/[0.02] p-1 backdrop-blur-xl">
-            {(['monthly', 'annual'] as const).map((b) => (
+            {(['monthly'annual'] as const).map((b) => (
               <button
                 key={b}
                 type="button"
                 onClick={() => setBilling(b)}
-                className="relative rounded-full px-5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(258,90%,66%)]/40"
+                className="relative rounded-full px-5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(258,90%,66%)']/40"
               >
                 {billing === b && (
                   <motion.span
@@ -158,7 +158,7 @@ export function Plans() {
               </button>
             ))}
           </div>
-          <span className="rounded-full border border-[hsl(186,100%,42%)]/25 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+          <span className="rounded-full border border-[hsl(186,100%,42%)']/25 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
             Save up to 30%
           </span>
         </motion.div>
@@ -183,14 +183,14 @@ export function Plans() {
               transition={SPRING}
               className={`group relative flex flex-col rounded-2xl border p-6 backdrop-blur-xl transition-colors ${
                 plan.popular
-                  ? 'border-[hsl(258,90%,66%)]/40 bg-violet-600/[0.04]'
+                  ? 'border-[hsl(258,90%,66%)']/40 bg-violet-600/[0.04]'
                   : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]'
               }`}
             >
-              <Spotlight color={plan.popular ? hsl(258, 90%, 66%) : hsl(258, 90%, 66%)} />
+              <Spotlight color={plan.popular ? hsl(258, 90%, 66%)'  : 'hsl(258, 90%, 66%)'} />
 
               {plan.popular && (
-                <span className="absolute -top-3 left-6 rounded-full bg-violet-600 px-3 py-1 text-[11px] font-semibold text-white shadow-lg shadow-[hsl(258,90%,66%)]/30">
+                <span className="absolute -top-3 left-6 rounded-full bg-violet-600 px-3 py-1 text-[11px] font-semibold text-white shadow-lg shadow-[hsl(258,90%,66%)']/30">
                   Most popular
                 </span>
               )}
@@ -232,7 +232,7 @@ export function Plans() {
                 href={plan.href}
                 className={`mb-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-medium transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                   plan.popular
-                    ? 'bg-violet-600 text-white hover:bg-violet-700 focus-visible:ring-[hsl(258,90%,66%)]/60'
+                    ? 'bg-violet-600 text-white hover:bg-violet-700 focus-visible:ring-[hsl(258,90%,66%)']/60'
                     : 'border border-white/[0.1] text-zinc-200 hover:border-white/[0.2] hover:text-white focus-visible:ring-white/20'
                 }`}
               >
@@ -247,7 +247,7 @@ export function Plans() {
               <ul className="space-y-2.5">
                 {plan.features.map((f) => (
                   <li key={f.label} className="flex items-start gap-2.5 text-[13px] leading-relaxed text-muted-foreground/90">
-                    <Check className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${plan.popular ? 'text-[hsl(258,90%,66%)]' : 'text-muted-foreground/70'}`} />
+                    <Check className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${plan.popular ? 'text-[hsl(258,90%,66%)']' : 'text-muted-foreground/70'}`} />
                     <span>
                       {f.label}
                       {f.soon && (

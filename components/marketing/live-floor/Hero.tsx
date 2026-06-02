@@ -13,7 +13,7 @@ export function Hero() {
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-0 h-[520px] w-[min(90vw,900px)] -translate-x-1/2 rounded-full opacity-[0.10] blur-[120px]"
-        style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)' }}
+        style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)'' }}
       />
 
       <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
@@ -151,7 +151,7 @@ function BorderBeamCard({ children }: { children: React.ReactNode }) {
         className="absolute inset-0 rounded-2xl"
         style={{
           background:
-            'conic-gradient(from 0deg, transparent 0deg, transparent 300deg, hsl(258,90%,66%) 340deg, hsl(186,100%,42%) 360deg)',
+            'conic-gradient(from 0deg, transparent 0deg, transparent 300deg, hsl(258,90%,66%) 340deg, hsl(186,100%,42%) 360deg)'',
         }}
         animate={{ rotate: 360 }}
         transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
@@ -160,7 +160,7 @@ function BorderBeamCard({ children }: { children: React.ReactNode }) {
       <div className="absolute inset-0 rounded-2xl border border-white/[0.06]" />
       {/* Content surface */}
       <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-black/90 p-6 backdrop-blur-xl">
-        <Spotlight color="hsl(186,100%,42%)" />
+        <Spotlight color="hsl(186,100%,42%)'" />
         <div className="relative z-10">{children}</div>
       </div>
     </div>

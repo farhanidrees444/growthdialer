@@ -39,7 +39,7 @@ export function Nav() {
       <div
         className={`mx-auto flex h-16 max-w-7xl items-center justify-between px-5 transition-all duration-500 lg:px-8 ${
           scrolled
-            ? 'border-b border-white/[0.06] bg-[hsl(200,50%,3%)]/80 backdrop-blur-xl'
+            ? 'border-b border-white/[0.06] bg-[hsl(200,50%,3%)']/80 backdrop-blur-xl'
             : 'border-b border-transparent'
         }`}
       >
@@ -59,7 +59,7 @@ export function Nav() {
             <Link
               key={l.label}
               href={l.href}
-              className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(258,90%,66%)]/50"
+              className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(258,90%,66%)']/50"
             >
               {l.label}
             </Link>
@@ -70,13 +70,13 @@ export function Nav() {
         <div className="hidden items-center gap-2 md:flex">
           <a
             href={APP_SIGNIN}
-            className="rounded-lg px-3.5 py-2 text-sm text-muted-foreground/90 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(258,90%,66%)]/50"
+            className="rounded-lg px-3.5 py-2 text-sm text-muted-foreground/90 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(258,90%,66%)']/50"
           >
             Log in
           </a>
           <a
             href={APP_SIGNUP}
-            className="group relative rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-violet-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(258,90%,66%)]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="group relative rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-violet-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(258,90%,66%)']/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             Start Free
           </a>
@@ -101,7 +101,7 @@ export function Nav() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.4, ease: EASE_OUT }}
-            className="overflow-hidden border-b border-white/[0.06] bg-[hsl(200,50%,3%)]/95 backdrop-blur-xl md:hidden"
+            className="overflow-hidden border-b border-white/[0.06] bg-[hsl(200,50%,3%)']/95 backdrop-blur-xl md:hidden"
           >
             <div className="space-y-1 px-5 py-4">
               {LINKS.map((l) => (

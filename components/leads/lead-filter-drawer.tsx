@@ -221,7 +221,7 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
                     <div key={field} className="flex items-center justify-between">
                       <span className="text-sm text-slate-400">{label}</span>
                       <div className="flex gap-1.5">
-                        {(['Any', 'Yes', 'No'] as const).map((opt) => {
+                        {(['Any'Yes'No'] as const).map((opt) => {
                           const val = opt === 'Any' ? null : opt === 'Yes';
                           const active = draft[field] === val;
                           return (

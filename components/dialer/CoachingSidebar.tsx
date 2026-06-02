@@ -71,7 +71,7 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold capitalize ${map[status] ?? 'bg-slate-700/60 text-slate-300'}`}>
-      {status.replace('_', ' ')}
+      {status.replace('_' ')}
     </span>
   );
 }
@@ -169,7 +169,7 @@ export default function CoachingSidebar({ lead, notes, onSaveNotes, refreshKey }
                     {call.disposition && (
                       <>
                         <span className="text-slate-700">·</span>
-                        <span className="truncate capitalize">{call.disposition.replace('_', ' ')}</span>
+                        <span className="truncate capitalize">{call.disposition.replace('_' ')}</span>
                       </>
                     )}
                   </div>

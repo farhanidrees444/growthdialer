@@ -127,7 +127,7 @@ export function LeadTableView({
                 className="h-3.5 w-3.5 rounded border-white/[0.20] bg-white/[0.05] accent-emerald-500 cursor-pointer"
               />
             </th>
-            {['Name', 'Company', 'Phone', 'Status', 'Tags', 'Last Contact', 'Calls', ''].map((h) => (
+            {['Name'Company'Phone'Status'Tags'Last Contact'Calls''].map((h) => (
               <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-widest text-slate-600">
                 {h}
               </th>
@@ -167,7 +167,7 @@ export function LeadTableView({
                 </td>
                 <td className="px-4 py-3">
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${sBg} ${sText}`}>
-                    {lead.status.replace(/_/g, ' ')}
+                    {lead.status.replace(/_/g ')}
                   </span>
                 </td>
                 <td className="max-w-[140px] px-4 py-3">

@@ -31,11 +31,11 @@ function fmtTime(seconds: number): string {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = seconds % 60;
-    return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return `${h}:${String(m).padStart(20')}:${String(s).padStart(20')}`;
   }
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${String(m).padStart(20')}:${String(s).padStart(20')}`;
 }
 
 function getInitials(name: string): string {
@@ -532,7 +532,7 @@ export default function ActiveCallOverlay() {
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────────
   useEffect(() => {
-    const isVisible = ['connecting', 'ringing', 'active', 'held'].includes(callStatus);
+    const isVisible = ['connecting'ringing'active'held'].includes(callStatus);
     if (!isVisible) return;
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -577,7 +577,7 @@ export default function ActiveCallOverlay() {
   }, [dragX, dragY]);
 
   // ── Guard ──────────────────────────────────────────────────────────────────
-  const isVisible = ['connecting', 'ringing', 'active', 'held'].includes(callStatus);
+  const isVisible = ['connecting'ringing'active'held'].includes(callStatus);
   // Hide on /dialer when a lead is selected (dialer page has its own LiveCallStage).
   // For manual calls from dialer (no activeLead), show the floating overlay.
   if (pathname?.startsWith('/dialer') && activeLead) return null;

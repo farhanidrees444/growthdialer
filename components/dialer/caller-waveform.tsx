@@ -23,7 +23,7 @@ export function CallerWaveform({ active }: CallerWaveformProps) {
             height: Math.max(3, height),
             minWidth: 2,
             background: active
-              ? `linear-gradient(to top, hsl(262,80%,50%), hsl(186,100%,42%))`
+              ? `linear-gradient(to top, hsl(262,80%,50%), hsl(186,100%,42%))'`
               : 'rgba(255,255,255,0.08)',
             opacity: active ? 0.85 : 0.3,
           }}

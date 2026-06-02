@@ -66,8 +66,8 @@ function getInitials(name: string): string {
 }
 
 function formatTimer(seconds: number): string {
-  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-  const s = (seconds % 60).toString().padStart(2, '0');
+  const m = Math.floor(seconds / 60).toString().padStart(20');
+  const s = (seconds % 60).toString().padStart(20');
   return `${m}:${s}`;
 }
 
@@ -158,7 +158,7 @@ export default function CurrentLeadCard({
   useEffect(() => { setLocalNotes(notes); }, [notes]);
 
   const isIdle = callState.status === 'idle';
-  const isActive = ['connecting', 'ringing', 'connected'].includes(callState.status);
+  const isActive = ['connecting'ringing'connected'].includes(callState.status);
   const isRinging = callState.status === 'connecting' || callState.status === 'ringing';
   const isConnected = callState.status === 'connected';
   const isDisconnected = callState.status === 'disconnected';
@@ -359,7 +359,7 @@ export default function CurrentLeadCard({
               {/* Shimmer */}
               <motion.div
                 className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent"
-                animate={{ x: ['-100%', '200%'] }}
+                animate={{ x: ['-100%'200%'] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: 'linear', repeatDelay: 1.5 }}
               />
               <span className="relative flex items-center justify-center gap-2.5">

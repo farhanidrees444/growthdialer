@@ -21,13 +21,13 @@ export function EarlyAccess() {
         <div
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-0 h-[260px] w-[min(80vw,560px)] -translate-x-1/2 rounded-full opacity-[0.12] blur-[110px]"
-          style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)' }}
+          style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)'' }}
         />
-        <span className="relative mb-6 inline-flex items-center gap-2 rounded-full border border-[hsl(258,90%,66%)]/25 bg-violet-600/[0.06] py-1 pl-1.5 pr-3">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-600/20 text-[hsl(258,90%,66%)]">
+        <span className="relative mb-6 inline-flex items-center gap-2 rounded-full border border-[hsl(258,90%,66%)']/25 bg-violet-600/[0.06] py-1 pl-1.5 pr-3">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-600/20 text-[hsl(258,90%,66%)']">
             <Sparkles className="h-3 w-3" />
           </span>
-          <span className="text-[12px] font-medium text-[hsl(258,90%,66%)]">Early access</span>
+          <span className="text-[12px] font-medium text-[hsl(258,90%,66%)']">Early access</span>
         </span>
 
         <h2 className="relative font-display text-[clamp(2rem,4.5vw,3.25rem)] font-light leading-[1.04] tracking-tight text-foreground">
@@ -43,7 +43,7 @@ export function EarlyAccess() {
         <div className="relative mt-9 flex justify-center">
           <a
             href={APP_SIGNUP}
-            className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-violet-600 px-7 text-sm font-medium text-white transition-all hover:bg-violet-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(258,90%,66%)]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-violet-600 px-7 text-sm font-medium text-white transition-all hover:bg-violet-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(258,90%,66%)']/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             Claim your spot
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

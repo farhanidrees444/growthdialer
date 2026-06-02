@@ -475,7 +475,7 @@ export default function LeadDetailPage() {
                   </p>
                 )}
                 <span className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold capitalize ${sBg} ${sText}`}>
-                  {lead.status.replace(/_/g, ' ')}
+                  {lead.status.replace(/_/g ')}
                 </span>
               </div>
             </div>
@@ -533,7 +533,7 @@ export default function LeadDetailPage() {
                 { label: 'Total Calls', value: totalCalls },
                 { label: 'Last Contact', value: formatRelative(lead.last_called_at) },
                 { label: 'AI Score', value: lead.ai_score != null ? `${lead.ai_score}/100` : '—' },
-                { label: 'Status', value: lead.status.replace(/_/g, ' ') },
+                { label: 'Status', value: lead.status.replace(/_/g ') },
               ].map(({ label, value }) => (
                 <div key={label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
                   <p className="text-[10px] text-slate-600">{label}</p>
@@ -551,7 +551,7 @@ export default function LeadDetailPage() {
                 className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-emerald-500/25 appearance-none cursor-pointer"
               >
                 {['new','queued','contacted','connected','callback','meeting_booked','not_interested','do_not_call','wrong_number'].map((s) => (
-                  <option key={s} value={s} className="bg-[#111] capitalize">{s.replace(/_/g, ' ')}</option>
+                  <option key={s} value={s} className="bg-[#111] capitalize">{s.replace(/_/g ')}</option>
                 ))}
               </select>
             </div>

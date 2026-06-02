@@ -21,8 +21,8 @@ import DialModeSegmented from '@/components/dialer/DialModeSegmented';
 import { LeadRecord } from '@/components/dialer/LeadCard';
 
 function formatTimer(seconds: number): string {
-  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-  const s = (seconds % 60).toString().padStart(2, '0');
+  const m = Math.floor(seconds / 60).toString().padStart(20');
+  const s = (seconds % 60).toString().padStart(20');
   return `${m}:${s}`;
 }
 
@@ -118,7 +118,7 @@ export default function DialerPanel({
   }, [notes]);
 
   const isIdle = callState.status === 'idle';
-  const isActive = ['connecting', 'ringing', 'connected'].includes(callState.status);
+  const isActive = ['connecting'ringing'connected'].includes(callState.status);
   const isRinging = callState.status === 'ringing' || callState.status === 'connecting';
   const isConnected = callState.status === 'connected';
   const isDisconnected = callState.status === 'disconnected';
@@ -205,7 +205,7 @@ export default function DialerPanel({
                   <span>Status</span>
                 </div>
                 <p className="mt-1 truncate font-semibold capitalize text-white">
-                  {selectedLead.status.replace(/_/g, ' ')}
+                  {selectedLead.status.replace(/_/g ')}
                 </p>
               </div>
             </div>

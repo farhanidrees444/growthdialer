@@ -74,8 +74,8 @@ function useTimer(running: boolean) {
     }
     return () => clearInterval(ref.current);
   }, [running]);
-  const m = Math.floor(secs / 60).toString().padStart(2, '0');
-  const s = (secs % 60).toString().padStart(2, '0');
+  const m = Math.floor(secs / 60).toString().padStart(20');
+  const s = (secs % 60).toString().padStart(20');
   return { formatted: `${m}:${s}`, seconds: secs };
 }
 
@@ -185,7 +185,7 @@ export default function DialerPage() {
       .from('purchased_numbers')
       .select('phone_number')
       .eq('user_id', userId)
-      .eq('status', 'active')
+      .eq('status'active')
       .order('is_default', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -321,7 +321,7 @@ export default function DialerPage() {
     const e164 = normalizePhone(phone) ?? phone;
     if (lead) {
       // Lead call: switch center column to live stage immediately
-      startCall('', '');
+      startCall(''');
     } else {
       // Manual dial (no lead): register in CallContext so floating overlay shows
       registerCallMeta(null, e164);
@@ -381,7 +381,7 @@ export default function DialerPage() {
     if (powerDialer.isActive) {
       toast.success('Saved · Loading next lead…', { duration: 2000 });
     } else {
-      toast.success(`Marked as ${disposition.replace(/_/g, ' ')}`);
+      toast.success(`Marked as ${disposition.replace(/_/g ')}`);
     }
 
     setDispositionOpen(false);
@@ -545,7 +545,7 @@ export default function DialerPage() {
                   className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold text-white transition-opacity ${
                     i === 0 ? 'ring-2 ring-red-500/60' : 'opacity-50 hover:opacity-80'
                   }`}
-                  style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))' }}
+                  style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))'' }}
                 >
                   {lead.name.split(' ').slice(0, 2).map((w) => w[0]).join('')}
                 </button>
@@ -670,7 +670,7 @@ export default function DialerPage() {
             </button>
             <button
               className="flex-1 h-11 rounded-xl text-sm font-semibold text-white"
-              style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))' }}
+              style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))'' }}
               onClick={() => setPowerConfirmOpen(true)}
             >
               Power Dial
@@ -745,7 +745,7 @@ export default function DialerPage() {
                     powerDialer.start({ delay_seconds: 5 });
                   }}
                   className="flex-[2] h-10 rounded-xl text-sm font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed"
-                  style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))' }}
+                  style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))'' }}
                 >
                   Start Session
                 </button>
@@ -787,7 +787,7 @@ export default function DialerPage() {
               <button
                 onClick={powerDialer.dismissSummary}
                 className="w-full h-10 rounded-xl text-sm font-semibold text-white"
-                style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))' }}
+                style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))'' }}
               >
                 Done
               </button>
@@ -841,7 +841,7 @@ export default function DialerPage() {
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setMobileAiBriefOpen(true)}
                 className="flex h-12 w-12 items-center justify-center rounded-full shadow-xl text-white"
-                style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))', border: '1px solid rgba(255,255,255,0.15)' }}
+                style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))'', border: '1px solid rgba(255,255,255,0.15)' }}
                 aria-label="Open AI Brief"
               >
                 <Sparkles className="h-5 w-5" />

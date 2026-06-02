@@ -20,7 +20,7 @@ const GROUPS = [
   {
     label: 'Browse mode',
     keys: [
-      { keys: ['↑', '↓'], desc: 'Navigate queue' },
+      { keys: ['↑'↓'], desc: 'Navigate queue' },
       { keys: ['Enter'], desc: 'Select lead' },
       { keys: ['P'], desc: 'Start power dial' },
     ],

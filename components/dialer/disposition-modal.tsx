@@ -16,9 +16,9 @@ interface DispositionModalProps {
 }
 
 const ORDERED: DispositionType[] = [
-  'interested', 'meeting_booked', 'callback',
-  'voicemail', 'gatekeeper', 'not_interested',
-  'wrong_number', 'dnc',
+  'interested'meeting_booked'callback',
+  'voicemail'gatekeeper'not_interested',
+  'wrong_number'dnc',
 ];
 
 const COLOR_CLASS: Record<string, string> = {
@@ -28,8 +28,8 @@ const COLOR_CLASS: Record<string, string> = {
 };
 
 function fmt(seconds: number) {
-  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-  const s = (seconds % 60).toString().padStart(2, '0');
+  const m = Math.floor(seconds / 60).toString().padStart(20');
+  const s = (seconds % 60).toString().padStart(20');
   return `${m}:${s}`;
 }
 
@@ -247,7 +247,7 @@ export function DispositionModal({ open, lead, callDuration, onSave, onClose }: 
             whileHover={selected ? { scale: 1.01 } : {}}
             whileTap={selected ? { scale: 0.99 } : {}}
             className="w-full h-11 rounded-lg font-medium text-sm transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 disabled:opacity-30 disabled:cursor-not-allowed"
-            style={selected ? { background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))' } : { background: 'rgba(255,255,255,0.05)' }}
+            style={selected ? { background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))'' } : { background: 'rgba(255,255,255,0.05)' }}
           >
             {selected ? `Save · ${DISPOSITION_LABELS[selected].label}` : 'Select a disposition'}
           </motion.button>

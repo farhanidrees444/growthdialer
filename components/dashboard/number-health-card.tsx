@@ -23,7 +23,7 @@ interface NumberItem {
 }
 
 function fmtPhone(p: string): string {
-  const d = p.replace(/\D/g, '');
+  const d = p.replace(/\D/g');
   if (d.length === 11) return `(${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`;
   return p;
 }

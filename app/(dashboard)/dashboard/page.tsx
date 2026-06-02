@@ -277,7 +277,7 @@ function CallActivityChart({
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
         </div>
         <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-black/20 p-0.5">
-          {(['24H', '7D'] as const).map(r => (
+          {(['24H'7D'] as const).map(r => (
             <button
               key={r}
               type="button"
@@ -304,12 +304,12 @@ function CallActivityChart({
               <AreaChart data={chartData} margin={{ top: 5, right: 8, bottom: 0, left: -20 }}>
                 <defs>
                   <linearGradient id="act-calls-grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(258,90%,66%)" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="hsl(258,90%,66%)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(258,90%,66%)'" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="hsl(258,90%,66%)'" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="act-conn-grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(186,100%,42%)" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="hsl(186,100%,42%)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(186,100%,42%)'" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="hsl(186,100%,42%)'" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
@@ -335,8 +335,8 @@ function CallActivityChart({
                     );
                   }}
                 />
-                <Area type="monotone" dataKey="calls" name="Calls Made" stroke="hsl(258,90%,66%)" strokeWidth={2} fill="url(#act-calls-grad)" dot={false} isAnimationActive={false} />
-                <Area type="monotone" dataKey="connected" name="Connected" stroke="hsl(186,100%,42%)" strokeWidth={2} fill="url(#act-conn-grad)" dot={false} isAnimationActive={false} />
+                <Area type="monotone" dataKey="calls" name="Calls Made" stroke="hsl(258,90%,66%)" strokeWidth={2} fill="url(#act-calls-grad)'" dot={false} isAnimationActive={false} />
+                <Area type="monotone" dataKey="connected" name="Connected" stroke="hsl(186,100%,42%)" strokeWidth={2} fill="url(#act-conn-grad)'" dot={false} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -346,7 +346,7 @@ function CallActivityChart({
               <span className="text-[10px] text-slate-500">Calls Made</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="h-[2px] w-3 rounded bg-[hsl(186,100%,42%)]" />
+              <div className="h-[2px] w-3 rounded bg-[hsl(186,100%,42%)']" />
               <span className="text-[10px] text-slate-500">Connected</span>
             </div>
           </div>
@@ -535,7 +535,7 @@ export default function DashboardPage() {
       .from('calls')
       .select('duration_seconds')
       .gte('ended_at', today.toISOString())
-      .not('duration_seconds', 'is', null)
+      .not('duration_seconds'is', null)
       .then(({ data }) => {
         if (!cancelled) {
           const total = (data ?? []).reduce((s, c) => s + ((c.duration_seconds as number) ?? 0), 0);
@@ -546,7 +546,7 @@ export default function DashboardPage() {
     void supabase
       .from('calls')
       .select('id, to_number, duration_seconds, ended_at, disposition, leads(name, company)')
-      .not('ended_at', 'is', null)
+      .not('ended_at'is', null)
       .order('ended_at', { ascending: false })
       .limit(5)
       .then(({ data }) => {
@@ -612,7 +612,7 @@ export default function DashboardPage() {
         {/* Hero */}
         <div className="px-4 pt-6 pb-4 lg:px-6 lg:pt-8 lg:pb-5">
           <h1 className="text-2xl font-light text-white md:text-3xl">
-            {greeting}{firstName ? ', ' : ''}<span className="font-semibold">{firstName}</span>
+            {greeting}{firstName ? ' : ''}<span className="font-semibold">{firstName}</span>
           </h1>
           <p className="mt-1 text-sm text-slate-500">{dateStr}</p>
         </div>
@@ -626,7 +626,7 @@ export default function DashboardPage() {
             loading={allLoading}
             icon={Phone}
             iconColor="text-violet-400"
-            color="hsl(258,90%,66%)"
+            color="hsl(258,90%,66%)'"
             gradientId="kpi-calls-grad"
             sparkline={sparkline}
             dataKey="calls"
@@ -639,7 +639,7 @@ export default function DashboardPage() {
             loading={allLoading}
             icon={Users}
             iconColor="text-cyan-400"
-            color="hsl(186,100%,42%)"
+            color="hsl(186,100%,42%)'"
             gradientId="kpi-conn-grad"
             sparkline={sparkline}
             dataKey="connected"

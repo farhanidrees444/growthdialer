@@ -9,7 +9,7 @@ interface CallTimerProps {
 function formatDuration(duration: number) {
   const minutes = Math.floor(duration / 60);
   const seconds = duration % 60;
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  return `${minutes.toString().padStart(20')}:${seconds.toString().padStart(20')}`;
 }
 
 export default function CallTimer({ duration, status, quality }: CallTimerProps) {

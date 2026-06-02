@@ -44,7 +44,7 @@ export function QueueLeadCard({ lead, selected, lastDisposition, onClick }: Queu
       {selected && (
         <div
           className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full"
-          style={{ background: 'linear-gradient(to bottom, hsl(262,80%,50%), hsl(186,100%,42%))' }}
+          style={{ background: 'linear-gradient(to bottom, hsl(262,80%,50%), hsl(186,100%,42%))'' }}
         />
       )}
 

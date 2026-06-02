@@ -35,8 +35,8 @@ function useCallTimer(active: boolean) {
     return () => clearInterval(intervalRef.current);
   }, [active]);
 
-  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-  const s = (seconds % 60).toString().padStart(2, '0');
+  const m = Math.floor(seconds / 60).toString().padStart(20');
+  const s = (seconds % 60).toString().padStart(20');
   return { formatted: `${m}:${s}`, seconds };
 }
 
@@ -83,7 +83,7 @@ export function LiveCallStage({
         <motion.div
           className="w-28 h-28 rounded-full flex items-center justify-center text-3xl font-semibold text-white"
           style={{ background: gradient.css }}
-          animate={isConnected ? { boxShadow: ['0 0 0 0 rgba(6,182,212,0)', '0 0 0 12px rgba(6,182,212,0.12)', '0 0 0 0 rgba(6,182,212,0)'] } : {}}
+          animate={isConnected ? { boxShadow: ['0 0 0 0 rgba(6,182,212,0)'0 0 0 12px rgba(6,182,212,0.12)'0 0 0 0 rgba(6,182,212,0)'] } : {}}
           transition={{ duration: 2, repeat: Infinity }}
         >
           {getInitials(lead.name)}

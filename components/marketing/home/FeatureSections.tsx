@@ -30,7 +30,7 @@ function useCycle(length: number, ms: number) {
 
 // ── AI Dialer — animated 3-mode switch + live waveform ──────────────────────
 function DialerVisual() {
-  const modes = ['Browse', 'Focus', 'Power'];
+  const modes = ['Browse'Focus'Power'];
   const { ref, i } = useCycle(modes.length, 1900);
   return (
     <div ref={ref} className="space-y-4" aria-hidden>
@@ -40,11 +40,11 @@ function DialerVisual() {
             {i === idx && (
               <motion.span
                 layoutId="dialer-mode"
-                className="absolute inset-0 rounded-lg border border-[hsl(258,90%,66%)]/40 bg-violet-600/10"
+                className="absolute inset-0 rounded-lg border border-[hsl(258,90%,66%)']/40 bg-violet-600/10"
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               />
             )}
-            <span className={`relative ${i === idx ? 'text-[hsl(258,90%,66%)]' : 'text-muted-foreground/70'}`}>{m}</span>
+            <span className={`relative ${i === idx ? 'text-[hsl(258,90%,66%)']' : 'text-muted-foreground/70'}`}>{m}</span>
           </div>
         ))}
       </div>
@@ -63,7 +63,7 @@ function DialerVisual() {
 
 // ── Power Dialer — auto-advancing call queue ────────────────────────────────
 function PowerVisual() {
-  const rows = ['Maya Chen', 'Tom Becker', 'Priya Nair', 'Diego Ruiz', 'Sam Okafor'];
+  const rows = ['Maya Chen'Tom Becker'Priya Nair'Diego Ruiz'Sam Okafor'];
   const { ref, i: active } = useCycle(rows.length, 1500);
   return (
     <div ref={ref} className="space-y-2" aria-hidden>
@@ -74,7 +74,7 @@ function PowerVisual() {
           <div
             key={r}
             className={`flex items-center justify-between rounded-lg border px-3 py-2.5 transition-colors duration-300 ${
-              isActive ? 'border-[hsl(258,90%,66%)]/40 bg-violet-600/[0.06]' : 'border-white/[0.06]'
+              isActive ? 'border-[hsl(258,90%,66%)']/40 bg-violet-600/[0.06]' : 'border-white/[0.06]'
             }`}
           >
             <div className="flex items-center gap-2.5">
@@ -86,7 +86,7 @@ function PowerVisual() {
               <span className={`text-[13px] ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>{r}</span>
             </div>
             {isActive ? (
-              <span className="flex items-center gap-1.5 text-[11px] font-medium text-[hsl(258,90%,66%)]">
+              <span className="flex items-center gap-1.5 text-[11px] font-medium text-[hsl(258,90%,66%)']">
                 <Phone className="h-3 w-3" /> Dialing…
               </span>
             ) : done ? (
@@ -137,7 +137,7 @@ function IntelVisual() {
       </div>
       <div className="flex items-center justify-between rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2">
         <span className="text-xs text-muted-foreground">Intent</span>
-        <span className="text-xs font-medium text-[hsl(258,90%,66%)]">Pricing + demo</span>
+        <span className="text-xs font-medium text-[hsl(258,90%,66%)']">Pricing + demo</span>
       </div>
     </div>
   );
@@ -148,7 +148,7 @@ function LeadsVisual() {
   const leads = [
     { n: 'Acme Co.', s: 'Interested', c: 'text-emerald-400' },
     { n: 'Globex', s: 'Callback', c: 'text-amber-400' },
-    { n: 'Initech', s: 'Meeting booked', c: 'text-[hsl(258,90%,66%)]' },
+    { n: 'Initech', s: 'Meeting booked', c: 'text-[hsl(258,90%,66%)']' },
     { n: 'Umbrella', s: 'New', c: 'text-muted-foreground' },
   ];
   return (
@@ -200,7 +200,7 @@ function AnalyticsVisual() {
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: i * 0.07, ease: EASE_OUT }}
             className="flex-1 rounded-t-md"
-            style={{ background: i === 5 ? 'linear-gradient(to top,hsl(258,90%,66%),hsl(186,100%,42%))' : 'rgba(255,255,255,0.08)' }}
+            style={{ background: i === 5 ? 'linear-gradient(to top,hsl(258,90%,66%),hsl(186,100%,42%))'' : 'rgba(255,255,255,0.08)' }}
           />
         ))}
       </div>
@@ -227,7 +227,7 @@ function HealthVisual() {
             whileInView={{ width: '92%' }}
             viewport={{ once: true }}
             transition={{ duration: 0.9, ease: EASE_OUT }}
-            className="h-full rounded-full bg-gradient-to-r from-[hsl(258,90%,66%)] to-[hsl(186,100%,42%)]"
+            className="h-full rounded-full bg-gradient-to-r from-[hsl(258,90%,66%)] to-[hsl(186,100%,42%)']"
           />
         </div>
       </div>
@@ -268,7 +268,7 @@ export function FeatureSections() {
                 className={reverse ? 'lg:order-2' : ''}
               >
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] py-1 pl-1.5 pr-3">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-600/15 text-[hsl(258,90%,66%)]">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-600/15 text-[hsl(258,90%,66%)']">
                     <Icon className="h-3 w-3" />
                   </span>
                   <span className="text-[12px] font-medium text-muted-foreground">{f.eyebrow}</span>

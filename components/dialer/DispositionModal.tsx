@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, CalendarClock, VoicemailIcon, Phone, SkipForward } from 'lucide-react';
 
 function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-  const s = (seconds % 60).toString().padStart(2, '0');
+  const m = Math.floor(seconds / 60).toString().padStart(20');
+  const s = (seconds % 60).toString().padStart(20');
   return `${m}:${s}`;
 }
 
@@ -14,7 +14,7 @@ function defaultCallbackTime(): string {
   const d = new Date();
   d.setDate(d.getDate() + 1);
   d.setHours(10, 0, 0, 0);
-  const pad = (n: number) => String(n).padStart(2, '0');
+  const pad = (n: number) => String(n).padStart(20');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
@@ -22,7 +22,7 @@ function gatekeeperRetryTime(): string {
   const d = new Date();
   d.setDate(d.getDate() + 2);
   d.setHours(9, 0, 0, 0);
-  const pad = (n: number) => String(n).padStart(2, '0');
+  const pad = (n: number) => String(n).padStart(20');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
@@ -112,7 +112,7 @@ export default function DispositionModal({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
+      if (['INPUT'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
       if (!isQuickMode) {
         const idx = parseInt(e.key) - 1;
         if (idx >= 0 && idx < DISPOSITIONS.length) {

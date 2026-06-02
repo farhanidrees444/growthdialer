@@ -57,7 +57,7 @@ type Tab = 'insights' | 'transcript' | 'memory';
 
 function formatDuration(seconds: number | null) {
   if (!seconds) return '—';
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(20')}`;
 }
 
 function formatDate(iso: string) {
@@ -68,7 +68,7 @@ function formatDate(iso: string) {
 }
 
 function fmtTimestamp(secs: number) {
-  return `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, '0')}`;
+  return `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(20')}`;
 }
 
 function getSummaryBullets(summary: unknown): string[] {
@@ -271,7 +271,7 @@ function InsightsTab({ analytics }: { analytics: CallAnalytics }) {
           <p className="text-sm text-emerald-300 leading-relaxed">{analytics.next_steps}</p>
           {analytics.suggested_disposition && (
             <p className="mt-2 text-[11px] text-emerald-600">
-              Suggested: <span className="font-semibold capitalize">{analytics.suggested_disposition.replace(/_/g, ' ')}</span>
+              Suggested: <span className="font-semibold capitalize">{analytics.suggested_disposition.replace(/_/g ')}</span>
             </p>
           )}
         </motion.div>
@@ -427,7 +427,7 @@ function buildSegments(words: WordTimestamp[]): Array<{ text: string; start: num
 
 function highlightText(text: string, query: string) {
   if (!query) return text;
-  const parts = text.split(new RegExp(`(${query})`, 'gi'));
+  const parts = text.split(new RegExp(`(${query})`gi'));
   return parts.map((part, i) =>
     part.toLowerCase() === query.toLowerCase()
       ? <mark key={i} className="bg-amber-500/30 text-amber-200 rounded px-0.5">{part}</mark>

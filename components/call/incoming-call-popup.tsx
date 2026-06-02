@@ -25,7 +25,7 @@ interface InboundCall {
 // ── Phone formatting helpers ────────────────────────────────────────────────
 
 function getCountryFlag(e164: string): string {
-  const d = e164.replace(/\D/g, '');
+  const d = e164.replace(/\D/g');
   if (d.startsWith('1'))   return '🇺🇸';
   if (d.startsWith('44'))  return '🇬🇧';
   if (d.startsWith('91'))  return '🇮🇳';
@@ -77,7 +77,7 @@ function getCountryFlag(e164: string): string {
 }
 
 function formatPhone(e164: string): string {
-  const d = e164.replace(/\D/g, '');
+  const d = e164.replace(/\D/g');
   // North America: +1 NXX NXX XXXX
   if (d.startsWith('1') && d.length === 11) {
     return `+1 ${d.slice(1, 4)} ${d.slice(4, 7)} ${d.slice(7)}`;
@@ -166,7 +166,7 @@ export function IncomingCallPopup({ userId }: Props) {
         { event: 'INSERT', schema: 'public', table: 'calls', filter: `user_id=eq.${userId}` },
         async (payload) => {
           const row = payload.new as Record<string, unknown>;
-          console.log('[POPUP] Inbound INSERT received:', row.id, '| direction:', row.direction, '| status:', row.status);
+          console.log('[POPUP] Inbound INSERT received:', row.id| direction:', row.direction| status:', row.status);
           if (row.direction !== 'inbound' || row.status !== 'ringing') return;
           callIdRef.current = row.id as string;
 
@@ -197,14 +197,14 @@ export function IncomingCallPopup({ userId }: Props) {
         (payload) => {
           const row = payload.new as Record<string, unknown>;
           if (row.id !== callIdRef.current) return;
-          if (['missed', 'completed', 'rejected'].includes(row.status as string)) {
+          if (['missed'completed'rejected'].includes(row.status as string)) {
             setCall(null);
             stopRingtone();
           }
         },
       )
       .subscribe((status) => {
-        console.log('[POPUP] Realtime status:', status, '| userId:', userId);
+        console.log('[POPUP] Realtime status:', status| userId:', userId);
       });
 
     return () => {
@@ -279,21 +279,21 @@ export function IncomingCallPopup({ userId }: Props) {
       >
         {/* Animated ring indicator */}
         <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-[hsl(258,90%,66%)]/[0.08] to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[hsl(258,90%,66%)']/[0.08] to-transparent" />
           <motion.div
             animate={{ scaleX: [1, 1.04, 1], opacity: [0.7, 1, 0.7] }}
             transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-            className="h-0.5 w-full bg-gradient-to-r from-[hsl(258,90%,66%)]/40 via-[hsl(186,100%,42%)] to-[hsl(258,90%,66%)]/40"
+            className="h-0.5 w-full bg-gradient-to-r from-[hsl(258,90%,66%)]/40 via-[hsl(186,100%,42%)] to-[hsl(258,90%,66%)']/40"
           />
         </div>
 
         <div className="px-5 py-5 sm:px-6">
           {/* Status label */}
-          <p className="mb-4 text-center text-[10px] font-bold uppercase tracking-widest text-[hsl(186,100%,42%)]">
+          <p className="mb-4 text-center text-[10px] font-bold uppercase tracking-widest text-[hsl(186,100%,42%)']">
             <motion.span
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 1.2, repeat: Infinity }}
-              className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-[hsl(186,100%,42%)] align-middle"
+              className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-[hsl(186,100%,42%)'] align-middle"
             />
             Incoming Call
           </p>
@@ -306,11 +306,11 @@ export function IncomingCallPopup({ userId }: Props) {
                 animate={{ scale: [1, 1.18, 1], opacity: [0.15, 0, 0.15] }}
                 transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
                 className="absolute inset-[-8px] rounded-[28px]"
-                style={{ background: 'linear-gradient(135deg, hsl(258,90%,66%), hsl(186,100%,42%))' }}
+                style={{ background: 'linear-gradient(135deg, hsl(258,90%,66%), hsl(186,100%,42%))'' }}
               />
               <div
                 className="relative flex h-20 w-20 items-center justify-center rounded-2xl text-2xl font-bold text-white shadow-lg"
-                style={{ background: 'linear-gradient(135deg, hsl(258,90%,66%), hsl(186,100%,42%))' }}
+                style={{ background: 'linear-gradient(135deg, hsl(258,90%,66%), hsl(186,100%,42%))'' }}
               >
                 {initials ?? <User className="h-8 w-8" />}
               </div>
