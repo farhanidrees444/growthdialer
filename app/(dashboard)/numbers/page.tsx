@@ -408,7 +408,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
         </div>
         <button onClick={onBuyNew}
           className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
-          style={{ background: 'linear-gradient(135deg,#7C3AED,#06B6D4)' }}>
+          style={{ background: 'linear-gradient(135deg,hsl(262,80%,50%),hsl(186,100%,42%))' }}>
           <Plus className="h-4 w-4" /> Buy Number
         </button>
       </div>

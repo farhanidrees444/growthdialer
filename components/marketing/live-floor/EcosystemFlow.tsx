@@ -64,7 +64,7 @@ export function EcosystemFlow() {
                       <motion.span
                         aria-hidden
                         className="absolute top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-primary"
-                        style={{ boxShadow: '0 0 8px #06B6D4' }}
+                        style={{ boxShadow: '0 0 8px hsl(186,100%,42%)' }}
                         initial={{ left: '0%', opacity: 0 }}
                         animate={{ left: ['0%', '100%'], opacity: [0, 1, 1, 0] }}
                         transition={{ duration: 2.4, repeat: Infinity, delay: i * 0.4, ease: 'easeInOut' }}

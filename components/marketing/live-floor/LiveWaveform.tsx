@@ -27,7 +27,7 @@ export function LiveWaveform({
   bars = 48,
   className = '',
   height = 64,
-  color = '#06B6D4',
+  color = hsl(186, 100%, 42%),
   barWidth = 3,
   gap = 3,
   speed = 1,
@@ -83,7 +83,7 @@ export function LiveWaveform({
 }
 
 /** A single mini-waveform glyph for inline/label use. */
-export function MiniWave({ color = '#06B6D4', className = '' }: { color?: string; className?: string }) {
+export function MiniWave({ color = hsl(186, 100%, 42%), className = '' }: { color?: string; className?: string }) {
   const reduce = useReducedMotion();
   const [mounted, setMounted] = useState(false);
   

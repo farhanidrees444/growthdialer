@@ -71,7 +71,7 @@ export function Features() {
             <Spotlight />
             <div>
               <div className="mb-5 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8B5CF6]/10 text-[#8B5CF6]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600/10 text-[hsl(258,90%,66%)]">
                   <Target className="h-5 w-5" />
                 </span>
                 <span className="rounded-full border border-white/[0.08] px-2.5 py-1 text-[11px] font-medium text-muted-foreground">

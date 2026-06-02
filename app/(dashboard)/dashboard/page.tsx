@@ -304,12 +304,12 @@ function CallActivityChart({
               <AreaChart data={chartData} margin={{ top: 5, right: 8, bottom: 0, left: -20 }}>
                 <defs>
                   <linearGradient id="act-calls-grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(258,90%,66%)" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="hsl(258,90%,66%)" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="act-conn-grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#06B6D4" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#06B6D4" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(186,100%,42%)" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="hsl(186,100%,42%)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
@@ -335,18 +335,18 @@ function CallActivityChart({
                     );
                   }}
                 />
-                <Area type="monotone" dataKey="calls" name="Calls Made" stroke="#8B5CF6" strokeWidth={2} fill="url(#act-calls-grad)" dot={false} isAnimationActive={false} />
-                <Area type="monotone" dataKey="connected" name="Connected" stroke="#06B6D4" strokeWidth={2} fill="url(#act-conn-grad)" dot={false} isAnimationActive={false} />
+                <Area type="monotone" dataKey="calls" name="Calls Made" stroke="hsl(258,90%,66%)" strokeWidth={2} fill="url(#act-calls-grad)" dot={false} isAnimationActive={false} />
+                <Area type="monotone" dataKey="connected" name="Connected" stroke="hsl(186,100%,42%)" strokeWidth={2} fill="url(#act-conn-grad)" dot={false} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
           <div className="flex justify-end gap-4 px-5 pb-4 pt-1">
             <div className="flex items-center gap-1.5">
-              <div className="h-[2px] w-3 rounded bg-[#8B5CF6]" />
+              <div className="h-[2px] w-3 rounded bg-violet-600" />
               <span className="text-[10px] text-slate-500">Calls Made</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="h-[2px] w-3 rounded bg-[#06B6D4]" />
+              <div className="h-[2px] w-3 rounded bg-[hsl(186,100%,42%)]" />
               <span className="text-[10px] text-slate-500">Connected</span>
             </div>
           </div>
@@ -626,7 +626,7 @@ export default function DashboardPage() {
             loading={allLoading}
             icon={Phone}
             iconColor="text-violet-400"
-            color="#8B5CF6"
+            color="hsl(258,90%,66%)"
             gradientId="kpi-calls-grad"
             sparkline={sparkline}
             dataKey="calls"
@@ -639,7 +639,7 @@ export default function DashboardPage() {
             loading={allLoading}
             icon={Users}
             iconColor="text-cyan-400"
-            color="#06B6D4"
+            color="hsl(186,100%,42%)"
             gradientId="kpi-conn-grad"
             sparkline={sparkline}
             dataKey="connected"

@@ -33,7 +33,7 @@ export function DashboardPreview() {
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-1/3 h-[460px] w-[min(92vw,900px)] -translate-x-1/2 rounded-full opacity-[0.07] blur-[130px]"
-        style={{ background: 'radial-gradient(circle, #8B5CF6 0%, transparent 70%)' }}
+        style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)' }}
       />
 
       <motion.div
@@ -68,7 +68,7 @@ export function DashboardPreview() {
           {/* Top bar */}
           <div className="mb-3 flex items-center justify-between rounded-2xl border border-white/[0.05] bg-white/[0.02] px-4 py-3">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: 'linear-gradient(135deg,#8B5CF6,#06B6D4)' }}>
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: 'linear-gradient(135deg,hsl(258,90%,66%),hsl(186,100%,42%))' }}>
                 <Phone className="h-3.5 w-3.5 text-white" />
               </span>
               <span className="text-sm font-medium text-foreground">Dialer</span>
@@ -132,7 +132,7 @@ export function DashboardPreview() {
               {/* AI summary materializing */}
               <div className="rounded-2xl border border-white/[0.05] bg-white/[0.02] p-4">
                 <p className="mb-3 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">
-                  <Sparkles className="h-3.5 w-3.5 text-[#8B5CF6]" /> AI summary
+                  <Sparkles className="h-3.5 w-3.5 text-[hsl(258,90%,66%)]" /> AI summary
                 </p>
                 <div className="mb-3 flex items-center justify-between rounded-lg border border-white/[0.05] bg-black/30 px-3 py-2">
                   <span className="text-xs text-muted-foreground">Sentiment</span>
@@ -150,7 +150,7 @@ export function DashboardPreview() {
                       transition={{ duration: 0.5, delay: 0.3 + i * 0.25, ease: EASE_OUT }}
                       className="flex items-start gap-2 text-[13px] leading-relaxed text-muted-foreground/90"
                     >
-                      <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#8B5CF6]" />
+                      <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[hsl(258,90%,66%)]" />
                       {t}
                     </motion.li>
                   ))}

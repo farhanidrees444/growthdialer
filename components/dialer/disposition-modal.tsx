@@ -247,7 +247,7 @@ export function DispositionModal({ open, lead, callDuration, onSave, onClose }: 
             whileHover={selected ? { scale: 1.01 } : {}}
             whileTap={selected ? { scale: 0.99 } : {}}
             className="w-full h-11 rounded-lg font-medium text-sm transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 disabled:opacity-30 disabled:cursor-not-allowed"
-            style={selected ? { background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' } : { background: 'rgba(255,255,255,0.05)' }}
+            style={selected ? { background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))' } : { background: 'rgba(255,255,255,0.05)' }}
           >
             {selected ? `Save · ${DISPOSITION_LABELS[selected].label}` : 'Select a disposition'}
           </motion.button>

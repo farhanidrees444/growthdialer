@@ -338,7 +338,7 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
                 <a
                   href="/numbers"
                   className="px-4 py-2 rounded-xl text-sm font-semibold text-white"
-                  style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}
+                  style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))' }}
                 >
                   Buy a Number
                 </a>

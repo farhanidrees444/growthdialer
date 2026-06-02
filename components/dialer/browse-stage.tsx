@@ -53,7 +53,7 @@ export function BrowseStage({ queueCount, hotCount, callbackCount, onStartPowerD
         whileHover={queueCount > 0 ? { scale: 1.03, boxShadow: '0 0 30px rgba(124,58,237,0.4)' } : {}}
         whileTap={queueCount > 0 ? { scale: 0.97 } : {}}
         className="flex items-center gap-2.5 px-8 py-3.5 rounded-xl font-semibold text-sm text-white disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-        style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}
+        style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))' }}
         aria-label="Start AI Power Dial"
       >
         <Zap className="w-4 h-4" />

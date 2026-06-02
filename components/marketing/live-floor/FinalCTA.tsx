@@ -17,7 +17,7 @@ export function FinalCTA() {
         <div
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-1/2 h-[460px] w-[min(92vw,820px)] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.12] blur-[130px]"
-          style={{ background: 'radial-gradient(circle, #8B5CF6 0%, transparent 70%)' }}
+          style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)' }}
         />
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -41,7 +41,7 @@ export function FinalCTA() {
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <a
               href={APP_SIGNUP}
-              className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#8B5CF6] px-7 text-sm font-medium text-white transition-all hover:bg-[#7C3AED] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A]"
+              className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-violet-600 px-7 text-sm font-medium text-white transition-all hover:bg-violet-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(258,90%,66%)]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Start Free
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

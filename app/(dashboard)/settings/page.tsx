@@ -95,7 +95,7 @@ function Toggle({ checked, onChange, disabled }: {
       onClick={() => onChange(!checked)}
       className={cn(
         "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200",
-        checked ? "bg-[#8B5CF6]" : "bg-white/[0.12]",
+        checked ? "bg-violet-600" : "bg-white/[0.12]",
         disabled && "cursor-not-allowed opacity-40",
       )}
     >
@@ -171,7 +171,7 @@ function ProfileTab({ userName, userEmail }: { userName: string; userEmail: stri
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-[#8B5CF6]/50 transition"
+              className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-[hsl(258,90%,66%)]/50 transition"
             />
           </div>
           <div>
@@ -200,7 +200,7 @@ function ProfileTab({ userName, userEmail }: { userName: string; userEmail: stri
             onClick={save}
             disabled={saving}
             className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-50"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)' }}
+            style={{ background: 'linear-gradient(135deg, hsl(258,90%,66%), hsl(186,100%,42%))' }}
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <CheckCircle2 className="h-4 w-4" /> : <Save className="h-4 w-4" />}
             {saved ? "Saved!" : "Save Profile"}
@@ -221,7 +221,7 @@ function ProfileTab({ userName, userEmail }: { userName: string; userEmail: stri
             className={cn(
               "flex shrink-0 items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold transition disabled:opacity-60",
               resetSent
-                ? "border-[#06B6D4]/30 bg-[#06B6D4]/10 text-[#06B6D4]"
+                ? "border-[hsl(186,100%,42%)]/30 bg-[hsl(186,100%,42%)]/10 text-[hsl(186,100%,42%)]"
                 : "border-white/[0.08] bg-white/[0.03] text-white/60 hover:border-white/[0.15] hover:text-white",
             )}
           >
@@ -241,7 +241,7 @@ function RecordingModeCard({ mode, selected, onSelect }: {
 }) {
   const configs = {
     always: {
-      icon: Radio, iconColor: "text-[#06B6D4]", iconBg: "bg-[#06B6D4]/10",
+      icon: Radio, iconColor: "text-[hsl(186,100%,42%)]", iconBg: "bg-[hsl(186,100%,42%)]/10",
       label: "Always Record", description: "All calls recorded automatically",
       badge: "Recommended", detail: "Best for compliance, coaching, and AI insights",
     },
@@ -265,7 +265,7 @@ function RecordingModeCard({ mode, selected, onSelect }: {
       className={cn(
         "w-full rounded-xl border p-4 text-left transition-all",
         selected
-          ? "border-[#8B5CF6]/40 bg-[#8B5CF6]/[0.06]"
+          ? "border-[hsl(258,90%,66%)]/40 bg-violet-600/[0.06]"
           : "border-white/[0.06] bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]",
       )}
     >
@@ -277,7 +277,7 @@ function RecordingModeCard({ mode, selected, onSelect }: {
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm font-semibold text-white">{c.label}</p>
             {c.badge && (
-              <span className="rounded-full bg-[#06B6D4]/15 px-2 py-0.5 text-[10px] font-bold text-[#06B6D4]">
+              <span className="rounded-full bg-[hsl(186,100%,42%)]/15 px-2 py-0.5 text-[10px] font-bold text-[hsl(186,100%,42%)]">
                 {c.badge}
               </span>
             )}
@@ -287,7 +287,7 @@ function RecordingModeCard({ mode, selected, onSelect }: {
         </div>
         <div className={cn(
           "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2",
-          selected ? "border-[#8B5CF6] bg-[#8B5CF6]" : "border-white/20",
+          selected ? "border-[hsl(258,90%,66%)] bg-violet-600" : "border-white/20",
         )}>
           {selected && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
         </div>
@@ -316,9 +316,9 @@ function RecordingTab({ settings, onChange, recordingStats }: {
             />
           ))}
         </div>
-        <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-[#06B6D4]/20 bg-[#06B6D4]/[0.05] p-3">
-          <Info className="h-4 w-4 shrink-0 text-[#06B6D4] mt-0.5" />
-          <p className="text-xs text-[#06B6D4]/80 leading-relaxed">
+        <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-[hsl(186,100%,42%)]/20 bg-[hsl(186,100%,42%)]/[0.05] p-3">
+          <Info className="h-4 w-4 shrink-0 text-[hsl(186,100%,42%)] mt-0.5" />
+          <p className="text-xs text-[hsl(186,100%,42%)]/80 leading-relaxed">
             <span className="font-semibold">30-second minimum:</span> Only calls lasting 30 seconds or more are saved. Shorter calls are discarded automatically — keeping your library clean.
           </p>
         </div>
@@ -339,7 +339,7 @@ function RecordingTab({ settings, onChange, recordingStats }: {
               animate={{ width: `${storagePercent}%` }}
               transition={{ duration: 0.8, ease: "easeOut" }}
               className={cn("h-full rounded-full",
-                storagePercent > 80 ? "bg-red-500" : storagePercent > 60 ? "bg-amber-500" : "bg-[#8B5CF6]",
+                storagePercent > 80 ? "bg-red-500" : storagePercent > 60 ? "bg-amber-500" : "bg-violet-600",
               )}
             />
           </div>
@@ -360,7 +360,7 @@ function RecordingTab({ settings, onChange, recordingStats }: {
                 className={cn(
                   "rounded-xl px-4 py-2 text-sm font-semibold transition",
                   settings.recording_retention_days === days
-                    ? "bg-[#8B5CF6]/15 text-[#8B5CF6] border border-[#8B5CF6]/30"
+                    ? "bg-violet-600/15 text-[hsl(258,90%,66%)] border border-[hsl(258,90%,66%)]/30"
                     : "border border-white/[0.06] bg-white/[0.02] text-white/40 hover:text-white",
                 )}
               >
@@ -387,7 +387,7 @@ function RecordingTab({ settings, onChange, recordingStats }: {
           checked={settings.recording_disclaimer}
           onChange={(v) => onChange({ recording_disclaimer: v })}
           icon={AlarmCheck}
-          iconColor="text-[#06B6D4]"
+          iconColor="text-[hsl(186,100%,42%)]"
         />
         <ToggleRow
           label="Pause recording on keypad input"
@@ -395,7 +395,7 @@ function RecordingTab({ settings, onChange, recordingStats }: {
           checked={settings.recording_pause_on_dtmf}
           onChange={(v) => onChange({ recording_pause_on_dtmf: v })}
           icon={Shield}
-          iconColor="text-[#8B5CF6]"
+          iconColor="text-[hsl(258,90%,66%)]"
         />
       </SectionCard>
     </div>
@@ -414,7 +414,7 @@ function AiTab({ settings, onChange }: { settings: UserSettings; onChange: (patc
           checked={settings.ai_auto_transcribe}
           onChange={(v) => onChange({ ai_auto_transcribe: v })}
           icon={Mic}
-          iconColor="text-[#06B6D4]"
+          iconColor="text-[hsl(186,100%,42%)]"
         />
         <ToggleRow
           label="Generate AI summaries"
@@ -422,7 +422,7 @@ function AiTab({ settings, onChange }: { settings: UserSettings; onChange: (patc
           checked={settings.ai_auto_summarize}
           onChange={(v) => onChange({ ai_auto_summarize: v })}
           icon={Brain}
-          iconColor="text-[#8B5CF6]"
+          iconColor="text-[hsl(258,90%,66%)]"
         />
         <ToggleRow
           label="Detect customer sentiment"
@@ -492,11 +492,11 @@ function CallingTab({ settings, onChange }: { settings: UserSettings; onChange: 
               className={cn(
                 "flex flex-col gap-2 rounded-xl border p-4 text-left transition-all",
                 settings.inbound_mode === id
-                  ? "border-[#06B6D4]/40 bg-[#06B6D4]/[0.06]"
+                  ? "border-[hsl(186,100%,42%)]/40 bg-[hsl(186,100%,42%)]/[0.06]"
                   : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]",
               )}
             >
-              <Icon className={cn("h-5 w-5", settings.inbound_mode === id ? "text-[#06B6D4]" : "text-white/30")} />
+              <Icon className={cn("h-5 w-5", settings.inbound_mode === id ? "text-[hsl(186,100%,42%)]" : "text-white/30")} />
               <p className={cn("text-sm font-semibold", settings.inbound_mode === id ? "text-white" : "text-white/60")}>
                 {title}
               </p>
@@ -515,7 +515,7 @@ function CallingTab({ settings, onChange }: { settings: UserSettings; onChange: 
               placeholder="+15551234567"
               className={cn(
                 "w-full rounded-xl border bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-white/20 outline-none transition",
-                fwdError ? "border-red-500/40" : "border-white/[0.07] focus:border-[#06B6D4]/40",
+                fwdError ? "border-red-500/40" : "border-white/[0.07] focus:border-[hsl(186,100%,42%)]/40",
               )}
             />
             {fwdError
@@ -529,13 +529,13 @@ function CallingTab({ settings, onChange }: { settings: UserSettings; onChange: 
           <div className="mb-5 space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-white/40">Ring duration before voicemail</label>
-              <span className="text-xs font-mono tabular-nums text-[#06B6D4]">{settings.inbound_ring_seconds}s</span>
+              <span className="text-xs font-mono tabular-nums text-[hsl(186,100%,42%)]">{settings.inbound_ring_seconds}s</span>
             </div>
             <input
               type="range" min={10} max={45} step={5}
               value={settings.inbound_ring_seconds}
               onChange={(e) => onChange({ inbound_ring_seconds: Number(e.target.value) })}
-              className="w-full accent-[#8B5CF6]"
+              className="w-full accent-[hsl(258,90%,66%)]"
             />
             <div className="flex justify-between text-[10px] text-white/25">
               <span>10s</span><span>45s</span>
@@ -559,7 +559,7 @@ function CallingTab({ settings, onChange }: { settings: UserSettings; onChange: 
         <div className="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
           <PhoneIncoming className="mt-0.5 h-4 w-4 shrink-0 text-white/30" />
           <p className="text-sm text-white/40 leading-relaxed">
-            Inbound calls appear in your call history with an <span className="text-[#06B6D4]">incoming arrow</span>. Missed calls are marked separately. All calls are recorded and AI-analyzed using the same pipeline as outbound calls.
+            Inbound calls appear in your call history with an <span className="text-[hsl(186,100%,42%)]">incoming arrow</span>. Missed calls are marked separately. All calls are recorded and AI-analyzed using the same pipeline as outbound calls.
           </p>
         </div>
       </SectionCard>
@@ -684,18 +684,18 @@ function VoicemailsTab() {
           className={cn(
             "mb-4 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition",
             dragOver
-              ? "border-[#8B5CF6]/60 bg-[#8B5CF6]/[0.06]"
+              ? "border-[hsl(258,90%,66%)]/60 bg-violet-600/[0.06]"
               : "border-white/[0.08] bg-white/[0.02] hover:border-white/[0.15]",
           )}
         >
           {uploading ? (
-            <><Loader2 className="h-7 w-7 animate-spin text-[#8B5CF6]" /><p className="text-sm text-white/40">Uploading…</p></>
+            <><Loader2 className="h-7 w-7 animate-spin text-[hsl(258,90%,66%)]" /><p className="text-sm text-white/40">Uploading…</p></>
           ) : (
             <>
               <Upload className="h-7 w-7 text-white/25" />
               <p className="text-sm font-medium text-white/60">
                 Drop an audio file or{' '}
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="text-[#8B5CF6] hover:underline underline-offset-2">
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="text-[hsl(258,90%,66%)] hover:underline underline-offset-2">
                   browse
                 </button>
               </p>
@@ -714,7 +714,7 @@ function VoicemailsTab() {
                 <button
                   type="button"
                   onClick={() => togglePlay(vm)}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/[0.10] bg-white/[0.04] text-white/50 transition hover:border-[#8B5CF6]/40 hover:text-[#8B5CF6]"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/[0.10] bg-white/[0.04] text-white/50 transition hover:border-[hsl(258,90%,66%)]/40 hover:text-[hsl(258,90%,66%)]"
                 >
                   {playingId === vm.id
                     ? <span className="h-3 w-3 rounded-sm bg-current" />
@@ -757,7 +757,7 @@ function NotificationsTab({ settings, onChange }: {
           checked={settings.missed_call_notify}
           onChange={(v) => onChange({ missed_call_notify: v })}
           icon={Bell}
-          iconColor="text-[#8B5CF6]"
+          iconColor="text-[hsl(258,90%,66%)]"
         />
       </SectionCard>
 
@@ -785,10 +785,10 @@ function BillingTab() {
   return (
     <div className="space-y-4 max-w-lg">
       <SectionCard title="Current Plan">
-        <div className="flex items-start gap-4 rounded-xl border border-[#8B5CF6]/20 bg-[#8B5CF6]/[0.05] p-4">
+        <div className="flex items-start gap-4 rounded-xl border border-[hsl(258,90%,66%)]/20 bg-violet-600/[0.05] p-4">
           <div
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)' }}
+            style={{ background: 'linear-gradient(135deg, hsl(258,90%,66%), hsl(186,100%,42%))' }}
           >
             <CreditCard className="h-5 w-5 text-white" />
           </div>
@@ -870,7 +870,7 @@ function SecurityTab({
             className={cn(
               "flex shrink-0 items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold transition disabled:opacity-60",
               resetSent
-                ? "border-[#06B6D4]/30 bg-[#06B6D4]/10 text-[#06B6D4]"
+                ? "border-[hsl(186,100%,42%)]/30 bg-[hsl(186,100%,42%)]/10 text-[hsl(186,100%,42%)]"
                 : "border-white/[0.08] bg-white/[0.03] text-white/60 hover:border-white/[0.15] hover:text-white",
             )}
           >
@@ -1043,7 +1043,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
         </div>
         {sent ? (
           <div className="flex flex-col items-center gap-3 py-6 text-center">
-            <CheckCircle2 className="h-10 w-10 text-[#06B6D4]" />
+            <CheckCircle2 className="h-10 w-10 text-[hsl(186,100%,42%)]" />
             <p className="text-sm font-semibold text-white">Invitation sent!</p>
           </div>
         ) : (
@@ -1054,7 +1054,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
                 type="email" value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(''); }}
                 placeholder="colleague@company.com" autoFocus
-                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-[#8B5CF6]/40 transition"
+                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-[hsl(258,90%,66%)]/40 transition"
               />
             </div>
             <div>
@@ -1066,7 +1066,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
                     className={cn(
                       "rounded-lg border px-2 py-1.5 text-xs font-semibold transition",
                       role === r
-                        ? "border-[#8B5CF6]/40 bg-[#8B5CF6]/10 text-[#8B5CF6]"
+                        ? "border-[hsl(258,90%,66%)]/40 bg-violet-600/10 text-[hsl(258,90%,66%)]"
                         : "border-white/[0.07] bg-white/[0.02] text-white/40 hover:text-white",
                     )}
                   >
@@ -1079,7 +1079,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
               <label className="mb-1.5 block text-xs font-semibold text-white/40">Personal message <span className="text-white/20">(optional)</span></label>
               <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={2}
                 placeholder="Looking forward to having you on the team!"
-                className="w-full resize-none rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-[#8B5CF6]/40 transition"
+                className="w-full resize-none rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-[hsl(258,90%,66%)]/40 transition"
               />
             </div>
             {error && <p className="text-xs text-red-400">{error}</p>}
@@ -1090,7 +1090,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
               </button>
               <button type="button" onClick={handleSend} disabled={busy || !email.trim()}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)' }}>
+                style={{ background: 'linear-gradient(135deg, hsl(258,90%,66%), hsl(186,100%,42%))' }}>
                 {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
                 {busy ? 'Sending…' : 'Send Invite'}
               </button>
@@ -1160,7 +1160,7 @@ function TeamTab() {
           <p className="text-xs text-white/35">{activeMembers.length} active member{activeMembers.length !== 1 ? 's' : ''}</p>
           {canInvite && (
             <button type="button" onClick={() => setShowInvite(true)}
-              className="flex items-center gap-1.5 rounded-lg border border-[#8B5CF6]/25 bg-[#8B5CF6]/10 px-3 py-1.5 text-xs font-semibold text-[#8B5CF6] transition hover:bg-[#8B5CF6]/15">
+              className="flex items-center gap-1.5 rounded-lg border border-[hsl(258,90%,66%)]/25 bg-violet-600/10 px-3 py-1.5 text-xs font-semibold text-[hsl(258,90%,66%)] transition hover:bg-violet-600/15">
               <UserPlus className="h-3.5 w-3.5" /> Invite member
             </button>
           )}
@@ -1178,7 +1178,7 @@ function TeamTab() {
               return (
                 <div key={member.id} className="flex items-center gap-3 rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
-                    style={{ background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)' }}>
+                    style={{ background: 'linear-gradient(135deg, hsl(258,90%,66%), hsl(186,100%,42%))' }}>
                     {ini}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -1218,7 +1218,7 @@ function TeamTab() {
                                   {ROLE_OPTIONS.filter((r) => r !== 'owner').map((r) => (
                                     <button key={r} type="button" onClick={() => handleRoleChange(member.user_id, r)}
                                       className={cn("flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition",
-                                        member.role === r ? "bg-[#8B5CF6]/10 text-[#8B5CF6]" : "text-white/40 hover:bg-white/[0.05] hover:text-white")}>
+                                        member.role === r ? "bg-violet-600/10 text-[hsl(258,90%,66%)]" : "text-white/40 hover:bg-white/[0.05] hover:text-white")}>
                                       {ROLE_LABELS[r]}
                                     </button>
                                   ))}
@@ -1405,7 +1405,7 @@ export default function SettingsPage() {
               className={cn(
                 "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors text-left",
                 activeTab === key
-                  ? "bg-[#8B5CF6]/10 text-[#8B5CF6]"
+                  ? "bg-violet-600/10 text-[hsl(258,90%,66%)]"
                   : "text-white/35 hover:text-white/70 hover:bg-white/[0.03]",
               )}
             >
@@ -1425,7 +1425,7 @@ export default function SettingsPage() {
               className={cn(
                 "shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition",
                 activeTab === key
-                  ? "bg-[#8B5CF6]/15 text-[#8B5CF6]"
+                  ? "bg-violet-600/15 text-[hsl(258,90%,66%)]"
                   : "text-white/30 hover:text-white/60",
               )}
             >
@@ -1499,12 +1499,12 @@ export default function SettingsPage() {
                 onClick={saveSettings}
                 disabled={saving}
                 className="flex items-center gap-2.5 rounded-xl px-6 py-2.5 text-sm font-bold text-white transition disabled:opacity-70"
-                style={{ background: saving || saveSuccess ? undefined : 'linear-gradient(135deg, #8B5CF6, #06B6D4)' }}
+                style={{ background: saving || saveSuccess ? undefined : 'linear-gradient(135deg, hsl(258,90%,66%), hsl(186,100%,42%))' }}
               >
                 {saving
                   ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</>
                   : saveSuccess
-                  ? <><CheckCircle2 className="h-4 w-4 text-[#06B6D4]" /> Saved!</>
+                  ? <><CheckCircle2 className="h-4 w-4 text-[hsl(186,100%,42%)]" /> Saved!</>
                   : <><Save className="h-4 w-4" /> Save Changes</>}
               </button>
             </div>

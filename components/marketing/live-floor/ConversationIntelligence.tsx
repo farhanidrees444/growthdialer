@@ -30,7 +30,7 @@ export function ConversationIntelligence() {
       <div
         aria-hidden
         className="pointer-events-none absolute right-0 top-1/2 h-[400px] w-[400px] -translate-y-1/2 rounded-full opacity-[0.07] blur-[120px]"
-        style={{ background: 'radial-gradient(circle, #8B5CF6 0%, transparent 70%)' }}
+        style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)' }}
       />
       <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-2 lg:gap-20">
         {/* Left: copy + capabilities */}
@@ -40,11 +40,11 @@ export function ConversationIntelligence() {
           viewport={{ once: true, margin: '-100px' }}
           variants={revealContainer}
         >
-          <motion.div variants={reveal} className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#8B5CF6]/20 bg-[#8B5CF6]/[0.06] py-1 pl-1.5 pr-3">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#8B5CF6]/20 text-[#8B5CF6]">
+          <motion.div variants={reveal} className="mb-5 inline-flex items-center gap-2 rounded-full border border-[hsl(258,90%,66%)]/20 bg-violet-600/[0.06] py-1 pl-1.5 pr-3">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-600/20 text-[hsl(258,90%,66%)]">
               <Sparkles className="h-3 w-3" />
             </span>
-            <span className="text-[12px] font-medium text-[#8B5CF6]">AI-native</span>
+            <span className="text-[12px] font-medium text-[hsl(258,90%,66%)]">AI-native</span>
           </motion.div>
 
           <motion.h2 variants={reveal} className="font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.05] tracking-tight text-foreground">
@@ -63,7 +63,7 @@ export function ConversationIntelligence() {
               const Icon = c.icon;
               return (
                 <motion.div key={c.title} variants={reveal} className="flex gap-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] text-[#8B5CF6]">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] text-[hsl(258,90%,66%)]">
                     <Icon className="h-[18px] w-[18px]" />
                   </span>
                   <div>
@@ -110,7 +110,7 @@ export function ConversationIntelligence() {
                 transition={{ duration: 0.5, delay: 0.1 + i * 0.1, ease: EASE_OUT }}
                 className="flex items-start gap-2.5 text-[13px] leading-relaxed text-muted-foreground/90"
               >
-                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[#8B5CF6]" />
+                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-violet-600" />
                 {t}
               </motion.li>
             ))}

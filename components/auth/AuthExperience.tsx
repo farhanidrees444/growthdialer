@@ -42,7 +42,7 @@ function getPasswordStrength(password: string) {
 }
 
 const inputClass =
-  'w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-[#F5F5F7] placeholder:text-zinc-600 outline-none transition focus:border-[#8B5CF6]/50 focus:ring-2 focus:ring-[#8B5CF6]/20';
+  'w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-[hsl(200,7%,96%)] placeholder:text-zinc-600 outline-none transition focus:border-[hsl(258,90%,66%)]/50 focus:ring-2 focus:ring-[hsl(258,90%,66%)]/20';
 
 export function AuthExperience({ initialMode }: { initialMode: Mode }) {
   const router = useRouter();
@@ -123,7 +123,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
   // ── Check-email success state ───────────────────────────────────────────
   if (checkEmail) {
     return (
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#08080A] px-5 text-[#F5F5F7]">
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[hsl(200,50%,3%)] px-5 text-[hsl(200,7%,96%)]">
         <Grain />
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -131,19 +131,19 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
           transition={{ duration: 0.6, ease: EASE_OUT }}
           className="relative z-10 w-full max-w-sm text-center"
         >
-          <span className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#06B6D4]/10 text-[#06B6D4]">
+          <span className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[hsl(186,100%,42%)]/10 text-[hsl(186,100%,42%)]">
             <Check className="h-6 w-6" />
           </span>
           <h2 className="font-display text-2xl font-medium tracking-tight">Check your email</h2>
           <p className="mt-3 text-sm leading-relaxed text-zinc-400">
             We sent a confirmation link to{' '}
-            <span className="text-[#F5F5F7]">{email}</span>. Click it to finish setting up your
+            <span className="text-[hsl(200,7%,96%)]">{email}</span>. Click it to finish setting up your
             account.
           </p>
           <button
             type="button"
             onClick={() => { setCheckEmail(false); setMode('login'); }}
-            className="mt-7 inline-flex items-center gap-2 text-sm text-zinc-400 transition-colors hover:text-[#F5F5F7]"
+            className="mt-7 inline-flex items-center gap-2 text-sm text-zinc-400 transition-colors hover:text-[hsl(200,7%,96%)]"
           >
             Back to sign in
           </button>
@@ -154,7 +154,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
 
   // ── Main split experience ───────────────────────────────────────────────
   return (
-    <div className="relative grid min-h-screen overflow-hidden bg-[#08080A] text-[#F5F5F7] lg:grid-cols-2">
+    <div className="relative grid min-h-screen overflow-hidden bg-[hsl(200,50%,3%)] text-[hsl(200,7%,96%)] lg:grid-cols-2">
       <Grain />
 
       {/* ── Left: brand + living waveform (lg+) ── */}
@@ -162,7 +162,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
         <div
           aria-hidden
           className="pointer-events-none absolute left-0 top-0 h-[480px] w-[480px] -translate-x-1/3 -translate-y-1/3 rounded-full opacity-[0.10] blur-[120px]"
-          style={{ background: 'radial-gradient(circle, #8B5CF6 0%, transparent 70%)' }}
+          style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)' }}
         />
         <Link href="https://growthdialer.com" className="relative z-10 inline-flex items-center gap-2.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03]">
@@ -173,10 +173,10 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
 
         <div className="relative z-10 max-w-md">
           <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] py-1 pl-2 pr-3 text-[12px] text-zinc-400 backdrop-blur-xl">
-            <span className="flex items-center gap-1.5 text-[#06B6D4]">
+            <span className="flex items-center gap-1.5 text-[hsl(186,100%,42%)]">
               <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#06B6D4] opacity-75" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#06B6D4]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[hsl(186,100%,42%)] opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[hsl(186,100%,42%)]" />
               </span>
               Live
             </span>
@@ -195,8 +195,8 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
           </p>
           <div className="mt-10 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
             <div className="mb-3 flex items-center justify-between">
-              <span className="flex items-center gap-2 text-xs font-medium text-[#06B6D4]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#06B6D4]" /> On call
+              <span className="flex items-center gap-2 text-xs font-medium text-[hsl(186,100%,42%)]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[hsl(186,100%,42%)]" /> On call
               </span>
               <span className="font-mono text-xs tabular-nums text-zinc-600">01:42</span>
             </div>
@@ -246,7 +246,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
           <button
             type="button"
             onClick={handleGoogle}
-            className="mb-5 flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] py-3 text-sm font-medium text-zinc-200 transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/40"
+            className="mb-5 flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] py-3 text-sm font-medium text-zinc-200 transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(258,90%,66%)]/40"
           >
             <GoogleIcon />
             Continue with Google
@@ -257,7 +257,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
               <span className="w-full border-t border-white/[0.06]" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-[#08080A] px-3 text-[11px] uppercase tracking-widest text-zinc-600">
+              <span className="bg-[hsl(200,50%,3%)] px-3 text-[11px] uppercase tracking-widest text-zinc-600">
                 or
               </span>
             </div>
@@ -391,7 +391,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
                     type="checkbox"
                     checked={agree}
                     onChange={(e) => setAgree(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/20 bg-white/[0.03] accent-[#8B5CF6]"
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/20 bg-white/[0.03] accent-[hsl(258,90%,66%)]"
                   />
                   <span>
                     I agree to the{' '}
@@ -410,7 +410,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
             <button
               type="submit"
               disabled={loading}
-              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#8B5CF6] py-3 text-sm font-medium text-white transition-all hover:bg-[#7C3AED] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A] disabled:opacity-60"
+              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 py-3 text-sm font-medium text-white transition-all hover:bg-violet-700 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(258,90%,66%)]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -429,7 +429,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
             <button
               type="button"
               onClick={toggleMode}
-              className="font-medium text-[#8B5CF6] transition-colors hover:text-[#A78BFA]"
+              className="font-medium text-[hsl(258,90%,66%)] transition-colors hover:text-[#A78BFA]"
             >
               {isSignup ? 'Sign in' : 'Start free'}
             </button>

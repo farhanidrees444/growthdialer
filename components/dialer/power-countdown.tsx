@@ -79,8 +79,8 @@ export function PowerCountdownStage({
         >
           <defs>
             <linearGradient id="pd-ring-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor={isPaused ? '#EAB308' : '#7C3AED'} />
-              <stop offset="100%" stopColor={isPaused ? '#F59E0B' : '#06B6D4'} />
+              <stop offset="0%" stopColor={isPaused ? '#EAB308' : hsl(280, 85%, 65%)} />
+              <stop offset="100%" stopColor={isPaused ? '#F59E0B' : hsl(186, 100%, 42%)} />
             </linearGradient>
           </defs>
           {/* Track */}

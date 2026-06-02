@@ -545,7 +545,7 @@ export default function DialerPage() {
                   className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold text-white transition-opacity ${
                     i === 0 ? 'ring-2 ring-red-500/60' : 'opacity-50 hover:opacity-80'
                   }`}
-                  style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}
+                  style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))' }}
                 >
                   {lead.name.split(' ').slice(0, 2).map((w) => w[0]).join('')}
                 </button>
@@ -670,7 +670,7 @@ export default function DialerPage() {
             </button>
             <button
               className="flex-1 h-11 rounded-xl text-sm font-semibold text-white"
-              style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}
+              style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))' }}
               onClick={() => setPowerConfirmOpen(true)}
             >
               Power Dial
@@ -745,7 +745,7 @@ export default function DialerPage() {
                     powerDialer.start({ delay_seconds: 5 });
                   }}
                   className="flex-[2] h-10 rounded-xl text-sm font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed"
-                  style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}
+                  style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))' }}
                 >
                   Start Session
                 </button>
@@ -787,7 +787,7 @@ export default function DialerPage() {
               <button
                 onClick={powerDialer.dismissSummary}
                 className="w-full h-10 rounded-xl text-sm font-semibold text-white"
-                style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}
+                style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))' }}
               >
                 Done
               </button>
@@ -841,7 +841,7 @@ export default function DialerPage() {
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setMobileAiBriefOpen(true)}
                 className="flex h-12 w-12 items-center justify-center rounded-full shadow-xl text-white"
-                style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)', border: '1px solid rgba(255,255,255,0.15)' }}
+                style={{ background: 'linear-gradient(135deg, hsl(262,80%,50%), hsl(186,100%,42%))', border: '1px solid rgba(255,255,255,0.15)' }}
                 aria-label="Open AI Brief"
               >
                 <Sparkles className="h-5 w-5" />

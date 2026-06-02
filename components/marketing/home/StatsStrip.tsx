@@ -18,7 +18,7 @@ export function StatsStrip() {
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-1/2 h-[300px] w-[min(90vw,760px)] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.06] blur-[120px]"
-        style={{ background: 'radial-gradient(circle, #06B6D4 0%, transparent 70%)' }}
+        style={{ background: 'radial-gradient(circle, hsl(186,100%,42%) 0%, transparent 70%)' }}
       />
       <motion.div
         initial="hidden"

@@ -95,7 +95,7 @@ export default function WorkspaceSetupPage() {
         {/* Header */}
         <div className="mb-10 text-center">
           <div className="mb-5 flex items-center justify-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: 'linear-gradient(135deg, #059669, #7C3AED)' }}>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: 'linear-gradient(135deg, #059669, hsl(262,80%,50%))' }}>
               <Zap className="h-4.5 w-4.5 text-white" fill="white" />
             </div>
             <span className="font-display text-xl font-bold text-white">
@@ -170,7 +170,7 @@ export default function WorkspaceSetupPage() {
           whileHover={!busy && name.trim() ? { scale: 1.01 } : {}}
           whileTap={!busy && name.trim() ? { scale: 0.99 } : {}}
           className="flex w-full items-center justify-center gap-2.5 rounded-xl py-3.5 text-sm font-bold text-white shadow-xl disabled:opacity-40 disabled:cursor-not-allowed transition"
-          style={{ background: 'linear-gradient(135deg, #059669, #7C3AED)' }}
+          style={{ background: 'linear-gradient(135deg, #059669, hsl(262,80%,50%))' }}
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           {busy ? 'Creating…' : 'Create Workspace'}
