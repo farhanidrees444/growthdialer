@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { SiTwilio, SiZoom, SiSlack, SiGooglemeet, SiDiscord, SiSkype } from 'react-icons/si';
+import { SiTwilio, SiZoom, SiSlack, SiGooglemeet, SiDiscord, SiGmail } from 'react-icons/si';
 import { AnimatedSection, type StepContent } from './AnimatedSection';
 
 const DIALER_LOGOS: [typeof SiTwilio, string][] = [
@@ -10,7 +10,7 @@ const DIALER_LOGOS: [typeof SiTwilio, string][] = [
   [SiSlack, 'Slack'],
   [SiGooglemeet, 'Google Meet'],
   [SiDiscord, 'Discord'],
-  [SiSkype, 'Skype'],
+  [SiGmail, 'Gmail'],
 ];
 
 const DIALER_STEPS: StepContent[] = [

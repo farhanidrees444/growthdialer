@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { SiGoogleanalytics, SiDatadog, SiGrafana, SiSplunk, SiAirtable, SiSalesforce } from 'react-icons/si';
+import { AnimatedSection, type StepContent } from './AnimatedSection';
 
 const ANALYTICS_LOGOS: [typeof SiGoogleanalytics, string][] = [
   [SiGoogleanalytics, 'Google Analytics'],
