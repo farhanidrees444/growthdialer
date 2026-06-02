@@ -12,11 +12,24 @@ export default function MarketingLayout({
 }) {
   const pathname = usePathname();
 
-  // Cinematic "Live Floor" routes bring their own nav + footer and use Lenis
-  // smooth scrolling. Scoped to these marketing routes only — app routes are a
-  // separate layout tree and stay untouched. Every other marketing page keeps
-  // the shared chrome exactly as before.
-  const cinematic = pathname === "/" || pathname === "/pricing";
+  // On-brand "Live Floor" routes bring their own nav + footer (via the page
+  // or MarketingShell) and use Lenis smooth scrolling. Scoped to marketing
+  // routes only — app routes are a separate layout tree and stay untouched.
+  // Any remaining marketing pages keep the shared chrome exactly as before.
+  const CINEMATIC = [
+    "/",
+    "/pricing",
+    "/features",
+    "/about",
+    "/contact-sales",
+    "/customers",
+    "/careers",
+    "/docs",
+    "/changelog",
+    "/privacy",
+    "/terms",
+  ];
+  const cinematic = CINEMATIC.includes(pathname);
   if (cinematic) {
     return (
       <>

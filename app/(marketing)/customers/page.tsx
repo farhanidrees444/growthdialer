@@ -1,17 +1,19 @@
-import { Metadata } from "next";
-import CustomersContent from "./CustomersContent";
+import type { Metadata } from "next";
+import { MarketingShell } from "@/components/marketing/MarketingShell";
+import { ComingSoon } from "@/components/marketing/ComingSoon";
 
 export const metadata: Metadata = {
-  title: "Customer Success Stories — GrowthDialer",
-  description: "Read real testimonials from B2B sales teams who've increased their connect rates by 41% and booked 3x more meetings with GrowthDialer.",
-  keywords: "customer testimonials, sales success stories, B2B sales results",
-  openGraph: {
-    title: "Customer Success Stories — GrowthDialer",
-    description: "Real results from real sales teams using GrowthDialer's AI-powered dialer.",
-    type: "website",
-  },
+  title: "Customers",
+  description: "Customer stories from teams using GrowthDialer — coming soon.",
 };
 
 export default function CustomersPage() {
-  return <CustomersContent />;
+  return (
+    <MarketingShell>
+      <ComingSoon
+        title="Customer stories, soon."
+        blurb="We're onboarding our first sales teams now. As they ship results with GrowthDialer, their stories will live here — real teams, real numbers, no fluff."
+      />
+    </MarketingShell>
+  );
 }
