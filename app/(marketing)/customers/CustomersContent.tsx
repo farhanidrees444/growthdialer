@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Star, Quote, TrendingUp, Users, Target } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowRight, Quote, TrendingUp, Users, Target } from "lucide-react";
 
 const testimonials = [
   {
@@ -121,29 +120,29 @@ const stats = [
 
 export default function CustomersContent() {
   return (
-    <div className="pt-24 pb-16">
+    <div className="py-16">
       {/* Hero */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
-          <Badge variant="secondary" className="mb-4">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#06B6D4]/10 text-[#06B6D4] border border-[#06B6D4]/30 mb-4">
             Customer Stories
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
+          </span>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-[#F5F5F7]">
             Real results from
-            <span className="text-brand"> real sales teams</span>
+            <span className="text-[#06B6D4]"> real sales teams</span>
           </h1>
-          <p className="text-xl text-muted-foreground mb-8">
+          <p className="text-xl text-zinc-400 mb-8">
             See how B2B sales teams are crushing their goals with GrowthDialer.
-            These aren't testimonials — these are transformation stories.
+            These aren&apos;t testimonials — these are transformation stories.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup">
-              <Button size="lg" className="bg-brand text-white hover:bg-brand/80">
+              <Button size="lg" className="bg-[#06B6D4] text-[#08080A] hover:bg-[#06B6D4]/80 font-semibold">
                 Join our customers <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/pricing">
-              <Button size="lg" variant="outline">
+              <Button size="lg" variant="outline" className="border-white/10 text-zinc-300 hover:bg-white/5">
                 View pricing
               </Button>
             </Link>
@@ -163,11 +162,11 @@ export default function CustomersContent() {
               transition={{ delay: index * 0.1 }}
               className="text-center"
             >
-              <div className="w-12 h-12 bg-brand/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <stat.icon className="w-6 h-6 text-brand" />
+              <div className="w-12 h-12 bg-[#06B6D4]/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <stat.icon className="w-6 h-6 text-[#06B6D4]" />
               </div>
-              <div className="text-3xl font-bold text-brand mb-2">{stat.value}</div>
-              <div className="text-sm text-muted-foreground">{stat.label}</div>
+              <div className="text-3xl font-bold text-[#06B6D4] mb-2">{stat.value}</div>
+              <div className="text-sm text-zinc-400">{stat.label}</div>
             </motion.div>
           ))}
         </div>
@@ -188,23 +187,23 @@ export default function CustomersContent() {
               }`}
             >
               <div className={`lg:col-span-2 ${index % 2 === 1 ? "lg:col-start-2" : ""}`}>
-                <Card className="bg-gradient-to-r from-brand/5 to-purple-500/5 border-brand/20">
+                <Card className="border-white/[0.08] bg-white/[0.02]">
                   <CardContent className="p-8">
-                    <Quote className="w-8 h-8 text-brand mb-4" />
-                    <blockquote className="text-lg mb-6 italic">
-                      "{testimonial.quote}"
+                    <Quote className="w-8 h-8 text-[#06B6D4] mb-4" />
+                    <blockquote className="text-lg mb-6 italic text-zinc-300">
+                      &quot;{testimonial.quote}&quot;
                     </blockquote>
 
                     <div className="flex items-center gap-4 mb-6">
-                      <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
-                        <span className="text-sm font-bold">{testimonial.logo}</span>
+                      <div className="w-12 h-12 bg-white/[0.05] border border-white/[0.08] rounded-full flex items-center justify-center">
+                        <span className="text-sm font-bold text-[#06B6D4]">{testimonial.logo}</span>
                       </div>
                       <div>
-                        <div className="font-semibold">{testimonial.name}</div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="font-semibold text-[#F5F5F7]">{testimonial.name}</div>
+                        <div className="text-sm text-zinc-400">
                           {testimonial.role} at {testimonial.company}
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs text-zinc-500">
                           {testimonial.industry} • {testimonial.companySize}
                         </div>
                       </div>
@@ -212,25 +211,25 @@ export default function CustomersContent() {
 
                     <div className="grid grid-cols-3 gap-4 mb-6">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-brand">{testimonial.metrics.connectRate}</div>
-                        <div className="text-xs text-muted-foreground">Connect Rate</div>
+                        <div className="text-2xl font-bold text-[#06B6D4]">{testimonial.metrics.connectRate}</div>
+                        <div className="text-xs text-zinc-500">Connect Rate</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-brand">{testimonial.metrics.meetings}</div>
-                        <div className="text-xs text-muted-foreground">More Meetings</div>
+                        <div className="text-2xl font-bold text-[#06B6D4]">{testimonial.metrics.meetings}</div>
+                        <div className="text-xs text-zinc-500">More Meetings</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-brand">{testimonial.metrics.pipeline}</div>
-                        <div className="text-xs text-muted-foreground">Pipeline Added</div>
+                        <div className="text-2xl font-bold text-[#06B6D4]">{testimonial.metrics.pipeline}</div>
+                        <div className="text-xs text-zinc-500">Pipeline Added</div>
                       </div>
                     </div>
 
                     <div>
-                      <h4 className="font-semibold mb-3">Key Results:</h4>
+                      <h4 className="font-semibold mb-3 text-[#F5F5F7]">Key Results:</h4>
                       <div className="grid md:grid-cols-2 gap-2">
                         {testimonial.results.map((result, i) => (
-                          <div key={i} className="flex items-center gap-2 text-sm">
-                            <div className="w-1.5 h-1.5 bg-brand rounded-full flex-shrink-0"></div>
+                          <div key={i} className="flex items-center gap-2 text-sm text-zinc-300">
+                            <div className="w-1.5 h-1.5 bg-[#06B6D4] rounded-full flex-shrink-0"></div>
                             <span>{result}</span>
                           </div>
                         ))}
@@ -241,12 +240,12 @@ export default function CustomersContent() {
               </div>
 
               <div className={`hidden lg:block ${index % 2 === 1 ? "lg:col-start-1 lg:row-start-1" : ""}`}>
-                <div className="bg-muted/20 border border-muted rounded-lg p-8 text-center">
-                  <div className="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-xl font-bold text-brand">{testimonial.logo}</span>
+                <div className="bg-white/[0.02] border border-white/[0.08] rounded-xl p-8 text-center">
+                  <div className="w-16 h-16 bg-[#06B6D4]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-xl font-bold text-[#06B6D4]">{testimonial.logo}</span>
                   </div>
-                  <h3 className="font-bold mb-2">{testimonial.company}</h3>
-                  <p className="text-sm text-muted-foreground">{testimonial.industry}</p>
+                  <h3 className="font-bold mb-2 text-[#F5F5F7]">{testimonial.company}</h3>
+                  <p className="text-sm text-zinc-400">{testimonial.industry}</p>
                 </div>
               </div>
             </motion.div>
@@ -257,13 +256,13 @@ export default function CustomersContent() {
       {/* CTA */}
       <section className="container mx-auto px-4 py-16 text-center">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold mb-4">Ready to join our success stories?</h2>
-          <p className="text-lg text-muted-foreground mb-8">
+          <h2 className="text-3xl font-bold mb-4 text-[#F5F5F7]">Ready to join our success stories?</h2>
+          <p className="text-lg text-zinc-400 mb-8">
             Start your free trial today and see why 2,400+ sales teams choose GrowthDialer
             to transform their sales performance.
           </p>
           <Link href="/signup">
-            <Button size="lg" className="bg-brand text-white hover:bg-brand/80">
+            <Button size="lg" className="bg-[#06B6D4] text-[#08080A] hover:bg-[#06B6D4]/80 font-semibold">
               Start your success story <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>

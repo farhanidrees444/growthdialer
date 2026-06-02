@@ -4,8 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Users, Target, Heart, Award, TrendingUp, Globe } from "lucide-react";
+import { ArrowRight, Users, Target, Heart, TrendingUp, Globe } from "lucide-react";
 
 const values = [
   {
@@ -43,52 +42,48 @@ const team = [
     name: "Sarah Chen",
     role: "CEO & Co-Founder",
     bio: "Former VP Sales at Salesforce. Scaled teams from 10 to 500+ reps. Built the sales tech that powers Fortune 500 companies.",
-    image: "/api/placeholder/150/150",
   },
   {
     name: "Marcus Rodriguez",
     role: "CTO & Co-Founder",
     bio: "Ex-Google AI researcher. Built ML systems at scale. PhD in Computer Science from Stanford.",
-    image: "/api/placeholder/150/150",
   },
   {
     name: "Priya Patel",
     role: "Head of Product",
     bio: "Product leader at HubSpot and Outreach. 10+ years building products sales teams love. MBA from Wharton.",
-    image: "/api/placeholder/150/150",
   },
   {
     name: "David Kim",
     role: "Head of Engineering",
     bio: "Engineering leader at Stripe and Plaid. Built high-scale systems serving millions of users daily.",
-    image: "/api/placeholder/150/150",
   },
 ];
 
 export default function AboutContent() {
   return (
-    <div className="pt-24 pb-16">
+    <div className="py-16">
       {/* Hero */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
-          <Badge variant="secondary" className="mb-4">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#06B6D4]/10 text-[#06B6D4] border border-[#06B6D4]/30 mb-4">
             About Us
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
+          </span>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-[#F5F5F7]">
             Democratizing AI-powered sales
           </h1>
-          <p className="text-xl text-muted-foreground mb-8">
+          <p className="text-xl text-zinc-400 mb-8">
             Founded in 2024, GrowthDialer is on a mission to make enterprise-grade
             sales technology accessible to every B2B sales team, regardless of size.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup">
-              <Button size="lg" className="bg-brand text-white hover:bg-brand/80">
+              <Button size="lg" className="bg-[#06B6D4] text-[#08080A] hover:bg-[#06B6D4]/80 font-semibold">
                 Join our mission <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/careers">
-              <Button size="lg" variant="outline">
+              <Button size="lg" variant="outline" className="border-white/10 text-zinc-300 hover:bg-white/5">
                 View careers
               </Button>
             </Link>
@@ -99,35 +94,35 @@ export default function AboutContent() {
       {/* Mission */}
       <section className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-6">Our Mission</h2>
-          <p className="text-lg text-muted-foreground mb-8">
+          <h2 className="text-3xl font-bold mb-6 text-[#F5F5F7]">Our Mission</h2>
+          <p className="text-lg text-zinc-400 mb-8">
             Sales is the lifeblood of every B2B company, yet most sales teams are stuck
-            with outdated tools that slow them down. We're building the future of sales
+            with outdated tools that slow them down. We&apos;re building the future of sales
             technology — AI-powered dialers that help reps connect with more prospects,
             have better conversations, and close more deals.
           </p>
           <div className="grid md:grid-cols-3 gap-8 mt-12">
             <div className="text-center">
-              <div className="text-4xl font-bold text-brand mb-2">2,400+</div>
-              <div className="text-muted-foreground">Sales teams trust us</div>
+              <div className="text-4xl font-bold text-[#06B6D4] mb-2">2,400+</div>
+              <div className="text-zinc-400">Sales teams trust us</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-brand mb-2">$144k</div>
-              <div className="text-muted-foreground">Avg. pipeline per user</div>
+              <div className="text-4xl font-bold text-[#06B6D4] mb-2">$144k</div>
+              <div className="text-zinc-400">Avg. pipeline per user</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-brand mb-2">41%</div>
-              <div className="text-muted-foreground">Higher connect rates</div>
+              <div className="text-4xl font-bold text-[#06B6D4] mb-2">41%</div>
+              <div className="text-zinc-400">Higher connect rates</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Values */}
-      <section className="container mx-auto px-4 py-16 bg-muted/20">
+      <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Our Values</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <h2 className="text-3xl font-bold mb-4 text-[#F5F5F7]">Our Values</h2>
+          <p className="text-zinc-400 max-w-2xl mx-auto">
             These principles guide everything we do, from product development to customer support.
           </p>
         </div>
@@ -140,15 +135,15 @@ export default function AboutContent() {
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className="h-full">
+              <Card className="h-full border-white/[0.08] bg-white/[0.02]">
                 <CardHeader>
-                  <div className="w-12 h-12 bg-brand/10 rounded-lg flex items-center justify-center mb-4">
-                    <value.icon className="w-6 h-6 text-brand" />
+                  <div className="w-12 h-12 bg-[#06B6D4]/10 rounded-lg flex items-center justify-center mb-4">
+                    <value.icon className="w-6 h-6 text-[#06B6D4]" />
                   </div>
-                  <CardTitle className="text-lg">{value.title}</CardTitle>
+                  <CardTitle className="text-lg text-[#F5F5F7]">{value.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{value.description}</p>
+                  <p className="text-zinc-400">{value.description}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -159,7 +154,7 @@ export default function AboutContent() {
       {/* Timeline */}
       <section className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Our Journey</h2>
+          <h2 className="text-3xl font-bold text-center mb-12 text-[#F5F5F7]">Our Journey</h2>
           <div className="space-y-8">
             {milestones.map((milestone, index) => (
               <motion.div
@@ -170,11 +165,11 @@ export default function AboutContent() {
                 className="flex gap-8 items-center"
               >
                 <div className="w-24 text-right">
-                  <div className="text-2xl font-bold text-brand">{milestone.year}</div>
+                  <div className="text-2xl font-bold text-[#06B6D4]">{milestone.year}</div>
                 </div>
-                <div className="w-px h-16 bg-brand/30"></div>
+                <div className="w-px h-16 bg-[#06B6D4]/30"></div>
                 <div className="flex-1">
-                  <p className="text-muted-foreground">{milestone.event}</p>
+                  <p className="text-zinc-400">{milestone.event}</p>
                 </div>
               </motion.div>
             ))}
@@ -183,11 +178,11 @@ export default function AboutContent() {
       </section>
 
       {/* Team */}
-      <section className="container mx-auto px-4 py-16 bg-muted/20">
+      <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Meet the Team</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            We're a team of sales veterans, AI researchers, and product builders
+          <h2 className="text-3xl font-bold mb-4 text-[#F5F5F7]">Meet the Team</h2>
+          <p className="text-zinc-400 max-w-2xl mx-auto">
+            We&apos;re a team of sales veterans, AI researchers, and product builders
             united by a passion for transforming how B2B sales works.
           </p>
         </div>
@@ -200,16 +195,16 @@ export default function AboutContent() {
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className="text-center">
+              <Card className="text-center border-white/[0.08] bg-white/[0.02]">
                 <CardHeader>
-                  <div className="w-24 h-24 bg-muted rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <Users className="w-12 h-12 text-muted-foreground" />
+                  <div className="w-24 h-24 bg-white/[0.05] rounded-full mx-auto mb-4 flex items-center justify-center border border-white/[0.08]">
+                    <Users className="w-12 h-12 text-zinc-500" />
                   </div>
-                  <CardTitle className="text-lg">{member.name}</CardTitle>
-                  <p className="text-sm text-muted-foreground">{member.role}</p>
+                  <CardTitle className="text-lg text-[#F5F5F7]">{member.name}</CardTitle>
+                  <p className="text-sm text-[#06B6D4]">{member.role}</p>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">{member.bio}</p>
+                  <p className="text-sm text-zinc-400">{member.bio}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -220,19 +215,19 @@ export default function AboutContent() {
       {/* CTA */}
       <section className="container mx-auto px-4 py-16 text-center">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold mb-4">Join the revolution</h2>
-          <p className="text-lg text-muted-foreground mb-8">
-            Help us build the future of sales. Whether you're a sales rep, sales leader,
-            or just passionate about great products, we'd love to hear from you.
+          <h2 className="text-3xl font-bold mb-4 text-[#F5F5F7]">Join the revolution</h2>
+          <p className="text-lg text-zinc-400 mb-8">
+            Help us build the future of sales. Whether you&apos;re a sales rep, sales leader,
+            or just passionate about great products, we&apos;d love to hear from you.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup">
-              <Button size="lg" className="bg-brand text-white hover:bg-brand/80">
+              <Button size="lg" className="bg-[#06B6D4] text-[#08080A] hover:bg-[#06B6D4]/80 font-semibold">
                 Start free trial <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/careers">
-              <Button size="lg" variant="outline">
+              <Button size="lg" variant="outline" className="border-white/10 text-zinc-300 hover:bg-white/5">
                 View open roles
               </Button>
             </Link>

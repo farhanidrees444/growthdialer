@@ -1,8 +1,9 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Navbar from "@/components/marketing/Navbar";
-import Footer from "@/components/marketing/Footer";
+import { Nav } from "@/components/marketing/live-floor/Nav";
+import { SiteFooter } from "@/components/marketing/live-floor/SiteFooter";
+import { Grain } from "@/components/marketing/live-floor/Grain";
 import { SmoothScroll } from "@/components/marketing/live-floor/SmoothScroll";
 
 export default function MarketingLayout({
@@ -12,12 +13,9 @@ export default function MarketingLayout({
 }) {
   const pathname = usePathname();
 
-  // Cinematic "Live Floor" routes bring their own nav + footer and use Lenis
-  // smooth scrolling. Scoped to these marketing routes only — app routes are a
-  // separate layout tree and stay untouched. Every other marketing page keeps
-  // the shared chrome exactly as before.
-  const cinematic = pathname === "/" || pathname === "/pricing";
-  if (cinematic) {
+  // Homepage and pricing bring their own full wrapper (MotionShell + Nav + Footer)
+  const selfContained = pathname === "/" || pathname === "/pricing";
+  if (selfContained) {
     return (
       <>
         <SmoothScroll />
@@ -26,11 +24,16 @@ export default function MarketingLayout({
     );
   }
 
+  // All other marketing pages use consistent dark theme with live-floor Nav + Footer
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <Navbar />
-      <main className="flex-1">{children}</main>
-      <Footer />
-    </div>
+    <>
+      <SmoothScroll />
+      <div className="relative min-h-screen overflow-x-hidden bg-[#08080A] text-[#F5F5F7] antialiased">
+        <Grain />
+        <Nav />
+        <main className="relative z-[2] pt-20">{children}</main>
+        <SiteFooter />
+      </div>
+    </>
   );
 }

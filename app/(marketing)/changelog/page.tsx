@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ArrowRight, Calendar, Zap, Users, MessageSquare, Shield, Star, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
   title: "Changelog — GrowthDialer Product Updates & New Features",
@@ -96,31 +95,29 @@ const changelog = [
 
 export default function ChangelogPage() {
   return (
-    <div className="pt-24 pb-16">
+    <div className="py-16">
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
-          <Badge variant="secondary" className="mb-4">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#06B6D4]/10 text-[#06B6D4] border border-[#06B6D4]/30 mb-4">
             Product Updates
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+          </span>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-[#F5F5F7]">
             Changelog
           </h1>
-          <p className="text-xl text-muted-foreground mb-8">
+          <p className="text-xl text-zinc-400 mb-8">
             Stay up to date with the latest features, improvements, and fixes in GrowthDialer.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/signup"
-              className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 h-9 px-2.5 py-1.5 text-sm font-medium transition-all"
-            >
-              Try Latest Features <ArrowRight className="ml-2 h-4 w-4" />
+            <Link href="/signup">
+              <Button size="lg" className="bg-[#06B6D4] text-[#08080A] hover:bg-[#06B6D4]/80 font-semibold">
+                Try Latest Features <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
             </Link>
-            <Link
-              href="/pricing"
-              className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground h-9 px-2.5 py-1.5 text-sm font-medium transition-all"
-            >
-              View Pricing
+            <Link href="/pricing">
+              <Button size="lg" variant="outline" className="border-white/10 text-zinc-300 hover:bg-white/5">
+                View Pricing
+              </Button>
             </Link>
           </div>
         </div>
@@ -131,42 +128,42 @@ export default function ChangelogPage() {
         <div className="max-w-4xl mx-auto">
           <div className="space-y-8">
             {changelog.map((entry, index) => (
-              <Card key={index} className="border-white/10 bg-[oklch(0.086_0.024_282)]/95">
+              <Card key={index} className="border-white/[0.08] bg-white/[0.02]">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-lg ${
-                        entry.type === 'major' ? 'bg-green-500/15' :
+                        entry.type === 'major' ? 'bg-[#06B6D4]/15' :
                         entry.type === 'security' ? 'bg-red-500/15' :
                         entry.type === 'feature' ? 'bg-blue-500/15' : 'bg-purple-500/15'
                       } flex items-center justify-center`}>
                         <entry.icon className={`w-5 h-5 ${
-                          entry.type === 'major' ? 'text-green-400' :
+                          entry.type === 'major' ? 'text-[#06B6D4]' :
                           entry.type === 'security' ? 'text-red-400' :
                           entry.type === 'feature' ? 'text-blue-400' : 'text-purple-400'
                         }`} />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <CardTitle className="text-lg">{entry.title}</CardTitle>
-                          <Badge variant="outline" className="text-xs">
+                          <CardTitle className="text-lg text-[#F5F5F7]">{entry.title}</CardTitle>
+                          <span className="text-xs px-2 py-0.5 rounded border border-white/10 text-zinc-400">
                             {entry.version}
-                          </Badge>
+                          </span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2 text-sm text-zinc-500">
                           <Calendar className="w-3 h-3" />
                           <span>{entry.date}</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <p className="text-muted-foreground mt-2">{entry.description}</p>
+                  <p className="text-zinc-400 mt-2">{entry.description}</p>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
                     {entry.changes.map((change, changeIndex) => (
-                      <li key={changeIndex} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <div className="w-1.5 h-1.5 rounded-full bg-brand mt-2 flex-shrink-0" />
+                      <li key={changeIndex} className="flex items-start gap-2 text-sm text-zinc-400">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#06B6D4] mt-2 flex-shrink-0" />
                         {change}
                       </li>
                     ))}
@@ -179,19 +176,19 @@ export default function ChangelogPage() {
       </section>
 
       {/* Subscribe Section */}
-      <section className="container mx-auto px-4 py-16 bg-muted/25">
+      <section className="container mx-auto px-4 py-16">
         <div className="text-center max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold mb-4">Stay Updated</h2>
-          <p className="text-lg text-muted-foreground mb-8">
+          <h2 className="text-3xl font-bold mb-4 text-[#F5F5F7]">Stay Updated</h2>
+          <p className="text-lg text-zinc-400 mb-8">
             Get notified when we release new features and improvements.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
             <input
               type="email"
               placeholder="Enter your email"
-              className="flex h-9 w-full rounded-lg border border-border bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-9 w-full rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#06B6D4]"
             />
-            <Button className="bg-brand text-[oklch(0.08_0.04_153)] hover:bg-[oklch(0.76_0.27_153)]">
+            <Button className="bg-[#06B6D4] text-[#08080A] hover:bg-[#06B6D4]/80 font-semibold">
               Subscribe
             </Button>
           </div>
@@ -202,13 +199,13 @@ export default function ChangelogPage() {
       <section id="roadmap" className="container mx-auto px-4 py-16 scroll-mt-24">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <Badge variant="secondary" className="mb-4">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#06B6D4]/10 text-[#06B6D4] border border-[#06B6D4]/30 mb-4">
               Coming Soon
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Roadmap</h2>
-            <p className="text-lg text-muted-foreground">
-              What we're building next. Vote on features or{" "}
-              <Link href="/contact-sales" className="text-brand hover:underline">
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-[#F5F5F7]">Roadmap</h2>
+            <p className="text-lg text-zinc-400">
+              What we&apos;re building next. Vote on features or{" "}
+              <Link href="/contact-sales" className="text-[#06B6D4] hover:underline">
                 suggest your own
               </Link>
               .
@@ -220,7 +217,7 @@ export default function ChangelogPage() {
               {
                 quarter: "Q2 2026",
                 status: "In Progress",
-                statusColor: "bg-brand/15 text-brand",
+                statusColor: "bg-[#06B6D4]/15 text-[#06B6D4]",
                 items: [
                   "Native Salesforce CTI integration (click-to-call from SFDC)",
                   "Power Dialer mode for single-line sequential campaigns",
@@ -249,12 +246,12 @@ export default function ChangelogPage() {
                 ],
               },
             ].map((section) => (
-              <Card key={section.quarter} className="border-white/10 bg-[oklch(0.086_0.024_282)]/95">
+              <Card key={section.quarter} className="border-white/[0.08] bg-white/[0.02]">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Clock className="w-5 h-5 text-muted-foreground" />
-                      <CardTitle className="text-lg">{section.quarter}</CardTitle>
+                      <Clock className="w-5 h-5 text-zinc-500" />
+                      <CardTitle className="text-lg text-[#F5F5F7]">{section.quarter}</CardTitle>
                     </div>
                     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${section.statusColor}`}>
                       {section.status}
@@ -264,8 +261,8 @@ export default function ChangelogPage() {
                 <CardContent>
                   <ul className="space-y-2">
                     {section.items.map((item, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <div className="w-1.5 h-1.5 rounded-full bg-brand mt-2 flex-shrink-0" />
+                      <li key={i} className="flex items-start gap-2 text-sm text-zinc-400">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#06B6D4] mt-2 flex-shrink-0" />
                         {item}
                       </li>
                     ))}
@@ -275,9 +272,9 @@ export default function ChangelogPage() {
             ))}
           </div>
 
-          <p className="text-center text-sm text-muted-foreground mt-8">
+          <p className="text-center text-sm text-zinc-500 mt-8">
             Have a feature request?{" "}
-            <Link href="/contact-sales" className="text-brand hover:underline">
+            <Link href="/contact-sales" className="text-[#06B6D4] hover:underline">
               Let us know
             </Link>{" "}
             — high-vote requests move up the queue.
@@ -287,15 +284,14 @@ export default function ChangelogPage() {
 
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-16 text-center">
-        <h2 className="text-3xl font-bold mb-4">Experience the Latest Features</h2>
-        <p className="text-xl text-muted-foreground mb-8">
+        <h2 className="text-3xl font-bold mb-4 text-[#F5F5F7]">Experience the Latest Features</h2>
+        <p className="text-xl text-zinc-400 mb-8">
           Try GrowthDialer today and see the difference our latest updates make.
         </p>
-        <Link
-          href="/signup"
-          className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 h-9 px-2.5 py-1.5 text-sm font-medium transition-all"
-        >
-          Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
+        <Link href="/signup">
+          <Button size="lg" className="bg-[#06B6D4] text-[#08080A] hover:bg-[#06B6D4]/80 font-semibold">
+            Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </Link>
       </section>
     </div>
