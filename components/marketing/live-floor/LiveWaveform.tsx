@@ -98,7 +98,7 @@ export function MiniWave({ color = '#06B6D4', className = '' }: { color?: string
           <span
             key={i}
             className="w-[2px] rounded-full"
-            style={{ background: color, height: '14px', scaleY: h }}
+            style={{ background: color, height: '14px', transform: `scaleY(${h})` }}
           />
         ))}
       </div>

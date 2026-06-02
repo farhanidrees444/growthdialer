@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowRight, Phone } from 'lucide-react';
+import { ArrowRight, Phone, Mic, Sparkles, Globe } from 'lucide-react';
 import { LiveWaveform } from './LiveWaveform';
 import { Spotlight } from './Spotlight';
 import { EASE_OUT, SPRING } from './motion';
@@ -88,6 +88,29 @@ export function Hero() {
           >
             No credit card required · Built for outbound teams
           </motion.p>
+
+          {/* Honest capability strip — fills the column, anchors the claims */}
+          <motion.dl
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, ease: EASE_OUT, delay: 0.5 }}
+            className="mt-10 grid max-w-md grid-cols-3 gap-px overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl"
+          >
+            {[
+              { icon: Mic, k: 'Every call', v: 'Recorded' },
+              { icon: Sparkles, k: 'AI summary', v: 'In seconds' },
+              { icon: Globe, k: '50+ countries', v: 'To dial' },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.k} className="flex flex-col gap-1.5 bg-[#08080A]/40 px-3.5 py-4">
+                  <Icon className="h-4 w-4 text-[#8B5CF6]" />
+                  <dt className="text-[13px] font-medium leading-tight text-[#F5F5F7]">{item.k}</dt>
+                  <dd className="text-[12px] leading-tight text-zinc-500">{item.v}</dd>
+                </div>
+              );
+            })}
+          </motion.dl>
         </div>
 
         {/* ── Right: the living call card (border-beam) ── */}
