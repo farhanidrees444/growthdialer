@@ -83,7 +83,7 @@ export function LiveWaveform({
 }
 
 /** A single mini-waveform glyph for inline/label use. */
-export function MiniWave({ color = hsl(186, 100%, 42%)', className = '' }: { color?: string; className?: string }) {
+export function MiniWave({ color = 'hsl(186, 100%, 42%)', className = '' }: { color?: string; className?: string }) {
   const reduce = useReducedMotion();
   const [mounted, setMounted] = useState(false);
   

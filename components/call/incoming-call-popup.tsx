@@ -77,7 +77,7 @@ function getCountryFlag(e164: string): string {
 }
 
 function formatPhone(e164: string): string {
-  const d = e164.replace(/\D/g');
+  const d = e164.replace(/\D/g, '');
   // North America: +1 NXX NXX XXXX
   if (d.startsWith('1') && d.length === 11) {
     return `+1 ${d.slice(1, 4)} ${d.slice(4, 7)} ${d.slice(7)}`;
