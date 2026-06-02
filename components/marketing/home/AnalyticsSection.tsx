@@ -1,16 +1,15 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { SiTableau, SiPowerbi, SiGoogleanalytics, SiDatadog, SiGrafana, SiSplunk } from 'react-icons/si';
-import { AnimatedSection, type StepContent } from './AnimatedSection';
+import { SiGoogleanalytics, SiDatadog, SiGrafana, SiSplunk, SiAirtable, SiSalesforce } from 'react-icons/si';
 
-const ANALYTICS_LOGOS: [typeof SiTableau, string][] = [
-  [SiTableau, 'Tableau'],
-  [SiPowerbi, 'Power BI'],
-  [SiGoogleanalytics, 'Analytics'],
+const ANALYTICS_LOGOS: [typeof SiGoogleanalytics, string][] = [
+  [SiGoogleanalytics, 'Google Analytics'],
   [SiDatadog, 'Datadog'],
   [SiGrafana, 'Grafana'],
   [SiSplunk, 'Splunk'],
+  [SiAirtable, 'Airtable'],
+  [SiSalesforce, 'Salesforce'],
 ];
 
 const ANALYTICS_STEPS: StepContent[] = [
