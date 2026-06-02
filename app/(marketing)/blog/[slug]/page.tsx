@@ -368,7 +368,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                           return `<p class="font-bold text-lg mt-6 mb-2">${line.replace(/\*\*/g, '')}</p>`;
                         }
                         if (line.startsWith('- ')) {
-                          return `<li class="ml-4">${line.replace('- '')}</li>`;
+                          return `<li class="ml-4">${line.replace('- ', '')}</li>`;
                         }
                         if (line.startsWith('**') && line.includes(':**')) {
                           return `<p class="font-semibold mt-4">${line.replace(/\*\*/g')}</p>`;

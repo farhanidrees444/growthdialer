@@ -102,7 +102,7 @@ export function DashboardPreview() {
               </div>
               <LiveWaveform bars={48} height={72} />
               <div className="mt-4 grid grid-cols-3 gap-2">
-                {[['Talk', fmtClock(seconds)], ['Disposition'—'], ['Sentiment'Positive']].map(([k, v]) => (
+                {[['Talk', fmtClock(seconds)], ['Disposition', '—'], ['Sentiment', 'Positive']].map(([k, v]) => (
                   <div key={k} className="rounded-lg border border-white/[0.05] bg-black/30 px-2 py-2 text-center">
                     <p className="text-[11px] tabular-nums text-foreground">{v}</p>
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60">{k}</p>
