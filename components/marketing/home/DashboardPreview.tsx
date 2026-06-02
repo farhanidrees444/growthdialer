@@ -141,7 +141,7 @@ export function DashboardPreview() {
                   </span>
                 </div>
                 <ul className="space-y-2">
-                  {['Evaluating for a 12-seat team'Wants pricing + a short demo'Follow up Thursday'].map((t, i) => (
+                  {['Evaluating for a 12-seat team', 'Wants pricing + a short demo', 'Follow up Thursday'].map((t, i) => (
                     <motion.li
                       key={t}
                       initial={{ opacity: 0, x: -6 }}
