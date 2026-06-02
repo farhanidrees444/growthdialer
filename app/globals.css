@@ -167,10 +167,12 @@
   animation-play-state: paused;
 }
 
-/* ─── Smooth scroll ─── */
-html {
-  scroll-behavior: smooth;
-}
+/* ─── Scroll ───
+   We intentionally use the browser's native (instant) scroll. A global
+   `scroll-behavior: smooth` made programmatic scrolls (anchor links, scroll
+   restoration, in-app navigation) animate slowly across the heavily-animated
+   marketing page and stall mid-flight on a not-yet-revealed section — which
+   read as large blank/black gaps. Native scroll lands instantly and reliably. */
 
 /* ─── Mobile / touch ─── */
 @layer utilities {

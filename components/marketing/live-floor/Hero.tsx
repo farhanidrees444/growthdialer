@@ -97,6 +97,10 @@ export function Hero() {
           transition={{ ...SPRING, delay: 0.34 }}
           className="relative"
         >
+          {/* Circular signal visual — concentric pulse rings + a slow orbit,
+              centered behind the call card. Decorative, SSR-safe (fixed
+              initial state), and reduced-motion aware via MotionShell. */}
+          <OrbitSignal />
           <BorderBeamCard>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">

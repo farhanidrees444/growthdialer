@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/marketing/Navbar";
 import Footer from "@/components/marketing/Footer";
-import { SmoothScroll } from "@/components/marketing/live-floor/SmoothScroll";
 
 export default function MarketingLayout({
   children,
@@ -18,12 +17,7 @@ export default function MarketingLayout({
   // the shared chrome exactly as before.
   const cinematic = pathname === "/" || pathname === "/pricing";
   if (cinematic) {
-    return (
-      <>
-        <SmoothScroll />
-        {children}
-      </>
-    );
+    return <>{children}</>;
   }
 
   return (
