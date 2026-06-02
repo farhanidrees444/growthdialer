@@ -163,7 +163,7 @@ export function IncomingCallPopup({ userId }: Props) {
       .channel(`inbound-${userId}`)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: ', 'public', table: ', 'calls', filter: `user_id=eq.${userId}` },
+        { event: 'INSERT', schema: 'public', table: 'calls', filter: `user_id=eq.${userId}` },
         async (payload) => {
           const row = payload.new as Record<string, unknown>;
           console.log('[POPUP] Inbound INSERT received:', row.id| direction:', row.direction| status:', row.status);
@@ -193,7 +193,7 @@ export function IncomingCallPopup({ userId }: Props) {
       )
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: ', 'public', table: ', 'calls', filter: `user_id=eq.${userId}` },
+        { event: 'UPDATE', schema: 'public', table: 'calls', filter: `user_id=eq.${userId}` },
         (payload) => {
           const row = payload.new as Record<string, unknown>;
           if (row.id !== callIdRef.current) return;

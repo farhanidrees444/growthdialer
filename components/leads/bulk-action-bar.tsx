@@ -14,7 +14,7 @@ interface Props {
 async function runBulk(ids: string[], action: Record<string, unknown>) {
   const res = await fetch('/api/leads/bulk', {
     method: 'POST',
-    headers: { 'Content-Type': ', 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ids, action }),
   });
   if (!res.ok) throw new Error('Bulk action failed');

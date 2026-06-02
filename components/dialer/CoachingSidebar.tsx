@@ -64,7 +64,7 @@ function StatusBadge({ status }: { status: string }) {
     answered: 'bg-emerald-500/10 text-emerald-300',
     initiated: 'bg-blue-500/10 text-blue-300',
     ringing: 'bg-amber-500/10 text-amber-300',
-    'no-answer': ', 'bg-amber-500/10 text-amber-300',
+    'no-answer': 'bg-amber-500/10 text-amber-300',
     no_answer: 'bg-amber-500/10 text-amber-300',
     busy: 'bg-orange-500/10 text-orange-300',
     failed: 'bg-rose-500/10 text-rose-300',

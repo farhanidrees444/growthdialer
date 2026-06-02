@@ -21,22 +21,22 @@ export default function CallControls({ isMuted, isOnHold, isRecording, onMute, o
         type="button"
         whileTap={{ scale: 0.98 }}
         onClick={onMute}
-        className={`rounded-3xl border border-white/10 px-4 py-4 text-sm font-semibold transition ${isMuted ? 'bg-rose-500/15 text-rose-300' : ', 'bg-slate-900/80 text-white hover:border-emerald-400/30'}`}
+        className={`rounded-3xl border border-white/10 px-4 py-4 text-sm font-semibold transition ${isMuted ? 'bg-rose-500/15 text-rose-300' : 'bg-slate-900/80 text-white hover:border-emerald-400/30'}`}
       >
         <div className="flex items-center justify-center gap-2">
           {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-          {isMuted ? 'Unmute' : ', 'Mute'}
+          {isMuted ? 'Unmute' : 'Mute'}
         </div>
       </motion.button>
       <motion.button
         type="button"
         whileTap={{ scale: 0.98 }}
         onClick={onHold}
-        className={`rounded-3xl border border-white/10 px-4 py-4 text-sm font-semibold transition ${isOnHold ? 'bg-amber-500/15 text-amber-300' : ', 'bg-slate-900/80 text-white hover:border-emerald-400/30'}`}
+        className={`rounded-3xl border border-white/10 px-4 py-4 text-sm font-semibold transition ${isOnHold ? 'bg-amber-500/15 text-amber-300' : 'bg-slate-900/80 text-white hover:border-emerald-400/30'}`}
       >
         <div className="flex items-center justify-center gap-2">
           <Pause className="h-5 w-5" />
-          {isOnHold ? 'Resume' : ', 'Hold'}
+          {isOnHold ? 'Resume' : 'Hold'}
         </div>
       </motion.button>
       <motion.button
@@ -53,11 +53,11 @@ export default function CallControls({ isMuted, isOnHold, isRecording, onMute, o
         type="button"
         whileTap={{ scale: 0.98 }}
         onClick={onRecord}
-        className={`rounded-3xl border border-white/10 px-4 py-4 text-sm font-semibold transition ${isRecording ? 'bg-rose-500/15 text-rose-300' : ', 'bg-slate-900/80 text-white hover:border-emerald-400/30'}`}
+        className={`rounded-3xl border border-white/10 px-4 py-4 text-sm font-semibold transition ${isRecording ? 'bg-rose-500/15 text-rose-300' : 'bg-slate-900/80 text-white hover:border-emerald-400/30'}`}
       >
         <div className="flex items-center justify-center gap-2">
           <Disc className="h-5 w-5" />
-          {isRecording ? 'Recording' : ', 'Record'}
+          {isRecording ? 'Recording' : 'Record'}
         </div>
       </motion.button>
       <motion.button

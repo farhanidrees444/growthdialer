@@ -44,7 +44,7 @@ function DialerVisual() {
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               />
             )}
-            <span className={`relative ${i === idx ? 'text-[hsl(258,90%,66%)]' : ', 'text-muted-foreground/70'}`}>{m}</span>
+            <span className={`relative ${i === idx ? 'text-[hsl(258,90%,66%)]' : 'text-muted-foreground/70'}`}>{m}</span>
           </div>
         ))}
       </div>
@@ -74,16 +74,16 @@ function PowerVisual() {
           <div
             key={r}
             className={`flex items-center justify-between rounded-lg border px-3 py-2.5 transition-colors duration-300 ${
-              isActive ? 'border-[hsl(258,90%,66%)]/40 bg-violet-600/[0.06]' : ', 'border-white/[0.06]'
+              isActive ? 'border-[hsl(258,90%,66%)]/40 bg-violet-600/[0.06]' : 'border-white/[0.06]'
             }`}
           >
             <div className="flex items-center gap-2.5">
               <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold ${
-                done ? 'bg-emerald-500/15 text-emerald-400' : ', 'bg-white/[0.05] text-muted-foreground'
+                done ? 'bg-emerald-500/15 text-emerald-400' : 'bg-white/[0.05] text-muted-foreground'
               }`}>
                 {done ? <Check className="h-3 w-3" /> : r.split(' ').map((w) => w[0]).join('')}
               </span>
-              <span className={`text-[13px] ${isActive ? 'text-foreground' : ', 'text-muted-foreground'}`}>{r}</span>
+              <span className={`text-[13px] ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>{r}</span>
             </div>
             {isActive ? (
               <span className="flex items-center gap-1.5 text-[11px] font-medium text-[hsl(258,90%,66%)']">
@@ -146,10 +146,10 @@ function IntelVisual() {
 // ── Smart Leads — pipeline with dispositions ────────────────────────────────
 function LeadsVisual() {
   const leads = [
-    { n: 'Acme Co.', s: ', 'Interested', c: ', 'text-emerald-400' },
-    { n: 'Globex', s: ', 'Callback', c: ', 'text-amber-400' },
-    { n: 'Initech', s: ', 'Meeting booked', c: ', 'text-[hsl(258,90%,66%)']' },
-    { n: 'Umbrella', s: ', 'New', c: ', 'text-muted-foreground' },
+    { n: 'Acme Co.', s: 'Interested', c: 'text-emerald-400' },
+    { n: 'Globex', s: 'Callback', c: 'text-amber-400' },
+    { n: 'Initech', s: 'Meeting booked', c: 'text-[hsl(258,90%,66%)']' },
+    { n: 'Umbrella', s: 'New', c: 'text-muted-foreground' },
   ];
   return (
     <div className="space-y-2" aria-hidden>
@@ -200,7 +200,7 @@ function AnalyticsVisual() {
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: i * 0.07, ease: EASE_OUT }}
             className="flex-1 rounded-t-md"
-            style={{ background: i === 5 ? 'linear-gradient(to top,hsl(258,90%,66%),hsl(186,100%,42%))'' : ', 'rgba(255,255,255,0.08)' }}
+            style={{ background: i === 5 ? 'linear-gradient(to top,hsl(258,90%,66%),hsl(186,100%,42%))'' : 'rgba(255,255,255,0.08)' }}
           />
         ))}
       </div>
@@ -241,12 +241,12 @@ function HealthVisual() {
 
 // ── Feature data ────────────────────────────────────────────────────────────
 const FEATURES = [
-  { icon: Target, eyebrow: 'AI Dialer', title: ', 'A focused stage for every call.', body: ', 'Three modes — browse, focus and power — give reps one clean surface to move through leads, with live controls and instant recording.', Visual: DialerVisual },
-  { icon: Zap, eyebrow: 'Power Dialer', title: ', 'Work the list, not the dialer.', body: ', 'Move call to call back-to-back. The queue auto-advances, dispositions in a tap, and you never lose your rhythm.', Visual: PowerVisual },
-  { icon: Brain, eyebrow: 'Conversation Intelligence', title: ', 'The AI listens so you don’t take notes.', body: ', 'Every recorded call is transcribed live, then distilled into a summary, sentiment and intent — ready the moment you hang up.', Visual: IntelVisual },
-  { icon: Users, eyebrow: 'Smart Leads', title: ', 'Your pipeline, in one place.', body: ', 'Import and organize leads, then work them straight from the dialer. Every call links back with full history and disposition.', Visual: LeadsVisual },
-  { icon: BarChart3, eyebrow: 'Analytics', title: ', 'See what’s actually working.', body: ', 'Connect rate, talk time, dispositions and sentiment trends — your whole calling operation at a glance.', Visual: AnalyticsVisual },
-  { icon: ShieldCheck, eyebrow: 'Number Health', title: ', 'Keep your calls landing.', body: ', 'Track carrier reputation and spam risk on every number, continuously, so your connect rates stay high.', Visual: HealthVisual },
+  { icon: Target, eyebrow: 'AI Dialer', title: 'A focused stage for every call.', body: 'Three modes — browse, focus and power — give reps one clean surface to move through leads, with live controls and instant recording.', Visual: DialerVisual },
+  { icon: Zap, eyebrow: 'Power Dialer', title: 'Work the list, not the dialer.', body: 'Move call to call back-to-back. The queue auto-advances, dispositions in a tap, and you never lose your rhythm.', Visual: PowerVisual },
+  { icon: Brain, eyebrow: 'Conversation Intelligence', title: 'The AI listens so you don’t take notes.', body: 'Every recorded call is transcribed live, then distilled into a summary, sentiment and intent — ready the moment you hang up.', Visual: IntelVisual },
+  { icon: Users, eyebrow: 'Smart Leads', title: 'Your pipeline, in one place.', body: 'Import and organize leads, then work them straight from the dialer. Every call links back with full history and disposition.', Visual: LeadsVisual },
+  { icon: BarChart3, eyebrow: 'Analytics', title: 'See what’s actually working.', body: 'Connect rate, talk time, dispositions and sentiment trends — your whole calling operation at a glance.', Visual: AnalyticsVisual },
+  { icon: ShieldCheck, eyebrow: 'Number Health', title: 'Keep your calls landing.', body: 'Track carrier reputation and spam risk on every number, continuously, so your connect rates stay high.', Visual: HealthVisual },
 ];
 
 export function FeatureSections() {

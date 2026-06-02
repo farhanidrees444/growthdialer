@@ -73,11 +73,11 @@ export function ActionDock({
 }: ActionDockProps) {
   return (
     <div className="flex items-center justify-center gap-3 flex-wrap" role="toolbar" aria-label="Call controls">
-      <DockButton label={isOnHold ? 'Resume' : ', 'Hold'} hotkey="O" onClick={onToggleHold} active={isOnHold}>
+      <DockButton label={isOnHold ? 'Resume' : 'Hold'} hotkey="O" onClick={onToggleHold} active={isOnHold}>
         <Pause className="w-4 h-4" />
       </DockButton>
 
-      <DockButton label={isMuted ? 'Unmute' : ', 'Mute'} hotkey="M" onClick={onToggleMute} active={isMuted}>
+      <DockButton label={isMuted ? 'Unmute' : 'Mute'} hotkey="M" onClick={onToggleMute} active={isMuted}>
         {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
       </DockButton>
 
@@ -95,7 +95,7 @@ export function ActionDock({
 
       {onToggleRecord && (
         <DockButton
-          label={isRecording ? 'Stop Recording' : ', 'Record'}
+          label={isRecording ? 'Stop Recording' : 'Record'}
           hotkey="R"
           onClick={onToggleRecord}
           active={isRecording}

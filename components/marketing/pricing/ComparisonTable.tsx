@@ -54,7 +54,7 @@ const GROUPS: { group: string; rows: { label: string; cells: [Cell, Cell, Cell, 
 ];
 
 function CellContent({ v, popular }: { v: Cell; popular: boolean }) {
-  if (v === true) return <Check className={`mx-auto h-4 w-4 ${popular ? 'text-[hsl(258,90%,66%)']' : ', 'text-muted-foreground/90'}`} />;
+  if (v === true) return <Check className={`mx-auto h-4 w-4 ${popular ? 'text-[hsl(258,90%,66%)']' : 'text-muted-foreground/90'}`} />;
   if (v === false) return <Minus className="mx-auto h-4 w-4 text-zinc-700" />;
   if (v === 'soon')
     return (
@@ -96,7 +96,7 @@ export function ComparisonTable() {
                     i === 1 ? 'rounded-t-xl border-x border-t border-[hsl(258,90%,66%)']/20' : ''
                   }`}
                 >
-                  <span className={`text-[14px] font-semibold ${i === 1 ? 'text-[hsl(258,90%,66%)']' : ', 'text-foreground'}`}>{p}</span>
+                  <span className={`text-[14px] font-semibold ${i === 1 ? 'text-[hsl(258,90%,66%)']' : 'text-foreground'}`}>{p}</span>
                 </th>
               ))}
             </tr>

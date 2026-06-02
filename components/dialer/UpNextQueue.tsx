@@ -63,9 +63,9 @@ function applyFilter(leads: LeadRecord[], filter: LocalFilter, search: string): 
 }
 
 const TABS: { key: LocalFilter; label: string }[] = [
-  { key: 'Queue', label: ', 'Queue' },
-  { key: 'Hot', label: ', 'Hot' },
-  { key: 'Callbacks', label: ', 'Callbacks' },
+  { key: 'Queue', label: 'Queue' },
+  { key: 'Hot', label: 'Hot' },
+  { key: 'Callbacks', label: 'Callbacks' },
 ];
 
 const staggerList = {

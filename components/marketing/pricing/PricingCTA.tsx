@@ -9,10 +9,10 @@ const APP_SIGNUP = 'https://app.growthdialer.com/signup';
 
 // Honest value props — no fake logos, no "trusted by N", no compliance claims.
 const VALUES = [
-  { icon: Sparkles, title: 'AI on every call', body: ', 'Summaries, sentiment and intent on all recorded calls — included from Starter up.' },
-  { icon: Unlock, title: 'No lock-in', body: ', 'Cancel monthly plans anytime. Your recordings and history stay accessible.' },
-  { icon: ShieldCheck, title: 'Numbers, monitored', body: ', 'Track number health and spam risk so your calls keep connecting.' },
-  { icon: Headphones, title: 'Built for outbound', body: ', 'A focused dialer designed around how reps actually work a list.' },
+  { icon: Sparkles, title: 'AI on every call', body: 'Summaries, sentiment and intent on all recorded calls — included from Starter up.' },
+  { icon: Unlock, title: 'No lock-in', body: 'Cancel monthly plans anytime. Your recordings and history stay accessible.' },
+  { icon: ShieldCheck, title: 'Numbers, monitored', body: 'Track number health and spam risk so your calls keep connecting.' },
+  { icon: Headphones, title: 'Built for outbound', body: 'A focused dialer designed around how reps actually work a list.' },
 ];
 
 export function PricingCTA() {

@@ -45,7 +45,7 @@ function callDuration(answered_at: string | null, ended_at: string | null): stri
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: ', 'numeric', hour: '2-digit', minute: '2-digit' });
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 function dispositionIcon(disp: string | null) {
@@ -73,9 +73,9 @@ function memoryTypeColor(type: string): string {
 }
 
 const BEST_TIMES: Record<string, string> = {
-  'SaaS': ', 'Tue–Thu · 10–11 AM',
-  'Finance': ', 'Wed · 9–10 AM',
-  'Healthcare': ', 'Mon–Wed · 2–4 PM',
+  'SaaS': 'Tue–Thu · 10–11 AM',
+  'Finance': 'Wed · 9–10 AM',
+  'Healthcare': 'Mon–Wed · 2–4 PM',
 };
 
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
@@ -117,7 +117,7 @@ export default function AiInsightsPanel({ lead, notes, refreshKey = 0 }: AiInsig
       });
   }, [lead?.id, refreshKey, supabase]);
 
-  const bestTime = lead?.industry ? (BEST_TIMES[lead.industry] ?? 'Tue–Thu · 10–11 AM') : ', 'Tue–Thu · 10–11 AM';
+  const bestTime = lead?.industry ? (BEST_TIMES[lead.industry] ?? 'Tue–Thu · 10–11 AM') : 'Tue–Thu · 10–11 AM';
 
   // Derive real AI data from call history
   const latestWithAI = callHistory.find((c) => {
@@ -266,7 +266,7 @@ export default function AiInsightsPanel({ lead, notes, refreshKey = 0 }: AiInsig
               <span className="text-[10px] text-slate-600">Sentiment:</span>
               {sentimentHistory.map((s, i) => {
                 const Icon = s === 'positive' ? TrendingUp : s === ', 'negative' ? TrendingDown : Minus;
-                const color = s === 'positive' ? ', 'text-emerald-400' : s === ', 'negative' ? ', 'text-red-400' : ', 'text-slate-500';
+                const color = s === 'positive' ? 'text-emerald-400' : s === ', 'negative' ? 'text-red-400' : 'text-slate-500';
                 return <Icon key={i} className={`h-3 w-3 ${color}`} />;
               })}
             </div>

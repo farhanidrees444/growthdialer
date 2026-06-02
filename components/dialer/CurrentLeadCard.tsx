@@ -196,7 +196,7 @@ export default function CurrentLeadCard({
         <div
           className="relative overflow-hidden rounded-2xl border bg-[oklch(0.10_0.025_282)] p-6 shadow-xl"
           style={{
-            borderColor: isConnected ? 'oklch(0.55 0.18 153 / 40%)' : ', 'oklch(1 0 0 / 6%)',
+            borderColor: isConnected ? 'oklch(0.55 0.18 153 / 40%)' : 'oklch(1 0 0 / 6%)',
             boxShadow: isConnected ? '0 0 40px oklch(0.55 0.18 153 / 12%)' : undefined,
           }}
         >
@@ -387,7 +387,7 @@ export default function CurrentLeadCard({
                 }`}
               >
                 <Star className={`h-3.5 w-3.5 ${isHot ? 'fill-amber-400' : ''}`} />
-                {isHot ? 'Hot!' : ', 'Mark Hot'}
+                {isHot ? 'Hot!' : 'Mark Hot'}
               </button>
               <button
                 type="button"
@@ -411,7 +411,7 @@ export default function CurrentLeadCard({
                   <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400" />
                 </span>
                 <span className="text-sm font-bold text-amber-300">
-                  {callState.status === 'connecting' ? ', 'Connecting…' : ', 'Ringing…'}
+                  {callState.status === 'connecting' ? 'Connecting…' : 'Ringing…'}
                 </span>
                 <span className="font-mono text-sm text-amber-300/60">{formatTimer(callState.duration)}</span>
               </div>
@@ -461,7 +461,7 @@ export default function CurrentLeadCard({
                 }`}
               >
                 {callState.isMuted ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-                {callState.isMuted ? 'Unmute' : ', 'Mute'}
+                {callState.isMuted ? 'Unmute' : 'Mute'}
               </button>
               <button
                 type="button"
@@ -473,7 +473,7 @@ export default function CurrentLeadCard({
                 }`}
               >
                 <Pause className="h-3.5 w-3.5" />
-                {callState.isOnHold ? 'Resume' : ', 'Hold'}
+                {callState.isOnHold ? 'Resume' : 'Hold'}
               </button>
               <button
                 type="button"
@@ -485,17 +485,17 @@ export default function CurrentLeadCard({
                 }`}
               >
                 <Disc className="h-3.5 w-3.5" />
-                {isRecording ? 'Recording' : ', 'Record'}
+                {isRecording ? 'Recording' : 'Record'}
               </button>
               <button
                 type="button"
                 onClick={onVmDrop}
                 disabled={vmDropping || !hasVoicemails || !onVmDrop}
-                title={!hasVoicemails ? 'No voicemails saved — add one in Settings → Voicemails' : ', 'Drop voicemail & hang up'}
+                title={!hasVoicemails ? 'No voicemails saved — add one in Settings → Voicemails' : 'Drop voicemail & hang up'}
                 className="flex items-center justify-center gap-1.5 rounded-xl border border-violet-500/25 bg-violet-500/[0.07] py-3 text-xs font-semibold text-violet-300 transition hover:border-violet-500/40 hover:bg-violet-500/[0.12] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Voicemail className="h-3.5 w-3.5" />
-                {vmDropping ? 'Dropping…' : ', 'VM Drop'}
+                {vmDropping ? 'Dropping…' : 'VM Drop'}
               </button>
             </div>
 
@@ -511,7 +511,7 @@ export default function CurrentLeadCard({
                 }`}
               >
                 <FileText className="h-3.5 w-3.5" />
-                {showCallNotes ? 'Hide Call Notes' : ', 'Call Notes'}
+                {showCallNotes ? 'Hide Call Notes' : 'Call Notes'}
               </button>
             )}
           </div>

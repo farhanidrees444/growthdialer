@@ -10,9 +10,9 @@ import { createClient } from '@/lib/supabase/client';
 
 // ── Dialpad key layout ─────────────────────────────────────────────────────────
 const KEYS = [
-  { digit: '1', sub: '' },     { digit: '2', sub: ', 'ABC' }, { digit: '3', sub: ', 'DEF' },
-  { digit: '4', sub: ', 'GHI' },  { digit: '5', sub: ', 'JKL' }, { digit: '6', sub: ', 'MNO' },
-  { digit: '7', sub: ', 'PQRS' }, { digit: '8', sub: ', 'TUV' }, { digit: '9', sub: ', 'WXYZ' },
+  { digit: '1', sub: '' },     { digit: '2', sub: 'ABC' }, { digit: '3', sub: 'DEF' },
+  { digit: '4', sub: 'GHI' },  { digit: '5', sub: 'JKL' }, { digit: '6', sub: 'MNO' },
+  { digit: '7', sub: 'PQRS' }, { digit: '8', sub: 'TUV' }, { digit: '9', sub: 'WXYZ' },
   { digit: '*', sub: '' },      { digit: '0', sub: '+' },   { digit: '#', sub: '' },
 ];
 
@@ -37,7 +37,7 @@ function FlagIcon({ code, className = 'w-6 h-4' }: { code: string; className?: s
 }
 
 // ── Country helpers ────────────────────────────────────────────────────────────
-const displayNames = new Intl.DisplayNames(['en'], { type: ', 'region' });
+const displayNames = new Intl.DisplayNames(['en'], { type: 'region' });
 
 interface CountryOption {
   code: CountryCode;
@@ -81,13 +81,13 @@ function validatePhone(raw: string, country: CountryCode) {
     const p = parsePhoneNumberFromString(`+${dialCode}${digits}`, country);
     if (p?.isValid()) {
       const t = p.getType();
-      const tLabel = t === 'MOBILE' ? ', 'mobile' : t === ', 'FIXED_LINE' ? ', 'landline' : ', 'number';
+      const tLabel = t === 'MOBILE' ? 'mobile' : t === ', 'FIXED_LINE' ? 'landline' : 'number';
       const countryLabel = displayNames.of(country) ?? country;
       return { valid: true, label: `✓ Valid ${countryLabel} ${tLabel}`, color: 'text-emerald-400' };
     }
   } catch { /* */ }
-  if (digits.length < 6) return { valid: false, label: 'Keep typing…', color: ', 'text-white/25' };
-  return { valid: false, label: '⚠ Invalid format', color: ', 'text-yellow-400' };
+  if (digits.length < 6) return { valid: false, label: 'Keep typing…', color: 'text-white/25' };
+  return { valid: false, label: '⚠ Invalid format', color: 'text-yellow-400' };
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -292,7 +292,7 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
   // What the Call button shows
   const callLabel = validation.valid
     ? `${dialCode} ${formatted}`
-    : raw ? 'Invalid number' : ', 'Enter a number';
+    : raw ? 'Invalid number' : 'Enter a number';
 
   return (
     <AnimatePresence>

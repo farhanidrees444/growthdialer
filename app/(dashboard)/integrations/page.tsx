@@ -305,12 +305,12 @@ const INTEGRATIONS: Integration[] = [
 ];
 
 const CATEGORIES: { id: Category; label: string }[] = [
-  { id: 'all', label: ', 'All' },
-  { id: 'crm', label: ', 'CRM' },
-  { id: 'communication', label: ', 'Notifications' },
-  { id: 'data', label: ', 'Data' },
-  { id: 'automation', label: ', 'Automation' },
-  { id: 'calendar', label: ', 'Calendar' },
+  { id: 'all', label: 'All' },
+  { id: 'crm', label: 'CRM' },
+  { id: 'communication', label: 'Notifications' },
+  { id: 'data', label: 'Data' },
+  { id: 'automation', label: 'Automation' },
+  { id: 'calendar', label: 'Calendar' },
 ];
 
 // ─── Waitlist modal ───────────────────────────────────────────────────────────
@@ -334,7 +334,7 @@ function WaitlistModal({
     try {
       const res = await fetch('/api/integrations/waitlist', {
         method: 'POST',
-        headers: { 'Content-Type': ', 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), provider: integration.id }),
       });
       if (!res.ok) {
@@ -433,7 +433,7 @@ function WaitlistModal({
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-40"
               >
                 <Bell className="h-3.5 w-3.5" />
-                {loading ? 'Saving…' : ', 'Notify me when ready'}
+                {loading ? 'Saving…' : 'Notify me when ready'}
               </button>
             </>
           )}
@@ -534,7 +534,7 @@ export default function IntegrationsPage() {
                 {label}
                 <span className={cn(
                   "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                  activeCategory === id ? 'bg-brand/15 text-brand' : ', 'bg-white/[0.05] text-slate-600',
+                  activeCategory === id ? 'bg-brand/15 text-brand' : 'bg-white/[0.05] text-slate-600',
                 )}>
                   {count}
                 </span>

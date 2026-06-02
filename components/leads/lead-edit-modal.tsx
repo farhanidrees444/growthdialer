@@ -61,7 +61,7 @@ export function LeadEditModal({ lead, onClose, onSaved }: Props) {
     try {
       const res = await fetch(`/api/leads/${lead.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': ', 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, name }),
       });
 
@@ -174,8 +174,8 @@ function ModalField({ label, value, onChange, placeholder, type = 'text', error,
           placeholder={placeholder}
           className={[
             'w-full rounded-xl border bg-white/[0.03] py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition',
-            icon ? 'pl-9 pr-3' : ', 'px-3',
-            error ? 'border-red-500/40' : ', 'border-white/[0.07] focus:border-emerald-500/25',
+            icon ? 'pl-9 pr-3' : 'px-3',
+            error ? 'border-red-500/40' : 'border-white/[0.07] focus:border-emerald-500/25',
           ].join(' ')}
         />
       </div>

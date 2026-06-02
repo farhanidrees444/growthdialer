@@ -64,9 +64,9 @@ function fmtTalkTime(s: number): string {
 
 function fmtDateLabel(iso: string, range: RangeKey): string {
   const d = new Date(iso + 'T00:00:00Z');
-  if (range === '7d') return d.toLocaleDateString(', 'en', { weekday: ', 'short', timeZone: ', 'UTC' });
+  if (range === '7d') return d.toLocaleDateString(', 'en', { weekday: 'short', timeZone: 'UTC' });
   if (range === 'today') return iso;
-  return d.toLocaleDateString('en', { month: ', 'short', day: ', 'numeric', timeZone: ', 'UTC' });
+  return d.toLocaleDateString('en', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
 function delta(curr: number, prev: number): { label: string; up: boolean; neutral: boolean } {
@@ -174,7 +174,7 @@ function KpiCard({ title, value, deltaLabel, deltaUp, deltaNeutral, spark, color
         <p className="text-2xl font-bold tabular-nums tracking-tight text-white">{value}</p>
         <div className={cn(
           'mt-2 flex items-center gap-1 text-[11px] font-medium',
-          deltaNeutral ? 'text-white/30' : deltaUp ? ', 'text-emerald-400' : ', 'text-red-400',
+          deltaNeutral ? 'text-white/30' : deltaUp ? 'text-emerald-400' : 'text-red-400',
         )}>
           {deltaNeutral ? <Minus className="h-3 w-3" /> : deltaUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
           <span>{deltaLabel} vs prev period</span>
@@ -228,24 +228,24 @@ function EmptyChart({ message = 'No data for this period' }: { message?: string 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
-  { key: 'today', label: ', 'Today' },
+  { key: 'today', label: 'Today' },
   { key: '7d',   label: '7 Days' },
   { key: '30d',  label: '30 Days' },
   { key: '90d',  label: '90 Days' },
-  { key: 'custom', label: ', 'Custom' },
+  { key: 'custom', label: 'Custom' },
 ];
 
 const KNOWN_DISPS = [
-  { value: '',              label: ', 'All Dispositions' },
-  { value: 'interested',   label: ', 'Interested' },
-  { value: 'callback',     label: ', 'Callback' },
-  { value: 'meeting_booked', label: ', 'Meeting Booked' },
-  { value: 'voicemail',    label: ', 'Voicemail' },
-  { value: 'not_interested', label: ', 'Not Interested' },
-  { value: 'wrong_number', label: ', 'Wrong Number' },
-  { value: 'gatekeeper',   label: ', 'Gatekeeper' },
-  { value: 'dnc',          label: ', 'DNC' },
-  { value: 'missed',       label: ', 'Missed' },
+  { value: '',              label: 'All Dispositions' },
+  { value: 'interested',   label: 'Interested' },
+  { value: 'callback',     label: 'Callback' },
+  { value: 'meeting_booked', label: 'Meeting Booked' },
+  { value: 'voicemail',    label: 'Voicemail' },
+  { value: 'not_interested', label: 'Not Interested' },
+  { value: 'wrong_number', label: 'Wrong Number' },
+  { value: 'gatekeeper',   label: 'Gatekeeper' },
+  { value: 'dnc',          label: 'DNC' },
+  { value: 'missed',       label: 'Missed' },
 ];
 
 export default function AnalyticsPage() {
@@ -282,7 +282,7 @@ export default function AnalyticsPage() {
     let sb: ReturnType<typeof createClient>;
     try { sb = createClient(); } catch { return; }
     const ch = sb.channel('analytics-page')
-      .on('postgres_changes', { event: '*', schema: ', 'public', table: ', 'calls' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calls' }, fetchData)
       .subscribe();
     return () => { sb.removeChannel(ch); };
   }, [fetchData]);
@@ -404,9 +404,9 @@ export default function AnalyticsPage() {
               value: direction,
               onChange: setDir,
               opts: [
-                { value: 'all',      label: ', 'All Calls' },
-                { value: 'outbound', label: ', 'Outbound' },
-                { value: 'inbound',  label: ', 'Inbound' },
+                { value: 'all',      label: 'All Calls' },
+                { value: 'outbound', label: 'Outbound' },
+                { value: 'inbound',  label: 'Inbound' },
               ],
             },
             { value: dispFilter, onChange: setDisp, opts: KNOWN_DISPS },
@@ -633,10 +633,10 @@ export default function AnalyticsPage() {
                         {(
                           [
                             { col: null,          label: 'Number' },
-                            { col: 'total',       label: ', 'Calls' },
-                            { col: 'connected',   label: ', 'Connected' },
-                            { col: 'connectRate', label: ', 'Connect %' },
-                            { col: 'avgDuration', label: ', 'Avg Duration' },
+                            { col: 'total',       label: 'Calls' },
+                            { col: 'connected',   label: 'Connected' },
+                            { col: 'connectRate', label: 'Connect %' },
+                            { col: 'avgDuration', label: 'Avg Duration' },
                           ] as { col: SortCol | null; label: string }[]
                         ).map(({ col, label }) => (
                           <th
@@ -653,7 +653,7 @@ export default function AnalyticsPage() {
                           >
                             <span className="flex items-center gap-1">
                               {label}
-                              {col && <ArrowUpDown className={cn('h-3 w-3', sortCol === col ? ', 'text-[hsl(258,90%,66%)']' : ', 'text-white/20')} />}
+                              {col && <ArrowUpDown className={cn('h-3 w-3', sortCol === col ? 'text-[hsl(258,90%,66%)']' : 'text-white/20')} />}
                             </span>
                           </th>
                         ))}
@@ -778,7 +778,7 @@ export default function AnalyticsPage() {
                       {data!.ai.keywords.map((kw) => {
                         const max = data!.ai.keywords[0].count;
                         const pct = max > 0 ? kw.count / max : 0;
-                        const size = pct > 0.7 ? 'text-sm font-semibold' : pct > 0.4 ? ', 'text-xs font-medium' : ', 'text-[11px]';
+                        const size = pct > 0.7 ? 'text-sm font-semibold' : pct > 0.4 ? 'text-xs font-medium' : 'text-[11px]';
                         const opacity = 0.4 + pct * 0.6;
                         return (
                           <span

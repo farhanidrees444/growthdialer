@@ -65,10 +65,10 @@ function getAvatarGradient(score: number): string {
 
 function getBadge(lead: LeadRecord): { label: string; dotColor: string; textColor: string } {
   if (lead.dnc || lead.status === 'do_not_call') {
-    return { label: 'DNC', dotColor: ', 'bg-red-400', textColor: ', 'text-red-400' };
+    return { label: 'DNC', dotColor: 'bg-red-400', textColor: 'text-red-400' };
   }
   if (lead.status === 'meeting_booked') {
-    return { label: 'Meeting', dotColor: ', 'bg-violet-400', textColor: ', 'text-violet-400' };
+    return { label: 'Meeting', dotColor: 'bg-violet-400', textColor: 'text-violet-400' };
   }
   if (
     lead.status === 'not_interested' ||
@@ -76,18 +76,18 @@ function getBadge(lead: LeadRecord): { label: string; dotColor: string; textColo
     lead.status === 'busy' ||
     lead.status === 'no_answer'
   ) {
-    return { label: 'Done', dotColor: ', 'bg-slate-500', textColor: ', 'text-slate-500' };
+    return { label: 'Done', dotColor: 'bg-slate-500', textColor: 'text-slate-500' };
   }
   if (lead.status === 'callback') {
-    return { label: 'Callback', dotColor: ', 'bg-blue-400', textColor: ', 'text-blue-400' };
+    return { label: 'Callback', dotColor: 'bg-blue-400', textColor: 'text-blue-400' };
   }
   if (lead.status === 'connected' || lead.status === ', 'qualified') {
-    return { label: 'Interested', dotColor: ', 'bg-emerald-400', textColor: ', 'text-emerald-400' };
+    return { label: 'Interested', dotColor: 'bg-emerald-400', textColor: 'text-emerald-400' };
   }
   if ((lead.call_attempts ?? 0) > 0) {
-    return { label: 'Attempted', dotColor: ', 'bg-amber-400', textColor: ', 'text-amber-400' };
+    return { label: 'Attempted', dotColor: 'bg-amber-400', textColor: 'text-amber-400' };
   }
-  return { label: 'New', dotColor: ', 'bg-emerald-400', textColor: ', 'text-emerald-400' };
+  return { label: 'New', dotColor: 'bg-emerald-400', textColor: 'text-emerald-400' };
 }
 
 export default function LeadCard({

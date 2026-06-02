@@ -8,11 +8,11 @@ import { Spotlight } from './Spotlight';
 import { EASE_OUT } from './motion';
 
 const STAGES = [
-  { id: 'dial',    label: ', 'Dial',        icon: Phone,     desc: ', 'You start the call from the AI Dialer or Power Dialer.' },
-  { id: 'connect', label: ', 'Connect',     icon: Radio,     desc: ', 'The prospect picks up. Recording begins automatically.' },
-  { id: 'listen',  label: ', 'AI listens',  icon: Ear,       desc: ', 'Whisper transcribes the conversation as it happens.' },
-  { id: 'analyze', label: ', 'AI analyzes', icon: Sparkles,  desc: ', 'Gemini distills a summary, sentiment and next steps.' },
-  { id: 'log',     label: ', 'Logged',      icon: BarChart3, desc: ', 'Everything lands in Analytics — searchable, forever.' },
+  { id: 'dial',    label: 'Dial',        icon: Phone,     desc: 'You start the call from the AI Dialer or Power Dialer.' },
+  { id: 'connect', label: 'Connect',     icon: Radio,     desc: 'The prospect picks up. Recording begins automatically.' },
+  { id: 'listen',  label: 'AI listens',  icon: Ear,       desc: 'Whisper transcribes the conversation as it happens.' },
+  { id: 'analyze', label: 'AI analyzes', icon: Sparkles,  desc: 'Gemini distills a summary, sentiment and next steps.' },
+  { id: 'log',     label: 'Logged',      icon: BarChart3, desc: 'Everything lands in Analytics — searchable, forever.' },
 ] as const;
 
 export function CallLifecycle() {
@@ -59,8 +59,8 @@ export function CallLifecycle() {
                         <motion.span
                           className="flex h-9 w-9 items-center justify-center rounded-full border"
                           animate={{
-                            borderColor: active ? 'hsl(186, 100%, 42%)'' : done ? ', 'rgba(139,92,246,0.4)' : ', 'rgba(255,255,255,0.08)',
-                            backgroundColor: active ? 'rgba(6,182,212,0.12)' : ', 'rgba(0,0,0,0)',
+                            borderColor: active ? 'hsl(186, 100%, 42%)'' : done ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.08)',
+                            backgroundColor: active ? 'rgba(6,182,212,0.12)' : 'rgba(0,0,0,0)',
                             scale: active ? 1 : 0.94,
                           }}
                           transition={{ duration: 0.5, ease: EASE_OUT }}
@@ -68,7 +68,7 @@ export function CallLifecycle() {
                           {done ? (
                             <Check className="h-4 w-4 text-[hsl(258,90%,66%)']" />
                           ) : (
-                            <Icon className={`h-4 w-4 ${active ? 'text-primary' : ', 'text-muted-foreground/60'}`} />
+                            <Icon className={`h-4 w-4 ${active ? 'text-primary' : 'text-muted-foreground/60'}`} />
                           )}
                         </motion.span>
                         {i < STAGES.length - 1 && (

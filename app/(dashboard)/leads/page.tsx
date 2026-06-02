@@ -555,7 +555,7 @@ export default function LeadsPage() {
       .channel('leads-rt')
       .on(
         'postgres_changes',
-        { event: '*', schema: ', 'public', table: ', 'leads' },
+        { event: '*', schema: 'public', table: 'leads' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
             setLeads((prev) => [payload.new as FullLead, ...prev]);

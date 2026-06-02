@@ -68,7 +68,7 @@ function fmtPhone(phone: string): string {
 }
 
 function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: ', 'short', day: ', 'numeric', year: ', 'numeric' });
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function daysUntil(iso: string | null | undefined): number | null {
@@ -79,10 +79,10 @@ function daysUntil(iso: string | null | undefined): number | null {
 // ─── Spam config ──────────────────────────────────────────────────────────────
 
 const SPAM_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  clean:    { label: 'Clean',    color: ', 'text-emerald-400', bg: ', 'bg-emerald-500/10', border: ', 'border-emerald-500/15' },
-  low_risk: { label: 'Low Risk', color: ', 'text-amber-400',   bg: ', 'bg-amber-500/10',   border: ', 'border-amber-500/15' },
-  flagged:  { label: 'Flagged',  color: ', 'text-orange-400',  bg: ', 'bg-orange-500/10',  border: ', 'border-orange-500/15' },
-  blocked:  { label: 'Blocked',  color: ', 'text-red-400',     bg: ', 'bg-red-500/10',     border: ', 'border-red-500/15' },
+  clean:    { label: 'Clean',    color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/15' },
+  low_risk: { label: 'Low Risk', color: 'text-amber-400',   bg: 'bg-amber-500/10',   border: 'border-amber-500/15' },
+  flagged:  { label: 'Flagged',  color: 'text-orange-400',  bg: 'bg-orange-500/10',  border: 'border-orange-500/15' },
+  blocked:  { label: 'Blocked',  color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/15' },
 };
 
 // ─── Number Card ──────────────────────────────────────────────────────────────
@@ -114,8 +114,8 @@ function NumberCard({ num, isOnlyNumber, onSetDefault, onRelease, onSpamCheck, o
   const isExpiringSoon = renewDays !== null && renewDays <= 7 && renewDays >= 0;
   const hasBilling = !!num.stripe_subscription_id;
 
-  const healthColor = health >= 80 ? 'text-emerald-400' : health >= 50 ? ', 'text-amber-400' : ', 'text-red-400';
-  const healthBar   = health >= 80 ? 'bg-emerald-500' : health >= 50 ? ', 'bg-amber-500' : ', 'bg-red-500';
+  const healthColor = health >= 80 ? 'text-emerald-400' : health >= 50 ? 'text-amber-400' : 'text-red-400';
+  const healthBar   = health >= 80 ? 'bg-emerald-500' : health >= 50 ? 'bg-amber-500' : 'bg-red-500';
 
   async function handleSetDefault() {
     setSettingDefault(true);
@@ -223,7 +223,7 @@ function NumberCard({ num, isOnlyNumber, onSetDefault, onRelease, onSpamCheck, o
 
         {/* ── Meta ── */}
         <p className="mt-2.5 text-[11px] text-white/40">
-          {NUMBER_TYPE_LABELS[num.number_type ?? ''] ?? num.number_type ?? ', 'Local'}
+          {NUMBER_TYPE_LABELS[num.number_type ?? ''] ?? num.number_type ?? 'Local'}
           {' · '}{num.country}
           {' · '}<span className="text-white/60 font-medium">${retailPrice.toFixed(2)}/mo</span>
           {num.billing_status === 'active'
@@ -234,13 +234,13 @@ function NumberCard({ num, isOnlyNumber, onSetDefault, onRelease, onSpamCheck, o
         {/* ── Stats grid ── */}
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
-            { label: 'Calls 30d',    value: stats.total_calls.toLocaleString(), icon: Phone,     color: ', 'text-white/80' },
-            { label: 'Connect Rate', value: `${stats.connect_rate}%`,           icon: TrendingUp, color: stats.connect_rate >= 20 ? ', 'text-emerald-400' : ', 'text-white/80' },
+            { label: 'Calls 30d',    value: stats.total_calls.toLocaleString(), icon: Phone,     color: 'text-white/80' },
+            { label: 'Connect Rate', value: `${stats.connect_rate}%`,           icon: TrendingUp, color: stats.connect_rate >= 20 ? 'text-emerald-400' : 'text-white/80' },
             { label: 'Health',       value: `${health}%`,                       icon: Zap,        color: healthColor },
             { label: 'Spam Status',  value: spam.label,                         icon: Shield,     color: spam.color, bg: spam.bg, border: spam.border },
           ].map((stat) => (
             <div key={stat.label}
-              className={`rounded-xl border px-3 py-2.5 ${stat.bg ?? 'bg-white/[0.02]'} ${stat.border ?? ', 'border-white/[0.05]'}`}>
+              className={`rounded-xl border px-3 py-2.5 ${stat.bg ?? 'bg-white/[0.02]'} ${stat.border ?? 'border-white/[0.05]'}`}>
               <p className="text-[9px] uppercase tracking-wider text-white/30 mb-0.5">{stat.label}</p>
               <p className={`text-sm font-semibold tabular-nums ${stat.color}`}>{stat.value}</p>
             </div>
@@ -301,7 +301,7 @@ function NumberCard({ num, isOnlyNumber, onSetDefault, onRelease, onSpamCheck, o
                 <div>
                   <p className="text-xs font-semibold text-red-400">Release this number?</p>
                   <p className="text-[11px] text-white/40 mt-0.5">
-                    {isOnlyNumber ? "You'll have no numbers to call from." : ', 'This cannot be undone.'}
+                    {isOnlyNumber ? "You'll have no numbers to call from." : 'This cannot be undone.'}
                   </p>
                 </div>
                 <div className="flex gap-2 shrink-0">
@@ -351,7 +351,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
 
   async function handleSetDefault(id: string) {
     await fetch(`/api/numbers/${id}`, {
-      method: 'PATCH', headers: { ', 'Content-Type': ', 'application/json' },
+      method: 'PATCH', headers: { ', 'Content-Type': 'application/json' },
       body: JSON.stringify({ isDefault: true }),
     });
     await load();
@@ -373,7 +373,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
 
   async function handleLabelSave(id: string, label: string) {
     const res = await fetch(`/api/numbers/${id}/label`, {
-      method: 'PATCH', headers: { ', 'Content-Type': ', 'application/json' },
+      method: 'PATCH', headers: { ', 'Content-Type': 'application/json' },
       body: JSON.stringify({ label }),
     });
     const data = await res.json() as { error?: string };
@@ -439,7 +439,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
             <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-amber-300">
-                {expiringCount} number{expiringCount > 1 ? 's' : ''} expire{expiringCount === 1 ? ', 's' : ''} soon
+                {expiringCount} number{expiringCount > 1 ? 's' : ''} expire{expiringCount === 1 ? 's' : ''} soon
               </p>
               <p className="text-xs text-amber-400/60 mt-0.5">
                 Numbers without an active subscription are released after 30 days.
@@ -455,7 +455,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
         <span className="text-white/10 hidden sm:inline">·</span>
         <span>Monthly: <span className="font-bold text-white">${totalCost.toFixed(2)}</span></span>
         <span className="text-white/10 hidden sm:inline">·</span>
-        <span>Avg health: <span className={`font-bold ${avgHealth >= 80 ? 'text-emerald-400' : avgHealth >= 50 ? ', 'text-amber-400' : ', 'text-red-400'}`}>{avgHealth}%</span></span>
+        <span>Avg health: <span className={`font-bold ${avgHealth >= 80 ? 'text-emerald-400' : avgHealth >= 50 ? 'text-amber-400' : 'text-red-400'}`}>{avgHealth}%</span></span>
       </div>
 
       {/* Search */}
@@ -571,7 +571,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
     try {
       const res = await fetch('/api/numbers/search', {
         method: 'POST',
-        headers: { 'Content-Type': ', 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           country: selectedCountry.code,
           areaCode: areaCode || undefined,
@@ -593,7 +593,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
     try {
       const res = await fetch('/api/numbers/purchase', {
         method: 'POST',
-        headers: { 'Content-Type': ', 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phoneNumber: num.phoneNumber,
           monthlyCost: num.monthlyCost,
@@ -833,8 +833,8 @@ export default function NumbersPage() {
         <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex gap-1 border-b border-white/[0.06]">
             {([
-              { key: 'my', label: ', 'My Numbers' },
-              { key: 'buy', label: ', 'Buy New Number' },
+              { key: 'my', label: 'My Numbers' },
+              { key: 'buy', label: 'Buy New Number' },
             ] as const).map(({ key, label }) => (
               <button key={key} type="button" onClick={() => setTab(key)}
                 className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${

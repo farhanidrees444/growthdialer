@@ -61,7 +61,7 @@ export default function WorkspaceSetupPage() {
     try {
       const res = await fetch('/api/workspaces', {
         method: 'POST',
-        headers: { 'Content-Type': ', 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), plan }),
       });
       const data = await res.json() as { workspace?: Workspace; error?: string };
@@ -135,7 +135,7 @@ export default function WorkspaceSetupPage() {
                 whileTap={{ scale: 0.99 }}
                 onClick={() => setPlan(opt.id)}
                 className={`relative rounded-2xl border p-4 text-left transition-all ${
-                  plan === opt.id ? opt.border + ' bg-gradient-to-br ' + opt.gradient : ', 'border-white/[0.07] bg-white/[0.02] hover:border-white/[0.12]'
+                  plan === opt.id ? opt.border + ' bg-gradient-to-br ' + opt.gradient : 'border-white/[0.07] bg-white/[0.02] hover:border-white/[0.12]'
                 }`}
               >
                 {opt.badge && (
@@ -173,7 +173,7 @@ export default function WorkspaceSetupPage() {
           style={{ background: 'linear-gradient(135deg, #059669, hsl(262,80%,50%))'' }}
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {busy ? 'Creating…' : ', 'Create Workspace'}
+          {busy ? 'Creating…' : 'Create Workspace'}
         </motion.button>
 
         <p className="mt-4 text-center text-xs text-slate-600">

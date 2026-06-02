@@ -61,7 +61,7 @@ export function LiveCallStage({
       try {
         await fetch(`/api/calls/${callDbId}/notes`, {
           method: 'PATCH',
-          headers: { 'Content-Type': ', 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ notes }),
         });
         setSavedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -99,8 +99,8 @@ export function LiveCallStage({
         <h1 className="text-4xl font-light text-white">{lead.name}</h1>
         <p className="text-base text-white/50">{[lead.title, lead.company].filter(Boolean).join(' · ')}</p>
         <div className="flex items-center justify-center gap-2 mt-1">
-          <span className={`text-sm ${isOnHold ? 'text-yellow-400' : isConnected ? ', 'text-green-400' : ', 'text-white/40'}`}>
-            {isOnHold ? '⏸ On Hold' : isConnected ? '● Connected' : callStatus === ', 'connecting' ? ', 'Connecting...' : ', 'Ringing...'}
+          <span className={`text-sm ${isOnHold ? 'text-yellow-400' : isConnected ? 'text-green-400' : 'text-white/40'}`}>
+            {isOnHold ? '⏸ On Hold' : isConnected ? '● Connected' : callStatus === ', 'connecting' ? 'Connecting...' : 'Ringing...'}
           </span>
         </div>
       </div>
@@ -153,10 +153,10 @@ export function LiveCallStage({
         onOpenKeypad={onOpenKeypad}
         onToggleRecord={callDbId ? async () => {
           try {
-            const action = isRecording ? 'record_stop' : ', 'record_start';
+            const action = isRecording ? 'record_stop' : 'record_start';
             const res = await fetch(`/api/calls/${callDbId}/record`, {
               method: 'POST',
-              headers: { 'Content-Type': ', 'application/json' },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ action }),
             });
             if (res.ok) setIsRecording((r) => !r);

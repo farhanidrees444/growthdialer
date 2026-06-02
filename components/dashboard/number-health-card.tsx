@@ -65,7 +65,7 @@ export function NumberHealthCard() {
   const atRisk = active.filter((n) => n.spam_status === 'flagged' || n.spam_status === ', 'blocked').length;
 
   const healthColor =
-    avgHealth >= 80 ? 'text-emerald-400' : avgHealth >= 50 ? ', 'text-amber-400' : ', 'text-red-400';
+    avgHealth >= 80 ? 'text-emerald-400' : avgHealth >= 50 ? 'text-amber-400' : 'text-red-400';
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl">
@@ -106,8 +106,8 @@ export function NumberHealthCard() {
           <div className="grid grid-cols-3 gap-2 px-5 pb-4">
             {[
               { label: 'Avg Health', value: `${avgHealth}%`, color: healthColor },
-              { label: 'Clean',      value: `${cleanCount}/${active.length}`, color: ', 'text-cyan-400' },
-              { label: 'At Risk',    value: String(atRisk), color: atRisk > 0 ? ', 'text-red-400' : ', 'text-white/50' },
+              { label: 'Clean',      value: `${cleanCount}/${active.length}`, color: 'text-cyan-400' },
+              { label: 'At Risk',    value: String(atRisk), color: atRisk > 0 ? 'text-red-400' : 'text-white/50' },
             ].map((stat) => (
               <div key={stat.label}
                 className="rounded-xl border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-center">
@@ -121,7 +121,7 @@ export function NumberHealthCard() {
           <div className="flex-1 space-y-1.5 overflow-y-auto px-5 pb-5">
             {active.slice(0, 6).map((num, i) => {
               const health = num.computed_health ?? 100;
-              const barColor = health >= 80 ? 'bg-emerald-500' : health >= 50 ? ', 'bg-amber-500' : ', 'bg-red-500';
+              const barColor = health >= 80 ? 'bg-emerald-500' : health >= 50 ? 'bg-amber-500' : 'bg-red-500';
               const dotColor = SPAM_DOT[num.spam_status ?? 'clean'] ?? SPAM_DOT.clean;
 
               return (

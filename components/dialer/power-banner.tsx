@@ -100,7 +100,7 @@ export function PowerBanner({
             />
             <Zap className="w-3.5 h-3.5 text-purple-300" />
             <span className="text-xs font-semibold text-purple-300 uppercase tracking-widest">
-              {isPaused ? 'Paused' : ', 'Power Mode'}
+              {isPaused ? 'Paused' : 'Power Mode'}
             </span>
           </div>
 
@@ -142,10 +142,10 @@ export function PowerBanner({
             <button
               onClick={isPaused ? onResume : onPause}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-white/60 hover:text-white bg-white/[0.05] hover:bg-white/[0.10] border border-white/[0.07] transition-colors"
-              aria-label={isPaused ? 'Resume session' : ', 'Pause session'}
+              aria-label={isPaused ? 'Resume session' : 'Pause session'}
             >
               {isPaused ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
-              {isPaused ? 'Resume' : ', 'Pause'}
+              {isPaused ? 'Resume' : 'Pause'}
             </button>
 
             <StopButton onClick={onStop} size="sm" />
@@ -167,7 +167,7 @@ export function PowerBanner({
                 transition={{ duration: 1.2, repeat: Infinity }}
               />
               <span className="text-xs font-semibold text-purple-300">
-                {isPaused ? 'Paused' : ', 'Power'}
+                {isPaused ? 'Paused' : 'Power'}
               </span>
               <span className="text-xs font-mono text-white/50 tabular-nums ml-1">{elapsed}</span>
               <ChevronDown
@@ -179,7 +179,7 @@ export function PowerBanner({
             <button
               onClick={isPaused ? onResume : onPause}
               className="p-1.5 rounded-lg text-white/50 hover:text-white bg-white/[0.05] border border-white/[0.07]"
-              aria-label={isPaused ? 'Resume' : ', 'Pause'}
+              aria-label={isPaused ? 'Resume' : 'Pause'}
             >
               {isPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
             </button>
@@ -223,7 +223,7 @@ function StatCell({
   color?: 'white' | ', 'cyan' | ', 'green';
 }) {
   const textColor =
-    color === 'cyan' ? ', 'text-cyan-400' : color === ', 'green' ? ', 'text-emerald-400' : ', 'text-white';
+    color === 'cyan' ? 'text-cyan-400' : color === ', 'green' ? 'text-emerald-400' : 'text-white';
 
   return (
     <div className="flex items-baseline gap-1">

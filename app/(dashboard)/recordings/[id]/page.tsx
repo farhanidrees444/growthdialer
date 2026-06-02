@@ -62,7 +62,7 @@ function formatDuration(seconds: number | null) {
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
-    month: 'long', day: ', 'numeric', year: ', 'numeric',
+    month: 'long', day: 'numeric', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
 }
@@ -174,7 +174,7 @@ function AudioPlayer({
           const height = 20 + Math.sin(i * 0.6) * 12 + Math.sin(i * 1.3) * 8;
           return (
             <div key={i} style={{ height: `${height}px` }}
-              className={`flex-1 rounded-sm transition-colors ${active ? 'bg-emerald-500' : ', 'bg-white/[0.08]'}`}
+              className={`flex-1 rounded-sm transition-colors ${active ? 'bg-emerald-500' : 'bg-white/[0.08]'}`}
             />
           );
         })}
@@ -250,7 +250,7 @@ function InsightsTab({ analytics }: { analytics: CallAnalytics }) {
         </div>
         <div className="h-2 w-full rounded-full bg-white/[0.05] overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${score !== null && score > 0 ? 'bg-emerald-500' : score !== null && score < 0 ? ', 'bg-red-500' : ', 'bg-amber-500'}`}
+            className={`h-full rounded-full transition-all ${score !== null && score > 0 ? 'bg-emerald-500' : score !== null && score < 0 ? 'bg-red-500' : 'bg-amber-500'}`}
             style={{ width: `${Math.round(absScore * 100)}%` }}
           />
         </div>
@@ -393,7 +393,7 @@ function TranscriptTab({
                 {fmtTimestamp(seg.start)}
               </button>
             )}
-            <p className={`text-sm leading-relaxed ${query && seg.text.toLowerCase().includes(query.toLowerCase()) ? 'text-white' : ', 'text-slate-400'}`}>
+            <p className={`text-sm leading-relaxed ${query && seg.text.toLowerCase().includes(query.toLowerCase()) ? 'text-white' : 'text-slate-400'}`}>
               {highlightText(seg.text, query)}
             </p>
           </div>
@@ -555,9 +555,9 @@ export default function RecordingDetailPage() {
   const lead = Array.isArray(call.leads) ? call.leads[0] : call.leads;
 
   const TABS: { key: Tab; label: string; count?: number }[] = [
-    { key: 'insights', label: ', 'AI Insights' },
-    { key: 'transcript', label: ', 'Transcript' },
-    { key: 'memory', label: ', 'Memory', count: memories.length },
+    { key: 'insights', label: 'AI Insights' },
+    { key: 'transcript', label: 'Transcript' },
+    { key: 'memory', label: 'Memory', count: memories.length },
   ];
 
   return (
@@ -607,7 +607,7 @@ export default function RecordingDetailPage() {
           {TABS.map(({ key, label, count }) => (
             <button key={key} type="button" onClick={() => setTab(key)}
               className={`px-4 py-2.5 text-sm font-medium transition border-b-2 -mb-px flex items-center gap-1.5 ${
-                tab === key ? 'border-emerald-500 text-emerald-400' : ', 'border-transparent text-slate-500 hover:text-slate-300'
+                tab === key ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-300'
               }`}
             >
               {label}

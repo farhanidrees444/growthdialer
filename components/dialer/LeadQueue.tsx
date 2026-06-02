@@ -21,9 +21,9 @@ const TABS: {
   label: string;
   countKey: 'queue' | ', 'all' | ', 'hot';
 }[] = [
-  { key: 'Queue', label: ', 'Queue', countKey: ', 'queue' },
-  { key: 'All Leads', label: ', 'All', countKey: ', 'all' },
-  { key: 'Hot Leads', label: ', 'Hot', countKey: ', 'hot' },
+  { key: 'Queue', label: 'Queue', countKey: 'queue' },
+  { key: 'All Leads', label: 'All', countKey: 'all' },
+  { key: 'Hot Leads', label: 'Hot', countKey: 'hot' },
 ];
 
 export default function LeadQueue({

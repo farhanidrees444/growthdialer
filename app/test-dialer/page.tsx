@@ -54,7 +54,7 @@ export default function TestDialerPage() {
       addLog('Fetching access token...');
       const response = await fetch('/api/twilio/token', {
         method: 'POST',
-        headers: { 'Content-Type': ', 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identity }),
       });
 
@@ -126,7 +126,7 @@ export default function TestDialerPage() {
         try {
           const refreshResponse = await fetch('/api/twilio/token', {
             method: 'POST',
-            headers: { 'Content-Type': ', 'application/json' },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ identity }),
           });
 
@@ -216,7 +216,7 @@ export default function TestDialerPage() {
       addLog(`Testing server call to ${phoneNumber}...`);
       const response = await fetch('/api/twilio/call', {
         method: 'POST',
-        headers: { 'Content-Type': ', 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: phoneNumber,
           leadId: 'test-lead-server',
@@ -309,10 +309,10 @@ export default function TestDialerPage() {
             {/* Device Status */}
             <div className="flex items-center gap-4">
               <Badge variant={device ? "default" : "secondary"}>
-                Device: {device ? 'Ready' : ', 'Not Connected'}
+                Device: {device ? 'Ready' : 'Not Connected'}
               </Badge>
               <Badge variant={token ? "default" : "secondary"}>
-                Token: {token ? 'Active' : ', 'None'}
+                Token: {token ? 'Active' : 'None'}
               </Badge>
             </div>
 
@@ -335,10 +335,10 @@ export default function TestDialerPage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Badge variant={
-                    callState.status === 'idle' ? ', 'secondary' :
-                    callState.status === 'connecting' ? ', 'default' :
-                    callState.status === 'ringing' ? ', 'destructive' :
-                    callState.status === 'connected' ? ', 'default' : ', 'secondary'
+                    callState.status === 'idle' ? 'secondary' :
+                    callState.status === 'connecting' ? 'default' :
+                    callState.status === 'ringing' ? 'destructive' :
+                    callState.status === 'connected' ? 'default' : 'secondary'
                   }>
                     Status: {callState.status}
                   </Badge>
@@ -383,7 +383,7 @@ export default function TestDialerPage() {
                     variant={callState.isMuted ? "default" : "outline"}
                   >
                     {callState.isMuted ? <MicOff className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />}
-                    {callState.isMuted ? 'Unmute' : ', 'Mute'}
+                    {callState.isMuted ? 'Unmute' : 'Mute'}
                   </Button>
 
                   <Button

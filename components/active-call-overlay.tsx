@@ -151,7 +151,7 @@ function LiveWaveform({ active }: { active: boolean }) {
             transform: 'scaleY(0.07)',
             transformOrigin: 'bottom',
             willChange: 'transform',
-            transition: active ? 'none' : ', 'transform 0.4s ease',
+            transition: active ? 'none' : 'transform 0.4s ease',
           }}
         />
       ))}
@@ -302,7 +302,7 @@ function MinimizedPill({
       <div className="min-w-0 flex-1">
         <p className="truncate text-[11px] font-semibold text-white" style={{ maxWidth: 92 }}>{name}</p>
         <p className="text-[10px] text-slate-500 tabular-nums">
-          {callStatus === 'connecting' ? ', 'Dialing…' : callStatus === ', 'ringing' ? ', 'Ringing…' : fmtTime(elapsed)}
+          {callStatus === 'connecting' ? 'Dialing…' : callStatus === ', 'ringing' ? 'Ringing…' : fmtTime(elapsed)}
         </p>
       </div>
       <button type="button" onClick={onExpand} aria-label="Expand"
@@ -343,7 +343,7 @@ function MobileMinimizedBar({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-white">{name}</p>
         <p className="text-[11px] text-slate-500 tabular-nums">
-          {callStatus === 'connecting' ? ', 'Dialing…' : callStatus === ', 'ringing' ? ', 'Ringing…' : fmtTime(elapsed)}
+          {callStatus === 'connecting' ? 'Dialing…' : callStatus === ', 'ringing' ? 'Ringing…' : fmtTime(elapsed)}
         </p>
       </div>
       <button type="button" onClick={onExpand} aria-label="Expand"
@@ -497,7 +497,7 @@ export default function ActiveCallOverlay() {
       if (!session?.access_token) return;
       await fetch(`/api/calls/${dbCallId}/notes`, {
         method: 'PATCH',
-        headers: { 'Content-Type': ', 'application/json', Authorization: `Bearer ${session.access_token}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({ notes: v }),
       });
     }, 800);
@@ -510,7 +510,7 @@ export default function ActiveCallOverlay() {
     try {
       await fetch('/api/calls/drop-voicemail', {
         method: 'POST',
-        headers: { 'Content-Type': ', 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ call_control_id: telnyxCallId }),
       });
       setVmDropped(true);
@@ -525,7 +525,7 @@ export default function ActiveCallOverlay() {
     setCoachRequested(true);
     await fetch('/api/coaching/request', {
       method: 'POST',
-      headers: { 'Content-Type': ', 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ call_id: dbCallId }),
     }).catch(() => {});
   }, [coachRequested, dbCallId]);
@@ -538,7 +538,7 @@ export default function ActiveCallOverlay() {
       const target = e.target as HTMLElement;
       if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
       switch (e.key) {
-        case 'Escape': e.preventDefault(); setMode((m) => m === ', 'full' ? ', 'minimized' : ', 'full'); break;
+        case 'Escape': e.preventDefault(); setMode((m) => m === ', 'full' ? 'minimized' : 'full'); break;
         case 'm': case ', 'M': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); toggleMute(); } break;
         case 'h': case ', 'H': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); toggleHold(); } break;
         case 'n': case ', 'N':
@@ -589,16 +589,16 @@ export default function ActiveCallOverlay() {
   const isCallActive = callStatus === 'active' || callStatus === ', 'held';
 
   const statusLabel =
-    callStatus === 'connecting' ? ', 'Dialing…'
-    : callStatus === 'ringing'  ? ', 'Ringing…'
-    : callStatus === 'held'     ? ', 'On Hold'
+    callStatus === 'connecting' ? 'Dialing…'
+    : callStatus === 'ringing'  ? 'Ringing…'
+    : callStatus === 'held'     ? 'On Hold'
     : displayName;
 
   // ── Control buttons config ─────────────────────────────────────────────────
   const controls = [
     {
       icon: isMuted ? MicOff : Mic,
-      label: isMuted ? 'Unmute' : ', 'Mute',
+      label: isMuted ? 'Unmute' : 'Mute',
       active: isMuted,
       activeClass: 'border-red-500/30 bg-red-500/15 text-red-400',
       onClick: toggleMute,
@@ -607,7 +607,7 @@ export default function ActiveCallOverlay() {
     },
     {
       icon: isOnHold ? Play : Pause,
-      label: isOnHold ? 'Resume' : ', 'Hold',
+      label: isOnHold ? 'Resume' : 'Hold',
       active: isOnHold,
       activeClass: 'border-amber-500/30 bg-amber-500/15 text-amber-400',
       onClick: toggleHold,
@@ -634,7 +634,7 @@ export default function ActiveCallOverlay() {
     },
     {
       icon: Voicemail,
-      label: vmDropped ? 'Dropped!' : ', 'VM Drop',
+      label: vmDropped ? 'Dropped!' : 'VM Drop',
       active: vmDropped,
       activeClass: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400',
       onClick: handleVmDrop,
@@ -643,7 +643,7 @@ export default function ActiveCallOverlay() {
     },
     {
       icon: Headset,
-      label: coachRequested ? 'Requested' : ', 'Coach',
+      label: coachRequested ? 'Requested' : 'Coach',
       active: coachRequested,
       activeClass: 'border-violet-500/30 bg-violet-500/15 text-violet-400',
       onClick: handleRequestCoach,
@@ -702,7 +702,7 @@ export default function ActiveCallOverlay() {
           className={[
             'z-50 w-full max-w-[480px] rounded-3xl border border-white/[0.12]',
             'bg-[oklch(0.085_0.02_282)]/98 shadow-2xl shadow-black/70 backdrop-blur-2xl overflow-hidden',
-            isMobile ? 'fixed bottom-4 left-4 right-4 mx-auto' : ', 'cursor-default select-none',
+            isMobile ? 'fixed bottom-4 left-4 right-4 mx-auto' : 'cursor-default select-none',
           ].join(' ')}
           aria-label="Active call overlay"
           aria-live="polite"
@@ -716,13 +716,13 @@ export default function ActiveCallOverlay() {
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
                   )}
                   <span className={`relative inline-flex h-2 w-2 rounded-full ${
-                    callStatus === 'active' ? ', 'bg-emerald-500'
-                    : callStatus === 'held' ? ', 'bg-amber-500'
+                    callStatus === 'active' ? 'bg-emerald-500'
+                    : callStatus === 'held' ? 'bg-amber-500'
                     : 'bg-slate-500'
                   }`} />
                 </div>
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                  {callStatus === 'active' ? ', 'Live' : callStatus === ', 'held' ? ', 'Held' : ', 'Connecting'}
+                  {callStatus === 'active' ? 'Live' : callStatus === ', 'held' ? 'Held' : 'Connecting'}
                 </span>
               </div>
               {isCallActive && <QualityDot level={quality} />}
@@ -765,7 +765,7 @@ export default function ActiveCallOverlay() {
                 />
               )}
               <div className={`relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 text-lg font-bold text-white shadow-lg ${
-                callStatus === 'active' ? ', 'shadow-emerald-900/40' : ''
+                callStatus === 'active' ? 'shadow-emerald-900/40' : ''
               }`}>
                 {getInitials(displayName)}
                 {callStatus === 'active' && !isOnHold && (
@@ -787,7 +787,7 @@ export default function ActiveCallOverlay() {
               <p className="mt-0.5 text-[11px] text-slate-600 font-mono">{displayPhone}</p>
             </div>
 
-            <div className={`shrink-0 text-xl font-mono font-bold tabular-nums ${callStatus === 'held' ? ', 'text-amber-400' : ', 'text-white'}`}>
+            <div className={`shrink-0 text-xl font-mono font-bold tabular-nums ${callStatus === 'held' ? 'text-amber-400' : 'text-white'}`}>
               {isCallActive ? fmtTime(elapsed) : (
                 <motion.span
                   animate={{ opacity: [1, 0.3, 1] }}
@@ -858,7 +858,7 @@ export default function ActiveCallOverlay() {
                     aria-label="Call notes"
                   />
                   <p className="mt-1 text-[10px] text-slate-700">
-                    {dbCallId ? 'Auto-saves to call record' : ', 'Saving locally…'}
+                    {dbCallId ? 'Auto-saves to call record' : 'Saving locally…'}
                   </p>
                 </motion.div>
               )}

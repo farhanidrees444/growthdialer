@@ -351,7 +351,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
               )}
 
               {/* Article Content */}
-              <div className={`${post.toc ? 'lg:col-span-3' : ', 'lg:col-span-4'} order-1 lg:order-2`}>
+              <div className={`${post.toc ? 'lg:col-span-3' : 'lg:col-span-4'} order-1 lg:order-2`}>
                 <div
                   className="prose prose-lg prose-invert max-w-none"
                   dangerouslySetInnerHTML={{

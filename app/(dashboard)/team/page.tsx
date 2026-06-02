@@ -24,11 +24,11 @@ import { createClient } from "@/lib/supabase/client";
 // ── Role selector data ───────────────────────────────────────────────────────
 
 const ROLES_LIST: { value: Role; label: string; description: string }[] = [
-  { value: 'owner',   label: ', 'Owner',   description: ', 'Full access. Billing, delete workspace.' },
-  { value: 'admin',   label: ', 'Admin',   description: ', 'Manage members, settings, and all data.' },
-  { value: 'manager', label: ', 'Manager', description: ', 'Coach calls, assign leads, view team analytics.' },
-  { value: 'agent',   label: ', 'Agent',   description: ', 'Make calls, manage own leads & recordings.' },
-  { value: 'viewer',  label: ', 'Viewer',  description: ', 'Read-only access to dashboards and reports.' },
+  { value: 'owner',   label: 'Owner',   description: 'Full access. Billing, delete workspace.' },
+  { value: 'admin',   label: 'Admin',   description: 'Manage members, settings, and all data.' },
+  { value: 'manager', label: 'Manager', description: 'Coach calls, assign leads, view team analytics.' },
+  { value: 'agent',   label: 'Agent',   description: 'Make calls, manage own leads & recordings.' },
+  { value: 'viewer',  label: 'Viewer',  description: 'Read-only access to dashboards and reports.' },
 ];
 
 interface PendingInvite {
@@ -170,7 +170,7 @@ function InviteModal({
           style={{ background: 'linear-gradient(135deg, #059669, hsl(262,80%,50%))'' }}
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-          {busy ? 'Sending invitation…' : ', 'Send invitation'}
+          {busy ? 'Sending invitation…' : 'Send invitation'}
         </Button>
       </motion.div>
     </div>
@@ -340,7 +340,7 @@ export default function TeamPage() {
                   <h2 className="text-lg font-bold text-white truncate">{currentWorkspace.name}</h2>
                   <div className="flex items-center gap-3 mt-0.5">
                     <span className="text-xs text-slate-400">
-                      {currentWorkspace.plan === 'enterprise' ? ', 'Enterprise' : `${currentWorkspace.plan?.charAt(0).toUpperCase()}${currentWorkspace.plan?.slice(1)}`} plan
+                      {currentWorkspace.plan === 'enterprise' ? 'Enterprise' : `${currentWorkspace.plan?.charAt(0).toUpperCase()}${currentWorkspace.plan?.slice(1)}`} plan
                     </span>
                     <span className="text-xs text-slate-600">·</span>
                     <span className="text-xs text-slate-400">
@@ -408,7 +408,7 @@ export default function TeamPage() {
             </div>
             <h3 className="text-base font-semibold text-white">No team members found</h3>
             <p className="mt-1 text-sm text-slate-400">
-              {searchQuery ? 'Try a different search term.' : ', 'Invite your first team member to get started.'}
+              {searchQuery ? 'Try a different search term.' : 'Invite your first team member to get started.'}
             </p>
           </div>
         )}

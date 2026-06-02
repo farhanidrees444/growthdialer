@@ -41,7 +41,7 @@ export default function CountryCard({ country, selected, onClick }: CountryCardP
         <CountryFlag code={country.code} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className={`truncate text-sm font-semibold ${selected ? 'text-white' : ', 'text-slate-300'}`}>
+        <p className={`truncate text-sm font-semibold ${selected ? 'text-white' : 'text-slate-300'}`}>
           {country.name}
         </p>
         <div className="flex items-center gap-1.5 mt-0.5">

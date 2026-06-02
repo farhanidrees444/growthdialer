@@ -56,7 +56,7 @@ function getInitials(name: string) {
 function formatDate(iso: string | null) {
   if (!iso) return '—';
   const d = new Date(iso);
-  return d.toLocaleDateString('en-US', { month: ', 'short', day: ', 'numeric', year: ', 'numeric' });
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function formatRelative(iso: string | null) {
@@ -73,15 +73,15 @@ function formatRelative(iso: string | null) {
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  new:            { bg: 'bg-slate-500/15',   text: ', 'text-slate-300' },
-  queued:         { bg: 'bg-blue-500/15',    text: ', 'text-blue-300' },
-  contacted:      { bg: 'bg-amber-500/15',   text: ', 'text-amber-300' },
-  connected:      { bg: 'bg-emerald-500/15', text: ', 'text-emerald-300' },
-  callback:       { bg: 'bg-amber-500/15',   text: ', 'text-amber-300' },
-  meeting_booked: { bg: 'bg-violet-500/15',  text: ', 'text-violet-300' },
-  not_interested: { bg: 'bg-red-500/15',     text: ', 'text-red-400' },
-  do_not_call:    { bg: 'bg-rose-900/40',    text: ', 'text-rose-400' },
-  wrong_number:   { bg: 'bg-red-500/15',     text: ', 'text-red-400' },
+  new:            { bg: 'bg-slate-500/15',   text: 'text-slate-300' },
+  queued:         { bg: 'bg-blue-500/15',    text: 'text-blue-300' },
+  contacted:      { bg: 'bg-amber-500/15',   text: 'text-amber-300' },
+  connected:      { bg: 'bg-emerald-500/15', text: 'text-emerald-300' },
+  callback:       { bg: 'bg-amber-500/15',   text: 'text-amber-300' },
+  meeting_booked: { bg: 'bg-violet-500/15',  text: 'text-violet-300' },
+  not_interested: { bg: 'bg-red-500/15',     text: 'text-red-400' },
+  do_not_call:    { bg: 'bg-rose-900/40',    text: 'text-rose-400' },
+  wrong_number:   { bg: 'bg-red-500/15',     text: 'text-red-400' },
 };
 
 const AVATAR_GRADIENTS = [
@@ -161,7 +161,7 @@ function InlineField({
           className="flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm text-white hover:bg-white/[0.04] transition group/field"
           title="Click to edit"
         >
-          <span className={value ? '' : ', 'text-slate-600 italic'}>{value || `Add ${label.toLowerCase()}…`}</span>
+          <span className={value ? '' : 'text-slate-600 italic'}>{value || `Add ${label.toLowerCase()}…`}</span>
           <Edit3 className="h-3 w-3 text-slate-700 opacity-0 group-hover/field:opacity-100 transition shrink-0" />
         </div>
       )}
@@ -186,7 +186,7 @@ function TimelineItem({ event }: { event: TimelineEvent }) {
     call:              'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
     'call.hangup':     ', 'bg-red-500/15 text-red-400 border-red-500/20',
     'call.answered':   ', 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-    'recording.saved': ', 'bg-violet-500/15 text-violet-400 border-violet-500/20',
+    'recording.saved': 'bg-violet-500/15 text-violet-400 border-violet-500/20',
     note_added:        'bg-blue-500/15 text-blue-400 border-blue-500/20',
     import:            'bg-amber-500/15 text-amber-400 border-amber-500/20',
     created:           'bg-slate-500/15 text-slate-400 border-slate-500/20',
@@ -343,7 +343,7 @@ export default function LeadDetailPage() {
   const patchLead = useCallback(async (updates: Partial<FullLead>) => {
     const res = await fetch(`/api/leads/${leadId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': ', 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
     });
     if (!res.ok) throw new Error('Failed to update');
@@ -399,7 +399,7 @@ export default function LeadDetailPage() {
   if (!lead) return null;
 
   const grad = avatarGradient(lead.name);
-  const { bg: sBg, text: sText } = STATUS_COLORS[lead.status] ?? { bg: 'bg-slate-500/15', text: ', 'text-slate-300' };
+  const { bg: sBg, text: sText } = STATUS_COLORS[lead.status] ?? { bg: 'bg-slate-500/15', text: 'text-slate-300' };
   const totalCalls = lead.call_attempts ?? 0;
 
   return (
