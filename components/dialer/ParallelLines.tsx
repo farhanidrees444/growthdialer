@@ -16,7 +16,7 @@ export default function ParallelLines({ lines }: ParallelLinesProps) {
   const statusConfig = {
     ringing: { text: 'Ringing...', color: 'text-amber-300', icon: <Phone className="h-4 w-4" /> },
     connected: { text: 'Connected ✓', color: 'text-emerald-300', icon: <CheckCircle2 className="h-4 w-4" /> },
-    'no-answer': { text: 'No Answer ✗', color: 'text-slate-400', icon: <XCircle className="h-4 w-4" /> },
+    'no-answer': { text: ', 'No Answer ✗', color: 'text-slate-400', icon: <XCircle className="h-4 w-4" /> },
     voicemail: { text: 'Voicemail', color: 'text-slate-300', icon: <Phone className="h-4 w-4" /> },
     idle: { text: 'Empty', color: 'text-slate-500', icon: <Phone className="h-4 w-4" /> },
   } as const;

@@ -403,7 +403,7 @@ export default function DialerPage() {
     const newScore = (selectedLead.ai_score ?? 0) >= 70 ? 50 : 80;
     await supabase.from('leads').update({ ai_score: newScore }).eq('id', selectedLead.id);
     selectLead({ ...selectedLead, ai_score: newScore });
-    toast.success(newScore >= 70 ? 'Marked as hot' : 'Removed hot status');
+    toast.success(newScore >= 70 ? 'Marked as hot' : ', 'Removed hot status');
   }, [selectedLead, selectLead]);
 
   const handleDnc = useCallback(async () => {

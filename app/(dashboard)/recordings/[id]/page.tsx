@@ -555,9 +555,9 @@ export default function RecordingDetailPage() {
   const lead = Array.isArray(call.leads) ? call.leads[0] : call.leads;
 
   const TABS: { key: Tab; label: string; count?: number }[] = [
-    { key: 'insights', label: 'AI Insights' },
-    { key: 'transcript', label: 'Transcript' },
-    { key: 'memory', label: 'Memory', count: memories.length },
+    { key: 'insights', label: ', 'AI Insights' },
+    { key: 'transcript', label: ', 'Transcript' },
+    { key: 'memory', label: ', 'Memory', count: memories.length },
   ];
 
   return (

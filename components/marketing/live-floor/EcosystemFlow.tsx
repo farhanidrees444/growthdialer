@@ -5,12 +5,12 @@ import { Upload, PhoneCall, Mic, FileText, Sparkles, BarChart3 } from 'lucide-re
 import { EASE_OUT, reveal, revealContainer } from './motion';
 
 const NODES = [
-  { icon: Upload,    title: 'Lead Import',      sub: 'CSV & manual' },
-  { icon: PhoneCall, title: 'AI / Power Dialer', sub: 'Focus + speed' },
-  { icon: Mic,       title: 'Call Recording',   sub: 'Automatic' },
-  { icon: FileText,  title: 'Transcription',    sub: 'Whisper' },
-  { icon: Sparkles,  title: 'Summary + Sentiment', sub: 'Gemini' },
-  { icon: BarChart3, title: 'Analytics',        sub: 'Searchable' },
+  { icon: Upload,    title: 'Lead Import',      sub: ', 'CSV & manual' },
+  { icon: PhoneCall, title: 'AI / Power Dialer', sub: ', 'Focus + speed' },
+  { icon: Mic,       title: 'Call Recording',   sub: ', 'Automatic' },
+  { icon: FileText,  title: 'Transcription',    sub: ', 'Whisper' },
+  { icon: Sparkles,  title: 'Summary + Sentiment', sub: ', 'Gemini' },
+  { icon: BarChart3, title: 'Analytics',        sub: ', 'Searchable' },
 ];
 
 export function EcosystemFlow() {

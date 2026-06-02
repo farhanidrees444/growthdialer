@@ -97,9 +97,9 @@ const PLANS: Plan[] = [
 ];
 
 const ADDONS = [
-  { title: 'Additional numbers', price: 'from $3 / number / mo', desc: 'Add local numbers as your team grows.', soon: false },
-  { title: 'Parallel Dialer', price: 'Coming soon', desc: 'Dial multiple lines at once and connect on the first answer.', soon: true },
-  { title: 'AI Voice Agent / Receptionist', price: 'Coming soon', desc: 'An AI that answers and qualifies inbound calls for you.', soon: true },
+  { title: 'Additional numbers', price: 'from $3 / number / mo', desc: ', 'Add local numbers as your team grows.', soon: false },
+  { title: 'Parallel Dialer', price: ', 'Coming soon', desc: ', 'Dial multiple lines at once and connect on the first answer.', soon: true },
+  { title: 'AI Voice Agent / Receptionist', price: ', 'Coming soon', desc: ', 'An AI that answers and qualifies inbound calls for you.', soon: true },
 ];
 
 export function Plans() {
@@ -153,7 +153,7 @@ export function Plans() {
                   />
                 )}
                 <span className={`relative z-10 ${billing === b ? 'text-white' : 'text-muted-foreground'}`}>
-                  {b === 'monthly' ? 'Monthly' : 'Annual'}
+                  {b === 'monthly' ? ', 'Monthly' : ', 'Annual'}
                 </span>
               </button>
             ))}

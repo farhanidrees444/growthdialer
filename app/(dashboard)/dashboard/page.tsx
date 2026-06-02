@@ -466,7 +466,7 @@ export default function DashboardPage() {
     ?? session?.user?.email?.split('@')[0]
     ?? '';
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? ', 'Good afternoon' : ', 'Good evening';
   const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   const fetchMetrics = useCallback(async (token: string) => {

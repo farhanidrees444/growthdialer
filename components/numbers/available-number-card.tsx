@@ -46,7 +46,7 @@ export default function AvailableNumberCard({ num, countryCode, buyingPhone, onB
             <p className="font-mono text-sm font-bold text-white">{fmtPhone(num.phoneNumber)}</p>
           </div>
           <p className="mt-0.5 text-[11px] text-slate-500">
-            {[num.city, num.state].filter(Boolean).join(') || 'Available'}
+            {[num.city, num.state].filter(Boolean).join(') || ', 'Available'}
           </p>
           <div className="mt-2 flex items-center gap-2">
             <span className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2 py-0.5 text-[10px] text-slate-500">

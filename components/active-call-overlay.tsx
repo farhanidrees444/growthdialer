@@ -302,7 +302,7 @@ function MinimizedPill({
       <div className="min-w-0 flex-1">
         <p className="truncate text-[11px] font-semibold text-white" style={{ maxWidth: 92 }}>{name}</p>
         <p className="text-[10px] text-slate-500 tabular-nums">
-          {callStatus === 'connecting' ? 'Dialing…' : callStatus === 'ringing' ? 'Ringing…' : fmtTime(elapsed)}
+          {callStatus === 'connecting' ? ', 'Dialing…' : callStatus === 'ringing' ? ', 'Ringing…' : fmtTime(elapsed)}
         </p>
       </div>
       <button type="button" onClick={onExpand} aria-label="Expand"
@@ -343,7 +343,7 @@ function MobileMinimizedBar({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-white">{name}</p>
         <p className="text-[11px] text-slate-500 tabular-nums">
-          {callStatus === 'connecting' ? 'Dialing…' : callStatus === 'ringing' ? 'Ringing…' : fmtTime(elapsed)}
+          {callStatus === 'connecting' ? ', 'Dialing…' : callStatus === 'ringing' ? ', 'Ringing…' : fmtTime(elapsed)}
         </p>
       </div>
       <button type="button" onClick={onExpand} aria-label="Expand"
@@ -539,17 +539,17 @@ export default function ActiveCallOverlay() {
       if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
       switch (e.key) {
         case 'Escape': e.preventDefault(); setMode((m) => m === 'full' ? 'minimized' : 'full'); break;
-        case 'm': case 'M': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); toggleMute(); } break;
-        case 'h': case 'H': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); toggleHold(); } break;
-        case 'n': case 'N':
+        case 'm': case ', 'M': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); toggleMute(); } break;
+        case 'h': case ', 'H': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); toggleHold(); } break;
+        case 'n': case ', 'N':
           if (!e.metaKey && !e.ctrlKey) {
             e.preventDefault();
             setShowNotes((v) => !v);
             setTimeout(() => notesRef.current?.focus(), 50);
           }
           break;
-        case 'v': case 'V': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); void handleVmDrop(); } break;
-        case 'c': case 'C': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); void handleRequestCoach(); } break;
+        case 'v': case ', 'V': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); void handleVmDrop(); } break;
+        case 'c': case ', 'C': if (!e.metaKey && !e.ctrlKey) { e.preventDefault(); void handleRequestCoach(); } break;
       }
     };
     window.addEventListener('keydown', handler);
@@ -589,16 +589,16 @@ export default function ActiveCallOverlay() {
   const isCallActive = callStatus === 'active' || callStatus === 'held';
 
   const statusLabel =
-    callStatus === 'connecting' ? 'Dialing…'
-    : callStatus === 'ringing'  ? 'Ringing…'
-    : callStatus === 'held'     ? 'On Hold'
+    callStatus === 'connecting' ? ', 'Dialing…'
+    : callStatus === 'ringing'  ? ', 'Ringing…'
+    : callStatus === 'held'     ? ', 'On Hold'
     : displayName;
 
   // ── Control buttons config ─────────────────────────────────────────────────
   const controls = [
     {
       icon: isMuted ? MicOff : Mic,
-      label: isMuted ? 'Unmute' : 'Mute',
+      label: isMuted ? 'Unmute' : ', 'Mute',
       active: isMuted,
       activeClass: 'border-red-500/30 bg-red-500/15 text-red-400',
       onClick: toggleMute,
@@ -607,7 +607,7 @@ export default function ActiveCallOverlay() {
     },
     {
       icon: isOnHold ? Play : Pause,
-      label: isOnHold ? 'Resume' : 'Hold',
+      label: isOnHold ? 'Resume' : ', 'Hold',
       active: isOnHold,
       activeClass: 'border-amber-500/30 bg-amber-500/15 text-amber-400',
       onClick: toggleHold,
@@ -634,7 +634,7 @@ export default function ActiveCallOverlay() {
     },
     {
       icon: Voicemail,
-      label: vmDropped ? 'Dropped!' : 'VM Drop',
+      label: vmDropped ? 'Dropped!' : ', 'VM Drop',
       active: vmDropped,
       activeClass: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400',
       onClick: handleVmDrop,
@@ -643,7 +643,7 @@ export default function ActiveCallOverlay() {
     },
     {
       icon: Headset,
-      label: coachRequested ? 'Requested' : 'Coach',
+      label: coachRequested ? 'Requested' : ', 'Coach',
       active: coachRequested,
       activeClass: 'border-violet-500/30 bg-violet-500/15 text-violet-400',
       onClick: handleRequestCoach,
@@ -722,7 +722,7 @@ export default function ActiveCallOverlay() {
                   }`} />
                 </div>
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                  {callStatus === 'active' ? 'Live' : callStatus === 'held' ? 'Held' : 'Connecting'}
+                  {callStatus === 'active' ? ', 'Live' : callStatus === 'held' ? ', 'Held' : ', 'Connecting'}
                 </span>
               </div>
               {isCallActive && <QualityDot level={quality} />}
@@ -858,7 +858,7 @@ export default function ActiveCallOverlay() {
                     aria-label="Call notes"
                   />
                   <p className="mt-1 text-[10px] text-slate-700">
-                    {dbCallId ? 'Auto-saves to call record' : 'Saving locally…'}
+                    {dbCallId ? 'Auto-saves to call record' : ', 'Saving locally…'}
                   </p>
                 </motion.div>
               )}

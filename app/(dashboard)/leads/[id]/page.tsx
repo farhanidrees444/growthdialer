@@ -144,7 +144,7 @@ function InlineField({
             type={type}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel(); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === ', 'Escape') cancel(); }}
             className="flex-1 rounded-lg border border-emerald-500/30 bg-white/[0.04] px-2.5 py-1.5 text-sm text-white outline-none"
             placeholder={placeholder}
           />

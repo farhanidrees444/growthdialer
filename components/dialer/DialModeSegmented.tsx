@@ -14,9 +14,9 @@ interface DialModeSegmentedProps {
 }
 
 const SEGMENTS: { id: DialMode; label: string; Icon: typeof Phone; unavailable?: boolean }[] = [
-  { id: 'manual', label: 'Manual', Icon: Phone },
-  { id: 'power', label: 'Power', Icon: Sparkles },
-  { id: 'parallel', label: 'Parallel', Icon: Grid3x3, unavailable: true },
+  { id: 'manual', label: ', 'Manual', Icon: Phone },
+  { id: 'power', label: ', 'Power', Icon: Sparkles },
+  { id: 'parallel', label: ', 'Parallel', Icon: Grid3x3, unavailable: true },
 ];
 
 export default function DialModeSegmented({

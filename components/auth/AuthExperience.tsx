@@ -231,7 +231,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
                 transition={{ duration: 0.35, ease: EASE_OUT }}
               >
                 <h2 className="font-display text-2xl font-medium tracking-tight">
-                  {isSignup ? 'Create your account' : 'Welcome back'}
+                  {isSignup ? 'Create your account' : ', 'Welcome back'}
                 </h2>
                 <p className="mt-2 text-sm text-zinc-400">
                   {isSignup
@@ -345,7 +345,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition-colors hover:text-zinc-300"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? 'Hide password' : ', 'Show password'}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -416,7 +416,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <>
-                  {isSignup ? 'Create account' : 'Sign in'}
+                  {isSignup ? 'Create account' : ', 'Sign in'}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </>
               )}
@@ -431,7 +431,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
               onClick={toggleMode}
               className="font-medium text-[hsl(258,90%,66%)'] transition-colors hover:text-[#A78BFA]"
             >
-              {isSignup ? 'Sign in' : 'Start free'}
+              {isSignup ? 'Sign in' : ', 'Start free'}
             </button>
           </p>
         </div>

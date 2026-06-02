@@ -7,7 +7,7 @@ import { EASE_OUT } from '@/components/marketing/live-floor/motion';
 
 type Cell = boolean | string | 'soon';
 
-const PLANS = ['Starter'Pro'Scale'Enterprise'];
+const PLANS = ['Starter', 'Pro'Scale', 'Enterprise'];
 
 const GROUPS: { group: string; rows: { label: string; cells: [Cell, Cell, Cell, Cell] }[] }[] = [
   {
@@ -23,7 +23,7 @@ const GROUPS: { group: string; rows: { label: string; cells: [Cell, Cell, Cell, 
   {
     group: 'Numbers',
     rows: [
-      { label: 'Local numbers', cells: ['1'Multiple'Multiple'Custom'] },
+      { label: 'Local numbers', cells: ['1', 'Multiple'Multiple', 'Custom'] },
       { label: 'Number health & spam monitoring', cells: [false, true, true, true] },
     ],
   },
@@ -40,15 +40,15 @@ const GROUPS: { group: string; rows: { label: string; cells: [Cell, Cell, Cell, 
     group: 'Data & insights',
     rows: [
       { label: 'Leads management', cells: [true, true, true, true] },
-      { label: 'Analytics', cells: ['Basic'Advanced'Advanced'Advanced'] },
+      { label: 'Analytics', cells: ['Basic', 'Advanced', 'Advanced', 'Advanced'] },
     ],
   },
   {
     group: 'Team & platform',
     rows: [
-      { label: 'Support', cells: ['Email'Email'Priority'Dedicated'] },
-      { label: 'Team workspaces', cells: [false, falsesoon'soon'] },
-      { label: 'Public API', cells: [false, falsesoon'soon'] },
+      { label: 'Support', cells: ['Email', 'Email', 'Priority', 'Dedicated'] },
+      { label: 'Team workspaces', cells: [false, false, 'soon', 'soon'] },
+      { label: 'Public API', cells: [false, false, 'soon', 'soon'] },
     ],
   },
 ];

@@ -34,7 +34,7 @@ const FEATURES = [
   },
 ];
 
-const COMING_SOON = ['Parallel dialing'Real-time coaching'AI voice agent'];
+const COMING_SOON = ['Parallel dialing', 'Real-time coaching'AI voice agent'];
 
 export function Features() {
   return (

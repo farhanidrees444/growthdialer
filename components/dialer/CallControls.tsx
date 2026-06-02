@@ -25,7 +25,7 @@ export default function CallControls({ isMuted, isOnHold, isRecording, onMute, o
       >
         <div className="flex items-center justify-center gap-2">
           {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-          {isMuted ? 'Unmute' : 'Mute'}
+          {isMuted ? 'Unmute' : ', 'Mute'}
         </div>
       </motion.button>
       <motion.button
@@ -36,7 +36,7 @@ export default function CallControls({ isMuted, isOnHold, isRecording, onMute, o
       >
         <div className="flex items-center justify-center gap-2">
           <Pause className="h-5 w-5" />
-          {isOnHold ? 'Resume' : 'Hold'}
+          {isOnHold ? 'Resume' : ', 'Hold'}
         </div>
       </motion.button>
       <motion.button
@@ -57,7 +57,7 @@ export default function CallControls({ isMuted, isOnHold, isRecording, onMute, o
       >
         <div className="flex items-center justify-center gap-2">
           <Disc className="h-5 w-5" />
-          {isRecording ? 'Recording' : 'Record'}
+          {isRecording ? 'Recording' : ', 'Record'}
         </div>
       </motion.button>
       <motion.button

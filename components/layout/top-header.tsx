@@ -7,17 +7,17 @@ import { useMobileNav } from '@/contexts/mobile-nav-context';
 import { useLeads } from '@/contexts/leads-context';
 
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
-  '/dashboard':    { title: 'Dashboard',    subtitle: 'Your calling command center' },
-  '/dialer':       { title: 'AI Dialer',    subtitle: 'Make calls, faster' },
-  '/leads':        { title: 'Leads',        subtitle: 'Manage your pipeline' },
-  '/analytics':    { title: 'Analytics',    subtitle: 'Performance insights' },
-  '/recordings':   { title: 'Recordings',   subtitle: 'Calls with AI analysis' },
-  '/numbers':      { title: 'My Numbers',   subtitle: 'Your calling identity' },
-  '/integrations': { title: 'Integrations', subtitle: 'Connect your tools' },
-  '/settings':     { title: 'Settings',     subtitle: 'Account & workspace' },
-  '/team':         { title: 'Team',         subtitle: 'Workspace members' },
-  '/coaching':     { title: 'Coaching',     subtitle: 'Real-time call coaching' },
-  '/sequences':    { title: 'Sequences',    subtitle: 'Multi-step outreach cadences' },
+  '/dashboard':    { title: ', 'Dashboard',    subtitle: ', 'Your calling command center' },
+  '/dialer':       { title: ', 'AI Dialer',    subtitle: ', 'Make calls, faster' },
+  '/leads':        { title: ', 'Leads',        subtitle: ', 'Manage your pipeline' },
+  '/analytics':    { title: ', 'Analytics',    subtitle: ', 'Performance insights' },
+  '/recordings':   { title: ', 'Recordings',   subtitle: ', 'Calls with AI analysis' },
+  '/numbers':      { title: ', 'My Numbers',   subtitle: ', 'Your calling identity' },
+  '/integrations': { title: ', 'Integrations', subtitle: ', 'Connect your tools' },
+  '/settings':     { title: ', 'Settings',     subtitle: ', 'Account & workspace' },
+  '/team':         { title: ', 'Team',         subtitle: ', 'Workspace members' },
+  '/coaching':     { title: ', 'Coaching',     subtitle: ', 'Real-time call coaching' },
+  '/sequences':    { title: ', 'Sequences',    subtitle: ', 'Multi-step outreach cadences' },
 };
 
 export function TopHeader() {

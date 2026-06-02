@@ -40,19 +40,19 @@ const SORT_LABELS: Record<SortKey, string> = {
 };
 
 const SORT_OPTIONS: { id: SortKey; label: string; Icon: React.ComponentType<{ size: number }> }[] = [
-  { id: 'priority', label: 'Priority', Icon: Flame },
-  { id: 'recent', label: 'Recently Added', Icon: Clock },
-  { id: 'az', label: 'A → Z', Icon: ArrowDownAZ },
-  { id: 'tz_safe', label: 'Timezone Safe', Icon: Globe },
+  { id: 'priority', label: ', 'Priority', Icon: Flame },
+  { id: 'recent', label: ', 'Recently Added', Icon: Clock },
+  { id: 'az', label: ', 'A → Z', Icon: ArrowDownAZ },
+  { id: 'tz_safe', label: ', 'Timezone Safe', Icon: Globe },
 ];
 
 const FILTER_OPTIONS: { id: keyof FilterState; label: string }[] = [
-  { id: 'hasPhone', label: 'Has phone number' },
-  { id: 'tzSafe', label: 'Timezone safe to call' },
-  { id: 'hot', label: 'Hot leads only' },
-  { id: 'callbacks', label: 'Scheduled callbacks' },
-  { id: 'hasNotes', label: 'Has notes' },
-  { id: 'recentlyContacted', label: 'Contacted in last 7 days' },
+  { id: 'hasPhone', label: ', 'Has phone number' },
+  { id: 'tzSafe', label: ', 'Timezone safe to call' },
+  { id: 'hot', label: ', 'Hot leads only' },
+  { id: 'callbacks', label: ', 'Scheduled callbacks' },
+  { id: 'hasNotes', label: ', 'Has notes' },
+  { id: 'recentlyContacted', label: ', 'Contacted in last 7 days' },
 ];
 
 interface QueueCounts { queue: number; hot: number; callbacks: number }
@@ -138,9 +138,9 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
     : leads;
 
   const tabDefs: { key: QueueTab; label: string; count: number }[] = [
-    { key: 'queue', label: 'Queue', count: counts.queue },
-    { key: 'hot', label: 'Hot', count: counts.hot },
-    { key: 'callbacks', label: 'Callbacks', count: counts.callbacks },
+    { key: 'queue', label: ', 'Queue', count: counts.queue },
+    { key: 'hot', label: ', 'Hot', count: counts.hot },
+    { key: 'callbacks', label: ', 'Callbacks', count: counts.callbacks },
   ];
 
   return (

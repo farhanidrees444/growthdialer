@@ -30,7 +30,7 @@ function useCycle(length: number, ms: number) {
 
 // ── AI Dialer — animated 3-mode switch + live waveform ──────────────────────
 function DialerVisual() {
-  const modes = ['Browse'Focus'Power'];
+  const modes = ['Browse', ', 'Focus', ', 'Power'];
   const { ref, i } = useCycle(modes.length, 1900);
   return (
     <div ref={ref} className="space-y-4" aria-hidden>
@@ -40,11 +40,11 @@ function DialerVisual() {
             {i === idx && (
               <motion.span
                 layoutId="dialer-mode"
-                className="absolute inset-0 rounded-lg border border-[hsl(258,90%,66%)']/40 bg-violet-600/10"
+                className="absolute inset-0 rounded-lg border border-[hsl(258,90%,66%)]/40 bg-violet-600/10"
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               />
             )}
-            <span className={`relative ${i === idx ? 'text-[hsl(258,90%,66%)']' : 'text-muted-foreground/70'}`}>{m}</span>
+            <span className={`relative ${i === idx ? 'text-[hsl(258,90%,66%)]' : 'text-muted-foreground/70'}`}>{m}</span>
           </div>
         ))}
       </div>
@@ -63,7 +63,7 @@ function DialerVisual() {
 
 // ── Power Dialer — auto-advancing call queue ────────────────────────────────
 function PowerVisual() {
-  const rows = ['Maya Chen'Tom Becker'Priya Nair'Diego Ruiz'Sam Okafor'];
+  const rows = ['Maya Chen', ', 'Tom Becker', ', 'Priya Nair', ', 'Diego Ruiz', ', 'Sam Okafor'];
   const { ref, i: active } = useCycle(rows.length, 1500);
   return (
     <div ref={ref} className="space-y-2" aria-hidden>
@@ -74,7 +74,7 @@ function PowerVisual() {
           <div
             key={r}
             className={`flex items-center justify-between rounded-lg border px-3 py-2.5 transition-colors duration-300 ${
-              isActive ? 'border-[hsl(258,90%,66%)']/40 bg-violet-600/[0.06]' : 'border-white/[0.06]'
+              isActive ? 'border-[hsl(258,90%,66%)]/40 bg-violet-600/[0.06]' : 'border-white/[0.06]'
             }`}
           >
             <div className="flex items-center gap-2.5">
@@ -146,10 +146,10 @@ function IntelVisual() {
 // ── Smart Leads — pipeline with dispositions ────────────────────────────────
 function LeadsVisual() {
   const leads = [
-    { n: 'Acme Co.', s: 'Interested', c: 'text-emerald-400' },
-    { n: 'Globex', s: 'Callback', c: 'text-amber-400' },
-    { n: 'Initech', s: 'Meeting booked', c: 'text-[hsl(258,90%,66%)']' },
-    { n: 'Umbrella', s: 'New', c: 'text-muted-foreground' },
+    { n: 'Acme Co.', s: ', 'Interested', c: 'text-emerald-400' },
+    { n: 'Globex', s: ', 'Callback', c: 'text-amber-400' },
+    { n: 'Initech', s: ', 'Meeting booked', c: 'text-[hsl(258,90%,66%)']' },
+    { n: 'Umbrella', s: ', 'New', c: 'text-muted-foreground' },
   ];
   return (
     <div className="space-y-2" aria-hidden>
@@ -241,12 +241,12 @@ function HealthVisual() {
 
 // ── Feature data ────────────────────────────────────────────────────────────
 const FEATURES = [
-  { icon: Target, eyebrow: 'AI Dialer', title: 'A focused stage for every call.', body: 'Three modes — browse, focus and power — give reps one clean surface to move through leads, with live controls and instant recording.', Visual: DialerVisual },
-  { icon: Zap, eyebrow: 'Power Dialer', title: 'Work the list, not the dialer.', body: 'Move call to call back-to-back. The queue auto-advances, dispositions in a tap, and you never lose your rhythm.', Visual: PowerVisual },
-  { icon: Brain, eyebrow: 'Conversation Intelligence', title: 'The AI listens so you don’t take notes.', body: 'Every recorded call is transcribed live, then distilled into a summary, sentiment and intent — ready the moment you hang up.', Visual: IntelVisual },
-  { icon: Users, eyebrow: 'Smart Leads', title: 'Your pipeline, in one place.', body: 'Import and organize leads, then work them straight from the dialer. Every call links back with full history and disposition.', Visual: LeadsVisual },
-  { icon: BarChart3, eyebrow: 'Analytics', title: 'See what’s actually working.', body: 'Connect rate, talk time, dispositions and sentiment trends — your whole calling operation at a glance.', Visual: AnalyticsVisual },
-  { icon: ShieldCheck, eyebrow: 'Number Health', title: 'Keep your calls landing.', body: 'Track carrier reputation and spam risk on every number, continuously, so your connect rates stay high.', Visual: HealthVisual },
+  { icon: Target, eyebrow: 'AI Dialer', title: ', 'A focused stage for every call.', body: ', 'Three modes — browse, focus and power — give reps one clean surface to move through leads, with live controls and instant recording.', Visual: DialerVisual },
+  { icon: Zap, eyebrow: 'Power Dialer', title: ', 'Work the list, not the dialer.', body: ', 'Move call to call back-to-back. The queue auto-advances, dispositions in a tap, and you never lose your rhythm.', Visual: PowerVisual },
+  { icon: Brain, eyebrow: 'Conversation Intelligence', title: ', 'The AI listens so you don’t take notes.', body: ', 'Every recorded call is transcribed live, then distilled into a summary, sentiment and intent — ready the moment you hang up.', Visual: IntelVisual },
+  { icon: Users, eyebrow: 'Smart Leads', title: ', 'Your pipeline, in one place.', body: ', 'Import and organize leads, then work them straight from the dialer. Every call links back with full history and disposition.', Visual: LeadsVisual },
+  { icon: BarChart3, eyebrow: 'Analytics', title: ', 'See what’s actually working.', body: ', 'Connect rate, talk time, dispositions and sentiment trends — your whole calling operation at a glance.', Visual: AnalyticsVisual },
+  { icon: ShieldCheck, eyebrow: 'Number Health', title: ', 'Keep your calls landing.', body: ', 'Track carrier reputation and spam risk on every number, continuously, so your connect rates stay high.', Visual: HealthVisual },
 ];
 
 export function FeatureSections() {

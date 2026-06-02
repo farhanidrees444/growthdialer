@@ -90,9 +90,9 @@ function getNextSteps(raw: unknown): string[] {
 // ─── Sentiment ────────────────────────────────────────────────────────────────
 
 const SENTIMENT = {
-  positive: { icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', label: 'Positive' },
-  neutral:  { icon: Minus,      color: 'text-slate-400',   bg: 'bg-white/[0.04]',   border: 'border-white/[0.08]',    label: 'Neutral'  },
-  negative: { icon: TrendingDown, color: 'text-red-400',   bg: 'bg-red-500/10',     border: 'border-red-500/20',      label: 'Negative' },
+  positive: { icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', label: ', 'Positive' },
+  neutral:  { icon: Minus,      color: 'text-slate-400',   bg: 'bg-white/[0.04]',   border: 'border-white/[0.08]',    label: ', 'Neutral'  },
+  negative: { icon: TrendingDown, color: 'text-red-400',   bg: 'bg-red-500/10',     border: 'border-red-500/20',      label: ', 'Negative' },
 } as const;
 
 type SentimentKey = keyof typeof SENTIMENT;
@@ -139,7 +139,7 @@ function MiniPlayer({ url, id, activeId, onActivate }: {
       <button
         type="button"
         onClick={toggle}
-        aria-label={isPlaying ? 'Pause' : 'Play'}
+        aria-label={isPlaying ? 'Pause' : ', 'Play'}
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-all
                    border-violet-500/30 bg-gradient-to-br from-violet-500/15 to-cyan-500/15
                    hover:from-violet-500/25 hover:to-cyan-500/25 active:scale-95"
@@ -257,7 +257,7 @@ function RecordingCard({
             type="button"
             onClick={() => setExpanded((v) => !v)}
             className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.07] text-slate-600 transition hover:border-white/[0.12] hover:text-slate-300"
-            aria-label={expanded ? 'Collapse' : 'Expand'}
+            aria-label={expanded ? 'Collapse' : ', 'Expand'}
           >
             <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
           </button>
@@ -414,10 +414,10 @@ function EmptyState() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const SENTIMENT_FILTERS = [
-  { key: '',         label: 'All' },
-  { key: 'positive', label: 'Positive' },
-  { key: 'neutral',  label: 'Neutral' },
-  { key: 'negative', label: 'Negative' },
+  { key: '',         label: ', 'All' },
+  { key: 'positive', label: ', 'Positive' },
+  { key: 'neutral',  label: ', 'Neutral' },
+  { key: 'negative', label: ', 'Negative' },
 ];
 
 export default function RecordingsPage() {

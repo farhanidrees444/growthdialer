@@ -64,9 +64,9 @@ function fmtTalkTime(s: number): string {
 
 function fmtDateLabel(iso: string, range: RangeKey): string {
   const d = new Date(iso + 'T00:00:00Z');
-  if (range === '7d') return d.toLocaleDateString('en', { weekday: 'short', timeZone: 'UTC' });
+  if (range === '7d') return d.toLocaleDateString('en', { weekday: 'short', timeZone: ', 'UTC' });
   if (range === 'today') return iso;
-  return d.toLocaleDateString('en', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  return d.toLocaleDateString('en', { month: 'short', day: 'numeric', timeZone: ', 'UTC' });
 }
 
 function delta(curr: number, prev: number): { label: string; up: boolean; neutral: boolean } {
@@ -228,24 +228,24 @@ function EmptyChart({ message = 'No data for this period' }: { message?: string 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
-  { key: 'today', label: 'Today' },
+  { key: 'today', label: ', 'Today' },
   { key: '7d',   label: '7 Days' },
   { key: '30d',  label: '30 Days' },
   { key: '90d',  label: '90 Days' },
-  { key: 'custom', label: 'Custom' },
+  { key: 'custom', label: ', 'Custom' },
 ];
 
 const KNOWN_DISPS = [
-  { value: '',              label: 'All Dispositions' },
-  { value: 'interested',   label: 'Interested' },
-  { value: 'callback',     label: 'Callback' },
-  { value: 'meeting_booked', label: 'Meeting Booked' },
-  { value: 'voicemail',    label: 'Voicemail' },
-  { value: 'not_interested', label: 'Not Interested' },
-  { value: 'wrong_number', label: 'Wrong Number' },
-  { value: 'gatekeeper',   label: 'Gatekeeper' },
-  { value: 'dnc',          label: 'DNC' },
-  { value: 'missed',       label: 'Missed' },
+  { value: '',              label: ', 'All Dispositions' },
+  { value: 'interested',   label: ', 'Interested' },
+  { value: 'callback',     label: ', 'Callback' },
+  { value: 'meeting_booked', label: ', 'Meeting Booked' },
+  { value: 'voicemail',    label: ', 'Voicemail' },
+  { value: 'not_interested', label: ', 'Not Interested' },
+  { value: 'wrong_number', label: ', 'Wrong Number' },
+  { value: 'gatekeeper',   label: ', 'Gatekeeper' },
+  { value: 'dnc',          label: ', 'DNC' },
+  { value: 'missed',       label: ', 'Missed' },
 ];
 
 export default function AnalyticsPage() {
@@ -404,9 +404,9 @@ export default function AnalyticsPage() {
               value: direction,
               onChange: setDir,
               opts: [
-                { value: 'all',      label: 'All Calls' },
-                { value: 'outbound', label: 'Outbound' },
-                { value: 'inbound',  label: 'Inbound' },
+                { value: 'all',      label: ', 'All Calls' },
+                { value: 'outbound', label: ', 'Outbound' },
+                { value: 'inbound',  label: ', 'Inbound' },
               ],
             },
             { value: dispFilter, onChange: setDisp, opts: KNOWN_DISPS },
@@ -633,10 +633,10 @@ export default function AnalyticsPage() {
                         {(
                           [
                             { col: null,          label: 'Number' },
-                            { col: 'total',       label: 'Calls' },
-                            { col: 'connected',   label: 'Connected' },
-                            { col: 'connectRate', label: 'Connect %' },
-                            { col: 'avgDuration', label: 'Avg Duration' },
+                            { col: 'total',       label: ', 'Calls' },
+                            { col: 'connected',   label: ', 'Connected' },
+                            { col: 'connectRate', label: ', 'Connect %' },
+                            { col: 'avgDuration', label: ', 'Avg Duration' },
                           ] as { col: SortCol | null; label: string }[]
                         ).map(({ col, label }) => (
                           <th
