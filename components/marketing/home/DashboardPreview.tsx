@@ -43,13 +43,13 @@ export function DashboardPreview() {
         variants={revealContainer}
         className="relative mx-auto max-w-2xl text-center"
       >
-        <motion.p variants={reveal} className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
+        <motion.p variants={reveal} className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-muted-foreground/60">
           Product preview
         </motion.p>
-        <motion.h2 variants={reveal} className="font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.05] tracking-tight text-[#F5F5F7]">
+        <motion.h2 variants={reveal} className="font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.05] tracking-tight text-foreground">
           Your floor, <span className="font-medium">live</span>.
         </motion.h2>
-        <motion.p variants={reveal} className="mx-auto mt-4 max-w-md text-[16px] leading-relaxed text-zinc-400">
+        <motion.p variants={reveal} className="mx-auto mt-4 max-w-md text-[16px] leading-relaxed text-muted-foreground">
           A look at the dialer in motion — calls connect, the AI listens, and
           insights land the moment you hang up.
         </motion.p>
@@ -71,12 +71,12 @@ export function DashboardPreview() {
               <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: 'linear-gradient(135deg,#8B5CF6,#06B6D4)' }}>
                 <Phone className="h-3.5 w-3.5 text-white" />
               </span>
-              <span className="text-sm font-medium text-[#F5F5F7]">Dialer</span>
+              <span className="text-sm font-medium text-foreground">Dialer</span>
             </div>
-            <span className="flex items-center gap-1.5 rounded-full bg-[#06B6D4]/10 px-2.5 py-1 text-[11px] font-medium text-[#06B6D4]">
+            <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
               <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#06B6D4] opacity-75" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#06B6D4]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
               </span>
               Live session
             </span>
@@ -87,25 +87,25 @@ export function DashboardPreview() {
             <div className="relative overflow-hidden rounded-2xl border border-white/[0.05] bg-white/[0.02] p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#06B6D4]/10 text-[#06B6D4]">
+                  <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <Phone className="h-4 w-4" />
                     <span className="absolute inset-0 grid place-items-center">
                       <LottiePulse size={56} />
                     </span>
                   </span>
                   <div>
-                    <p className="text-sm font-medium text-[#F5F5F7]">Jordan at Acme Co.</p>
-                    <p className="font-mono text-xs tabular-nums text-zinc-500">Connected · {fmtClock(seconds)}</p>
+                    <p className="text-sm font-medium text-foreground">Jordan at Acme Co.</p>
+                    <p className="font-mono text-xs tabular-nums text-muted-foreground/70">Connected · {fmtClock(seconds)}</p>
                   </div>
                 </div>
-                <span className="rounded-full bg-[#06B6D4]/10 px-2.5 py-1 text-[11px] font-medium text-[#06B6D4]">Recording</span>
+                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">Recording</span>
               </div>
               <LiveWaveform bars={48} height={72} />
               <div className="mt-4 grid grid-cols-3 gap-2">
                 {[['Talk', fmtClock(seconds)], ['Disposition', '—'], ['Sentiment', 'Positive']].map(([k, v]) => (
                   <div key={k} className="rounded-lg border border-white/[0.05] bg-black/30 px-2 py-2 text-center">
-                    <p className="text-[11px] tabular-nums text-[#F5F5F7]">{v}</p>
-                    <p className="text-[10px] uppercase tracking-wider text-zinc-600">{k}</p>
+                    <p className="text-[11px] tabular-nums text-foreground">{v}</p>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60">{k}</p>
                   </div>
                 ))}
               </div>
@@ -121,9 +121,9 @@ export function DashboardPreview() {
                   const Icon = m.icon;
                   return (
                     <div key={m.label} className="rounded-2xl border border-white/[0.05] bg-white/[0.02] p-4">
-                      <Icon className="mb-2 h-4 w-4 text-zinc-500" />
-                      <p className="font-display text-2xl font-light tabular-nums text-[#F5F5F7]">{m.value}</p>
-                      <p className="text-[11px] text-zinc-600">{m.label}</p>
+                      <Icon className="mb-2 h-4 w-4 text-muted-foreground/70" />
+                      <p className="font-display text-2xl font-light tabular-nums text-foreground">{m.value}</p>
+                      <p className="text-[11px] text-muted-foreground/60">{m.label}</p>
                     </div>
                   );
                 })}
@@ -131,11 +131,11 @@ export function DashboardPreview() {
 
               {/* AI summary materializing */}
               <div className="rounded-2xl border border-white/[0.05] bg-white/[0.02] p-4">
-                <p className="mb-3 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
+                <p className="mb-3 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">
                   <Sparkles className="h-3.5 w-3.5 text-[#8B5CF6]" /> AI summary
                 </p>
                 <div className="mb-3 flex items-center justify-between rounded-lg border border-white/[0.05] bg-black/30 px-3 py-2">
-                  <span className="text-xs text-zinc-400">Sentiment</span>
+                  <span className="text-xs text-muted-foreground">Sentiment</span>
                   <span className="flex items-center gap-1 text-xs font-medium text-emerald-400">
                     <TrendingUp className="h-3.5 w-3.5" /> Positive
                   </span>
@@ -148,7 +148,7 @@ export function DashboardPreview() {
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.5, delay: 0.3 + i * 0.25, ease: EASE_OUT }}
-                      className="flex items-start gap-2 text-[13px] leading-relaxed text-zinc-300"
+                      className="flex items-start gap-2 text-[13px] leading-relaxed text-muted-foreground/90"
                     >
                       <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#8B5CF6]" />
                       {t}

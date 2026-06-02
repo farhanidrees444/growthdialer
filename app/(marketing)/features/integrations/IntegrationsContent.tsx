@@ -217,7 +217,7 @@ export default function IntegrationsContent() {
           <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
             {["No credit card required", "14-day free trial", "Cancel anytime"].map((item) => (
               <span key={item} className="flex items-center gap-1">
-                <CheckCircle className="w-4 h-4 text-green-500" /> {item}
+                <CheckCircle className="w-4 h-4 text-primary" /> {item}
               </span>
             ))}
           </div>

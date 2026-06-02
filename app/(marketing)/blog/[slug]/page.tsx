@@ -291,7 +291,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             {/* Back Link */}
-            <Link href="/blog" className="text-sm text-blue-400 hover:underline mb-8 inline-block">
+            <Link href="/blog" className="text-sm text-primary hover:underline mb-8 inline-block">
               ← Back to blog
             </Link>
 
@@ -314,7 +314,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                   </div>
                 </div>
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                 {post.title}
               </h1>
               <p className="text-xl text-muted-foreground">{post.excerpt}</p>
@@ -336,7 +336,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                               <li key={item.id} style={{ paddingLeft: `${(item.level - 2) * 16}px` }}>
                                 <a
                                   href={`#${item.id}`}
-                                  className="text-sm text-muted-foreground hover:text-blue-400 transition-colors"
+                                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
                                 >
                                   {item.text}
                                 </a>
@@ -433,7 +433,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                             <CardTitle className="text-lg">
                               <Link
                                 href={`/blog/${relatedPost.slug}`}
-                                className="hover:text-blue-400 transition-colors"
+                                className="hover:text-primary transition-colors"
                               >
                                 {relatedPost.title}
                               </Link>

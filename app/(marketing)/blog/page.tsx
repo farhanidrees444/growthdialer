@@ -79,18 +79,18 @@ export default function BlogPage() {
     <div className="py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <nav className="mb-8 text-sm text-zinc-400">
-          <Link href="/" className="hover:text-[#06B6D4] transition-colors">Home</Link>
+        <nav className="mb-8 text-sm text-muted-foreground">
+          <Link href="/" className="hover:text-primary transition-colors">Home</Link>
           <span className="mx-2">›</span>
-          <span className="text-zinc-300">Blog</span>
+          <span className="text-muted-foreground/90">Blog</span>
         </nav>
 
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 text-[#F5F5F7]">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 text-foreground">
             GrowthDialer Blog
           </h1>
-          <p className="text-xl text-zinc-400 leading-relaxed">
+          <p className="text-xl text-muted-foreground leading-relaxed">
             Expert insights on AI-powered sales dialing, automation strategies, and B2B sales best practices. Grow your revenue with proven sales ops tactics.
           </p>
         </div>
@@ -99,33 +99,33 @@ export default function BlogPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {posts.map((post) => (
             <Link key={post.slug} href={`/blog/${post.slug}`}>
-              <div className="group h-full border border-white/[0.08] rounded-xl p-6 hover:border-[#06B6D4]/40 hover:bg-white/[0.02] transition-all duration-300 cursor-pointer">
+              <div className="group h-full border border-white/[0.08] rounded-xl p-6 hover:border-primary/40 hover:bg-white/[0.02] transition-all duration-300 cursor-pointer">
                 {/* Category Badge */}
                 <div className="flex items-center justify-between mb-4">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#06B6D4]/10 text-[#06B6D4] border border-[#06B6D4]/30">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/30">
                     {post.category}
                   </span>
-                  <span className="text-xs text-zinc-500">{post.readTime}</span>
+                  <span className="text-xs text-muted-foreground/70">{post.readTime}</span>
                 </div>
 
                 {/* Title */}
-                <h2 className="text-xl font-bold mb-3 text-[#F5F5F7] group-hover:text-[#06B6D4] transition-colors">
+                <h2 className="text-xl font-bold mb-3 text-foreground group-hover:text-primary transition-colors">
                   {post.title}
                 </h2>
 
                 {/* Excerpt */}
-                <p className="text-zinc-400 text-sm mb-6 line-clamp-3 leading-relaxed">
+                <p className="text-muted-foreground text-sm mb-6 line-clamp-3 leading-relaxed">
                   {post.excerpt}
                 </p>
 
                 {/* Meta */}
-                <div className="flex items-center justify-between text-xs text-zinc-500 border-t border-white/[0.06] pt-4">
+                <div className="flex items-center justify-between text-xs text-muted-foreground/70 border-t border-white/[0.06] pt-4">
                   <span>{post.author}</span>
                   <span>{post.date}</span>
                 </div>
 
                 {/* Read more link */}
-                <div className="mt-4 flex items-center gap-2 text-[#06B6D4] group-hover:gap-3 transition-all text-sm font-medium">
+                <div className="mt-4 flex items-center gap-2 text-primary group-hover:gap-3 transition-all text-sm font-medium">
                   Read article
                   <span>→</span>
                 </div>

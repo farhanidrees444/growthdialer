@@ -114,7 +114,7 @@ export default function VsKrispCallContent() {
               <span className="text-center">
                 {typeof row.growthdialer === "boolean" ? (
                   row.growthdialer ? (
-                    <CheckCircle className="w-5 h-5 text-green-500 mx-auto" />
+                    <CheckCircle className="w-5 h-5 text-primary mx-auto" />
                   ) : (
                     <XCircle className="w-5 h-5 text-muted-foreground mx-auto" />
                   )
@@ -125,7 +125,7 @@ export default function VsKrispCallContent() {
               <span className="text-center">
                 {typeof row.competitor === "boolean" ? (
                   row.competitor ? (
-                    <CheckCircle className="w-5 h-5 text-green-500 mx-auto" />
+                    <CheckCircle className="w-5 h-5 text-primary mx-auto" />
                   ) : (
                     <XCircle className="w-5 h-5 text-muted-foreground mx-auto" />
                   )
@@ -197,7 +197,7 @@ export default function VsKrispCallContent() {
           <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
             {["No credit card required", "14-day free trial", "Number porting supported"].map((item) => (
               <span key={item} className="flex items-center gap-1">
-                <CheckCircle className="w-4 h-4 text-green-500" /> {item}
+                <CheckCircle className="w-4 h-4 text-primary" /> {item}
               </span>
             ))}
           </div>

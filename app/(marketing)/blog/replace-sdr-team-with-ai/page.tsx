@@ -42,14 +42,14 @@ export default function ReplaceSDRTeamWithAI() {
   const wordCount = 4500;
 
   return (
-    <article className="pt-24 pb-16 bg-black text-white">
+    <article className="pt-24 pb-16 bg-background text-foreground">
       {/* Breadcrumb */}
-      <nav className="max-w-4xl mx-auto px-4 mb-8 text-sm text-gray-400">
-        <Link href="/" className="hover:text-[#16a34a]">Home</Link>
+      <nav className="max-w-4xl mx-auto px-4 mb-8 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-primary">Home</Link>
         <span className="mx-2">›</span>
-        <Link href="/blog" className="hover:text-[#16a34a]">Blog</Link>
+        <Link href="/blog" className="hover:text-primary">Blog</Link>
         <span className="mx-2">›</span>
-        <span className="text-gray-300">Replace Your SDR Team with AI</span>
+        <span className="text-foreground/80">Replace Your SDR Team with AI</span>
       </nav>
 
       <div className="max-w-4xl mx-auto px-4">
@@ -57,10 +57,10 @@ export default function ReplaceSDRTeamWithAI() {
         <div className="mb-12">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
             How to Replace Your SDR Team with AI in 2026
-            <span className="block text-[#16a34a]">(Complete Guide)</span>
+            <span className="block text-primary">(Complete Guide)</span>
           </h1>
           
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-gray-400 mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-muted-foreground mb-8">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span>{readingTime} min read</span>
@@ -71,57 +71,57 @@ export default function ReplaceSDRTeamWithAI() {
             <span>April 9, 2026</span>
           </div>
 
-          <p className="text-xl text-gray-300 leading-relaxed mb-6">
+          <p className="text-xl text-foreground/80 leading-relaxed mb-6">
             The SDR model is broken. A human making $50K/year, reaching 40-60 people per day, ramp time of 6 months, and 15% turnover. Compare that to an AI agent making $200/month, reaching 500+ people per day, fully productive in 2 weeks, and 100% reliability. This guide walks through the exact transition process.
           </p>
         </div>
 
         {/* Stats Bar */}
-        <div className="grid grid-cols-3 gap-4 mb-12 bg-gradient-to-r from-[#16a34a]/10 to-transparent border border-[#16a34a]/30 rounded-lg p-6">
+        <div className="grid grid-cols-3 gap-4 mb-12 bg-gradient-to-r from-primary/10 to-transparent border border-primary/30 rounded-lg p-6">
           <div>
-            <div className="text-3xl font-bold text-[#16a34a] mb-2">68%</div>
-            <p className="text-sm text-gray-400">of B2B sales teams are replacing SDRs with AI</p>
+            <div className="text-3xl font-bold text-primary mb-2">68%</div>
+            <p className="text-sm text-muted-foreground">of B2B sales teams are replacing SDRs with AI</p>
           </div>
           <div>
-            <div className="text-3xl font-bold text-[#16a34a] mb-2">$285K</div>
-            <p className="text-sm text-gray-400">Average annual savings per SDR replaced</p>
+            <div className="text-3xl font-bold text-primary mb-2">$285K</div>
+            <p className="text-sm text-muted-foreground">Average annual savings per SDR replaced</p>
           </div>
           <div>
-            <div className="text-3xl font-bold text-[#16a34a] mb-2">73%</div>
-            <p className="text-sm text-gray-400">Reduction in time-to-qualified-lead</p>
+            <div className="text-3xl font-bold text-primary mb-2">73%</div>
+            <p className="text-sm text-muted-foreground">Reduction in time-to-qualified-lead</p>
           </div>
         </div>
 
         {/* Key Takeaways */}
-        <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-8 mb-12">
-          <h2 className="text-2xl font-bold text-[#16a34a] mb-4">Key Takeaways</h2>
+        <div className="bg-primary/10 border border-primary/30 rounded-lg p-8 mb-12">
+          <h2 className="text-2xl font-bold text-primary mb-4">Key Takeaways</h2>
           <ul className="space-y-3">
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <span><strong>Full replacement</strong> is possible for 60-80% of your SDR workload (initial outreach, qualification, meeting booking)</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <span><strong>Cost savings</strong> are 70-85% vs hiring an SDR ($200/month vs $50K annually)</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <span><strong>Implementation</strong> takes 4-8 weeks if you have good sales processes and CRM hygiene</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <span><strong>Your best SDRs</strong> will be promoted to AE roles or strategic account responsibility, not fired</span>
             </li>
           </ul>
         </div>
 
         {/* Table of Contents */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8 mb-12">
+        <div className="bg-muted/50 border border-border rounded-lg p-8 mb-12">
           <h2 className="text-2xl font-bold mb-6">Table of Contents</h2>
           <ul className="space-y-2">
             {tableOfContents.map((item) => (
               <li key={item.id} className={item.level === 3 ? "ml-6" : ""}>
-                <a href={`#${item.id}`} className="text-gray-300 hover:text-[#16a34a] transition-colors flex items-center gap-2">
+                <a href={`#${item.id}`} className="text-foreground/80 hover:text-primary transition-colors flex items-center gap-2">
                   <ChevronRight className="w-4 h-4" />
                   {item.title}
                 </a>
@@ -134,7 +134,7 @@ export default function ReplaceSDRTeamWithAI() {
         <section id="why-broken" className="mb-12">
           <h2 className="text-3xl font-bold mb-6">Why the Traditional SDR Model Is Failing in 2026</h2>
           
-          <p className="text-gray-300 leading-relaxed mb-6">
+          <p className="text-foreground/80 leading-relaxed mb-6">
             The modern SDR job description hasn't meaningfully changed since 2010. Make calls, send emails, qualify leads, book meetings. Repeat. But the economics have changed dramatically.
           </p>
 
@@ -143,7 +143,7 @@ export default function ReplaceSDRTeamWithAI() {
           <div className="overflow-x-auto mb-8">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-700 bg-gray-900/50">
+                <tr className="border-b border-border bg-gray-900/50">
                   <th className="text-left p-4 font-bold">Expense</th>
                   <th className="text-right p-4 font-bold">Annual Cost</th>
                   <th className="text-right p-4 font-bold">Notes</th>
@@ -162,32 +162,32 @@ export default function ReplaceSDRTeamWithAI() {
                   { item: "Turnover replacement costs", cost: "$4,800", note: "10-15% turnover X recruiting" },
                   { item: "Manager oversight (30%)", cost: "$15,000", note: "1-hour weekly coaching per rep" },
                 ].map((row, idx) => (
-                  <tr key={row.item} className={idx % 2 === 0 ? "bg-gray-900/30 border-b border-gray-800" : "border-b border-gray-800"}>
+                  <tr key={row.item} className={idx % 2 === 0 ? "bg-muted/30 border-b border-border" : "border-b border-border"}>
                     <td className="p-4">{row.item}</td>
                     <td className="text-right p-4 font-semibold">{row.cost}</td>
-                    <td className="text-right p-4 text-gray-400 text-xs">{row.note}</td>
+                    <td className="text-right p-4 text-muted-foreground text-xs">{row.note}</td>
                   </tr>
                 ))}
-                <tr className="bg-[#16a34a]/10 border-t-2 border-[#16a34a]">
+                <tr className="bg-primary/10 border-t-2 border-primary">
                   <td className="p-4 font-bold">Total Annual Cost</td>
-                  <td className="text-right p-4 font-bold text-[#16a34a]">$88,950</td>
+                  <td className="text-right p-4 font-bold text-primary">$88,950</td>
                   <td className="text-right p-4"></td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <p className="text-gray-300 leading-relaxed mb-6">
+          <p className="text-foreground/80 leading-relaxed mb-6">
             So one fully-loaded SDR costs you ~$89K per year. Productivity metrics: most reach 50-70 people per day, with 4-6 month ramp time. After ramp, they book 6-12 qualified meetings per month.
           </p>
 
           <h3 className="text-2xl font-bold mb-6">The AI Agent Alternative</h3>
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-6">
-              <h3 className="font-bold text-[#16a34a] mb-4">Traditional SDR Annual Cost</h3>
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-6">
+              <h3 className="font-bold text-primary mb-4">Traditional SDR Annual Cost</h3>
               <div className="text-3xl font-bold mb-2">$88,950</div>
-              <ul className="space-y-2 text-sm text-gray-300">
+              <ul className="space-y-2 text-sm text-foreground/80">
                 <li>• 6-month ramp time</li>
                 <li>• 50-70 dials/day max</li>
                 <li>• 15% annual turnover</li>
@@ -196,10 +196,10 @@ export default function ReplaceSDRTeamWithAI() {
               </ul>
             </div>
             
-            <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6">
+            <div className="bg-muted/50 border border-border rounded-lg p-6">
               <h3 className="font-bold text-white mb-4">AI Agent Annual Cost</h3>
-              <div className="text-3xl font-bold text-[#16a34a] mb-2">$2,400</div>
-              <ul className="space-y-2 text-sm text-gray-300">
+              <div className="text-3xl font-bold text-primary mb-2">$2,400</div>
+              <ul className="space-y-2 text-sm text-foreground/80">
                 <li>• 2-week ramp time</li>
                 <li>• 500+ dials/day continuously</li>
                 <li>• 100% uptime (24/7)</li>
@@ -211,7 +211,7 @@ export default function ReplaceSDRTeamWithAI() {
 
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-6">
             <h3 className="font-bold text-yellow-400 mb-2">⚠️ The Honest Truth</h3>
-            <p className="text-gray-300">These numbers are real, but they don't capture everything. An SDR brings contextual thinking, relationship building, and decision-making that AI still struggles with. The best approach isn't pure replacement — it's strategic replacement focused on high-volume objection handling and meeting booking.</p>
+            <p className="text-foreground/80">These numbers are real, but they don't capture everything. An SDR brings contextual thinking, relationship building, and decision-making that AI still struggles with. The best approach isn't pure replacement — it's strategic replacement focused on high-volume objection handling and meeting booking.</p>
           </div>
         </section>
 
@@ -219,14 +219,14 @@ export default function ReplaceSDRTeamWithAI() {
         <section id="what-ai-can" className="mb-12">
           <h2 className="text-3xl font-bold mb-6">What AI Sales Agents Can (and Cannot) Do</h2>
           
-          <p className="text-gray-300 leading-relaxed mb-8">
+          <p className="text-foreground/80 leading-relaxed mb-8">
             The key to successful AI SDR replacement is being completely honest about what AI can and cannot do. Here's the breakdown:
           </p>
 
           <div className="overflow-x-auto mb-8">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-700 bg-gray-900/50">
+                <tr className="border-b border-border bg-gray-900/50">
                   <th className="text-left p-4 font-bold">Task</th>
                   <th className="text-center p-4 font-bold">AI Capability</th>
                   <th className="text-center p-4 font-bold">Quality Level</th>
@@ -244,20 +244,20 @@ export default function ReplaceSDRTeamWithAI() {
                   { task: "Handling hostile prospects", cap: "◐ Limited", quality: "35%", note: "Often escalates to human" },
                   { task: "Industry expertise (technical)", cap: "◐ Limited", quality: "55%", note: "Works well with technical documentation" },
                 ].map((row, idx) => (
-                  <tr key={row.task} className={idx % 2 === 0 ? "bg-gray-900/30 border-b border-gray-800" : "border-b border-gray-800"}>
+                  <tr key={row.task} className={idx % 2 === 0 ? "bg-muted/30 border-b border-border" : "border-b border-border"}>
                     <td className="p-4">{row.task}</td>
                     <td className="text-center p-4 font-semibold">{row.cap}</td>
                     <td className="text-center p-4">{row.quality}</td>
-                    <td className="p-4 text-gray-400 text-xs">{row.note}</td>
+                    <td className="p-4 text-muted-foreground text-xs">{row.note}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-6">
-            <h3 className="font-bold text-[#16a34a] mb-2">💡 The 80/20 Rule</h3>
-            <p className="text-gray-300">AI excels at the 80% of work that's repetitive, high-volume, and rule-based: making calls, handling standard objections, booking meetings. It struggles with the 20% that requires contextual thinking and relationship skills. Focus AI on the 80%, keep humans for the 20%.</p>
+          <div className="bg-primary/10 border border-primary/30 rounded-lg p-6">
+            <h3 className="font-bold text-primary mb-2">💡 The 80/20 Rule</h3>
+            <p className="text-foreground/80">AI excels at the 80% of work that's repetitive, high-volume, and rule-based: making calls, handling standard objections, booking meetings. It struggles with the 20% that requires contextual thinking and relationship skills. Focus AI on the 80%, keep humans for the 20%.</p>
           </div>
         </section>
 
@@ -265,60 +265,60 @@ export default function ReplaceSDRTeamWithAI() {
         <section id="cost-comparison" className="mb-12">
           <h2 className="text-3xl font-bold mb-6">The Real Cost Comparison: Human SDR vs AI Agent</h2>
           
-          <p className="text-gray-300 leading-relaxed mb-6">
+          <p className="text-foreground/80 leading-relaxed mb-6">
             Let's do a detailed analysis over 3 years, the typical tenure before an SDR either burns out or gets promoted:
           </p>
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8">
+            <div className="bg-muted/50 border border-border rounded-lg p-8">
               <h3 className="text-xl font-bold mb-6">Hiring 1 SDR for 3 Years</h3>
-              <div className="space-y-4 text-gray-300">
+              <div className="space-y-4 text-foreground/80">
                 <div>
-                  <p className="text-sm text-gray-400">Year 1 (Ramp)</p>
+                  <p className="text-sm text-muted-foreground">Year 1 (Ramp)</p>
                   <p className="font-bold">$89K × 1.2 (lower productivity) = <span className="text-yellow-400">$106,800</span></p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">Year 2 (Productive)</p>
+                  <p className="text-sm text-muted-foreground">Year 2 (Productive)</p>
                   <p className="font-bold">$89K × 1.0 = <span className="text-yellow-400">$89,000</span></p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">Year 3 (Trending up)</p>
+                  <p className="text-sm text-muted-foreground">Year 3 (Trending up)</p>
                   <p className="font-bold">$89K × 1.1 (raise + benefits increase) = <span className="text-yellow-400">$97,900</span></p>
                 </div>
-                <div className="border-t border-gray-700 pt-4">
-                  <p className="text-sm text-gray-400 mb-1">3-Year Total</p>
+                <div className="border-t border-border pt-4">
+                  <p className="text-sm text-muted-foreground mb-1">3-Year Total</p>
                   <p className="text-2xl font-bold text-white">$293,700</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-8">
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-8">
               <h3 className="text-xl font-bold mb-6">Using 1 AI Agent for 3 Years</h3>
-              <div className="space-y-4 text-gray-300">
+              <div className="space-y-4 text-foreground/80">
                 <div>
-                  <p className="text-sm text-gray-400">Year 1</p>
-                  <p className="font-bold">$2,400 × 12 = <span className="text-[#16a34a]">$28,800</span></p>
+                  <p className="text-sm text-muted-foreground">Year 1</p>
+                  <p className="font-bold">$2,400 × 12 = <span className="text-primary">$28,800</span></p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">Year 2</p>
-                  <p className="font-bold">$2,400 × 12 = <span className="text-[#16a34a]">$28,800</span></p>
+                  <p className="text-sm text-muted-foreground">Year 2</p>
+                  <p className="font-bold">$2,400 × 12 = <span className="text-primary">$28,800</span></p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">Year 3</p>
-                  <p className="font-bold">$2,400 × 12 = <span className="text-[#16a34a]">$28,800</span></p>
+                  <p className="text-sm text-muted-foreground">Year 3</p>
+                  <p className="font-bold">$2,400 × 12 = <span className="text-primary">$28,800</span></p>
                 </div>
-                <div className="border-t border-[#16a34a] pt-4">
-                  <p className="text-sm text-gray-400 mb-1">3-Year Total</p>
-                  <p className="text-2xl font-bold text-[#16a34a]">$86,400</p>
+                <div className="border-t border-primary pt-4">
+                  <p className="text-sm text-muted-foreground mb-1">3-Year Total</p>
+                  <p className="text-2xl font-bold text-primary">$86,400</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-[#16a34a]/10 to-transparent border border-[#16a34a]/30 rounded-lg p-8 text-center">
-            <p className="text-gray-300 mb-2">3-Year Savings</p>
-            <p className="text-5xl font-bold text-[#16a34a] mb-2">$207,300</p>
-            <p className="text-gray-300">That's $69,100 per year in savings from just one SDR replacement</p>
+          <div className="bg-gradient-to-r from-primary/10 to-transparent border border-primary/30 rounded-lg p-8 text-center">
+            <p className="text-foreground/80 mb-2">3-Year Savings</p>
+            <p className="text-5xl font-bold text-primary mb-2">$207,300</p>
+            <p className="text-foreground/80">That's $69,100 per year in savings from just one SDR replacement</p>
           </div>
 
           <h3 className="text-2xl font-bold mt-8 mb-6">But There Are Hidden Costs to Consider</h3>
@@ -346,17 +346,17 @@ export default function ReplaceSDRTeamWithAI() {
                 detail: "New processes, training, documentation for your team"
               },
             ].map((item) => (
-              <div key={item.cost} className="flex items-start gap-4 bg-gray-900/50 border border-gray-800 rounded-lg p-4">
+              <div key={item.cost} className="flex items-start gap-4 bg-muted/50 border border-border rounded-lg p-4">
                 <div className="flex-1">
                   <h4 className="font-bold">{item.cost}</h4>
-                  <p className="text-sm text-gray-400">{item.detail}</p>
+                  <p className="text-sm text-muted-foreground">{item.detail}</p>
                 </div>
-                <div className="text-[#16a34a] font-bold whitespace-nowrap">{item.amount}</div>
+                <div className="text-primary font-bold whitespace-nowrap">{item.amount}</div>
               </div>
             ))}
           </div>
 
-          <p className="text-gray-300 leading-relaxed mt-6">
+          <p className="text-foreground/80 leading-relaxed mt-6">
             Even accounting for these costs, the net savings over 3 years is still $185K-195K per SDR replaced. That's the real financial case.
           </p>
         </section>
@@ -365,7 +365,7 @@ export default function ReplaceSDRTeamWithAI() {
         <section id="transition-plan" className="mb-12">
           <h2 className="text-3xl font-bold mb-6">Step-by-Step: How to Transition to AI SDRs</h2>
           
-          <p className="text-gray-300 leading-relaxed mb-8">
+          <p className="text-foreground/80 leading-relaxed mb-8">
             This is the critical part. Rushing the transition leads to failure. Here's the proper approach:
           </p>
 
@@ -432,9 +432,9 @@ export default function ReplaceSDRTeamWithAI() {
                 cta: "Output: Monthly dashboard showing AI agent ROI vs SDR costs"
               },
             ].map((section) => (
-              <div key={section.step} className="bg-gray-900/50 border border-gray-800 rounded-lg p-8">
+              <div key={section.step} className="bg-muted/50 border border-border rounded-lg p-8">
                 <div className="flex items-start gap-4 mb-6">
-                  <div className="w-14 h-14 rounded-full bg-[#16a34a] flex items-center justify-center flex-shrink-0 font-bold text-xl">
+                  <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center flex-shrink-0 font-bold text-xl">
                     {section.step}
                   </div>
                   <div>
@@ -444,15 +444,15 @@ export default function ReplaceSDRTeamWithAI() {
 
                 <ul className="space-y-3 mb-6">
                   {section.points.map((point) => (
-                    <li key={point} className="flex items-start gap-3 text-gray-300">
-                      <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
+                    <li key={point} className="flex items-start gap-3 text-foreground/80">
+                      <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                       <span>{point}</span>
                     </li>
                   ))}
                 </ul>
 
-                <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded p-3">
-                  <p className="text-sm text-[#16a34a]">{section.cta}</p>
+                <div className="bg-primary/10 border border-primary/30 rounded p-3">
+                  <p className="text-sm text-primary">{section.cta}</p>
                 </div>
               </div>
             ))}
@@ -463,7 +463,7 @@ export default function ReplaceSDRTeamWithAI() {
         <section id="how-growthdialer" className="mb-12">
           <h2 className="text-3xl font-bold mb-6">How GrowthDialer Replaces Your SDR Team</h2>
           
-          <p className="text-gray-300 leading-relaxed mb-8">
+          <p className="text-foreground/80 leading-relaxed mb-8">
             Our approach combines AI agents with intelligent routing to replace the full SDR workflow:
           </p>
 
@@ -494,15 +494,15 @@ export default function ReplaceSDRTeamWithAI() {
                 description: "Every call transcribed, analyzed for sentiment and outcome. Learn what works and what doesn't."
               },
             ].map((item) => (
-              <div key={item.feature} className="border-l-4 border-[#16a34a] pl-6">
+              <div key={item.feature} className="border-l-4 border-primary pl-6">
                 <h3 className="font-bold text-lg mb-2">{item.feature}</h3>
-                <p className="text-gray-300">{item.description}</p>
+                <p className="text-foreground/80">{item.description}</p>
               </div>
             ))}
           </div>
 
           <Link href="/compare/vs-orum" className="mt-8 inline-block">
-            <Button className="bg-[#16a34a] text-white hover:bg-[#15803d]">
+            <Button className="bg-primary text-white hover:bg-primary/90">
               See How GrowthDialer Compares →
             </Button>
           </Link>
@@ -556,39 +556,39 @@ export default function ReplaceSDRTeamWithAI() {
               timeline: "4 months (longer due to compliance auditing)"
             },
           ].map((case_study, idx) => (
-            <div key={case_study.company} className={`mb-8 p-8 rounded-lg border ${idx % 2 === 0 ? "bg-gray-900/50 border-gray-800" : "bg-[#16a34a]/5 border-[#16a34a]/20"}`}>
+            <div key={case_study.company} className={`mb-8 p-8 rounded-lg border ${idx % 2 === 0 ? "bg-gray-900/50 border-border" : "bg-primary/5 border-primary/20"}`}>
               <h3 className="text-2xl font-bold mb-6">{case_study.company}</h3>
               
               <div className="grid md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <p className="text-sm text-gray-400 mb-1">Before</p>
-                  <p className="text-lg font-semibold text-gray-300">{case_study.team_before}</p>
+                  <p className="text-sm text-muted-foreground mb-1">Before</p>
+                  <p className="text-lg font-semibold text-foreground/80">{case_study.team_before}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 mb-1">Challenge</p>
-                  <p className="text-lg font-semibold text-gray-300">{case_study.challenge}</p>
+                  <p className="text-sm text-muted-foreground mb-1">Challenge</p>
+                  <p className="text-lg font-semibold text-foreground/80">{case_study.challenge}</p>
                 </div>
               </div>
 
-              <div className="mb-6 bg-black/30 p-4 rounded border border-gray-800">
-                <p className="text-sm text-gray-400 mb-1">Transition Strategy</p>
-                <p className="text-gray-300">{case_study.transition}</p>
+              <div className="mb-6 bg-black/30 p-4 rounded border border-border">
+                <p className="text-sm text-muted-foreground mb-1">Transition Strategy</p>
+                <p className="text-foreground/80">{case_study.transition}</p>
               </div>
 
               <div>
-                <p className="text-sm text-gray-400 mb-3">Results (after 90 days)</p>
+                <p className="text-sm text-muted-foreground mb-3">Results (after 90 days)</p>
                 <ul className="space-y-2">
                   {case_study.results.map((result) => (
-                    <li key={result} className="flex items-start gap-3 text-gray-300">
-                      <TrendingUp className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
+                    <li key={result} className="flex items-start gap-3 text-foreground/80">
+                      <TrendingUp className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                       <span>{result}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="mt-6 pt-6 border-t border-gray-800">
-                <p className="text-sm text-gray-400">Implementation Timeline: <span className="text-[#16a34a] font-semibold">{case_study.timeline}</span></p>
+              <div className="mt-6 pt-6 border-t border-border">
+                <p className="text-sm text-muted-foreground">Implementation Timeline: <span className="text-primary font-semibold">{case_study.timeline}</span></p>
               </div>
             </div>
           ))}
@@ -598,15 +598,15 @@ export default function ReplaceSDRTeamWithAI() {
         <section id="human-sdrs" className="mb-12">
           <h2 className="text-3xl font-bold mb-6">What Happens to Your Human SDRs?</h2>
           
-          <p className="text-gray-300 leading-relaxed mb-8">
+          <p className="text-foreground/80 leading-relaxed mb-8">
             This is the question your team is asking. Here's the honest answer: the SDR role is changing, not disappearing. The best SDRs transition to higher-value work.
           </p>
 
           <h3 className="text-2xl font-bold mb-6">The New SDR Role</h3>
 
-          <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8 mb-8">
-            <h4 className="font-bold text-lg mb-4 text-[#16a34a]">What AI Handles (70-80% of work)</h4>
-            <ul className="space-y-2 text-gray-300 mb-6">
+          <div className="bg-muted/50 border border-border rounded-lg p-8 mb-8">
+            <h4 className="font-bold text-lg mb-4 text-primary">What AI Handles (70-80% of work)</h4>
+            <ul className="space-y-2 text-foreground/80 mb-6">
               {[
                 "Cold outbound calling (1000+ calls/month per person)",
                 "Initial lead qualification",
@@ -616,16 +616,16 @@ export default function ReplaceSDRTeamWithAI() {
                 "Basic objection handling"
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <span className="text-[#16a34a]">✓</span>
+                  <span className="text-primary">✓</span>
                   <span>{item}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-8">
-            <h4 className="font-bold text-lg mb-4 text-[#16a34a]">What Humans Handle (20-30% of work)</h4>
-            <ul className="space-y-2 text-gray-300">
+          <div className="bg-primary/10 border border-primary/30 rounded-lg p-8">
+            <h4 className="font-bold text-lg mb-4 text-primary">What Humans Handle (20-30% of work)</h4>
+            <ul className="space-y-2 text-foreground/80">
               {[
                 "Relationship development with warm leads",
                 "Complex deal qualification",
@@ -635,7 +635,7 @@ export default function ReplaceSDRTeamWithAI() {
                 "Account management for expansion opportunities"
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <span className="text-[#16a34a]">✓</span>
+                  <span className="text-primary">✓</span>
                   <span>{item}</span>
                 </li>
               ))}
@@ -662,17 +662,17 @@ export default function ReplaceSDRTeamWithAI() {
                 benefit: "Better fit for their skills, less pressure-driven environment"
               },
             ].map((scenario) => (
-              <div key={scenario.performer} className="border-l-4 border-[#16a34a] pl-6 py-4">
+              <div key={scenario.performer} className="border-l-4 border-primary pl-6 py-4">
                 <h4 className="font-bold mb-1">{scenario.performer}</h4>
-                <p className="text-gray-300 mb-2"><strong>Transition:</strong> {scenario.transition}</p>
-                <p className="text-gray-400 text-sm">{scenario.benefit}</p>
+                <p className="text-foreground/80 mb-2"><strong>Transition:</strong> {scenario.transition}</p>
+                <p className="text-muted-foreground text-sm">{scenario.benefit}</p>
               </div>
             ))}
           </div>
 
-          <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-6 mt-8">
-            <h3 className="font-bold text-[#16a34a] mb-2">💡 Pro Tip</h3>
-            <p className="text-gray-300">The key to smooth transition: communicate early and honestly. Tell your team "We're deploying AI to handle 80% of the grunt work so you can focus on what you're actually good at — building relationships and closing deals." Good SDRs see this as a promotion, not a threat.</p>
+          <div className="bg-primary/10 border border-primary/30 rounded-lg p-6 mt-8">
+            <h3 className="font-bold text-primary mb-2">💡 Pro Tip</h3>
+            <p className="text-foreground/80">The key to smooth transition: communicate early and honestly. Tell your team "We're deploying AI to handle 80% of the grunt work so you can focus on what you're actually good at — building relationships and closing deals." Good SDRs see this as a promotion, not a threat.</p>
           </div>
         </section>
 
@@ -707,26 +707,26 @@ export default function ReplaceSDRTeamWithAI() {
                 answer: "Probably not. 95% of B2B sales follow the same basic pattern: identify prospect, make initial contact, qualify, book meeting. The 5% that's unique is the stuff humans should do anyway. AI handles the 95%, humans focus on the 5% where your real differentiation is."
               },
             ].map((item) => (
-              <div key={item.obj} className="bg-gray-900/50 border border-gray-800 rounded-lg p-6">
+              <div key={item.obj} className="bg-muted/50 border border-border rounded-lg p-6">
                 <h3 className="font-bold text-lg mb-3">{item.obj}</h3>
-                <p className="text-gray-300">{item.answer}</p>
+                <p className="text-foreground/80">{item.answer}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* CTA Section */}
-        <div className="bg-gradient-to-r from-[#16a34a]/10 to-transparent border border-[#16a34a]/30 rounded-lg p-8 mb-12 text-center">
+        <div className="bg-gradient-to-r from-primary/10 to-transparent border border-primary/30 rounded-lg p-8 mb-12 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Replace Your SDR Team?</h2>
-          <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
+          <p className="text-foreground/80 mb-6 max-w-2xl mx-auto">
             Start with a pilot: deploy one AI agent on your coldest, most structured lead list for 2 weeks. Measure the results yourself.
           </p>
           <Link href="https://app.growthdialer.com/signup">
-            <Button size="lg" className="bg-[#16a34a] text-white hover:bg-[#15803d]">
+            <Button size="lg" className="bg-primary text-white hover:bg-primary/90">
               Start Pilot Program Free <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
-          <p className="text-sm text-gray-400 mt-4">14-day free trial. Full feature access. See the impact before committing.</p>
+          <p className="text-sm text-muted-foreground mt-4">14-day free trial. Full feature access. See the impact before committing.</p>
         </div>
 
         {/* FAQ */}
@@ -755,26 +755,26 @@ export default function ReplaceSDRTeamWithAI() {
                 a: "GrowthDialer includes TCPA compliance tools, GDPR data handling, and state-specific restrictions. But verify with your legal team — we provide the tools, you own compliance responsibility."
               },
             ].map((item) => (
-              <div key={item.q} className="border-l-4 border-[#16a34a] pl-6 py-4">
+              <div key={item.q} className="border-l-4 border-primary pl-6 py-4">
                 <h3 className="font-bold text-lg mb-2">{item.q}</h3>
-                <p className="text-gray-300">{item.a}</p>
+                <p className="text-foreground/80">{item.a}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* Author Bio */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8 mb-12">
+        <div className="bg-muted/50 border border-border rounded-lg p-8 mb-12">
           <div className="flex flex-col sm:flex-row items-start gap-6">
-            <div className="w-20 h-20 rounded-full bg-[#16a34a]/20 flex items-center justify-center text-2xl flex-shrink-0">
+            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-2xl flex-shrink-0">
               👤
             </div>
             <div>
               <h3 className="font-bold text-lg mb-1">Written by GrowthDialer Sales Team</h3>
-              <p className="text-gray-400 mb-4">
+              <p className="text-muted-foreground mb-4">
                 We've helped 200+ companies make the transition from human SDRs to AI agents. This guide captures real data, honest objections, and practical implementation steps from 18+ months of working with sales teams across industries.
               </p>
-              <Link href="/about" className="text-[#16a34a] hover:text-[#15803d]">Learn more about our team →</Link>
+              <Link href="/about" className="text-primary hover:text-primary/90">Learn more about our team →</Link>
             </div>
           </div>
         </div>
@@ -783,13 +783,13 @@ export default function ReplaceSDRTeamWithAI() {
         <div className="mb-12">
           <h2 className="text-3xl font-bold mb-8">Related Articles</h2>
           <div className="grid md:grid-cols-2 gap-6">
-            <Link href="/blog/best-ai-sales-dialer-2026" className="border border-gray-800 rounded-lg p-6 hover:border-[#16a34a] transition-colors">
+            <Link href="/blog/best-ai-sales-dialer-2026" className="border border-border rounded-lg p-6 hover:border-primary transition-colors">
               <h3 className="font-bold text-lg mb-2">7 Best AI Sales Dialers in 2026: Honest Reviews & Comparisons</h3>
-              <p className="text-gray-400 text-sm">Find the right platform for your specific needs.</p>
+              <p className="text-muted-foreground text-sm">Find the right platform for your specific needs.</p>
             </Link>
-            <Link href="/blog/how-parallel-dialing-works" className="border border-gray-800 rounded-lg p-6 hover:border-[#16a34a] transition-colors">
+            <Link href="/blog/how-parallel-dialing-works" className="border border-border rounded-lg p-6 hover:border-primary transition-colors">
               <h3 className="font-bold text-lg mb-2">How Parallel Dialing 10x's Your Sales Connect Rate in 2026</h3>
-              <p className="text-gray-400 text-sm">Understand the technology that makes AI SDRs possible.</p>
+              <p className="text-muted-foreground text-sm">Understand the technology that makes AI SDRs possible.</p>
             </Link>
           </div>
         </div>
@@ -797,12 +797,12 @@ export default function ReplaceSDRTeamWithAI() {
         {/* Final CTA */}
         <div className="text-center">
           <h2 className="text-3xl font-bold mb-4">The Future of Sales Development Is AI</h2>
-          <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
+          <p className="text-foreground/80 mb-8 max-w-2xl mx-auto">
             The question isn't whether to replace SDRs with AI. It's when — and whether you'll do it before your competitors do.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="https://app.growthdialer.com/signup">
-              <Button size="lg" className="bg-[#16a34a] text-white hover:bg-[#15803d]">
+              <Button size="lg" className="bg-primary text-white hover:bg-primary/90">
                 Start Free Trial <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>

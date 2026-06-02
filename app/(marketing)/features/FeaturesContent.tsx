@@ -74,24 +74,24 @@ export default function FeaturesContent() {
       {/* Hero */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#06B6D4]/10 text-[#06B6D4] border border-[#06B6D4]/30 mb-4">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/30 mb-4">
             Features
           </span>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-[#F5F5F7]">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
             Everything you need to dominate B2B sales
           </h1>
-          <p className="text-xl text-zinc-400 mb-8">
+          <p className="text-xl text-muted-foreground mb-8">
             GrowthDialer combines AI-powered dialing, real-time coaching, and team collaboration
             to help sales teams book 3x more meetings and close more deals.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup">
-              <Button size="lg" className="bg-[#06B6D4] text-[#08080A] hover:bg-[#06B6D4]/80 font-semibold">
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/80 font-semibold">
                 Start free trial <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/pricing">
-              <Button size="lg" variant="outline" className="border-white/10 text-zinc-300 hover:bg-white/5">
+              <Button size="lg" variant="outline" className="border-white/10 text-muted-foreground/90 hover:bg-white/5">
                 View pricing
               </Button>
             </Link>
@@ -111,11 +111,11 @@ export default function FeaturesContent() {
               transition={{ delay: index * 0.1 }}
               className="text-center"
             >
-              <div className="w-12 h-12 bg-[#06B6D4]/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <stat.icon className="w-6 h-6 text-[#06B6D4]" />
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <stat.icon className="w-6 h-6 text-primary" />
               </div>
-              <div className="text-3xl font-bold text-[#06B6D4] mb-2">{stat.value}</div>
-              <div className="text-sm text-zinc-400">{stat.label}</div>
+              <div className="text-3xl font-bold text-primary mb-2">{stat.value}</div>
+              <div className="text-sm text-muted-foreground">{stat.label}</div>
             </motion.div>
           ))}
         </div>
@@ -137,35 +137,35 @@ export default function FeaturesContent() {
             >
               <div className={index % 2 === 1 ? "lg:col-start-2" : ""}>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-[#06B6D4]/10 rounded-lg flex items-center justify-center">
-                    <feature.icon className="w-6 h-6 text-[#06B6D4]" />
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <feature.icon className="w-6 h-6 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-bold text-[#F5F5F7]">{feature.title}</h3>
+                  <h3 className="text-2xl font-bold text-foreground">{feature.title}</h3>
                 </div>
-                <p className="text-lg text-zinc-400 mb-6">{feature.description}</p>
+                <p className="text-lg text-muted-foreground mb-6">{feature.description}</p>
 
                 <div className="mb-6">
-                  <h4 className="font-semibold mb-3 text-[#F5F5F7]">Key Benefits:</h4>
+                  <h4 className="font-semibold mb-3 text-foreground">Key Benefits:</h4>
                   <ul className="space-y-2">
                     {feature.benefits.map((benefit, i) => (
                       <li key={i} className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-[#06B6D4] flex-shrink-0" />
-                        <span className="text-zinc-300">{benefit}</span>
+                        <CheckCircle className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span className="text-muted-foreground/90">{benefit}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
                 <div className="bg-white/[0.02] border border-white/[0.08] p-4 rounded-lg">
-                  <h4 className="font-semibold mb-2 text-[#F5F5F7]">Use Case:</h4>
-                  <p className="text-sm text-zinc-400">{feature.useCase}</p>
+                  <h4 className="font-semibold mb-2 text-foreground">Use Case:</h4>
+                  <p className="text-sm text-muted-foreground">{feature.useCase}</p>
                 </div>
               </div>
 
               <div className={index % 2 === 1 ? "lg:col-start-1 lg:row-start-1" : ""}>
                 <div className="bg-white/[0.02] border border-white/[0.08] rounded-xl p-8 text-center">
-                  <feature.icon className="w-16 h-16 text-zinc-500 mx-auto mb-4" />
-                  <p className="text-zinc-500">Feature screenshot/mockup</p>
+                  <feature.icon className="w-16 h-16 text-muted-foreground/70 mx-auto mb-4" />
+                  <p className="text-muted-foreground/70">Feature screenshot/mockup</p>
                 </div>
               </div>
             </motion.div>
@@ -176,12 +176,12 @@ export default function FeaturesContent() {
       {/* CTA */}
       <section className="container mx-auto px-4 py-16 text-center">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold mb-4 text-[#F5F5F7]">Ready to transform your sales process?</h2>
-          <p className="text-lg text-zinc-400 mb-8">
+          <h2 className="text-3xl font-bold mb-4 text-foreground">Ready to transform your sales process?</h2>
+          <p className="text-lg text-muted-foreground mb-8">
             Join 2,400+ sales teams who&apos;ve increased their connect rates by 41% and booked 3x more meetings.
           </p>
           <Link href="/signup">
-            <Button size="lg" className="bg-[#06B6D4] text-[#08080A] hover:bg-[#06B6D4]/80 font-semibold">
+            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/80 font-semibold">
               Start free trial <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>

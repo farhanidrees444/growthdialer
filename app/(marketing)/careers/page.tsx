@@ -80,23 +80,23 @@ export default function CareersPage() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#06B6D4]/10 text-[#06B6D4] border border-[#06B6D4]/30 mb-4">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/30 mb-4">
             We&apos;re Hiring
           </span>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-[#F5F5F7]">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
             Join Our Mission
           </h1>
-          <p className="text-xl text-zinc-400 mb-8">
+          <p className="text-xl text-muted-foreground mb-8">
             Help us revolutionize B2B sales by building the most advanced AI dialer platform in the world.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="mailto:careers@growthdialer.com">
-              <Button size="lg" className="bg-[#06B6D4] text-[#08080A] hover:bg-[#06B6D4]/80 font-semibold">
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/80 font-semibold">
                 View Open Positions <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/about">
-              <Button size="lg" variant="outline" className="border-white/10 text-zinc-300 hover:bg-white/5">
+              <Button size="lg" variant="outline" className="border-white/10 text-muted-foreground/90 hover:bg-white/5">
                 Learn About Us
               </Button>
             </Link>
@@ -107,19 +107,19 @@ export default function CareersPage() {
       {/* Open Positions */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4 text-[#F5F5F7]">Open Positions</h2>
-          <p className="text-lg text-zinc-400">
+          <h2 className="text-3xl font-bold mb-4 text-foreground">Open Positions</h2>
+          <p className="text-lg text-muted-foreground">
             Join our growing team of innovators
           </p>
         </div>
         <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {openPositions.map((position, index) => (
-            <Card key={index} className="border-white/[0.08] bg-white/[0.02] hover:border-[#06B6D4]/30 transition-colors">
+            <Card key={index} className="border-white/[0.08] bg-white/[0.02] hover:border-primary/30 transition-colors">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-lg mb-1 text-[#F5F5F7]">{position.title}</CardTitle>
-                    <div className="flex items-center gap-2 text-sm text-zinc-400">
+                    <CardTitle className="text-lg mb-1 text-foreground">{position.title}</CardTitle>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <span>{position.department}</span>
                       <span>•</span>
                       <span>{position.location}</span>
@@ -130,8 +130,8 @@ export default function CareersPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-zinc-400 text-sm mb-4">{position.description}</p>
-                <Button variant="outline" size="sm" className="w-full border-white/10 text-zinc-300 hover:bg-white/5 hover:text-[#06B6D4]">
+                <p className="text-muted-foreground text-sm mb-4">{position.description}</p>
+                <Button variant="outline" size="sm" className="w-full border-white/10 text-muted-foreground/90 hover:bg-white/5 hover:text-primary">
                   Apply Now
                 </Button>
               </CardContent>
@@ -139,12 +139,12 @@ export default function CareersPage() {
           ))}
         </div>
         <div className="text-center mt-8">
-          <p className="text-zinc-400 mb-4">
+          <p className="text-muted-foreground mb-4">
             Don&apos;t see a perfect fit? We&apos;re always looking for talented people.
           </p>
           <Link
             href="mailto:careers@growthdialer.com"
-            className="text-[#06B6D4] hover:text-[#06B6D4]/80 transition-colors"
+            className="text-primary hover:text-primary/80 transition-colors"
           >
             Send us your resume →
           </Link>
@@ -154,8 +154,8 @@ export default function CareersPage() {
       {/* Perks Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4 text-[#F5F5F7]">Why Join GrowthDialer?</h2>
-          <p className="text-lg text-zinc-400">
+          <h2 className="text-3xl font-bold mb-4 text-foreground">Why Join GrowthDialer?</h2>
+          <p className="text-lg text-muted-foreground">
             Work with amazing people on meaningful projects
           </p>
         </div>
@@ -163,11 +163,11 @@ export default function CareersPage() {
           {perks.map((perk, index) => (
             <Card key={index} className="border-white/[0.08] bg-white/[0.02] text-center">
               <CardContent className="pt-6">
-                <div className="w-12 h-12 rounded-xl bg-[#06B6D4]/10 flex items-center justify-center mx-auto mb-4">
-                  <perk.icon className="w-6 h-6 text-[#06B6D4]" />
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <perk.icon className="w-6 h-6 text-primary" />
                 </div>
-                <h3 className="font-semibold mb-2 text-[#F5F5F7]">{perk.title}</h3>
-                <p className="text-sm text-zinc-400">{perk.description}</p>
+                <h3 className="font-semibold mb-2 text-foreground">{perk.title}</h3>
+                <p className="text-sm text-muted-foreground">{perk.description}</p>
               </CardContent>
             </Card>
           ))}
@@ -176,12 +176,12 @@ export default function CareersPage() {
 
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-16 text-center">
-        <h2 className="text-3xl font-bold mb-4 text-[#F5F5F7]">Ready to Make an Impact?</h2>
-        <p className="text-xl text-zinc-400 mb-8">
+        <h2 className="text-3xl font-bold mb-4 text-foreground">Ready to Make an Impact?</h2>
+        <p className="text-xl text-muted-foreground mb-8">
           Join us in building the future of B2B sales
         </p>
         <Link href="mailto:careers@growthdialer.com">
-          <Button size="lg" className="bg-[#06B6D4] text-[#08080A] hover:bg-[#06B6D4]/80 font-semibold">
+          <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/80 font-semibold">
             Apply for a Position <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </Link>

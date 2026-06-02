@@ -175,7 +175,7 @@ export default function SalesfloorContent() {
                     <ul className="space-y-1">
                       {useCase.metrics.map((metric, i) => (
                         <li key={i} className="flex items-center gap-2 text-sm">
-                          <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <CheckCircle className="w-4 h-4 text-primary flex-shrink-0" />
                           <span>{metric}</span>
                         </li>
                       ))}

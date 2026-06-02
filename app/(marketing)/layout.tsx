@@ -28,7 +28,7 @@ export default function MarketingLayout({
   return (
     <>
       <SmoothScroll />
-      <div className="relative min-h-screen overflow-x-hidden bg-[#08080A] text-[#F5F5F7] antialiased">
+      <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground antialiased">
         <Grain />
         <Nav />
         <main className="relative z-[2] pt-20">{children}</main>

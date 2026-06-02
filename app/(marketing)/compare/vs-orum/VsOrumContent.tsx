@@ -57,24 +57,24 @@ export default function VsOrumContent() {
       {/* Hero */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#06B6D4]/10 text-[#06B6D4] border border-[#06B6D4]/30 mb-4">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/30 mb-4">
             GrowthDialer vs Orum
           </span>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-[#F5F5F7]">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
             Orum-level AI.
-            <span className="text-[#06B6D4]"> 88% lower cost.</span>
+            <span className="text-primary"> 88% lower cost.</span>
           </h1>
-          <p className="text-xl text-zinc-400 mb-8">
+          <p className="text-xl text-muted-foreground mb-8">
             Orum pioneered AI-powered live dialing. GrowthDialer delivers the same autonomous sales technology starting at $79/seat — not $650.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup">
-              <Button size="lg" className="bg-[#06B6D4] text-[#08080A] hover:bg-[#06B6D4]/80 font-semibold">
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/80 font-semibold">
                 Start free trial <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/pricing">
-              <Button size="lg" variant="outline" className="border-white/10 text-zinc-300 hover:bg-white/5">
+              <Button size="lg" variant="outline" className="border-white/10 text-muted-foreground/90 hover:bg-white/5">
                 See pricing
               </Button>
             </Link>
@@ -90,13 +90,13 @@ export default function VsOrumContent() {
           viewport={{ once: true }}
           className="max-w-2xl mx-auto grid grid-cols-2 gap-4"
         >
-          <div className="bg-[#06B6D4]/10 border border-[#06B6D4]/30 rounded-xl p-6 text-center">
-            <div className="text-4xl font-bold text-[#06B6D4] mb-2">$79</div>
-            <div className="text-sm font-semibold text-[#F5F5F7]">GrowthDialer / seat / mo</div>
+          <div className="bg-primary/10 border border-primary/30 rounded-xl p-6 text-center">
+            <div className="text-4xl font-bold text-primary mb-2">$79</div>
+            <div className="text-sm font-semibold text-foreground">GrowthDialer / seat / mo</div>
           </div>
           <div className="bg-white/[0.02] border border-white/[0.08] rounded-xl p-6 text-center">
-            <div className="text-4xl font-bold text-zinc-500 mb-2">$650+</div>
-            <div className="text-sm text-zinc-500">Orum / seat / mo</div>
+            <div className="text-4xl font-bold text-muted-foreground/70 mb-2">$650+</div>
+            <div className="text-sm text-muted-foreground/70">Orum / seat / mo</div>
           </div>
         </motion.div>
       </section>
@@ -104,8 +104,8 @@ export default function VsOrumContent() {
       {/* Comparison Table */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4 text-[#F5F5F7]">Feature-by-feature comparison</h2>
-          <p className="text-zinc-400">Comparable features. Dramatically different price.</p>
+          <h2 className="text-3xl font-bold mb-4 text-foreground">Feature-by-feature comparison</h2>
+          <p className="text-muted-foreground">Comparable features. Dramatically different price.</p>
         </div>
 
         <motion.div
@@ -115,9 +115,9 @@ export default function VsOrumContent() {
           className="max-w-3xl mx-auto overflow-hidden rounded-xl border border-white/[0.08]"
         >
           <div className="grid grid-cols-3 bg-white/[0.02] px-6 py-4 text-sm font-semibold">
-            <span className="text-[#F5F5F7]">Feature</span>
-            <span className="text-center text-[#06B6D4]">GrowthDialer</span>
-            <span className="text-center text-zinc-500">Orum</span>
+            <span className="text-foreground">Feature</span>
+            <span className="text-center text-primary">GrowthDialer</span>
+            <span className="text-center text-muted-foreground/70">Orum</span>
           </div>
           {comparisonRows.map((row, index) => (
             <motion.div
@@ -128,27 +128,27 @@ export default function VsOrumContent() {
               transition={{ delay: index * 0.05 }}
               className="grid grid-cols-3 px-6 py-4 border-t border-white/[0.06] items-center"
             >
-              <span className="text-sm text-zinc-300">{row.feature}</span>
+              <span className="text-sm text-muted-foreground/90">{row.feature}</span>
               <span className="text-center">
                 {typeof row.growthdialer === "boolean" ? (
                   row.growthdialer ? (
-                    <CheckCircle className="w-5 h-5 text-[#06B6D4] mx-auto" />
+                    <CheckCircle className="w-5 h-5 text-primary mx-auto" />
                   ) : (
-                    <XCircle className="w-5 h-5 text-zinc-600 mx-auto" />
+                    <XCircle className="w-5 h-5 text-muted-foreground/60 mx-auto" />
                   )
                 ) : (
-                  <span className="font-bold text-[#06B6D4]">{row.growthdialer}</span>
+                  <span className="font-bold text-primary">{row.growthdialer}</span>
                 )}
               </span>
               <span className="text-center">
                 {typeof row.competitor === "boolean" ? (
                   row.competitor ? (
-                    <CheckCircle className="w-5 h-5 text-[#06B6D4] mx-auto" />
+                    <CheckCircle className="w-5 h-5 text-primary mx-auto" />
                   ) : (
-                    <XCircle className="w-5 h-5 text-zinc-600 mx-auto" />
+                    <XCircle className="w-5 h-5 text-muted-foreground/60 mx-auto" />
                   )
                 ) : (
-                  <span className="text-zinc-500">{row.competitor}</span>
+                  <span className="text-muted-foreground/70">{row.competitor}</span>
                 )}
               </span>
             </motion.div>
@@ -159,7 +159,7 @@ export default function VsOrumContent() {
       {/* Reasons */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4 text-[#F5F5F7]">Why teams choose GrowthDialer over Orum</h2>
+          <h2 className="text-3xl font-bold mb-4 text-foreground">Why teams choose GrowthDialer over Orum</h2>
         </div>
         <div className="grid md:grid-cols-2 gap-8">
           {reasons.map((reason, index) => (
@@ -172,13 +172,13 @@ export default function VsOrumContent() {
             >
               <Card className="h-full border-white/[0.08] bg-white/[0.02]">
                 <CardHeader>
-                  <div className="w-12 h-12 bg-[#06B6D4]/10 rounded-lg flex items-center justify-center mb-4">
-                    <reason.icon className="w-6 h-6 text-[#06B6D4]" />
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <reason.icon className="w-6 h-6 text-primary" />
                   </div>
-                  <CardTitle className="text-xl text-[#F5F5F7]">{reason.title}</CardTitle>
+                  <CardTitle className="text-xl text-foreground">{reason.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-zinc-400">{reason.description}</p>
+                  <p className="text-muted-foreground">{reason.description}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -194,28 +194,28 @@ export default function VsOrumContent() {
           viewport={{ once: true }}
           className="max-w-3xl mx-auto bg-white/[0.02] border border-white/[0.08] rounded-2xl p-10 text-center"
         >
-          <p className="text-xl italic mb-6 text-zinc-300">&ldquo;{testimonial.quote}&rdquo;</p>
-          <p className="font-semibold text-[#F5F5F7]">{testimonial.author}</p>
-          <p className="text-sm text-zinc-400">{testimonial.role}</p>
+          <p className="text-xl italic mb-6 text-muted-foreground/90">&ldquo;{testimonial.quote}&rdquo;</p>
+          <p className="font-semibold text-foreground">{testimonial.author}</p>
+          <p className="text-sm text-muted-foreground">{testimonial.role}</p>
         </motion.div>
       </section>
 
       {/* CTA */}
       <section className="container mx-auto px-4 py-16 text-center">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold mb-4 text-[#F5F5F7]">Cut your dialing costs by 88%</h2>
-          <p className="text-lg text-zinc-400 mb-8">
+          <h2 className="text-3xl font-bold mb-4 text-foreground">Cut your dialing costs by 88%</h2>
+          <p className="text-lg text-muted-foreground mb-8">
             Start your free 14-day trial and see the same AI results at a fraction of Orum&apos;s price.
           </p>
           <Link href="/signup">
-            <Button size="lg" className="bg-[#06B6D4] text-[#08080A] hover:bg-[#06B6D4]/80 font-semibold">
+            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/80 font-semibold">
               Start free trial <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
-          <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-zinc-400">
+          <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
             {["No credit card required", "14-day free trial", "Cancel anytime"].map((item) => (
               <span key={item} className="flex items-center gap-1">
-                <CheckCircle className="w-4 h-4 text-[#06B6D4]" /> {item}
+                <CheckCircle className="w-4 h-4 text-primary" /> {item}
               </span>
             ))}
           </div>
