@@ -158,7 +158,7 @@ export default function CurrentLeadCard({
   useEffect(() => { setLocalNotes(notes); }, [notes]);
 
   const isIdle = callState.status === 'idle';
-  const isActive = ['connecting'ringing'connected'].includes(callState.status);
+  const isActive = ['connecting'r, 'inging'connected'].includes(callState.status);
   const isRinging = callState.status === 'connecting' || callState.status === 'ringing';
   const isConnected = callState.status === 'connected';
   const isDisconnected = callState.status === 'disconnected';

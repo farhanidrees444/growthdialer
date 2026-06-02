@@ -365,7 +365,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                           return `<h2 id="${id}" class="text-2xl font-bold mt-8 mb-4">${text}</h2>`;
                         }
                         if (line.startsWith('**') && line.endsWith('**')) {
-                          return `<p class="font-bold text-lg mt-6 mb-2">${line.replace(/\*\*/g')}</p>`;
+                          return `<p class="font-bold text-lg mt-6 mb-2">${line.replace(/\*\*/g, '')}</p>`;
                         }
                         if (line.startsWith('- ')) {
                           return `<li class="ml-4">${line.replace('- '')}</li>`;

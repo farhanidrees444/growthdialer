@@ -151,7 +151,7 @@ function BorderBeamCard({ children }: { children: React.ReactNode }) {
         className="absolute inset-0 rounded-2xl"
         style={{
           background:
-            'conic-gradient(from 0deg, transparent 0deg, transparent 300deg, hsl(258,90%,66%) 340deg, hsl(186,100%,42%) 360deg)'',
+            'conic-gradient(from 0deg, transparent 0deg, transparent 300deg, hsl(258,90%,66%) 340deg, hsl(186,100%,42%) 360deg)',
         }}
         animate={{ rotate: 360 }}
         transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}

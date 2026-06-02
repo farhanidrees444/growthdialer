@@ -53,7 +53,7 @@ export function UserMenu() {
       >
         <div
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
-          style={{ background: 'linear-gradient(135deg, hsl(258,90%,66%), hsl(186,100%,42%))'' }}
+          style={{ background: 'linear-gradient(135deg, hsl(258,90%,66%), hsl(186,100%,42%))' }}
         >
           {avatarInitials}
         </div>

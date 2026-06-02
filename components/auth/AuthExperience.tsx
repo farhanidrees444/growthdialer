@@ -162,7 +162,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
         <div
           aria-hidden
           className="pointer-events-none absolute left-0 top-0 h-[480px] w-[480px] -translate-x-1/3 -translate-y-1/3 rounded-full opacity-[0.10] blur-[120px]"
-          style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)'' }}
+          style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)' }}
         />
         <Link href="https://growthdialer.com" className="relative z-10 inline-flex items-center gap-2.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03]">

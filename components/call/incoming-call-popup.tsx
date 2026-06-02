@@ -25,7 +25,7 @@ interface InboundCall {
 // ── Phone formatting helpers ────────────────────────────────────────────────
 
 function getCountryFlag(e164: string): string {
-  const d = e164.replace(/\D/g');
+  const d = e164.replace(/\D/g, '');
   if (d.startsWith('1'))   return '🇺🇸';
   if (d.startsWith('44'))  return '🇬🇧';
   if (d.startsWith('91'))  return '🇮🇳';
@@ -197,7 +197,7 @@ export function IncomingCallPopup({ userId }: Props) {
         (payload) => {
           const row = payload.new as Record<string, unknown>;
           if (row.id !== callIdRef.current) return;
-          if (['missed'completed'rejected'].includes(row.status as string)) {
+          if (['missed'c, 'ompleted'rejected'].includes(row.status as string)) {
             setCall(null);
             stopRingtone();
           }

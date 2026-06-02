@@ -118,7 +118,7 @@ export default function DialerPanel({
   }, [notes]);
 
   const isIdle = callState.status === 'idle';
-  const isActive = ['connecting'ringing'connected'].includes(callState.status);
+  const isActive = ['connecting'r, 'inging'connected'].includes(callState.status);
   const isRinging = callState.status === 'ringing' || callState.status === 'connecting';
   const isConnected = callState.status === 'connected';
   const isDisconnected = callState.status === 'disconnected';

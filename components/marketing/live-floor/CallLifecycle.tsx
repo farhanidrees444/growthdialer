@@ -19,13 +19,13 @@ export function CallLifecycle() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
-    offset: ['start start'end end'],
+    offset: ['start start', 'end end'],
   });
   // Weighted, spring-smoothed progress for the narrative rail
   const progress = useSpring(scrollYProgress, { stiffness: 200, damping: 25 });
   const [stage, setStage] = useState(0);
 
-  useMotionValueEvent(scrollYProgresschange', (v) => {
+  useMotionValueEvent(scrollYProgress, 'change', (v) => {
     // Map 0→1 across the 5 stages with a little headroom at the ends
     const idx = Math.min(STAGES.length - 1, Math.max(0, Math.floor(v * STAGES.length * 0.999)));
     setStage(idx);

@@ -695,7 +695,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
           <span className="text-sm font-semibold text-white">Number Type</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          {(['local'toll_free'mobile'national'] as const).map((t) => {
+          {(['local't, 'oll_free'mobile'national'] as const).map((t) => {
             const supported = selectedCountry.types.includes(t);
             return (
               <button key={t} type="button" disabled={!supported} onClick={() => setType(t)}

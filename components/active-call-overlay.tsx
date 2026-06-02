@@ -577,7 +577,7 @@ export default function ActiveCallOverlay() {
   }, [dragX, dragY]);
 
   // ── Guard ──────────────────────────────────────────────────────────────────
-  const isVisible = ['connecting'ringing'active'held'].includes(callStatus);
+  const isVisible = ['connecting'r, 'inging'active'held'].includes(callStatus);
   // Hide on /dialer when a lead is selected (dialer page has its own LiveCallStage).
   // For manual calls from dialer (no activeLead), show the floating overlay.
   if (pathname?.startsWith('/dialer') && activeLead) return null;

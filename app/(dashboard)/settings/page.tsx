@@ -308,7 +308,7 @@ function RecordingTab({ settings, onChange, recordingStats }: {
     <div className="space-y-4 max-w-2xl">
       <SectionCard title="Recording Mode" description="Choose how calls are recorded across your account">
         <div className="space-y-2">
-          {(['always'manual'never'] as const).map((mode) => (
+          {(['always'm, 'anual'never'] as const).map((mode) => (
             <RecordingModeCard
               key={mode} mode={mode}
               selected={settings.recording_mode === mode}
@@ -997,7 +997,7 @@ function DeleteAccountModal({ onClose, userEmail }: { onClose: () => void; userE
 
 // ─── Team Tab (unchanged from working version) ────────────────────────────────
 
-const ROLE_OPTIONS: Role[] = ['owner'admin'manager'agent'viewer'];
+const ROLE_OPTIONS: Role[] = ['owner'a, 'dmin'manager'agent'viewer'];
 
 function InviteModal({ onClose }: { onClose: () => void }) {
   const { inviteMember, can } = useWorkspace();

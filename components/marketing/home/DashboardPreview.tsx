@@ -21,6 +21,7 @@ function useTicker(start: number, stepMs: number, inc: number, reduce: boolean |
 function fmtClock(s: number) {
   const m = Math.floor(s / 60);
   return `${m}:${String(s % 60).padStart(2, '0')}`;
+}
 
 export function DashboardPreview() {
   const reduce = useReducedMotion();
@@ -32,7 +33,7 @@ export function DashboardPreview() {
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-1/3 h-[460px] w-[min(92vw,900px)] -translate-x-1/2 rounded-full opacity-[0.07] blur-[130px]"
-        style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)'' }}
+        style={{ background: 'radial-gradient(circle, hsl(258,90%,66%) 0%, transparent 70%)' }}
       />
 
       <motion.div
