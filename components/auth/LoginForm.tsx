@@ -47,7 +47,7 @@ export function LoginForm({ showGoogle }: { showGoogle: boolean }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="w-full max-w-md rounded-2xl border border-white/10 bg-[oklch(0.086_0.024_282)] p-8 shadow-2xl shadow-black/40"
+      className="w-full max-w-md rounded-2xl border border-white/10 bg-[oklch(0.09_0.006_285)] p-8 shadow-2xl shadow-black/40"
     >
       <div className="mb-8 text-center">
         <Link href="/" className="inline-flex items-center gap-2 mb-6">
@@ -80,7 +80,7 @@ export function LoginForm({ showGoogle }: { showGoogle: boolean }) {
               <span className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[oklch(0.086_0.024_282)] px-2 text-muted-foreground">Or</span>
+              <span className="bg-[oklch(0.09_0.006_285)] px-2 text-muted-foreground">Or</span>
             </div>
           </div>
         </>

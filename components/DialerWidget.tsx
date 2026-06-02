@@ -124,7 +124,7 @@ export default function DialerWidget() {
   // Empty state
   if (!loadingLeads && leads.length === 0) {
     return (
-      <Card className="flex flex-col gap-4 border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
+      <Card className="flex flex-col gap-4 border-white/10 bg-[oklch(0.09_0.006_285)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-sm font-semibold">Active dialer</h2>
           <Badge className="rounded-full px-2 text-[10px] font-medium border border-white/10 bg-white/5 text-muted-foreground">
@@ -150,7 +150,7 @@ export default function DialerWidget() {
   }
 
   return (
-    <Card className="flex flex-col gap-4 border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
+    <Card className="flex flex-col gap-4 border-white/10 bg-[oklch(0.09_0.006_285)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-sm font-semibold">Active dialer</h2>
         <Badge

@@ -203,7 +203,7 @@ function RecordingCard({
     <motion.div
       variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}
       transition={{ duration: 0.2 }}
-      className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[oklch(0.086_0.024_282)] transition-all hover:border-white/[0.11]"
+      className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[oklch(0.09_0.006_285)] transition-all hover:border-white/[0.11]"
     >
       {/* ── Main row ── */}
       <div className="flex items-center gap-3 p-4">

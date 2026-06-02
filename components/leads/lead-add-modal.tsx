@@ -105,7 +105,7 @@ export function LeadAddModal({ onClose, onCreated }: Props) {
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.96, opacity: 0, y: 12 }}
         transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-        className="relative z-10 w-full max-w-md rounded-3xl border border-white/[0.10] bg-[oklch(0.09_0.02_282)] shadow-2xl shadow-black/70 overflow-hidden"
+        className="relative z-10 w-full max-w-md rounded-3xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] shadow-2xl shadow-black/70 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

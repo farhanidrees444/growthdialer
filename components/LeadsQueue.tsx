@@ -35,7 +35,7 @@ export default function LeadsQueue({ limit }: LeadsQueueProps) {
   const remaining = Math.max(0, 40 + leads.length * 2);
 
   return (
-    <Card className="flex flex-col border-white/10 bg-[oklch(0.086_0.024_282)]/95 shadow-xl shadow-black/30 backdrop-blur-sm">
+    <Card className="flex flex-col border-white/10 bg-[oklch(0.09_0.006_285)]/95 shadow-xl shadow-black/30 backdrop-blur-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 gap-y-2 border-b border-white/10 px-5 py-4">
         <div>
           <h2 className="font-display font-semibold text-sm">Leads queue</h2>

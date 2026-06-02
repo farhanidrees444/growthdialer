@@ -124,7 +124,7 @@ function CoachingPanel({ call, sessionId, currentMode, onModeChange, onEnd, busy
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 40 }}
       transition={{ type: 'spring', damping: 26, stiffness: 280 }}
-      className="fixed right-4 top-20 bottom-4 z-50 w-80 rounded-2xl border border-white/[0.10] bg-[oklch(0.086_0.024_282)] shadow-2xl shadow-black/60 flex flex-col overflow-hidden"
+      className="fixed right-4 top-20 bottom-4 z-50 w-80 rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] shadow-2xl shadow-black/60 flex flex-col overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3">
@@ -257,7 +257,7 @@ function CallCard({
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-white/[0.08] bg-[oklch(0.086_0.024_282)] p-5 shadow-lg"
+      className="rounded-2xl border border-white/[0.08] bg-[oklch(0.09_0.006_285)] p-5 shadow-lg"
     >
       {/* Header row */}
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -266,7 +266,7 @@ function CallCard({
             {getInitials(agentName)}
             <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-[oklch(0.086_0.024_282)] bg-emerald-500" />
+              <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-[oklch(0.09_0.006_285)] bg-emerald-500" />
             </span>
           </div>
           <div>

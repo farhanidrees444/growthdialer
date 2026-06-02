@@ -54,7 +54,7 @@ export default function Navbar() {
       className={cn(
         "fixed top-0 inset-x-0 z-50 transition-all duration-300",
         scrolled
-          ? "bg-[oklch(0.056_0.018_286/0.92)] backdrop-blur-xl border-b border-white/8 shadow-xl shadow-black/20"
+          ? "bg-[oklch(0.05_0.005_285/0.92)] backdrop-blur-xl border-b border-white/8 shadow-xl shadow-black/20"
           : "bg-transparent"
       )}
     >
@@ -96,7 +96,7 @@ export default function Navbar() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 4, scale: 0.97 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute top-full left-0 mt-1 w-44 rounded-xl bg-[oklch(0.086_0.024_282)] border border-white/10 shadow-xl shadow-black/30 py-1.5 overflow-hidden"
+                        className="absolute top-full left-0 mt-1 w-44 rounded-xl bg-[oklch(0.09_0.006_285)] border border-white/10 shadow-xl shadow-black/30 py-1.5 overflow-hidden"
                       >
                         {link.children.map((child) => (
                           <Link
@@ -157,7 +157,7 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-white/8 bg-[oklch(0.056_0.018_286/0.98)] backdrop-blur-xl overflow-hidden"
+            className="md:hidden border-t border-white/8 bg-[oklch(0.05_0.005_285/0.98)] backdrop-blur-xl overflow-hidden"
           >
             <div className="px-4 py-4 flex flex-col gap-1">
               {navLinks.map((link) => (

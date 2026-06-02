@@ -73,7 +73,7 @@ function RowMenu({ lead, onCall, onView, onEdit, onDelete }: {
             initial={{ opacity: 0, scale: 0.95, y: -4 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -4 }}
-            className="absolute right-0 top-8 z-50 min-w-[140px] rounded-xl border border-white/[0.10] bg-[oklch(0.09_0.02_282)] py-1 shadow-2xl"
+            className="absolute right-0 top-8 z-50 min-w-[140px] rounded-xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] py-1 shadow-2xl"
           >
             {[
               { icon: <Phone className="h-3.5 w-3.5" />, label: 'Call', onClick: onCall, className: 'text-emerald-400' },

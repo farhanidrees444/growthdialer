@@ -361,7 +361,7 @@ function WaitlistModal({
       <motion.div
         initial={{ scale: 0.94, opacity: 0, y: 8 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-white/[0.08] bg-[oklch(0.10_0.02_282)] shadow-2xl"
+        className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-white/[0.08] bg-[oklch(0.10_0.006_285)] shadow-2xl"
       >
         <div className="flex items-start justify-between p-6 pb-4">
           <div className="flex items-center gap-3">

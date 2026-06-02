@@ -48,7 +48,7 @@ export default function MetricCardWithSparkline({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: "easeOut" }}
     >
-      <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/95 shadow-lg shadow-black/25 backdrop-blur-sm overflow-hidden transition-shadow hover:shadow-xl hover:shadow-black/30">
+      <Card className="border-white/10 bg-[oklch(0.09_0.006_285)]/95 shadow-lg shadow-black/25 backdrop-blur-sm overflow-hidden transition-shadow hover:shadow-xl hover:shadow-black/30">
         <div className="flex items-start justify-between gap-3 p-5 pb-3">
           <div>
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
@@ -91,7 +91,7 @@ export default function MetricCardWithSparkline({
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
                   return (
-                    <div className="rounded-lg border border-white/10 bg-[oklch(0.1_0.02_282)] px-2 py-1 text-xs shadow-xl">
+                    <div className="rounded-lg border border-white/10 bg-[oklch(0.1_0.006_285)] px-2 py-1 text-xs shadow-xl">
                       <p className="font-semibold">{payload[0].payload.label}</p>
                       <p className="text-muted-foreground">{payload[0].value} {dataKey}</p>
                     </div>

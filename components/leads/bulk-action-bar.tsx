@@ -124,7 +124,7 @@ export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
               initial={{ scale: 0.96, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.96, opacity: 0 }}
-              className="relative z-10 w-full max-w-sm rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.02_282)] p-6 shadow-2xl"
+              className="relative z-10 w-full max-w-sm rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] p-6 shadow-2xl"
             >
               <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-red-500/15">
                 <Trash2 className="h-5 w-5 text-red-400" />
@@ -154,7 +154,7 @@ export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 80, opacity: 0 }}
         transition={{ type: 'spring', damping: 24, stiffness: 280 }}
-        className="fixed left-3 right-3 z-40 flex flex-wrap items-center gap-2 rounded-2xl border border-white/[0.12] bg-[oklch(0.09_0.02_282)]/96 px-4 py-3 shadow-2xl shadow-black/60 backdrop-blur-xl lg:bottom-6 lg:left-1/2 lg:right-auto lg:w-auto lg:-translate-x-1/2 lg:flex-nowrap"
+        className="fixed left-3 right-3 z-40 flex flex-wrap items-center gap-2 rounded-2xl border border-white/[0.12] bg-[oklch(0.09_0.006_285)]/96 px-4 py-3 shadow-2xl shadow-black/60 backdrop-blur-xl lg:bottom-6 lg:left-1/2 lg:right-auto lg:w-auto lg:-translate-x-1/2 lg:flex-nowrap"
         style={{ bottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}
       >
         {/* Selection count */}

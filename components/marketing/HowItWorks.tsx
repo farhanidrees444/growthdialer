@@ -106,7 +106,7 @@ export default function HowItWorks() {
               </div>
 
               {/* Terminal */}
-              <div className="rounded-2xl border border-white/10 bg-[oklch(0.068_0.020_284)] overflow-hidden shadow-2xl shadow-black/40">
+              <div className="rounded-2xl border border-white/10 bg-[oklch(0.068_0.006_285)] overflow-hidden shadow-2xl shadow-black/40">
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-white/8">
                   <div className="flex gap-1.5">
                     <div className="w-3 h-3 rounded-full bg-red-500/50" />

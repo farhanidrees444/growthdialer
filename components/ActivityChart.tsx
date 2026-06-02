@@ -34,7 +34,7 @@ const FALLBACK_WEEK: Bucket[] = [
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="rounded-lg border border-white/10 bg-[oklch(0.086_0.024_282)] p-3 text-xs shadow-xl shadow-black/40">
+      <div className="rounded-lg border border-white/10 bg-[oklch(0.09_0.006_285)] p-3 text-xs shadow-xl shadow-black/40">
         <p className="mb-1.5 font-semibold text-foreground">{label}</p>
         {payload.map((p: any) => (
           <div key={p.name} className="flex items-center gap-2 capitalize">
@@ -72,7 +72,7 @@ export default function ActivityChart() {
   }, [range]);
 
   return (
-    <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
+    <Card className="border-white/10 bg-[oklch(0.09_0.006_285)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
       <div className="mb-5 flex items-center justify-between">
         <div>
           <h2 className="font-display text-sm font-semibold">Call activity</h2>

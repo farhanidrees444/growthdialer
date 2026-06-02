@@ -84,12 +84,12 @@ export default function AcceptInvitePage() {
   const emailMismatch = isLoggedIn && invite && session!.user.email?.toLowerCase() !== invite.email.toLowerCase();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12 bg-[oklch(0.056_0.018_286)]">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12 bg-[oklch(0.05_0.005_285)]">
       {/* BG gradient */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
         <div
           className="absolute top-0 left-1/2 h-[500px] w-[700px] -translate-x-1/2 opacity-[0.10] blur-3xl rounded-full"
-          style={{ background: 'radial-gradient(circle, oklch(0.82 0.27 153) 0%, transparent 70%)' }}
+          style={{ background: 'radial-gradient(circle, oklch(0.64 0.21 293) 0%, transparent 70%)' }}
         />
       </div>
 
@@ -113,7 +113,7 @@ export default function AcceptInvitePage() {
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl border border-white/[0.08] bg-[oklch(0.086_0.024_282)] p-8 shadow-2xl">
+        <div className="rounded-2xl border border-white/[0.08] bg-[oklch(0.09_0.006_285)] p-8 shadow-2xl">
           {/* Loading */}
           {state === 'loading' && (
             <div className="flex flex-col items-center gap-4 py-8 text-center">

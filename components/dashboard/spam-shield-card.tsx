@@ -62,7 +62,7 @@ export default function SpamShieldCard({ data, loading }: SpamShieldCardProps) {
   });
 
   return (
-    <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
+    <Card className="border-white/10 bg-[oklch(0.09_0.006_285)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 border border-white/10">
           <ShieldCheck className="h-5 w-5 text-indigo-400" />

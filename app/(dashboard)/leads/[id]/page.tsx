@@ -269,7 +269,7 @@ function DeleteConfirmModal({ name, onConfirm, onCancel }: {
       <motion.div
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="relative z-10 w-full max-w-sm rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.02_282)] p-6 shadow-2xl"
+        className="relative z-10 w-full max-w-sm rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] p-6 shadow-2xl"
       >
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/15">
           <Trash2 className="h-5 w-5 text-red-400" />

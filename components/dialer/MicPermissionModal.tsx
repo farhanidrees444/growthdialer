@@ -20,7 +20,7 @@ export default function MicPermissionModal() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="relative mx-4 w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[oklch(0.10_0.025_282)] p-6 shadow-2xl">
+      <div className="relative mx-4 w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[oklch(0.10_0.006_285)] p-6 shadow-2xl">
         <button
           type="button"
           onClick={() => setDismissed(true)}

@@ -92,7 +92,7 @@ export default function CallNotesPanel({
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           className={cn('overflow-hidden', className)}
         >
-          <div className="rounded-2xl border border-white/[0.08] bg-[oklch(0.09_0.02_282)] p-4">
+          <div className="rounded-2xl border border-white/[0.08] bg-[oklch(0.09_0.006_285)] p-4">
             {/* Header */}
             <div className="mb-2.5 flex items-center justify-between">
               <div className="flex items-center gap-2">

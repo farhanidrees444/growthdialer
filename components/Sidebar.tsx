@@ -108,7 +108,7 @@ function WorkspaceSwitcher() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -6, scale: 0.97 }}
               transition={{ duration: 0.15 }}
-              className="absolute left-3 right-3 top-[calc(100%+4px)] z-50 rounded-xl border border-white/[0.10] bg-[oklch(0.10_0.024_282)] p-1.5 shadow-2xl shadow-black/60"
+              className="absolute left-3 right-3 top-[calc(100%+4px)] z-50 rounded-xl border border-white/[0.10] bg-[oklch(0.1_0.006_285)] p-1.5 shadow-2xl shadow-black/60"
             >
               <p className="mb-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
                 Workspaces

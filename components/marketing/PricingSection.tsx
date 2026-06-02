@@ -163,8 +163,8 @@ export default function PricingSection() {
               className={cn(
                 "relative rounded-2xl border p-7 flex flex-col",
                 plan.featured
-                  ? "border-brand/50 bg-gradient-to-b from-brand/8 to-[oklch(0.086_0.024_282)] shadow-2xl shadow-brand/10 glow-brand"
-                  : "border-white/10 bg-[oklch(0.086_0.024_282)]"
+                  ? "border-brand/50 bg-gradient-to-b from-brand/8 to-[oklch(0.09_0.006_285)] shadow-2xl shadow-brand/10 glow-brand"
+                  : "border-white/10 bg-[oklch(0.09_0.006_285)]"
               )}
             >
               {plan.badge && (
@@ -246,7 +246,7 @@ export default function PricingSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.5, duration: 0.4 }}
-          className="mt-10 rounded-2xl border border-white/8 bg-[oklch(0.068_0.020_284)] px-6 py-5"
+          className="mt-10 rounded-2xl border border-white/8 bg-[oklch(0.068_0.006_285)] px-6 py-5"
         >
           <p className="text-center text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-5">
             Built for compliant outreach
@@ -331,7 +331,7 @@ function PricingFAQ() {
         {pricingFaqs.map((faq, i) => (
           <div
             key={i}
-            className="rounded-xl border border-white/8 bg-[oklch(0.086_0.024_282)] overflow-hidden"
+            className="rounded-xl border border-white/8 bg-[oklch(0.09_0.006_285)] overflow-hidden"
           >
             <button
               onClick={() => setOpen(open === i ? null : i)}

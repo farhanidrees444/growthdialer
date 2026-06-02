@@ -104,7 +104,7 @@ export function ImportLeadsDialog() {
 
   return (
     <Dialog open={importOpen} onOpenChange={setImportOpen}>
-      <DialogContent className="sm:max-w-md border-white/10 bg-[oklch(0.086_0.024_282)]">
+      <DialogContent className="sm:max-w-md border-white/10 bg-[oklch(0.09_0.006_285)]">
         <DialogHeader>
           <DialogTitle className="font-display flex items-center gap-2">
             <FileSpreadsheet className="w-5 h-5 text-brand" />

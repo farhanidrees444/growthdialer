@@ -79,11 +79,11 @@ export default function WorkspaceSetupPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12 bg-[oklch(0.056_0.018_286)]">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12 bg-[oklch(0.05_0.005_285)]">
       {/* BG gradient */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute top-0 left-1/2 h-[500px] w-[700px] -translate-x-1/2 opacity-[0.12] blur-3xl rounded-full"
-          style={{ background: 'radial-gradient(circle, oklch(0.82 0.27 153) 0%, transparent 70%)' }} />
+          style={{ background: 'radial-gradient(circle, oklch(0.64 0.21 293) 0%, transparent 70%)' }} />
       </div>
 
       <motion.div

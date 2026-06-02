@@ -75,7 +75,7 @@ export default function CompareTable() {
           className="rounded-2xl border border-white/10 overflow-hidden"
         >
           {/* Header */}
-          <div className="grid grid-cols-4 bg-[oklch(0.068_0.020_284)] border-b border-white/10">
+          <div className="grid grid-cols-4 bg-[oklch(0.068_0.006_285)] border-b border-white/10">
             <div className="col-span-1 px-6 py-4 text-sm font-medium text-muted-foreground">Feature</div>
             <div className="col-span-1 px-6 py-4 text-center">
               <div className="text-sm font-bold text-brand">GrowthDialer</div>
@@ -101,7 +101,7 @@ export default function CompareTable() {
               key={row.feature}
               className={cn(
                 "grid grid-cols-4 border-b border-white/6 last:border-0 transition-colors",
-                i % 2 === 0 ? "bg-[oklch(0.086_0.024_282)]" : "bg-[oklch(0.080_0.022_283)]"
+                i % 2 === 0 ? "bg-[oklch(0.09_0.006_285)]" : "bg-[oklch(0.080_0.006_285)]"
               )}
             >
               <div className="col-span-1 px-6 py-4 text-sm text-muted-foreground">{row.feature}</div>

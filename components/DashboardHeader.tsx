@@ -41,7 +41,7 @@ export function DashboardHeader({
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="sticky top-0 z-10 flex items-center border-b border-white/10 bg-[oklch(0.056_0.018_286)]/85 backdrop-blur-xl"
+        className="sticky top-0 z-10 flex items-center border-b border-white/10 bg-[oklch(0.05_0.005_285)]/85 backdrop-blur-xl"
       >
         {/* Title block */}
         <div className="flex-1 min-w-0 px-4 py-3 lg:px-6 lg:py-4">

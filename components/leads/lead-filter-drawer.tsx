@@ -127,7 +127,7 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 26, stiffness: 280 }}
-            className="fixed right-0 top-0 bottom-0 z-50 flex w-full max-w-sm flex-col border-l border-white/[0.08] bg-[oklch(0.085_0.02_282)] shadow-2xl"
+            className="fixed right-0 top-0 bottom-0 z-50 flex w-full max-w-sm flex-col border-l border-white/[0.08] bg-[oklch(0.085_0.006_285)] shadow-2xl"
           >
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between px-5 py-4 border-b border-white/[0.06]">

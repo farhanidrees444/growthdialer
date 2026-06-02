@@ -41,7 +41,7 @@ export default function MultiLineChart({ data }: MultiLineChartProps) {
   const monoStyle = { fontFamily: "monospace" };
 
   return (
-    <Card className="border-white/10 bg-[oklch(0.086_0.024_282)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
+    <Card className="border-white/10 bg-[oklch(0.09_0.006_285)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold">Activity — Today (hourly)</p>
         <div className="flex flex-wrap gap-1.5">
@@ -87,7 +87,7 @@ export default function MultiLineChart({ data }: MultiLineChartProps) {
             />
             <Tooltip
               contentStyle={{
-                background: "oklch(0.1 0.02 282)",
+                background: "oklch(0.1 0.006 285)",
                 border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: "8px",
                 fontSize: "12px",

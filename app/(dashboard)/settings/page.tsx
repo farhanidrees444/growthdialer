@@ -942,7 +942,7 @@ function DeleteAccountModal({ onClose, userEmail }: { onClose: () => void; userE
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 8 }}
         transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-        className="relative z-10 w-full max-w-md rounded-2xl border border-red-500/20 bg-[oklch(0.086_0.024_282)] p-6 shadow-2xl"
+        className="relative z-10 w-full max-w-md rounded-2xl border border-red-500/20 bg-[oklch(0.09_0.006_285)] p-6 shadow-2xl"
       >
         <div className="mb-5 flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/10">
@@ -1030,7 +1030,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 8 }}
         transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-        className="relative z-10 w-full max-w-md rounded-2xl border border-white/[0.10] bg-[oklch(0.086_0.024_282)] p-6 shadow-2xl"
+        className="relative z-10 w-full max-w-md rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] p-6 shadow-2xl"
       >
         <div className="mb-5 flex items-center justify-between">
           <div>
@@ -1210,7 +1210,7 @@ function TeamTab() {
                               animate={{ opacity: 1, scale: 1, y: 0 }}
                               exit={{ opacity: 0, scale: 0.95, y: -4 }}
                               transition={{ duration: 0.12 }}
-                              className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-white/[0.10] bg-[oklch(0.10_0.024_282)] p-1.5 shadow-2xl"
+                              className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-white/[0.10] bg-[oklch(0.1_0.006_285)] p-1.5 shadow-2xl"
                             >
                               {canChangeRoles && (
                                 <>
@@ -1416,7 +1416,7 @@ export default function SettingsPage() {
         </nav>
 
         {/* Mobile tab bar */}
-        <div className="flex border-b border-white/[0.06] overflow-x-auto scrollbar-none lg:hidden shrink-0 absolute top-[57px] left-0 right-0 z-10 bg-[oklch(0.056_0.018_286)]/95 backdrop-blur-xl px-3 py-2 gap-1">
+        <div className="flex border-b border-white/[0.06] overflow-x-auto scrollbar-none lg:hidden shrink-0 absolute top-[57px] left-0 right-0 z-10 bg-[oklch(0.05_0.005_285)]/95 backdrop-blur-xl px-3 py-2 gap-1">
           {TABS.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
@@ -1492,7 +1492,7 @@ export default function SettingsPage() {
             exit={{ opacity: 0, y: 16 }}
             className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2"
           >
-            <div className="flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-[oklch(0.086_0.024_282)]/95 px-4 py-2.5 shadow-2xl backdrop-blur-xl">
+            <div className="flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-[oklch(0.09_0.006_285)]/95 px-4 py-2.5 shadow-2xl backdrop-blur-xl">
               {saveError && <p className="text-xs text-red-400">{saveError}</p>}
               <button
                 type="button"

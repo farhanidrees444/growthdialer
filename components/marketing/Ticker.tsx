@@ -14,10 +14,10 @@ const items = [...testimonials, ...testimonials];
 
 export default function Ticker() {
   return (
-    <div className="relative overflow-hidden py-5 border-y border-white/8 bg-[oklch(0.068_0.020_284)]">
+    <div className="relative overflow-hidden py-5 border-y border-white/8 bg-[oklch(0.068_0.006_285)]">
       {/* Fade masks */}
-      <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[oklch(0.068_0.020_284)] to-transparent z-10 pointer-events-none" />
-      <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[oklch(0.068_0.020_284)] to-transparent z-10 pointer-events-none" />
+      <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[oklch(0.068_0.006_285)] to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[oklch(0.068_0.006_285)] to-transparent z-10 pointer-events-none" />
 
       <div className="ticker-track flex gap-8 w-max">
         {items.map((item, i) => (

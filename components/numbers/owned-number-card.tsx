@@ -87,7 +87,7 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
       className={`group relative rounded-2xl border p-4 shadow-lg shadow-black/20 transition-all ${
         isExpiringSoon
           ? 'border-amber-500/30 bg-amber-500/[0.04] hover:border-amber-500/50'
-          : 'border-white/[0.07] bg-[oklch(0.086_0.024_282)] hover:border-emerald-500/20'
+          : 'border-white/[0.07] bg-[oklch(0.09_0.006_285)] hover:border-emerald-500/20'
       }`}
     >
       <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,oklch(0.5_0.2_145_/_0.06),transparent_60%)]" />

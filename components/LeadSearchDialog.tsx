@@ -55,7 +55,7 @@ export function LeadSearchDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-white/10 bg-[oklch(0.086_0.024_282)] sm:max-w-lg">
+      <DialogContent className="border-white/10 bg-[oklch(0.09_0.006_285)] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-display">Search leads</DialogTitle>
         </DialogHeader>

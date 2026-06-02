@@ -106,7 +106,7 @@ export default function SystemHealthDropdown() {
 
       <PopoverContent
         align="end"
-        className="w-72 border-white/10 bg-[oklch(0.09_0.02_282)] p-4 shadow-xl shadow-black/40"
+        className="w-72 border-white/10 bg-[oklch(0.09_0.006_285)] p-4 shadow-xl shadow-black/40"
       >
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-1.5">

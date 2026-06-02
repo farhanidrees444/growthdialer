@@ -169,7 +169,7 @@ function LeadMenu({
             initial={{ opacity: 0, scale: 0.95, y: -4 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -4 }}
-            className="absolute right-0 top-7 z-50 min-w-[140px] rounded-xl border border-white/[0.10] bg-[oklch(0.09_0.02_282)] py-1 shadow-2xl"
+            className="absolute right-0 top-7 z-50 min-w-[140px] rounded-xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] py-1 shadow-2xl"
           >
             {items.map(({ icon, label, onClick, cls }) => (
               <button
@@ -197,7 +197,7 @@ function DeleteConfirmModal({ name, onConfirm, onCancel }: { name: string; onCon
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
       <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
-        className="relative z-10 w-full max-w-sm rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.02_282)] p-6 shadow-2xl">
+        className="relative z-10 w-full max-w-sm rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] p-6 shadow-2xl">
         <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-red-500/15">
           <Trash2 className="h-5 w-5 text-red-400" />
         </div>
@@ -246,7 +246,7 @@ function LeadCard({
       onClick={onView}
       className={cn(
         "group relative flex cursor-pointer flex-col gap-3 rounded-2xl border p-4 transition-all",
-        "border-white/[0.07] bg-[oklch(0.086_0.024_282)] hover:border-white/[0.14] hover:bg-white/[0.04] hover:-translate-y-0.5",
+        "border-white/[0.07] bg-[oklch(0.09_0.006_285)] hover:border-white/[0.14] hover:bg-white/[0.04] hover:-translate-y-0.5",
         isHot && "border-amber-500/20 hover:border-amber-500/35",
         selected && "border-emerald-500/30 bg-emerald-500/5",
       )}

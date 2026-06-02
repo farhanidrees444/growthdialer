@@ -120,7 +120,7 @@ export default function RecentActivity() {
   };
 
   return (
-    <Card className="flex flex-col border-white/10 bg-[oklch(0.086_0.024_282)]/95 shadow-lg shadow-black/25 backdrop-blur-sm">
+    <Card className="flex flex-col border-white/10 bg-[oklch(0.09_0.006_285)]/95 shadow-lg shadow-black/25 backdrop-blur-sm">
       <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
         <h2 className="font-display text-sm font-semibold">Recent activity</h2>
       </div>

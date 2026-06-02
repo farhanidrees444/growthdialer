@@ -100,11 +100,11 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
       <div
         className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-10 blur-3xl"
-        style={{ background: "radial-gradient(circle, oklch(0.82 0.27 153) 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, oklch(0.64 0.21 293) 0%, transparent 70%)" }}
       />
       <div
         className="absolute top-1/3 right-1/4 w-[400px] h-[400px] rounded-full opacity-8 blur-3xl"
-        style={{ background: "radial-gradient(circle, oklch(0.62 0.22 264) 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, oklch(0.71 0.13 207) 0%, transparent 70%)" }}
       />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
@@ -212,9 +212,9 @@ export default function HeroSection() {
             className="relative hidden lg:block"
           >
             {/* Main card */}
-            <div className="relative rounded-2xl border border-white/10 bg-[oklch(0.086_0.024_282)] overflow-hidden shadow-2xl shadow-black/50">
+            <div className="relative rounded-2xl border border-white/10 bg-[oklch(0.09_0.006_285)] overflow-hidden shadow-2xl shadow-black/50">
               {/* Top bar */}
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/8 bg-[oklch(0.068_0.020_284)]">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/8 bg-[oklch(0.068_0.006_285)]">
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-full bg-red-500/60" />
                   <div className="w-3 h-3 rounded-full bg-amber-500/60" />
@@ -262,8 +262,8 @@ export default function HeroSection() {
                         style={{
                           background:
                             i === 4
-                              ? "oklch(0.82 0.27 153)"
-                              : "oklch(0.82 0.27 153 / 30%)",
+                              ? "oklch(0.64 0.21 293)"
+                              : "oklch(0.64 0.21 293 / 30%)",
                         }}
                       />
                     ))}
@@ -297,7 +297,7 @@ export default function HeroSection() {
                     ease: "easeInOut",
                   },
                 }}
-                className={`absolute ${card.pos} bg-[oklch(0.086_0.024_282)] border border-white/12 rounded-xl px-4 py-3 shadow-xl shadow-black/30 backdrop-blur-sm min-w-[140px]`}
+                className={`absolute ${card.pos} bg-[oklch(0.09_0.006_285)] border border-white/12 rounded-xl px-4 py-3 shadow-xl shadow-black/30 backdrop-blur-sm min-w-[140px]`}
               >
                 <div className="flex items-center gap-2 mb-1">
                   <div className={`w-6 h-6 rounded-lg ${card.bg} flex items-center justify-center`}>

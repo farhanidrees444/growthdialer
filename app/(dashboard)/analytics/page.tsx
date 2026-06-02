@@ -101,7 +101,7 @@ function rangeToParams(range: RangeKey, cStart: string, cEnd: string) {
 function GlassTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-white/[0.1] bg-[oklch(0.09_0.02_282)] px-4 py-3 text-xs shadow-2xl">
+    <div className="rounded-xl border border-white/[0.1] bg-[oklch(0.09_0.006_285)] px-4 py-3 text-xs shadow-2xl">
       {label && <p className="mb-1.5 font-semibold text-white/70">{label}</p>}
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       {payload.map((p: any) => (
@@ -418,7 +418,7 @@ export default function AnalyticsPage() {
                 className="appearance-none cursor-pointer rounded-xl border border-white/[0.06] bg-white/[0.02] py-1.5 pl-3 pr-8 text-xs text-white/60 outline-none hover:border-white/[0.12] focus:border-[#8B5CF6]/50 backdrop-blur-xl transition-colors"
               >
                 {sel.opts.map((o) => (
-                  <option key={o.value} value={o.value} className="bg-[oklch(0.09_0.02_282)] text-white">
+                  <option key={o.value} value={o.value} className="bg-[oklch(0.09_0.006_285)] text-white">
                     {o.label}
                   </option>
                 ))}
@@ -435,9 +435,9 @@ export default function AnalyticsPage() {
                 onChange={(e) => setNum(e.target.value)}
                 className="appearance-none cursor-pointer rounded-xl border border-white/[0.06] bg-white/[0.02] py-1.5 pl-3 pr-8 text-xs text-white/60 outline-none hover:border-white/[0.12] focus:border-[#8B5CF6]/50 backdrop-blur-xl transition-colors"
               >
-                <option value="" className="bg-[oklch(0.09_0.02_282)] text-white">All Numbers</option>
+                <option value="" className="bg-[oklch(0.09_0.006_285)] text-white">All Numbers</option>
                 {data!.perNumber.map((n) => (
-                  <option key={n.number} value={n.number} className="bg-[oklch(0.09_0.02_282)] text-white">
+                  <option key={n.number} value={n.number} className="bg-[oklch(0.09_0.006_285)] text-white">
                     {n.number}
                   </option>
                 ))}

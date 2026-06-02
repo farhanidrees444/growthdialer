@@ -15,6 +15,7 @@ import SaveAsLeadModal from "@/components/save-as-lead-modal";
 import { WorkspaceProvider } from "@/contexts/workspace-context";
 import { IncomingCallPopup } from "@/components/call/incoming-call-popup";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
+import { Grain } from "@/components/marketing/live-floor/Grain";
 import { cn } from "@/lib/utils";
 
 const BOTTOM_TABS = [
@@ -30,7 +31,7 @@ function MobileBottomTabBar() {
   const pathname = usePathname();
   return (
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex items-end border-t border-white/[0.08] bg-[oklch(0.056_0.018_286)]/95 backdrop-blur-xl"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex items-end border-t border-white/[0.08] bg-[oklch(0.05_0.005_285)]/95 backdrop-blur-xl"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       aria-label="Mobile navigation"
     >
@@ -42,12 +43,12 @@ function MobileBottomTabBar() {
             href={href}
             className={cn(
               "relative flex flex-1 flex-col items-center gap-0.5 py-2 min-h-[56px] justify-center transition-colors",
-              active ? "text-[oklch(0.82_0.27_153)]" : "text-slate-500 hover:text-slate-300",
+              active ? "text-[oklch(0.64_0.21_293)]" : "text-slate-500 hover:text-slate-300",
             )}
             aria-current={active ? "page" : undefined}
           >
             {active && (
-              <span className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-[oklch(0.82_0.27_153)]" />
+              <span className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-[oklch(0.64_0.21_293)]" />
             )}
             <Icon className="h-5 w-5" />
             <span className="text-[10px] font-medium">{label}</span>
@@ -87,13 +88,14 @@ export default function DashboardLayout({
             <MobileNavProvider>
             <ImportLeadsDialog />
             <div className="dashboard-shell relative flex h-screen overflow-hidden bg-background text-foreground">
+              <Grain />
               <div className="pointer-events-none absolute inset-0 grid-bg opacity-[0.35]" aria-hidden />
               <div
                 className="pointer-events-none absolute top-0 left-1/2 h-[420px] w-[min(90vw,800px)] -translate-x-1/2 rounded-full opacity-[0.12] blur-3xl"
-                style={{ background: "radial-gradient(circle, oklch(0.82 0.27 153) 0%, transparent 70%)" }}
+                style={{ background: "radial-gradient(circle, oklch(0.64 0.21 293) 0%, transparent 70%)" }}
                 aria-hidden
               />
-              <div className="pointer-events-none absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full opacity-[0.08] blur-3xl bg-[oklch(0.62_0.22_264)]" aria-hidden />
+              <div className="pointer-events-none absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full opacity-[0.08] blur-3xl bg-[oklch(0.71_0.13_207)]" aria-hidden />
 
               <Sidebar />
               <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">

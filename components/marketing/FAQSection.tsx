@@ -81,7 +81,7 @@ export default function FAQSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.06, duration: 0.35 }}
-              className="rounded-xl border border-white/8 bg-[oklch(0.086_0.024_282)] overflow-hidden"
+              className="rounded-xl border border-white/8 bg-[oklch(0.09_0.006_285)] overflow-hidden"
             >
               <button
                 onClick={() => setOpen(open === i ? null : i)}

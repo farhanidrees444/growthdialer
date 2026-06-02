@@ -324,7 +324,7 @@ function CallActivityChart({
                   content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null;
                     return (
-                      <div className="rounded-lg border border-white/10 bg-[oklch(0.1_0.02_282)] px-3 py-2 text-xs shadow-xl">
+                      <div className="rounded-lg border border-white/10 bg-[oklch(0.1_0.006_285)] px-3 py-2 text-xs shadow-xl">
                         <p className="mb-1 font-medium text-slate-300">{String(label ?? '')}</p>
                         {payload.map(p => (
                           <p key={String(p.name)} style={{ color: String(p.color ?? '#fff') }}>

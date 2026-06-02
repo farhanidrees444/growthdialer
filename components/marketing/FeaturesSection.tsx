@@ -100,11 +100,11 @@ export default function FeaturesSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ delay: (i % 4) * 0.08, duration: 0.45 }}
-              className={`${f.span} group relative rounded-2xl border border-white/8 bg-[oklch(0.086_0.024_282)] p-6 hover:border-brand/30 hover:bg-[oklch(0.10_0.028_282)] transition-all duration-300 overflow-hidden`}
+              className={`${f.span} group relative rounded-2xl border border-white/8 bg-[oklch(0.09_0.006_285)] p-6 hover:border-brand/30 hover:bg-[oklch(0.10_0.006_285)] transition-all duration-300 overflow-hidden`}
             >
               {/* Glow on hover */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl"
-                style={{ background: "radial-gradient(ellipse at top left, oklch(0.82 0.27 153 / 5%) 0%, transparent 60%)" }}
+                style={{ background: "radial-gradient(ellipse at top left, oklch(0.64 0.21 293 / 5%) 0%, transparent 60%)" }}
               />
 
               <div className="relative">

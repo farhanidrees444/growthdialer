@@ -194,7 +194,7 @@ export default function CurrentLeadCard({
       >
         {/* ── Main lead card ─────────────────────────────────────────────── */}
         <div
-          className="relative overflow-hidden rounded-2xl border bg-[oklch(0.10_0.025_282)] p-6 shadow-xl"
+          className="relative overflow-hidden rounded-2xl border bg-[oklch(0.10_0.006_285)] p-6 shadow-xl"
           style={{
             borderColor: isConnected ? 'oklch(0.55 0.18 153 / 40%)' : 'oklch(1 0 0 / 6%)',
             boxShadow: isConnected ? '0 0 40px oklch(0.55 0.18 153 / 12%)' : undefined,
@@ -215,7 +215,7 @@ export default function CurrentLeadCard({
                 {isConnected && (
                   <span className="absolute -right-1 -top-1 flex h-4 w-4">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                    <span className="relative inline-flex h-4 w-4 rounded-full bg-emerald-400 ring-2 ring-[oklch(0.10_0.025_282)]" />
+                    <span className="relative inline-flex h-4 w-4 rounded-full bg-emerald-400 ring-2 ring-[oklch(0.10_0.006_285)]" />
                   </span>
                 )}
               </div>

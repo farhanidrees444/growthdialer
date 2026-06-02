@@ -57,7 +57,7 @@ export default function SaveAsLeadModal({ phone, onClose }: SaveAsLeadModalProps
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 40, opacity: 0 }}
           transition={{ type: 'spring', damping: 26, stiffness: 280 }}
-          className="relative z-10 w-full max-w-sm rounded-3xl border border-white/[0.10] bg-[oklch(0.09_0.02_282)] p-6 shadow-2xl"
+          className="relative z-10 w-full max-w-sm rounded-3xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] p-6 shadow-2xl"
         >
           <button type="button" onClick={onClose} className="absolute top-4 right-4 text-slate-600 hover:text-slate-300 transition">
             <X className="h-4 w-4" />

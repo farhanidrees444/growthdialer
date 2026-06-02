@@ -11,7 +11,7 @@ export default function ActiveDialerPreview({ leadsInQueue }: ActiveDialerPrevie
   const router = useRouter();
 
   return (
-    <div className="relative flex min-h-[320px] flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/[0.07] bg-[oklch(0.07_0.02_286)] p-8">
+    <div className="relative flex min-h-[320px] flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/[0.07] bg-[oklch(0.07_0.006_285)] p-8">
       {/* Ambient glow */}
       <div className="pointer-events-none absolute inset-0 [background:radial-gradient(ellipse_60%_50%_at_50%_100%,oklch(0.5_0.2_145_/_0.08),transparent)]" />
 

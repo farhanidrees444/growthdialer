@@ -253,7 +253,7 @@ function DtmfPad({ onDigit, onClose }: { onDigit: (d: string) => void; onClose: 
       initial={{ opacity: 0, y: 8, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 8, scale: 0.96 }}
-      className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-10 rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.02_282)] p-3 shadow-2xl backdrop-blur-xl"
+      className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-10 rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] p-3 shadow-2xl backdrop-blur-xl"
     >
       <div className="mb-2 flex items-center justify-between gap-8">
         <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Keypad</span>
@@ -292,7 +292,7 @@ function MinimizedPill({
       animate={{ x: 0, opacity: 1, scale: 1 }}
       exit={{ x: 60, opacity: 0, scale: 0.9 }}
       transition={{ type: 'spring', damping: 24, stiffness: 280 }}
-      className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.02_282)]/96 px-3.5 py-2.5 shadow-2xl shadow-black/60 backdrop-blur-xl"
+      className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)]/96 px-3.5 py-2.5 shadow-2xl shadow-black/60 backdrop-blur-xl"
       style={{ minWidth: 188 }}
     >
       <div className="relative flex h-2 w-2 shrink-0">
@@ -333,7 +333,7 @@ function MobileMinimizedBar({
       exit={{ y: '100%' }}
       transition={{ type: 'spring', damping: 28, stiffness: 300 }}
       // Sits above the mobile bottom nav (56px) + safe area
-      className="fixed left-0 right-0 z-50 flex items-center gap-3 border-t border-white/[0.10] bg-[oklch(0.09_0.02_282)]/98 px-4 py-3 backdrop-blur-xl"
+      className="fixed left-0 right-0 z-50 flex items-center gap-3 border-t border-white/[0.10] bg-[oklch(0.09_0.006_285)]/98 px-4 py-3 backdrop-blur-xl"
       style={{ bottom: 'calc(56px + env(safe-area-inset-bottom, 0px))' }}
     >
       <div className="relative flex h-2 w-2 shrink-0">
@@ -371,7 +371,7 @@ function PopoutBadge({ onReturn }: { onReturn: () => void }) {
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0.8, opacity: 0 }}
       transition={{ type: 'spring', damping: 22, stiffness: 300 }}
-      className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-2xl border border-white/[0.12] bg-[oklch(0.09_0.02_282)]/96 px-3.5 py-2.5 shadow-2xl shadow-black/60 backdrop-blur-xl transition hover:border-white/20"
+      className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-2xl border border-white/[0.12] bg-[oklch(0.09_0.006_285)]/96 px-3.5 py-2.5 shadow-2xl shadow-black/60 backdrop-blur-xl transition hover:border-white/20"
       aria-label="Return to call"
     >
       <div className="relative flex h-2 w-2 shrink-0">
@@ -701,7 +701,7 @@ export default function ActiveCallOverlay() {
           transition={{ type: 'spring', damping: 26, stiffness: 300 }}
           className={[
             'z-50 w-full max-w-[480px] rounded-3xl border border-white/[0.12]',
-            'bg-[oklch(0.085_0.02_282)]/98 shadow-2xl shadow-black/70 backdrop-blur-2xl overflow-hidden',
+            'bg-[oklch(0.085_0.006_285)]/98 shadow-2xl shadow-black/70 backdrop-blur-2xl overflow-hidden',
             isMobile ? 'fixed bottom-4 left-4 right-4 mx-auto' : 'cursor-default select-none',
           ].join(' ')}
           aria-label="Active call overlay"
@@ -769,7 +769,7 @@ export default function ActiveCallOverlay() {
               }`}>
                 {getInitials(displayName)}
                 {callStatus === 'active' && !isOnHold && (
-                  <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[oklch(0.085_0.02_282)] bg-emerald-400" />
+                  <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[oklch(0.085_0.006_285)] bg-emerald-400" />
                 )}
                 {isMuted && (
                   <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/60">

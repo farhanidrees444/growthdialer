@@ -13,7 +13,7 @@ export default function CTASection() {
         className="absolute inset-0 opacity-15 pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse 80% 60% at 50% 50%, oklch(0.82 0.27 153) 0%, transparent 70%)",
+            "radial-gradient(ellipse 80% 60% at 50% 50%, oklch(0.64 0.21 293) 0%, transparent 70%)",
         }}
       />
       <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none" />

@@ -51,7 +51,7 @@ export function GlowToggleCard({
         "relative flex items-start gap-3 rounded-xl border p-4 transition-colors",
         enabled
           ? `border-white/20 bg-[oklch(0.1_0.03_282)] ${glowMap[glowColor]}`
-          : "border-white/10 bg-[oklch(0.086_0.024_282)]/90",
+          : "border-white/10 bg-[oklch(0.09_0.006_285)]/90",
         disabled && "opacity-50 cursor-not-allowed"
       )}
     >

@@ -145,7 +145,7 @@ export default function DispositionModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 20 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[oklch(0.10_0.025_282)] shadow-2xl shadow-black/70"
+            className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[oklch(0.10_0.006_285)] shadow-2xl shadow-black/70"
           >
             {/* Header */}
             <div className="flex items-start justify-between gap-3 border-b border-white/[0.06] px-5 py-4">

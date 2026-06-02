@@ -77,7 +77,7 @@ export default function TestimonialsSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.45 }}
-              className="rounded-2xl border border-white/8 bg-[oklch(0.086_0.024_282)] p-7 flex flex-col gap-5 hover:border-white/15 transition-colors group"
+              className="rounded-2xl border border-white/8 bg-[oklch(0.09_0.006_285)] p-7 flex flex-col gap-5 hover:border-white/15 transition-colors group"
             >
               {/* Stars */}
               <div className="flex gap-1">

@@ -78,7 +78,7 @@ function InviteModal({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative w-full max-w-lg rounded-2xl border border-white/[0.08] bg-[oklch(0.086_0.024_282)] p-6 shadow-2xl"
+        className="relative w-full max-w-lg rounded-2xl border border-white/[0.08] bg-[oklch(0.09_0.006_285)] p-6 shadow-2xl"
       >
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -208,7 +208,7 @@ function ConfirmDialog({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[oklch(0.086_0.024_282)] p-6 shadow-2xl"
+        className="relative w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[oklch(0.09_0.006_285)] p-6 shadow-2xl"
       >
         <div className={cn(
           "mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full",
@@ -605,7 +605,7 @@ function MemberRow({
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-full mt-1 z-20 w-48 rounded-xl border border-white/[0.08] bg-[oklch(0.086_0.024_282)] p-1.5 shadow-2xl shadow-black/40">
+                <div className="absolute right-0 top-full mt-1 z-20 w-48 rounded-xl border border-white/[0.08] bg-[oklch(0.09_0.006_285)] p-1.5 shadow-2xl shadow-black/40">
                   {canChangeRoles && ROLES_LIST.map((r) => (
                     <button
                       key={r.value}
