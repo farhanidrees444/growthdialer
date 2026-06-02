@@ -2,6 +2,8 @@ import { MotionShell } from '@/components/marketing/live-floor/MotionShell';
 import { Nav } from '@/components/marketing/live-floor/Nav';
 import { Grain } from '@/components/marketing/live-floor/Grain';
 import { Hero } from '@/components/marketing/live-floor/Hero';
+import { BentoFeatures } from '@/components/marketing/live-floor/BentoFeatures';
+import { CallJourney } from '@/components/marketing/live-floor/CallJourney';
 import { Features } from '@/components/marketing/live-floor/Features';
 import { FinalCTA } from '@/components/marketing/live-floor/FinalCTA';
 import { IntegrationsMarquee } from '@/components/marketing/home/IntegrationsMarquee';
@@ -26,6 +28,8 @@ export default function LandingPage() {
         <main className="relative z-[2]">
           <Hero />
           <IntegrationsMarquee />
+          <BentoFeatures />
+          <CallJourney />
           <InteractivePipeline />
           <Features />
           <StatsStrip />
