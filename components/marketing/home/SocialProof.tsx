@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import type { IconType } from 'react-icons';
 import {
@@ -42,16 +43,34 @@ const ROW_B: Brand[] = [
 ];
 
 function LogoPill({ name, Icon }: Brand) {
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
-    <div className="group flex shrink-0 items-center gap-3 rounded-2xl border border-white/[0.04] bg-white/[0.015] px-6 py-3.5 backdrop-blur-sm transition-colors duration-300 hover:border-white/[0.12] hover:bg-white/[0.04]">
-      <Icon
-        className="h-6 w-6 text-zinc-500 transition-colors duration-300 group-hover:text-[#F5F5F7]"
-        aria-hidden
-      />
-      <span className="whitespace-nowrap font-display text-[15px] font-medium tracking-tight text-zinc-500 transition-colors duration-300 group-hover:text-[#F5F5F7]">
+    <motion.div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="group flex shrink-0 items-center gap-3 rounded-2xl border border-white/[0.04] bg-white/[0.015] px-6 py-3.5 backdrop-blur-sm transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.05]"
+      whileHover={{ scale: 1.05, y: -2 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+    >
+      <motion.div
+        animate={{
+          filter: isHovered ? 'grayscale(0%) brightness(1.2)' : 'grayscale(100%) brightness(0.85)',
+        }}
+        transition={{ duration: 0.4, ease: 'easeInOut' }}
+      >
+        <Icon className="h-6 w-6 text-zinc-500" aria-hidden />
+      </motion.div>
+      <motion.span
+        animate={{
+          color: isHovered ? '#F5F5F7' : '#71717A',
+        }}
+        transition={{ duration: 0.4, ease: 'easeInOut' }}
+        className="whitespace-nowrap font-display text-[15px] font-medium tracking-tight"
+      >
         {name}
-      </span>
-    </div>
+      </motion.span>
+    </motion.div>
   );
 }
 
