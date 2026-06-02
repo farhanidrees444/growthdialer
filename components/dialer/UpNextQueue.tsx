@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { Search, X, Phone, ChevronRight, Users } from 'lucide-react';
 import type { LeadRecord } from '@/components/dialer/LeadCard';
 
-type LocalFilter = 'Queue' | ', 'Hot' | ', 'Callbacks';
+type LocalFilter = 'Queue' | 'Hot' | 'Callbacks';
 
 interface UpNextQueueProps {
   leads: LeadRecord[];
@@ -63,9 +63,9 @@ function applyFilter(leads: LeadRecord[], filter: LocalFilter, search: string): 
 }
 
 const TABS: { key: LocalFilter; label: string }[] = [
-  { key: 'Queue', label: ', 'Queue' },
-  { key: 'Hot', label: ', 'Hot' },
-  { key: 'Callbacks', label: ', 'Callbacks' },
+  { key: 'Queue', label: 'Queue' },
+  { key: 'Hot', label: 'Hot' },
+  { key: 'Callbacks', label: 'Callbacks' },
 ];
 
 const staggerList = {

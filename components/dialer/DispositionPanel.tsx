@@ -88,7 +88,7 @@ export default function DispositionPanel({ notes, onSaveNotes, onDisposition }: 
           className="col-span-2 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3.5 text-sm font-bold text-black shadow-lg shadow-emerald-500/30 transition hover:from-emerald-400 hover:to-emerald-500 disabled:opacity-50 sm:col-span-1"
         >
           <CheckCircle2 className="h-4 w-4 shrink-0" />
-          {submitting === 'Meeting Booked' ? ', 'Saving…' : ', 'Meeting Booked'}
+          {submitting === 'Meeting Booked' ? 'Saving…' : 'Meeting Booked'}
         </motion.button>
 
         {/* Wrong Number */}
@@ -134,7 +134,7 @@ export default function DispositionPanel({ notes, onSaveNotes, onDisposition }: 
             disabled={!callbackAt || submitting !== null}
             className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-black transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {submitting === 'Callback' ? '…' : ', 'Set'}
+            {submitting === 'Callback' ? '…' : 'Set'}
           </button>
         </motion.div>
       )}

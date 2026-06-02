@@ -309,10 +309,10 @@ export default function TestDialerPage() {
             {/* Device Status */}
             <div className="flex items-center gap-4">
               <Badge variant={device ? "default" : "secondary"}>
-                Device: {device ? 'Ready' : ', 'Not Connected'}
+                Device: {device ? 'Ready' : 'Not Connected'}
               </Badge>
               <Badge variant={token ? "default" : "secondary"}>
-                Token: {token ? 'Active' : ', 'None'}
+                Token: {token ? 'Active' : 'None'}
               </Badge>
             </div>
 
@@ -383,7 +383,7 @@ export default function TestDialerPage() {
                     variant={callState.isMuted ? "default" : "outline"}
                   >
                     {callState.isMuted ? <MicOff className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />}
-                    {callState.isMuted ? 'Unmute' : ', 'Mute'}
+                    {callState.isMuted ? 'Unmute' : 'Mute'}
                   </Button>
 
                   <Button

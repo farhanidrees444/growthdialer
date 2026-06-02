@@ -16,13 +16,13 @@ interface Props {
 }
 
 const FIELD_OPTIONS = [
-  { id: 'basic', label: ', 'Basic info', sublabel: ', 'Name, company, phone, email', default: true },
-  { id: 'title', label: ', 'Title', sublabel: ', 'Job title', default: true },
-  { id: 'status', label: ', 'Status', sublabel: ', 'Current lead status', default: true },
-  { id: 'tags', label: ', 'Tags', sublabel: ', 'Lead tags', default: true },
-  { id: 'notes', label: ', 'Notes', sublabel: ', 'Call and lead notes', default: false },
-  { id: 'call_history', label: ', 'Call history', sublabel: ', 'Attempts and last contact', default: false },
-  { id: 'ai_score', label: ', 'AI Score', sublabel: ', 'Lead scoring', default: false },
+  { id: 'basic', label: 'Basic info', sublabel: 'Name, company, phone, email', default: true },
+  { id: 'title', label: 'Title', sublabel: 'Job title', default: true },
+  { id: 'status', label: 'Status', sublabel: 'Current lead status', default: true },
+  { id: 'tags', label: 'Tags', sublabel: 'Lead tags', default: true },
+  { id: 'notes', label: 'Notes', sublabel: 'Call and lead notes', default: false },
+  { id: 'call_history', label: 'Call history', sublabel: 'Attempts and last contact', default: false },
+  { id: 'ai_score', label: 'AI Score', sublabel: 'Lead scoring', default: false },
 ];
 
 export function LeadExportModal({ onClose, selectedCount, filteredCount, selectedIds }: Props) {
@@ -122,9 +122,9 @@ export function LeadExportModal({ onClose, selectedCount, filteredCount, selecte
             <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-slate-500">Scope</label>
             <div className="space-y-1.5">
               {[
-                { value: 'all' as Scope, label: ', 'All leads', count: null },
-                ...(selectedCount > 0 ? [{ value: 'selected' as Scope, label: ', 'Selected only', count: selectedCount }] : []),
-                ...(filteredCount > 0 ? [{ value: 'filtered' as Scope, label: ', 'Current filter view', count: filteredCount }] : []),
+                { value: 'all' as Scope, label: 'All leads', count: null },
+                ...(selectedCount > 0 ? [{ value: 'selected' as Scope, label: 'Selected only', count: selectedCount }] : []),
+                ...(filteredCount > 0 ? [{ value: 'filtered' as Scope, label: 'Current filter view', count: filteredCount }] : []),
               ].map(({ value, label, count }) => (
                 <button key={value} type="button" onClick={() => setScope(value)}
                   className={[
@@ -179,7 +179,7 @@ export function LeadExportModal({ onClose, selectedCount, filteredCount, selecte
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-50 transition active:scale-[0.98]"
           >
             {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            {exporting ? 'Exporting…' : ', 'Download'}
+            {exporting ? 'Exporting…' : 'Download'}
           </button>
         </div>
       </motion.div>

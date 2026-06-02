@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 
 // Clearly generic / fictional placeholder wordmarks — swappable later.
 // No real brands, no "trusted by N".
-const LOGOS = ['Acme', 'Northwind'Globex', 'Initech'Vandelay', 'Soylent'Hooli', 'Umbrella'];
+const LOGOS = ['Acme'Northwind'Globex'Initech'Vandelay'Soylent'Hooli'Umbrella'];
 
 export function SocialProof() {
   const reduce = useReducedMotion();

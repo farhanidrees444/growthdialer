@@ -100,7 +100,7 @@ export function LiveCallStage({
         <p className="text-base text-white/50">{[lead.title, lead.company].filter(Boolean).join(' · ')}</p>
         <div className="flex items-center justify-center gap-2 mt-1">
           <span className={`text-sm ${isOnHold ? 'text-yellow-400' : isConnected ? 'text-green-400' : 'text-white/40'}`}>
-            {isOnHold ? '⏸ On Hold' : isConnected ? '● Connected' : callStatus === 'connecting' ? ', 'Connecting...' : ', 'Ringing...'}
+            {isOnHold ? '⏸ On Hold' : isConnected ? '● Connected' : callStatus === 'connecting' ? 'Connecting...' : 'Ringing...'}
           </span>
         </div>
       </div>

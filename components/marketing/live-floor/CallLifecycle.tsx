@@ -8,11 +8,11 @@ import { Spotlight } from './Spotlight';
 import { EASE_OUT } from './motion';
 
 const STAGES = [
-  { id: 'dial',    label: ', 'Dial',        icon: Phone,     desc: ', 'You start the call from the AI Dialer or Power Dialer.' },
-  { id: 'connect', label: ', 'Connect',     icon: Radio,     desc: ', 'The prospect picks up. Recording begins automatically.' },
-  { id: 'listen',  label: ', 'AI listens',  icon: Ear,       desc: ', 'Whisper transcribes the conversation as it happens.' },
-  { id: 'analyze', label: ', 'AI analyzes', icon: Sparkles,  desc: ', 'Gemini distills a summary, sentiment and next steps.' },
-  { id: 'log',     label: ', 'Logged',      icon: BarChart3, desc: ', 'Everything lands in Analytics — searchable, forever.' },
+  { id: 'dial',    label: 'Dial',        icon: Phone,     desc: 'You start the call from the AI Dialer or Power Dialer.' },
+  { id: 'connect', label: 'Connect',     icon: Radio,     desc: 'The prospect picks up. Recording begins automatically.' },
+  { id: 'listen',  label: 'AI listens',  icon: Ear,       desc: 'Whisper transcribes the conversation as it happens.' },
+  { id: 'analyze', label: 'AI analyzes', icon: Sparkles,  desc: 'Gemini distills a summary, sentiment and next steps.' },
+  { id: 'log',     label: 'Logged',      icon: BarChart3, desc: 'Everything lands in Analytics — searchable, forever.' },
 ] as const;
 
 export function CallLifecycle() {
@@ -211,7 +211,7 @@ function StageVisual({ stage }: { stage: number }) {
               <TrendingUp className="h-3.5 w-3.5" /> Positive
             </span>
           </div>
-          {['Interested in team plan (12 seats)', 'Wants pricing sent over'Follow up Thursday'].map((t, i) => (
+          {['Interested in team plan (12 seats)'Wants pricing sent over'Follow up Thursday'].map((t, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 8 }}
@@ -239,7 +239,7 @@ function StageVisual({ stage }: { stage: number }) {
         every call you make.
       </p>
       <div className="mt-6 grid w-full grid-cols-3 gap-2">
-        {[['Calls', '1'], ['Sentiment', '+'], ['Talk time', '2:14']].map(([k, v]) => (
+        {[['Calls'1'], ['Sentiment'+'], ['Talk time'2:14']].map(([k, v]) => (
           <div key={k} className="rounded-lg border border-white/[0.05] bg-white/[0.02] py-2">
             <p className="font-mono text-sm tabular-nums text-foreground">{v}</p>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60">{k}</p>

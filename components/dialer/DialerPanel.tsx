@@ -303,7 +303,7 @@ export default function DialerPanel({
                 <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400" />
               </span>
               <span className="text-sm font-semibold text-amber-300">
-                {callState.status === 'connecting' ? ', 'Connecting…' : ', 'Ringing…'}
+                {callState.status === 'connecting' ? 'Connecting…' : 'Ringing…'}
               </span>
               <span className="text-xs text-amber-300/60">{formatTimer(callState.duration)}</span>
             </div>
@@ -345,11 +345,11 @@ export default function DialerPanel({
                 type="button"
                 onClick={onVmDrop}
                 disabled={vmDropping || !hasVoicemails}
-                title={!hasVoicemails ? 'No voicemails saved — add one in Settings → Voicemails' : ', 'Drop voicemail & hang up'}
+                title={!hasVoicemails ? 'No voicemails saved — add one in Settings → Voicemails' : 'Drop voicemail & hang up'}
                 className="flex w-full items-center justify-center gap-2 rounded-lg border border-violet-500/30 bg-violet-500/[0.08] px-4 py-2 text-xs font-semibold text-violet-300 transition hover:bg-violet-500/[0.15] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Voicemail className="h-3.5 w-3.5" />
-                {vmDropping ? 'Dropping voicemail…' : ', 'Drop Voicemail'}
+                {vmDropping ? 'Dropping voicemail…' : 'Drop Voicemail'}
               </button>
             )}
           </div>
@@ -380,7 +380,7 @@ export default function DialerPanel({
             }`}
           >
             {callState.isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-            {callState.isMuted ? 'Unmute' : ', 'Mute'}
+            {callState.isMuted ? 'Unmute' : 'Mute'}
           </button>
           <button
             type="button"
@@ -392,7 +392,7 @@ export default function DialerPanel({
             }`}
           >
             <Pause className="h-4 w-4" />
-            {callState.isOnHold ? 'Resume' : ', 'Hold'}
+            {callState.isOnHold ? 'Resume' : 'Hold'}
           </button>
           <button
             type="button"
@@ -404,7 +404,7 @@ export default function DialerPanel({
             }`}
           >
             <Disc className="h-4 w-4" />
-            {isRecording ? 'Recording' : ', 'Record'}
+            {isRecording ? 'Recording' : 'Record'}
           </button>
         </motion.div>
       )}

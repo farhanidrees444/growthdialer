@@ -200,7 +200,7 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
               <div>
                 <p className="text-xs font-semibold text-red-400">Release this number?</p>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  {isOnlyNumber ? "You'll have no numbers to call from." : ', 'This cannot be undone.'}
+                  {isOnlyNumber ? "You'll have no numbers to call from." : 'This cannot be undone.'}
                 </p>
               </div>
               <div className="flex items-center gap-2">

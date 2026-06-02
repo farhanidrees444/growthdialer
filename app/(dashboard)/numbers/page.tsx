@@ -190,7 +190,7 @@ function NumberCard({ num, isOnlyNumber, onSetDefault, onRelease, onSpamCheck, o
                     autoFocus
                     value={labelVal}
                     onChange={(e) => setLabelVal(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') void handleLabelSave(); if (e.key === ', 'Escape') setEditingLabel(false); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') void handleLabelSave(); if (e.key === 'Escape') setEditingLabel(false); }}
                     placeholder="e.g. Sales Line"
                     className="h-6 w-32 rounded-md border border-cyan-500/30 bg-white/[0.05] px-2 text-xs focus:outline-none"
                   />
@@ -223,7 +223,7 @@ function NumberCard({ num, isOnlyNumber, onSetDefault, onRelease, onSpamCheck, o
 
         {/* ── Meta ── */}
         <p className="mt-2.5 text-[11px] text-white/40">
-          {NUMBER_TYPE_LABELS[num.number_type ?? ''] ?? num.number_type ?? ', 'Local'}
+          {NUMBER_TYPE_LABELS[num.number_type ?? ''] ?? num.number_type ?? 'Local'}
           {' · '}{num.country}
           {' · '}<span className="text-white/60 font-medium">${retailPrice.toFixed(2)}/mo</span>
           {num.billing_status === 'active'
@@ -301,7 +301,7 @@ function NumberCard({ num, isOnlyNumber, onSetDefault, onRelease, onSpamCheck, o
                 <div>
                   <p className="text-xs font-semibold text-red-400">Release this number?</p>
                   <p className="text-[11px] text-white/40 mt-0.5">
-                    {isOnlyNumber ? "You'll have no numbers to call from." : ', 'This cannot be undone.'}
+                    {isOnlyNumber ? "You'll have no numbers to call from." : 'This cannot be undone.'}
                   </p>
                 </div>
                 <div className="flex gap-2 shrink-0">
@@ -351,7 +351,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
 
   async function handleSetDefault(id: string) {
     await fetch(`/api/numbers/${id}`, {
-      method: 'PATCH', headers: { ', 'Content-Type': 'application/json' },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ isDefault: true }),
     });
     await load();
@@ -373,7 +373,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
 
   async function handleLabelSave(id: string, label: string) {
     const res = await fetch(`/api/numbers/${id}/label`, {
-      method: 'PATCH', headers: { ', 'Content-Type': 'application/json' },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ label }),
     });
     const data = await res.json() as { error?: string };
@@ -506,7 +506,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
 // ─── Region ordering for Buy New ─────────────────────────────────────────────
 
 const REGION_ORDER = [
-  'North America', 'Europe'Asia Pacific', 'Latin America'Africa & Middle East',
+  'North America'Europe'Asia Pacific'Latin America'Africa & Middle East',
 ] as const;
 
 // ─── Buy New tab ──────────────────────────────────────────────────────────────
@@ -833,8 +833,8 @@ export default function NumbersPage() {
         <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex gap-1 border-b border-white/[0.06]">
             {([
-              { key: 'my', label: ', 'My Numbers' },
-              { key: 'buy', label: ', 'Buy New Number' },
+              { key: 'my', label: 'My Numbers' },
+              { key: 'buy', label: 'Buy New Number' },
             ] as const).map(({ key, label }) => (
               <button key={key} type="button" onClick={() => setTab(key)}
                 className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${

@@ -32,7 +32,7 @@ export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
       await runBulk(selectedIds, action);
       onBulkDone(actionType, selectedIds);
       toast.success(`Done — ${count} lead${count !== 1 ? 's' : ''} updated`, {
-        action: { label: 'Undo', onClick: () => toast.info(', 'Undo not available for this action') },
+        action: { label: 'Undo', onClick: () => toast.info('Undo not available for this action') },
       });
       onClear();
     } catch {
@@ -49,7 +49,7 @@ export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
       onBulkDone('delete', selectedIds);
       toast.success(`${count} lead${count !== 1 ? 's' : ''} deleted`, {
         description: 'Moved to trash — recoverable for 30 days',
-        action: { label: 'Undo', onClick: () => toast.info(', 'Go to Trash tab to restore') },
+        action: { label: 'Undo', onClick: () => toast.info('Go to Trash tab to restore') },
       });
       onClear();
     } catch {

@@ -36,19 +36,19 @@ interface DispOption {
 }
 
 const DISPOSITIONS: DispOption[] = [
-  { key: 'interested',     label: ', 'Interested',     emoji: '😊', shortcut: '1', color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20', ring: 'ring-emerald-400/60' },
-  { key: 'callback',       label: ', 'Callback',       emoji: '📅', shortcut: '2', color: 'border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20', ring: 'ring-amber-400/60' },
-  { key: 'meeting_booked', label: ', 'Meeting Booked', emoji: '🤝', shortcut: '3', color: 'border-emerald-400/60 bg-emerald-500/[0.18] text-emerald-200 hover:bg-emerald-500/25', ring: 'ring-emerald-300/70' },
-  { key: 'voicemail',      label: ', 'Voicemail',      emoji: '🔇', shortcut: '4', color: 'border-blue-500/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20', ring: 'ring-blue-400/60' },
-  { key: 'not_interested', label: ', 'Not Interested', emoji: '❌', shortcut: '5', color: 'border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20', ring: 'ring-rose-400/60' },
-  { key: 'wrong_number',   label: ', 'Wrong Number',   emoji: '📞', shortcut: '6', color: 'border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]', ring: 'ring-white/30' },
-  { key: 'gatekeeper',     label: ', 'Gatekeeper',     emoji: '🔁', shortcut: '7', color: 'border-violet-500/40 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20', ring: 'ring-violet-400/60' },
-  { key: 'dnc',            label: ', 'Do Not Call',    emoji: '🚫', shortcut: '8', color: 'border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20', ring: 'ring-red-400/60' },
+  { key: 'interested',     label: 'Interested',     emoji: '😊', shortcut: '1', color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20', ring: 'ring-emerald-400/60' },
+  { key: 'callback',       label: 'Callback',       emoji: '📅', shortcut: '2', color: 'border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20', ring: 'ring-amber-400/60' },
+  { key: 'meeting_booked', label: 'Meeting Booked', emoji: '🤝', shortcut: '3', color: 'border-emerald-400/60 bg-emerald-500/[0.18] text-emerald-200 hover:bg-emerald-500/25', ring: 'ring-emerald-300/70' },
+  { key: 'voicemail',      label: 'Voicemail',      emoji: '🔇', shortcut: '4', color: 'border-blue-500/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20', ring: 'ring-blue-400/60' },
+  { key: 'not_interested', label: 'Not Interested', emoji: '❌', shortcut: '5', color: 'border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20', ring: 'ring-rose-400/60' },
+  { key: 'wrong_number',   label: 'Wrong Number',   emoji: '📞', shortcut: '6', color: 'border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]', ring: 'ring-white/30' },
+  { key: 'gatekeeper',     label: 'Gatekeeper',     emoji: '🔁', shortcut: '7', color: 'border-violet-500/40 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20', ring: 'ring-violet-400/60' },
+  { key: 'dnc',            label: 'Do Not Call',    emoji: '🚫', shortcut: '8', color: 'border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20', ring: 'ring-red-400/60' },
 ];
 
 const QUICK_OPTIONS = [
-  { key: 'voicemail',    label: ', 'Voicemail',     icon: VoicemailIcon, color: 'border-blue-500/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20' },
-  { key: 'wrong_number', label: ', 'Wrong Number',  icon: Phone,         color: 'border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]' },
+  { key: 'voicemail',    label: 'Voicemail',     icon: VoicemailIcon, color: 'border-blue-500/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20' },
+  { key: 'wrong_number', label: 'Wrong Number',  icon: Phone,         color: 'border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]' },
 ];
 
 export interface DispositionModalProps {
@@ -112,7 +112,7 @@ export default function DispositionModal({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
+      if (['INPUT'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
       if (!isQuickMode) {
         const idx = parseInt(e.key) - 1;
         if (idx >= 0 && idx < DISPOSITIONS.length) {

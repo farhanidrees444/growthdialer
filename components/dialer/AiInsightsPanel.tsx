@@ -73,9 +73,9 @@ function memoryTypeColor(type: string): string {
 }
 
 const BEST_TIMES: Record<string, string> = {
-  'SaaS': ', 'Tue–Thu · 10–11 AM',
-  'Finance': ', 'Wed · 9–10 AM',
-  'Healthcare': ', 'Mon–Wed · 2–4 PM',
+  'SaaS': 'Tue–Thu · 10–11 AM',
+  'Finance': 'Wed · 9–10 AM',
+  'Healthcare': 'Mon–Wed · 2–4 PM',
 };
 
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
@@ -117,7 +117,7 @@ export default function AiInsightsPanel({ lead, notes, refreshKey = 0 }: AiInsig
       });
   }, [lead?.id, refreshKey, supabase]);
 
-  const bestTime = lead?.industry ? (BEST_TIMES[lead.industry] ?? 'Tue–Thu · 10–11 AM') : ', 'Tue–Thu · 10–11 AM';
+  const bestTime = lead?.industry ? (BEST_TIMES[lead.industry] ?? 'Tue–Thu · 10–11 AM') : 'Tue–Thu · 10–11 AM';
 
   // Derive real AI data from call history
   const latestWithAI = callHistory.find((c) => {

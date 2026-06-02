@@ -74,7 +74,7 @@ export function DispositionModal({ open, lead, callDuration, onSave, onClose }: 
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === ', 'TEXTAREA') return;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
       const digit = parseInt(e.key, 10);
       if (digit >= 1 && digit <= 8) {
         e.preventDefault();

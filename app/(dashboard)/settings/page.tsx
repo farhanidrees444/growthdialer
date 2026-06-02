@@ -56,15 +56,15 @@ const DEFAULT_SETTINGS: UserSettings = {
 type TabKey = 'profile' | 'recording' | 'ai' | 'calling' | 'voicemails' | 'notifications' | 'billing' | 'team' | 'security';
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
-  { key: 'profile',       label: ', 'Profile',        icon: Settings },
-  { key: 'recording',     label: ', 'Recording',      icon: Mic },
-  { key: 'ai',            label: ', 'AI',             icon: Sparkles },
-  { key: 'calling',       label: ', 'Inbound',        icon: Phone },
-  { key: 'voicemails',    label: ', 'Voicemails',     icon: Voicemail },
-  { key: 'notifications', label: ', 'Notifications',  icon: Bell },
-  { key: 'billing',       label: ', 'Billing',        icon: CreditCard },
-  { key: 'team',          label: ', 'Team',           icon: Users },
-  { key: 'security',      label: ', 'Security',       icon: Shield },
+  { key: 'profile',       label: 'Profile',        icon: Settings },
+  { key: 'recording',     label: 'Recording',      icon: Mic },
+  { key: 'ai',            label: 'AI',             icon: Sparkles },
+  { key: 'calling',       label: 'Inbound',        icon: Phone },
+  { key: 'voicemails',    label: 'Voicemails',     icon: Voicemail },
+  { key: 'notifications', label: 'Notifications',  icon: Bell },
+  { key: 'billing',       label: 'Billing',        icon: CreditCard },
+  { key: 'team',          label: 'Team',           icon: Users },
+  { key: 'security',      label: 'Security',       icon: Shield },
 ];
 
 // ─── Shared UI ────────────────────────────────────────────────────────────────
@@ -458,10 +458,10 @@ function AiTab({ settings, onChange }: { settings: UserSettings; onChange: (patc
 // ─── Inbound Calling Tab ──────────────────────────────────────────────────────
 
 const INBOUND_MODES = [
-  { id: 'browser',   title: ', 'Ring in Browser',  desc: ', 'Answer calls right here in the app', icon: Monitor },
-  { id: 'forward',   title: ', 'Forward to Phone', desc: ', 'Route to your personal number',       icon: Smartphone },
-  { id: 'voicemail', title: ', 'Voicemail Only',   desc: ', 'Send straight to voicemail',          icon: Voicemail },
-  { id: 'off',       title: ', 'Reject All',       desc: ', 'Decline all incoming calls',          icon: PhoneOff },
+  { id: 'browser',   title: 'Ring in Browser',  desc: 'Answer calls right here in the app', icon: Monitor },
+  { id: 'forward',   title: 'Forward to Phone', desc: 'Route to your personal number',       icon: Smartphone },
+  { id: 'voicemail', title: 'Voicemail Only',   desc: 'Send straight to voicemail',          icon: Voicemail },
+  { id: 'off',       title: 'Reject All',       desc: 'Decline all incoming calls',          icon: PhoneOff },
 ] as const;
 
 function CallingTab({ settings, onChange }: { settings: UserSettings; onChange: (patch: Partial<UserSettings>) => void }) {
@@ -914,7 +914,7 @@ function DeleteAccountModal({ onClose, userEmail }: { onClose: () => void; userE
   const [error, setError]     = useState('');
 
   async function handleDelete() {
-    if (input !== 'DELETE') { setError(', 'Type DELETE exactly'); return; }
+    if (input !== 'DELETE') { setError('Type DELETE exactly'); return; }
     setDeleting(true);
     try {
       const res = await fetch('/api/settings/delete-account', {
@@ -986,7 +986,7 @@ function DeleteAccountModal({ onClose, userEmail }: { onClose: () => void; userE
               className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white transition hover:bg-red-500 disabled:opacity-50"
             >
               {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-              {deleting ? 'Deleting…' : ', 'Delete Forever'}
+              {deleting ? 'Deleting…' : 'Delete Forever'}
             </button>
           </div>
         </div>
@@ -1092,7 +1092,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition disabled:opacity-50"
                 style={{ background: 'linear-gradient(135deg, hsl(258,90%,66%), hsl(186,100%,42%))'' }}>
                 {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
-                {busy ? 'Sending…' : ', 'Send Invite'}
+                {busy ? 'Sending…' : 'Send Invite'}
               </button>
             </div>
           </div>
@@ -1117,7 +1117,7 @@ function TeamTab() {
   const canChangeRoles = can('CHANGE_ROLES');
   const canRemove      = can('REMOVE_MEMBERS');
 
-  const planLabel: Record<string, string> = { free: 'Free', pro: ', 'Pro', team: ', 'Team', enterprise: ', 'Enterprise' };
+  const planLabel: Record<string, string> = { free: 'Free', pro: 'Pro', team: 'Team', enterprise: 'Enterprise' };
 
   async function handleRoleChange(userId: string, role: Role) {
     setActionBusy(userId);
