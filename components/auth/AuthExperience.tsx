@@ -12,6 +12,18 @@ import { EASE_OUT } from '@/components/marketing/live-floor/motion';
 
 type Mode = 'login' | 'signup';
 
+// OAuth/email callbacks must always land on the app subdomain so the code
+// exchange and session cookies happen there (never on the marketing apex).
+// Localhost is preserved for local development.
+const APP_ORIGIN = 'https://app.growthdialer.com';
+function authCallbackUrl(): string {
+  if (typeof window !== 'undefined') {
+    const h = window.location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1') return `${window.location.origin}/auth/callback`;
+  }
+  return `${APP_ORIGIN}/auth/callback`;
+}
+
 const GoogleIcon = () => (
   <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden>
     <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.24 1.4-1.66 4.1-5.5 4.1-3.3 0-6-2.7-6-6.1S8.7 6 12 6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.5 14.6 2.5 12 2.5 6.9 2.5 2.8 6.6 2.8 11.7S6.9 21 12 21c5.3 0 8.8-3.7 8.8-9 0-.6-.06-1-.15-1.5H12z" />
@@ -62,7 +74,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/auth/callback' },
+      options: { redirectTo: authCallbackUrl() },
     });
   }
 
@@ -86,7 +98,10 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: name, company } },
+          options: {
+            data: { full_name: name, company },
+            emailRedirectTo: authCallbackUrl(),
+          },
         });
         if (error) {
           setError(error.message);
