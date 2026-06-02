@@ -32,7 +32,7 @@ export function HomeFAQ() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section className="relative px-5 py-20 lg:px-8 lg:py-28">
+    <section className="relative px-5 py-16 lg:px-8 lg:py-24">
       <div className="mx-auto grid max-w-5xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
         <motion.div
           initial={{ opacity: 0, y: 16 }}

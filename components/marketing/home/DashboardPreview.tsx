@@ -29,7 +29,7 @@ export function DashboardPreview() {
   const calls = useTicker(47, 4200, 1, reduce);
 
   return (
-    <section className="relative px-5 py-20 lg:px-8 lg:py-28">
+    <section className="relative px-5 py-16 lg:px-8 lg:py-24">
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-1/3 h-[460px] w-[min(92vw,900px)] -translate-x-1/2 rounded-full opacity-[0.07] blur-[130px]"

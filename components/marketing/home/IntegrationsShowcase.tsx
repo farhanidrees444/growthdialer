@@ -18,7 +18,7 @@ const CATEGORIES = [
 
 export function IntegrationsShowcase() {
   return (
-    <section id="integrations" className="relative px-5 py-20 lg:px-8 lg:py-28">
+    <section id="integrations" className="relative px-5 py-16 lg:px-8 lg:py-24">
       <motion.div
         initial="hidden"
         whileInView="show"

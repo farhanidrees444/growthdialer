@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Upload, PhoneCall, Mic, FileText, Sparkles, BarChart3 } from 'lucide-react';
 import { EASE_OUT, reveal, revealContainer } from './motion';
 
@@ -14,6 +14,7 @@ const NODES = [
 ];
 
 export function EcosystemFlow() {
+  const reduce = useReducedMotion();
   return (
     <section className="relative px-5 py-16 lg:px-8 lg:py-24">
       <div className="mx-auto max-w-7xl">
@@ -58,6 +59,17 @@ export function EcosystemFlow() {
                       transition={{ duration: 0.8, delay: 0.1 + i * 0.1, ease: EASE_OUT }}
                       className="h-full origin-left bg-gradient-to-r from-white/[0.12] to-white/[0.04]"
                     />
+                    {/* Data-flow pulse traveling node → node */}
+                    {!reduce && (
+                      <motion.span
+                        aria-hidden
+                        className="absolute top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-[#06B6D4]"
+                        style={{ boxShadow: '0 0 8px #06B6D4' }}
+                        initial={{ left: '0%', opacity: 0 }}
+                        animate={{ left: ['0%', '100%'], opacity: [0, 1, 1, 0] }}
+                        transition={{ duration: 2.4, repeat: Infinity, delay: i * 0.4, ease: 'easeInOut' }}
+                      />
+                    )}
                   </div>
                 )}
                 <div className="group relative flex flex-col items-center gap-3 px-2 text-center lg:px-3">

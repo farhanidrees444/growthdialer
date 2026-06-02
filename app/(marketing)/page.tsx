@@ -5,7 +5,6 @@ import { Hero } from '@/components/marketing/live-floor/Hero';
 import { CallLifecycle } from '@/components/marketing/live-floor/CallLifecycle';
 import { EcosystemFlow } from '@/components/marketing/live-floor/EcosystemFlow';
 import { Features } from '@/components/marketing/live-floor/Features';
-import { ConversationIntelligence } from '@/components/marketing/live-floor/ConversationIntelligence';
 import { FinalCTA } from '@/components/marketing/live-floor/FinalCTA';
 import { SocialProof } from '@/components/marketing/home/SocialProof';
 import { DashboardPreview } from '@/components/marketing/home/DashboardPreview';
@@ -31,7 +30,6 @@ export default function LandingPage() {
           <EcosystemFlow />
           <Features />
           <FeatureSections />
-          <ConversationIntelligence />
           <IntegrationsShowcase />
           <StatsStrip />
           <EarlyAccess />

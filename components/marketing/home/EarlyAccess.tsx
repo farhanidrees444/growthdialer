@@ -9,7 +9,7 @@ const APP_SIGNUP = 'https://app.growthdialer.com/signup';
 
 export function EarlyAccess() {
   return (
-    <section className="relative px-5 py-20 lg:px-8 lg:py-28">
+    <section className="relative px-5 py-16 lg:px-8 lg:py-24">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
