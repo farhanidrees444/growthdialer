@@ -2,15 +2,17 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useMounted } from '@/hooks/use-mounted';
 
 const NAV_LINKS = ['Features', 'Pricing', 'Docs'] as const;
 type NavLink = (typeof NAV_LINKS)[number];
 
 export function GlobalHeader() {
   const [activeLink, setActiveLink] = useState<NavLink | null>(null);
+  const mounted = useMounted();
 
   return (
     <motion.header
@@ -47,18 +49,12 @@ export function GlobalHeader() {
                 </button>
 
                 {/* ─── Animated Pill Background ─── */}
-                <AnimatePresence>
-                  {activeLink === link && (
-                    <motion.div
-                      layoutId="navbar-pill"
-                      className="absolute inset-0 -z-10 rounded-lg bg-white/[0.08]"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    />
-                  )}
-                </AnimatePresence>
+                <motion.div
+                  className="absolute inset-0 -z-10 rounded-lg bg-white/[0.08]"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: mounted && activeLink === link ? 1 : 0 }}
+                  transition={{ duration: 0.2 }}
+                />
               </div>
             ))}
           </nav>
