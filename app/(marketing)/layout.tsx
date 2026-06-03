@@ -20,6 +20,7 @@ export default function MarketingLayout({
     "/",
     "/pricing",
     "/features",
+    "/features/integrations",
     "/about",
     "/contact-sales",
     "/customers",
