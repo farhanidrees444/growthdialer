@@ -3,10 +3,20 @@
 import { MotionConfig } from 'framer-motion';
 
 /**
- * Wraps the homepage so every Framer Motion animation respects the user's
- * OS "reduce motion" setting (reducedMotion="user"). Heavy transform/scroll
- * motion is reduced automatically; opacity reveals stay gentle.
+ * Centralizes Framer Motion config for the homepage.
+ *
+ * IMPORTANT: reducedMotion is "never" (not "user") on purpose. Using "user"
+ * globally auto-reduced EVERY animation — including one-shot entrance and
+ * scroll-reveal animations — to instant on any device whose OS reports
+ * `prefers-reduced-motion: reduce` (common on desktop/laptop). That made the
+ * hero and below-fold sections appear frozen on desktop while mobile (no such
+ * OS setting) animated. Entrance/reveal animations now run on every viewport.
+ *
+ * Accessibility is preserved where it matters: the continuous / infinite-loop
+ * animations (waveform, marquee, pulses, tickers, cursor spotlight) each call
+ * `useReducedMotion()` directly and disable themselves for users who request
+ * reduced motion — independent of this prop.
  */
 export function MotionShell({ children }: { children: React.ReactNode }) {
-  return <MotionConfig reducedMotion="user">{children}</MotionConfig>;
+  return <MotionConfig reducedMotion="never">{children}</MotionConfig>;
 }
