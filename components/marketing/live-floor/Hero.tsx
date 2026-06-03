@@ -40,7 +40,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 22 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, ease: EASE_OUT, delay: 0.06 }}
-            className="font-display text-[clamp(2.6rem,6vw,4.75rem)] font-light leading-[0.98] tracking-tight text-[#F5F5F7]"
+            className="bg-gradient-to-b from-white via-white to-zinc-500 bg-clip-text font-display text-[clamp(2.6rem,6vw,4.75rem)] font-light leading-[0.98] tracking-tight text-transparent"
           >
             Every call,
             <br />
@@ -99,6 +99,13 @@ export function Hero() {
           className="relative"
         >
           <BorderBeamCard>
+            {/* macOS-style app-frame title bar */}
+            <div className="mb-5 flex items-center gap-1.5 border-b border-white/[0.05] pb-4">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+              <span className="ml-2 text-[11px] text-zinc-600">GrowthDialer — Live call</span>
+            </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#06B6D4]/10 text-[#06B6D4]">

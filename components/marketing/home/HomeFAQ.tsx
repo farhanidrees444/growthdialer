@@ -26,6 +26,34 @@ const FAQS = [
     q: 'Can I try it before paying?',
     a: 'Yes — start free with no credit card. Make real calls and see the AI summaries for yourself before deciding on a plan.',
   },
+  {
+    q: 'Are my calls recorded automatically?',
+    a: 'Recording follows your settings. With recording on, calls are captured automatically so the AI can transcribe and analyze them; you can change recording behavior any time in settings.',
+  },
+  {
+    q: 'What does the AI summary actually include?',
+    a: 'A short bullet recap of the conversation, the overall sentiment, the detected intent, and suggested next steps — all linked back to the call and the lead.',
+  },
+  {
+    q: 'Can I bring my own phone numbers?',
+    a: 'You provision numbers inside GrowthDialer and we monitor their health and spam risk so your connect rates stay high. Porting and bring-your-own options are on the roadmap.',
+  },
+  {
+    q: 'How does Power Dialer differ from the AI Dialer?',
+    a: 'The AI Dialer is a focused single-call stage with three modes. Power Dialer moves you through a list back-to-back — disposition, note, and advance without breaking rhythm.',
+  },
+  {
+    q: 'Do you support inbound calls?',
+    a: 'Yes — inbound calls ring in the browser (or forward to your phone / go to voicemail per your settings), and they get recorded and analyzed just like outbound calls.',
+  },
+  {
+    q: 'Is my data secure?',
+    a: 'Your calls, recordings and transcripts are tied to your account and used only to power the product for you. We don’t sell your data. Formal compliance certifications are in progress.',
+  },
+  {
+    q: 'What does it cost?',
+    a: 'Plans start free and scale by seat — see the pricing page for current tiers. You only pay for what you use, and you can change plans at any time.',
+  },
 ];
 
 export function HomeFAQ() {

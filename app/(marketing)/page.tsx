@@ -5,7 +5,10 @@ import { Hero } from '@/components/marketing/live-floor/Hero';
 import { Features } from '@/components/marketing/live-floor/Features';
 import { FinalCTA } from '@/components/marketing/live-floor/FinalCTA';
 import { IntegrationsMarquee } from '@/components/marketing/home/IntegrationsMarquee';
+import { DashboardPreview } from '@/components/marketing/home/DashboardPreview';
 import { InteractivePipeline } from '@/components/marketing/home/InteractivePipeline';
+import { FeatureSections } from '@/components/marketing/home/FeatureSections';
+import { HowItWorks } from '@/components/marketing/home/HowItWorks';
 import { StatsStrip } from '@/components/marketing/home/StatsStrip';
 import { EarlyAccess } from '@/components/marketing/home/EarlyAccess';
 import { HomeFAQ } from '@/components/marketing/home/HomeFAQ';
@@ -26,8 +29,11 @@ export default function LandingPage() {
         <main className="relative z-[2]">
           <Hero />
           <IntegrationsMarquee />
+          <DashboardPreview />
           <InteractivePipeline />
           <Features />
+          <FeatureSections />
+          <HowItWorks />
           <StatsStrip />
           <EarlyAccess />
           <HomeFAQ />

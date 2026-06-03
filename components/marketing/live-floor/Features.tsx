@@ -8,11 +8,6 @@ import { reveal, revealContainer } from './motion';
 
 const FEATURES = [
   {
-    icon: Brain,
-    title: 'AI Conversation Intelligence',
-    body: 'Whisper transcribes, Gemini analyzes. Summaries, sentiment and intent on every recorded call — automatically.',
-  },
-  {
     icon: Zap,
     title: 'Power Dialer',
     body: 'Burn through a call list back-to-back. Disposition, take notes and move to the next number without breaking rhythm.',
@@ -97,6 +92,48 @@ export function Features() {
                 <span className="font-mono text-xs tabular-nums text-zinc-600">01:08</span>
               </div>
               <LiveWaveform bars={52} height={48} barWidth={2.5} gap={2.5} />
+            </div>
+          </motion.article>
+
+          {/* Second large feature — AI Conversation Intelligence (transcript → key points) */}
+          <motion.article
+            variants={reveal}
+            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12] hover:bg-white/[0.03] sm:col-span-2 lg:row-span-2"
+          >
+            <Spotlight />
+            <div>
+              <div className="mb-5 flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#06B6D4]/10 text-[#06B6D4]">
+                  <Brain className="h-5 w-5" />
+                </span>
+                <span className="rounded-full border border-white/[0.08] px-2.5 py-1 text-[11px] font-medium text-zinc-400">
+                  Whisper + Gemini
+                </span>
+              </div>
+              <h3 className="font-display text-2xl font-medium tracking-tight text-[#F5F5F7]">
+                AI Conversation Intelligence
+              </h3>
+              <p className="mt-3 max-w-md text-[15px] leading-relaxed text-zinc-400">
+                Every recorded call is transcribed and distilled into a summary,
+                sentiment and intent — the moment you hang up, no notes required.
+              </p>
+            </div>
+
+            {/* transcript → glowing key points */}
+            <div className="mt-8 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-white/[0.05] bg-black/30 p-4">
+                <p className="mb-2 text-[10px] font-medium uppercase tracking-widest text-zinc-600">Transcript</p>
+                <p className="text-[12px] leading-relaxed text-zinc-500">
+                  &ldquo;…send pricing for a team of twelve, and let&apos;s talk Thursday.&rdquo;
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                {['Positive sentiment', 'Intent: pricing + demo', 'Next: follow up Thu'].map((t) => (
+                  <div key={t} className="flex items-center gap-2 rounded-lg border border-[#8B5CF6]/15 bg-[#8B5CF6]/[0.06] px-2.5 py-1.5 text-[12px] text-zinc-300">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#8B5CF6]" /> {t}
+                  </div>
+                ))}
+              </div>
             </div>
           </motion.article>
 
