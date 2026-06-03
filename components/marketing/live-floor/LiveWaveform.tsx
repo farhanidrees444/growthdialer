@@ -90,9 +90,8 @@ export function MiniWave({ color = '#06B6D4', className = '' }: { color?: string
         <motion.span
           key={i}
           className="w-[2px] rounded-full"
-          style={{ background: color, height: 14 }}
-          initial={reduce ? false : { scaleY: h * 0.4 }}
-          animate={reduce ? { scaleY: h } : { scaleY: [h * 0.4, h, h * 0.4] }}
+          style={{ background: color, height: 14, scaleY: h }}
+          animate={reduce ? undefined : { scaleY: [h * 0.4, h, h * 0.4] }}
           transition={reduce ? undefined : { duration: 0.8 + i * 0.07, repeat: Infinity, ease: 'easeInOut' }}
         />
       ))}
