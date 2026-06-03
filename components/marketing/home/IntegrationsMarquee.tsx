@@ -52,22 +52,19 @@ export function IntegrationsMarquee() {
             return (
               <li
                 key={`${b.name}-${i}`}
-                className="group relative flex shrink-0 items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-2.5 backdrop-blur-xl"
+                className="group relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl sm:h-[4.5rem] sm:w-[4.5rem]"
                 style={{ ['--brand']: b.color } as React.CSSProperties}
               >
                 {/* Localized radial glow on hover */}
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                  style={{ background: `radial-gradient(60% 120% at 30% 50%, ${b.color}26, transparent 70%)` }}
+                  className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                  style={{ background: `radial-gradient(circle at 50% 50%, ${b.color}2e, transparent 70%)` }}
                 />
                 <Icon
                   aria-hidden
-                  className="relative h-5 w-5 text-zinc-500 opacity-50 transition-all duration-300 group-hover:opacity-100 group-hover:[color:var(--brand)]"
+                  className="relative h-6 w-6 text-zinc-500 opacity-40 transition-all duration-300 group-hover:opacity-100 group-hover:[color:var(--brand)] sm:h-7 sm:w-7"
                 />
-                <span className="relative rounded-full border border-white/[0.08] px-1.5 py-0.5 text-[10px] text-zinc-600">
-                  Soon
-                </span>
                 <span className="sr-only">{b.name} — integration coming soon</span>
               </li>
             );
