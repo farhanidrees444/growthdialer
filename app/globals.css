@@ -177,6 +177,28 @@
   animation-play-state: paused;
 }
 
+/* Marquee — pure CSS so it loops identically on every viewport (no JS/hook
+   timing differences between mobile and desktop). Duplicated content + -50%
+   gives a seamless infinite loop. */
+@keyframes marquee-x {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.marquee-track {
+  animation: marquee-x 38s linear infinite;
+  will-change: transform;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+/* Respect reduced motion — only here, never broadly */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track,
+  .marquee-track {
+    animation: none;
+  }
+}
+
 /* ─── Smooth scroll ─── */
 html {
   scroll-behavior: smooth;
