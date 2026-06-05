@@ -494,6 +494,26 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
             onLabelSave={handleLabelSave}
           />
         ))}
+
+        {/* Balance the 2-col grid when there's a single number — supporting CTA
+            instead of empty dead space. */}
+        {active.length === 1 && !search && (
+          <button
+            type="button"
+            onClick={onBuyNew}
+            className="group flex min-h-[160px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/[0.10] bg-white/[0.01] p-6 text-center transition-colors hover:border-violet-500/30 hover:bg-white/[0.02]"
+          >
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-violet-300 transition-colors group-hover:border-violet-500/40">
+              <Plus className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-white/80">Add another number</p>
+              <p className="mx-auto mt-1 max-w-[14rem] text-xs leading-relaxed text-white/35">
+                Spread calls across more numbers to protect deliverability and connect rates.
+              </p>
+            </div>
+          </button>
+        )}
       </motion.div>
 
       {filtered.length === 0 && search && (

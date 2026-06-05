@@ -7,9 +7,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Phone, Users, CalendarCheck, Clock, TrendingUp, TrendingDown,
-  Activity, ChevronRight,
+  ChevronRight,
 } from "lucide-react";
 import { NumberHealthCard } from "@/components/dashboard/number-health-card";
+import { MiniWave } from "@/components/marketing/live-floor/LiveWaveform";
 import {
   AreaChart, Area, XAxis, CartesianGrid,
   ResponsiveContainer, Tooltip as RechartsTooltip,
@@ -153,9 +154,9 @@ function Skeleton({ className }: { className?: string }) {
 
 function KpiCard({
   title,
-  rawValue,
   displayValue,
   loading,
+  hasActivity,
   icon: Icon,
   iconColor,
   color,
@@ -165,9 +166,9 @@ function KpiCard({
   trend,
 }: {
   title: string;
-  rawValue: number;
   displayValue: string;
   loading: boolean;
+  hasActivity: boolean;
   icon: typeof Phone;
   iconColor: string;
   color: string;
@@ -176,7 +177,9 @@ function KpiCard({
   dataKey: keyof Pick<HourlyMetricPoint, "calls" | "connected" | "meetings">;
   trend?: { pct: number; positive: boolean } | null;
 }) {
-  const hasData = rawValue > 0;
+  // Empty-state is shared across all KPI cards: if there are calls today,
+  // every card shows its value (even 0) so the row stays consistent.
+  const hasData = hasActivity;
 
   return (
     <motion.div
@@ -267,14 +270,19 @@ function CallActivityChart({
   });
 
   const chartData = timeRange === '24H' ? chart24H : (weeklyData ?? []);
-  const hasData = chartData.some(p => p.calls > 0 || p.connected > 0);
+  const nonZeroPoints = chartData.filter(p => p.calls > 0 || p.connected > 0).length;
+  const anyData = nonZeroPoints > 0;
+  // A single non-zero point renders as a lonely spike — need ≥2 to draw a real
+  // curve. Below that, show a clean premium state instead.
+  const enoughToChart = nonZeroPoints >= 2;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
       <div className="flex items-center justify-between p-5 pb-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <h3 className="text-sm font-semibold text-white">Call Activity</h3>
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+          {/* Brand waveform motif — live/active identity */}
+          <MiniWave className="h-3.5 opacity-80" />
         </div>
         <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-black/20 p-0.5">
           {(['24H', '7D'] as const).map(r => (
@@ -297,7 +305,7 @@ function CallActivityChart({
         <div className="flex h-[240px] items-center justify-center lg:h-[280px]">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/10 border-t-white/40" />
         </div>
-      ) : hasData ? (
+      ) : enoughToChart ? (
         <>
           <div className="h-[240px] px-2 lg:h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -353,10 +361,12 @@ function CallActivityChart({
         </>
       ) : (
         <div className="flex h-[240px] flex-col items-center justify-center gap-3 px-5 lg:h-[280px]">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02]">
-            <Activity className="h-5 w-5 text-slate-600" />
+          <div className="flex h-12 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] px-4">
+            <MiniWave className="h-5" />
           </div>
-          <p className="text-sm text-slate-600">Activity will appear once you start calling</p>
+          <p className="text-sm text-slate-600">
+            {anyData ? 'Your activity chart builds as more calls come in' : 'Activity will appear once you start calling'}
+          </p>
           <Link href="/dialer" className="text-xs font-semibold text-brand underline-offset-2 hover:underline">
             Go to dialer →
           </Link>
@@ -606,6 +616,8 @@ export default function DashboardPage() {
     : null;
 
   const allLoading = metricsLoading || statsLoading;
+  // Single source of truth for the KPI empty-state so all four cards agree.
+  const hasCallsToday = (stats?.callsToday ?? 0) > 0;
 
   return (
     <main className="flex-1 overflow-y-auto">
@@ -621,9 +633,9 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-3 px-4 lg:grid-cols-4 lg:gap-4 lg:px-6">
           <KpiCard
             title="Calls Today"
-            rawValue={stats?.callsToday ?? 0}
             displayValue={String(stats?.callsToday ?? 0)}
             loading={allLoading}
+            hasActivity={hasCallsToday}
             icon={Phone}
             iconColor="text-violet-400"
             color="#8B5CF6"
@@ -634,9 +646,9 @@ export default function DashboardPage() {
           />
           <KpiCard
             title="Connect Rate"
-            rawValue={stats?.connectRate ?? 0}
             displayValue={`${(stats?.connectRate ?? 0).toFixed(1)}%`}
             loading={allLoading}
+            hasActivity={hasCallsToday}
             icon={Users}
             iconColor="text-cyan-400"
             color="#06B6D4"
@@ -647,9 +659,9 @@ export default function DashboardPage() {
           />
           <KpiCard
             title="Talk Time"
-            rawValue={talkTime ?? 0}
             displayValue={talkTime !== null && talkTime > 0 ? fmtTalkTime(talkTime) : '0m'}
             loading={allLoading || talkTime === null}
+            hasActivity={hasCallsToday}
             icon={Clock}
             iconColor="text-emerald-400"
             color="#10b981"
@@ -660,9 +672,9 @@ export default function DashboardPage() {
           />
           <KpiCard
             title="Meetings Booked"
-            rawValue={stats?.meetingsBooked ?? 0}
             displayValue={String(stats?.meetingsBooked ?? 0)}
             loading={allLoading}
+            hasActivity={hasCallsToday}
             icon={CalendarCheck}
             iconColor="text-amber-400"
             color="#f59e0b"

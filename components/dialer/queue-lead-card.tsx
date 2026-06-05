@@ -60,7 +60,7 @@ export function QueueLeadCard({ lead, selected, lastDisposition, onClick }: Queu
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="text-sm font-medium text-white truncate">{lead.name}</span>
-          {lead.ai_score && lead.ai_score >= 70 && (
+          {(lead.ai_score ?? 0) >= 70 && (
             <span className="flex-shrink-0 text-[9px] bg-yellow-400/15 text-yellow-400 border border-yellow-400/20 rounded px-1 py-px">HOT</span>
           )}
         </div>

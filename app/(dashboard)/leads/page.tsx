@@ -280,7 +280,7 @@ function LeadCard({
       <div className="flex items-start gap-3 pt-1">
         <div className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${grad} text-sm font-bold text-white shadow-sm`}>
           {getInitials(lead.name)}
-          {lead.ai_score !== null && (
+          {lead.ai_score != null && lead.ai_score > 0 && (
             <div className={`absolute -bottom-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br ${scoreGrad} text-[9px] font-bold text-white shadow-sm`}>
               {lead.ai_score}
             </div>

@@ -513,38 +513,48 @@ export default function AnalyticsPage() {
             ) : (
               <>
                 {/* Disposition donut */}
-                <GCard title="Disposition Breakdown" subtitle="Call outcomes this period">
+                <GCard title="Disposition Breakdown" subtitle="Share of dispositioned calls">
                   {data!.dispositions.length === 0 ? (
                     <EmptyChart message="No dispositioned calls yet" />
                   ) : (
-                    <div className="flex items-center gap-4">
-                      <div className="shrink-0">
-                        <ResponsiveContainer width={160} height={160}>
-                          <PieChart>
-                            <Pie data={data!.dispositions} cx="50%" cy="50%"
-                              innerRadius={48} outerRadius={72} paddingAngle={2} dataKey="count">
-                              {data!.dispositions.map((e) => (
-                                <Cell key={e.disposition} fill={e.color} fillOpacity={0.88} />
-                              ))}
-                            </Pie>
-                            <Tooltip content={<GlassTooltip />} />
-                          </PieChart>
-                        </ResponsiveContainer>
+                    <div>
+                      <div className="flex items-center gap-4">
+                        <div className="shrink-0">
+                          <ResponsiveContainer width={160} height={160}>
+                            <PieChart>
+                              <Pie data={data!.dispositions} cx="50%" cy="50%"
+                                innerRadius={48} outerRadius={72} paddingAngle={2} dataKey="count">
+                                {data!.dispositions.map((e) => (
+                                  <Cell key={e.disposition} fill={e.color} fillOpacity={0.88} />
+                                ))}
+                              </Pie>
+                              <Tooltip content={<GlassTooltip />} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="flex-1 space-y-1.5 min-w-0">
+                          {data!.dispositions.slice(0, 6).map((d) => {
+                            const tot = data!.dispositions.reduce((s, x) => s + x.count, 0);
+                            const pct = tot > 0 ? ((d.count / tot) * 100).toFixed(0) : '0';
+                            return (
+                              <div key={d.disposition} className="flex items-center gap-2 rounded-lg border border-white/[0.04] bg-white/[0.02] px-2.5 py-1.5">
+                                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: d.color }} />
+                                <span className="min-w-0 flex-1 truncate text-xs text-white/60">{d.label}</span>
+                                <span className="tabular-nums text-xs font-bold text-white">{d.count}</span>
+                                <span className="tabular-nums text-[10px] text-white/30">{pct}%</span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <div className="flex-1 space-y-1.5 min-w-0">
-                        {data!.dispositions.slice(0, 6).map((d) => {
-                          const tot = data!.dispositions.reduce((s, x) => s + x.count, 0);
-                          const pct = tot > 0 ? ((d.count / tot) * 100).toFixed(0) : '0';
-                          return (
-                            <div key={d.disposition} className="flex items-center gap-2 rounded-lg border border-white/[0.04] bg-white/[0.02] px-2.5 py-1.5">
-                              <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: d.color }} />
-                              <span className="min-w-0 flex-1 truncate text-xs text-white/60">{d.label}</span>
-                              <span className="tabular-nums text-xs font-bold text-white">{d.count}</span>
-                              <span className="tabular-nums text-[10px] text-white/30">{pct}%</span>
-                            </div>
-                          );
-                        })}
-                      </div>
+                      {/* Clarify the denominator: % above is of dispositioned calls, not all calls */}
+                      <p className="mt-3 border-t border-white/[0.05] pt-3 text-[11px] text-white/35">
+                        <span className="tabular-nums text-white/60">
+                          {data!.dispositions.reduce((s, x) => s + x.count, 0)}
+                        </span>{' '}
+                        of <span className="tabular-nums text-white/60">{data!.current.totalCalls}</span> calls dispositioned
+                        {' '}· percentages are of dispositioned calls
+                      </p>
                     </div>
                   )}
                 </GCard>

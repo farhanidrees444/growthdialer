@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, LogOut, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
@@ -18,7 +19,9 @@ function getInitials(name: string | null | undefined): string {
 
 export function UserMenu() {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; right: number }>({ top: 64, right: 16 });
+  const btnRef = useRef<HTMLButtonElement>(null);
   const session = useSupabaseSession();
   const { currentRole } = useWorkspace();
 
@@ -27,13 +30,23 @@ export function UserMenu() {
   const roleLabel = currentRole ? ROLE_LABELS[currentRole] : 'Agent';
   const avatarInitials = getInitials(displayName);
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+  useEffect(() => setMounted(true), []);
+
+  // Position the portal dropdown under the trigger; recompute while open.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const r = btnRef.current?.getBoundingClientRect();
+      if (r) setCoords({ top: r.bottom + 8, right: window.innerWidth - r.right });
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
+    place();
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+  }, [open]);
 
   async function handleSignOut() {
     setOpen(false);
@@ -43,8 +56,9 @@ export function UserMenu() {
   }
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative">
       <button
+        ref={btnRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="User menu"
@@ -62,53 +76,67 @@ export function UserMenu() {
         />
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -6, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.97 }}
-            transition={{ duration: 0.14 }}
-            className="absolute right-0 mt-2 z-50 w-64 overflow-hidden rounded-2xl border border-white/[0.10] bg-black/95 shadow-2xl shadow-black/60 backdrop-blur-2xl"
-          >
-            {/* User info header */}
-            <div className="flex items-center gap-3 border-b border-white/[0.06] p-4">
-              <div
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white"
-                style={{ background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)' }}
-              >
-                {avatarInitials}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-white">{displayName}</p>
-                {email && email !== displayName
-                  ? <p className="truncate text-xs text-white/40">{email}</p>
-                  : <p className="text-xs text-white/40">{roleLabel}</p>}
-              </div>
-            </div>
+      {/* Portal — escapes the sticky/backdrop-blur header stacking context so
+          the dropdown renders once, cleanly, above all page content. */}
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {open && (
+              <>
+                <div
+                  className="fixed inset-0 z-[90]"
+                  aria-hidden
+                  onClick={() => setOpen(false)}
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  transition={{ duration: 0.14 }}
+                  style={{ position: 'fixed', top: coords.top, right: coords.right }}
+                  className="z-[100] w-64 overflow-hidden rounded-2xl border border-white/[0.10] bg-black/95 shadow-2xl shadow-black/60 backdrop-blur-2xl"
+                >
+                  {/* User info header */}
+                  <div className="flex items-center gap-3 border-b border-white/[0.06] p-4">
+                    <div
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white"
+                      style={{ background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)' }}
+                    >
+                      {avatarInitials}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-white">{displayName}</p>
+                      {email && email !== displayName
+                        ? <p className="truncate text-xs text-white/40">{email}</p>
+                        : <p className="text-xs text-white/40">{roleLabel}</p>}
+                    </div>
+                  </div>
 
-            {/* Menu items */}
-            <div className="p-2">
-              <Link
-                href="/settings"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/70 transition-colors hover:bg-white/[0.05] hover:text-white"
-              >
-                <Settings className="h-4 w-4 shrink-0" />
-                Settings
-              </Link>
-              <button
-                type="button"
-                onClick={() => void handleSignOut()}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-red-400 transition-colors hover:bg-red-500/[0.08]"
-              >
-                <LogOut className="h-4 w-4 shrink-0" />
-                Sign out
-              </button>
-            </div>
-          </motion.div>
+                  {/* Menu items */}
+                  <div className="p-2">
+                    <Link
+                      href="/settings"
+                      onClick={() => setOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/70 transition-colors hover:bg-white/[0.05] hover:text-white"
+                    >
+                      <Settings className="h-4 w-4 shrink-0" />
+                      Settings
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => void handleSignOut()}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-red-400 transition-colors hover:bg-red-500/[0.08]"
+                    >
+                      <LogOut className="h-4 w-4 shrink-0" />
+                      Sign out
+                    </button>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>,
+          document.body,
         )}
-      </AnimatePresence>
     </div>
   );
 }
