@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import CookieConsent from "@/components/CookieConsent";
@@ -27,6 +27,14 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 const SITE_URL = "https://growthdialer.com";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: "#08080A",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

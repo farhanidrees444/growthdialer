@@ -1,17 +1,22 @@
 import { Metadata } from "next";
+import { MarketingShell } from "@/components/marketing/MarketingShell";
 import SalesfloorContent from "./SalesfloorContent";
+import { MARKETING_SITE } from "@/lib/marketing/navigation";
 
 export const metadata: Metadata = {
-  title: "Salesfloor — Team Collaboration Features | GrowthDialer",
-  description: "Live call monitoring, team coaching, and collaborative selling features. Watch live calls, provide real-time coaching, and improve team performance together.",
-  keywords: "sales team collaboration, live call monitoring, sales coaching, team performance",
+  title: "Salesfloor — Live coaching & team dialer | GrowthDialer",
+  description: "Live call monitoring, manager coaching modes, and team performance visibility on the GrowthDialer sales floor.",
+  alternates: { canonical: `${MARKETING_SITE}/features/salesfloor` },
   openGraph: {
-    title: "Salesfloor — Team Collaboration Features | GrowthDialer",
-    description: "Transform your sales team with live call monitoring and real-time coaching capabilities.",
-    type: "website",
+    title: "GrowthDialer Salesfloor",
+    url: `${MARKETING_SITE}/features/salesfloor`,
   },
 };
 
 export default function SalesfloorPage() {
-  return <SalesfloorContent />;
+  return (
+    <MarketingShell>
+      <SalesfloorContent />
+    </MarketingShell>
+  );
 }

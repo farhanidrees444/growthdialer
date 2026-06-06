@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -255,7 +256,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
   const shareUrl = `https://growthdialer.com/blog/${params.slug}`;
 
   return (
-    <>
+    <MarketingShell>
       {/* JSON-LD Structured Data */}
       <script
         type="application/ld+json"
@@ -482,6 +483,6 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
           </div>
         </div>
       </article>
-    </>
+    </MarketingShell>
   );
 }

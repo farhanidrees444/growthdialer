@@ -124,14 +124,17 @@ export default function WorkspaceSetupPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#050508] text-[#F5F5F7]">
+    <div
+      className="relative flex min-h-[100dvh] flex-col overflow-x-hidden bg-[#050508] text-[#F5F5F7]"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
       <Grain />
-      <div className="pointer-events-none absolute inset-0">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-32 left-1/2 h-[520px] w-[720px] -translate-x-1/2 rounded-full bg-violet-600/20 blur-[120px]" />
         <div className="absolute bottom-0 right-0 h-[400px] w-[500px] rounded-full bg-emerald-600/10 blur-[100px]" />
       </div>
 
-      <header className="relative z-10 flex items-center justify-between px-6 py-5 sm:px-10">
+      <header className="relative z-10 flex shrink-0 items-center justify-between px-5 py-4 sm:px-10 sm:py-5">
         <div className="flex items-center gap-2.5">
           <div
             className="flex h-9 w-9 items-center justify-center rounded-xl shadow-lg shadow-emerald-500/20"
@@ -149,14 +152,14 @@ export default function WorkspaceSetupPage() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center px-4 pb-16 pt-4 sm:px-6">
+      <main className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col justify-start px-4 pb-12 pt-2 sm:justify-center sm:px-6 sm:pb-16 sm:pt-4">
         {/* Progress */}
-        <div className="mb-10 flex items-center justify-center gap-2 sm:gap-3">
+        <div className="mb-6 flex items-center justify-center gap-2 sm:mb-10 sm:gap-3">
           {STEPS.map((label, i) => (
             <div key={label} className="flex items-center gap-2 sm:gap-3">
               <div
                 className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-300',
+                  'flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 sm:h-8 sm:w-8',
                   i <= step
                     ? 'bg-gradient-to-br from-emerald-500 to-violet-600 text-white shadow-lg shadow-violet-500/25'
                     : 'border border-white/10 bg-white/[0.03] text-zinc-500',
@@ -168,7 +171,7 @@ export default function WorkspaceSetupPage() {
                 {label}
               </span>
               {i < STEPS.length - 1 && (
-                <div className={cn('h-px w-6 sm:w-12', i < step ? 'bg-emerald-500/50' : 'bg-white/10')} />
+                <div className={cn('h-px w-5 sm:w-12', i < step ? 'bg-emerald-500/50' : 'bg-white/10')} />
               )}
             </div>
           ))}
@@ -180,18 +183,18 @@ export default function WorkspaceSetupPage() {
           transition={{ duration: 0.45, ease: EASE_OUT }}
           className="overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.02] shadow-2xl shadow-black/40 backdrop-blur-xl"
         >
-          <div className="border-b border-white/[0.06] bg-gradient-to-r from-white/[0.04] to-transparent px-6 py-5 sm:px-8">
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          <div className="border-b border-white/[0.06] bg-gradient-to-r from-white/[0.04] to-transparent px-5 py-4 sm:px-8 sm:py-5">
+            <h1 className="text-xl font-bold tracking-tight sm:text-3xl">
               {step === 0 ? 'Name your workspace' : 'Pick the right plan'}
             </h1>
-            <p className="mt-1.5 text-sm text-zinc-400">
+            <p className="mt-1.5 text-xs text-zinc-400 sm:text-sm">
               {step === 0
                 ? 'This is your team’s home base — leads, calls, recordings, and coaching live here.'
                 : 'Start free or unlock AI coaching. Upgrade or downgrade anytime.'}
             </p>
           </div>
 
-          <div className="px-6 py-8 sm:px-8">
+          <div className="px-5 py-6 sm:px-8 sm:py-8">
             <AnimatePresence mode="wait">
               {step === 0 ? (
                 <motion.div
@@ -244,7 +247,7 @@ export default function WorkspaceSetupPage() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -12 }}
                   transition={{ duration: 0.25 }}
-                  className="grid gap-4 sm:grid-cols-3"
+                  className="grid gap-3 sm:grid-cols-3 sm:gap-4"
                 >
                   {PLAN_OPTIONS.map((opt) => {
                     const Icon = opt.icon;
@@ -255,7 +258,7 @@ export default function WorkspaceSetupPage() {
                         type="button"
                         onClick={() => setPlan(opt.id)}
                         className={cn(
-                          'relative rounded-2xl border p-5 text-left transition-all duration-200',
+                          'relative rounded-2xl border p-4 text-left transition-all duration-200 sm:p-5',
                           'hover:border-white/20 hover:bg-white/[0.04]',
                           selected
                             ? cn('border-transparent bg-gradient-to-br ring-2', opt.accent, opt.ring)
@@ -313,12 +316,12 @@ export default function WorkspaceSetupPage() {
             </AnimatePresence>
           </div>
 
-          <div className="flex flex-col-reverse gap-3 border-t border-white/[0.06] bg-black/20 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+          <div className="flex flex-col-reverse gap-3 border-t border-white/[0.06] bg-black/20 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-5">
             <button
               type="button"
               onClick={() => { setError(''); setStep(Math.max(0, step - 1)); }}
               disabled={step === 0 || busy}
-              className="text-sm font-medium text-zinc-500 transition hover:text-zinc-300 disabled:invisible"
+              className="min-h-11 text-sm font-medium text-zinc-500 transition hover:text-zinc-300 disabled:invisible sm:min-h-0"
             >
               Back
             </button>
@@ -328,7 +331,7 @@ export default function WorkspaceSetupPage() {
               disabled={busy || (step === 0 && !canAdvance)}
               whileHover={!busy && canAdvance ? { scale: 1.01 } : {}}
               whileTap={!busy && canAdvance ? { scale: 0.99 } : {}}
-              className="inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex w-full min-h-12 items-center justify-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
               style={{ background: 'linear-gradient(135deg, #059669 0%, #7C3AED 100%)' }}
             >
               {busy ? (

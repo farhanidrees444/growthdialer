@@ -27,7 +27,7 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section className="relative px-5 py-16 lg:px-8 lg:py-24" aria-label="How it works">
+    <section id="how-it-works" className="relative scroll-mt-24 px-5 py-16 lg:px-8 lg:py-24" aria-label="How it works">
       <motion.div
         initial="hidden"
         whileInView="show"

@@ -39,58 +39,61 @@ export function BrowseStage({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ type: 'spring', stiffness: 220, damping: 28 }}
-      className="flex h-full flex-col items-center justify-center gap-6 p-6 md:p-8"
+      className="scrollbar-none flex h-full w-full flex-col items-center overflow-y-auto"
     >
-      <div className="relative h-40 w-40 md:h-48 md:w-48">
-        <LottieHero className="h-full w-full" fallback={<AiOrb />} />
-      </div>
+      <div className="flex w-full flex-1 flex-col items-center justify-center gap-4 px-4 py-6 sm:gap-5 sm:px-6 sm:py-8 md:gap-6 md:p-8">
+        {/* Hero animation — sized down on smaller screens so CTAs stay visible */}
+        <div className="relative h-24 w-24 shrink-0 sm:h-32 sm:w-32 md:h-40 md:w-40 lg:h-44 lg:w-44">
+          <LottieHero className="h-full w-full" fallback={<AiOrb />} />
+        </div>
 
-      <div className="text-center space-y-2 max-w-md">
-        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-white">
-          AI Dialer ready
-        </h2>
-        <p className="text-sm text-muted-foreground">{subtitle}</p>
-      </div>
+        <div className="max-w-md space-y-1.5 text-center">
+          <h2 className="text-xl font-semibold tracking-tight text-white sm:text-2xl md:text-3xl">
+            AI Dialer ready
+          </h2>
+          <p className="text-xs text-muted-foreground sm:text-sm">{subtitle}</p>
+        </div>
 
-      <div className="grid w-full max-w-lg grid-cols-3 gap-3">
-        <StatBento icon={Users} label="In queue" value={queueCount} />
-        <StatBento icon={TrendingUp} label="Hot" value={hotCount} accent="amber" />
-        <StatBento icon={PhoneCall} label="Callbacks" value={callbackCount} accent="cyan" />
-      </div>
+        <div className="grid w-full max-w-lg grid-cols-3 gap-2 sm:gap-3">
+          <StatBento icon={Users} label="In queue" value={queueCount} />
+          <StatBento icon={TrendingUp} label="Hot" value={hotCount} accent="amber" />
+          <StatBento icon={PhoneCall} label="Callbacks" value={callbackCount} accent="cyan" />
+        </div>
 
-      <div className="grid w-full max-w-lg gap-3 sm:grid-cols-2">
-        <DialerSurface variant="violet" glow className="p-4">
-          <p className="text-xs font-semibold text-violet-200 mb-1">Power Dial</p>
-          <p className="text-[11px] text-white/45 mb-3 leading-relaxed">
-            Sequential auto-dial with AI brief & disposition flow.
-          </p>
-          <Button
-            onClick={onStartPowerDial}
-            disabled={queueCount === 0}
-            className="w-full gap-2 gradient-brand text-white border-0"
-          >
-            <Zap className="h-4 w-4" />
-            Launch power session
-          </Button>
-        </DialerSurface>
-
-        {onStartParallelDial && (
-          <DialerSurface variant="live" glow className="p-4">
-            <p className="text-xs font-semibold text-cyan-200 mb-1">Parallel Dial</p>
-            <p className="text-[11px] text-white/45 mb-3 leading-relaxed">
-              2–10 lines · AMD skip · auto VM drop on losers.
+        <div className="grid w-full max-w-lg gap-2.5 sm:grid-cols-2 sm:gap-3">
+          <DialerSurface variant="violet" glow className="p-3 sm:p-4">
+            <p className="mb-1 text-xs font-semibold text-violet-200">Power Dial</p>
+            <p className="mb-3 text-[11px] leading-relaxed text-white/45">
+              Sequential auto-dial with AI brief &amp; disposition flow.
             </p>
             <Button
-              onClick={onStartParallelDial}
+              onClick={onStartPowerDial}
               disabled={queueCount === 0}
-              variant="outline"
-              className="w-full gap-2 border-cyan-500/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20"
+              className="gradient-brand w-full gap-2 border-0 text-white"
             >
-              <Grid3x3 className="h-4 w-4" />
-              Launch parallel
+              <Zap className="h-4 w-4" />
+              Launch power session
             </Button>
           </DialerSurface>
-        )}
+
+          {onStartParallelDial && (
+            <DialerSurface variant="live" glow className="p-3 sm:p-4">
+              <p className="mb-1 text-xs font-semibold text-cyan-200">Parallel Dial</p>
+              <p className="mb-3 text-[11px] leading-relaxed text-white/45">
+                2–10 lines · AMD skip · auto VM drop on losers.
+              </p>
+              <Button
+                onClick={onStartParallelDial}
+                disabled={queueCount === 0}
+                variant="outline"
+                className="w-full gap-2 border-cyan-500/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20"
+              >
+                <Grid3x3 className="h-4 w-4" />
+                Launch parallel
+              </Button>
+            </DialerSurface>
+          )}
+        </div>
       </div>
     </motion.div>
   );

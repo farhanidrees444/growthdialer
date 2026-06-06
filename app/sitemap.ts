@@ -1,39 +1,13 @@
-import { MetadataRoute } from "next";
+import { MetadataRoute } from 'next';
+import { MARKETING_ROUTES } from '@/lib/marketing/sitemap-routes';
 
-const BASE = process.env.NEXT_PUBLIC_APP_URL ?? "https://growthdialer.com";
+const BASE = process.env.NEXT_PUBLIC_APP_URL ?? 'https://growthdialer.com';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const pages: Array<{
-    url: string;
-    priority: number;
-    changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'];
-  }> = [
-    { url: BASE, priority: 1.0, changeFrequency: "weekly" },
-    { url: `${BASE}/pricing`, priority: 0.9, changeFrequency: "monthly" },
-    { url: `${BASE}/features`, priority: 0.8, changeFrequency: "monthly" },
-    { url: `${BASE}/features/ai`, priority: 0.85, changeFrequency: "monthly" },
-    { url: `${BASE}/about`, priority: 0.6, changeFrequency: "monthly" },
-    { url: `${BASE}/contact-sales`, priority: 0.7, changeFrequency: "monthly" },
-    { url: `${BASE}/signup`, priority: 0.8, changeFrequency: "monthly" },
-    { url: `${BASE}/blog`, priority: 0.6, changeFrequency: "daily" },
-    { url: `${BASE}/blog/best-ai-sales-dialer-2026`, priority: 0.8, changeFrequency: "monthly" },
-    { url: `${BASE}/blog/how-parallel-dialing-works`, priority: 0.8, changeFrequency: "monthly" },
-    { url: `${BASE}/blog/replace-sdr-team-with-ai`, priority: 0.8, changeFrequency: "monthly" },
-    { url: `${BASE}/blog/best-b2b-sales-dialer-2026`, priority: 0.7, changeFrequency: "monthly" },
-    { url: `${BASE}/blog/parallel-dialing-guide`, priority: 0.6, changeFrequency: "monthly" },
-    { url: `${BASE}/blog/ai-coaching`, priority: 0.6, changeFrequency: "monthly" },
-    { url: `${BASE}/compare/vs-krispcall`, priority: 0.8, changeFrequency: "monthly" },
-    { url: `${BASE}/compare/vs-dandydialer`, priority: 0.8, changeFrequency: "monthly" },
-    { url: `${BASE}/compare/vs-powerdialer`, priority: 0.8, changeFrequency: "monthly" },
-    { url: `${BASE}/compare/vs-orum`, priority: 0.8, changeFrequency: "monthly" },
-    { url: `${BASE}/compare/vs-nooks`, priority: 0.8, changeFrequency: "monthly" },
-    { url: `${BASE}/compare/vs-phoneburner`, priority: 0.8, changeFrequency: "monthly" },
-  ];
-
-  return pages.map((p) => ({
-    url: p.url,
+  return MARKETING_ROUTES.map((route) => ({
+    url: `${BASE}${route.path === '/' ? '' : route.path}`,
     lastModified: new Date(),
-    changeFrequency: p.changeFrequency,
-    priority: p.priority,
+    changeFrequency: route.changeFrequency,
+    priority: route.priority,
   }));
 }
