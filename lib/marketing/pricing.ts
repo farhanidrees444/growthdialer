@@ -115,9 +115,9 @@ export const MARKETING_ADDONS = [
   },
   {
     title: 'Parallel Dialer',
-    price: 'Coming soon',
-    desc: 'Dial multiple lines at once and connect on the first answer.',
-    soon: true,
+    price: 'Up to 10 lines',
+    desc: 'Dial multiple lines at once — first connect wins, losers auto-hang.',
+    soon: false,
   },
   {
     title: 'AI Voice Agent',

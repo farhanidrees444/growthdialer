@@ -12,6 +12,7 @@ import { useDialerMode } from '@/hooks/use-dialer-mode';
 import { useCallRealtime } from '@/hooks/use-call-realtime';
 import { useDialerHotkeys } from '@/hooks/use-dialer-hotkeys';
 import { usePowerDialer } from '@/hooks/use-power-dialer';
+import { useParallelDialer } from '@/hooks/use-parallel-dialer';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { ownCallsOrFilter } from '@/lib/auth/call-access';
@@ -29,6 +30,10 @@ import { ManualDialpadOverlay } from '@/components/dialer/manual-dialpad-overlay
 import { ShortcutsHelpModal } from '@/components/dialer/shortcuts-help-modal';
 import { PowerBanner } from '@/components/dialer/power-banner';
 import { PowerCountdownStage } from '@/components/dialer/power-countdown';
+import DialModeSegmented, { type DialMode } from '@/components/dialer/DialModeSegmented';
+import { ParallelDialConfigModal } from '@/components/dialer/parallel-dial-config-modal';
+import { ParallelDialStage } from '@/components/dialer/parallel-dial-stage';
+import { ParallelSessionBanner } from '@/components/dialer/parallel-session-banner';
 
 import type { LeadRecord, DispositionType } from '@/lib/dialer/state-machine';
 
@@ -132,6 +137,16 @@ export default function DialerPage() {
 
   // Power dialer state machine
   const [powerConfirmOpen, setPowerConfirmOpen] = useState(false);
+  const [parallelConfirmOpen, setParallelConfirmOpen] = useState(false);
+  const [dialMode, setDialMode] = useState<DialMode>('manual');
+
+  const parallelDialer = useParallelDialer({
+    onLeadConnected: (lead, leg) => {
+      selectLead(lead);
+      startCall(leg.call_id ?? '', leg.call_id ?? '');
+      beginOutboundCall(lead.phone, lead.id);
+    },
+  });
 
   const powerDialer = usePowerDialer({
     onLeadReady: (lead) => { selectLead(lead); },
@@ -159,6 +174,8 @@ export default function DialerPage() {
   // Stable ref so the callStatus effect always calls the latest powerDialer methods
   const powerDialerRef = useRef(powerDialer);
   powerDialerRef.current = powerDialer;
+  const parallelDialerRef = useRef(parallelDialer);
+  parallelDialerRef.current = parallelDialer;
 
   const [userId, setUserId] = useState<string | null>(null);
   const [stats, setStats] = useState<TodayStats>({ calls: 0, connects: 0, meetings: 0, streak: 0 });
@@ -262,16 +279,29 @@ export default function DialerPage() {
     onLeadUpdate: () => { /* queue self-refreshes */ },
   });
 
-  // Bridge power dialer ↔ global call orchestrator
+  // Bridge power / parallel dialer ↔ global call orchestrator
   useEffect(() => {
     registerPowerDialBridge({
-      onCallStarted: () => powerDialerRef.current.onCallStarted(),
-      onCallEnd: () => powerDialerRef.current.onCallEnd(),
-      onDispositionSaved: (disp, wasConnected, wasMeeting) => {
-        powerDialerRef.current.onDispositionSaved(disp, wasConnected, wasMeeting);
+      onCallStarted: () => {
+        if (parallelDialerRef.current.isActive) parallelDialerRef.current.onCallStarted();
+        else powerDialerRef.current.onCallStarted();
       },
-      isActive: () => powerDialerRef.current.isActive,
-      getState: () => powerDialerRef.current.state,
+      onCallEnd: () => {
+        if (parallelDialerRef.current.isActive) parallelDialerRef.current.onCallEnd();
+        else powerDialerRef.current.onCallEnd();
+      },
+      onDispositionSaved: (disp, wasConnected, wasMeeting) => {
+        if (parallelDialerRef.current.isActive) {
+          parallelDialerRef.current.onDispositionSaved(disp, wasConnected, wasMeeting);
+        } else {
+          powerDialerRef.current.onDispositionSaved(disp, wasConnected, wasMeeting);
+        }
+      },
+      isActive: () => parallelDialerRef.current.isActive || powerDialerRef.current.isActive,
+      getState: () =>
+        parallelDialerRef.current.isActive
+          ? parallelDialerRef.current.state
+          : powerDialerRef.current.state,
     });
     return () => registerPowerDialBridge(null);
   }, [registerPowerDialBridge]);
@@ -446,6 +476,18 @@ export default function DialerPage() {
         onOpenShortcuts={() => setShortcutsOpen(true)}
       />
 
+      <div className="flex-shrink-0 px-4 py-2 border-b border-white/[0.04]">
+        <DialModeSegmented
+          mode={dialMode}
+          onModeChange={setDialMode}
+          onStartPowerDial={() => setPowerConfirmOpen(true)}
+          onStartParallelDial={() => setParallelConfirmOpen(true)}
+          powerActive={powerDialer.isActive}
+          parallelActive={parallelDialer.isActive}
+          disabled={isLive || phoneStatus !== 'ready'}
+        />
+      </div>
+
       {/* Live call banner */}
       <AnimatePresence>
         {isLive && selectedLead && (
@@ -474,7 +516,17 @@ export default function DialerPage() {
 
       {/* Power dialer banner — visible during any active session state */}
       <AnimatePresence>
-        {powerDialer.isActive && (
+        {parallelDialer.isActive && parallelDialer.session && (
+          <ParallelSessionBanner
+            session={parallelDialer.session}
+            state={parallelDialer.state}
+            onPause={parallelDialer.pause}
+            onResume={parallelDialer.resume}
+            onStop={parallelDialer.stop}
+          />
+        )}
+
+        {powerDialer.isActive && !parallelDialer.isActive && (
           <PowerBanner
             state={powerDialer.state}
             session={powerDialer.session}
@@ -528,18 +580,28 @@ export default function DialerPage() {
         {/* Center stage */}
         <div className="flex-1 min-w-0 relative overflow-hidden">
           <AnimatePresence mode="wait">
-            {mode === 'browse' && (
+            {mode === 'browse' && parallelDialer.isActive && parallelDialer.session && (
+              <motion.div key="parallel" className="absolute inset-0">
+                <ParallelDialStage
+                  session={parallelDialer.session}
+                  legs={parallelDialer.legs}
+                  state={parallelDialer.state}
+                />
+              </motion.div>
+            )}
+            {mode === 'browse' && !parallelDialer.isActive && (
               <motion.div key="browse" className="absolute inset-0">
                 <BrowseStage
                   queueCount={queueCounts.queue}
                   hotCount={queueCounts.hot}
                   callbackCount={queueCounts.callbacks}
-                  onStartPowerDial={() => setPowerConfirmOpen(true)}
+                  onStartPowerDial={() => { setDialMode('power'); setPowerConfirmOpen(true); }}
+                  onStartParallelDial={() => { setDialMode('parallel'); setParallelConfirmOpen(true); }}
                 />
               </motion.div>
             )}
             {/* Normal preview (no power dial) */}
-            {mode === 'preview' && selectedLead && !powerDialer.isActive && (
+            {mode === 'preview' && selectedLead && !powerDialer.isActive && !parallelDialer.isActive && (
               <motion.div key="preview" className="absolute inset-0 overflow-y-auto scrollbar-hide">
                 <PreviewStage
                   lead={selectedLead}
@@ -627,7 +689,7 @@ export default function DialerPage() {
             </button>
             <button
               className="flex-1 flex items-center justify-center h-11 rounded-xl bg-white/[0.06] border border-white/[0.08] text-sm text-white/70"
-              onClick={() => toast.info('Filters coming soon')}
+              onClick={() => setMobileQueueOpen(true)}
             >
               Filters
             </button>
@@ -756,6 +818,16 @@ export default function DialerPage() {
         )}
       </AnimatePresence>
 
+      <ParallelDialConfigModal
+        open={parallelConfirmOpen}
+        queueCount={queueCounts.queue}
+        onClose={() => setParallelConfirmOpen(false)}
+        onStart={(cfg) => {
+          setDialMode('parallel');
+          void parallelDialer.start(cfg);
+        }}
+      />
+
       {/* Power Dial confirm modal */}
       <AnimatePresence>
         {powerConfirmOpen && (
@@ -801,6 +873,46 @@ export default function DialerPage() {
                   Start Session
                 </button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Parallel session summary */}
+      <AnimatePresence>
+        {!parallelDialer.isActive && parallelDialer.summary && (
+          <motion.div
+            key="pl-summary"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              className="w-full max-w-sm rounded-2xl border border-white/[0.10] p-6 bg-zinc-900 shadow-2xl space-y-5"
+            >
+              <div className="text-center space-y-1">
+                <h2 className="text-lg font-semibold text-white">Parallel session complete</h2>
+                <p className="text-sm text-white/40">
+                  {Math.floor(parallelDialer.summary.duration_seconds / 60)}m{' '}
+                  {parallelDialer.summary.duration_seconds % 60}s ·{' '}
+                  {parallelDialer.summary.connect_rate}% connect rate
+                </p>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <SummaryCell label="Dialed" value={parallelDialer.summary.dialed} />
+                <SummaryCell label="Connects" value={parallelDialer.summary.connects} color="cyan" />
+                <SummaryCell label="Meetings" value={parallelDialer.summary.meetings} color="green" />
+              </div>
+              <button
+                type="button"
+                onClick={() => parallelDialer.dismissSummary()}
+                className="w-full min-h-11 rounded-xl text-sm font-semibold text-white gradient-brand"
+              >
+                Done
+              </button>
             </motion.div>
           </motion.div>
         )}

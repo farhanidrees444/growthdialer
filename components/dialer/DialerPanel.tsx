@@ -429,6 +429,7 @@ export default function DialerPanel({
             <DialModeSegmented
               mode={dialMode === 'power' ? 'power' : 'manual'}
               onStartPowerDial={onStartPowerDial}
+              onStartParallelDial={() => {}}
               disabled={!isReady || callState.status !== 'idle'}
               className="w-full"
             />

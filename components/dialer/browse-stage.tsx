@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Zap } from 'lucide-react';
+import { Zap, Grid3x3 } from 'lucide-react';
 import { AiOrb } from './ai-orb';
 
 interface BrowseStageProps {
@@ -10,6 +10,7 @@ interface BrowseStageProps {
   hotCount: number;
   callbackCount: number;
   onStartPowerDial: () => void;
+  onStartParallelDial?: () => void;
 }
 
 function getContextualSubtitle(): string {
@@ -19,7 +20,7 @@ function getContextualSubtitle(): string {
   return 'Final push for today';
 }
 
-export function BrowseStage({ queueCount, hotCount, callbackCount, onStartPowerDial }: BrowseStageProps) {
+export function BrowseStage({ queueCount, hotCount, callbackCount, onStartPowerDial, onStartParallelDial }: BrowseStageProps) {
   const subtitle = useMemo(() => getContextualSubtitle(), []);
 
   return (
@@ -46,19 +47,32 @@ export function BrowseStage({ queueCount, hotCount, callbackCount, onStartPowerD
         <StatPill label="callbacks due" value={callbackCount} color="cyan" />
       </div>
 
-      {/* Power Dial CTA */}
-      <motion.button
-        onClick={onStartPowerDial}
-        disabled={queueCount === 0}
-        whileHover={queueCount > 0 ? { scale: 1.03, boxShadow: '0 0 30px rgba(124,58,237,0.4)' } : {}}
-        whileTap={queueCount > 0 ? { scale: 0.97 } : {}}
-        className="flex items-center gap-2.5 px-8 py-3.5 rounded-xl font-semibold text-sm text-white disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-        style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}
-        aria-label="Start AI Power Dial"
-      >
-        <Zap className="w-4 h-4" />
-        Start AI Power Dial
-      </motion.button>
+      <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
+        <motion.button
+          onClick={onStartPowerDial}
+          disabled={queueCount === 0}
+          whileHover={queueCount > 0 ? { scale: 1.02 } : {}}
+          whileTap={queueCount > 0 ? { scale: 0.98 } : {}}
+          className="flex flex-1 items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-semibold text-sm text-white disabled:opacity-30 disabled:cursor-not-allowed gradient-brand"
+          aria-label="Start AI Power Dial"
+        >
+          <Zap className="w-4 h-4" />
+          Power Dial
+        </motion.button>
+        {onStartParallelDial && (
+          <motion.button
+            onClick={onStartParallelDial}
+            disabled={queueCount === 0}
+            whileHover={queueCount > 0 ? { scale: 1.02 } : {}}
+            whileTap={queueCount > 0 ? { scale: 0.98 } : {}}
+            className="flex flex-1 items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-semibold text-sm text-white disabled:opacity-30 disabled:cursor-not-allowed border border-violet-500/30 bg-violet-500/10 hover:bg-violet-500/20"
+            aria-label="Start Parallel Dial"
+          >
+            <Grid3x3 className="w-4 h-4" />
+            Parallel Dial
+          </motion.button>
+        )}
+      </div>
     </motion.div>
   );
 }

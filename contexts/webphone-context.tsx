@@ -147,6 +147,19 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         safeSet(setActiveCallId, call.id ?? null);
         safeSet(setCallStatus, mapped);
 
+        if (mapped === 'ringing') {
+          void import('@/lib/parallel-dial/auto-answer-flag').then(({ shouldParallelAutoAnswer }) => {
+            if (!shouldParallelAutoAnswer() || !activeCallRef.current) return;
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (activeCallRef.current as any).answer?.();
+              console.log('[WebPhone] parallel auto-answer');
+            } catch (err) {
+              console.error('[WebPhone] parallel auto-answer failed:', err);
+            }
+          });
+        }
+
         if (mapped === 'ended') {
           activeCallRef.current = null;
           safeSet(setActiveCallId, null);

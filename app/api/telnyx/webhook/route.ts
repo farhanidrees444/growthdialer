@@ -318,11 +318,28 @@ export async function POST(request: NextRequest) {
           .from('calls')
           .update({ status: 'ringing', ...(callSessionId ? { telnyx_session_id: callSessionId } : {}) })
           .eq('telnyx_call_id', callControlId);
+        await supabase
+          .from('parallel_dial_legs')
+          .update({ status: 'ringing', updated_at: new Date().toISOString() })
+          .eq('telnyx_call_id', callControlId)
+          .in('status', ['dialing']);
       }
     }
 
     // ── call.answered ───────────────────────────────────────────────────────
     else if (event_type === 'call.answered') {
+      if (callControlId) {
+        const { handleParallelLegAnswered } = await import('@/lib/parallel-dial/handle-answered');
+        const parallel = await handleParallelLegAnswered(
+          supabase,
+          callControlId,
+          payload.from ?? null,
+        );
+        if (parallel.sessionId) {
+          console.log('[WEBHOOK] parallel leg answered — session:', parallel.sessionId, 'bridged:', parallel.bridged);
+        }
+      }
+
       const callRow = await findCall(supabase, callSessionId, callControlId);
       if (!callRow) {
         console.error('[WEBHOOK] call.answered — call not found. session:', callSessionId, '| control:', callControlId);
@@ -375,6 +392,11 @@ export async function POST(request: NextRequest) {
 
     // ── call.hangup ─────────────────────────────────────────────────────────
     else if (event_type === 'call.hangup') {
+      if (callControlId) {
+        const { handleParallelLegHangup } = await import('@/lib/parallel-dial/handle-answered');
+        await handleParallelLegHangup(supabase, callControlId, payload.hangup_cause ?? null);
+      }
+
       const callRow = await findCall(
         supabase, callSessionId, callControlId,
         'id, user_id, lead_id, answered_at, to_number, from_number, direction, duration_seconds, was_recorded',
