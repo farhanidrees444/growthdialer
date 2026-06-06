@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useReducedMotion } from 'framer-motion';
+import { useMarketingMotionReduced } from './motion';
 
 const PHRASES = ['AI Sales Dialer', 'Conversation Intelligence', 'Revenue Engine'];
 
 export function TypewriterRotator({ prefix = 'The ' }: { prefix?: string }) {
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
   const [phraseIdx, setPhraseIdx] = useState(0);
   const [text, setText] = useState(PHRASES[0]);
   const [deleting, setDeleting] = useState(false);

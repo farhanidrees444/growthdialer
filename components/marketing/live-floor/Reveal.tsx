@@ -1,7 +1,8 @@
 'use client';
 
-import { motion, type HTMLMotionProps } from 'framer-motion';
-import { EASE_OUT } from './motion';
+import { useRef } from 'react';
+import { motion, useInView, type HTMLMotionProps, type Variants } from 'framer-motion';
+import { EASE_OUT, MARKETING_IN_VIEW } from './motion';
 
 type RevealProps = HTMLMotionProps<'div'> & {
   delay?: number;
@@ -9,11 +10,14 @@ type RevealProps = HTMLMotionProps<'div'> & {
 };
 
 export function Reveal({ children, delay = 0, y = 24, ...props }: RevealProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, MARKETING_IN_VIEW);
+
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-80px' }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y }}
       transition={{ duration: 0.6, delay, ease: EASE_OUT }}
       {...props}
     >
@@ -22,17 +26,56 @@ export function Reveal({ children, delay = 0, y = 24, ...props }: RevealProps) {
   );
 }
 
-export function StaggerReveal({ children, className }: { children: React.ReactNode; className?: string }) {
+export function StaggerReveal({
+  children,
+  className,
+  variants,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  variants?: Variants;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, MARKETING_IN_VIEW);
+
   return (
     <motion.div
+      ref={ref}
       className={className}
       initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, margin: '-60px' }}
-      variants={{
-        hidden: {},
-        show: { transition: { staggerChildren: 0.08 } },
-      }}
+      animate={inView ? 'show' : 'hidden'}
+      variants={
+        variants ?? {
+          hidden: {},
+          show: { transition: { staggerChildren: 0.08 } },
+        }
+      }
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/** Stagger container driven by useInView — use instead of whileInView + revealContainer. */
+export function InViewReveal({
+  children,
+  className,
+  variants,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  variants?: Variants;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, MARKETING_IN_VIEW);
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      initial="hidden"
+      animate={inView ? 'show' : 'hidden'}
+      variants={variants}
     >
       {children}
     </motion.div>

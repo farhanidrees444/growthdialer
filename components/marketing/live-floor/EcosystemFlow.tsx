@@ -1,8 +1,8 @@
 'use client';
 
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Upload, PhoneCall, Mic, FileText, Sparkles, BarChart3 } from 'lucide-react';
-import { EASE_OUT, reveal, revealContainer } from './motion';
+import { useMarketingMotionReduced, EASE_OUT, reveal, revealContainer } from './motion';
 
 const NODES = [
   { icon: Upload,    title: 'Lead Import',      sub: 'CSV & manual' },
@@ -14,7 +14,7 @@ const NODES = [
 ];
 
 export function EcosystemFlow() {
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
   return (
     <section className="relative px-5 py-16 lg:px-8 lg:py-24">
       <div className="mx-auto max-w-7xl">

@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { motion, useInView, useReducedMotion } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import {
   Target, Zap, Brain, Users, BarChart3, ShieldCheck, Check, TrendingUp, Phone,
 } from 'lucide-react';
 import { LiveWaveform } from '@/components/marketing/live-floor/LiveWaveform';
 import { Spotlight } from '@/components/marketing/live-floor/Spotlight';
 import { CountUp } from './CountUp';
-import { EASE_OUT } from '@/components/marketing/live-floor/motion';
+import { useMarketingMotionReduced, EASE_OUT } from '@/components/marketing/live-floor/motion';
 
 /**
  * Cycles an index 0..length-1 every `ms`, but ONLY while the element is in
@@ -18,7 +18,7 @@ import { EASE_OUT } from '@/components/marketing/live-floor/motion';
 function useCycle(length: number, ms: number) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { margin: '-15%' });
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
   const [i, setI] = useState(0);
   useEffect(() => {
     if (!inView || reduce) return;

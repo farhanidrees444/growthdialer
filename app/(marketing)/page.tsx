@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 export default function LandingPage() {
   return (
     <MotionShell>
-      <div className="marketing-site relative min-h-screen overflow-x-clip bg-[#08080A] text-[#F8F8FF] antialiased selection:bg-[#7C3AED]/30 selection:text-white">
+      <div className="relative min-h-screen bg-[#08080A] text-[#F8F8FF] antialiased selection:bg-[#7C3AED]/30 selection:text-white">
         <BackgroundSystem />
         <Grain />
         <ScrollProgress />

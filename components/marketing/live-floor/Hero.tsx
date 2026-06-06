@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from 'react';
 import {
   motion,
-  useReducedMotion,
   useMotionValue,
   useSpring,
   useTransform,
@@ -15,7 +14,7 @@ import { ShimmerButton } from './ShimmerButton';
 import { TypewriterRotator } from './TypewriterRotator';
 import { HeroWebGL } from './HeroWebGL';
 import { LottiePulse } from '@/components/marketing/home/LottiePulse';
-import { EASE_OUT, SPRING } from './motion';
+import { useMarketingMotionReduced, EASE_OUT, SPRING } from './motion';
 
 const HEADLINE = ['Every', 'call,', 'understood', 'the', 'moment', 'it', 'ends.'];
 
@@ -55,7 +54,7 @@ function AnnouncementBar() {
 }
 
 export function Hero() {
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
 
   return (
     <>
@@ -161,7 +160,7 @@ export function Hero() {
 
 function HeroMockup() {
   const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [8, -8]), { stiffness: 200, damping: 20 });
@@ -253,7 +252,7 @@ const INSIGHTS = [
 ];
 
 function AiInsights() {
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
   const [shown, setShown] = useState(reduce ? INSIGHTS.length : 0);
 
   useEffect(() => {

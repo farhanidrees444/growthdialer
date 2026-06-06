@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ArrowRight, Home, BookOpen, Phone } from 'lucide-react';
 import { ShimmerButton } from '@/components/marketing/live-floor/ShimmerButton';
 import { LiveWaveform } from '@/components/marketing/live-floor/LiveWaveform';
-import { EASE_OUT } from '@/components/marketing/live-floor/motion';
+import { useMarketingMotionReduced, EASE_OUT } from '@/components/marketing/live-floor/motion';
 
 const LINKS = [
   { href: '/', label: 'Home', icon: Home },
@@ -15,7 +15,7 @@ const LINKS = [
 ];
 
 export function NotFoundContent() {
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
 
   return (
     <section className="relative flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-5 py-24 text-center lg:px-8">

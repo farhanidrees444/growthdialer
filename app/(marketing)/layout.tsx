@@ -12,9 +12,9 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <div className="marketing-site">
       <SmoothScroll />
       {children}
-    </>
+    </div>
   );
 }

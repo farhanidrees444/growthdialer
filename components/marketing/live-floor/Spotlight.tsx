@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useReducedMotion } from 'framer-motion';
+import { useMarketingMotionReduced } from './motion';
 
 interface SpotlightProps {
   /** Glow color — violet by default, cyan on live/active cards */
@@ -20,7 +20,7 @@ interface SpotlightProps {
  */
 export function Spotlight({ color = '#8B5CF6', size = 380, radiusClass = 'rounded-2xl' }: SpotlightProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
   const [p, setP] = useState({ x: 0, y: 0, on: false });
 
   useEffect(() => {

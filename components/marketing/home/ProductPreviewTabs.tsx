@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Phone, BarChart3, Headphones, Zap, TrendingUp, Check } from 'lucide-react';
 import { LiveWaveform } from '@/components/marketing/live-floor/LiveWaveform';
 import { Spotlight } from '@/components/marketing/live-floor/Spotlight';
 import { Reveal } from '@/components/marketing/live-floor/Reveal';
 import { CountUp } from './CountUp';
-import { EASE_OUT } from '@/components/marketing/live-floor/motion';
+import { useMarketingMotionReduced, EASE_OUT } from '@/components/marketing/live-floor/motion';
 import { cn } from '@/lib/utils';
 
 const TABS = [
@@ -35,7 +35,7 @@ function fmt(s: number) {
 }
 
 function AiDialerView({ active }: { active: boolean }) {
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
   const seconds = useTimer(active, reduce);
   return (
     <div className="space-y-4">

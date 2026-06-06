@@ -1,10 +1,10 @@
 'use client';
 
 import { useRef } from 'react';
-import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { Upload, PhoneCall, Sparkles } from 'lucide-react';
 import { Reveal } from '@/components/marketing/live-floor/Reveal';
-import { EASE_OUT } from '@/components/marketing/live-floor/motion';
+import { useMarketingMotionReduced, EASE_OUT } from '@/components/marketing/live-floor/motion';
 
 const STEPS = [
   {
@@ -32,7 +32,7 @@ const STEPS = [
 
 export function StickyHowItWorks() {
   const ref = useRef<HTMLElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ['start start', 'end end'],

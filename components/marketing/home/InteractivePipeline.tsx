@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload, PhoneCall, Mic, FileText, Sparkles, BarChart3, Check, TrendingUp,
 } from 'lucide-react';
 import { LiveWaveform } from '@/components/marketing/live-floor/LiveWaveform';
-import { EASE_OUT } from '@/components/marketing/live-floor/motion';
+import { useMarketingMotionReduced, EASE_OUT } from '@/components/marketing/live-floor/motion';
 
 const NODES = [
   { icon: Upload, label: 'Lead Import' },
@@ -25,7 +25,7 @@ const TABS = [
 
 export function InteractivePipeline() {
   const [tab, setTab] = useState(0);
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
   const litTo = TABS[tab].litTo;
   const fillPct = (litTo / (NODES.length - 1)) * 100;
 

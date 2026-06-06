@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useInView, useReducedMotion } from 'framer-motion';
+import { useInView } from 'framer-motion';
+import { MARKETING_IN_VIEW, useMarketingMotionReduced } from '@/components/marketing/live-floor/motion';
 
 interface CountUpProps {
   to: number;
@@ -13,8 +14,8 @@ interface CountUpProps {
 /** Counts up to `to` when scrolled into view. Reduced-motion shows the final value instantly. */
 export function CountUp({ to, prefix = '', suffix = '', duration = 1.4 }: CountUpProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
-  const reduce = useReducedMotion();
+  const inView = useInView(ref, MARKETING_IN_VIEW);
+  const reduce = useMarketingMotionReduced();
   const [n, setN] = useState(0);
 
   useEffect(() => {

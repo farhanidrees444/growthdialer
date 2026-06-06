@@ -11,7 +11,7 @@ import { SiteFooter } from '@/components/marketing/live-floor/SiteFooter';
 export function MarketingShell({ children }: { children: React.ReactNode }) {
   return (
     <MotionShell>
-      <div className="relative min-h-screen overflow-x-clip bg-[#08080A] text-[#F5F5F7] antialiased">
+      <div className="relative min-h-screen bg-[#08080A] text-[#F5F5F7] antialiased">
         <Grain />
         <Nav />
         <main className="relative z-[2]">{children}</main>

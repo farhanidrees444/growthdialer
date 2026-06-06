@@ -269,13 +269,13 @@
   border-radius: 4px;
 }
 
-/* Respect reduced motion — only here, never broadly */
+/* Respect reduced motion on app/dashboard routes only — marketing always animates */
 @media (prefers-reduced-motion: reduce) {
-  .ticker-track,
-  .marquee-track,
-  .marquee-track-reverse,
-  .animate-float,
-  .animate-beam {
+  html:not(:has(.marketing-site)) .ticker-track,
+  html:not(:has(.marketing-site)) .marquee-track,
+  html:not(:has(.marketing-site)) .marquee-track-reverse,
+  html:not(:has(.marketing-site)) .animate-float,
+  html:not(:has(.marketing-site)) .animate-beam {
     animation: none;
   }
 }
@@ -355,9 +355,11 @@ html {
   }
 }
 
-/* ─── Reduced motion ─── */
+/* Reduced motion — dashboard/app only; .marketing-site keeps full motion */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  html:not(:has(.marketing-site)) *,
+  html:not(:has(.marketing-site)) *::before,
+  html:not(:has(.marketing-site)) *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

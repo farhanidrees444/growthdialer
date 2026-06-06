@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Target, Zap, Brain, Users, BarChart3, ShieldCheck, Clock, Headphones } from 'lucide-react';
 import { LiveWaveform } from './LiveWaveform';
 import { Spotlight } from './Spotlight';
-import { reveal, revealContainer } from './motion';
+import { InViewReveal } from './Reveal';
+import { reveal, revealContainer, useMarketingMotionReduced } from './motion';
 
 const SMALL_CARDS = [
   { icon: Zap, title: 'Power Dialer', body: 'Back-to-back dialing with disposition and notes in rhythm.', col: 'lg:col-span-3' },
@@ -19,7 +20,7 @@ const COMING_SOON = ['CRM sync (beyond HubSpot)', 'AI voice agent'];
 
 function TranscriptDemo() {
   const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
   const [active, setActive] = useState(false);
   const [line, setLine] = useState(0);
 
@@ -76,28 +77,16 @@ export function Features() {
   return (
     <section id="features" className="relative px-5 py-20 lg:px-8 lg:py-28">
       <div className="mx-auto max-w-7xl">
-        <motion.div
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: '-100px' }}
-          variants={revealContainer}
-          className="mb-14 max-w-2xl"
-        >
+        <InViewReveal variants={revealContainer} className="mb-14 max-w-2xl">
           <motion.p variants={reveal} className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
             Platform
           </motion.p>
           <motion.h2 variants={reveal} className="font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.05] tracking-tight text-[#F5F5F7]">
             A dialer that does the <span className="font-medium">listening</span> for you.
           </motion.h2>
-        </motion.div>
+        </InViewReveal>
 
-        <motion.div
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: '-80px' }}
-          variants={revealContainer}
-          className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12"
-        >
+        <InViewReveal variants={revealContainer} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
           <motion.article
             variants={reveal}
             whileHover={{ y: -4 }}
@@ -159,13 +148,10 @@ export function Features() {
               </motion.article>
             );
           })}
-        </motion.div>
+        </InViewReveal>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
+        <InViewReveal
+          variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.7 } } }}
           className="mt-8 flex flex-col items-start gap-3 rounded-2xl border border-white/[0.06] bg-[#0F0F12]/50 px-6 py-4 sm:flex-row sm:items-center"
         >
           <span className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.15em] text-zinc-500">
@@ -178,7 +164,7 @@ export function Features() {
               </span>
             ))}
           </div>
-        </motion.div>
+        </InViewReveal>
       </div>
     </section>
   );

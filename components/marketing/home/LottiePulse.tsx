@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useReducedMotion } from 'framer-motion';
+import { useMarketingMotionReduced } from '@/components/marketing/live-floor/motion';
 import animationData from './pulse.json';
 
 // Client-only — avoids SSR entirely so static generation never touches it.
@@ -13,7 +13,7 @@ const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
  * Framer/Tailwind motion still carries the section.
  */
 export function LottiePulse({ size = 64, className = '' }: { size?: number; className?: string }) {
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
   if (reduce) return null;
   return (
     <div className={`pointer-events-none ${className}`} style={{ width: size, height: size }} aria-hidden>

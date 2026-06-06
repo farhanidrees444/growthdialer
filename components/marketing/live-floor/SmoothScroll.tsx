@@ -5,25 +5,24 @@ import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 
 /**
- * Buttery, weighted smooth scrolling — scoped to the marketing homepage only.
- * Mounted from the marketing layout for "/" exclusively, so app routes
- * (app.growthdialer.com, which use their own scroll containers) are never
- * affected. Renders nothing. Disabled entirely under prefers-reduced-motion.
- *
- * Lenis drives the real native scroll position, so `position: sticky` and
- * Framer Motion's useScroll (used by the "Life of one call" pin) stay in sync.
+ * Buttery smooth scroll for all marketing routes.
+ * Drives native scroll position so sticky + Framer useScroll stay in sync.
+ * Dispatches scroll events so useInView / IntersectionObserver update during
+ * Lenis wheel smoothing on desktop (touch scroll on mobile is already native).
  */
 export function SmoothScroll() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const lenis = new Lenis({
       duration: 1.1,
-      // Weighted ease-out — deliberate, never linear
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
       touchMultiplier: 1.5,
+    });
+
+    lenis.on('scroll', () => {
+      window.dispatchEvent(new Event('scroll'));
     });
 
     let rafId = 0;

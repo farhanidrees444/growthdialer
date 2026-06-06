@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Phone, TrendingUp, Check, Activity, Clock, Sparkles } from 'lucide-react';
 import { LiveWaveform } from '@/components/marketing/live-floor/LiveWaveform';
 import { Spotlight } from '@/components/marketing/live-floor/Spotlight';
 import { LottiePulse } from './LottiePulse';
-import { EASE_OUT, reveal, revealContainer } from '@/components/marketing/live-floor/motion';
+import { useMarketingMotionReduced, EASE_OUT, reveal, revealContainer } from '@/components/marketing/live-floor/motion';
 
 function useTicker(start: number, stepMs: number, inc: number, reduce: boolean | null) {
   const [v, setV] = useState(start);
@@ -24,7 +24,7 @@ function fmtClock(s: number) {
 }
 
 export function DashboardPreview() {
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
   const seconds = useTicker(132, 1000, 1, reduce);
   const calls = useTicker(47, 4200, 1, reduce);
 

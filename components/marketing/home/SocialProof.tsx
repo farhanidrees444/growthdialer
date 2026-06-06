@@ -1,13 +1,14 @@
 'use client';
 
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { useMarketingMotionReduced } from '@/components/marketing/live-floor/motion';
 
 // Clearly generic / fictional placeholder wordmarks — swappable later.
 // No real brands, no "trusted by N".
 const LOGOS = ['Acme', 'Northwind', 'Globex', 'Initech', 'Vandelay', 'Soylent', 'Hooli', 'Umbrella'];
 
 export function SocialProof() {
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
   const row = [...LOGOS, ...LOGOS];
 
   return (

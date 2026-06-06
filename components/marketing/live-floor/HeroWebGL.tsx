@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useReducedMotion } from 'framer-motion';
+import { useMarketingMotionReduced } from './motion';
 
 const HeroWebGLScene = dynamic(() => import('./HeroWebGLScene'), {
   ssr: false,
@@ -13,7 +13,7 @@ const HeroWebGLScene = dynamic(() => import('./HeroWebGLScene'), {
  * Lazy-loaded; skipped when the user prefers reduced motion.
  */
 export function HeroWebGL() {
-  const reduce = useReducedMotion();
+  const reduce = useMarketingMotionReduced();
   if (reduce) return null;
 
   return (
