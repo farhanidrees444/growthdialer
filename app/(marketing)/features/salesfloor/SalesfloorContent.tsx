@@ -1,208 +1,173 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Users, Eye, MessageSquare, BarChart2, Zap, CheckCircle } from "lucide-react";
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { ArrowRight, Eye, MessageSquare, Users, BarChart2, Headphones, Radio } from 'lucide-react';
+import { MarketingPageHero } from '@/components/marketing/live-floor/MarketingPageHero';
+import { EarlyAccess } from '@/components/marketing/home/EarlyAccess';
+import { reveal, revealContainer } from '@/components/marketing/live-floor/motion';
+import { APP_SIGNUP } from '@/lib/marketing/navigation';
 
-const features = [
+const COACHING_MODES = [
   {
     icon: Eye,
-    title: "Live Call Monitoring",
-    description: "Watch your team's calls in real-time. See exactly how they're handling objections, using your battlecards, and following your process.",
-    benefits: ["Real-time visibility", "Quality assurance", "Instant feedback"],
-    demo: "Monitor 10+ concurrent calls from your dashboard",
+    title: 'Listen',
+    body: 'Managers hear the live call without the prospect knowing — useful for QA and shadowing new reps.',
   },
   {
     icon: MessageSquare,
-    title: "Real-Time Coaching",
-    description: "Send live prompts and suggestions during active calls. Guide your reps through tough conversations without interrupting the flow.",
-    benefits: ["Live guidance", "Contextual help", "Improved close rates"],
-    demo: "Send battlecard suggestions mid-call via chat or overlay",
+    title: 'Whisper',
+    body: 'Coach the rep in real time. Only the rep hears you; the prospect stays on a normal conversation.',
   },
   {
-    icon: Users,
-    title: "Team Collaboration Hub",
-    description: "Create shared playbooks, battlecards, and objection handlers. Your entire team stays aligned on messaging and tactics.",
-    benefits: ["Shared knowledge", "Consistent messaging", "Faster onboarding"],
-    demo: "Team wiki with call recordings, scripts, and best practices",
-  },
-  {
-    icon: BarChart2,
-    title: "Performance Analytics",
-    description: "Track individual and team performance metrics. Identify top performers and replicate their success across your organization.",
-    benefits: ["Performance insights", "Data-driven coaching", "Predictive analytics"],
-    demo: "Advanced dashboards with conversion tracking and trend analysis",
-  },
-  {
-    icon: Zap,
-    title: "Instant Feedback Loops",
-    description: "Provide immediate feedback after calls. Tag common issues, suggest improvements, and track progress over time.",
-    benefits: ["Rapid improvement", "Continuous learning", "Measurable growth"],
-    demo: "Post-call feedback forms with actionable recommendations",
+    icon: Headphones,
+    title: 'Barge',
+    body: 'Join the call when a deal needs a leader in the room — escalation without switching tools.',
   },
 ];
 
-const useCases = [
+const FEATURES = [
   {
-    title: "Scale Your Top Performers",
-    description: "Identify what makes your best reps successful, then replicate those behaviors across your entire team.",
-    metrics: ["40% improvement in team performance", "Reduced ramp time by 60%", "Higher retention rates"],
+    icon: Radio,
+    title: 'Live coaching floor',
+    body: 'See who is on a call, how long they have been connected, and jump in from one dashboard view.',
   },
   {
-    title: "Coach Through Complex Deals",
-    description: "Provide expert guidance during high-stakes conversations without being on the call yourself.",
-    metrics: ["25% increase in deal size", "Faster deal cycles", "Better win rates"],
+    icon: Users,
+    title: 'Team visibility',
+    body: 'Workspace-scoped seats and roles so managers see their pod — not every account in the org.',
   },
   {
-    title: "Maintain Quality at Scale",
-    description: "Ensure every customer interaction meets your standards, no matter how fast you're growing.",
-    metrics: ["99% call quality compliance", "Reduced customer churn", "Higher satisfaction scores"],
+    icon: BarChart2,
+    title: 'Call outcomes in analytics',
+    body: 'Dispositions and duration roll into Analytics so you review patterns instead of sitting on every dial.',
+  },
+];
+
+const WORKFLOWS = [
+  {
+    title: 'Morning power block',
+    body: 'Reps run a power session while a manager monitors connect rate from the floor — whisper on tough objections only.',
+  },
+  {
+    title: 'New rep ramp',
+    body: 'Listen to the first ten live calls, leave structured feedback after hang-up, and track dispositions over the week.',
+  },
+  {
+    title: 'Deal rescue',
+    body: 'When a rep flags a live call, a lead can barge in with pricing authority without losing recording continuity.',
   },
 ];
 
 export default function SalesfloorContent() {
   return (
-    <div className="pt-24 pb-16">
-      {/* Hero */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="text-center max-w-4xl mx-auto">
-          <Badge variant="secondary" className="mb-4">
-            Salesfloor
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            Coach your team to
-            <span className="text-brand"> legendary performance</span>
-          </h1>
-          <p className="text-xl text-muted-foreground mb-8">
-            Live call monitoring, real-time coaching, and team collaboration tools
-            that transform good sales teams into extraordinary ones.
+    <>
+      <MarketingPageHero
+        eyebrow="Salesfloor"
+        title={
+          <>
+            Coach live calls
+            <br />
+            <span className="font-medium">without leaving the floor.</span>
+          </>
+        }
+        description="Listen, whisper, and barge on active calls from the coaching dashboard. Available on Pro and Team workspaces — built for managers who want visibility, not vanity metrics."
+      >
+        <a
+          href={APP_SIGNUP}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#8B5CF6] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#7C3AED]"
+        >
+          Start free <ArrowRight className="h-4 w-4" />
+        </a>
+        <Link
+          href="/pricing"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.03] px-6 py-3 text-sm font-semibold text-zinc-200 hover:bg-white/[0.06]"
+        >
+          View plans
+        </Link>
+      </MarketingPageHero>
+
+      <section className="mx-auto max-w-5xl px-5 pb-16 lg:px-8">
+        <motion.div
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: '-80px' }}
+          variants={revealContainer}
+          className="grid gap-4 md:grid-cols-3"
+        >
+          {COACHING_MODES.map((mode) => {
+            const Icon = mode.icon;
+            return (
+              <motion.div
+                key={mode.title}
+                variants={reveal}
+                className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl"
+              >
+                <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#8B5CF6]/10 text-[#A78BFA]">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <h2 className="font-display text-lg font-medium text-[#F5F5F7]">{mode.title}</h2>
+                <p className="mt-2 text-[14px] leading-relaxed text-zinc-500">{mode.body}</p>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      </section>
+
+      <section className="border-t border-white/[0.06] px-5 py-20 lg:px-8 lg:py-24">
+        <div className="mx-auto max-w-5xl">
+          <p className="mb-10 text-center text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
+            What ships today
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup">
-              <Button size="lg" className="bg-brand text-white hover:bg-brand/80">
-                Start team coaching <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link href="/pricing">
-              <Button size="lg" variant="outline">
-                View pricing
-              </Button>
-            </Link>
-          </div>
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: '-80px' }}
+            variants={revealContainer}
+            className="grid gap-4 md:grid-cols-3"
+          >
+            {FEATURES.map((f) => {
+              const Icon = f.icon;
+              return (
+                <motion.div
+                  key={f.title}
+                  variants={reveal}
+                  className="rounded-2xl border border-white/[0.06] bg-[#0F0F12] p-6"
+                >
+                  <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.04] text-zinc-300">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <h3 className="text-[15px] font-medium text-[#F5F5F7]">{f.title}</h3>
+                  <p className="mt-2 text-[14px] leading-relaxed text-zinc-500">{f.body}</p>
+                </motion.div>
+              );
+            })}
+          </motion.div>
         </div>
       </section>
 
-      {/* Key Features */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Everything you need to coach at scale</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Built for sales leaders who want to maintain quality and consistency
-            as their teams grow from 5 to 500+ reps.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
+      <section className="mx-auto max-w-3xl px-5 pb-20 lg:px-8">
+        <h2 className="text-center font-display text-2xl font-light tracking-tight text-[#F5F5F7]">
+          Common <span className="font-medium">manager workflows</span>
+        </h2>
+        <div className="mt-10 space-y-6">
+          {WORKFLOWS.map((w) => (
+            <article
+              key={w.title}
+              className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl"
             >
-              <Card className="h-full">
-                <CardHeader>
-                  <div className="w-12 h-12 bg-brand/10 rounded-lg flex items-center justify-center mb-4">
-                    <feature.icon className="w-6 h-6 text-brand" />
-                  </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-muted-foreground">{feature.description}</p>
-
-                  <div>
-                    <h4 className="font-semibold mb-2 text-sm">Key Benefits:</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {feature.benefits.map((benefit, i) => (
-                        <Badge key={i} variant="outline" className="text-xs">
-                          {benefit}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="bg-muted/50 p-3 rounded-lg">
-                    <p className="text-xs text-muted-foreground">{feature.demo}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+              <h3 className="font-medium text-[#F5F5F7]">{w.title}</h3>
+              <p className="mt-2 text-[14px] leading-relaxed text-zinc-500">{w.body}</p>
+            </article>
           ))}
         </div>
+        <p className="mx-auto mt-10 max-w-lg text-center text-[13px] leading-relaxed text-zinc-600">
+          We do not publish team performance guarantees or customer counts we cannot verify. Try the
+          coaching floor on your own calls and judge whether it fits your process.
+        </p>
       </section>
 
-      {/* Use Cases */}
-      <section className="container mx-auto px-4 py-16 bg-muted/20">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Real results from real teams</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            See how sales leaders are using Salesfloor to transform their team's performance.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8">
-          {useCases.map((useCase, index) => (
-            <motion.div
-              key={useCase.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">{useCase.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-muted-foreground">{useCase.description}</p>
-
-                  <div>
-                    <h4 className="font-semibold mb-2 text-sm">Results:</h4>
-                    <ul className="space-y-1">
-                      {useCase.metrics.map((metric, i) => (
-                        <li key={i} className="flex items-center gap-2 text-sm">
-                          <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                          <span>{metric}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="container mx-auto px-4 py-16 text-center">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold mb-4">Ready to level up your sales team?</h2>
-          <p className="text-lg text-muted-foreground mb-8">
-            Join 500+ sales leaders who've transformed their teams with Salesfloor's
-            coaching and collaboration tools.
-          </p>
-          <Link href="/signup">
-            <Button size="lg" className="bg-brand text-white hover:bg-brand/80">
-              Start coaching today <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-    </div>
+      <EarlyAccess />
+    </>
   );
 }

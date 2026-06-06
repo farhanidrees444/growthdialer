@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
-import { MotionShell } from "@/components/marketing/live-floor/MotionShell";
-import { Nav } from "@/components/marketing/live-floor/Nav";
-import { Grain } from "@/components/marketing/live-floor/Grain";
-import { SiteFooter } from "@/components/marketing/live-floor/SiteFooter";
+import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { Plans } from "@/components/marketing/pricing/Plans";
 import { ComparisonTable } from "@/components/marketing/pricing/ComparisonTable";
 import { PricingFAQ } from "@/components/marketing/pricing/PricingFAQ";
@@ -17,18 +14,11 @@ export const metadata: Metadata = {
 
 export default function PricingPage() {
   return (
-    <MotionShell>
-      <div className="relative min-h-screen overflow-x-clip bg-[#08080A] text-[#F5F5F7] antialiased">
-        <Grain />
-        <Nav />
-        <main className="relative z-[2]">
-          <Plans />
-          <ComparisonTable />
-          <PricingFAQ />
-          <PricingCTA />
-        </main>
-        <SiteFooter />
-      </div>
-    </MotionShell>
+    <MarketingShell>
+      <Plans />
+      <ComparisonTable />
+      <PricingFAQ />
+      <PricingCTA />
+    </MarketingShell>
   );
 }
