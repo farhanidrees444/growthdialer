@@ -2,60 +2,92 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Zap, CheckCircle2, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Zap, Check, Loader2, Sparkles, Users, BarChart3, Headphones,
+  ArrowRight, Building2, Shield,
+} from 'lucide-react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import type { Workspace } from '@/contexts/workspace-context';
+import { Grain } from '@/components/marketing/live-floor/Grain';
+import { EASE_OUT } from '@/components/marketing/live-floor/motion';
+import { cn } from '@/lib/utils';
 
 const PLAN_OPTIONS = [
   {
-    id: 'free',
-    label: 'Free',
+    id: 'free' as const,
+    label: 'Starter',
     price: '$0',
-    period: '/mo',
+    period: 'forever',
     seats: '1 seat',
-    features: ['1 agent', 'Power dialer', 'Call recordings', 'Basic analytics'],
-    gradient: 'from-slate-600/20 to-slate-700/20',
-    border: 'border-white/[0.08]',
-    badge: null,
+    tagline: 'Solo rep getting started',
+    icon: Zap,
+    accent: 'from-slate-500/30 to-slate-600/10',
+    ring: 'ring-emerald-500/40',
+    features: ['Power dialer', 'Call recordings', 'Lead import', 'Basic analytics'],
   },
   {
-    id: 'pro',
+    id: 'pro' as const,
     label: 'Pro',
     price: '$49',
     period: '/mo',
     seats: 'Up to 3 seats',
-    features: ['3 agents', 'AI brief + coaching', 'Team analytics', 'Priority support'],
-    gradient: 'from-violet-600/20 to-blue-600/20',
-    border: 'border-violet-500/30',
-    badge: 'Most Popular',
+    tagline: 'Small team closing deals',
+    icon: Sparkles,
+    accent: 'from-violet-600/35 to-indigo-600/15',
+    ring: 'ring-violet-500/50',
+    badge: 'Most popular',
+    features: ['AI call briefs', 'Live coaching', 'Team analytics', 'Priority support'],
   },
   {
-    id: 'team',
+    id: 'team' as const,
     label: 'Team',
     price: '$99',
     period: '/mo',
     seats: 'Up to 10 seats',
-    features: ['10 agents', 'Full coaching suite', 'Workspace analytics', 'Custom integrations'],
-    gradient: 'from-emerald-600/20 to-teal-600/20',
-    border: 'border-emerald-500/30',
-    badge: null,
+    tagline: 'Scale outbound with managers',
+    icon: Users,
+    accent: 'from-emerald-600/30 to-teal-600/12',
+    ring: 'ring-emerald-500/40',
+    features: ['Full coaching suite', 'Workspace analytics', 'Role permissions', 'Custom integrations'],
   },
-] as const;
+];
+
+const STEPS = ['Name your workspace', 'Choose your plan', 'Launch'];
+
+function friendlyError(message: string) {
+  if (/infinite recursion/i.test(message)) {
+    return 'Database policy conflict — our team has shipped a fix. Refresh and try again in 60 seconds.';
+  }
+  return message;
+}
+
+function previewSlug(name: string) {
+  const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return base ? `${base}.growthdialer.com` : 'your-team.growthdialer.com';
+}
 
 export default function WorkspaceSetupPage() {
   const router = useRouter();
   const { refreshWorkspaces, setCurrentWorkspace } = useWorkspace();
 
+  const [step, setStep] = useState(0);
   const [name, setName] = useState('');
-  const [plan, setPlan] = useState<'free' | 'pro' | 'team'>('free');
+  const [plan, setPlan] = useState<'free' | 'pro' | 'team'>('pro');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
+  const slugPreview = useMemo(() => previewSlug(name), [name]);
+  const canAdvance = step === 0 ? name.trim().length >= 2 : true;
+
   async function handleCreate() {
-    if (!name.trim()) { setError('Workspace name is required'); return; }
+    if (!name.trim()) {
+      setError('Enter a workspace name (at least 2 characters)');
+      setStep(0);
+      return;
+    }
     setBusy(true);
     setError('');
     try {
@@ -65,121 +97,264 @@ export default function WorkspaceSetupPage() {
         body: JSON.stringify({ name: name.trim(), plan }),
       });
       const data = await res.json() as { workspace?: Workspace; error?: string };
-      if (!res.ok) { setError(data.error ?? 'Failed to create workspace'); return; }
+      if (!res.ok) {
+        setError(friendlyError(data.error ?? 'Failed to create workspace'));
+        return;
+      }
       if (data.workspace) {
         await refreshWorkspaces();
         await setCurrentWorkspace(data.workspace);
       }
       router.push('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unexpected error');
+      setError(friendlyError(err instanceof Error ? err.message : 'Unexpected error'));
     } finally {
       setBusy(false);
     }
   }
 
+  function next() {
+    if (step === 0 && !canAdvance) {
+      setError('Enter a workspace name (at least 2 characters)');
+      return;
+    }
+    setError('');
+    if (step < 1) setStep(step + 1);
+    else void handleCreate();
+  }
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12 bg-[oklch(0.05_0.005_285)]">
-      {/* BG gradient */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute top-0 left-1/2 h-[500px] w-[700px] -translate-x-1/2 opacity-[0.12] blur-3xl rounded-full"
-          style={{ background: 'radial-gradient(circle, oklch(0.64 0.21 293) 0%, transparent 70%)' }} />
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#050508] text-[#F5F5F7]">
+      <Grain />
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-32 left-1/2 h-[520px] w-[720px] -translate-x-1/2 rounded-full bg-violet-600/20 blur-[120px]" />
+        <div className="absolute bottom-0 right-0 h-[400px] w-[500px] rounded-full bg-emerald-600/10 blur-[100px]" />
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="relative z-10 w-full max-w-2xl"
-      >
-        {/* Header */}
-        <div className="mb-10 text-center">
-          <div className="mb-5 flex items-center justify-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: 'linear-gradient(135deg, #059669, #7C3AED)' }}>
-              <Zap className="h-4.5 w-4.5 text-white" fill="white" />
-            </div>
-            <span className="font-display text-xl font-bold text-white">
-              Growth<span className="text-emerald-400">Dialer</span>
-            </span>
+      <header className="relative z-10 flex items-center justify-between px-6 py-5 sm:px-10">
+        <div className="flex items-center gap-2.5">
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-xl shadow-lg shadow-emerald-500/20"
+            style={{ background: 'linear-gradient(135deg, #059669 0%, #7C3AED 100%)' }}
+          >
+            <Zap className="h-4 w-4 text-white" fill="white" />
           </div>
-          <h1 className="text-3xl font-bold text-white">Set up your workspace</h1>
-          <p className="mt-2 text-slate-400">A workspace is where your team makes calls, shares leads, and coaches each other.</p>
+          <span className="font-display text-lg font-bold tracking-tight">
+            Growth<span className="text-emerald-400">Dialer</span>
+          </span>
         </div>
-
-        {/* Name */}
-        <div className="mb-6">
-          <label className="mb-1.5 block text-sm font-semibold text-slate-300">
-            Workspace name
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => { setName(e.target.value); setError(''); }}
-            placeholder="Acme Sales Team"
-            className="w-full rounded-xl border border-white/[0.10] bg-white/[0.04] px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-emerald-500/40 transition"
-            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-            autoFocus
-          />
-          {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+        <div className="hidden items-center gap-2 text-xs text-zinc-500 sm:flex">
+          <Shield className="h-3.5 w-3.5" />
+          SOC2-ready infrastructure
         </div>
+      </header>
 
-        {/* Plan selector */}
-        <div className="mb-8">
-          <p className="mb-3 text-sm font-semibold text-slate-300">Choose plan</p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {PLAN_OPTIONS.map((opt) => (
-              <motion.button
-                key={opt.id}
-                type="button"
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() => setPlan(opt.id)}
-                className={`relative rounded-2xl border p-4 text-left transition-all ${
-                  plan === opt.id ? opt.border + ' bg-gradient-to-br ' + opt.gradient : 'border-white/[0.07] bg-white/[0.02] hover:border-white/[0.12]'
-                }`}
-              >
-                {opt.badge && (
-                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-violet-500 px-2.5 py-0.5 text-[10px] font-bold text-white">
-                    {opt.badge}
-                  </span>
+      <main className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center px-4 pb-16 pt-4 sm:px-6">
+        {/* Progress */}
+        <div className="mb-10 flex items-center justify-center gap-2 sm:gap-3">
+          {STEPS.map((label, i) => (
+            <div key={label} className="flex items-center gap-2 sm:gap-3">
+              <div
+                className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-300',
+                  i <= step
+                    ? 'bg-gradient-to-br from-emerald-500 to-violet-600 text-white shadow-lg shadow-violet-500/25'
+                    : 'border border-white/10 bg-white/[0.03] text-zinc-500',
                 )}
-                <div className="flex items-end gap-1 mb-1">
-                  <span className="text-xl font-bold text-white">{opt.price}</span>
-                  <span className="text-xs text-slate-500 mb-0.5">{opt.period}</span>
-                </div>
-                <p className="text-sm font-semibold text-white mb-0.5">{opt.label}</p>
-                <p className="text-xs text-slate-500 mb-3">{opt.seats}</p>
-                <ul className="space-y-1">
-                  {opt.features.map((f) => (
-                    <li key={f} className="flex items-center gap-1.5 text-xs text-slate-400">
-                      <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-500" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </motion.button>
-            ))}
-          </div>
+              >
+                {i < step ? <Check className="h-3.5 w-3.5" /> : i + 1}
+              </div>
+              <span className={cn('hidden text-xs font-medium sm:inline', i <= step ? 'text-zinc-300' : 'text-zinc-600')}>
+                {label}
+              </span>
+              {i < STEPS.length - 1 && (
+                <div className={cn('h-px w-6 sm:w-12', i < step ? 'bg-emerald-500/50' : 'bg-white/10')} />
+              )}
+            </div>
+          ))}
         </div>
 
-        {/* Create button */}
-        <motion.button
-          type="button"
-          onClick={handleCreate}
-          disabled={busy || !name.trim()}
-          whileHover={!busy && name.trim() ? { scale: 1.01 } : {}}
-          whileTap={!busy && name.trim() ? { scale: 0.99 } : {}}
-          className="flex w-full items-center justify-center gap-2.5 rounded-xl py-3.5 text-sm font-bold text-white shadow-xl disabled:opacity-40 disabled:cursor-not-allowed transition"
-          style={{ background: 'linear-gradient(135deg, #059669, #7C3AED)' }}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: EASE_OUT }}
+          className="overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.02] shadow-2xl shadow-black/40 backdrop-blur-xl"
         >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {busy ? 'Creating…' : 'Create Workspace'}
-        </motion.button>
+          <div className="border-b border-white/[0.06] bg-gradient-to-r from-white/[0.04] to-transparent px-6 py-5 sm:px-8">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              {step === 0 ? 'Name your workspace' : 'Pick the right plan'}
+            </h1>
+            <p className="mt-1.5 text-sm text-zinc-400">
+              {step === 0
+                ? 'This is your team’s home base — leads, calls, recordings, and coaching live here.'
+                : 'Start free or unlock AI coaching. Upgrade or downgrade anytime.'}
+            </p>
+          </div>
 
-        <p className="mt-4 text-center text-xs text-slate-600">
-          You can change your plan or invite team members at any time.
+          <div className="px-6 py-8 sm:px-8">
+            <AnimatePresence mode="wait">
+              {step === 0 ? (
+                <motion.div
+                  key="step-name"
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -12 }}
+                  transition={{ duration: 0.25 }}
+                  className="space-y-5"
+                >
+                  <div>
+                    <label htmlFor="ws-name" className="mb-2 flex items-center gap-2 text-sm font-semibold text-zinc-300">
+                      <Building2 className="h-4 w-4 text-emerald-400" />
+                      Workspace name
+                    </label>
+                    <input
+                      id="ws-name"
+                      type="text"
+                      value={name}
+                      onChange={(e) => { setName(e.target.value); setError(''); }}
+                      placeholder="Acme Sales Team"
+                      className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 text-base text-white placeholder:text-zinc-600 outline-none transition focus:border-violet-500/40 focus:ring-2 focus:ring-violet-500/20"
+                      onKeyDown={(e) => e.key === 'Enter' && canAdvance && next()}
+                      autoFocus
+                    />
+                    <p className="mt-2 flex items-center gap-1.5 text-xs text-zinc-500">
+                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      {slugPreview}
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {[
+                      { icon: Headphones, label: 'Shared dialer', desc: 'One queue for your team' },
+                      { icon: BarChart3, label: 'Live analytics', desc: 'Connect rate & pipeline' },
+                      { icon: Users, label: 'Invite reps', desc: 'Roles & permissions' },
+                    ].map(({ icon: Icon, label, desc }) => (
+                      <div key={label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                        <Icon className="mb-2 h-4 w-4 text-violet-400" />
+                        <p className="text-xs font-semibold text-zinc-200">{label}</p>
+                        <p className="text-[11px] text-zinc-500">{desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="step-plan"
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -12 }}
+                  transition={{ duration: 0.25 }}
+                  className="grid gap-4 sm:grid-cols-3"
+                >
+                  {PLAN_OPTIONS.map((opt) => {
+                    const Icon = opt.icon;
+                    const selected = plan === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setPlan(opt.id)}
+                        className={cn(
+                          'relative rounded-2xl border p-5 text-left transition-all duration-200',
+                          'hover:border-white/20 hover:bg-white/[0.04]',
+                          selected
+                            ? cn('border-transparent bg-gradient-to-br ring-2', opt.accent, opt.ring)
+                            : 'border-white/[0.08] bg-white/[0.02]',
+                        )}
+                      >
+                        {opt.badge && (
+                          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-violet-500 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                            {opt.badge}
+                          </span>
+                        )}
+                        <div className="mb-3 flex items-center justify-between">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.06]">
+                            <Icon className="h-4 w-4 text-white" />
+                          </div>
+                          {selected && (
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
+                              <Check className="h-3 w-3 text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-2xl font-bold text-white">{opt.price}</span>
+                          <span className="text-xs text-zinc-500">{opt.period}</span>
+                        </div>
+                        <p className="mt-1 text-sm font-semibold text-white">{opt.label}</p>
+                        <p className="text-[11px] text-zinc-500">{opt.tagline}</p>
+                        <p className="mt-2 text-xs font-medium text-emerald-400/90">{opt.seats}</p>
+                        <ul className="mt-3 space-y-1.5 border-t border-white/[0.06] pt-3">
+                          {opt.features.map((f) => (
+                            <li key={f} className="flex items-center gap-2 text-[11px] text-zinc-400">
+                              <Check className="h-3 w-3 shrink-0 text-emerald-500" />
+                              {f}
+                            </li>
+                          ))}
+                        </ul>
+                      </button>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="mt-5 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+                >
+                  {error}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="flex flex-col-reverse gap-3 border-t border-white/[0.06] bg-black/20 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+            <button
+              type="button"
+              onClick={() => { setError(''); setStep(Math.max(0, step - 1)); }}
+              disabled={step === 0 || busy}
+              className="text-sm font-medium text-zinc-500 transition hover:text-zinc-300 disabled:invisible"
+            >
+              Back
+            </button>
+            <motion.button
+              type="button"
+              onClick={next}
+              disabled={busy || (step === 0 && !canAdvance)}
+              whileHover={!busy && canAdvance ? { scale: 1.01 } : {}}
+              whileTap={!busy && canAdvance ? { scale: 0.99 } : {}}
+              className="inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-violet-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+              style={{ background: 'linear-gradient(135deg, #059669 0%, #7C3AED 100%)' }}
+            >
+              {busy ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Creating workspace…
+                </>
+              ) : step === 1 ? (
+                <>
+                  Launch workspace
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              ) : (
+                <>
+                  Continue
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </motion.button>
+          </div>
+        </motion.div>
+
+        <p className="mt-6 text-center text-xs text-zinc-600">
+          No credit card for Starter · Change plan or invite teammates anytime from Settings
         </p>
-      </motion.div>
+      </main>
     </div>
   );
 }
