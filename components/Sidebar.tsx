@@ -41,6 +41,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ROLE_LABELS } from "@/lib/auth/permissions";
 import { EASE_OUT, SPRING } from "@/components/marketing/live-floor/motion";
+import { UserMenu } from "@/components/layout/user-menu";
 
 type CountKey = "leads" | "recordings" | "numbers" | "calls";
 
@@ -135,18 +136,18 @@ function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
       type="button"
       onClick={() => setOpen((p) => !p)}
       className={cn(
-        "flex w-full items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.04] text-left transition-colors hover:border-white/[0.12] hover:bg-white/[0.07]",
+        "flex w-full items-center gap-2.5 rounded-lg border border-zinc-800/50 bg-zinc-900/50 text-left transition-colors hover:border-zinc-700/60 hover:bg-zinc-800/40",
         collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5",
       )}
       aria-label={collapsed ? `Workspace: ${currentWorkspace.name}` : undefined}
     >
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-800 text-zinc-400">
         <Building2 className="h-3.5 w-3.5" />
       </div>
       {!collapsed && (
         <>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold text-white">{currentWorkspace.name}</p>
+            <p className="truncate text-xs font-medium text-zinc-100">{currentWorkspace.name}</p>
             {currentRole && (
               <p className="truncate text-[10px] text-slate-500">{ROLE_LABELS[currentRole]}</p>
             )}
@@ -297,25 +298,15 @@ function SidebarNavItem({
       {active && (
         <motion.span
           layoutId="sidebar-active-pill"
-          className="absolute inset-0 rounded-lg border border-[#8B5CF6]/25 bg-[#8B5CF6]/10 shadow-[0_0_20px_-4px_rgba(139,92,246,0.45)]"
-          transition={reduceMotion ? { duration: 0 } : SPRING}
-        />
-      )}
-      {active && (
-        <motion.span
-          layoutId="sidebar-active-accent"
-          className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-[#06B6D4]"
+          className="absolute inset-0 rounded-lg nav-active-glass"
           transition={reduceMotion ? { duration: 0 } : SPRING}
         />
       )}
 
       <motion.span
-        className="relative z-[1] flex shrink-0 items-center justify-center"
-        animate={{
-          scale: active ? 1.05 : 1,
-          color: active ? "#06B6D4" : undefined,
-        }}
-        whileHover={reduceMotion ? undefined : { scale: 1.08, x: collapsed ? 0 : 1 }}
+        className="relative z-[1] flex shrink-0 items-center justify-center text-zinc-400"
+        animate={{ color: active ? '#f4f4f5' : undefined }}
+        whileHover={reduceMotion ? undefined : { scale: 1.04 }}
         transition={SPRING}
       >
         <Icon className="h-4 w-4" aria-hidden />
@@ -330,12 +321,12 @@ function SidebarNavItem({
           transition={{ duration: 0.2, ease: EASE_OUT }}
         >
           <span className="truncate">{item.label}</span>
-          {item.sparkle && <Sparkles className="h-3 w-3 shrink-0 text-amber-400/80" aria-hidden />}
+          {item.sparkle && <Sparkles className="h-3 w-3 shrink-0 text-violet-400/70" aria-hidden />}
         </motion.span>
       )}
 
       {!collapsed && item.badge === "Live" && (
-        <Badge className="relative z-[1] h-4 shrink-0 rounded-full border-0 bg-[#06B6D4]/20 px-1.5 py-0 text-[10px] font-semibold text-[#06B6D4]">
+        <Badge className="relative z-[1] h-4 shrink-0 rounded-md border-0 bg-zinc-800 px-1.5 py-0 text-[10px] font-normal text-zinc-300">
           Live
         </Badge>
       )}
@@ -415,10 +406,10 @@ function NavSection({
               show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: EASE_OUT } },
             }
       }
-      className={cn(showDivider && "mt-1 border-t border-white/[0.04] pt-3")}
+      className={cn(showDivider && "mt-1 border-t border-zinc-800/50 pt-3")}
     >
       {title && !collapsed && (
-        <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-600">
+        <p className="mb-1.5 px-3 text-[10px] font-normal uppercase tracking-[0.2em] text-zinc-500">
           {title}
         </p>
       )}
@@ -455,7 +446,7 @@ export default function Sidebar() {
     <Suspense
       fallback={
         <aside
-          className="hidden w-[240px] shrink-0 border-r border-white/[0.06] bg-[#08080A]/95 lg:block"
+          className="hidden w-[240px] shrink-0 border-r border-zinc-800/50 bg-zinc-950 lg:block"
           aria-hidden
         />
       }
@@ -497,7 +488,7 @@ function SidebarInner() {
         }}
         transition={reduceMotion ? { duration: 0 } : SPRING}
         className={cn(
-          "flex flex-col border-r border-white/[0.06] bg-[#08080A]/95 text-sidebar-foreground shadow-xl shadow-black/40 backdrop-blur-xl",
+          "flex flex-col border-r border-zinc-800/50 bg-zinc-950 text-sidebar-foreground",
           "fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
           isOpen ? "translate-x-0" : "-translate-x-full",
           "lg:static lg:z-auto lg:h-screen lg:shrink-0 lg:translate-x-0",
@@ -507,7 +498,7 @@ function SidebarInner() {
         {/* Logo + collapse */}
         <div
           className={cn(
-            "flex items-center border-b border-white/[0.06]",
+            "flex items-center border-b border-zinc-800/50",
             collapsed ? "justify-center px-2 py-4" : "justify-between gap-2 px-4 py-4",
           )}
         >
@@ -516,16 +507,16 @@ function SidebarInner() {
             onClick={close}
             className={cn("group flex min-w-0 items-center gap-2.5", collapsed && "justify-center")}
           >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gradient-brand glow-brand-sm">
-              <Zap className="h-4 w-4 text-[oklch(0.08_0.04_153)]" fill="currentColor" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-800 text-violet-400">
+              <Zap className="h-4 w-4" fill="currentColor" />
             </div>
             {!collapsed && (
               <motion.span
                 initial={false}
                 animate={{ opacity: 1 }}
-                className="truncate font-display text-base font-bold tracking-tight text-white group-hover:text-white/95"
+                className="truncate font-display text-base font-semibold tracking-tight text-zinc-100"
               >
-                Growth<span className="text-[#8B5CF6]">Dialer</span>
+                Growth<span className="text-violet-400">Dialer</span>
               </motion.span>
             )}
           </Link>
@@ -623,7 +614,7 @@ function SidebarInner() {
           </motion.nav>
 
           {/* Setup — pinned bottom */}
-          <div className="mt-auto border-t border-white/[0.06] px-2 py-3">
+          <div className="mt-auto border-t border-zinc-800/50 px-2 py-3">
             <NavSection
               title="Setup"
               items={SETUP_ITEMS}
@@ -635,6 +626,11 @@ function SidebarInner() {
               onNavigate={close}
               reduceMotion={!!reduceMotion}
             />
+          </div>
+
+          {/* User profile — bottom rail */}
+          <div className="border-t border-zinc-800/50 p-2 pb-3">
+            <UserMenu placement="sidebar" collapsed={collapsed} />
           </div>
         </LayoutGroup>
       </motion.aside>

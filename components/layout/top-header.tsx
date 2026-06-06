@@ -7,18 +7,19 @@ import { useMobileNav } from '@/contexts/mobile-nav-context';
 import { useLeads } from '@/contexts/leads-context';
 
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
-  '/dashboard':    { title: 'Dashboard',    subtitle: 'Your calling command center' },
-  '/dialer':       { title: 'AI Dialer',    subtitle: 'Make calls, faster' },
-  '/leads':        { title: 'Leads',        subtitle: 'Manage your pipeline' },
-  '/analytics':    { title: 'Analytics',    subtitle: 'Performance insights' },
-  '/recordings':   { title: 'Recordings',   subtitle: 'Calls with AI analysis' },
-  '/numbers':      { title: 'My Numbers',   subtitle: 'Your calling identity' },
-  '/integrations': { title: 'Integrations', subtitle: 'Connect your tools' },
-  '/settings':     { title: 'Settings',     subtitle: 'Account & workspace' },
-  '/team':         { title: 'Team',         subtitle: 'Workspace members' },
-  '/coaching':     { title: 'Coaching',     subtitle: 'Real-time call coaching' },
-  '/sequences':    { title: 'Sequences',    subtitle: 'Multi-step outreach cadences' },
-  '/leaderboard':  { title: 'Leaderboard',  subtitle: 'Team rankings & connect rates' },
+  '/dashboard':    { title: 'Dashboard',    subtitle: 'Overview' },
+  '/dialer':       { title: 'AI Dialer',    subtitle: 'Outbound calling' },
+  '/leads':        { title: 'Leads',        subtitle: 'Pipeline' },
+  '/analytics':    { title: 'Analytics',    subtitle: 'Performance' },
+  '/recordings':   { title: 'Recordings',   subtitle: 'Call library' },
+  '/call-logs':    { title: 'Call Logs',    subtitle: 'Activity history' },
+  '/numbers':      { title: 'My Numbers',   subtitle: 'Caller IDs' },
+  '/integrations': { title: 'Integrations', subtitle: 'Connected apps' },
+  '/settings':     { title: 'Settings',     subtitle: 'Workspace' },
+  '/team':         { title: 'Team',         subtitle: 'Members' },
+  '/coaching':     { title: 'Coaching',     subtitle: 'Live sessions' },
+  '/sequences':    { title: 'Sequences',    subtitle: 'Cadences' },
+  '/leaderboard':  { title: 'Leaderboard',  subtitle: 'Rankings' },
 };
 
 export function TopHeader() {
@@ -26,57 +27,43 @@ export function TopHeader() {
   const { toggle } = useMobileNav();
   const { setImportOpen } = useLeads();
 
-  const pageKey = Object.keys(PAGE_TITLES).find(k => pathname.startsWith(k)) ?? '/dashboard';
+  const pageKey = Object.keys(PAGE_TITLES).find((k) => pathname.startsWith(k)) ?? '/dashboard';
   const page = PAGE_TITLES[pageKey] ?? PAGE_TITLES['/dashboard'];
   const showImport = pathname.startsWith('/dashboard') || pathname.startsWith('/leads');
 
   return (
-    <header
-      className="flex flex-shrink-0 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8
-                 h-16 border-b border-white/[0.06] sticky top-0 z-10
-                 bg-gradient-to-r from-white/[0.02] via-transparent to-white/[0.02]
-                 backdrop-blur-xl"
-    >
-      {/* Left: mobile hamburger + page title */}
+    <header className="sticky top-0 z-10 flex h-14 flex-shrink-0 items-center justify-between gap-3 border-b border-zinc-800/50 bg-zinc-950/90 px-4 backdrop-blur-md sm:px-6 lg:px-8">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
           onClick={toggle}
           aria-label="Toggle navigation"
-          className="lg:hidden flex min-h-11 min-w-11 items-center justify-center rounded-xl
-                     text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors flex-shrink-0"
+          className="flex min-h-10 min-w-10 flex-shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-800/40 hover:text-zinc-100 lg:hidden"
         >
-          <Menu size={20} />
+          <Menu size={18} />
         </button>
 
         <div className="min-w-0">
-          <h1 className="truncate text-base font-semibold text-white sm:text-lg leading-tight">
+          <h1 className="truncate text-[15px] font-medium leading-tight text-zinc-100 sm:text-base">
             {page.title}
           </h1>
-          <p className="hidden truncate text-xs text-white/40 sm:block">
-            {page.subtitle}
-          </p>
+          <p className="hidden truncate text-xs text-zinc-500 sm:block">{page.subtitle}</p>
         </div>
       </div>
 
-      {/* Right: action cluster */}
-      <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
-
-        {/* Import leads — dashboard + leads only */}
+      <div className="flex flex-shrink-0 items-center gap-2">
         {showImport && (
           <button
             type="button"
             onClick={() => setImportOpen(true)}
-            className="flex min-h-11 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium text-white
-                       bg-gradient-to-r from-violet-600 to-cyan-500
-                       hover:opacity-90 transition-all shadow-lg shadow-violet-500/20"
+            className="hover-brand-glow flex min-h-9 items-center gap-1.5 rounded-lg border border-zinc-800/50 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-100 transition-colors hover:border-violet-500/30 hover:bg-zinc-800/80"
           >
-            <Upload size={15} className="flex-shrink-0" />
+            <Upload size={15} className="flex-shrink-0 text-zinc-400" />
             <span className="hidden sm:inline">Import leads</span>
           </button>
         )}
 
-        <UserMenu />
+        <UserMenu placement="header" />
       </div>
     </header>
   );

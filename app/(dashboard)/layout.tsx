@@ -15,7 +15,6 @@ import { WorkspaceProvider } from "@/contexts/workspace-context";
 import { WorkspaceGate } from "@/components/workspace/workspace-gate";
 import { IncomingCallPopup } from "@/components/call/incoming-call-popup";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
-import { Grain } from "@/components/marketing/live-floor/Grain";
 import { PremiumOverlays } from "@/components/premium/premium-overlays";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -51,15 +50,8 @@ export default function DashboardLayout({
           <LeadsProvider>
             <MobileNavProvider>
             <ImportLeadsDialog />
-            <div className="dashboard-shell relative flex h-[100dvh] overflow-hidden bg-background text-foreground">
-              <Grain />
-              <div className="pointer-events-none absolute inset-0 grid-bg opacity-[0.35]" aria-hidden />
-              <div
-                className="pointer-events-none absolute top-0 left-1/2 h-[420px] w-[min(90vw,800px)] -translate-x-1/2 rounded-full opacity-[0.12] blur-3xl"
-                style={{ background: "radial-gradient(circle, oklch(0.64 0.21 293) 0%, transparent 70%)" }}
-                aria-hidden
-              />
-              <div className="pointer-events-none absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full opacity-[0.08] blur-3xl bg-[oklch(0.71_0.13_207)]" aria-hidden />
+            <div className="dashboard-shell relative flex h-[100dvh] overflow-hidden bg-zinc-950 text-zinc-100">
+              <div className="pointer-events-none absolute inset-0 grid-bg opacity-[0.15]" aria-hidden />
 
               {!isOnboarding && <Sidebar />}
               <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
