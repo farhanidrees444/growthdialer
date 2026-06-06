@@ -6,115 +6,21 @@ import { Check, ArrowRight, Plus, Clock } from 'lucide-react';
 import { Spotlight } from '@/components/marketing/live-floor/Spotlight';
 import { MiniWave } from '@/components/marketing/live-floor/LiveWaveform';
 import { EASE_OUT, SPRING, reveal, revealContainer } from '@/components/marketing/live-floor/motion';
-
-const APP_SIGNUP = 'https://app.growthdialer.com/signup';
+import { MARKETING_PLANS, MARKETING_ADDONS } from '@/lib/marketing/pricing';
 
 type Billing = 'monthly' | 'annual';
-
-interface Plan {
-  id: string;
-  name: string;
-  monthly: number | null;
-  annual: number | null;
-  tagline: string;
-  cta: string;
-  href: string;
-  popular?: boolean;
-  lead?: string;
-  features: { label: string; soon?: boolean }[];
-}
-
-const PLANS: Plan[] = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    monthly: 25,
-    annual: 18,
-    tagline: 'For solo reps getting started with outbound.',
-    cta: 'Start Free',
-    href: APP_SIGNUP,
-    features: [
-      { label: 'Outbound calling (US & Canada)' },
-      { label: 'Web dialer + click-to-call' },
-      { label: '1 local number' },
-      { label: 'Call recording' },
-      { label: 'Leads management' },
-      { label: 'Basic analytics' },
-      { label: 'AI call summaries' },
-    ],
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    monthly: 39,
-    annual: 29,
-    tagline: 'The full AI dialer for working reps.',
-    cta: 'Start Free',
-    href: APP_SIGNUP,
-    popular: true,
-    lead: 'Everything in Starter, plus',
-    features: [
-      { label: 'AI Dialer (3-mode Focus Stage)' },
-      { label: 'Power Dialer' },
-      { label: 'AI Conversation Intelligence — summaries, sentiment & intent' },
-      { label: 'Advanced analytics' },
-      { label: 'Multiple numbers' },
-      { label: 'Number health & spam monitoring' },
-      { label: 'Inbound calling' },
-    ],
-  },
-  {
-    id: 'scale',
-    name: 'Scale',
-    monthly: 69,
-    annual: 48,
-    tagline: 'For growing teams that need more room.',
-    cta: 'Start Free',
-    href: APP_SIGNUP,
-    lead: 'Everything in Pro, plus',
-    features: [
-      { label: 'Higher calling & usage limits' },
-      { label: 'Priority support' },
-      { label: 'Team workspaces', soon: true },
-      { label: 'Public API', soon: true },
-    ],
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    monthly: null,
-    annual: null,
-    tagline: 'For high-volume teams with custom needs.',
-    cta: 'Contact sales',
-    href: '/contact-sales',
-    lead: 'Everything in Scale, plus',
-    features: [
-      { label: 'Volume discounts' },
-      { label: 'Dedicated support' },
-      { label: 'Custom onboarding' },
-    ],
-  },
-];
-
-const ADDONS = [
-  { title: 'Additional numbers', price: 'from $3 / number / mo', desc: 'Add local numbers as your team grows.', soon: false },
-  { title: 'Parallel Dialer', price: 'Coming soon', desc: 'Dial multiple lines at once and connect on the first answer.', soon: true },
-  { title: 'AI Voice Agent / Receptionist', price: 'Coming soon', desc: 'An AI that answers and qualifies inbound calls for you.', soon: true },
-];
 
 export function Plans() {
   const [billing, setBilling] = useState<Billing>('annual');
 
   return (
     <section className="relative px-5 pt-36 lg:px-8 lg:pt-44">
-      {/* Ambient violet glow */}
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-10 h-[420px] w-[min(90vw,820px)] -translate-x-1/2 rounded-full opacity-[0.09] blur-[120px]"
         style={{ background: 'radial-gradient(circle, #8B5CF6 0%, transparent 70%)' }}
       />
 
-      {/* Header */}
       <motion.div
         initial="hidden"
         animate="show"
@@ -131,11 +37,10 @@ export function Plans() {
           <span className="font-medium">scales with you</span>.
         </motion.h1>
         <motion.p variants={reveal} className="mx-auto mt-5 max-w-md text-[16px] leading-relaxed text-zinc-400">
-          Start free, upgrade when you&apos;re ready. Every plan includes call
-          recording and AI call summaries — no add-ons required to get value.
+          Start free on Starter, then upgrade your workspace when you need more seats
+          and AI features. Every plan includes call recording and AI summaries.
         </motion.p>
 
-        {/* Toggle */}
         <motion.div variants={reveal} className="mt-9 flex items-center justify-center gap-3">
           <div className="relative inline-flex rounded-full border border-white/[0.08] bg-white/[0.02] p-1 backdrop-blur-xl">
             {(['monthly', 'annual'] as const).map((b) => (
@@ -159,12 +64,11 @@ export function Plans() {
             ))}
           </div>
           <span className="rounded-full border border-[#06B6D4]/25 bg-[#06B6D4]/10 px-2.5 py-1 text-[11px] font-medium text-[#06B6D4]">
-            Save up to 30%
+            Save up to 20%
           </span>
         </motion.div>
       </motion.div>
 
-      {/* Plan cards */}
       <motion.div
         initial="hidden"
         whileInView="show"
@@ -172,9 +76,10 @@ export function Plans() {
         variants={revealContainer}
         className="relative mx-auto mt-14 grid max-w-7xl gap-4 md:grid-cols-2 lg:grid-cols-4"
       >
-        {PLANS.map((plan) => {
+        {MARKETING_PLANS.map((plan) => {
           const price = billing === 'annual' ? plan.annual : plan.monthly;
           const isCustom = price === null;
+          const isFree = price === 0;
           return (
             <motion.div
               key={plan.id}
@@ -200,10 +105,11 @@ export function Plans() {
                 <p className="mt-1 text-[13px] leading-relaxed text-zinc-500">{plan.tagline}</p>
               </div>
 
-              {/* Price */}
               <div className="mb-1 flex items-end gap-1.5">
                 {isCustom ? (
                   <span className="font-display text-4xl font-light tracking-tight text-[#F5F5F7]">Custom</span>
+                ) : isFree ? (
+                  <span className="font-display text-5xl font-light tracking-tight text-[#F5F5F7]">Free</span>
                 ) : (
                   <>
                     <span className="mb-1 text-lg text-zinc-500">$</span>
@@ -219,15 +125,14 @@ export function Plans() {
                         {price}
                       </motion.span>
                     </AnimatePresence>
-                    <span className="mb-1.5 text-[13px] text-zinc-500">/user/mo</span>
+                    <span className="mb-1.5 text-[13px] text-zinc-500">/workspace/mo</span>
                   </>
                 )}
               </div>
               <p className="mb-6 h-4 text-[12px] text-zinc-600">
-                {isCustom ? 'Tailored to your volume' : billing === 'annual' ? 'billed annually' : 'billed monthly'}
+                {isCustom ? 'Tailored to your volume' : isFree ? plan.seats : `${plan.seats} · ${billing === 'annual' ? 'billed annually' : 'billed monthly'}`}
               </p>
 
-              {/* CTA */}
               <a
                 href={plan.href}
                 className={`mb-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-medium transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A] ${
@@ -240,7 +145,6 @@ export function Plans() {
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </a>
 
-              {/* Features */}
               {plan.lead && (
                 <p className="mb-3 text-[12px] font-medium uppercase tracking-wider text-zinc-600">{plan.lead}</p>
               )}
@@ -264,7 +168,6 @@ export function Plans() {
         })}
       </motion.div>
 
-      {/* Add-ons */}
       <motion.div
         initial="hidden"
         whileInView="show"
@@ -273,7 +176,7 @@ export function Plans() {
         className="mx-auto mt-6 max-w-7xl"
       >
         <motion.div variants={reveal} className="grid gap-4 sm:grid-cols-3">
-          {ADDONS.map((a) => (
+          {MARKETING_ADDONS.map((a) => (
             <div key={a.title} className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl transition-colors hover:border-white/[0.12]">
               <Spotlight />
               <div className="mb-2 flex items-center justify-between">

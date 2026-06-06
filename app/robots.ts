@@ -29,6 +29,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: "https://www.growthdialer.com/sitemap.xml",
+    sitemap: `${BASE}/sitemap.xml`,
   };
 }

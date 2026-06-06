@@ -20,7 +20,7 @@ const FAQS = [
   },
   {
     q: 'Which features are live versus coming soon?',
-    a: 'Live today: the AI Dialer, Power Dialer, call recording, conversation intelligence, leads, analytics and number-health monitoring. Parallel dialing, an AI voice agent, team workspaces and integrations are clearly marked “Coming soon.”',
+    a: 'Live today: AI Dialer, Power Dialer, AI call briefs, conversation intelligence, live manager coaching, team workspaces (Team plan), leads, analytics and number-health monitoring. Parallel dialing, AI voice agents and CRM integrations are on the roadmap and clearly marked “Coming soon.”',
   },
   {
     q: 'Can I try it before paying?',
@@ -52,7 +52,7 @@ const FAQS = [
   },
   {
     q: 'What does it cost?',
-    a: 'Plans start free and scale by seat — see the pricing page for current tiers. You only pay for what you use, and you can change plans at any time.',
+    a: 'Starter is free (1 seat). Pro is $49/workspace/mo for up to 3 seats; Team is $99/workspace/mo for up to 10. See the pricing page for annual discounts — upgrade or downgrade any time from Settings.',
   },
 ];
 

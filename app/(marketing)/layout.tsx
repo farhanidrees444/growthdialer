@@ -28,6 +28,7 @@ export default function MarketingLayout({
     "/changelog",
     "/privacy",
     "/terms",
+    "/features/ai",
   ];
   const cinematic = CINEMATIC.includes(pathname);
   if (cinematic) {

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { MotionShell } from '@/components/marketing/live-floor/MotionShell';
 import { Nav } from '@/components/marketing/live-floor/Nav';
 import { Grain } from '@/components/marketing/live-floor/Grain';
@@ -12,6 +13,14 @@ import { HowItWorks } from '@/components/marketing/home/HowItWorks';
 import { StatsStrip } from '@/components/marketing/home/StatsStrip';
 import { EarlyAccess } from '@/components/marketing/home/EarlyAccess';
 import { HomeFAQ } from '@/components/marketing/home/HomeFAQ';
+import { AiProductPillars } from '@/components/marketing/home/AiProductPillars';
+
+export const metadata: Metadata = {
+  title: 'AI Sales Dialer — Record, Transcribe & Analyze Every Call',
+  description:
+    'GrowthDialer is the AI sales dialer with conversation intelligence, AI call briefs, live coaching, and power dialing. Start free — upgrade your workspace when your team grows.',
+  alternates: { canonical: 'https://growthdialer.com' },
+};
 
 // "The Live Floor" — the homepage is a living dialer that demonstrates itself
 // through real-time motion and an interactive story.
@@ -32,6 +41,7 @@ export default function LandingPage() {
           <DashboardPreview />
           <InteractivePipeline />
           <Features />
+          <AiProductPillars />
           <FeatureSections />
           <HowItWorks />
           <StatsStrip />

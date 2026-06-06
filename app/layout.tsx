@@ -26,7 +26,10 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const SITE_URL = "https://growthdialer.com";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "GrowthDialer — AI Sales Dialer & Conversation Intelligence",
     template: "%s | GrowthDialer",
@@ -78,13 +81,29 @@ export const metadata: Metadata = {
       "url": "https://growthdialer.com",
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "Web",
-      "offers": {
-        "@type": "Offer",
-        "price": "29",
-        "priceCurrency": "USD",
-        "priceValidUntil": "2026-12-31",
-        "availability": "https://schema.org/InStock",
-      },
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Starter",
+          "price": "0",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+        },
+        {
+          "@type": "Offer",
+          "name": "Pro",
+          "price": "49",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+        },
+        {
+          "@type": "Offer",
+          "name": "Team",
+          "price": "99",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+        },
+      ],
       "publisher": {
         "@type": "Organization",
         "name": "GrowthDialer",

@@ -16,11 +16,11 @@ const FAQS = [
   },
   {
     q: 'How does annual billing work?',
-    a: 'Annual plans are billed once per year at the discounted per-user rate shown above. It is the same product as monthly — just a lower price in exchange for committing for the year.',
+    a: 'Annual plans are billed once per year at the discounted workspace rate shown above. Same product as monthly — a lower price in exchange for committing for the year.',
   },
   {
-    q: 'What counts as a "user"?',
-    a: 'A user is one person with their own login who makes or receives calls. Pricing is per user, per month, so you only pay for the seats you actually use.',
+    q: 'How do workspace seats work?',
+    a: 'Each plan covers a workspace with a seat limit (1 on Starter, 3 on Pro, 10 on Team). A seat is one person with their own login. Pending invites count toward the limit so you never over-provision.',
   },
   {
     q: 'Can I cancel whenever I want?',
@@ -28,7 +28,7 @@ const FAQS = [
   },
   {
     q: 'Which features are still on the roadmap?',
-    a: 'Parallel dialing, an AI voice agent / receptionist, team workspaces and a public API are in active development. They are clearly marked "Coming soon" — we only charge for what works today.',
+    a: 'Parallel dialing, an AI voice agent / receptionist, CRM integrations and a public API are in active development. Team workspaces, live coaching and manager analytics are live today on Pro and Team — we only charge for what works.',
   },
 ];
 

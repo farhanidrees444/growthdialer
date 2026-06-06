@@ -11,7 +11,7 @@ import { PricingCTA } from "@/components/marketing/pricing/PricingCTA";
 export const metadata: Metadata = {
   title: "Pricing — Simple plans that scale with you",
   description:
-    "GrowthDialer pricing. Start free, then $18/user/mo. Call recording and AI call summaries on every plan, with AI Dialer, Power Dialer and conversation intelligence on Pro.",
+    "GrowthDialer pricing. Starter is free (1 seat). Pro $49/workspace/mo (3 seats), Team $99/workspace/mo (10 seats). AI Dialer, coaching and conversation intelligence on Pro.",
   alternates: { canonical: "https://growthdialer.com/pricing" },
 };
 

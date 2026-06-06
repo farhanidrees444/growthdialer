@@ -29,7 +29,7 @@ const FEATURES = [
   },
 ];
 
-const COMING_SOON = ['Parallel dialing', 'Real-time coaching', 'AI voice agent'];
+const COMING_SOON = ['Parallel dialing', 'AI voice agent', 'CRM integrations'];
 
 export function Features() {
   return (

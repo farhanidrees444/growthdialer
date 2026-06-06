@@ -7,9 +7,17 @@ import { EASE_OUT } from '@/components/marketing/live-floor/motion';
 
 type Cell = boolean | string | 'soon';
 
-const PLANS = ['Starter', 'Pro', 'Scale', 'Enterprise'];
+const PLANS = ['Starter', 'Pro', 'Team', 'Enterprise'];
 
 const GROUPS: { group: string; rows: { label: string; cells: [Cell, Cell, Cell, Cell] }[] }[] = [
+  {
+    group: 'Workspace',
+    rows: [
+      { label: 'Seats included', cells: ['1', 'Up to 3', 'Up to 10', 'Unlimited'] },
+      { label: 'Team workspaces & roles', cells: [false, false, true, true] },
+      { label: 'Manager team analytics', cells: [false, false, true, true] },
+    ],
+  },
   {
     group: 'Calling',
     rows: [
@@ -18,6 +26,7 @@ const GROUPS: { group: string; rows: { label: string; cells: [Cell, Cell, Cell, 
       { label: 'Inbound calling', cells: [false, true, true, true] },
       { label: 'AI Dialer (3-mode Focus Stage)', cells: [false, true, true, true] },
       { label: 'Power Dialer', cells: [false, true, true, true] },
+      { label: 'Live manager coaching', cells: [false, true, true, true] },
     ],
   },
   {
@@ -33,6 +42,7 @@ const GROUPS: { group: string; rows: { label: string; cells: [Cell, Cell, Cell, 
       { label: 'Call recording', cells: [true, true, true, true] },
       { label: 'Call transcription', cells: [true, true, true, true] },
       { label: 'AI call summaries', cells: [true, true, true, true] },
+      { label: 'AI call brief before dial', cells: [false, true, true, true] },
       { label: 'AI sentiment & intent', cells: [false, true, true, true] },
     ],
   },
@@ -44,11 +54,11 @@ const GROUPS: { group: string; rows: { label: string; cells: [Cell, Cell, Cell, 
     ],
   },
   {
-    group: 'Team & platform',
+    group: 'Platform',
     rows: [
       { label: 'Support', cells: ['Email', 'Email', 'Priority', 'Dedicated'] },
-      { label: 'Team workspaces', cells: [false, false, 'soon', 'soon'] },
-      { label: 'Public API', cells: [false, false, 'soon', 'soon'] },
+      { label: 'CRM integrations', cells: [false, false, 'soon', true] },
+      { label: 'Public API', cells: [false, false, 'soon', true] },
     ],
   },
 ];
@@ -83,7 +93,6 @@ export function ComparisonTable() {
 
       <div className="mx-auto mt-12 max-w-6xl overflow-x-auto lg:overflow-visible">
         <table className="w-full min-w-[760px] border-collapse">
-          {/* Sticky header — sits just below the fixed nav (h-16) */}
           <thead className="sticky top-16 z-20">
             <tr>
               <th className="bg-[#08080A]/95 py-4 pr-4 text-left align-bottom backdrop-blur-xl">
