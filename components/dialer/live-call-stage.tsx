@@ -177,7 +177,7 @@ export function LiveCallStage({
       >
         <PhoneOff className="w-5 h-5" />
         End Call
-        <kbd className="ml-1 text-red-200/50 text-xs font-mono font-normal">Space</kbd>
+        <kbd className="ml-1 hidden text-red-200/50 text-xs font-mono font-normal [@media(pointer:fine)]:inline">Space</kbd>
       </motion.button>
     </motion.div>
   );

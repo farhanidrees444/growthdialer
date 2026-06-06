@@ -176,10 +176,10 @@ export default function Sidebar() {
 
       <aside
         className={cn(
-          "flex flex-col bg-sidebar text-sidebar-foreground border-l border-sidebar-border shadow-xl shadow-black/40",
-          "fixed inset-y-0 right-0 z-50 w-[280px] transition-transform duration-300 ease-in-out",
-          isOpen ? "translate-x-0" : "translate-x-full",
-          "lg:static lg:border-l-0 lg:border-r lg:border-sidebar-border lg:w-[228px] lg:translate-x-0 lg:z-auto lg:h-screen lg:shrink-0",
+          "flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border shadow-xl shadow-black/40",
+          "fixed inset-y-0 left-0 z-50 w-[280px] transition-transform duration-300 ease-in-out",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+          "lg:static lg:w-[228px] lg:translate-x-0 lg:z-auto lg:h-screen lg:shrink-0",
         )}
       >
         {/* Logo row */}
@@ -195,7 +195,7 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={close}
-            className="flex lg:hidden h-8 w-8 items-center justify-center rounded-lg text-sidebar-foreground/60 hover:bg-white/10 hover:text-white transition-colors"
+            className="flex lg:hidden min-h-11 min-w-11 items-center justify-center rounded-lg text-sidebar-foreground/60 hover:bg-white/10 hover:text-white transition-colors"
             aria-label="Close menu"
           >
             <X className="h-4 w-4" />

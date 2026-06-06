@@ -42,7 +42,7 @@ export function TopHeader() {
           type="button"
           onClick={toggle}
           aria-label="Toggle navigation"
-          className="lg:hidden flex h-9 w-9 items-center justify-center rounded-xl
+          className="lg:hidden flex min-h-11 min-w-11 items-center justify-center rounded-xl
                      text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors flex-shrink-0"
         >
           <Menu size={20} />
@@ -66,7 +66,7 @@ export function TopHeader() {
           <button
             type="button"
             onClick={() => setImportOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium text-white
+            className="flex min-h-11 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium text-white
                        bg-gradient-to-r from-violet-600 to-cyan-500
                        hover:opacity-90 transition-all shadow-lg shadow-violet-500/20"
           >

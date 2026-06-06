@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { verifyTelnyxSignature } from '@/lib/telnyx-signature';
+import { claimWebhookEvent } from '@/lib/webhooks/dedup';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -176,6 +177,13 @@ export async function POST(request: NextRequest) {
     if (!supabase) {
       console.warn('[WEBHOOK] Service client unavailable');
       return NextResponse.json({ received: true });
+    }
+
+    if (event.id) {
+      const claimed = await claimWebhookEvent(supabase, event.id, 'telnyx', event_type);
+      if (!claimed) {
+        return NextResponse.json({ received: true, duplicate: true });
+      }
     }
 
     // ── call.initiated ──────────────────────────────────────────────────────

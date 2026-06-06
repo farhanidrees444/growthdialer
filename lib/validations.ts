@@ -40,3 +40,32 @@ export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
 export type ContactInput = z.infer<typeof contactSchema>;
 export type SettingsProfileInput = z.infer<typeof settingsProfileSchema>;
+
+export const dispositionTypes = [
+  'interested',
+  'callback',
+  'meeting_booked',
+  'voicemail',
+  'not_interested',
+  'wrong_number',
+  'gatekeeper',
+  'dnc',
+] as const;
+
+export const dialRequestSchema = z.object({
+  to: z.string().min(7, 'Phone number is required'),
+  lead_id: z.string().uuid().optional(),
+  call_control_id: z.string().min(1).optional(),
+  workspace_id: z.string().uuid().optional(),
+});
+
+export const dispositionRequestSchema = z.object({
+  disposition: z.enum(dispositionTypes),
+  notes: z.string().max(5000).optional(),
+  callback_at: z.string().optional(),
+  meeting_at: z.string().optional(),
+  workspace_id: z.string().uuid().optional(),
+});
+
+export type DialRequestInput = z.infer<typeof dialRequestSchema>;
+export type DispositionRequestInput = z.infer<typeof dispositionRequestSchema>;

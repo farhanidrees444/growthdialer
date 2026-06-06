@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { LEAD_STATUS_TO_DISPOSITION } from '@/lib/dialer/state-machine';
-import type { DispositionType } from '@/lib/dialer/state-machine';
+import { LEAD_STATUS_TO_DISPOSITION, type DispositionType } from '@/lib/dialer/state-machine';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
+import { apiUnauthorized, parseJsonBody } from '@/lib/api/errors';
+import { dispositionRequestSchema } from '@/lib/validations';
 
 export async function POST(
   request: NextRequest,
@@ -13,19 +14,14 @@ export async function POST(
     const { id } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) return apiUnauthorized();
 
-    const body = await request.json() as {
-      disposition: DispositionType;
-      notes?: string;
-      callback_at?: string;
-      meeting_at?: string;
-    };
-    const { disposition, notes, callback_at, meeting_at } = body;
+    const rawBody = await request.json();
+    const parsed = parseJsonBody(rawBody, dispositionRequestSchema);
+    if (!parsed.ok) return parsed.response;
+    const { disposition, notes, callback_at, meeting_at } = parsed.data;
 
-    if (!disposition) return NextResponse.json({ error: 'Missing disposition' }, { status: 400 });
-
-    const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body });
+    const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body: rawBody });
     if (isWorkspaceError(access)) return access;
 
     const call = await requireCallAccess(

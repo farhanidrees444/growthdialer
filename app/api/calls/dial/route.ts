@@ -4,6 +4,9 @@ import telnyxClient, { toE164 } from '@/lib/telnyx';
 import { normalizePhone } from '@/lib/phone';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { hasPermission } from '@/lib/auth/permissions';
+import { assertWorkspaceCanPlaceCalls } from '@/lib/billing/workspace-billing-gate';
+import { apiUnauthorized, parseJsonBody } from '@/lib/api/errors';
+import { dialRequestSchema } from '@/lib/validations';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,19 +14,13 @@ export async function POST(request: NextRequest) {
     const { data: { user: authUser } } = await supabase.auth.getUser();
     const userId = authUser?.id;
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiUnauthorized();
     }
 
-    const body = await request.json();
-    const { to, lead_id, call_control_id } = body as {
-      to: string;
-      lead_id?: string;
-      call_control_id?: string; // provided by browser when using WebRTC
-    };
-
-    if (!to) {
-      return NextResponse.json({ error: 'Missing "to" phone number' }, { status: 400 });
-    }
+    const rawBody = await request.json();
+    const parsed = parseJsonBody(rawBody, dialRequestSchema);
+    if (!parsed.ok) return parsed.response;
+    const { to, lead_id, call_control_id } = parsed.data;
 
     const e164 = normalizePhone(to) ?? toE164(to);
     console.log(`[dial] original="${to}" normalized="${e164}" webrtc=${!!call_control_id}`);
@@ -31,12 +28,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Phone number format is invalid' }, { status: 400 });
     }
 
-    const access = await requireWorkspaceFromRequest(request, supabase, userId, { body });
+    const access = await requireWorkspaceFromRequest(request, supabase, userId, { body: rawBody });
     if (isWorkspaceError(access)) return access;
 
     if (!hasPermission(access.role, 'MAKE_CALLS')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const billingBlock = await assertWorkspaceCanPlaceCalls(supabase, access.workspaceId);
+    if (billingBlock) return billingBlock;
 
     // Determine from number (user's default purchased number or env fallback)
     // .maybeSingle() is used (not .single()) so the route doesn't throw when

@@ -41,11 +41,12 @@ function DtmfKeypad({ onSend, onClose }: { onSend: (d: string) => void; onClose:
       initial={{ opacity: 0, scale: 0.95, y: 8 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 8 }}
-      className="fixed bottom-24 right-6 z-50 w-64 rounded-2xl border border-white/[0.10] p-4 shadow-2xl backdrop-blur-2xl bg-zinc-900/95"
+      className="fixed right-4 z-[var(--z-drawer)] w-[min(16rem,calc(100vw-2rem))] rounded-2xl border border-white/[0.10] p-4 shadow-2xl backdrop-blur-2xl bg-zinc-900/95 lg:right-6"
+      style={{ bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 5rem)' }}
     >
       <div className="flex justify-between items-center mb-3">
         <span className="text-xs text-white/40 uppercase tracking-widest">Keypad</span>
-        <button onClick={onClose} className="text-white/30 hover:text-white text-xs">Done</button>
+        <button onClick={onClose} className="min-h-11 px-2 text-sm text-white/50 hover:text-white">Done</button>
       </div>
       <div className="grid grid-cols-3 gap-2">
         {DTMF_KEYS.map((k) => (
@@ -168,6 +169,9 @@ export default function DialerPage() {
   const [dtmfOpen, setDtmfOpen] = useState(false);
   const [mobileQueueOpen, setMobileQueueOpen] = useState(false);
   const [mobileAiBriefOpen, setMobileAiBriefOpen] = useState(false);
+  const [mobileLiveInsightsOpen, setMobileLiveInsightsOpen] = useState(false);
+  const [dncConfirmOpen, setDncConfirmOpen] = useState(false);
+  const [switchLeadTarget, setSwitchLeadTarget] = useState<LeadRecord | null>(null);
   const [queueIndex, setQueueIndex] = useState(0);
   const [queueLeads, setQueueLeads] = useState<LeadRecord[]>([]);
   const [fromNumber, setFromNumber] = useState<string>('');
@@ -357,14 +361,26 @@ export default function DialerPage() {
     toast.success(newScore >= 70 ? 'Marked as hot' : 'Removed hot status');
   }, [selectedLead, selectLead]);
 
-  const handleDnc = useCallback(async () => {
+  const handleDnc = useCallback(() => {
     if (!selectedLead) return;
-    if (!confirm(`Mark ${selectedLead.name} as Do Not Call?`)) return;
+    setDncConfirmOpen(true);
+  }, [selectedLead]);
+
+  const confirmDnc = useCallback(async () => {
+    if (!selectedLead) return;
+    setDncConfirmOpen(false);
     const supabase = createClient();
     await supabase.from('leads').update({ dnc: true, status: 'do_not_call' }).eq('id', selectedLead.id);
     selectLead(null);
     toast.success('Marked as DNC');
   }, [selectedLead, selectLead]);
+
+  const confirmSwitchLead = useCallback(() => {
+    if (!switchLeadTarget) return;
+    hangup();
+    selectLead(switchLeadTarget);
+    setSwitchLeadTarget(null);
+  }, [switchLeadTarget, hangup, selectLead]);
 
   const handleSkip = useCallback(() => {
     if (!selectedLead) return;
@@ -477,8 +493,8 @@ export default function DialerPage() {
         {/* Queue column */}
         <div
           className={`flex-shrink-0 border-r border-white/[0.06] overflow-hidden transition-all duration-300 ${
-            isLive ? 'w-0 lg:w-20' : 'w-0 lg:w-[380px]'
-          } flex-col hidden lg:flex`}
+            isLive ? 'w-0 md:w-20' : 'w-0 md:w-[300px] lg:w-[380px]'
+          } flex-col hidden md:flex`}
         >
           {isLive ? (
             /* Collapsed avatar strip */
@@ -488,12 +504,7 @@ export default function DialerPage() {
                 <button
                   key={lead.id}
                   title={lead.name}
-                  onClick={() => {
-                    if (confirm(`Switch to ${lead.name}?`)) {
-                      hangup();
-                      selectLead(lead);
-                    }
-                  }}
+                  onClick={() => setSwitchLeadTarget(lead)}
                   className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold text-white transition-opacity ${
                     i === 0 ? 'ring-2 ring-red-500/60' : 'opacity-50 hover:opacity-80'
                   }`}
@@ -631,7 +642,7 @@ export default function DialerPage() {
         )}
       </AnimatePresence>
 
-      {/* Floating manual dial button — visible in browse + preview, hidden during live call */}
+      {/* Floating manual dial button — desktop only, browse + preview */}
       <AnimatePresence>
         {mode !== 'live' && (
           <motion.button
@@ -656,6 +667,94 @@ export default function DialerPage() {
       </AnimatePresence>
 
       {/* ── Overlays ── */}
+
+      {/* DNC confirm */}
+      <AnimatePresence>
+        {dncConfirmOpen && selectedLead && (
+          <motion.div
+            key="dnc-confirm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setDncConfirmOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.94, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.94, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-2xl border border-white/[0.10] p-6 bg-zinc-900 shadow-2xl space-y-4"
+            >
+              <div>
+                <h2 className="text-base font-semibold text-white">Mark as Do Not Call?</h2>
+                <p className="text-sm text-white/50 mt-1">
+                  {selectedLead.name} will be removed from your queue and flagged DNC.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDncConfirmOpen(false)}
+                  className="flex-1 min-h-11 rounded-xl text-sm text-white/50 bg-white/[0.05] border border-white/[0.07]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void confirmDnc()}
+                  className="flex-[2] min-h-11 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-500"
+                >
+                  Mark DNC
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Switch lead during live call */}
+      <AnimatePresence>
+        {switchLeadTarget && (
+          <motion.div
+            key="switch-lead"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setSwitchLeadTarget(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.94, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.94, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-2xl border border-white/[0.10] p-6 bg-zinc-900 shadow-2xl space-y-4"
+            >
+              <div>
+                <h2 className="text-base font-semibold text-white">Switch to {switchLeadTarget.name}?</h2>
+                <p className="text-sm text-white/50 mt-1">Your current call will end before switching leads.</p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSwitchLeadTarget(null)}
+                  className="flex-1 min-h-11 rounded-xl text-sm text-white/50 bg-white/[0.05] border border-white/[0.07]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmSwitchLead}
+                  className="flex-[2] min-h-11 rounded-xl text-sm font-semibold text-white gradient-brand"
+                >
+                  End &amp; switch
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Power Dial confirm modal */}
       <AnimatePresence>
@@ -768,46 +867,50 @@ export default function DialerPage() {
         )}
       </AnimatePresence>
 
-      {/* ── Mobile floating buttons (Queue + AI Brief) — hidden on lg+ ── */}
+      {/* ── Mobile floating buttons — hidden on md+ (queue column visible) ── */}
       <AnimatePresence>
-        {mode !== 'live' && (
-          <motion.div
-            key="mobile-fabs"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="lg:hidden fixed bottom-20 right-4 z-30 flex flex-col gap-2.5"
-            style={{ bottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}
-          >
-            {/* AI Brief button */}
-            {(mode === 'preview') && selectedLead && (
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setMobileAiBriefOpen(true)}
-                className="flex h-12 w-12 items-center justify-center rounded-full shadow-xl text-white"
-                style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)', border: '1px solid rgba(255,255,255,0.15)' }}
-                aria-label="Open AI Brief"
-              >
-                <Sparkles className="h-5 w-5" />
-              </motion.button>
-            )}
-            {/* Queue button */}
+        <motion.div
+          key="mobile-fabs"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          className="md:hidden fixed right-4 z-30 flex flex-col gap-2.5"
+          style={{ bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 4.5rem)' }}
+        >
+          {mode === 'live' && selectedLead && (
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => setMobileQueueOpen(true)}
-              className="relative flex h-12 w-12 items-center justify-center rounded-full shadow-xl text-white"
-              style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.12)' }}
-              aria-label="Open Queue"
+              onClick={() => setMobileLiveInsightsOpen(true)}
+              className="flex h-12 w-12 items-center justify-center rounded-full shadow-xl text-white gradient-brand"
+              aria-label="Open live insights"
             >
-              <Users className="h-5 w-5" />
-              {queueCounts.queue > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">
-                  {queueCounts.queue > 99 ? '99+' : queueCounts.queue}
-                </span>
-              )}
+              <Sparkles className="h-5 w-5" />
             </motion.button>
-          </motion.div>
-        )}
+          )}
+          {mode === 'preview' && selectedLead && (
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setMobileAiBriefOpen(true)}
+              className="flex h-12 w-12 items-center justify-center rounded-full shadow-xl text-white gradient-brand"
+              aria-label="Open AI Brief"
+            >
+              <Sparkles className="h-5 w-5" />
+            </motion.button>
+          )}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setMobileQueueOpen(true)}
+            className="relative flex h-12 w-12 items-center justify-center rounded-full shadow-xl text-white bg-white/[0.08] backdrop-blur-xl border border-white/[0.12]"
+            aria-label="Open Queue"
+          >
+            <Users className="h-5 w-5" />
+            {queueCounts.queue > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">
+                {queueCounts.queue > 99 ? '99+' : queueCounts.queue}
+              </span>
+            )}
+          </motion.button>
+        </motion.div>
       </AnimatePresence>
 
       {/* ── Mobile Queue Drawer ── */}
@@ -819,7 +922,7 @@ export default function DialerPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+              className="md:hidden fixed inset-0 z-[var(--z-drawer)] bg-black/60 backdrop-blur-sm"
               onClick={() => setMobileQueueOpen(false)}
             />
             <motion.div
@@ -828,7 +931,7 @@ export default function DialerPage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-3xl border-t border-white/[0.10] bg-zinc-900 overflow-hidden"
+              className="md:hidden fixed bottom-0 left-0 right-0 z-[var(--z-drawer)] flex flex-col rounded-t-3xl border-t border-white/[0.10] bg-zinc-900 overflow-hidden"
               style={{ height: '80vh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             >
               <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
@@ -836,7 +939,7 @@ export default function DialerPage() {
                 <button
                   type="button"
                   onClick={() => setMobileQueueOpen(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 hover:text-white"
+                  className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 hover:text-white"
                 >
                   <XIcon className="h-4 w-4" />
                 </button>
@@ -864,7 +967,7 @@ export default function DialerPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+              className="md:hidden fixed inset-0 z-[var(--z-drawer)] bg-black/60 backdrop-blur-sm"
               onClick={() => setMobileAiBriefOpen(false)}
             />
             <motion.div
@@ -873,7 +976,7 @@ export default function DialerPage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-3xl border-t border-white/[0.10] bg-zinc-900 overflow-hidden"
+              className="md:hidden fixed bottom-0 left-0 right-0 z-[var(--z-drawer)] flex flex-col rounded-t-3xl border-t border-white/[0.10] bg-zinc-900 overflow-hidden"
               style={{ height: '80vh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             >
               <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
@@ -881,13 +984,52 @@ export default function DialerPage() {
                 <button
                   type="button"
                   onClick={() => setMobileAiBriefOpen(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 hover:text-white"
+                  className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 hover:text-white"
                 >
                   <XIcon className="h-4 w-4" />
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto scrollbar-thin">
                 <AiBriefPanel lead={selectedLead} />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Mobile Live Insights Drawer ── */}
+      <AnimatePresence>
+        {mobileLiveInsightsOpen && selectedLead && mode === 'live' && (
+          <>
+            <motion.div
+              key="live-insights-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="md:hidden fixed inset-0 z-[var(--z-drawer)] bg-black/60 backdrop-blur-sm"
+              onClick={() => setMobileLiveInsightsOpen(false)}
+            />
+            <motion.div
+              key="live-insights-drawer"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="md:hidden fixed bottom-0 left-0 right-0 z-[var(--z-drawer)] flex flex-col rounded-t-3xl border-t border-white/[0.10] bg-zinc-900 overflow-hidden"
+              style={{ height: '80vh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+            >
+              <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
+                <span className="text-sm font-semibold text-white">Live insights</span>
+                <button
+                  type="button"
+                  onClick={() => setMobileLiveInsightsOpen(false)}
+                  className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 hover:text-white"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto scrollbar-thin">
+                <LiveInsightsPanel lead={selectedLead} />
               </div>
             </motion.div>
           </>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { assertWorkspaceCanPlaceCalls } from '@/lib/billing/workspace-billing-gate';
 import {
   buildDialerLeadsQuery,
   buildDialerQueueCountQuery,
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest) {
 
     const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body });
     if (isWorkspaceError(access)) return access;
+
+    const billingBlock = await assertWorkspaceCanPlaceCalls(supabase, access.workspaceId);
+    if (billingBlock) return billingBlock;
 
     const userId = user.id;
     const workspaceId = access.workspaceId;

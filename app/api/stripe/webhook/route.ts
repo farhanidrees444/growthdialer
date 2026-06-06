@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { stripe, isStripeConfigured } from "@/lib/stripe";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getWorkspacePlanLimits } from "@/lib/billing/workspace-plans";
+import { claimWebhookEvent } from "@/lib/webhooks/dedup";
 import Stripe from "stripe";
 
 async function syncWorkspaceBilling(
@@ -60,6 +61,11 @@ export async function POST(req: NextRequest) {
   if (!supabase) {
     console.error("[STRIPE-WEBHOOK] Service client unavailable");
     return Response.json({ received: true });
+  }
+
+  const claimed = await claimWebhookEvent(supabase, event.id, "stripe", event.type);
+  if (!claimed) {
+    return Response.json({ received: true, duplicate: true });
   }
 
   try {
@@ -190,7 +196,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error("[STRIPE-WEBHOOK] Handler error:", err);
-    // Still return 200 so Stripe doesn't endlessly retry our own bugs
+    return Response.json({ error: "Webhook handler failed" }, { status: 500 });
   }
 
   return Response.json({ received: true });
