@@ -11,6 +11,8 @@ import { useWebPhone } from '@/contexts/webphone-context';
 import { useCallContext } from '@/lib/call-context';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { PersistentCallBar } from '@/components/premium/persistent-call-bar';
+import { SentimentAmbient } from '@/components/premium/sentiment-ambient';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -281,81 +283,50 @@ function DtmfPad({ onDigit, onClose }: { onDigit: (d: string) => void; onClose: 
 // ─── Minimized Pill (desktop) ─────────────────────────────────────────────────
 
 function MinimizedPill({
-  name, elapsed, callStatus, onExpand, onHangup,
+  name, elapsed, callStatus, onExpand, onHangup, isMuted, onToggleMute, sentiment,
 }: {
   name: string; elapsed: number; callStatus: string;
   onExpand: () => void; onHangup: () => void;
+  isMuted: boolean; onToggleMute: () => void;
+  sentiment?: string | null;
 }) {
   return (
-    <motion.div
-      key="pill"
-      initial={{ x: 60, opacity: 0, scale: 0.9 }}
-      animate={{ x: 0, opacity: 1, scale: 1 }}
-      exit={{ x: 60, opacity: 0, scale: 0.9 }}
-      transition={{ type: 'spring', damping: 24, stiffness: 280 }}
-      className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)]/96 px-3.5 py-2.5 shadow-2xl shadow-black/60 backdrop-blur-xl"
-      style={{ minWidth: 188 }}
-    >
-      <div className="relative flex h-2 w-2 shrink-0">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[11px] font-semibold text-white" style={{ maxWidth: 92 }}>{name}</p>
-        <p className="text-[10px] text-slate-500 tabular-nums">
-          {callStatus === 'connecting' ? 'Dialing…' : callStatus === 'ringing' ? 'Ringing…' : fmtTime(elapsed)}
-        </p>
-      </div>
-      <button type="button" onClick={onExpand} aria-label="Expand"
-        className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.08] text-slate-500 transition hover:text-white">
-        <Maximize2 className="h-3 w-3" />
-      </button>
-      <button type="button" onClick={onHangup} aria-label="End call"
-        className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white shadow-lg shadow-red-900/40 transition hover:bg-red-400 active:scale-95">
-        <PhoneOff className="h-3 w-3" />
-      </button>
-    </motion.div>
+    <PersistentCallBar
+      name={name}
+      elapsed={elapsed}
+      callStatus={callStatus}
+      sentiment={sentiment}
+      isMuted={isMuted}
+      isMobile={false}
+      onExpand={onExpand}
+      onHangup={onHangup}
+      onToggleMute={onToggleMute}
+    />
   );
 }
 
 // ─── Minimized Bar (mobile) ───────────────────────────────────────────────────
 
 function MobileMinimizedBar({
-  name, elapsed, callStatus, onExpand, onHangup,
+  name, elapsed, callStatus, onExpand, onHangup, isMuted, onToggleMute, sentiment,
 }: {
   name: string; elapsed: number; callStatus: string;
   onExpand: () => void; onHangup: () => void;
+  isMuted: boolean; onToggleMute: () => void;
+  sentiment?: string | null;
 }) {
   return (
-    <motion.div
-      key="mobile-bar"
-      initial={{ y: '100%' }}
-      animate={{ y: 0 }}
-      exit={{ y: '100%' }}
-      transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-      // Sits above the mobile bottom nav (56px) + safe area
-      className="fixed left-0 right-0 z-50 flex items-center gap-3 border-t border-white/[0.10] bg-[oklch(0.09_0.006_285)]/98 px-4 py-3 backdrop-blur-xl"
-      style={{ bottom: 'calc(56px + env(safe-area-inset-bottom, 0px))' }}
-    >
-      <div className="relative flex h-2 w-2 shrink-0">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-white">{name}</p>
-        <p className="text-[11px] text-slate-500 tabular-nums">
-          {callStatus === 'connecting' ? 'Dialing…' : callStatus === 'ringing' ? 'Ringing…' : fmtTime(elapsed)}
-        </p>
-      </div>
-      <button type="button" onClick={onExpand} aria-label="Expand"
-        className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] text-slate-400 transition hover:text-white">
-        <Maximize2 className="h-4 w-4" />
-      </button>
-      <button type="button" onClick={onHangup} aria-label="End call"
-        className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-500 text-white shadow-lg shadow-red-900/40 transition hover:bg-red-400 active:scale-95">
-        <PhoneOff className="h-4 w-4" />
-      </button>
-    </motion.div>
+    <PersistentCallBar
+      name={name}
+      elapsed={elapsed}
+      callStatus={callStatus}
+      sentiment={sentiment}
+      isMuted={isMuted}
+      isMobile
+      onExpand={onExpand}
+      onHangup={onHangup}
+      onToggleMute={onToggleMute}
+    />
   );
 }
 
@@ -404,6 +375,7 @@ export default function ActiveCallOverlay() {
   const [vmDropping, setVmDropping] = useState(false);
   const [vmDropped, setVmDropped] = useState(false);
   const [coachRequested, setCoachRequested] = useState(false);
+  const [callSentiment, setCallSentiment] = useState<string | null>(null);
 
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -474,6 +446,42 @@ export default function ActiveCallOverlay() {
       if (data?.id) setDbCallId(data.id as string);
     })();
   }, [telnyxCallId, dbCallId]);
+
+  // ── Live AI sentiment tint (when present on call record) ───────────────────
+  useEffect(() => {
+    if (!dbCallId) {
+      setCallSentiment(null);
+      return;
+    }
+    const supabase = createClient();
+    void (async () => {
+      const { data } = await supabase
+        .from('calls')
+        .select('ai_sentiment')
+        .eq('id', dbCallId)
+        .single();
+      if (data?.ai_sentiment) setCallSentiment(data.ai_sentiment as string);
+    })();
+    const ch = supabase
+      .channel(`overlay-sentiment-${dbCallId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'calls', filter: `id=eq.${dbCallId}` },
+        (payload) => {
+          const s = (payload.new as { ai_sentiment?: string | null }).ai_sentiment;
+          if (s) setCallSentiment(s);
+        },
+      )
+      .subscribe();
+    return () => { void supabase.removeChannel(ch); };
+  }, [dbCallId]);
+
+  // ── Auto-minimize when navigating away from dialer ─────────────────────────
+  useEffect(() => {
+    if (pathname && !pathname.startsWith('/dialer')) {
+      setMode((m) => (m === 'full' ? 'minimized' : m));
+    }
+  }, [pathname]);
 
   // ── Document title pulse ───────────────────────────────────────────────────
   useEffect(() => {
@@ -660,6 +668,9 @@ export default function ActiveCallOverlay() {
           name={displayName}
           elapsed={elapsed}
           callStatus={callStatus}
+          sentiment={callSentiment}
+          isMuted={isMuted}
+          onToggleMute={toggleMute}
           onExpand={() => setMode('full')}
           onHangup={hangup}
         />
@@ -669,6 +680,9 @@ export default function ActiveCallOverlay() {
           name={displayName}
           elapsed={elapsed}
           callStatus={callStatus}
+          sentiment={callSentiment}
+          isMuted={isMuted}
+          onToggleMute={toggleMute}
           onExpand={() => setMode('full')}
           onHangup={hangup}
         />
@@ -681,8 +695,9 @@ export default function ActiveCallOverlay() {
 
       {/* ── State 1: Full overlay ───────────────────────────────── */}
       {mode === 'full' && (
+        <SentimentAmbient sentiment={callSentiment}>
         <motion.div
-          key="overlay"
+          layoutId="gd-call-bar"
           drag={!isMobile}
           dragMomentum={false}
           dragElastic={0}
@@ -884,6 +899,7 @@ export default function ActiveCallOverlay() {
             </p>
           </div>
         </motion.div>
+        </SentimentAmbient>
       )}
     </AnimatePresence>
   );

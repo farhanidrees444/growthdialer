@@ -28,6 +28,8 @@ import { LeadTableView } from "@/components/leads/lead-table-view";
 import { ViewToggle, type ViewMode } from "@/components/leads/view-toggle";
 import { PremiumEmptyState } from "@/components/ui/premium-empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { SpotlightCard } from "@/components/premium/spotlight-card";
+import { navigateWithTransition, setLeadTransitionId } from "@/lib/ui/lead-transition";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -228,10 +230,11 @@ function DeleteConfirmModal({ name, onConfirm, onCancel }: { name: string; onCon
 const cardVariants = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
 
 function LeadCard({
-  lead, selected, onSelect, onCall, onView, onEdit, onDelete,
+  lead, selected, focused, onSelect, onCall, onView, onEdit, onDelete,
 }: {
   lead: FullLead;
   selected: boolean;
+  focused?: boolean;
   onSelect: () => void;
   onCall: () => void;
   onView: () => void;
@@ -243,15 +246,16 @@ function LeadCard({
   const isHot = (lead.tags ?? []).includes("hot") || lead.status === "callback" || lead.status === "meeting_booked";
 
   return (
-    <motion.div
-      variants={cardVariants}
-      transition={{ duration: 0.18, ease: "easeOut" }}
+    <motion.div variants={cardVariants} transition={{ duration: 0.18, ease: "easeOut" }}>
+    <SpotlightCard
+      as="article"
       onClick={onView}
       className={cn(
-        "group relative flex cursor-pointer flex-col gap-3 rounded-2xl border p-4 transition-all",
+        "group relative flex h-full cursor-pointer flex-col gap-3 rounded-2xl border p-4 transition-all",
         "border-white/[0.07] bg-[oklch(0.09_0.006_285)] hover:border-white/[0.14] hover:bg-white/[0.04] hover:-translate-y-0.5",
         isHot && "border-amber-500/20 hover:border-amber-500/35",
         selected && "border-emerald-500/30 bg-emerald-500/5",
+        focused && "ring-2 ring-[#8B5CF6]/40 ring-offset-2 ring-offset-[oklch(0.09_0.006_285)]",
       )}
     >
       {/* Checkbox top-left — larger tap area on mobile */}
@@ -281,16 +285,19 @@ function LeadCard({
 
       {/* Top: avatar + score */}
       <div className="flex items-start gap-3 pt-1">
-        <div className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${grad} text-sm font-bold text-white shadow-sm`}>
+        <motion.div
+          layoutId={`lead-avatar-${lead.id}`}
+          className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${grad} text-sm font-bold text-white shadow-sm`}
+        >
           {getInitials(lead.name)}
           {lead.ai_score != null && lead.ai_score > 0 && (
             <div className={`absolute -bottom-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br ${scoreGrad} text-[9px] font-bold text-white shadow-sm`}>
               {lead.ai_score}
             </div>
           )}
-        </div>
+        </motion.div>
         <div className="min-w-0 flex-1 pt-0.5">
-          <p className="truncate text-sm font-semibold text-white leading-tight">{lead.name}</p>
+          <motion.p layoutId={`lead-name-${lead.id}`} className="truncate text-sm font-semibold text-white leading-tight">{lead.name}</motion.p>
           {(lead.title || lead.company) && (
             <p className="mt-0.5 truncate text-[11px] text-slate-500 leading-tight">
               {[lead.title, lead.company].filter(Boolean).join(" · ")}
@@ -361,6 +368,7 @@ function LeadCard({
           View
         </button>
       </div>
+    </SpotlightCard>
     </motion.div>
   );
 }
@@ -546,6 +554,7 @@ export default function LeadsPage() {
   const [deleteForeverLead, setDeleteForeverLead] = useState<FullLead | null>(null);
   const [deleteForeverBusy, setDeleteForeverBusy] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [focusIndex, setFocusIndex] = useState(0);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -656,6 +665,10 @@ export default function LeadsPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  useEffect(() => {
+    setFocusIndex(0);
+  }, [tab, debouncedSearch, page, viewMode]);
+
   const handleTabChange = useCallback((t: TabKey) => {
     setTab(t);
     setPage(1);
@@ -677,8 +690,36 @@ export default function LeadsPage() {
   }, [startCall]);
 
   const handleView = useCallback((lead: FullLead) => {
-    router.push(`/leads/${lead.id}`);
+    setLeadTransitionId(lead.id);
+    navigateWithTransition(router, `/leads/${lead.id}`);
   }, [router]);
+
+  useEffect(() => {
+    const onNav = (e: Event) => {
+      if (viewMode !== "grid" || tab === "trash") return;
+      const dir = (e as CustomEvent<{ dir: "up" | "down" }>).detail?.dir;
+      if (!dir) return;
+      setFocusIndex((i) =>
+        dir === "down" ? Math.min(paginated.length - 1, i + 1) : Math.max(0, i - 1),
+      );
+    };
+    const onOpen = () => {
+      const lead = paginated[focusIndex];
+      if (lead) handleView(lead);
+    };
+    const onCallKey = () => {
+      const lead = paginated[focusIndex];
+      if (lead) handleCall(lead);
+    };
+    window.addEventListener("gd:list-nav", onNav);
+    window.addEventListener("gd:list-open", onOpen);
+    window.addEventListener("gd:list-call", onCallKey);
+    return () => {
+      window.removeEventListener("gd:list-nav", onNav);
+      window.removeEventListener("gd:list-open", onOpen);
+      window.removeEventListener("gd:list-call", onCallKey);
+    };
+  }, [paginated, focusIndex, viewMode, tab, handleView, handleCall]);
 
   const handleDeleteSingle = useCallback(async (lead: FullLead) => {
     const res = await apiFetch(`/api/leads/${lead.id}`, { method: "DELETE" });
@@ -1027,7 +1068,7 @@ export default function LeadsPage() {
                 initial="hidden"
                 animate="show"
               >
-                {paginated.map((lead) =>
+                {paginated.map((lead, idx) =>
                   tab === "trash" ? (
                     <TrashLeadCard
                       key={lead.id}
@@ -1040,6 +1081,7 @@ export default function LeadsPage() {
                       key={lead.id}
                       lead={lead}
                       selected={selectedIds.has(lead.id)}
+                      focused={idx === focusIndex}
                       onSelect={() => handleToggleSelect(lead.id)}
                       onCall={() => handleCall(lead)}
                       onView={() => handleView(lead)}

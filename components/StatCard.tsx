@@ -3,6 +3,9 @@
 import { motion } from "framer-motion";
 import { LucideIcon, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { AnimatedKpiValue } from "@/components/premium/animated-number";
+import { SpotlightCard } from "@/components/premium/spotlight-card";
+import { SPRING } from "@/lib/ui/premium-motion";
 import { cn } from "@/lib/utils";
 
 interface StatCardProps {
@@ -34,13 +37,16 @@ export default function StatCard({
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay, ease: "easeOut" }}
+      transition={{ ...SPRING, delay }}
     >
+      <SpotlightCard>
       <Card className="border-white/10 bg-[oklch(0.09_0.006_285)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm transition-shadow hover:shadow-xl hover:shadow-black/30">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="mt-1 font-display text-2xl font-bold tracking-tight">{value}</p>
+            <p className="mt-1 font-display text-2xl font-bold tracking-tight">
+              <AnimatedKpiValue value={value} />
+            </p>
             <div
               className={cn(
                 "mt-2 flex items-center gap-1 text-xs font-medium",
@@ -67,6 +73,7 @@ export default function StatCard({
           </div>
         </div>
       </Card>
+      </SpotlightCard>
     </motion.div>
   );
 }

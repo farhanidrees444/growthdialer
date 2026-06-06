@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { useCallContext } from '@/lib/call-context';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/lib/utils';
+import { clearLeadTransitionId } from '@/lib/ui/lead-transition';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -312,6 +313,11 @@ export default function LeadDetailPage() {
   const [savingNote, setSavingNote] = useState(false);
 
   useEffect(() => {
+    const t = setTimeout(() => clearLeadTransitionId(), 600);
+    return () => clearTimeout(t);
+  }, [leadId]);
+
+  useEffect(() => {
     if (!leadId || !currentWorkspace?.id) return;
     setLoading(true);
     apiFetch(`/api/leads/${leadId}`)
@@ -461,11 +467,14 @@ export default function LeadDetailPage() {
           <div className="p-5">
             {/* Avatar + name */}
             <div className="mb-5 flex items-start gap-4">
-              <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${grad} text-xl font-bold text-white shadow-lg`}>
+              <motion.div
+                layoutId={`lead-avatar-${lead.id}`}
+                className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${grad} text-xl font-bold text-white shadow-lg`}
+              >
                 {getInitials(lead.name)}
-              </div>
+              </motion.div>
               <div className="min-w-0 flex-1">
-                <h1 className="text-lg font-bold text-white leading-tight truncate">{lead.name}</h1>
+                <motion.h1 layoutId={`lead-name-${lead.id}`} className="text-lg font-bold text-white leading-tight truncate">{lead.name}</motion.h1>
                 {lead.title && <p className="text-sm text-slate-500 truncate">{lead.title}</p>}
                 {lead.company && (
                   <p className="flex items-center gap-1 text-xs text-slate-600 truncate mt-0.5">

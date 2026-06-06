@@ -16,6 +16,7 @@ import {
 } from 'recharts';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+import { AnimatedKpiValue } from '@/components/premium/animated-number';
 import type { KpiSet } from '@/app/api/analytics/calls/route';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -130,7 +131,7 @@ function MiniSpark({ data, color }: { data: number[]; color: string }) {
           </linearGradient>
         </defs>
         <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.5}
-          fill={`url(#sg-${color.replace('#', '')})`} dot={false} isAnimationActive={false} />
+          fill={`url(#sg-${color.replace('#', '')})`} dot={false} isAnimationActive animationDuration={900} animationEasing="ease-out" />
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -171,7 +172,9 @@ function KpiCard({ title, value, deltaLabel, deltaUp, deltaNeutral, spark, color
           </div>
           <p className="text-xs font-medium text-white/50">{title}</p>
         </div>
-        <p className="text-2xl font-bold tabular-nums tracking-tight text-white">{value}</p>
+        <p className="text-2xl font-bold tabular-nums tracking-tight text-white">
+          <AnimatedKpiValue value={value} />
+        </p>
         <div className={cn(
           'mt-2 flex items-center gap-1 text-[11px] font-medium',
           deltaNeutral ? 'text-white/30' : deltaUp ? 'text-emerald-400' : 'text-red-400',
@@ -498,8 +501,8 @@ export default function AnalyticsPage() {
                     <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} allowDecimals={false} />
                     <Tooltip content={<GlassTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.07)', strokeWidth: 1 }} />
                     <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 12, color: 'rgba(255,255,255,0.45)' }} />
-                    <Area type="monotone" dataKey="outbound" name="Outbound" stroke="#8B5CF6" strokeWidth={2} fill="url(#gOut)" dot={false} />
-                    <Area type="monotone" dataKey="inbound"  name="Inbound"  stroke="#06B6D4" strokeWidth={2} fill="url(#gIn)"  dot={false} />
+                    <Area type="monotone" dataKey="outbound" name="Outbound" stroke="#8B5CF6" strokeWidth={2} fill="url(#gOut)" dot={false} isAnimationActive animationDuration={1000} animationEasing="ease-out" />
+                    <Area type="monotone" dataKey="inbound"  name="Inbound"  stroke="#06B6D4" strokeWidth={2} fill="url(#gIn)"  dot={false} isAnimationActive animationDuration={1000} animationEasing="ease-out" />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
@@ -571,8 +574,8 @@ export default function AnalyticsPage() {
                         <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} allowDecimals={false} />
                         <Tooltip content={<GlassTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
                         <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 10, color: 'rgba(255,255,255,0.45)' }} />
-                        <Bar dataKey="outbound" name="Outbound" stackId="a" fill="#8B5CF6" fillOpacity={0.75} radius={[0, 0, 0, 0]} />
-                        <Bar dataKey="inbound"  name="Inbound"  stackId="a" fill="#06B6D4" fillOpacity={0.75} radius={[3, 3, 0, 0]} />
+                        <Bar dataKey="outbound" name="Outbound" stackId="a" fill="#8B5CF6" fillOpacity={0.75} radius={[0, 0, 0, 0]} isAnimationActive animationDuration={900} animationEasing="ease-out" />
+                        <Bar dataKey="inbound"  name="Inbound"  stackId="a" fill="#06B6D4" fillOpacity={0.75} radius={[3, 3, 0, 0]} isAnimationActive animationDuration={900} animationEasing="ease-out" />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
@@ -598,8 +601,8 @@ export default function AnalyticsPage() {
                         <XAxis dataKey="label" tick={{ fontSize: 9, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} allowDecimals={false} />
                         <Tooltip content={<GlassTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-                        <Bar dataKey="total" name="Total" fill="#8B5CF6" fillOpacity={0.5} radius={[3, 3, 0, 0]} />
-                        <Bar dataKey="connected" name="Connected" fill="#06B6D4" fillOpacity={0.85} radius={[3, 3, 0, 0]} />
+                        <Bar dataKey="total" name="Total" fill="#8B5CF6" fillOpacity={0.5} radius={[3, 3, 0, 0]} isAnimationActive animationDuration={900} animationEasing="ease-out" />
+                        <Bar dataKey="connected" name="Connected" fill="#06B6D4" fillOpacity={0.85} radius={[3, 3, 0, 0]} isAnimationActive animationDuration={900} animationEasing="ease-out" />
                       </BarChart>
                     </ResponsiveContainer>
                   )}

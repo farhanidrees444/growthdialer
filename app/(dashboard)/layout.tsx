@@ -16,6 +16,7 @@ import { WorkspaceGate } from "@/components/workspace/workspace-gate";
 import { IncomingCallPopup } from "@/components/call/incoming-call-popup";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { Grain } from "@/components/marketing/live-floor/Grain";
+import { PremiumOverlays } from "@/components/premium/premium-overlays";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 
@@ -75,6 +76,7 @@ export default function DashboardLayout({
             </div>
             {!isOnboarding && <MobileBottomNav />}
             <DashboardOverlays />
+            <PremiumOverlays />
             </MobileNavProvider>
           </LeadsProvider>
           </CallOrchestratorProvider>

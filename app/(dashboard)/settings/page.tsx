@@ -22,6 +22,7 @@ import { WorkspaceBillingPanel } from "@/components/billing/workspace-billing-pa
 import { ROLE_LABELS, ROLE_COLORS, type Role } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { SoundDesignToggle } from "@/components/premium/sound-design-toggle";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -764,6 +765,10 @@ function NotificationsTab({ settings, onChange }: {
           icon={Bell}
           iconColor="text-[#8B5CF6]"
         />
+      </SectionCard>
+
+      <SectionCard title="Sound design" description="Optional audio feedback for calls and dispositions">
+        <SoundDesignToggle />
       </SectionCard>
 
       <SectionCard title="Email Notifications">

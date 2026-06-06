@@ -4,18 +4,25 @@ import { Brain, Building2, Mail, Sparkles, Tag, TrendingUp, User } from 'lucide-
 import type { LeadRecord } from '@/lib/dialer/state-machine';
 import { DialerSurface } from './dialer-surface';
 import { Badge } from '@/components/ui/badge';
+import { AiInsightsMaterialize } from '@/components/premium/ai-insights-materialize';
 import { cn } from '@/lib/utils';
 
 interface LiveInsightsPanelProps {
   lead: LeadRecord;
+  /** When true, show in-progress state while AI pipeline runs */
+  analyzing?: boolean;
 }
 
-export function LiveInsightsPanel({ lead }: LiveInsightsPanelProps) {
+export function LiveInsightsPanel({ lead, analyzing = false }: LiveInsightsPanelProps) {
   const score = lead.ai_score;
   const scoreLabel =
     score == null ? null : score >= 80 ? 'Hot' : score >= 55 ? 'Warm' : 'Cold';
   const scoreColor =
     score == null ? '' : score >= 80 ? 'text-amber-400' : score >= 55 ? 'text-cyan-400' : 'text-zinc-400';
+
+  const aiFields = lead.activity_summary
+    ? [{ id: 'summary', label: 'AI summary', value: lead.activity_summary, icon: <Brain className="h-3.5 w-3.5" />, variant: 'violet' as const }]
+    : [];
 
   return (
     <div className="flex h-full flex-col">
@@ -34,15 +41,15 @@ export function LiveInsightsPanel({ lead }: LiveInsightsPanelProps) {
       </div>
 
       <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 scrollbar-hide">
-        {lead.activity_summary && (
-          <DialerSurface variant="violet" className="p-3">
-            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-violet-300/80 mb-2">
-              <Brain className="h-3.5 w-3.5" />
-              AI summary
-            </div>
-            <p className="text-xs leading-relaxed text-white/75">{lead.activity_summary}</p>
-          </DialerSurface>
-        )}
+        <AiInsightsMaterialize
+          fields={aiFields}
+          loading={analyzing && aiFields.length === 0}
+          emptyMessage={
+            analyzing
+              ? 'Analysis in progress — insights will stream in when ready.'
+              : 'No AI insights yet. They appear automatically after calls are processed.'
+          }
+        />
 
         <section>
           <SectionLabel icon={User} label="Lead context" />

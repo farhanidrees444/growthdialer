@@ -7,6 +7,8 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
 import { useWorkspaceDispositions } from '@/hooks/use-workspace-dispositions';
 import type { WorkspaceDispositionDef } from '@/lib/dispositions/defaults';
+import { emitMilestoneFromDisposition } from '@/lib/ui/milestone-events';
+import { playDispositionClick } from '@/lib/ui/sound-preferences';
 
 interface DispositionModalProps {
   open: boolean;
@@ -62,6 +64,8 @@ export function DispositionModal({ open, lead, callDuration, onSave, onClose }: 
 
   const handleSubmit = useCallback(() => {
     if (!selected) return;
+    emitMilestoneFromDisposition(selected);
+    playDispositionClick();
     onSave(selected, notes || undefined, callbackAt || undefined, meetingAt || undefined);
   }, [selected, notes, callbackAt, meetingAt, onSave]);
 
