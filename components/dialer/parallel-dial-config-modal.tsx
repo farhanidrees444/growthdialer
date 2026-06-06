@@ -1,8 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Grid3x3, Zap, Shield } from 'lucide-react';
+import { Grid3x3, Zap, Shield, Sparkles } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface ParallelDialConfigModalProps {
   open: boolean;
@@ -24,126 +35,126 @@ export function ParallelDialConfigModal({
   const [vmDrop, setVmDrop] = useState(true);
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/65 backdrop-blur-sm p-4"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ scale: 0.94, opacity: 0, y: 12 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.94, opacity: 0 }}
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-2xl border border-white/[0.10] bg-zinc-900 shadow-2xl overflow-hidden"
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="sm:max-w-lg border-white/10 bg-[oklch(0.09_0.006_285)] p-0 gap-0 overflow-hidden">
+        <DialogHeader className="border-b border-white/[0.06] px-6 py-5">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/25 to-fuchsia-500/10 text-violet-300 ring-1 ring-violet-500/20">
+              <Grid3x3 className="h-5 w-5" />
+            </span>
+            <div className="text-left">
+              <DialogTitle className="text-lg font-semibold text-white flex items-center gap-2">
+                Parallel Dial
+                <Badge variant="secondary" className="text-[10px] bg-cyan-500/15 text-cyan-300 border-cyan-500/20">
+                  10× lines
+                </Badge>
+              </DialogTitle>
+              <DialogDescription>
+                First live answer wins — losers auto-hang or get VM drop.
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-6 px-6 py-5">
+          <div>
+            <label className="mb-3 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Simultaneous lines
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {LINE_PRESETS.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setLines(n)}
+                  className={cn(
+                    'min-h-10 min-w-12 rounded-xl border px-3 text-sm font-semibold transition-all',
+                    lines === n
+                      ? 'border-violet-500/50 bg-violet-500/20 text-violet-100 shadow-lg shadow-violet-500/10'
+                      : 'border-white/[0.08] text-muted-foreground hover:border-white/[0.15] hover:text-white',
+                  )}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {queueCount} in queue · batch uses up to {Math.min(lines, queueCount)} leads
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <ToggleRow
+              icon={Shield}
+              iconClass="text-cyan-400"
+              title="Answering machine detection"
+              description="Skip machines — only humans reach your headset."
+              checked={amd}
+              onCheckedChange={setAmd}
+            />
+            <ToggleRow
+              icon={Zap}
+              iconClass="text-amber-400"
+              title="Auto voicemail drop"
+              description="Drop VM on machines and losing lines automatically."
+              checked={vmDrop}
+              onCheckedChange={setVmDrop}
+            />
+          </div>
+
+          <ul className="space-y-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-xs text-muted-foreground">
+            <li className="flex gap-2"><Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-400" /> AI brief + disposition same as power dial</li>
+            <li className="flex gap-2"><Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-400" /> Realtime line grid — see every leg live</li>
+            <li className="flex gap-2"><Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-400" /> Up to 10 lines vs typical 4-line competitors</li>
+          </ul>
+        </div>
+
+        <DialogFooter className="border-t border-white/[0.06] bg-transparent px-6 py-4 sm:justify-stretch gap-3">
+          <Button type="button" variant="outline" onClick={onClose} className="flex-1 border-white/10">
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            disabled={queueCount === 0}
+            onClick={() => {
+              onStart({ lines_count: lines, amd_enabled: amd, vm_drop_enabled: vmDrop });
+              onClose();
+            }}
+            className="flex-[2] gradient-brand text-white border-0"
           >
-            <div className="border-b border-white/[0.06] px-6 py-5">
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/15 text-violet-400">
-                  <Grid3x3 className="h-5 w-5" />
-                </span>
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Parallel Dial</h2>
-                  <p className="text-sm text-zinc-500">Dial up to 10 lines — first connect wins</p>
-                </div>
-              </div>
-            </div>
+            Launch parallel session
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
-            <div className="space-y-6 px-6 py-5">
-              <div>
-                <label className="mb-3 block text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  Simultaneous lines
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {LINE_PRESETS.map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => setLines(n)}
-                      className={`min-h-10 min-w-12 rounded-xl border px-3 text-sm font-semibold transition-colors ${
-                        lines === n
-                          ? 'border-violet-500/50 bg-violet-500/20 text-violet-200'
-                          : 'border-white/[0.08] text-zinc-400 hover:border-white/[0.15] hover:text-white'
-                      }`}
-                    >
-                      {n}
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-2 text-xs text-zinc-600">
-                  {queueCount} leads in queue · next batch uses up to {Math.min(lines, queueCount)} leads
-                </p>
-              </div>
-
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
-                <input
-                  type="checkbox"
-                  checked={amd}
-                  onChange={(e) => setAmd(e.target.checked)}
-                  className="mt-1"
-                />
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-medium text-white">
-                    <Shield className="h-4 w-4 text-cyan-400" />
-                    Answering machine detection
-                  </div>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    Skip machines automatically — only live humans reach you.
-                  </p>
-                </div>
-              </label>
-
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
-                <input
-                  type="checkbox"
-                  checked={vmDrop}
-                  onChange={(e) => setVmDrop(e.target.checked)}
-                  className="mt-1"
-                />
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-medium text-white">
-                    <Zap className="h-4 w-4 text-amber-400" />
-                    Auto voicemail drop
-                  </div>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    Drop your VM on machines and losing lines — CloudTalk-style parallel power.
-                  </p>
-                </div>
-              </label>
-
-              <ul className="space-y-2 text-xs text-zinc-500">
-                <li className="flex gap-2"><Zap className="h-3.5 w-3.5 shrink-0 text-violet-400" /> Non-winners auto-hang when someone answers</li>
-                <li className="flex gap-2"><Zap className="h-3.5 w-3.5 shrink-0 text-violet-400" /> AI brief + disposition flow same as power dial</li>
-                <li className="flex gap-2"><Zap className="h-3.5 w-3.5 shrink-0 text-violet-400" /> Up to 10 lines — more than PhoneBurner&apos;s typical 4</li>
-              </ul>
-            </div>
-
-            <div className="flex gap-3 border-t border-white/[0.06] px-6 py-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 min-h-11 rounded-xl border border-white/[0.08] text-sm text-zinc-400 hover:bg-white/[0.04]"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={queueCount === 0}
-                onClick={() => {
-                  onStart({ lines_count: lines, amd_enabled: amd, vm_drop_enabled: vmDrop });
-                  onClose();
-                }}
-                className="flex-[2] min-h-11 rounded-xl text-sm font-semibold text-white gradient-brand disabled:opacity-40"
-              >
-                Launch parallel session
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+function ToggleRow({
+  icon: Icon,
+  iconClass,
+  title,
+  description,
+  checked,
+  onCheckedChange,
+}: {
+  icon: typeof Shield;
+  iconClass: string;
+  title: string;
+  description: string;
+  checked: boolean;
+  onCheckedChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
+      <div className="flex items-start gap-3 min-w-0">
+        <Icon className={cn('h-4 w-4 mt-0.5 shrink-0', iconClass)} />
+        <div>
+          <p className="text-sm font-medium text-white">{title}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">{description}</p>
+        </div>
+      </div>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+    </div>
   );
 }

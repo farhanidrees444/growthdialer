@@ -11,7 +11,9 @@ import {
   Info, HardDrive, Clock, Voicemail, Upload, Play, X as XIcon,
   Users, UserPlus, Crown, Mail, MoreVertical, UserMinus,
   Monitor, Smartphone, PhoneOff, PhoneIncoming, AlertTriangle, KeyRound,
+  Building2,
 } from "lucide-react";
+import { WorkspaceSettingsPanel } from "@/components/settings/workspace-settings-panel";
 import { useSearchParams } from "next/navigation";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { WorkspaceBillingPanel } from "@/components/billing/workspace-billing-panel";
@@ -55,10 +57,11 @@ const DEFAULT_SETTINGS: UserSettings = {
   missed_call_notify:          true,
 };
 
-type TabKey = 'profile' | 'recording' | 'ai' | 'calling' | 'voicemails' | 'notifications' | 'billing' | 'team' | 'security';
+type TabKey = 'profile' | 'workspace' | 'recording' | 'ai' | 'calling' | 'voicemails' | 'notifications' | 'billing' | 'team' | 'security';
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: 'profile',       label: 'Profile',        icon: Settings },
+  { key: 'workspace',     label: 'Workspace',      icon: Building2 },
   { key: 'recording',     label: 'Recording',      icon: Mic },
   { key: 'ai',            label: 'AI',             icon: Sparkles },
   { key: 'calling',       label: 'Inbound',        icon: Phone },
@@ -1244,7 +1247,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab === 'billing' || tab === 'team' || tab === 'security' || tab === 'profile') {
+    if (tab === 'billing' || tab === 'team' || tab === 'security' || tab === 'profile' || tab === 'workspace') {
       setActiveTab(tab as TabKey);
     }
   }, [searchParams]);
@@ -1415,6 +1418,9 @@ export default function SettingsPage() {
               >
                 {activeTab === 'profile' && (
                   <ProfileTab userName={userName} userEmail={userEmail} />
+                )}
+                {activeTab === 'workspace' && (
+                  <WorkspaceSettingsPanel />
                 )}
                 {activeTab === 'recording' && (
                   <RecordingTab settings={settings} onChange={handleChange} recordingStats={recordingStats} />
