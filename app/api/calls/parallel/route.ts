@@ -20,6 +20,9 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user: authUser } } = await supabase.auth.getUser();
     const userId = authUser?.id;
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const body = await request.json();
     const { leads } = body as { leads: DialTarget[] };
@@ -52,7 +55,7 @@ export async function POST(request: NextRequest) {
 
           const callControlId = result.data?.call_control_id;
 
-          if (userId && callControlId) {
+          if (callControlId) {
             const nowIso = new Date().toISOString();
             const { error: insertError } = await supabase.from('calls').insert({
               user_id: userId,

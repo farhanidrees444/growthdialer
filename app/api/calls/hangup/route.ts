@@ -27,7 +27,11 @@ export async function POST(request: NextRequest) {
       .eq('telnyx_call_id', call_control_id)
       .maybeSingle();
 
-    if (callRow && callRow.user_id !== user.id) {
+    if (!callRow) {
+      return NextResponse.json({ error: 'Call not found' }, { status: 404 });
+    }
+
+    if (callRow.user_id !== user.id) {
       console.warn(`[hangup] user ${user.id} attempted to hang up call ${callRow.id} owned by ${callRow.user_id}`);
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

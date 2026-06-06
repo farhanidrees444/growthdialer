@@ -61,22 +61,22 @@ function DtmfKeypad({ onSend, onClose }: { onSend: (d: string) => void; onClose:
   );
 }
 
-// ── Call timer ─────────────────────────────────────────────────────────────────
+// ── Call timer (accumulates across hold; reset explicitly on new call) ─────────
 function useTimer(running: boolean) {
   const [secs, setSecs] = useState(0);
   const ref = useRef<ReturnType<typeof setInterval>>(undefined);
   useEffect(() => {
     if (running) {
-      setSecs(0);
       ref.current = setInterval(() => setSecs((s) => s + 1), 1000);
     } else {
       clearInterval(ref.current);
     }
     return () => clearInterval(ref.current);
   }, [running]);
+  const reset = useCallback(() => setSecs(0), []);
   const m = Math.floor(secs / 60).toString().padStart(2, '0');
   const s = (secs % 60).toString().padStart(2, '0');
-  return { formatted: `${m}:${s}`, seconds: secs };
+  return { formatted: `${m}:${s}`, seconds: secs, reset };
 }
 
 // ── Session summary stat cell ──────────────────────────────────────────────────
@@ -133,7 +133,8 @@ export default function DialerPage() {
           return;
         }
         if (attempts >= 10) {
-          toast.error('Phone not ready — auto-dial skipped');
+          toast.error('Phone not ready — skipping to next lead');
+          powerDialerRef.current.skipCountdown();
           return;
         }
         attempts++;
@@ -261,16 +262,17 @@ export default function DialerPage() {
       }
     }
 
-    if ((prev === 'active' || prev === 'connecting' || prev === 'ringing') &&
+    if ((prev === 'active' || prev === 'held' || prev === 'connecting' || prev === 'ringing') &&
         (callStatus === 'ended' || callStatus === 'idle')) {
       powerDialerRef.current.onCallEnd();
       endCall();
       const seconds = callTimerRef.current.seconds;
+      const dbId = pendingCallDbId;
       if (seconds >= 10) {
         setDispositionOpen(true);
       } else {
-        if (pendingCallDbId) {
-          fetch(`/api/calls/${pendingCallDbId}/disposition`, {
+        if (dbId) {
+          fetch(`/api/calls/${dbId}/disposition`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ disposition: 'voicemail' }),
@@ -282,6 +284,8 @@ export default function DialerPage() {
             powerDialerRef.current.onDispositionSaved('voicemail', false, false);
           }, 2000);
         }
+        setPendingCallDbId(null);
+        callTimerRef.current.reset();
       }
       loadStats();
       loadTodayCalls();
@@ -318,17 +322,23 @@ export default function DialerPage() {
       toast.error('Phone not ready — please wait a moment');
       return;
     }
+    if (callStatus === 'connecting' || callStatus === 'ringing' || callStatus === 'active' || callStatus === 'held') {
+      toast.error('End the current call before starting a new one');
+      return;
+    }
     const e164 = normalizePhone(phone) ?? phone;
+    callTimer.reset();
     if (lead) {
       // Lead call: switch center column to live stage immediately
       startCall('', '');
     } else {
-      // Manual dial (no lead): register in CallContext so floating overlay shows
+      // Manual dial (no lead): clear queue selection and use overlay
+      selectLead(null);
       registerCallMeta(null, e164);
     }
     pendingRegRef.current = { e164, leadId: lead?.id };
     makeCall(e164, fromNumber || undefined);
-  }, [phoneStatus, makeCall, fromNumber, startCall, registerCallMeta]);
+  }, [phoneStatus, callStatus, makeCall, fromNumber, startCall, registerCallMeta, selectLead, callTimer]);
 
   // Update ref on every render so powerDialer.onShouldDial always calls latest version
   initiateCallRef.current = initiateCall;
@@ -365,16 +375,22 @@ export default function DialerPage() {
     callbackAt?: string,
     meetingAt?: string,
   ) => {
-    // Save to DB only if we have an ID — don't let a missing ID block the power dialer
-    if (pendingCallDbId) {
+    const dbId = pendingCallDbId;
+    if (dbId) {
       try {
-        await fetch(`/api/calls/${pendingCallDbId}/disposition`, {
+        const res = await fetch(`/api/calls/${dbId}/disposition`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ disposition, notes, callback_at: callbackAt, meeting_at: meetingAt }),
         });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({})) as { error?: string };
+          toast.error(err.error ?? 'Failed to save disposition');
+          return;
+        }
       } catch {
         toast.error('Failed to save disposition');
+        return;
       }
     }
 
@@ -385,6 +401,8 @@ export default function DialerPage() {
     }
 
     setDispositionOpen(false);
+    setPendingCallDbId(null);
+    callTimer.reset();
     loadStats();
     loadTodayCalls();
 
@@ -394,7 +412,15 @@ export default function DialerPage() {
       const wasMeeting = disposition === 'meeting_booked';
       powerDialer.onDispositionSaved(disposition, wasConnected, wasMeeting);
     }
-  }, [pendingCallDbId, loadStats, loadTodayCalls, powerDialer, selectedLead]);
+  }, [pendingCallDbId, loadStats, loadTodayCalls, powerDialer, selectedLead, callTimer]);
+
+  const handleDispositionClose = useCallback(() => {
+    if (powerDialer.isActive && powerDialer.state === 'disposition') {
+      void handleDispositionSave('voicemail');
+      return;
+    }
+    setDispositionOpen(false);
+  }, [powerDialer.isActive, powerDialer.state, handleDispositionSave]);
 
   // ── Lead actions ────────────────────────────────────────────────────────────
   const handleMarkHot = useCallback(async () => {
@@ -431,6 +457,7 @@ export default function DialerPage() {
   // ── Hotkeys ─────────────────────────────────────────────────────────────────
   useDialerHotkeys({
     mode,
+    powerDialActive: powerDialer.isActive,
     onOpenManualDial: () => setDialpadOpen(true),
     onOpenShortcuts: () => setShortcutsOpen(true),
     onFocusSearch: () => searchRef.current?.focus(),
@@ -807,7 +834,7 @@ export default function DialerPage() {
         lead={selectedLead}
         callDuration={callTimer.seconds}
         onSave={handleDispositionSave}
-        onClose={() => setDispositionOpen(false)}
+        onClose={handleDispositionClose}
       />
 
       <ShortcutsHelpModal

@@ -7,7 +7,10 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient()
-    await supabase.auth.exchangeCodeForSession(code)
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error) {
+      return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`)
+    }
   }
 
   // Redirect to /dashboard on the SAME origin that served this callback

@@ -78,6 +78,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const clientRef = useRef<any>(null);
   const activeCallRef = useRef<Call | null>(null);
+  const callStatusRef = useRef<WebRTCCallStatus>('idle');
+  callStatusRef.current = callStatus;
   // Track whether we are mounted to avoid setState after unmount
   const mountedRef = useRef(true);
 
@@ -208,6 +210,11 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     }
     if (phoneStatus !== 'ready') {
       console.warn('[WebPhone] makeCall: phone not ready, status:', phoneStatus);
+      return;
+    }
+    const currentStatus = callStatusRef.current;
+    if (currentStatus === 'connecting' || currentStatus === 'ringing' || currentStatus === 'active' || currentStatus === 'held') {
+      console.warn('[WebPhone] makeCall: call already in progress');
       return;
     }
     setCallStatus('connecting');

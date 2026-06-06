@@ -26,7 +26,7 @@ export async function POST(
     // Get call + current lead data in one shot
     const { data: call, error: callError } = await supabase
       .from('calls')
-      .select('id, lead_id, user_id')
+      .select('id, lead_id, user_id, disposition')
       .eq('id', id)
       .eq('user_id', user.id)
       .single();
@@ -62,10 +62,13 @@ export async function POST(
         updatedNotes = updatedNotes ? `${updatedNotes}\n${entry}` : entry;
       }
 
+      const isFirstDisposition = !call.disposition;
       const leadUpdate: Record<string, unknown> = {
         status: leadStatus,
         last_called_at: now,
-        call_attempts: (currentLead?.call_attempts ?? 0) + 1,
+        ...(isFirstDisposition
+          ? { call_attempts: (currentLead?.call_attempts ?? 0) + 1 }
+          : {}),
         ...(updatedNotes !== null ? { notes: updatedNotes } : {}),
         ...(disposition === 'dnc' ? { dnc: true } : {}),
         ...(disposition === 'wrong_number' ? { status: 'wrong_number' } : {}),

@@ -255,7 +255,8 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
 
   // ── Public: called by page when call ends (before disposition) ─────────────
   const onCallEnd = useCallback(() => {
-    if (stateRef.current !== 'calling') return;
+    const s = stateRef.current;
+    if (s === 'idle' || s === 'ending' || s === 'paused' || s === 'disposition') return;
     setPdState('disposition');
   }, []);
 

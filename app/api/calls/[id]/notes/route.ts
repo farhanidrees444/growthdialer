@@ -1,17 +1,9 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
 const MAX_NOTES_LENGTH = 5000;
-
-function getServiceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } },
-  );
-}
 
 export async function PATCH(
   req: Request,
@@ -23,15 +15,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'Missing call ID' }, { status: 400 });
     }
 
-    // Auth: verify user owns this call
-    const authHeader = req.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const supabase = getServiceClient();
-    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+    const supabase = await createClient();
+    const { data: { user }, error: authErr } = await supabase.auth.getUser();
     if (authErr || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -39,7 +24,6 @@ export async function PATCH(
     const body = await req.json() as { notes?: string };
     const notes = (body.notes ?? '').slice(0, MAX_NOTES_LENGTH);
 
-    // Verify call belongs to user
     const { data: call, error: fetchErr } = await supabase
       .from('calls')
       .select('id')

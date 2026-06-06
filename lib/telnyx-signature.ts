@@ -35,6 +35,14 @@ export function verifyTelnyxSignature(
   const publicKeyB64 = process.env.TELNYX_PUBLIC_KEY?.trim();
 
   if (!publicKeyB64) {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const allowSkip = process.env.TELNYX_SKIP_WEBHOOK_VERIFY === 'true';
+    if (isProduction && !allowSkip) {
+      console.error(
+        '[TELNYX-VERIFY] TELNYX_PUBLIC_KEY not set in production — rejecting webhook.',
+      );
+      return { ok: false, reason: 'verification_required_no_key' };
+    }
     console.warn(
       '[TELNYX-VERIFY] TELNYX_PUBLIC_KEY not set — webhook signatures are NOT being verified. ' +
       'Copy the public key from Telnyx Portal → API Keys → Public Key and set it in Vercel.',

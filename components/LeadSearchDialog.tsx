@@ -9,12 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { mockContacts } from "@/lib/mock-data";
 import { useLeads } from "@/contexts/leads-context";
 
-type SearchRow =
-  | { kind: "crm"; id: string; title: string; subtitle: string }
-  | { kind: "queue"; id: string; title: string; subtitle: string };
+type SearchRow = { kind: "queue"; id: string; title: string; subtitle: string };
 
 export function LeadSearchDialog({
   open,
@@ -27,19 +24,12 @@ export function LeadSearchDialog({
   const { leads } = useLeads();
 
   const rows = useMemo((): SearchRow[] => {
-    const fromCrm: SearchRow[] = mockContacts.map((c) => ({
-      kind: "crm" as const,
-      id: c.id,
-      title: `${c.firstName} ${c.lastName}`,
-      subtitle: `${c.company} · ${c.title}`,
-    }));
-    const fromQueue: SearchRow[] = leads.map((l) => ({
+    return leads.map((l) => ({
       kind: "queue" as const,
       id: l.id,
       title: l.name,
       subtitle: `${l.company} · ${l.title}`,
     }));
-    return [...fromQueue, ...fromCrm];
   }, [leads]);
 
   const filtered = useMemo(() => {
@@ -77,7 +67,7 @@ export function LeadSearchDialog({
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{r.title}</span>
                   <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    {r.kind === "queue" ? "Queue" : "CRM"}
+                    Lead
                   </span>
                 </div>
                 <div className="text-xs text-muted-foreground">{r.subtitle}</div>

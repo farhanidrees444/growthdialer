@@ -20,6 +20,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing call_control_id' }, { status: 400 });
     }
 
+    const { data: callRow } = await supabase
+      .from('calls')
+      .select('id, user_id')
+      .eq('telnyx_call_id', call_control_id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!callRow) {
+      return NextResponse.json({ error: 'Call not found' }, { status: 404 });
+    }
+
     // Get voicemail to play — use specified one or fall back to first in user's library
     let vmQuery = supabase
       .from('voicemails')
@@ -73,14 +84,13 @@ export async function POST(req: NextRequest) {
       .update({ drop_count: (vm.drop_count ?? 0) + 1 })
       .eq('id', vm.id);
 
-    // Mark call disposition on the DB record if available
-    if (call_db_id) {
-      void supabase
-        .from('calls')
-        .update({ disposition: 'voicemail', updated_at: new Date().toISOString() })
-        .eq('id', call_db_id)
-        .eq('user_id', user.id);
-    }
+    // Mark call disposition on the DB record
+    const resolvedDbId = call_db_id ?? callRow.id;
+    void supabase
+      .from('calls')
+      .update({ disposition: 'voicemail', updated_at: new Date().toISOString() })
+      .eq('id', resolvedDbId)
+      .eq('user_id', user.id);
 
     return NextResponse.json({
       ok: true,

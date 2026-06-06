@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/service';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/server';
 
 type CallControlAction = 'pause_recording' | 'resume_recording' | 'mute' | 'hold' | 'unhold' | 'unmute';
 
@@ -24,18 +23,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'call_control_id and action required' }, { status: 400 });
   }
 
-  const supabase = createServiceClient();
-  if (!supabase) {
-    return NextResponse.json({ error: 'Service unavailable' }, { status: 503 });
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Auth: get user from session cookie
-  // For server actions we use the service client but verify ownership
-  // The call_control_id must belong to an active call for this user
   const { data: callRow } = await supabase
     .from('calls')
     .select('id, user_id, was_recorded')
     .eq('telnyx_call_id', call_control_id)
+    .eq('user_id', user.id)
     .single();
 
   if (!callRow) {

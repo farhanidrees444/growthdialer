@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
   const protectedRoutes = [
     '/dashboard', '/dialer', '/leads', '/sequences',
     '/analytics', '/recordings', '/integrations', '/settings',
-    '/team'
+    '/team', '/numbers', '/coaching', '/workspace',
   ]
   const authRoutes = ['/login', '/signup']
   const path = request.nextUrl.pathname

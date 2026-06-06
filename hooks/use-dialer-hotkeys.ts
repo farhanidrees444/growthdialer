@@ -5,6 +5,8 @@ import type { DialerMode } from '@/lib/dialer/state-machine';
 
 interface HotkeyHandlers {
   mode: DialerMode;
+  /** When true, Space in preview is handled by power countdown — do not manual-dial */
+  powerDialActive?: boolean;
   onOpenManualDial: () => void;
   onOpenShortcuts: () => void;
   onFocusSearch: () => void;
@@ -55,8 +57,8 @@ export function useDialerHotkeys(handlers: HotkeyHandlers) {
       }
 
       if (mode === 'preview') {
-        if (e.key === ' ') { e.preventDefault(); h.onStartCall(); return; }
-        if (e.key === 's' || e.key === 'S') { e.preventDefault(); h.onSkipLead(); return; }
+        if (!h.powerDialActive && e.key === ' ') { e.preventDefault(); h.onStartCall(); return; }
+        if (!h.powerDialActive && (e.key === 's' || e.key === 'S')) { e.preventDefault(); h.onSkipLead(); return; }
         if (e.key === 'h' || e.key === 'H') { e.preventDefault(); h.onMarkHot(); return; }
         if (e.key === 'n' || e.key === 'N') { e.preventDefault(); h.onQuickNote(); return; }
       }
