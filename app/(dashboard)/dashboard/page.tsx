@@ -22,6 +22,7 @@ import { useWorkspace } from "@/contexts/workspace-context";
 import { WORKSPACE_ID_HEADER } from "@/lib/auth/workspace-access";
 import { cn } from "@/lib/utils";
 import type { SystemMetricsData, HourlyMetricPoint } from "@/lib/dashboard-types";
+import { ActivationChecklist } from "@/components/activation/activation-checklist";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -644,6 +645,8 @@ export default function DashboardPage() {
           </h1>
           <p className="mt-1 text-sm text-slate-500">{dateStr}</p>
         </div>
+
+        <ActivationChecklist />
 
         {/* KPI Grid — 2×2 mobile, 4×1 desktop */}
         <div className="grid grid-cols-2 gap-3 px-4 lg:grid-cols-4 lg:gap-4 lg:px-6">

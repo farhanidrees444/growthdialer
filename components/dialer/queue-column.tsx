@@ -4,8 +4,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, X, ArrowDownUp, ChevronDown, Filter,
-  Flame, Clock, ArrowDownAZ, Globe,
+  Flame, Clock, ArrowDownAZ, Globe, Users,
 } from 'lucide-react';
+import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
+import { useLeads } from '@/contexts/leads-context';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { QueueLeadCard } from './queue-lead-card';
 import { getLocalTime } from '@/lib/utils/timezone';
@@ -68,6 +70,7 @@ interface QueueColumnProps {
 
 export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsChange, onLeadsChange }: QueueColumnProps) {
   const { apiFetch } = useWorkspace();
+  const { setImportOpen } = useLeads();
   const [tab, setTab] = useState<QueueTab>('queue');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -287,17 +290,31 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
             ))}
           </div>
         ) : displayLeads.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 text-center px-4">
-            <p className="text-sm text-white/30">
-              {debouncedSearch
-                ? 'No results'
-                : tab === 'hot'
-                ? 'No hot leads'
-                : tab === 'callbacks'
-                ? 'No callbacks due'
-                : 'Queue is empty'}
-            </p>
-          </div>
+          debouncedSearch ? (
+            <div className="flex flex-col items-center justify-center h-32 text-center px-4">
+              <p className="text-sm text-white/30">No results</p>
+            </div>
+          ) : tab === 'queue' ? (
+            <PremiumEmptyState
+              icon={Users}
+              accent="violet"
+              compact
+              title="Queue is empty"
+              description="Import leads to start dialing — they'll appear here by priority."
+              primaryAction={{ label: 'Import CSV', onClick: () => setImportOpen(true) }}
+              secondaryAction={{ label: 'View leads', href: '/leads' }}
+            />
+          ) : (
+            <PremiumEmptyState
+              icon={tab === 'hot' ? Flame : Clock}
+              accent="emerald"
+              compact
+              title={tab === 'hot' ? 'No hot leads' : 'No callbacks due'}
+              description={tab === 'hot'
+                ? 'Tag high-intent leads as hot from the Leads page.'
+                : 'Scheduled callbacks will show up here when due.'}
+            />
+          )
         ) : (
           <AnimatePresence initial={false}>
             {displayLeads.map((lead) => (

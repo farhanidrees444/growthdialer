@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Upload, Sparkles, HelpCircle, Bell, Menu } from 'lucide-react';
+import { Upload, Menu } from 'lucide-react';
 import { UserMenu } from './user-menu';
 import { useMobileNav } from '@/contexts/mobile-nav-context';
 import { useLeads } from '@/contexts/leads-context';
@@ -75,51 +75,6 @@ export function TopHeader() {
           </button>
         )}
 
-        {/* Ask AI — premium glassy pill, hidden on mobile */}
-        <button
-          type="button"
-          aria-label="Ask AI"
-          className="relative hidden sm:flex items-center gap-1.5 overflow-hidden rounded-xl
-                     border border-violet-500/30 px-3 py-2 text-sm font-medium text-white
-                     bg-gradient-to-r from-violet-600/15 to-cyan-500/15
-                     hover:border-violet-400/50 transition-all group"
-        >
-          <span
-            className="pointer-events-none absolute inset-0 bg-gradient-to-r
-                       from-violet-500/0 via-violet-500/10 to-cyan-500/0
-                       opacity-0 group-hover:opacity-100 transition-opacity"
-            aria-hidden
-          />
-          <Sparkles size={15} className="relative text-violet-400" />
-          <span className="relative">Ask AI</span>
-        </button>
-
-        {/* Help */}
-        <button
-          type="button"
-          aria-label="Help"
-          className="flex items-center gap-1.5 rounded-xl p-2 lg:px-3
-                     text-white/55 hover:text-white/90 hover:bg-white/[0.06] transition-all"
-        >
-          <HelpCircle size={18} />
-          <span className="hidden lg:inline text-sm">Help</span>
-        </button>
-
-        {/* Notifications */}
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative rounded-xl p-2 text-white/55 hover:text-white/90
-                     hover:bg-white/[0.06] transition-all"
-        >
-          <Bell size={18} />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" aria-hidden />
-        </button>
-
-        {/* Divider */}
-        <span className="hidden sm:block w-px h-6 bg-white/[0.08] mx-0.5" aria-hidden />
-
-        {/* User menu */}
         <UserMenu />
       </div>
     </header>

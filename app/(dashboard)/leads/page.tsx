@@ -26,6 +26,7 @@ import { LeadFilterDrawer, type LeadFilters, EMPTY_FILTERS, isFilterActive } fro
 import { LeadExportModal } from "@/components/leads/lead-export-modal";
 import { LeadTableView } from "@/components/leads/lead-table-view";
 import { ViewToggle, type ViewMode } from "@/components/leads/view-toggle";
+import { PremiumEmptyState } from "@/components/ui/premium-empty-state";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -433,9 +434,34 @@ function TrashLeadCard({
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
-function EmptyState({ tab }: { tab: TabKey }) {
-  const msgs: Record<TabKey, { title: string; sub: string }> = {
-    all:      { title: "No leads yet", sub: "Import a CSV or add leads manually." },
+function EmptyState({
+  tab,
+  onImport,
+  onAddLead,
+}: {
+  tab: TabKey;
+  onImport: () => void;
+  onAddLead: () => void;
+}) {
+  if (tab === 'all') {
+    return (
+      <PremiumEmptyState
+        icon={UserPlus}
+        accent="violet"
+        title="Your pipeline starts here"
+        description="Import a CSV from HubSpot, Salesforce, or a spreadsheet — or add leads one at a time."
+        primaryAction={{ label: 'Import CSV', onClick: onImport }}
+        secondaryAction={{ label: 'Add lead', onClick: onAddLead }}
+        features={[
+          { icon: Sparkles, label: 'AI scoring' },
+          { icon: Phone, label: 'Power dial ready' },
+          { icon: Tag, label: 'Tags & filters' },
+        ]}
+      />
+    );
+  }
+
+  const msgs: Record<Exclude<TabKey, 'all'>, { title: string; sub: string }> = {
     new:      { title: "No new leads", sub: "All leads have been contacted." },
     hot:      { title: "No hot leads", sub: "Leads tagged hot or with callback status will appear here." },
     callback: { title: "No callbacks", sub: "Leads marked for callback appear here." },
@@ -443,15 +469,15 @@ function EmptyState({ tab }: { tab: TabKey }) {
     dnc:      { title: "No DNC leads", sub: "Leads marked Do Not Call appear here." },
     trash:    { title: "Trash is empty", sub: "Deleted leads appear here for 7 days before permanent removal." },
   };
-  const { title, sub } = msgs[tab];
+  const { title, sub } = msgs[tab as Exclude<TabKey, 'all'>];
   return (
-    <div className="flex flex-col items-center justify-center py-24 text-center">
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.03]">
-        <UserPlus className="h-7 w-7 text-slate-600" />
-      </div>
-      <p className="text-sm font-semibold text-white">{title}</p>
-      <p className="mt-1.5 max-w-xs text-xs text-slate-500 leading-relaxed">{sub}</p>
-    </div>
+    <PremiumEmptyState
+      icon={UserPlus}
+      accent="emerald"
+      title={title}
+      description={sub}
+      compact
+    />
   );
 }
 
@@ -941,7 +967,11 @@ export default function LeadsPage() {
               ))}
             </div>
           ) : paginated.length === 0 ? (
-            <EmptyState tab={tab} />
+            <EmptyState
+              tab={tab}
+              onImport={() => setImportOpen(true)}
+              onAddLead={() => setShowAddModal(true)}
+            />
           ) : viewMode === "table" ? (
             <LeadTableView
               leads={paginated}

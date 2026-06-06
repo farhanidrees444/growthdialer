@@ -6,7 +6,9 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Phone, ChevronRight, Users } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { useLeads } from '@/contexts/leads-context';
 
 interface Lead {
   id: string;
@@ -34,6 +36,7 @@ function initials(name: string | null): string {
 export default function UpNextQueue() {
   const router = useRouter();
   const { currentWorkspace, apiFetch } = useWorkspace();
+  const { setImportOpen } = useLeads();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -67,13 +70,16 @@ export default function UpNextQueue() {
             ))}
           </div>
         ) : leads.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 py-10 text-center">
-            <Phone className="h-6 w-6 text-slate-700" />
-            <p className="text-xs text-slate-600">No leads in queue</p>
-            <Link href="/leads" className="text-[11px] text-brand hover:underline">
-              Import leads →
-            </Link>
-          </div>
+          <PremiumEmptyState
+            icon={Phone}
+            accent="violet"
+            compact
+            title="Nothing queued yet"
+            description="Import leads to see your top priorities here."
+            primaryAction={{ label: 'Import CSV', onClick: () => setImportOpen(true) }}
+            secondaryAction={{ label: 'Open dialer', href: '/dialer' }}
+            className="py-8"
+          />
         ) : (
           <motion.div
             className="space-y-1 pt-1"
