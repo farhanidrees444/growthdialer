@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { hasPermission, type Role } from '@/lib/auth/permissions';
+import { fetchLiveWorkspaceCalls } from '@/lib/coaching/active-calls-query';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,27 +25,9 @@ export async function GET() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // Get active calls in this workspace (status in_progress or initiated, not ended)
-  const { data: calls } = await supabase
-    .from('calls')
-    .select(`
-      id,
-      user_id,
-      lead_id,
-      from_number,
-      to_number,
-      telnyx_call_id,
-      status,
-      created_at,
-      started_at,
-      workspace_id
-    `)
-    .eq('workspace_id', member.workspace_id)
-    .in('status', ['initiated', 'in_progress', 'active'])
-    .is('ended_at', null)
-    .order('created_at', { ascending: false });
+  const calls = await fetchLiveWorkspaceCalls(supabase, member.workspace_id);
 
-  if (!calls?.length) return NextResponse.json({ calls: [] });
+  if (!calls.length) return NextResponse.json({ calls: [] });
 
   // Enrich with agent name + lead info
   const userIds = [...new Set(calls.map((c) => c.user_id).filter(Boolean))];

@@ -23,6 +23,8 @@ interface ActiveCall {
   telnyx_call_id: string | null;
   status: string;
   created_at: string;
+  started_at: string | null;
+  answered_at: string | null;
   agent_name: string;
   agent_email: string;
   lead_first_name: string;
@@ -45,8 +47,12 @@ interface CoachingPanelProps {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function fmtElapsed(createdAt: string): string {
-  const secs = Math.floor((Date.now() - new Date(createdAt).getTime()) / 1000);
+function callTimerAnchor(call: Pick<ActiveCall, 'answered_at' | 'started_at' | 'created_at'>): string {
+  return call.answered_at ?? call.started_at ?? call.created_at;
+}
+
+function fmtElapsed(anchorAt: string): string {
+  const secs = Math.max(0, Math.floor((Date.now() - new Date(anchorAt).getTime()) / 1000));
   if (secs >= 3600) {
     const h = Math.floor(secs / 3600);
     const m = Math.floor((secs % 3600) / 60);
@@ -98,9 +104,10 @@ function CoachingPanel({ call, sessionId, currentMode, onModeChange, onEnd, busy
   const [elapsed, setElapsed] = useState('00:00');
 
   useEffect(() => {
-    const id = setInterval(() => setElapsed(fmtElapsed(call.created_at)), 1000);
+    const anchor = callTimerAnchor(call);
+    const id = setInterval(() => setElapsed(fmtElapsed(anchor)), 1000);
     return () => clearInterval(id);
-  }, [call.created_at]);
+  }, [call.answered_at, call.started_at, call.created_at]);
 
   const agentName = call.agent_name || call.agent_email || 'Agent';
   const leadName = [call.lead_first_name, call.lead_last_name].filter(Boolean).join(' ') || call.to_number;
@@ -246,9 +253,10 @@ function CallCard({
   const leadCompany = call.lead_company;
 
   useEffect(() => {
-    const id = setInterval(() => setElapsed(fmtElapsed(call.created_at)), 1000);
+    const anchor = callTimerAnchor(call);
+    const id = setInterval(() => setElapsed(fmtElapsed(anchor)), 1000);
     return () => clearInterval(id);
-  }, [call.created_at]);
+  }, [call.answered_at, call.started_at, call.created_at]);
 
   const isBeingCoached = !!call.coaching;
   const isBusy = busy === call.id;

@@ -41,6 +41,15 @@ export async function handleParallelLegAmd(
       })
       .eq('id', leg.id);
 
+    if (leg.call_id) {
+      const now = new Date().toISOString();
+      await supabase
+        .from('calls')
+        .update({ status: 'completed', ended_at: now, disposition: 'voicemail' })
+        .eq('id', leg.call_id)
+        .is('ended_at', null);
+    }
+
     if (session.vm_drop_enabled) {
       void dropVoicemailAndHangup(
         supabase,

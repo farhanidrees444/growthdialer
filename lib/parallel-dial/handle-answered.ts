@@ -176,12 +176,27 @@ export async function handleParallelLegHangup(
 ): Promise<void> {
   const { data: leg } = await supabase
     .from('parallel_dial_legs')
-    .select('id, session_id, status, is_winner')
+    .select('id, session_id, status, is_winner, call_id')
     .eq('telnyx_call_id', callControlId)
     .maybeSingle();
 
   if (!leg) return;
   if (leg.is_winner && leg.status === 'connected') return;
+
+  const closeLegCallRow = async () => {
+    if (!leg.call_id) return;
+    const now = new Date().toISOString();
+    await supabase
+      .from('calls')
+      .update({
+        status: 'completed',
+        ended_at: now,
+        updated_at: now,
+      })
+      .eq('id', leg.call_id)
+      .is('ended_at', null)
+      .neq('status', 'answered');
+  };
 
   if (leg.is_winner && leg.status === 'answered') {
     await supabase
@@ -193,6 +208,7 @@ export async function handleParallelLegHangup(
         updated_at: new Date().toISOString(),
       })
       .eq('id', leg.id);
+    await closeLegCallRow();
   } else if (!leg.is_winner) {
     const terminal = hangupCause === 'user_busy' ? 'busy' : 'no_answer';
     await supabase
@@ -203,6 +219,7 @@ export async function handleParallelLegHangup(
         updated_at: new Date().toISOString(),
       })
       .eq('id', leg.id);
+    await closeLegCallRow();
   }
 
   const { data: session } = await supabase
