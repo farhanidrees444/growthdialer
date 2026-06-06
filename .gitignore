@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# nested clone / broken submodule (not part of the app)
+/growthdialer/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

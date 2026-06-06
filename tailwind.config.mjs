@@ -1,8 +1,4 @@
-import type { Config } from 'tailwindcss';
-
-/**
- * Enterprise + marketing design tokens — complements @theme in app/globals.css (Tailwind v4).
- */
+/** @type {import('tailwindcss').Config} */
 const config = {
   theme: {
     extend: {
@@ -39,6 +35,6 @@ const config = {
       },
     },
   },
-} satisfies Config;
+};
 
 export default config;
