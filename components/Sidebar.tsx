@@ -17,6 +17,8 @@ import {
   X,
   Hash,
   Sparkles,
+  PhoneIncoming,
+  ScrollText,
   ChevronsUpDown,
   Check,
   Headset,
@@ -31,7 +33,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_LABELS } from "@/lib/auth/permissions";
 
-type CountKey = 'leads' | 'recordings' | 'numbers';
+type CountKey = 'leads' | 'recordings' | 'numbers' | 'calls';
 
 type NavItem = {
   icon: LucideIcon;
@@ -49,6 +51,8 @@ const navItems: NavItem[] = [
   { icon: Users, label: "Leads", href: "/leads", countKey: 'leads' },
   { icon: ListOrdered, label: "Sequences", href: "/sequences" },
   { icon: BarChart2, label: "Analytics", href: "/analytics" },
+  { icon: ScrollText, label: "Call Logs", href: "/call-logs", countKey: 'calls' },
+  { icon: PhoneIncoming, label: "Inbound", href: "/settings?tab=calling" },
   { icon: Trophy, label: "Leaderboard", href: "/leaderboard", managerOnly: true },
   { icon: Headphones, label: "Recordings", href: "/recordings", countKey: 'recordings' },
   { icon: Hash, label: "My Numbers", href: "/numbers", countKey: 'numbers' },

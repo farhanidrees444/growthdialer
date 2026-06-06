@@ -1,228 +1,170 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, CheckCircle, Zap, Database, Globe, Settings } from "lucide-react";
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { ArrowRight, CheckCircle2, Zap, Database, Globe, Settings } from 'lucide-react';
+import { INTEGRATION_BRANDS } from '@/lib/marketing/integration-brands';
+import { Nav } from '@/components/marketing/live-floor/Nav';
+import { Grain } from '@/components/marketing/live-floor/Grain';
+import { reveal, revealContainer } from '@/components/marketing/live-floor/motion';
+import { cn } from '@/lib/utils';
 
-const integrations = [
-  {
-    category: "CRM",
-    items: [
-      { name: "Salesforce", description: "Bi-directional sync for contacts, activities, and deals.", icon: "SF" },
-      { name: "HubSpot", description: "Auto-log calls, update deals, and sync contacts in real time.", icon: "HS" },
-      { name: "Pipedrive", description: "Sync leads and activities directly to your Pipedrive pipeline.", icon: "PD" },
-      { name: "Zoho CRM", description: "Push call outcomes and notes to Zoho automatically.", icon: "ZO" },
-    ],
-  },
-  {
-    category: "Communication",
-    items: [
-      { name: "Slack", description: "Receive call summaries, alerts, and team notifications in Slack.", icon: "SL" },
-      { name: "Microsoft Teams", description: "Surface deal updates and coaching alerts in Teams channels.", icon: "MT" },
-      { name: "Gmail", description: "Trigger email sequences after call outcomes.", icon: "GM" },
-      { name: "Outlook", description: "Log calls and set follow-up tasks straight from Outlook.", icon: "OL" },
-    ],
-  },
-  {
-    category: "Automation",
-    items: [
-      { name: "Zapier", description: "Connect GrowthDialer to 5,000+ apps with no-code workflows.", icon: "ZP" },
-      { name: "Make (Integromat)", description: "Build advanced multi-step automations triggered by call events.", icon: "MK" },
-      { name: "Webhooks", description: "Send real-time call data to any endpoint you choose.", icon: "WH" },
-      { name: "REST API", description: "Full-featured API for custom integrations and enterprise workflows.", icon: "AP" },
-    ],
-  },
-  {
-    category: "Productivity",
-    items: [
-      { name: "Google Calendar", description: "Auto-schedule follow-ups and sync meetings from calls.", icon: "GC" },
-      { name: "Calendly", description: "Let prospects book directly from call outcomes.", icon: "CL" },
-      { name: "Notion", description: "Push call notes and summaries to your Notion workspace.", icon: "NT" },
-      { name: "Google Sheets", description: "Export call data and analytics to Google Sheets.", icon: "GS" },
-    ],
-  },
-];
+const CATEGORY_LABELS: Record<string, string> = {
+  crm: 'CRM',
+  communication: 'Communication',
+  automation: 'Automation',
+  calendar: 'Calendar',
+  productivity: 'Productivity',
+};
 
 const benefits = [
   {
     icon: Zap,
-    title: "Zero manual data entry",
-    description: "Every call is automatically logged with duration, outcome, notes, and next steps — no rep ever needs to type a CRM update again.",
+    title: 'Zero manual logging',
+    description: 'Disposition, duration, and recording link push to your CRM when the rep hangs up.',
   },
   {
     icon: Database,
-    title: "Single source of truth",
-    description: "All your call data, contact history, and deal notes flow into your CRM in real time so your pipeline is always accurate.",
+    title: 'One call record',
+    description: 'Call Logs, Recordings, and AI summaries stay in sync — inbound and outbound.',
   },
   {
     icon: Globe,
-    title: "Works with your existing stack",
-    description: "We built native integrations for the tools your team already uses — no forced migrations or new software to learn.",
+    title: 'Your stack, not ours',
+    description: 'We integrate where your team already works. No forced migration.',
   },
   {
     icon: Settings,
-    title: "Custom workflows",
-    description: "Trigger actions based on call outcomes, disposition codes, or AI sentiment — automate the follow-up work your team hates.",
+    title: 'Outcome triggers',
+    description: 'Fire automations on meeting booked, callback, or negative sentiment.',
   },
 ];
 
+const categories = ['crm', 'communication', 'automation', 'calendar', 'productivity'] as const;
+
 export default function IntegrationsContent() {
   return (
-    <div className="pt-24 pb-16">
-      {/* Hero */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="text-center max-w-4xl mx-auto">
-          <Badge variant="secondary" className="mb-4">
-            Integrations
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            Connect GrowthDialer to
-            <span className="text-brand"> your entire sales stack</span>
-          </h1>
-          <p className="text-xl text-muted-foreground mb-8">
-            15+ native integrations so your calls, contacts, and deal data automatically flow to the tools your team already lives in.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup">
-              <Button size="lg" className="bg-brand text-white hover:bg-brand/80">
-                Start free trial <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link href="/pricing">
-              <Button size="lg" variant="outline">
-                View pricing
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {benefits.map((benefit, index) => (
-            <motion.div
-              key={benefit.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="text-center"
-            >
-              <div className="w-12 h-12 bg-brand/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <benefit.icon className="w-6 h-6 text-brand" />
-              </div>
-              <h3 className="font-semibold mb-2">{benefit.title}</h3>
-              <p className="text-sm text-muted-foreground">{benefit.description}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Integration Categories */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">All your tools, all connected</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Native integrations with the CRM, communication, automation, and productivity tools your sales team relies on every day.
-          </p>
-        </div>
-
-        <div className="space-y-12">
-          {integrations.map((category, catIndex) => (
-            <motion.div
-              key={category.category}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: catIndex * 0.1 }}
-            >
-              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                <Badge variant="outline">{category.category}</Badge>
-              </h3>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {category.items.map((item, index) => (
-                  <motion.div
-                    key={item.name}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <Card className="h-full hover:border-brand/50 transition-colors">
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-brand/10 rounded-lg flex items-center justify-center text-xs font-bold text-brand">
-                            {item.icon}
-                          </div>
-                          <CardTitle className="text-base">{item.name}</CardTitle>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground">{item.description}</p>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* API Section */}
-      <section className="container mx-auto px-4 py-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="bg-muted/30 border border-muted rounded-2xl p-12 text-center"
+    <div className="relative min-h-screen overflow-x-clip bg-[#08080A] text-[#F5F5F7] antialiased">
+      <Grain />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-[0.35] [mask-image:radial-gradient(ellipse_at_top,black,transparent_75%)]"
+      />
+      <Nav />
+      <div className="relative z-[2] pt-24 pb-20 px-5 lg:px-8">
+        <motion.section
+          initial="hidden"
+          animate="show"
+          variants={revealContainer}
+          className="mx-auto max-w-3xl text-center"
         >
-          <h2 className="text-3xl font-bold mb-4">Need a custom integration?</h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Our REST API and webhook system let your engineering team connect GrowthDialer to any internal tool or custom workflow.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup">
-              <Button size="lg" className="bg-brand text-white hover:bg-brand/80">
-                Start building <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+          <motion.p variants={reveal} className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
+            Integrations
+          </motion.p>
+          <motion.h1 variants={reveal} className="font-display text-[clamp(2.2rem,5vw,3.5rem)] font-light leading-[1.05] tracking-tight">
+            Connect the stack you already run on.
+          </motion.h1>
+          <motion.p variants={reveal} className="mx-auto mt-5 max-w-xl text-[16px] leading-relaxed text-zinc-400">
+            HubSpot logs calls today. Salesforce, Slack, Zapier, and the rest are on the roadmap — join the waitlist from your workspace.
+          </motion.p>
+          <motion.div variants={reveal} className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/signup"
+              className="inline-flex items-center justify-center gap-2 rounded-xl gradient-brand px-6 py-3 text-sm font-semibold text-white"
+            >
+              Start free <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link href="/contact">
-              <Button size="lg" variant="outline">
-                Talk to sales
-              </Button>
+            <Link
+              href="/integrations"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.03] px-6 py-3 text-sm font-semibold text-zinc-200 hover:bg-white/[0.06]"
+            >
+              Open integration hub
             </Link>
-          </div>
-        </motion.div>
-      </section>
+          </motion.div>
+        </motion.section>
 
-      {/* CTA */}
-      <section className="container mx-auto px-4 py-8 text-center">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold mb-4">Ready to connect your stack?</h2>
-          <p className="text-lg text-muted-foreground mb-8">
-            Set up your first integration in under 5 minutes. No engineering required.
+        <section className="mx-auto mt-20 max-w-5xl grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {benefits.map((b, i) => (
+            <motion.div
+              key={b.title}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.08 }}
+              className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl"
+            >
+              <b.icon className="h-5 w-5 text-primary mb-3" />
+              <h3 className="text-sm font-semibold text-white mb-1">{b.title}</h3>
+              <p className="text-xs leading-relaxed text-zinc-500">{b.description}</p>
+            </motion.div>
+          ))}
+        </section>
+
+        {categories.map((cat) => {
+          const items = INTEGRATION_BRANDS.filter((b) => b.category === cat);
+          if (items.length === 0) return null;
+          return (
+            <section key={cat} className="mx-auto mt-16 max-w-5xl">
+              <h2 className="mb-6 text-sm font-semibold uppercase tracking-widest text-zinc-500">
+                {CATEGORY_LABELS[cat]}
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {items.map((item, i) => {
+                  const Icon = item.Icon;
+                  return (
+                    <motion.article
+                      key={item.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.05 }}
+                      whileHover={{ y: -3 }}
+                      className="group relative rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 backdrop-blur-xl transition-colors hover:border-white/[0.14]"
+                    >
+                      {item.live && (
+                        <span className="absolute right-4 top-4 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-300">
+                          Live
+                        </span>
+                      )}
+                      <div className="flex items-center gap-3 mb-3">
+                        <span
+                          className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04]"
+                          style={{ color: item.color }}
+                        >
+                          <Icon className="h-5 w-5" aria-hidden />
+                        </span>
+                        <h3 className="font-semibold text-white">{item.name}</h3>
+                      </div>
+                      <p className="text-sm leading-relaxed text-zinc-500">{item.description}</p>
+                      {!item.live && (
+                        <p className={cn('mt-3 text-[11px] font-medium text-zinc-600')}>Waitlist — notify from app</p>
+                      )}
+                    </motion.article>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+
+        <section className="mx-auto mt-20 max-w-3xl rounded-2xl border border-white/[0.08] bg-white/[0.02] p-10 text-center backdrop-blur-xl">
+          <h2 className="font-display text-2xl font-light text-white mb-3">REST API & webhooks</h2>
+          <p className="text-sm text-zinc-500 mb-6 leading-relaxed">
+            Engineering team? Pipe call events to your data warehouse or internal tools. Same pipeline that powers Call Logs and AI analysis.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/signup">
-              <Button size="lg" className="bg-brand text-white hover:bg-brand/80">
-                Start free trial <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-          <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
-            {["No credit card required", "14-day free trial", "Cancel anytime"].map((item) => (
-              <span key={item} className="flex items-center gap-1">
-                <CheckCircle className="w-4 h-4 text-green-500" /> {item}
+          <Link href="/signup" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+            Get API access with your workspace <ArrowRight className="h-4 w-4" />
+          </Link>
+          <div className="mt-8 flex flex-wrap justify-center gap-4 text-xs text-zinc-600">
+            {['HubSpot live now', 'No credit card to start', 'Call Logs for every dial'].map((t) => (
+              <span key={t} className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                {t}
               </span>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

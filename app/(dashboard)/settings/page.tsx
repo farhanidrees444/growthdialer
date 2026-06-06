@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { WorkspaceSettingsPanel } from "@/components/settings/workspace-settings-panel";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { InboundHistoryPanel } from "@/components/calls/inbound-history-panel";
 import { useSearchParams } from "next/navigation";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { WorkspaceBillingPanel } from "@/components/billing/workspace-billing-panel";
@@ -561,13 +562,11 @@ function CallingTab({ settings, onChange }: { settings: UserSettings; onChange: 
         </div>
       </SectionCard>
 
-      <SectionCard title="Call History">
-        <div className="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-          <PhoneIncoming className="mt-0.5 h-4 w-4 shrink-0 text-white/30" />
-          <p className="text-sm text-white/40 leading-relaxed">
-            Inbound calls appear in your call history with an <span className="text-[#06B6D4]">incoming arrow</span>. Missed calls are marked separately. All calls are recorded and AI-analyzed using the same pipeline as outbound calls.
-          </p>
-        </div>
+      <SectionCard
+        title="Inbound call history"
+        description="Recent calls to your numbers — missed calls highlighted. Full logs live under Call Logs in the sidebar."
+      >
+        <InboundHistoryPanel />
       </SectionCard>
     </div>
   );
@@ -1260,7 +1259,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab === 'billing' || tab === 'team' || tab === 'security' || tab === 'profile' || tab === 'workspace') {
+    if (tab === 'billing' || tab === 'team' || tab === 'security' || tab === 'profile' || tab === 'workspace' || tab === 'calling') {
       setActiveTab(tab as TabKey);
     }
   }, [searchParams]);

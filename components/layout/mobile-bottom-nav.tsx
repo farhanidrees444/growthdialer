@@ -15,6 +15,8 @@ import {
   Headset,
   ListOrdered,
   Trophy,
+  ScrollText,
+  PhoneIncoming,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -35,6 +37,8 @@ type MoreLink = {
 
 const MORE_LINKS: MoreLink[] = [
   { icon: Building2, label: 'Team', href: '/team' },
+  { icon: ScrollText, label: 'Call Logs', href: '/call-logs' },
+  { icon: PhoneIncoming, label: 'Inbound', href: '/settings?tab=calling' },
   { icon: Headphones, label: 'Recordings', href: '/recordings' },
   { icon: ListOrdered, label: 'Sequences', href: '/sequences' },
   { icon: BarChart2, label: 'Analytics', href: '/analytics' },

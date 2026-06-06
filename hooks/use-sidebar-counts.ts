@@ -8,6 +8,7 @@ import { ownCallsOrFilter } from '@/lib/auth/call-access';
 interface SidebarCounts {
   leads: number | null;
   recordings: number | null;
+  calls: number | null;
   notifications: number | null;
   numbers: number | null;
 }
@@ -17,6 +18,7 @@ export function useSidebarCounts(): SidebarCounts {
   const [counts, setCounts] = useState<SidebarCounts>({
     leads: null,
     recordings: null,
+    calls: null,
     notifications: null,
     numbers: null,
   });
@@ -28,12 +30,16 @@ export function useSidebarCounts(): SidebarCounts {
 
     const wsId = currentWorkspace.id;
 
-    const [leads, recordings, notifications, numbers] = await Promise.all([
+    const [leads, callLogs, recordings, notifications, numbers] = await Promise.all([
       supabase
         .from('leads')
         .select('*', { count: 'exact', head: true })
         .eq('workspace_id', wsId)
         .is('deleted_at', null),
+      supabase
+        .from('calls')
+        .select('*', { count: 'exact', head: true })
+        .or(ownCallsOrFilter(wsId, user.id)),
       supabase
         .from('calls')
         .select('*', { count: 'exact', head: true })
@@ -53,6 +59,7 @@ export function useSidebarCounts(): SidebarCounts {
 
     setCounts({
       leads: leads.count,
+      calls: callLogs.count,
       recordings: recordings.count,
       notifications: notifications.count,
       numbers: numbers.count,
