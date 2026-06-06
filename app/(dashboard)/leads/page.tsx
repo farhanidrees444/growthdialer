@@ -27,6 +27,7 @@ import { LeadExportModal } from "@/components/leads/lead-export-modal";
 import { LeadTableView } from "@/components/leads/lead-table-view";
 import { ViewToggle, type ViewMode } from "@/components/leads/view-toggle";
 import { PremiumEmptyState } from "@/components/ui/premium-empty-state";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -542,6 +543,8 @@ export default function LeadsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editLead, setEditLead] = useState<FullLead | null>(null);
   const [deleteLead, setDeleteLead] = useState<FullLead | null>(null);
+  const [deleteForeverLead, setDeleteForeverLead] = useState<FullLead | null>(null);
+  const [deleteForeverBusy, setDeleteForeverBusy] = useState(false);
   const [showExport, setShowExport] = useState(false);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -695,15 +698,17 @@ export default function LeadsPage() {
   }, []);
 
   const handleDeleteForever = useCallback(async (lead: FullLead) => {
-    const confirmed = window.confirm(
-      `Permanently delete ${lead.name}? This cannot be undone. All call history will be lost.`
-    );
-    if (!confirmed) return;
-    const supabase = createClient();
-    const { error } = await supabase.from("leads").delete().eq("id", lead.id);
-    if (error) { toast.error("Delete failed: " + error.message); return; }
-    setLeads((p) => p.filter((l) => l.id !== lead.id));
-    toast.success(`${lead.name} permanently deleted`);
+    setDeleteForeverBusy(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.from("leads").delete().eq("id", lead.id);
+      if (error) { toast.error("Delete failed: " + error.message); return; }
+      setLeads((p) => p.filter((l) => l.id !== lead.id));
+      toast.success(`${lead.name} permanently deleted`);
+      setDeleteForeverLead(null);
+    } finally {
+      setDeleteForeverBusy(false);
+    }
   }, []);
 
   const handleToggleSelect = useCallback((id: string) => {
@@ -782,6 +787,16 @@ export default function LeadsPage() {
             onCancel={() => setDeleteLead(null)}
           />
         )}
+        <ConfirmDialog
+          open={deleteForeverLead !== null}
+          onOpenChange={(open) => { if (!open) setDeleteForeverLead(null); }}
+          title={`Delete ${deleteForeverLead?.name ?? 'lead'} forever?`}
+          description="This cannot be undone. All call history for this lead will be permanently removed."
+          confirmLabel="Delete forever"
+          variant="destructive"
+          loading={deleteForeverBusy}
+          onConfirm={() => { if (deleteForeverLead) void handleDeleteForever(deleteForeverLead); }}
+        />
         {showExport && (
           <LeadExportModal
             onClose={() => setShowExport(false)}
@@ -1018,7 +1033,7 @@ export default function LeadsPage() {
                       key={lead.id}
                       lead={lead}
                       onRestore={() => handleRestoreFromTrash(lead)}
-                      onDeleteForever={() => handleDeleteForever(lead)}
+                      onDeleteForever={() => setDeleteForeverLead(lead)}
                     />
                   ) : (
                     <LeadCard

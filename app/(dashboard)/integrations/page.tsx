@@ -7,8 +7,11 @@ import { useSearchParams } from "next/navigation";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Zap, CheckCircle2, Bell } from "lucide-react";
+import { X, Zap, CheckCircle2, Bell, Plug } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/ui/page-header";
+import { SurfaceCard } from "@/components/ui/surface-card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // ─── SVG Logos ────────────────────────────────────────────────────────────────
 
@@ -573,41 +576,44 @@ export default function IntegrationsPage() {
   return (
     <>
       <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
-        {/* Category filter tabs */}
-        <div className="mb-6 flex items-center gap-1 overflow-x-auto scrollbar-hide border-b border-white/[0.06]">
-          {CATEGORIES.map(({ id, label }) => {
-            const count = id === 'all' ? INTEGRATIONS.length : INTEGRATIONS.filter((i) => i.category === id).length;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setActiveCategory(id)}
-                className={cn(
-                  "flex items-center gap-1.5 shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
-                  activeCategory === id
-                    ? 'border-brand text-brand'
-                    : 'border-transparent text-slate-500 hover:text-slate-300',
-                )}
-              >
-                {label}
-                <span className={cn(
-                  "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                  activeCategory === id ? 'bg-brand/15 text-brand' : 'bg-white/[0.05] text-slate-600',
-                )}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <div className="mx-auto max-w-5xl">
+        <PageHeader
+          title="Integrations"
+          description="Connect your CRM, enrichment tools, and automation stack — lemlist-style hub."
+          icon={Plug}
+          badge={`${connectedProviders.length} live`}
+        />
 
-        {/* Header note */}
-        <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.05] px-4 py-3 max-w-4xl">
+        <Tabs
+          value={activeCategory}
+          onValueChange={(v) => setActiveCategory(v as Category)}
+          className="mb-6"
+        >
+          <TabsList variant="line" className="w-full justify-start overflow-x-auto scrollbar-hide border-b border-white/[0.06] bg-transparent rounded-none p-0 h-auto">
+            {CATEGORIES.map(({ id, label }) => {
+              const count = id === 'all' ? INTEGRATIONS.length : INTEGRATIONS.filter((i) => i.category === id).length;
+              return (
+                <TabsTrigger
+                  key={id}
+                  value={id}
+                  className="shrink-0 gap-1.5 px-4 py-2.5 data-active:text-primary"
+                >
+                  {label}
+                  <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">
+                    {count}
+                  </span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </Tabs>
+
+        <SurfaceCard variant="amber" className="mb-5 flex items-center gap-2.5 px-4 py-3">
           <Zap className="h-4 w-4 shrink-0 text-amber-400" />
-          <p className="text-xs text-amber-300/80">
+          <p className="text-xs text-amber-200/80 leading-relaxed">
             HubSpot is live — connect to log calls on disposition. More integrations on the waitlist below.
           </p>
-        </div>
+        </SurfaceCard>
 
         {/* Grid */}
         <AnimatePresence mode="wait">
@@ -617,7 +623,7 @@ export default function IntegrationsPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="grid max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
           >
             {filtered.map((item) => (
               <IntegrationCard
@@ -630,9 +636,10 @@ export default function IntegrationsPage() {
           </motion.div>
         </AnimatePresence>
 
-        <p className="mt-8 max-w-4xl text-xs text-slate-700">
+        <p className="mt-8 text-xs text-muted-foreground">
           Need a specific integration? Contact us and we&apos;ll prioritize it for the roadmap.
         </p>
+        </div>
       </main>
 
       <AnimatePresence>

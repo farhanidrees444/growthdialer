@@ -14,6 +14,7 @@ import {
   Building2,
 } from "lucide-react";
 import { WorkspaceSettingsPanel } from "@/components/settings/workspace-settings-panel";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useSearchParams } from "next/navigation";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { WorkspaceBillingPanel } from "@/components/billing/workspace-billing-panel";
@@ -1068,6 +1069,7 @@ function TeamTab() {
   const [showInvite, setShowInvite] = useState(false);
   const [roleMenu, setRoleMenu]     = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState<string | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<string | null>(null);
 
   const activeMembers  = members.filter((m) => m.status === 'active');
   const pendingInvites = members.filter((m) => m.status === 'invited');
@@ -1084,10 +1086,10 @@ function TeamTab() {
   }
 
   async function handleRemove(userId: string) {
-    if (!confirm('Remove this member?')) return;
     setActionBusy(userId);
     await removeMember(userId);
     setActionBusy(null);
+    setRemoveTarget(null);
   }
 
   if (!currentWorkspace) return (
@@ -1185,7 +1187,7 @@ function TeamTab() {
                               )}
                               {canRemove && (
                                 <button type="button"
-                                  onClick={() => { setRoleMenu(null); void handleRemove(member.user_id); }}
+                                  onClick={() => { setRoleMenu(null); setRemoveTarget(member.user_id); }}
                                   className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-red-400 transition hover:bg-red-500/10">
                                   <UserMinus className="h-3 w-3" /> Remove member
                                 </button>
@@ -1223,6 +1225,17 @@ function TeamTab() {
       <AnimatePresence>
         {showInvite && <InviteModal onClose={() => { setShowInvite(false); void refreshMembers(); }} />}
       </AnimatePresence>
+
+      <ConfirmDialog
+        open={removeTarget !== null}
+        onOpenChange={(open) => { if (!open) setRemoveTarget(null); }}
+        title="Remove team member?"
+        description="They will lose access to this workspace immediately. Their call history stays in the workspace."
+        confirmLabel="Remove member"
+        variant="destructive"
+        loading={actionBusy !== null}
+        onConfirm={() => { if (removeTarget) void handleRemove(removeTarget); }}
+      />
     </div>
   );
 }

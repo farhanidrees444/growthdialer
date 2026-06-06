@@ -155,6 +155,9 @@
   .gradient-brand {
     background: linear-gradient(135deg, oklch(0.64 0.21 293) 0%, oklch(0.71 0.13 207) 100%);
   }
+  .glass-panel {
+    @apply rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl;
+  }
   .grid-bg {
     background-image:
       linear-gradient(oklch(1 0 0 / 3%) 1px, transparent 1px),
