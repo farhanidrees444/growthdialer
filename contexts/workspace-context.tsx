@@ -17,6 +17,9 @@ export interface Workspace {
   owner_id: string;
   plan: 'free' | 'pro' | 'team' | 'enterprise';
   max_seats: number;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  billing_status?: string;
   settings: Record<string, unknown>;
   created_at: string;
 }
@@ -54,6 +57,7 @@ interface WorkspaceContextValue {
   inviteMember: (email: string, role: Role, message?: string) => Promise<{ ok: boolean; error?: string }>;
   removeMember: (userId: string) => Promise<{ ok: boolean; error?: string }>;
   updateMemberRole: (userId: string, role: Role) => Promise<{ ok: boolean; error?: string }>;
+  cancelInvitation: (inviteId: string) => Promise<{ ok: boolean; error?: string }>;
 
   // Permission helper
   can: (permission: Permission) => boolean;
@@ -228,6 +232,21 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentWorkspace, refreshMembers]);
 
+  const cancelInvitation = useCallback(async (inviteId: string) => {
+    if (!currentWorkspace) return { ok: false, error: 'No workspace selected' };
+    try {
+      const res = await fetch(
+        `/api/workspaces/${currentWorkspace.id}/invitations/${inviteId}`,
+        { method: 'DELETE' },
+      );
+      const data = await res.json();
+      if (!res.ok) return { ok: false, error: data.error ?? 'Cancel failed' };
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+  }, [currentWorkspace]);
+
   const can = useCallback((permission: Permission): boolean => {
     if (!currentRole) return false;
     return hasPermission(currentRole, permission);
@@ -244,7 +263,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       currentWorkspace, currentRole, currentMemberId,
       workspaces, members, loading, membersLoading,
       setCurrentWorkspace, refreshWorkspaces, refreshMembers,
-      inviteMember, removeMember, updateMemberRole, can, apiFetch,
+      inviteMember, removeMember, updateMemberRole, cancelInvitation, can, apiFetch,
     }}>
       {children}
     </WorkspaceContext.Provider>

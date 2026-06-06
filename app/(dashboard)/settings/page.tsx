@@ -12,7 +12,9 @@ import {
   Users, UserPlus, Crown, Mail, MoreVertical, UserMinus,
   Monitor, Smartphone, PhoneOff, PhoneIncoming, AlertTriangle, KeyRound,
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useWorkspace } from "@/contexts/workspace-context";
+import { WorkspaceBillingPanel } from "@/components/billing/workspace-billing-panel";
 import { ROLE_LABELS, ROLE_COLORS, type Role } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -782,54 +784,7 @@ function NotificationsTab({ settings, onChange }: {
 // ─── Billing Tab ──────────────────────────────────────────────────────────────
 
 function BillingTab() {
-  return (
-    <div className="space-y-4 max-w-lg">
-      <SectionCard title="Current Plan">
-        <div className="flex items-start gap-4 rounded-xl border border-[#8B5CF6]/20 bg-[#8B5CF6]/[0.05] p-4">
-          <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)' }}
-          >
-            <CreditCard className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <p className="text-sm font-bold text-white">GrowthDialer Pro</p>
-            <p className="mt-0.5 text-xs text-white/40">Full access · All features included</p>
-          </div>
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Subscription Management">
-        <div className="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-          <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-white/25" />
-          <div>
-            <p className="text-sm font-medium text-white/60">Lemon Squeezy billing</p>
-            <p className="mt-1 text-xs text-white/30 leading-relaxed">
-              Subscription management, invoices, and billing details will be available through Lemon Squeezy shortly. You will be able to upgrade, downgrade, and manage payment methods directly here.
-            </p>
-            <span className="mt-2 inline-block rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 text-[10px] font-semibold text-white/30">
-              Coming soon
-            </span>
-          </div>
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Integrations">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-white/70">Connect your tools</p>
-            <p className="text-xs text-white/35 mt-0.5">CRM, Slack, Zapier, and more</p>
-          </div>
-          <a
-            href="/integrations"
-            className="shrink-0 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-xs font-semibold text-white/60 transition hover:border-white/[0.15] hover:text-white"
-          >
-            View Integrations →
-          </a>
-        </div>
-      </SectionCard>
-    </div>
-  );
+  return <WorkspaceBillingPanel />;
 }
 
 // ─── Security Tab ─────────────────────────────────────────────────────────────
@@ -1272,6 +1227,7 @@ function TeamTab() {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab]     = useState<TabKey>('recording');
   const [settings, setSettings]       = useState<UserSettings>(DEFAULT_SETTINGS);
   const [savedSettings, setSavedSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
@@ -1285,6 +1241,13 @@ export default function SettingsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const isDirty = JSON.stringify(settings) !== JSON.stringify(savedSettings);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'billing' || tab === 'team' || tab === 'security' || tab === 'profile') {
+      setActiveTab(tab as TabKey);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const supabase = createClient();

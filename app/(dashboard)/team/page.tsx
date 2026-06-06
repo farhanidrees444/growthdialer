@@ -13,9 +13,12 @@ import {
 import { useWorkspace, type WorkspaceMember } from "@/contexts/workspace-context";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import {
-  ROLE_LABELS, ROLE_COLORS, hasPermission,
+  ROLE_LABELS, ROLE_COLORS, canAssignRole,
   type Role, type Permission,
 } from "@/lib/auth/permissions";
+import { TeamPerformancePanel } from "@/components/team/team-performance-panel";
+import { toast } from "sonner";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,11 +49,13 @@ function InviteModal({
   onClose,
   onInvite,
   busy,
+  allowedRoles,
 }: {
   open: boolean;
   onClose: () => void;
   onInvite: (email: string, role: Role, message?: string) => Promise<void>;
   busy: boolean;
+  allowedRoles: Role[];
 }) {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<Role>('agent');
@@ -117,7 +122,7 @@ function InviteModal({
         <div className="mb-4">
           <label className="mb-1.5 block text-xs font-semibold text-slate-400">Role</label>
           <div className="grid grid-cols-1 gap-2">
-            {ROLES_LIST.map((r) => (
+            {ROLES_LIST.filter((r) => allowedRoles.includes(r.value)).map((r) => (
               <button
                 key={r.value}
                 type="button"
@@ -254,7 +259,7 @@ export default function TeamPage() {
   const {
     currentWorkspace, currentRole, currentMemberId,
     members, loading, membersLoading,
-    inviteMember, removeMember, updateMemberRole, refreshMembers, can,
+    inviteMember, removeMember, updateMemberRole, cancelInvitation, refreshMembers, can,
   } = useWorkspace();
 
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -293,10 +298,27 @@ export default function TeamPage() {
     const result = await inviteMember(email, role, message);
     setInviteBusy(false);
     if (result.ok) {
+      toast.success(`Invitation sent to ${email}`);
       setInviteOpen(false);
       fetchPendingInvites();
+    } else {
+      toast.error(result.error ?? 'Invitation failed');
     }
   }
+
+  async function handleCancelInvite(inviteId: string) {
+    const result = await cancelInvitation(inviteId);
+    if (result.ok) {
+      toast.success('Invitation cancelled');
+      fetchPendingInvites();
+    } else {
+      toast.error(result.error ?? 'Could not cancel invitation');
+    }
+  }
+
+  const assignableRoles = ROLES_LIST
+    .map((r) => r.value)
+    .filter((role) => currentRole && canAssignRole(currentRole, role));
 
   async function handleRemove(member: WorkspaceMember) {
     setActionBusy(true);
@@ -318,6 +340,9 @@ export default function TeamPage() {
   }
 
   const memberCount = members.filter((m) => m.status === 'active').length;
+  const seatsFull = currentWorkspace
+    ? memberCount + pendingInvites.length >= currentWorkspace.max_seats
+    : false;
   const filtered = members.filter((m) =>
     !searchQuery || m.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     m.email?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -367,6 +392,24 @@ export default function TeamPage() {
           </div>
         )}
 
+        <TeamPerformancePanel />
+
+        {seatsFull && canInvite && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
+            <p className="text-sm text-amber-200">
+              Seat limit reached ({memberCount}/{currentWorkspace?.max_seats}). Upgrade to invite more teammates.
+            </p>
+            {can('MANAGE_BILLING') && (
+              <Link
+                href="/settings?tab=billing"
+                className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-100 transition hover:bg-amber-500/20"
+              >
+                Upgrade plan
+              </Link>
+            )}
+          </div>
+        )}
+
         {/* Actions bar */}
         <div className="flex items-center justify-between gap-4">
           <div className="relative flex-1 max-w-xs">
@@ -383,6 +426,7 @@ export default function TeamPage() {
             <Button
               type="button"
               onClick={() => setInviteOpen(true)}
+              disabled={seatsFull}
               className="flex items-center gap-2 rounded-xl py-2 px-4 text-sm font-bold text-white shadow-xl"
               style={{ background: 'linear-gradient(135deg, #059669, #7C3AED)' }}
             >
@@ -468,6 +512,15 @@ export default function TeamPage() {
                   <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 text-[10px] font-semibold">
                     Pending
                   </Badge>
+                  {canInvite && (
+                    <button
+                      type="button"
+                      onClick={() => void handleCancelInvite(inv.id)}
+                      className="rounded-lg border border-white/[0.08] px-2.5 py-1 text-[11px] font-semibold text-slate-400 transition hover:border-red-500/30 hover:text-red-300"
+                    >
+                      Cancel
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -483,6 +536,7 @@ export default function TeamPage() {
             onClose={() => setInviteOpen(false)}
             onInvite={handleInvite}
             busy={inviteBusy}
+            allowedRoles={assignableRoles}
           />
         )}
       </AnimatePresence>

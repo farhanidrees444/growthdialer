@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { hasPermission, type Role } from '@/lib/auth/permissions';
+import { canAssignRole, hasPermission, type Role } from '@/lib/auth/permissions';
 
 type RouteCtx = { params: Promise<{ id: string; userId: string }> };
 
@@ -33,6 +33,22 @@ export async function PATCH(request: NextRequest, { params }: RouteCtx) {
   }
 
   const body = await request.json() as { role?: Role; status?: string };
+
+  if (body.role && !canAssignRole(callerRole, body.role)) {
+    return NextResponse.json({ error: 'You cannot assign that role' }, { status: 403 });
+  }
+
+  const { data: targetMember } = await supabase
+    .from('workspace_members')
+    .select('role')
+    .eq('workspace_id', id)
+    .eq('user_id', userId)
+    .single();
+
+  if (targetMember?.role === 'owner' && callerRole !== 'owner') {
+    return NextResponse.json({ error: 'Cannot change the workspace owner role' }, { status: 403 });
+  }
+
   const patch: Record<string, unknown> = {};
   if (body.role) patch.role = body.role;
   if (body.status) patch.status = body.status;

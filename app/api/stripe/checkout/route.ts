@@ -11,6 +11,9 @@ function stripeReadyForPlan(planData: (typeof PLANS)[PlanKey]) {
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return Response.json({ error: 'Sign in to upgrade your plan' }, { status: 401 });
+  }
   const { plan, annual } = (await req.json()) as { plan: PlanKey; annual: boolean };
 
   if (!PLANS[plan]) {

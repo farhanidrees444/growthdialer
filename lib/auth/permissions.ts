@@ -88,6 +88,14 @@ export function hasPermission(role: string, permission: Permission): boolean {
   return allowed.includes(role);
 }
 
+/** Whether caller may assign targetRole to another member (invite or PATCH). */
+export function canAssignRole(callerRole: string, targetRole: Role): boolean {
+  const caller = callerRole as Role;
+  if (!(caller in ROLE_RANK) || !(targetRole in ROLE_RANK)) return false;
+  if (targetRole === 'owner') return caller === 'owner';
+  return ROLE_RANK[targetRole] <= ROLE_RANK[caller];
+}
+
 export function requirePermission(role: string, permission: Permission): void {
   if (!hasPermission(role, permission)) {
     const allowed = PERMISSIONS[permission] as readonly string[];

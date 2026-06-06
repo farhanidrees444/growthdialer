@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
-
-const PLAN_LIMITS: Record<string, { plan: string; max_seats: number }> = {
-  free: { plan: 'free', max_seats: 1 },
-  pro: { plan: 'pro', max_seats: 3 },
-  team: { plan: 'team', max_seats: 10 },
-};
+import { getWorkspacePlanLimits } from '@/lib/billing/workspace-plans';
 
 function slugFromName(name: string) {
   const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -54,7 +49,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Workspace name is required' }, { status: 400 });
   }
 
-  const limits = PLAN_LIMITS[body.plan ?? 'free'] ?? PLAN_LIMITS.free;
+  const limits = getWorkspacePlanLimits(body.plan);
   const slug = body.slug?.trim() || slugFromName(body.name.trim());
   const name = body.name.trim();
 

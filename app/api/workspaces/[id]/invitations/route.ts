@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { hasPermission, type Role } from '@/lib/auth/permissions';
+import { canAssignRole, hasPermission, type Role } from '@/lib/auth/permissions';
+import { countWorkspaceSeatsUsed } from '@/lib/billing/workspace-seats';
 import { sendInvitationEmail } from '@/lib/email/invitation';
 import crypto from 'crypto';
 
@@ -28,20 +29,23 @@ export async function POST(
 
   const body = await request.json() as { email: string; role?: Role; message?: string };
   const email = body.email?.trim().toLowerCase();
+  const inviteRole = (body.role ?? 'agent') as Role;
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: 'Valid email address is required' }, { status: 400 });
   }
 
-  // Check seat limit
-  const { data: ws } = await supabase.from('workspaces').select('max_seats, name').eq('id', id).single();
-  const { count: seatCount } = await supabase
-    .from('workspace_members')
-    .select('*', { count: 'exact', head: true })
-    .eq('workspace_id', id)
-    .eq('status', 'active');
+  if (!canAssignRole(callerMember.role as Role, inviteRole)) {
+    return NextResponse.json({ error: 'You cannot assign that role' }, { status: 403 });
+  }
 
-  if (ws && seatCount !== null && seatCount >= ws.max_seats) {
-    return NextResponse.json({ error: `Seat limit reached (${ws.max_seats} seats)` }, { status: 422 });
+  const { data: ws } = await supabase.from('workspaces').select('max_seats, name').eq('id', id).single();
+  const seats = await countWorkspaceSeatsUsed(supabase, id);
+
+  if (ws && seats.totalUsed >= ws.max_seats) {
+    return NextResponse.json({
+      error: `Seat limit reached (${seats.totalUsed}/${ws.max_seats} used). Upgrade your plan or cancel a pending invite.`,
+      code: 'seat_limit',
+    }, { status: 422 });
   }
 
   // Check if already a member
@@ -70,7 +74,7 @@ export async function POST(
     .insert({
       workspace_id: id,
       email,
-      role: body.role ?? 'agent',
+      role: inviteRole,
       invited_by: user.id,
       token,
       expires_at: expiresAt,
