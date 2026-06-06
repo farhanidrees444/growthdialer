@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { MiniWave } from './LiveWaveform';
-import { APP_SIGNUP, FOOTER_COLUMNS, SOCIAL_LINKS } from '@/lib/marketing/navigation';
+import { APP_SIGNUP, FOOTER_COLUMNS, SOCIAL_LINKS, STATUS_URL } from '@/lib/marketing/navigation';
 
 function TwitterIcon() {
   return (
@@ -38,14 +38,28 @@ const SOCIAL_ICONS = [TwitterIcon, LinkedinIcon, GithubIcon, YoutubeIcon];
 
 export function SiteFooter() {
   return (
-    <footer className="relative border-t border-white/[0.06] px-5 py-14 lg:px-8">
-      <div className="mx-auto grid max-w-7xl gap-10 sm:grid-cols-2 lg:grid-cols-6">
+    <footer className="relative overflow-hidden px-5 pb-10 pt-16 lg:px-8">
+      <div
+        aria-hidden
+        className="mb-12 h-px w-full bg-gradient-to-r from-transparent via-[#7C3AED]/40 to-transparent"
+      />
+
+      <p
+        aria-hidden
+        className="pointer-events-none absolute bottom-8 left-1/2 -translate-x-1/2 select-none font-display text-[clamp(4rem,14vw,11rem)] font-semibold leading-none tracking-tighter text-white/[0.03]"
+      >
+        GrowthDialer
+      </p>
+
+      <div className="relative mx-auto grid max-w-7xl gap-10 sm:grid-cols-2 lg:grid-cols-6">
         <div className="sm:col-span-2 lg:col-span-1">
           <div className="flex items-center gap-2.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03]">
               <MiniWave className="scale-90" />
             </span>
-            <span className="text-[15px] font-medium tracking-tight text-[#F5F5F7]">GrowthDialer</span>
+            <span className="font-display text-[15px] font-semibold tracking-tight text-[#F5F5F7]">
+              GrowthDialer
+            </span>
           </div>
           <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-zinc-500">
             The AI sales dialer that turns every conversation into searchable revenue intelligence.
@@ -60,7 +74,7 @@ export function SiteFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.02] text-zinc-500 transition-colors hover:border-white/[0.12] hover:text-[#F5F5F7]"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.02] text-zinc-500 transition-all hover:translate-x-0.5 hover:border-white/[0.12] hover:text-[#F5F5F7]"
                 >
                   <Icon />
                 </a>
@@ -69,7 +83,7 @@ export function SiteFooter() {
           </div>
           <a
             href={APP_SIGNUP}
-            className="mt-5 inline-flex text-[13px] font-medium text-[#8B5CF6] transition-colors hover:text-[#A78BFA]"
+            className="mt-5 inline-flex text-[13px] font-medium text-[#A78BFA] transition-colors hover:text-[#C4B5FD]"
           >
             Start free →
           </a>
@@ -77,7 +91,7 @@ export function SiteFooter() {
 
         {FOOTER_COLUMNS.map((col) => (
           <div key={col.heading}>
-            <p className="mb-4 text-[12px] font-medium uppercase tracking-[0.15em] text-zinc-600">
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-600">
               {col.heading}
             </p>
             <ul className="space-y-2.5">
@@ -85,7 +99,7 @@ export function SiteFooter() {
                 <li key={l.label}>
                   <Link
                     href={l.href}
-                    className="text-[13px] text-zinc-400 transition-colors hover:text-[#F5F5F7]"
+                    className="inline-block text-[13px] text-zinc-400 transition-all hover:translate-x-0.5 hover:text-[#F5F5F7]"
                   >
                     {l.label}
                   </Link>
@@ -96,10 +110,22 @@ export function SiteFooter() {
         ))}
       </div>
 
-      <div className="mx-auto mt-12 flex max-w-7xl flex-col items-center justify-between gap-4 border-t border-white/[0.06] pt-7 sm:flex-row">
+      <div className="relative mx-auto mt-12 flex max-w-7xl flex-col items-center justify-between gap-4 border-t border-white/[0.05] pt-7 sm:flex-row">
         <p className="text-[12px] text-zinc-600">
           © {new Date().getFullYear()} GrowthDialer. All rights reserved.
         </p>
+        <a
+          href={STATUS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-[12px] text-zinc-500 transition-colors hover:text-zinc-300"
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-40" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+          </span>
+          All systems operational
+        </a>
         <div className="flex flex-wrap items-center justify-center gap-4 text-[12px]">
           <Link href="/privacy" className="text-zinc-500 transition-colors hover:text-[#F5F5F7]">
             Privacy
@@ -110,12 +136,6 @@ export function SiteFooter() {
           <Link href="/status" className="text-zinc-500 transition-colors hover:text-[#F5F5F7]">
             Status
           </Link>
-          <a
-            href="https://app.growthdialer.com"
-            className="text-zinc-500 transition-colors hover:text-[#F5F5F7]"
-          >
-            app.growthdialer.com
-          </a>
         </div>
       </div>
     </footer>

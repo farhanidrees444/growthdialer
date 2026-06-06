@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 
 const stats = [
-  { value: 150, suffix: "+", label: "Avg. daily calls per rep", prefix: "" },
-  { value: 22, suffix: "%", label: "Average connect rate", prefix: "" },
-  { value: 3, suffix: "×", label: "More meetings booked", prefix: "" },
-  { value: 2400, suffix: "+", label: "Sales teams trust us", prefix: "" },
+  { value: 50, suffix: '+', label: 'Countries you can dial', prefix: '' },
+  { value: 3, suffix: '', label: 'AI Dialer focus modes', prefix: '' },
+  { value: 100, suffix: '%', label: 'Calls recorded & analyzed', prefix: '' },
+  { value: 4, suffix: 's', label: 'To an AI call summary', prefix: '<' },
 ];
 
 function Counter({ target, suffix, prefix }: { target: number; suffix: string; prefix: string }) {

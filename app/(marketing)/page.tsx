@@ -2,18 +2,18 @@ import type { Metadata } from 'next';
 import { MotionShell } from '@/components/marketing/live-floor/MotionShell';
 import { Nav } from '@/components/marketing/live-floor/Nav';
 import { Grain } from '@/components/marketing/live-floor/Grain';
+import { BackgroundSystem } from '@/components/marketing/live-floor/BackgroundSystem';
+import { ScrollProgress } from '@/components/marketing/live-floor/ScrollProgress';
 import { Hero } from '@/components/marketing/live-floor/Hero';
 import { Features } from '@/components/marketing/live-floor/Features';
 import { FinalCTA } from '@/components/marketing/live-floor/FinalCTA';
 import { IntegrationsMarquee } from '@/components/marketing/home/IntegrationsMarquee';
-import { DashboardPreview } from '@/components/marketing/home/DashboardPreview';
-import { InteractivePipeline } from '@/components/marketing/home/InteractivePipeline';
-import { FeatureSections } from '@/components/marketing/home/FeatureSections';
-import { HowItWorks } from '@/components/marketing/home/HowItWorks';
+import { ProductPreviewTabs } from '@/components/marketing/home/ProductPreviewTabs';
+import { StickyHowItWorks } from '@/components/marketing/home/StickyHowItWorks';
 import { StatsStrip } from '@/components/marketing/home/StatsStrip';
-import { EarlyAccess } from '@/components/marketing/home/EarlyAccess';
+import { TestimonialsTicker } from '@/components/marketing/home/TestimonialsTicker';
+import { HomePricing } from '@/components/marketing/home/HomePricing';
 import { HomeFAQ } from '@/components/marketing/home/HomeFAQ';
-import { AiProductPillars } from '@/components/marketing/home/AiProductPillars';
 
 export const metadata: Metadata = {
   title: 'AI Sales Dialer — Record, Transcribe & Analyze Every Call',
@@ -22,30 +22,23 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://growthdialer.com' },
 };
 
-// "The Live Floor" — the homepage is a living dialer that demonstrates itself
-// through real-time motion and an interactive story.
 export default function LandingPage() {
   return (
     <MotionShell>
-      <div className="relative min-h-screen overflow-x-clip bg-[#08080A] text-[#F5F5F7] antialiased">
+      <div className="marketing-site relative min-h-screen overflow-x-clip bg-[#08080A] text-[#F8F8FF] antialiased selection:bg-[#7C3AED]/30 selection:text-white">
+        <BackgroundSystem />
         <Grain />
-        {/* Subtle grid depth, faded toward the edges */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-0 bg-grid-pattern opacity-[0.4] [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]"
-        />
+        <ScrollProgress />
         <Nav />
         <main className="relative z-[2]">
           <Hero />
           <IntegrationsMarquee />
-          <DashboardPreview />
-          <InteractivePipeline />
+          <ProductPreviewTabs />
           <Features />
-          <AiProductPillars />
-          <FeatureSections />
-          <HowItWorks />
+          <StickyHowItWorks />
           <StatsStrip />
-          <EarlyAccess />
+          <TestimonialsTicker />
+          <HomePricing />
           <HomeFAQ />
           <FinalCTA />
         </main>

@@ -224,10 +224,58 @@
 .marquee-track:hover {
   animation-play-state: paused;
 }
+@keyframes marquee-x-reverse {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+.marquee-track-reverse {
+  animation: marquee-x-reverse 40s linear infinite;
+  will-change: transform;
+}
+.marquee-track-reverse:hover {
+  animation-play-state: paused;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes beam {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.animate-beam {
+  animation: beam 8s linear infinite;
+}
+
+/* Marketing site grain + focus (scoped — dashboard unaffected) */
+.marketing-site::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  pointer-events: none;
+  z-index: 9998;
+  mix-blend-mode: overlay;
+}
+.marketing-site *:focus-visible {
+  outline: 2px solid #7C3AED;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* Respect reduced motion — only here, never broadly */
 @media (prefers-reduced-motion: reduce) {
   .ticker-track,
-  .marquee-track {
+  .marquee-track,
+  .marquee-track-reverse,
+  .animate-float,
+  .animate-beam {
     animation: none;
   }
 }

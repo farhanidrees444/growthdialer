@@ -3,11 +3,19 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Menu, X, ChevronDown, Target, Zap, BarChart3, Headphones, ArrowRight } from 'lucide-react';
 import { MiniWave } from './LiveWaveform';
+import { ShimmerButton } from './ShimmerButton';
 import { EASE_OUT } from './motion';
 import { APP_SIGNIN, APP_SIGNUP, TOP_NAV } from '@/lib/marketing/navigation';
 import { cn } from '@/lib/utils';
+
+const PRODUCT_FEATURES = [
+  { icon: Target, label: 'AI Dialer', href: '/features/ai', desc: '3-mode focus stage' },
+  { icon: Zap, label: 'Power Dialer', href: '/features', desc: 'Queue & parallel dial' },
+  { icon: BarChart3, label: 'Analytics', href: '/features', desc: 'Connect rate & talk time' },
+  { icon: Headphones, label: 'Coaching', href: '/features/salesfloor', desc: 'Live manager floor' },
+];
 
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
@@ -17,7 +25,7 @@ export function Nav() {
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 16);
+    const onScroll = () => setScrolled(window.scrollY > 20);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -32,24 +40,27 @@ export function Nav() {
     >
       <div
         className={cn(
-          'mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 transition-all duration-500 lg:px-8',
+          'mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 transition-all duration-300 lg:px-8',
           scrolled
             ? 'border-b border-white/[0.06] bg-[#08080A]/80 backdrop-blur-xl'
-            : 'border-b border-transparent'
+            : 'border-b border-transparent bg-transparent'
         )}
       >
         <Link href="/" className="group flex shrink-0 items-center gap-2.5">
-          <span className="relative flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03]">
+          <span className="relative flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] transition-transform group-hover:scale-105">
             <MiniWave className="scale-90" />
           </span>
-          <span className="text-[15px] font-medium tracking-tight text-[#F5F5F7]">
+          <span className="font-display text-[15px] font-semibold tracking-tight text-[#F5F5F7]">
             GrowthDialer
           </span>
         </Link>
 
         <nav
-          className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-0.5 lg:flex"
-          onMouseLeave={() => setHovered(null)}
+          className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 lg:flex"
+          onMouseLeave={() => {
+            setHovered(null);
+            setDropdownOpen(null);
+          }}
         >
           {TOP_NAV.map((item) =>
             item.children ? (
@@ -60,19 +71,11 @@ export function Nav() {
                   setHovered(item.label);
                   setDropdownOpen(item.label);
                 }}
-                onMouseLeave={() => setDropdownOpen(null)}
               >
                 <button
                   type="button"
-                  className="relative flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
+                  className="group relative flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/50"
                 >
-                  {hovered === item.label && (
-                    <motion.span
-                      layoutId="nav-hover-pill"
-                      className="absolute inset-0 -z-10 rounded-lg bg-white/[0.06]"
-                      transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-                    />
-                  )}
                   {item.label}
                   <ChevronDown
                     className={cn(
@@ -80,9 +83,58 @@ export function Nav() {
                       dropdownOpen === item.label && 'rotate-180'
                     )}
                   />
+                  <span className="absolute bottom-1 left-3 right-3 h-px origin-left scale-x-0 bg-[#7C3AED] transition-transform duration-300 group-hover:scale-x-100" />
                 </button>
                 <AnimatePresence>
-                  {dropdownOpen === item.label && (
+                  {dropdownOpen === item.label && item.label === 'Features' && (
+                    <motion.div
+                      initial={{ opacity: 0, scaleY: 0.95, y: 6 }}
+                      animate={{ opacity: 1, scaleY: 1, y: 0 }}
+                      exit={{ opacity: 0, scaleY: 0.95, y: 6 }}
+                      transition={{ duration: 0.15 }}
+                      style={{ transformOrigin: 'top' }}
+                      className="absolute left-1/2 top-full z-50 mt-2 w-[480px] -translate-x-1/2 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0c0c0e]/95 shadow-2xl shadow-black/50 backdrop-blur-xl"
+                    >
+                      <div className="grid grid-cols-2 gap-0 p-2">
+                        <div className="space-y-1 p-2">
+                          {PRODUCT_FEATURES.map((f) => {
+                            const Icon = f.icon;
+                            return (
+                              <Link
+                                key={f.label}
+                                href={f.href}
+                                className="flex items-start gap-3 rounded-xl p-3 transition-colors hover:bg-white/[0.04]"
+                              >
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#7C3AED]/10 text-[#A78BFA]">
+                                  <Icon className="h-4 w-4" />
+                                </span>
+                                <span>
+                                  <span className="block text-sm font-medium text-[#F5F5F7]">{f.label}</span>
+                                  <span className="text-[12px] text-zinc-500">{f.desc}</span>
+                                </span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                        <div className="border-l border-white/[0.06] p-4">
+                          <span className="mb-2 inline-flex rounded-full bg-[#7C3AED]/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#A78BFA]">
+                            What&apos;s new
+                          </span>
+                          <p className="text-sm font-medium text-[#F5F5F7]">AI Call Briefs</p>
+                          <p className="mt-1 text-[12px] leading-relaxed text-zinc-500">
+                            Context before every dial — company, intent and last touch in one glance.
+                          </p>
+                          <Link
+                            href="/features/ai"
+                            className="mt-3 inline-flex items-center gap-1 text-[12px] font-medium text-[#A78BFA] hover:text-[#C4B5FD]"
+                          >
+                            Read more <ArrowRight className="h-3 w-3" />
+                          </Link>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                  {dropdownOpen === item.label && item.label !== 'Features' && (
                     <motion.div
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -108,7 +160,7 @@ export function Nav() {
                 key={item.label}
                 href={item.href}
                 onMouseEnter={() => setHovered(item.label)}
-                className="relative rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
+                className="group relative rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/50"
               >
                 {hovered === item.label && (
                   <motion.span
@@ -118,6 +170,7 @@ export function Nav() {
                   />
                 )}
                 {item.label}
+                <span className="absolute bottom-1 left-3 right-3 h-px origin-left scale-x-0 bg-[#7C3AED] transition-transform duration-300 group-hover:scale-x-100" />
               </Link>
             )
           )}
@@ -126,16 +179,14 @@ export function Nav() {
         <div className="hidden shrink-0 items-center gap-2 lg:flex">
           <a
             href={APP_SIGNIN}
-            className="rounded-lg px-3.5 py-2 text-sm text-zinc-300 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
+            className="rounded-lg px-3.5 py-2 text-sm text-zinc-300 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/50"
           >
             Log in
           </a>
-          <a
-            href={APP_SIGNUP}
-            className="group relative rounded-lg bg-[#8B5CF6] px-4 py-2 text-sm font-medium text-white ring-1 ring-inset ring-white/15 transition-all hover:bg-[#7C3AED] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A]"
-          >
+          <ShimmerButton href={APP_SIGNUP} className="!h-10 !px-4 !text-sm">
             Start Free
-          </a>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </ShimmerButton>
         </div>
 
         <button
@@ -143,30 +194,40 @@ export function Nav() {
           onClick={() => setOpen((v) => !v)}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] text-zinc-300 lg:hidden"
           aria-label="Toggle menu"
+          aria-expanded={open}
         >
-          {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          <motion.span animate={{ rotate: open ? 90 : 0 }} transition={{ duration: 0.2 }}>
+            {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </motion.span>
         </button>
       </div>
 
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.4, ease: EASE_OUT }}
-            className="overflow-hidden border-b border-white/[0.06] bg-[#08080A]/95 backdrop-blur-xl lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 top-16 z-40 bg-[#08080A] lg:hidden"
           >
-            <div className="space-y-1 px-5 py-4">
+            <motion.div
+              initial="hidden"
+              animate="show"
+              variants={{
+                hidden: {},
+                show: { transition: { staggerChildren: 0.05 } },
+              }}
+              className="space-y-1 px-5 py-6"
+            >
               {TOP_NAV.map((item) =>
                 item.children ? (
-                  <div key={item.label}>
+                  <motion.div key={item.label} variants={{ hidden: { opacity: 0, x: -12 }, show: { opacity: 1, x: 0 } }}>
                     <button
                       type="button"
                       onClick={() =>
                         setMobileExpanded((v) => (v === item.label ? null : item.label))
                       }
-                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-zinc-300 hover:bg-white/[0.03] hover:text-[#F5F5F7]"
+                      className="flex w-full items-center justify-between rounded-lg px-3 py-3 text-base text-zinc-300"
                     >
                       {item.label}
                       <ChevronDown
@@ -183,38 +244,38 @@ export function Nav() {
                             key={child.label}
                             href={child.href}
                             onClick={() => setOpen(false)}
-                            className="block rounded-lg px-3 py-2 text-sm text-zinc-500 hover:bg-white/[0.03] hover:text-[#F5F5F7]"
+                            className="block rounded-lg px-3 py-2 text-sm text-zinc-500 hover:text-[#F5F5F7]"
                           >
                             {child.label}
                           </Link>
                         ))}
                       </div>
                     )}
-                  </div>
+                  </motion.div>
                 ) : (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className="block rounded-lg px-3 py-2.5 text-sm text-zinc-300 hover:bg-white/[0.03] hover:text-[#F5F5F7]"
-                  >
-                    {item.label}
-                  </Link>
+                  <motion.div key={item.label} variants={{ hidden: { opacity: 0, x: -12 }, show: { opacity: 1, x: 0 } }}>
+                    <Link
+                      href={item.href}
+                      onClick={() => setOpen(false)}
+                      className="block rounded-lg px-3 py-3 text-base text-zinc-300"
+                    >
+                      {item.label}
+                    </Link>
+                  </motion.div>
                 )
               )}
-              <div className="mt-3 flex flex-col gap-2 border-t border-white/[0.06] pt-3">
-                <a href={APP_SIGNIN} className="rounded-lg px-3 py-2.5 text-sm text-zinc-300 hover:bg-white/[0.03]">
+              <motion.div
+                variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}
+                className="mt-6 space-y-3 border-t border-white/[0.06] pt-6"
+              >
+                <a href={APP_SIGNIN} className="block px-3 py-2 text-sm text-zinc-400">
                   Log in
                 </a>
-                <a
-                  href={APP_SIGNUP}
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg bg-[#8B5CF6] px-3 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-[#7C3AED]"
-                >
+                <ShimmerButton href={APP_SIGNUP} className="w-full justify-center">
                   Start Free
-                </a>
-              </div>
-            </div>
+                </ShimmerButton>
+              </motion.div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

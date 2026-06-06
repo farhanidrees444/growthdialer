@@ -1,39 +1,80 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { Target, Zap, Brain, Users, BarChart3, ShieldCheck, Clock } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Target, Zap, Brain, Users, BarChart3, ShieldCheck, Clock, Headphones } from 'lucide-react';
 import { LiveWaveform } from './LiveWaveform';
 import { Spotlight } from './Spotlight';
 import { reveal, revealContainer } from './motion';
 
-const FEATURES = [
-  {
-    icon: Zap,
-    title: 'Power Dialer',
-    body: 'Burn through a call list back-to-back. Disposition, take notes and move to the next number without breaking rhythm.',
-  },
-  {
-    icon: Users,
-    title: 'Smart Leads',
-    body: 'Import, organize and work your pipeline. Every call links back to the lead with full history.',
-  },
-  {
-    icon: BarChart3,
-    title: 'Analytics',
-    body: 'Connect rate, talk time, dispositions, sentiment trends — your whole calling operation in one view.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Number Health & Spam Monitoring',
-    body: 'Track carrier reputation and spam risk on every number so your calls keep landing.',
-  },
+const SMALL_CARDS = [
+  { icon: Zap, title: 'Power Dialer', body: 'Back-to-back dialing with disposition and notes in rhythm.', col: 'lg:col-span-3' },
+  { icon: Users, title: 'Smart Leads', body: 'Import, organize and work your pipeline with full call history.', col: 'lg:col-span-2' },
+  { icon: BarChart3, title: 'Analytics', body: 'Connect rate, talk time, dispositions and sentiment trends.', col: 'lg:col-span-3' },
+  { icon: ShieldCheck, title: 'Number Health', body: 'Carrier reputation and spam risk on every number you own.', col: 'lg:col-span-5' },
+  { icon: Headphones, title: 'Live Coaching', body: 'Manager floor with whisper mode while reps stay on calls.', col: 'lg:col-span-4' },
 ];
 
-const COMING_SOON = ['AI voice agent', 'CRM integrations'];
+const COMING_SOON = ['CRM sync (beyond HubSpot)', 'AI voice agent'];
+
+function TranscriptDemo() {
+  const ref = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
+  const [active, setActive] = useState(false);
+  const [line, setLine] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => setActive(e.isIntersecting),
+      { threshold: 0.4 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!active || reduce) return;
+    const id = setInterval(() => setLine((l) => (l >= 2 ? 0 : l + 1)), 2800);
+    return () => clearInterval(id);
+  }, [active, reduce]);
+
+  const lines = [
+    { speaker: 'Rep', text: "What's your current process for follow-ups?" },
+    { speaker: 'Prospect', text: '…that actually solves the problem for us.' },
+  ];
+
+  return (
+    <div ref={ref} className="mt-6 space-y-3">
+      {lines.map((l, i) => (
+        <motion.div
+          key={l.speaker}
+          initial={false}
+          animate={{ opacity: line >= i ? 1 : 0.25 }}
+          className="rounded-xl border border-white/[0.05] bg-black/30 p-3"
+        >
+          <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-600">{l.speaker}</p>
+          <p className="mt-1 text-[12px] text-zinc-400">
+            {line >= i ? l.text : '…'}
+          </p>
+        </motion.div>
+      ))}
+      <motion.div
+        initial={false}
+        animate={{ opacity: line >= 2 ? 1 : 0 }}
+        className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-400"
+      >
+        Positive sentiment
+      </motion.div>
+      <LiveWaveform bars={36} height={36} barWidth={2} gap={2} />
+    </div>
+  );
+}
 
 export function Features() {
   return (
-    <section id="features" className="relative px-5 py-16 lg:px-8 lg:py-24">
+    <section id="features" className="relative px-5 py-20 lg:px-8 lg:py-28">
       <div className="mx-auto max-w-7xl">
         <motion.div
           initial="hidden"
@@ -43,67 +84,29 @@ export function Features() {
           className="mb-14 max-w-2xl"
         >
           <motion.p variants={reveal} className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
-            What you get today
+            Platform
           </motion.p>
           <motion.h2 variants={reveal} className="font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.05] tracking-tight text-[#F5F5F7]">
             A dialer that does the <span className="font-medium">listening</span> for you.
           </motion.h2>
         </motion.div>
 
-        {/* Bento grid — asymmetric, no uniform box-in-box */}
         <motion.div
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: '-80px' }}
           variants={revealContainer}
-          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12"
         >
-          {/* Hero feature — AI Dialer, spans 2 cols on lg, with living waveform */}
           <motion.article
             variants={reveal}
-            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12] hover:bg-white/[0.03] sm:col-span-2 lg:row-span-2"
+            whileHover={{ y: -4 }}
+            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0F0F12] p-6 transition-colors hover:border-[#7C3AED]/30 hover:bg-[#16161A] hover:shadow-[0_20px_40px_rgba(0,0,0,0.4),0_0_0_1px_rgba(124,58,237,0.15)] lg:col-span-7 lg:row-span-2"
           >
             <Spotlight />
             <div>
               <div className="mb-5 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8B5CF6]/10 text-[#8B5CF6]">
-                  <Target className="h-5 w-5" />
-                </span>
-                <span className="rounded-full border border-white/[0.08] px-2.5 py-1 text-[11px] font-medium text-zinc-400">
-                  3-mode Focus Stage
-                </span>
-              </div>
-              <h3 className="font-display text-2xl font-medium tracking-tight text-[#F5F5F7]">
-                AI Dialer
-              </h3>
-              <p className="mt-3 max-w-md text-[15px] leading-relaxed text-zinc-400">
-                A focused calling surface built for outbound. Move through leads
-                with a clean three-mode stage, live call controls and instant
-                recording — designed so the rep only has to talk.
-              </p>
-            </div>
-
-            {/* Living waveform anchored in the card */}
-            <div className="mt-8 rounded-xl border border-white/[0.05] bg-black/30 p-5">
-              <div className="mb-3 flex items-center justify-between">
-                <span className="flex items-center gap-2 text-xs font-medium text-[#06B6D4]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#06B6D4]" /> On call
-                </span>
-                <span className="font-mono text-xs tabular-nums text-zinc-600">01:08</span>
-              </div>
-              <LiveWaveform bars={52} height={48} barWidth={2.5} gap={2.5} />
-            </div>
-          </motion.article>
-
-          {/* Second large feature — AI Conversation Intelligence (transcript → key points) */}
-          <motion.article
-            variants={reveal}
-            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12] hover:bg-white/[0.03] sm:col-span-2 lg:row-span-2"
-          >
-            <Spotlight />
-            <div>
-              <div className="mb-5 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#06B6D4]/10 text-[#06B6D4]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7C3AED]/10 text-[#A78BFA]">
                   <Brain className="h-5 w-5" />
                 </span>
                 <span className="rounded-full border border-white/[0.08] px-2.5 py-1 text-[11px] font-medium text-zinc-400">
@@ -113,56 +116,57 @@ export function Features() {
               <h3 className="font-display text-2xl font-medium tracking-tight text-[#F5F5F7]">
                 AI Conversation Intelligence
               </h3>
-              <p className="mt-3 max-w-md text-[15px] leading-relaxed text-zinc-400">
-                Every recorded call is transcribed and distilled into a summary,
-                sentiment and intent — the moment you hang up, no notes required.
+              <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-zinc-400">
+                Every recorded call transcribed and distilled into summary, sentiment and intent — the moment you hang up.
               </p>
             </div>
+            <TranscriptDemo />
+          </motion.article>
 
-            {/* transcript → glowing key points */}
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-white/[0.05] bg-black/30 p-4">
-                <p className="mb-2 text-[10px] font-medium uppercase tracking-widest text-zinc-600">Transcript</p>
-                <p className="text-[12px] leading-relaxed text-zinc-500">
-                  &ldquo;…send pricing for a team of twelve, and let&apos;s talk Thursday.&rdquo;
-                </p>
-              </div>
-              <div className="space-y-1.5">
-                {['Positive sentiment', 'Intent: pricing + demo', 'Next: follow up Thu'].map((t) => (
-                  <div key={t} className="flex items-center gap-2 rounded-lg border border-[#8B5CF6]/15 bg-[#8B5CF6]/[0.06] px-2.5 py-1.5 text-[12px] text-zinc-300">
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#8B5CF6]" /> {t}
-                  </div>
-                ))}
-              </div>
+          <motion.article
+            variants={reveal}
+            whileHover={{ y: -4 }}
+            className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0F0F12] p-6 transition-colors hover:border-[#7C3AED]/30 hover:bg-[#16161A] lg:col-span-3 lg:row-span-2"
+          >
+            <Spotlight />
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#7C3AED]/10 text-[#A78BFA]">
+              <Target className="h-5 w-5" />
+            </div>
+            <h3 className="font-display text-xl font-medium text-[#F5F5F7]">AI Dialer</h3>
+            <p className="mt-2 text-[14px] leading-relaxed text-zinc-400">
+              Three-mode focus stage — browse, preview and live — built for outbound rhythm.
+            </p>
+            <div className="mt-6 rounded-xl border border-white/[0.05] bg-black/30 p-4">
+              <LiveWaveform bars={32} height={40} />
             </div>
           </motion.article>
 
-          {FEATURES.map((f) => {
+          {SMALL_CARDS.map((f) => {
             const Icon = f.icon;
             return (
               <motion.article
                 key={f.title}
                 variants={reveal}
-                className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12] hover:bg-white/[0.03]"
+                whileHover={{ y: -4 }}
+                className={`group relative rounded-2xl border border-white/[0.06] bg-[#0F0F12] p-5 transition-colors hover:border-[#7C3AED]/30 hover:bg-[#16161A] ${f.col}`}
               >
                 <Spotlight />
-                <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04] text-zinc-300 transition-colors group-hover:text-[#F5F5F7]">
-                  <Icon className="h-5 w-5" />
+                <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.04] text-zinc-300 group-hover:text-[#A78BFA]">
+                  <Icon className="h-4 w-4" />
                 </span>
                 <h3 className="text-[15px] font-medium text-[#F5F5F7]">{f.title}</h3>
-                <p className="mt-2 text-[14px] leading-relaxed text-zinc-400">{f.body}</p>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-400">{f.body}</p>
               </motion.article>
             );
           })}
         </motion.div>
 
-        {/* Honest coming-soon strip */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
-          className="mt-8 flex flex-col items-start gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.01] px-6 py-4 sm:flex-row sm:items-center"
+          className="mt-8 flex flex-col items-start gap-3 rounded-2xl border border-white/[0.06] bg-[#0F0F12]/50 px-6 py-4 sm:flex-row sm:items-center"
         >
           <span className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.15em] text-zinc-500">
             <Clock className="h-3.5 w-3.5" /> On the roadmap

@@ -7,7 +7,7 @@ import { Plus, Minus } from "lucide-react";
 const faqs = [
   {
     q: "How does GrowthDialer compare to Orum and Nooks?",
-    a: "GrowthDialer offers parallel dialing up to 10 lines (vs Orum's 3 and Nooks' 5), AI voice technology for better conversations, and team collaboration features. At $29/user/mo, we're 50% cheaper than Orum ($59) and 35% cheaper than Nooks ($45) while delivering superior results.",
+    a: "GrowthDialer offers parallel dialing up to 10 lines, AI call summaries on every recorded call, and a live coaching floor. Pro starts at $49/workspace/mo (annual billing) — compare our full feature set on the pricing page.",
   },
   {
     q: "How does parallel dialing work?",
@@ -19,7 +19,7 @@ const faqs = [
   },
   {
     q: "Does GrowthDialer integrate with my CRM?",
-    a: "Yes — we have native integrations with Salesforce, HubSpot, Pipedrive, Outreach, Salesloft, and Apollo.io. Every call is automatically logged with disposition, duration, and AI-generated notes.",
+    a: "HubSpot integration is live today. Additional CRM connectors are on the roadmap — see Integrations for what's shipping next. Every call is logged with disposition, duration, and AI-generated notes in GrowthDialer.",
   },
   {
     q: "Is there a free trial?",
@@ -46,8 +46,8 @@ const faqs = [
     a: "Yes — managers can join calls silently, provide live coaching, or take over if needed. All activity is logged for performance reviews and training purposes.",
   },
   {
-    q: "What's included in the $29/month plan?",
-    a: "Everything: parallel dialing, AI voice, CRM integrations, unlimited calls, call recording, team analytics, live coaching, and priority support. No hidden fees or add-ons required.",
+    q: "What's included in the free Starter plan?",
+    a: "Starter is free (1 seat) with recording and AI summaries. Pro is $49/mo monthly or $39/mo billed annually for up to 3 seats with the full AI dialer, power dialing, and coaching floor.",
   },
 ];
 

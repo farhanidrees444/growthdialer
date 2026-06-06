@@ -110,75 +110,27 @@ export default async function Image() {
             The Sales Platform That Never Stops Closing
           </p>
 
-          {/* Stats */}
+          {/* Stats — honest capability facts */}
           <div
             style={{
               display: 'flex',
-              gap: '60px',
+              gap: '48px',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: '40px',
-                  fontWeight: 'bold',
-                  color: '#16a34a',
-                  marginBottom: '8px',
-                }}
-              >
-                2,400+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#A78BFA', marginBottom: '8px' }}>
+                AI Dialer
               </div>
-              <div
-                style={{
-                  fontSize: '18px',
-                  color: '#9ca3af',
-                }}
-              >
-                Sales Teams
-              </div>
+              <div style={{ fontSize: '16px', color: '#9ca3af' }}>Record · Transcribe · Analyze</div>
             </div>
-
-            <div
-              style={{
-                width: '2px',
-                height: '80px',
-                background: 'rgba(255, 255, 255, 0.1)',
-              }}
-            />
-
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: '40px',
-                  fontWeight: 'bold',
-                  color: '#16a34a',
-                  marginBottom: '8px',
-                }}
-              >
-                4.9/5
+            <div style={{ width: '2px', height: '60px', background: 'rgba(255,255,255,0.1)' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#A78BFA', marginBottom: '8px' }}>
+                Start Free
               </div>
-              <div
-                style={{
-                  fontSize: '18px',
-                  color: '#9ca3af',
-                }}
-              >
-                Customer Rating
-              </div>
+              <div style={{ fontSize: '16px', color: '#9ca3af' }}>No credit card required</div>
             </div>
           </div>
         </div>
