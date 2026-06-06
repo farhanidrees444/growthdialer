@@ -12,6 +12,7 @@ import {
   Users, UserPlus, Crown, Mail, MoreVertical, UserMinus,
   Monitor, Smartphone, PhoneOff, PhoneIncoming, AlertTriangle, KeyRound,
   Building2,
+  type LucideIcon,
 } from "lucide-react";
 import { WorkspaceSettingsPanel } from "@/components/settings/workspace-settings-panel";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -62,7 +63,7 @@ const DEFAULT_SETTINGS: UserSettings = {
 
 type TabKey = 'profile' | 'workspace' | 'recording' | 'ai' | 'calling' | 'voicemails' | 'notifications' | 'billing' | 'team' | 'security';
 
-const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
+const TABS: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: 'profile',       label: 'Profile',        icon: Settings },
   { key: 'workspace',     label: 'Workspace',      icon: Building2 },
   { key: 'recording',     label: 'Recording',      icon: Mic },
@@ -119,7 +120,7 @@ function Toggle({ checked, onChange, disabled }: {
 
 function ToggleRow({ label, description, checked, onChange, icon: Icon, iconColor = "text-white/40" }: {
   label: string; description?: string; checked: boolean; onChange: (v: boolean) => void;
-  icon?: React.ElementType; iconColor?: string;
+  icon?: LucideIcon; iconColor?: string;
 }) {
   return (
     <div className="flex items-center justify-between gap-4 py-3 border-b border-white/[0.04] last:border-0">

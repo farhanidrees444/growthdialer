@@ -8,6 +8,7 @@ import {
   Headset, RefreshCw, Eye, Mic2, PhoneCall,
   Clock, Loader2, Users, CheckCircle2, XCircle,
   ChevronDown, Star, X as XIcon,
+  type LucideIcon,
 } from 'lucide-react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/lib/utils';
@@ -112,7 +113,7 @@ function CoachingPanel({ call, sessionId, currentMode, onModeChange, onEnd, busy
   const agentName = call.agent_name || call.agent_email || 'Agent';
   const leadName = [call.lead_first_name, call.lead_last_name].filter(Boolean).join(' ') || call.to_number;
 
-  const MODE_CONFIG: Record<CoachMode, { label: string; icon: React.ElementType; color: string; description: string }> = {
+  const MODE_CONFIG: Record<CoachMode, { label: string; icon: LucideIcon; color: string; description: string }> = {
     listen:  { label: 'Listen',  icon: Eye,      color: 'border-blue-500/30 bg-blue-500/10 text-blue-300',    description: 'Silent — agent unaware' },
     whisper: { label: 'Whisper', icon: Mic2,     color: 'border-violet-500/30 bg-violet-500/10 text-violet-300', description: 'You speak to agent only' },
     barge:   { label: 'Barge',   icon: PhoneCall, color: 'border-amber-500/30 bg-amber-500/10 text-amber-300',  description: '3-way — all parties hear you' },

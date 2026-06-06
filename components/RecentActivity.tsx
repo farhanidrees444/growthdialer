@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { PhoneCall, PhoneMissed, CalendarCheck } from "lucide-react";
+import { PhoneCall, PhoneMissed, CalendarCheck, type LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -33,7 +33,7 @@ function formatDuration(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-const ICON_MAP: Record<ActivityType, { icon: React.ElementType; cls: string }> = {
+const ICON_MAP: Record<ActivityType, { icon: LucideIcon; cls: string }> = {
   meeting: { icon: CalendarCheck, cls: "bg-emerald-500/15 text-emerald-400" },
   call: { icon: PhoneCall, cls: "bg-sky-500/15 text-sky-400" },
   missed: { icon: PhoneMissed, cls: "bg-red-500/15 text-red-400" },

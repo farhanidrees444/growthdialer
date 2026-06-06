@@ -13,6 +13,7 @@ import { LiveWaveform } from './LiveWaveform';
 import { Spotlight } from './Spotlight';
 import { ShimmerButton } from './ShimmerButton';
 import { TypewriterRotator } from './TypewriterRotator';
+import { HeroWebGL } from './HeroWebGL';
 import { LottiePulse } from '@/components/marketing/home/LottiePulse';
 import { EASE_OUT, SPRING } from './motion';
 
@@ -60,13 +61,14 @@ export function Hero() {
     <>
       <AnnouncementBar />
       <section className="relative min-h-[92vh] overflow-hidden px-5 pb-16 pt-36 lg:px-8 lg:pb-20 lg:pt-44">
+        <HeroWebGL />
         <div
           aria-hidden
-          className="pointer-events-none absolute left-1/2 top-0 h-[520px] w-[min(90vw,900px)] -translate-x-1/2 rounded-full opacity-[0.10] blur-[120px]"
+          className="pointer-events-none absolute left-1/2 top-0 z-[1] h-[520px] w-[min(90vw,900px)] -translate-x-1/2 rounded-full opacity-[0.10] blur-[120px]"
           style={{ background: 'radial-gradient(circle, #7C3AED 0%, transparent 70%)' }}
         />
 
-        <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-14 text-center lg:gap-16">
+        <div className="relative z-[2] mx-auto flex max-w-7xl flex-col items-center gap-14 text-center lg:gap-16">
           <div className="max-w-3xl">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}

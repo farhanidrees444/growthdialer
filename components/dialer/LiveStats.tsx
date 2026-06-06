@@ -1,7 +1,6 @@
 'use client';
 
-import type React from 'react';
-import { Phone, Users, CalendarCheck, TrendingUp } from 'lucide-react';
+import { Phone, Users, CalendarCheck, TrendingUp, type LucideIcon } from 'lucide-react';
 
 interface LiveStatsProps {
   calls: number;
@@ -13,7 +12,7 @@ interface LiveStatsProps {
 const STATS: Array<{
   key: 'calls' | 'connects' | 'meetings' | 'connectRate';
   label: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   color: string;
   bg: string;
   isRate?: boolean;

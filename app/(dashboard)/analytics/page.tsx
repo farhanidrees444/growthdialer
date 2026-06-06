@@ -6,6 +6,7 @@ import {
   Phone, Clock, Activity, Zap,
   TrendingUp, TrendingDown, Minus,
   ArrowUpDown, Brain, Sparkles, BarChart2, ChevronDown,
+  type LucideIcon,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -147,7 +148,7 @@ interface KpiCardProps {
   deltaNeutral: boolean;
   spark:   number[];
   color:   string;
-  icon:    React.ElementType;
+  icon:    LucideIcon;
   delay?:  number;
 }
 
