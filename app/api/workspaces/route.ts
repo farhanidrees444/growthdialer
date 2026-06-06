@@ -58,12 +58,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: wsErr.message }, { status: 500 });
   }
 
-  await supabase.from('workspace_members').insert({
+  const { error: memberErr } = await supabase.from('workspace_members').insert({
     workspace_id: ws.id,
     user_id: user.id,
     role: 'owner',
     status: 'active',
   });
+
+  if (memberErr) {
+    console.error('[workspaces] member insert failed:', memberErr);
+    await supabase.from('workspaces').delete().eq('id', ws.id);
+    return NextResponse.json({ error: memberErr.message }, { status: 500 });
+  }
 
   return NextResponse.json({ workspace: ws }, { status: 201 });
 }

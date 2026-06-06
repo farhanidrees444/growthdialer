@@ -105,7 +105,7 @@ Pushed to `main` on GitHub; Vercel auto-deploys.
 | **UX** | Removed mock CRM contacts from lead search |
 | **Routes** | Middleware protects `/numbers`, `/coaching`, `/workspace` |
 
-**Post-deploy actions:** Run in Supabase SQL Editor: `036_fix_integration_waitlist_rls.sql`, `037_workspace_leads_rls.sql`, `038_workspace_calls_rls.sql`
+**Post-deploy actions:** Run in Supabase SQL Editor: `036`–`039` (especially `039_fix_workspace_members_rls.sql` for workspace onboarding)
 
 ---
 
