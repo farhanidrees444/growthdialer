@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
+import { hasPermission } from '@/lib/auth/permissions';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -23,29 +26,33 @@ async function telnyxCallAction(callControlId: string, action: string, payload =
   return res.json();
 }
 
-// POST /api/calls/[id]/record
-// Body: { action: 'record_start' | 'record_stop' }
-// [id] is the telnyx_call_id (call_control_id)
 export async function POST(request: NextRequest, { params }: Ctx) {
   const { id: callControlId } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { action } = await request.json() as { action?: string };
+  const body = await request.json() as { action?: string };
+  const { action } = body;
   if (action !== 'record_start' && action !== 'record_stop') {
     return NextResponse.json({ error: 'action must be record_start or record_stop' }, { status: 400 });
   }
 
-  // Verify call belongs to user
-  const { data: call } = await supabase
-    .from('calls')
-    .select('id, telnyx_call_id')
-    .or(`id.eq.${callControlId},telnyx_call_id.eq.${callControlId}`)
-    .eq('user_id', user.id)
-    .single();
+  const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body });
+  if (isWorkspaceError(access)) return access;
 
-  if (!call) return NextResponse.json({ error: 'Call not found' }, { status: 404 });
+  if (!hasPermission(access.role, 'MAKE_CALLS')) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const call = await requireCallAccess(
+    supabase,
+    { id: callControlId, telnyxCallId: callControlId },
+    access,
+    user.id,
+    'control',
+  );
+  if (isCallAccessError(call)) return call;
 
   const controlId = call.telnyx_call_id ?? callControlId;
 

@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useWorkspace } from '@/contexts/workspace-context';
+import { ownCallsOrFilter } from '@/lib/auth/call-access';
 
 interface SidebarCounts {
   leads: number | null;
@@ -11,6 +13,7 @@ interface SidebarCounts {
 }
 
 export function useSidebarCounts(): SidebarCounts {
+  const { currentWorkspace } = useWorkspace();
   const [counts, setCounts] = useState<SidebarCounts>({
     leads: null,
     recordings: null,
@@ -21,18 +24,20 @@ export function useSidebarCounts(): SidebarCounts {
   const fetchAll = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user || !currentWorkspace?.id) return;
+
+    const wsId = currentWorkspace.id;
 
     const [leads, recordings, notifications, numbers] = await Promise.all([
       supabase
         .from('leads')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
+        .eq('workspace_id', wsId)
         .is('deleted_at', null),
       supabase
         .from('calls')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
+        .or(ownCallsOrFilter(wsId, user.id))
         .eq('was_recorded', true),
       supabase
         .from('notifications')
@@ -52,7 +57,7 @@ export function useSidebarCounts(): SidebarCounts {
       notifications: notifications.count,
       numbers: numbers.count,
     });
-  }, []);
+  }, [currentWorkspace?.id]);
 
   useEffect(() => {
     void fetchAll();

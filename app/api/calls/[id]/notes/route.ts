@@ -1,12 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 
 export const dynamic = 'force-dynamic';
 
 const MAX_NOTES_LENGTH = 5000;
 
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -24,23 +26,23 @@ export async function PATCH(
     const body = await req.json() as { notes?: string };
     const notes = (body.notes ?? '').slice(0, MAX_NOTES_LENGTH);
 
-    const { data: call, error: fetchErr } = await supabase
-      .from('calls')
-      .select('id')
-      .eq('id', callId)
-      .eq('user_id', user.id)
-      .single();
+    const access = await requireWorkspaceFromRequest(req, supabase, user.id, { body });
+    if (isWorkspaceError(access)) return access;
 
-    if (fetchErr || !call) {
-      return NextResponse.json({ error: 'Call not found' }, { status: 404 });
-    }
+    const call = await requireCallAccess(
+      supabase,
+      { id: callId },
+      access,
+      user.id,
+      'control',
+    );
+    if (isCallAccessError(call)) return call;
 
     const updatedAt = new Date().toISOString();
     const { error: updateErr } = await supabase
       .from('calls')
       .update({ notes, updated_at: updatedAt })
-      .eq('id', callId)
-      .eq('user_id', user.id);
+      .eq('id', callId);
 
     if (updateErr) {
       return NextResponse.json({ error: updateErr.message }, { status: 500 });

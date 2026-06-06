@@ -12,6 +12,8 @@ import { useCallRealtime } from '@/hooks/use-call-realtime';
 import { useDialerHotkeys } from '@/hooks/use-dialer-hotkeys';
 import { usePowerDialer } from '@/hooks/use-power-dialer';
 import { createClient } from '@/lib/supabase/client';
+import { useWorkspace } from '@/contexts/workspace-context';
+import { ownCallsOrFilter } from '@/lib/auth/call-access';
 import { normalizePhone } from '@/lib/phone';
 import { Users, Sparkles, X as XIcon } from 'lucide-react';
 
@@ -112,6 +114,7 @@ export default function DialerPage() {
 
   const { mode, selectedLead, activeCallDbId, selectLead, startCall, endCall } = useDialerMode();
   const { registerCallMeta } = useCallContext();
+  const { currentWorkspace, apiFetch } = useWorkspace();
 
   // Stable ref so powerDialer.onShouldDial can call initiateCall once it's defined
   const initiateCallRef = useRef<((phone: string, lead?: LeadRecord) => void) | null>(null);
@@ -195,8 +198,9 @@ export default function DialerPage() {
 
   // ── Stats ──────────────────────────────────────────────────────────────────
   const loadStats = useCallback(async () => {
+    if (!currentWorkspace?.id) return;
     try {
-      const res = await fetch('/api/stats/today');
+      const res = await apiFetch('/api/stats/today');
       if (!res.ok) return;
       const data = await res.json() as { callsToday: number; connectRate: number; meetingsBooked: number };
       setStats((prev) => ({
@@ -206,17 +210,17 @@ export default function DialerPage() {
         meetings: data.meetingsBooked ?? 0,
       }));
     } catch { /* silent */ }
-  }, []);
+  }, [apiFetch, currentWorkspace?.id]);
 
   const loadTodayCalls = useCallback(async () => {
-    if (!userId) return;
+    if (!userId || !currentWorkspace?.id) return;
     try {
       const supabase = createClient();
       const today = new Date(); today.setHours(0, 0, 0, 0);
       const { data } = await supabase
         .from('calls')
         .select('id, disposition, created_at, leads(name)')
-        .eq('user_id', userId)
+        .or(ownCallsOrFilter(currentWorkspace.id, userId))
         .gte('created_at', today.toISOString())
         .order('created_at', { ascending: true })
         .limit(50);
@@ -237,7 +241,7 @@ export default function DialerPage() {
         );
       }
     } catch { /* silent */ }
-  }, [userId]);
+  }, [userId, currentWorkspace?.id]);
 
   useEffect(() => { loadStats(); }, [loadStats]);
   useEffect(() => { loadTodayCalls(); }, [loadTodayCalls]);
@@ -272,7 +276,7 @@ export default function DialerPage() {
         setDispositionOpen(true);
       } else {
         if (dbId) {
-          fetch(`/api/calls/${dbId}/disposition`, {
+          apiFetch(`/api/calls/${dbId}/disposition`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ disposition: 'voicemail' }),
@@ -303,7 +307,7 @@ export default function DialerPage() {
     if (!activeCallId || !pendingRegRef.current) return;
     const { e164, leadId } = pendingRegRef.current;
     pendingRegRef.current = null;
-    fetch('/api/calls/dial', {
+    apiFetch('/api/calls/dial', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ to: e164, lead_id: leadId, call_control_id: activeCallId }),
@@ -314,7 +318,7 @@ export default function DialerPage() {
         if (id) setPendingCallDbId(id);
       })
       .catch(() => { /* non-fatal */ });
-  }, [activeCallId]);
+  }, [activeCallId, apiFetch]);
 
   // ── Call initiation ─────────────────────────────────────────────────────────
   const initiateCall = useCallback((phone: string, lead?: LeadRecord) => {
@@ -352,7 +356,7 @@ export default function DialerPage() {
 
   const handleDropVoicemail = useCallback(async () => {
     if (!activeCallId) return;
-    const res = await fetch('/api/calls/drop-voicemail', {
+    const res = await apiFetch('/api/calls/drop-voicemail', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -366,7 +370,7 @@ export default function DialerPage() {
     } else {
       toast.success(`Voicemail dropped${data.voicemail_name ? ` · ${data.voicemail_name}` : ''}`);
     }
-  }, [activeCallId, pendingCallDbId]);
+  }, [activeCallId, pendingCallDbId, apiFetch]);
 
   // ── Disposition ─────────────────────────────────────────────────────────────
   const handleDispositionSave = useCallback(async (
@@ -378,7 +382,7 @@ export default function DialerPage() {
     const dbId = pendingCallDbId;
     if (dbId) {
       try {
-        const res = await fetch(`/api/calls/${dbId}/disposition`, {
+        const res = await apiFetch(`/api/calls/${dbId}/disposition`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ disposition, notes, callback_at: callbackAt, meeting_at: meetingAt }),

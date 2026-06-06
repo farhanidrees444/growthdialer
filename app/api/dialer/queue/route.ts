@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 
 interface Filters {
   hasPhone?: boolean;
@@ -15,6 +16,9 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const access = await requireWorkspaceFromRequest(request, supabase, user.id);
+    if (isWorkspaceError(access)) return access;
 
     const { searchParams } = new URL(request.url);
     const tab = searchParams.get('tab') ?? 'queue';
@@ -32,7 +36,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('leads')
       .select('id, name, title, company, phone, email, status, ai_score, last_called_at, call_attempts, tags, notes, dnc, user_id')
-      .eq('user_id', user.id)
+      .eq('workspace_id', access.workspaceId)
       .is('deleted_at', null)
       .not('status', 'in', '("do_not_call","meeting_booked")')
       .eq('dnc', false);

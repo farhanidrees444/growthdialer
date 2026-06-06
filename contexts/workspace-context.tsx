@@ -6,6 +6,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useSupabaseSession } from '@/lib/supabase/hooks';
 import { hasPermission, type Permission, type Role } from '@/lib/auth/permissions';
+import { workspaceFetch } from '@/lib/workspace/api-client';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -56,6 +57,9 @@ interface WorkspaceContextValue {
 
   // Permission helper
   can: (permission: Permission) => boolean;
+
+  /** fetch() with X-Workspace-Id header for workspace-scoped APIs */
+  apiFetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
 // ── Context ───────────────────────────────────────────────────────────────────
@@ -229,12 +233,18 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     return hasPermission(currentRole, permission);
   }, [currentRole]);
 
+  const apiFetch = useCallback(
+    (input: RequestInfo | URL, init?: RequestInit) =>
+      workspaceFetch(input, { ...init, workspaceId: currentWorkspace?.id }),
+    [currentWorkspace?.id],
+  );
+
   return (
     <WorkspaceContext.Provider value={{
       currentWorkspace, currentRole, currentMemberId,
       workspaces, members, loading, membersLoading,
       setCurrentWorkspace, refreshWorkspaces, refreshMembers,
-      inviteMember, removeMember, updateMemberRole, can,
+      inviteMember, removeMember, updateMemberRole, can, apiFetch,
     }}>
       {children}
     </WorkspaceContext.Provider>

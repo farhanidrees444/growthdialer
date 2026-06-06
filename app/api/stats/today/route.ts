@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { canViewTeamCalls, ownCallsOrFilter } from '@/lib/auth/call-access';
 
 function startOfDayUTC(date: Date) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())).toISOString();
 }
 
-export async function GET(_request: NextRequest) {
+function applyCallScope<T extends { or: (f: string) => T; eq: (c: string, v: string) => T }>(
+  query: T,
+  workspaceId: string,
+  userId: string,
+  teamView: boolean,
+): T {
+  if (teamView) return query.eq('workspace_id', workspaceId);
+  return query.or(ownCallsOrFilter(workspaceId, userId));
+}
+
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
@@ -14,6 +26,12 @@ export async function GET(_request: NextRequest) {
     if (authError || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const access = await requireWorkspaceFromRequest(request, supabase, userId);
+    if (isWorkspaceError(access)) return access;
+
+    const teamView = canViewTeamCalls(access);
+    const wsId = access.workspaceId;
 
     const now = new Date();
     const todayStart = startOfDayUTC(now);
@@ -32,40 +50,49 @@ export async function GET(_request: NextRequest) {
       { count: leadsCount },
       { count: meetingsBooked },
     ] = await Promise.all([
-      supabase
-        .from('calls')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId)
+      applyCallScope(
+        supabase.from('calls').select('id', { count: 'exact', head: true }),
+        wsId,
+        userId,
+        teamView,
+      )
         .gte('created_at', todayStart)
         .lt('created_at', tomorrowStart),
-      supabase
-        .from('calls')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId)
+      applyCallScope(
+        supabase.from('calls').select('id', { count: 'exact', head: true }),
+        wsId,
+        userId,
+        teamView,
+      )
         .not('answered_at', 'is', null)
         .gte('created_at', todayStart)
         .lt('created_at', tomorrowStart),
-      supabase
-        .from('calls')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId)
+      applyCallScope(
+        supabase.from('calls').select('id', { count: 'exact', head: true }),
+        wsId,
+        userId,
+        teamView,
+      )
         .gte('created_at', yesterdayStart)
         .lt('created_at', todayStart),
-      supabase
-        .from('calls')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId)
+      applyCallScope(
+        supabase.from('calls').select('id', { count: 'exact', head: true }),
+        wsId,
+        userId,
+        teamView,
+      )
         .not('answered_at', 'is', null)
         .gte('created_at', yesterdayStart)
         .lt('created_at', todayStart),
       supabase
         .from('leads')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId),
+        .eq('workspace_id', wsId)
+        .is('deleted_at', null),
       supabase
         .from('leads')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId)
+        .eq('workspace_id', wsId)
         .eq('status', 'meeting_booked'),
     ]);
 
@@ -73,16 +100,18 @@ export async function GET(_request: NextRequest) {
     const answered = answeredToday ?? 0;
     const connectRate = total ? Math.round((answered / total) * 10000) / 100 : 0;
 
-    // Pipeline value: sum of AI-extracted deal_value_usd on qualified calls
-    // Falls back to 0 if the column doesn't exist yet (migration pending)
     let pipelineValue = 0;
     try {
-      const { data: dealData } = await supabase
-        .from('calls')
-        .select('deal_value_usd')
-        .eq('user_id', userId)
+      let dealQuery = applyCallScope(
+        supabase.from('calls').select('deal_value_usd'),
+        wsId,
+        userId,
+        teamView,
+      )
         .in('disposition', ['interested', 'meeting_booked', 'callback'])
         .not('deal_value_usd', 'is', null);
+
+      const { data: dealData } = await dealQuery;
       if (dealData) {
         pipelineValue = dealData.reduce((sum, r) => sum + (Number((r as { deal_value_usd: number | null }).deal_value_usd) || 0), 0);
       }
@@ -101,6 +130,7 @@ export async function GET(_request: NextRequest) {
       connectRate,
       meetingsBooked: meetingsBooked ?? 0,
       pipelineValue,
+      leadsCount: leadsCount ?? 0,
       yesterday: {
         calls: totalYesterday,
         connectRate: yesterdayRate,

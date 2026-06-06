@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -14,14 +15,16 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const access = await requireWorkspaceFromRequest(request, supabase, userId);
+    if (isWorkspaceError(access)) return access;
+
     const { id } = await params;
 
-    // Verify lead ownership
     const { data: lead, error: leadErr } = await supabase
       .from('leads')
       .select('id, name')
       .eq('id', id)
-      .eq('user_id', userId)
+      .eq('workspace_id', access.workspaceId)
       .maybeSingle();
 
     if (leadErr || !lead) {

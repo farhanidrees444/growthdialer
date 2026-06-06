@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Phone, ChevronRight, Users } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { useWorkspace } from '@/contexts/workspace-context';
 
 interface Lead {
   id: string;
@@ -32,16 +33,19 @@ function initials(name: string | null): string {
 
 export default function UpNextQueue() {
   const router = useRouter();
+  const { currentWorkspace, apiFetch } = useWorkspace();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/leads/queue?limit=5&status=queued,new,callback')
+    if (!currentWorkspace?.id) return;
+    setLoading(true);
+    apiFetch('/api/leads/queue?limit=5&status=queued,new,callback')
       .then((r) => r.json())
       .then((data) => setLeads(data.leads ?? []))
       .catch(() => setLeads([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [currentWorkspace?.id, apiFetch]);
 
   return (
     <Card className="flex h-full flex-col border-white/10 bg-[oklch(0.09_0.006_285)]/90 shadow-lg shadow-black/20">

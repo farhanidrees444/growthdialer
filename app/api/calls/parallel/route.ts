@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import telnyxClient, { toE164 } from '@/lib/telnyx';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { hasPermission } from '@/lib/auth/permissions';
 
 interface DialTarget {
   phone: string;
@@ -35,6 +37,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Maximum 10 parallel calls allowed' }, { status: 400 });
     }
 
+    const access = await requireWorkspaceFromRequest(request, supabase, userId, { body });
+    if (isWorkspaceError(access)) return access;
+
+    if (!hasPermission(access.role, 'MAKE_CALLS')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const webhookUrl = `${process.env.APP_URL}/api/telnyx/webhook`;
 
     const results: DialResult[] = await Promise.all(
@@ -59,6 +68,7 @@ export async function POST(request: NextRequest) {
             const nowIso = new Date().toISOString();
             const { error: insertError } = await supabase.from('calls').insert({
               user_id: userId,
+              workspace_id: access.workspaceId,
               lead_id: target.lead_id ?? null,
               direction: 'outbound',
               to_number: e164,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { normalizePhone } from '@/lib/phone';
 import { type CountryCode } from 'libphonenumber-js';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 
 function parseCsvLine(line: string) {
   const result: string[] = [];
@@ -40,6 +41,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const access = await requireWorkspaceFromRequest(request, supabase, userId, {
+      permission: 'CREATE_LEADS',
+      body,
+    });
+    if (isWorkspaceError(access)) return access;
+
     const csv = typeof body.csv === 'string' ? body.csv.trim() : '';
     const defaultCountry = (body.defaultCountry as CountryCode | undefined) ?? 'US';
 
@@ -66,7 +73,8 @@ export async function POST(request: NextRequest) {
     const { data: existing } = await supabase
       .from('leads')
       .select('phone')
-      .eq('user_id', userId);
+      .eq('workspace_id', access.workspaceId)
+      .is('deleted_at', null);
 
     (existing ?? []).forEach((lead) => {
       if (lead.phone) existingPhones.add(lead.phone.trim());
@@ -87,6 +95,7 @@ export async function POST(request: NextRequest) {
           invalidPhones += 1;
           acc.push({
             user_id: userId,
+            workspace_id: access.workspaceId,
             name: fullName,
             first_name: firstName || undefined,
             last_name: lastName || undefined,
@@ -94,7 +103,7 @@ export async function POST(request: NextRequest) {
             phone: rawPhone, // keep raw; user can fix
             company: row.company || undefined,
             title: row.title || undefined,
-            source: row.source || undefined,
+            source: row.source || 'import',
             notes: row.notes || undefined,
             ai_score: Number(row.ai_score) || 0,
             status: 'invalid_phone',
@@ -110,6 +119,7 @@ export async function POST(request: NextRequest) {
 
       acc.push({
         user_id: userId,
+        workspace_id: access.workspaceId,
         name: fullName,
         first_name: firstName || undefined,
         last_name: lastName || undefined,
@@ -117,7 +127,7 @@ export async function POST(request: NextRequest) {
         phone,
         company: row.company || undefined,
         title: row.title || undefined,
-        source: row.source || undefined,
+        source: row.source || 'import',
         notes: row.notes || undefined,
         ai_score: Number(row.ai_score) || 0,
         status: 'queued',

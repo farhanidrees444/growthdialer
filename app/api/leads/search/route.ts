@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,17 +12,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const access = await requireWorkspaceFromRequest(request, supabase, userId);
+    if (isWorkspaceError(access)) return access;
+
     const url = new URL(request.url);
     const query = (url.searchParams.get('q') ?? '').trim();
     const limit = Number(url.searchParams.get('limit') ?? '25');
     const offset = Number(url.searchParams.get('offset') ?? '0');
 
-    let supabaseQuery = supabase.from('leads').select('*').eq('user_id', userId);
+    let supabaseQuery = supabase
+      .from('leads')
+      .select('*')
+      .eq('workspace_id', access.workspaceId)
+      .is('deleted_at', null);
 
     if (query) {
       const escapedQuery = query.replace(/%/g, '\\%').replace(/_/g, '\\_');
       supabaseQuery = supabaseQuery.or(
-        `name.ilike.%${escapedQuery}%,company.ilike.%${escapedQuery}%,email.ilike.%${escapedQuery}%,phone.ilike.%${escapedQuery}%`
+        `name.ilike.%${escapedQuery}%,company.ilike.%${escapedQuery}%,email.ilike.%${escapedQuery}%,phone.ilike.%${escapedQuery}%`,
       );
     }
 

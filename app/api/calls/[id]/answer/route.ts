@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -12,27 +15,27 @@ export async function POST(
 
     const { id } = await params;
 
-    const { data: call } = await supabase
-      .from('calls')
-      .select('telnyx_call_id')
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .maybeSingle();
+    const access = await requireWorkspaceFromRequest(request, supabase, user.id);
+    if (isWorkspaceError(access)) return access;
 
-    if (!call) {
-      return NextResponse.json({ error: 'Call not found' }, { status: 404 });
+    if (!hasPermission(access.role, 'MAKE_CALLS')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Update DB immediately — must happen regardless of whether REST answer succeeds.
-    // Browser/WebRTC mode answers via the SDK (not REST), so REST may return an error
-    // for browser-delivered calls; that is expected and non-fatal.
+    const call = await requireCallAccess(
+      supabase,
+      { id },
+      access,
+      user.id,
+      'control',
+    );
+    if (isCallAccessError(call)) return call;
+
     await supabase
       .from('calls')
       .update({ status: 'in_progress', answered_at: new Date().toISOString() })
       .eq('id', id);
 
-    // Attempt Telnyx Call Control answer — needed for forward/transfer modes.
-    // For WebRTC browser mode, the SDK has already answered the call; this is a no-op.
     if (call.telnyx_call_id) {
       const res = await fetch(
         `https://api.telnyx.com/v2/calls/${call.telnyx_call_id}/actions/answer`,
@@ -47,7 +50,6 @@ export async function POST(
       );
       if (!res.ok) {
         const errText = await res.text();
-        // 4xx from Telnyx for a browser-answered call is expected; just log it.
         console.warn('[ANSWER] Telnyx REST answer returned', res.status, errText.slice(0, 200), '— browser WebRTC answer is primary');
       }
     }

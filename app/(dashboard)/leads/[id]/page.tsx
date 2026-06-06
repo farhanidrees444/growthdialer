@@ -12,8 +12,8 @@ import {
   PlayCircle, MessageSquare,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase/client';
 import { useCallContext } from '@/lib/call-context';
+import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/lib/utils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -300,6 +300,7 @@ export default function LeadDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { startCall } = useCallContext();
+  const { currentWorkspace, apiFetch } = useWorkspace();
   const leadId = params.id as string;
 
   const [lead, setLead] = useState<FullLead | null>(null);
@@ -311,37 +312,35 @@ export default function LeadDetailPage() {
   const [savingNote, setSavingNote] = useState(false);
 
   useEffect(() => {
-    if (!leadId) return;
-    const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) { router.push('/login'); return; }
-
-      supabase
-        .from('leads')
-        .select('*')
-        .eq('id', leadId)
-        .eq('user_id', session.user.id)
-        .maybeSingle()
-        .then(({ data, error }) => {
-          if (error || !data) { toast.error('Lead not found'); router.push('/leads'); return; }
-          setLead(data as FullLead);
-          setLoading(false);
-        });
-    });
-  }, [leadId, router]);
+    if (!leadId || !currentWorkspace?.id) return;
+    setLoading(true);
+    apiFetch(`/api/leads/${leadId}`)
+      .then((r) => {
+        if (!r.ok) throw new Error('not found');
+        return r.json();
+      })
+      .then((d) => {
+        setLead(d.lead as FullLead);
+      })
+      .catch(() => {
+        toast.error('Lead not found');
+        router.push('/leads');
+      })
+      .finally(() => setLoading(false));
+  }, [leadId, currentWorkspace?.id, apiFetch, router]);
 
   useEffect(() => {
-    if (!leadId) return;
+    if (!leadId || !currentWorkspace?.id) return;
     setTimelineLoading(true);
-    fetch(`/api/leads/${leadId}/activity`)
+    apiFetch(`/api/leads/${leadId}/activity`)
       .then((r) => r.json())
       .then((d) => { setTimeline(d.timeline ?? []); })
       .catch(() => setTimeline([]))
       .finally(() => setTimelineLoading(false));
-  }, [leadId]);
+  }, [leadId, currentWorkspace?.id, apiFetch]);
 
   const patchLead = useCallback(async (updates: Partial<FullLead>) => {
-    const res = await fetch(`/api/leads/${leadId}`, {
+    const res = await apiFetch(`/api/leads/${leadId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
@@ -351,14 +350,14 @@ export default function LeadDetailPage() {
     setLead(updated);
     toast.success('Saved');
     return updated;
-  }, [leadId]);
+  }, [leadId, apiFetch]);
 
   const handleDelete = useCallback(async () => {
-    const res = await fetch(`/api/leads/${leadId}`, { method: 'DELETE' });
+    const res = await apiFetch(`/api/leads/${leadId}`, { method: 'DELETE' });
     if (!res.ok) { toast.error('Failed to delete'); return; }
     toast.success(`${lead?.name} deleted`);
     router.push('/leads');
-  }, [leadId, lead?.name, router]);
+  }, [leadId, lead?.name, router, apiFetch]);
 
   const handleSaveNote = useCallback(async () => {
     if (!newNote.trim()) return;

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { LEAD_STATUS_TO_DISPOSITION } from '@/lib/dialer/state-machine';
 import type { DispositionType } from '@/lib/dialer/state-machine';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 
 export async function POST(
   request: NextRequest,
@@ -23,15 +25,17 @@ export async function POST(
 
     if (!disposition) return NextResponse.json({ error: 'Missing disposition' }, { status: 400 });
 
-    // Get call + current lead data in one shot
-    const { data: call, error: callError } = await supabase
-      .from('calls')
-      .select('id, lead_id, user_id, disposition')
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .single();
+    const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body });
+    if (isWorkspaceError(access)) return access;
 
-    if (callError || !call) return NextResponse.json({ error: 'Call not found' }, { status: 404 });
+    const call = await requireCallAccess(
+      supabase,
+      { id },
+      access,
+      user.id,
+      'control',
+    );
+    if (isCallAccessError(call)) return call;
 
     const leadStatus = LEAD_STATUS_TO_DISPOSITION[disposition];
     const now = new Date().toISOString();
@@ -51,6 +55,7 @@ export async function POST(
         .from('leads')
         .select('notes, call_attempts')
         .eq('id', call.lead_id)
+        .eq('workspace_id', access.workspaceId)
         .single();
 
       // Append note with timestamp + disposition label
@@ -81,7 +86,11 @@ export async function POST(
         leadUpdate.status = 'wrong_number';
       }
 
-      await supabase.from('leads').update(leadUpdate).eq('id', call.lead_id);
+      await supabase
+        .from('leads')
+        .update(leadUpdate)
+        .eq('id', call.lead_id)
+        .eq('workspace_id', access.workspaceId);
 
       // Activity log entry
       const activitySummary = buildActivitySummary(disposition, notes);

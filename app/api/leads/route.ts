@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { normalizePhone } from '@/lib/phone';
 import type { CountryCode } from 'libphonenumber-js';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +15,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const access = await requireWorkspaceFromRequest(request, supabase, userId, {
+      permission: 'CREATE_LEADS',
+      body,
+    });
+    if (isWorkspaceError(access)) return access;
 
     const firstName = (body.first_name ?? '').trim();
     const lastName = (body.last_name ?? '').trim();
@@ -26,12 +32,12 @@ export async function POST(request: NextRequest) {
 
     const phone = normalizePhone(rawPhone, (body.country ?? 'US') as CountryCode) ?? rawPhone;
 
-    // Duplicate check
     const { data: existing } = await supabase
       .from('leads')
       .select('id, name')
-      .eq('user_id', userId)
+      .eq('workspace_id', access.workspaceId)
       .eq('phone', phone)
+      .is('deleted_at', null)
       .maybeSingle();
 
     if (existing) {
@@ -44,18 +50,19 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from('leads')
       .insert({
-        user_id:    userId,
+        user_id: userId,
+        workspace_id: access.workspaceId,
         name,
         first_name: firstName || undefined,
-        last_name:  lastName || undefined,
+        last_name: lastName || undefined,
         phone,
-        email:      body.email?.trim() || undefined,
-        company:    body.company?.trim() || undefined,
-        title:      body.title?.trim() || undefined,
-        notes:      body.notes?.trim() || undefined,
-        tags:       Array.isArray(body.tags) ? body.tags : [],
-        source:     'manual',
-        status:     'new',
+        email: body.email?.trim() || undefined,
+        company: body.company?.trim() || undefined,
+        title: body.title?.trim() || undefined,
+        notes: body.notes?.trim() || undefined,
+        tags: Array.isArray(body.tags) ? body.tags : [],
+        source: 'manual',
+        status: 'new',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })

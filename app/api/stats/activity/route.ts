@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { canViewTeamCalls, ownCallsOrFilter } from '@/lib/auth/call-access';
 
 function formatDate(date: Date) {
   return date.toISOString().slice(0, 10);
@@ -15,6 +17,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const access = await requireWorkspaceFromRequest(request, supabase, userId);
+    if (isWorkspaceError(access)) return access;
+
+    const teamView = canViewTeamCalls(access);
+    const wsId = access.workspaceId;
+
     const url = new URL(request.url);
     const period = url.searchParams.get('period') === 'month' ? 'month' : 'week';
     const days = period === 'month' ? 30 : 7;
@@ -23,12 +31,17 @@ export async function GET(request: NextRequest) {
       Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - (days - 1)),
     );
 
-    const { data: calls, error } = await supabase
+    let callsQuery = supabase
       .from('calls')
       .select('created_at, answered_at, status')
-      .eq('user_id', userId)
       .gte('created_at', start.toISOString())
       .order('created_at', { ascending: true });
+
+    callsQuery = teamView
+      ? callsQuery.eq('workspace_id', wsId)
+      : callsQuery.or(ownCallsOrFilter(wsId, userId));
+
+    const { data: calls, error } = await callsQuery;
 
     if (error) {
       console.error('Activity stats query failed:', error);

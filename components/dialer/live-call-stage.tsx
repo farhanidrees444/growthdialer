@@ -7,6 +7,7 @@ import { getAvatarGradient, getInitials } from '@/lib/dialer/avatar-color';
 import { CallerWaveform } from './caller-waveform';
 import { ActionDock } from './action-dock';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
+import { useWorkspace } from '@/contexts/workspace-context';
 
 interface LiveCallStageProps {
   lead: LeadRecord;
@@ -44,6 +45,7 @@ export function LiveCallStage({
   lead, callStatus, isMuted, isOnHold, onToggleMute, onToggleHold,
   onDropVoicemail, onOpenKeypad, onEndCall, callDbId,
 }: LiveCallStageProps) {
+  const { apiFetch } = useWorkspace();
   const isConnected = callStatus === 'active';
   const { formatted } = useCallTimer(isConnected);
   const gradient = getAvatarGradient(lead.id);
@@ -59,7 +61,7 @@ export function LiveCallStage({
     clearTimeout(saveDebounceRef.current);
     saveDebounceRef.current = setTimeout(async () => {
       try {
-        await fetch(`/api/calls/${callDbId}/notes`, {
+        await apiFetch(`/api/calls/${callDbId}/notes`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ notes }),
@@ -68,7 +70,7 @@ export function LiveCallStage({
       } catch { /* silent */ }
     }, 800);
     return () => clearTimeout(saveDebounceRef.current);
-  }, [notes, callDbId]);
+  }, [notes, callDbId, apiFetch]);
 
   return (
     <motion.div
@@ -154,7 +156,7 @@ export function LiveCallStage({
         onToggleRecord={callDbId ? async () => {
           try {
             const action = isRecording ? 'record_stop' : 'record_start';
-            const res = await fetch(`/api/calls/${callDbId}/record`, {
+            const res = await apiFetch(`/api/calls/${callDbId}/record`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ action }),

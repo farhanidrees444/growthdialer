@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,11 +12,16 @@ export async function POST(request: NextRequest) {
       delay_seconds?: number;
       auto_stop_after?: number;
       skip_after_disposition?: string[];
+      workspace_id?: string;
     };
     const { delay_seconds = 5, auto_stop_after, skip_after_disposition } = body;
     void auto_stop_after; void skip_after_disposition; // stored client-side
 
+    const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body });
+    if (isWorkspaceError(access)) return access;
+
     const userId = user.id;
+    const workspaceId = access.workspaceId;
 
     // End any existing active session first
     await supabase
@@ -27,7 +33,7 @@ export async function POST(request: NextRequest) {
     // Create new session
     const { data: powerSession, error: sessionError } = await supabase
       .from('power_dial_sessions')
-      .insert({ user_id: userId, status: 'active' })
+      .insert({ user_id: userId, workspace_id: workspaceId, status: 'active' })
       .select('id, started_at, total_calls, connected_calls, meetings_booked, total_talk_time, status')
       .single();
 
@@ -40,7 +46,8 @@ export async function POST(request: NextRequest) {
     const { data: leads } = await supabase
       .from('leads')
       .select('id, name, title, company, phone, email, status, ai_score, last_called_at, call_attempts, tags, notes, dnc')
-      .eq('user_id', userId)
+      .eq('workspace_id', workspaceId)
+      .is('deleted_at', null)
       .not('status', 'in', '("do_not_call","meeting_booked")')
       .eq('dnc', false)
       .order('ai_score', { ascending: false })

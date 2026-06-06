@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,18 +23,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing call_control_id' }, { status: 400 });
     }
 
-    const { data: callRow } = await supabase
-      .from('calls')
-      .select('id, user_id')
-      .eq('telnyx_call_id', call_control_id)
-      .eq('user_id', user.id)
-      .maybeSingle();
+    const access = await requireWorkspaceFromRequest(req, supabase, user.id, { body });
+    if (isWorkspaceError(access)) return access;
 
-    if (!callRow) {
-      return NextResponse.json({ error: 'Call not found' }, { status: 404 });
+    if (!hasPermission(access.role, 'MAKE_CALLS')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Get voicemail to play — use specified one or fall back to first in user's library
+    const callRow = await requireCallAccess(
+      supabase,
+      { telnyxCallId: call_control_id },
+      access,
+      user.id,
+      'control',
+    );
+    if (isCallAccessError(callRow)) return callRow;
+
     let vmQuery = supabase
       .from('voicemails')
       .select('id, audio_url, duration_seconds, name, drop_count')
@@ -55,7 +62,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No voicemail found — upload one in Settings → Voicemails' }, { status: 404 });
     }
 
-    // Trigger Telnyx playback on the live call
     const telnyxRes = await fetch(
       `https://api.telnyx.com/v2/calls/${call_control_id}/actions/playback_start`,
       {
@@ -75,22 +81,19 @@ export async function POST(req: NextRequest) {
     if (!telnyxRes.ok) {
       const errBody = await telnyxRes.text();
       console.error('[VM DROP] Telnyx error:', telnyxRes.status, errBody);
-      return NextResponse.json({ error: `Failed to start playback` }, { status: 502 });
+      return NextResponse.json({ error: 'Failed to start playback' }, { status: 502 });
     }
 
-    // Increment drop count (fire-and-forget)
     void supabase
       .from('voicemails')
       .update({ drop_count: (vm.drop_count ?? 0) + 1 })
       .eq('id', vm.id);
 
-    // Mark call disposition on the DB record
     const resolvedDbId = call_db_id ?? callRow.id;
     void supabase
       .from('calls')
       .update({ disposition: 'voicemail', updated_at: new Date().toISOString() })
-      .eq('id', resolvedDbId)
-      .eq('user_id', user.id);
+      .eq('id', resolvedDbId);
 
     return NextResponse.json({
       ok: true,

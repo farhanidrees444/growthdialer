@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useWorkspace } from '@/contexts/workspace-context';
 
 type Format = 'csv' | 'json';
 type Scope = 'all' | 'selected' | 'filtered';
@@ -26,6 +27,7 @@ const FIELD_OPTIONS = [
 ];
 
 export function LeadExportModal({ onClose, selectedCount, filteredCount, selectedIds }: Props) {
+  const { apiFetch } = useWorkspace();
   const [format, setFormat] = useState<Format>('csv');
   const [scope, setScope] = useState<Scope>(selectedCount > 0 ? 'selected' : 'all');
   const [fields, setFields] = useState<string[]>(
@@ -45,7 +47,7 @@ export function LeadExportModal({ onClose, selectedCount, filteredCount, selecte
       const body: Record<string, unknown> = { scope, format, fields };
       if (scope === 'selected') body.ids = selectedIds;
 
-      const res = await fetch('/api/leads/export', {
+      const res = await apiFetch('/api/leads/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

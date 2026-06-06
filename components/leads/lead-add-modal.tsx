@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Phone, Mail, Building2, Briefcase, User, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useWorkspace } from '@/contexts/workspace-context';
 
 interface FormData {
   first_name: string;
@@ -26,6 +27,7 @@ const INITIAL: FormData = {
 };
 
 export function LeadAddModal({ onClose, onCreated }: Props) {
+  const { apiFetch } = useWorkspace();
   const [form, setForm] = useState<FormData>(INITIAL);
   const [errors, setErrors] = useState<Partial<FormData>>({});
   const [saving, setSaving] = useState(false);
@@ -62,7 +64,7 @@ export function LeadAddModal({ onClose, onCreated }: Props) {
     setDuplicateWarning(null);
 
     try {
-      const res = await fetch('/api/leads', {
+      const res = await apiFetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

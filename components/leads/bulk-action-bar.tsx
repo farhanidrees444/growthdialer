@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, Tag, TrendingUp, PhoneOff, Download, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { useWorkspace } from '@/contexts/workspace-context';
 
 interface Props {
   selectedIds: string[];
@@ -11,18 +12,19 @@ interface Props {
   onBulkDone: (action: string, ids: string[]) => void;
 }
 
-async function runBulk(ids: string[], action: Record<string, unknown>) {
-  const res = await fetch('/api/leads/bulk', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ids, action }),
-  });
-  if (!res.ok) throw new Error('Bulk action failed');
-  return res.json();
-}
-
 export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
+  const { apiFetch } = useWorkspace();
   const [busy, setBusy] = useState<string | null>(null);
+
+  const runBulk = async (ids: string[], action: Record<string, unknown>) => {
+    const res = await apiFetch('/api/leads/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, action }),
+    });
+    if (!res.ok) throw new Error('Bulk action failed');
+    return res.json();
+  };
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const count = selectedIds.length;
 
@@ -63,7 +65,7 @@ export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
   const handleExport = async () => {
     setBusy('export');
     try {
-      const res = await fetch('/api/leads/export', {
+      const res = await apiFetch('/api/leads/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scope: 'selected', ids: selectedIds, format: 'csv', fields: ['name','company','phone','email','status','tags','call_history'] }),

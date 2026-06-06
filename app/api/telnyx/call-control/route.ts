@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
+import { hasPermission } from '@/lib/auth/permissions';
 
 type CallControlAction = 'pause_recording' | 'resume_recording' | 'mute' | 'hold' | 'unhold' | 'unmute';
 
@@ -29,16 +32,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: callRow } = await supabase
-    .from('calls')
-    .select('id, user_id, was_recorded')
-    .eq('telnyx_call_id', call_control_id)
-    .eq('user_id', user.id)
-    .single();
+  const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body });
+  if (isWorkspaceError(access)) return access;
 
-  if (!callRow) {
-    return NextResponse.json({ error: 'Call not found' }, { status: 404 });
+  if (!hasPermission(access.role, 'MAKE_CALLS')) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
+
+  const callRow = await requireCallAccess(
+    supabase,
+    { telnyxCallId: call_control_id },
+    access,
+    user.id,
+    'control',
+  );
+  if (isCallAccessError(callRow)) return callRow;
 
   const telnyxApiKey = process.env.TELNYX_API_KEY;
   if (!telnyxApiKey) {

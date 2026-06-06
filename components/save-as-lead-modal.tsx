@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserPlus, X, Loader2, CheckCircle2 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { useWorkspace } from '@/contexts/workspace-context';
 
 interface SaveAsLeadModalProps {
   phone: string;
@@ -11,6 +11,7 @@ interface SaveAsLeadModalProps {
 }
 
 export default function SaveAsLeadModal({ phone, onClose }: SaveAsLeadModalProps) {
+  const { apiFetch } = useWorkspace();
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
   const [saving, setSaving] = useState(false);
@@ -20,19 +21,27 @@ export default function SaveAsLeadModal({ phone, onClose }: SaveAsLeadModalProps
     if (!name.trim()) return;
     setSaving(true);
     try {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return;
+      const parts = name.trim().split(/\s+/);
+      const first_name = parts[0] ?? '';
+      const last_name = parts.slice(1).join(' ');
 
-      await supabase.from('leads').insert({
-        user_id: session.user.id,
-        name: name.trim(),
-        company: company.trim() || null,
-        phone,
-        status: 'new',
-        call_attempts: 1,
-        last_called_at: new Date().toISOString(),
+      const res = await apiFetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name,
+          last_name,
+          name: name.trim(),
+          company: company.trim() || undefined,
+          phone,
+          status: 'new',
+        }),
       });
+
+      if (!res.ok) {
+        console.error('Save as lead failed:', await res.text());
+        return;
+      }
 
       setSaved(true);
       setTimeout(onClose, 1500);
@@ -81,48 +90,32 @@ export default function SaveAsLeadModal({ phone, onClose }: SaveAsLeadModalProps
               </div>
 
               <div className="space-y-3">
-                <div>
-                  <label className="text-[11px] font-medium text-slate-500 mb-1 block">Name *</label>
-                  <input
-                    autoFocus
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Contact name"
-                    className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-slate-600 outline-none focus:border-emerald-500/30"
-                    onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-medium text-slate-500 mb-1 block">Company</label>
-                  <input
-                    type="text"
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                    placeholder="Optional"
-                    className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-slate-600 outline-none focus:border-emerald-500/30"
-                  />
-                </div>
+                <input
+                  type="text"
+                  placeholder="Contact name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
+                  autoFocus
+                />
+                <input
+                  type="text"
+                  placeholder="Company (optional)"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
+                />
               </div>
 
-              <div className="mt-5 flex gap-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.03] py-2.5 text-sm text-slate-400 transition hover:text-white"
-                >
-                  Skip
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={!name.trim() || saving}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
-                >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-                  Save Lead
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={!name.trim() || saving}
+                className="mt-5 w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 py-2.5 text-sm font-semibold text-white transition"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Save to workspace
+              </button>
             </>
           )}
         </motion.div>

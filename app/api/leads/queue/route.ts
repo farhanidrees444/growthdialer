@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,13 +12,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const access = await requireWorkspaceFromRequest(request, supabase, userId);
+    if (isWorkspaceError(access)) return access;
+
     const url = new URL(request.url);
     const page = Number(url.searchParams.get('page') ?? '1');
     const limit = Number(url.searchParams.get('limit') ?? '25');
     const status = url.searchParams.get('status') ?? 'queued';
     const offset = Math.max(page - 1, 0) * limit;
 
-    let query = supabase.from('leads').select('*', { count: 'exact' }).eq('user_id', userId).is('deleted_at', null);
+    let query = supabase
+      .from('leads')
+      .select('*', { count: 'exact' })
+      .eq('workspace_id', access.workspaceId)
+      .is('deleted_at', null);
+
     if (status !== 'all') {
       query = query.in('status', status.split(',').map((value) => value.trim()).filter(Boolean));
     }

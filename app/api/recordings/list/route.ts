@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { canViewTeamCalls, ownCallsOrFilter } from '@/lib/auth/call-access';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,14 +10,24 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized', recordings: [] }, { status: 401 });
 
+    const access = await requireWorkspaceFromRequest(request, supabase, user.id);
+    if (isWorkspaceError(access)) return access;
+
+    if (
+      !hasPermission(access.role, 'VIEW_ALL_RECORDINGS')
+      && !hasPermission(access.role, 'VIEW_OWN_RECORDINGS')
+    ) {
+      return NextResponse.json({ error: 'Forbidden', recordings: [] }, { status: 403 });
+    }
+
+    const teamView = canViewTeamCalls(access);
+    const wsId = access.workspaceId;
+
     const { searchParams } = new URL(request.url);
     const sentiment = searchParams.get('sentiment') ?? '';
     const search = searchParams.get('search') ?? '';
 
-    // NOTE: SELECT contains ONLY columns that actually exist in the calls table
-    // (verified against migrations 001 → 029). Adding a non-existent column
-    // here causes Supabase to return an error and the page renders empty.
-    const { data: calls, error } = await supabase
+    let recordingsQuery = supabase
       .from('calls')
       .select(`
         id, recording_url, recording_supabase_path,
@@ -24,11 +37,16 @@ export async function GET(request: NextRequest) {
         from_number, to_number, started_at, created_at, disposition, direction, lead_id,
         leads:lead_id (id, name, first_name, last_name, company, phone)
       `)
-      .eq('user_id', user.id)
       .not('recording_url', 'is', null)
       .order('started_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
       .limit(100);
+
+    recordingsQuery = teamView
+      ? recordingsQuery.eq('workspace_id', wsId)
+      : recordingsQuery.or(ownCallsOrFilter(wsId, user.id));
+
+    const { data: calls, error } = await recordingsQuery;
 
     if (error) {
       console.error('[RECORDINGS-LIST] DB error:', error);

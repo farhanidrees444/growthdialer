@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
+import { useWorkspace } from '@/contexts/workspace-context';
 
 export type PowerDialerState =
   | 'idle'
@@ -46,6 +47,7 @@ interface UsePowerDialerOptions {
 const LS_KEY = 'pd_session_v2';
 
 export function usePowerDialer(options: UsePowerDialerOptions = {}) {
+  const { apiFetch } = useWorkspace();
   const [pdState, setPdState] = useState<PowerDialerState>('idle');
   const [session, setSession] = useState<PowerSession | null>(null);
   const [currentLead, setCurrentLead] = useState<LeadRecord | null>(null);
@@ -121,7 +123,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     clearLS();
 
     try {
-      const res = await fetch(`/api/dialer/power-session/${sess.id}/end`, { method: 'POST' });
+      const res = await apiFetch(`/api/dialer/power-session/${sess.id}/end`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json() as { summary?: SessionSummary; session?: PowerSession };
         const finalSummary: SessionSummary = data.summary ?? {
@@ -157,7 +159,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     setCalledLeadIds(called);
 
     try {
-      const res = await fetch(`/api/dialer/power-session/${sess.id}/next`, {
+      const res = await apiFetch(`/api/dialer/power-session/${sess.id}/next`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ excludeLeadId: doneLeadId, calledLeadIds: called }),
@@ -193,7 +195,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
         consecutiveErrorsRef.current = 0;
         preStateRef.current = 'preview';
         setPdState('paused');
-        fetch(`/api/dialer/power-session/${sess.id}/pause`, { method: 'POST' }).catch(() => {});
+        apiFetch(`/api/dialer/power-session/${sess.id}/pause`, { method: 'POST' }).catch(() => {});
         toast.error('Auto-paused: 3 consecutive errors. Resume when ready.');
       } else {
         // eslint-disable-next-line @typescript-eslint/no-use-before-define
@@ -210,7 +212,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     setPdState('starting');
 
     try {
-      const res = await fetch('/api/dialer/power-session/start', {
+      const res = await apiFetch('/api/dialer/power-session/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(merged),
@@ -296,7 +298,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     preStateRef.current = stateRef.current;
     setPdState('paused');
 
-    fetch(`/api/dialer/power-session/${sess.id}/pause`, { method: 'POST' }).catch(() => {});
+    apiFetch(`/api/dialer/power-session/${sess.id}/pause`, { method: 'POST' }).catch(() => {});
   }, []);
 
   // ── Public: resume ─────────────────────────────────────────────────────────
@@ -306,7 +308,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     if (!sess || stateRef.current !== 'paused') return;
 
     const prev = preStateRef.current;
-    fetch(`/api/dialer/power-session/${sess.id}/resume`, { method: 'POST' }).catch(() => {});
+    apiFetch(`/api/dialer/power-session/${sess.id}/resume`, { method: 'POST' }).catch(() => {});
 
     if ((prev === 'preview' || prev === 'countdown') && lead) {
       // Restart full countdown — setPdState and setCountdown batched together
@@ -354,7 +356,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
       const { sessionId } = JSON.parse(stored) as { sessionId?: string };
       if (!sessionId) return;
 
-      fetch('/api/dialer/power-session/active')
+      apiFetch('/api/dialer/power-session/active')
         .then((r) => r.json())
         .then(({ activeSession }: { activeSession: PowerSession | null }) => {
           if (!mounted || !activeSession || activeSession.id !== sessionId) {

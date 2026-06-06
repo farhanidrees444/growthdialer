@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +13,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const access = await requireWorkspaceFromRequest(request, supabase, userId, { body });
+    if (isWorkspaceError(access)) return access;
+
     const scope: 'all' | 'selected' | 'filtered' = body.scope ?? 'all';
     const ids: string[] = Array.isArray(body.ids) ? body.ids : [];
     const format: 'csv' | 'json' = body.format ?? 'csv';
@@ -20,7 +24,8 @@ export async function POST(request: NextRequest) {
     let query = supabase
       .from('leads')
       .select('id,name,first_name,last_name,company,title,phone,email,status,tags,notes,call_attempts,last_called_at,created_at,ai_score,source')
-      .eq('user_id', userId)
+      .eq('workspace_id', access.workspaceId)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (scope === 'selected' && ids.length > 0) {

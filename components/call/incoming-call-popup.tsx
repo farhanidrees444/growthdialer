@@ -6,6 +6,7 @@ import { Phone, PhoneOff, User } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useWebPhone } from '@/contexts/webphone-context';
 import { useCallContext } from '@/lib/call-context';
+import { useWorkspace } from '@/contexts/workspace-context';
 
 interface InboundLead {
   first_name: string | null;
@@ -142,6 +143,7 @@ export function IncomingCallPopup({ userId }: Props) {
 
   const { answerIncomingCall } = useWebPhone();
   const { registerCallMeta } = useCallContext();
+  const { apiFetch } = useWorkspace();
 
   // Keyboard: Enter = answer, Esc = decline (Space reserved for outbound dial)
   useEffect(() => {
@@ -245,7 +247,7 @@ export function IncomingCallPopup({ userId }: Props) {
     );
 
     // Update DB + signal Telnyx (non-fatal if REST answer fails for WebRTC calls)
-    void fetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch(
+    void apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch(
       (err) => console.error('[POPUP] REST answer failed:', err),
     );
 
@@ -258,7 +260,7 @@ export function IncomingCallPopup({ userId }: Props) {
     setDeclining(true);
     stopRingtone();
     try {
-      await fetch(`/api/calls/${call.id}/end`, { method: 'POST' });
+      await apiFetch(`/api/calls/${call.id}/end`, { method: 'POST' });
     } catch { /* non-fatal */ }
     setCall(null);
     setDeclining(false);

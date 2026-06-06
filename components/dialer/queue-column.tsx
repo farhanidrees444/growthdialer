@@ -10,6 +10,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { QueueLeadCard } from './queue-lead-card';
 import { getLocalTime } from '@/lib/utils/timezone';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
+import { useWorkspace } from '@/contexts/workspace-context';
 
 type QueueTab = 'queue' | 'hot' | 'callbacks';
 type SortKey = 'priority' | 'recent' | 'az' | 'tz_safe';
@@ -66,6 +67,7 @@ interface QueueColumnProps {
 }
 
 export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsChange, onLeadsChange }: QueueColumnProps) {
+  const { apiFetch } = useWorkspace();
   const [tab, setTab] = useState<QueueTab>('queue');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -115,7 +117,7 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
         search: debouncedSearch,
         filters: JSON.stringify(serverFilters),
       });
-      const res = await fetch(`/api/dialer/queue?${params}`);
+      const res = await apiFetch(`/api/dialer/queue?${params}`);
       if (!res.ok) return;
       const data = await res.json() as { leads: LeadRecord[]; counts: QueueCounts };
       setLeads(data.leads);
@@ -125,7 +127,7 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
     } catch { /* silent */ } finally {
       setLoading(false);
     }
-  }, [tab, sort, debouncedSearch, filters]);
+  }, [tab, sort, debouncedSearch, filters, apiFetch]);
 
   useEffect(() => { load(); }, [load]);
 

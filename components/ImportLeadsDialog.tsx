@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useLeads } from "@/contexts/leads-context";
+import { useWorkspace } from "@/contexts/workspace-context";
 
 const COUNTRIES = [
   { code: "US", label: "🇺🇸 United States" },
@@ -36,6 +37,7 @@ const COUNTRIES = [
 export function ImportLeadsDialog() {
   const router = useRouter();
   const { importOpen, setImportOpen, refresh } = useLeads();
+  const { apiFetch } = useWorkspace();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +54,7 @@ export function ImportLeadsDialog() {
       try {
         const text = await file.text();
 
-        const res = await fetch("/api/leads/import", {
+        const res = await apiFetch("/api/leads/import", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ csv: text, defaultCountry }),

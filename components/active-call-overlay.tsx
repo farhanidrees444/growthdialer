@@ -10,6 +10,7 @@ import {
 import { useWebPhone } from '@/contexts/webphone-context';
 import { useCallContext } from '@/lib/call-context';
 import { createClient } from '@/lib/supabase/client';
+import { useWorkspace } from '@/contexts/workspace-context';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -390,6 +391,7 @@ export default function ActiveCallOverlay() {
   const pathname = usePathname();
   const { callStatus, activeCallId: telnyxCallId, isMuted, isOnHold, toggleMute, toggleHold, sendDTMF, hangup } = useWebPhone();
   const { activeLead, activePhone, callAnsweredAt } = useCallContext();
+  const { apiFetch } = useWorkspace();
   const quality = useConnectionQuality();
 
   const [mode, setMode] = useState<OverlayMode>('full');
@@ -492,23 +494,20 @@ export default function ActiveCallOverlay() {
     if (saveNotesRef.current) clearTimeout(saveNotesRef.current);
     saveNotesRef.current = setTimeout(async () => {
       if (!dbCallId) return;
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return;
-      await fetch(`/api/calls/${dbCallId}/notes`, {
+      await apiFetch(`/api/calls/${dbCallId}/notes`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes: v }),
       });
     }, 800);
-  }, [dbCallId]);
+  }, [dbCallId, apiFetch]);
 
   // ── VM Drop ────────────────────────────────────────────────────────────────
   const handleVmDrop = useCallback(async () => {
     if (vmDropping || vmDropped || !telnyxCallId) return;
     setVmDropping(true);
     try {
-      await fetch('/api/calls/drop-voicemail', {
+      await apiFetch('/api/calls/drop-voicemail', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ call_control_id: telnyxCallId }),
@@ -517,7 +516,7 @@ export default function ActiveCallOverlay() {
     } finally {
       setVmDropping(false);
     }
-  }, [vmDropping, vmDropped, telnyxCallId]);
+  }, [vmDropping, vmDropped, telnyxCallId, apiFetch]);
 
   // ── Coach Request ──────────────────────────────────────────────────────────
   const handleRequestCoach = useCallback(async () => {

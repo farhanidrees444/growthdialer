@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 
 export async function POST(
   request: NextRequest,
@@ -11,12 +12,16 @@ export async function POST(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const userId = user.id;
     const body = await request.json() as {
       excludeLeadId?: string;
       calledLeadIds?: string[];
       current_disposition?: string;
+      workspace_id?: string;
     };
+    const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body });
+    if (isWorkspaceError(access)) return access;
+
+    const userId = user.id;
     const { excludeLeadId, calledLeadIds = [] } = body;
 
     // Verify session belongs to user and is active
@@ -37,7 +42,8 @@ export async function POST(
     let query = supabase
       .from('leads')
       .select('id, name, title, company, phone, email, status, ai_score, last_called_at, call_attempts, tags, notes, dnc')
-      .eq('user_id', userId)
+      .eq('workspace_id', access.workspaceId)
+      .is('deleted_at', null)
       .not('status', 'in', '("do_not_call","meeting_booked")')
       .eq('dnc', false)
       .order('ai_score', { ascending: false })
@@ -59,7 +65,8 @@ export async function POST(
     let countQuery = supabase
       .from('leads')
       .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
+      .eq('workspace_id', access.workspaceId)
+      .is('deleted_at', null)
       .not('status', 'in', '("do_not_call","meeting_booked")')
       .eq('dnc', false);
 

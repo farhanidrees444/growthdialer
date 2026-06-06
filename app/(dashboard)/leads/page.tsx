@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useLeads } from "@/contexts/leads-context";
+import { useWorkspace } from "@/contexts/workspace-context";
 import { useCallContext } from "@/lib/call-context";
 import { AnimatePresence as AP } from "framer-motion";
 import { LeadAddModal } from "@/components/leads/lead-add-modal";
@@ -499,6 +500,7 @@ function applyAdvancedFilters(leads: FullLead[], filters: LeadFilters): FullLead
 export default function LeadsPage() {
   const router = useRouter();
   const { leads: contextLeads, setImportOpen } = useLeads();
+  const { currentWorkspace, apiFetch } = useWorkspace();
   const { startCall } = useCallContext();
 
   const [leads, setLeads] = useState<FullLead[]>([]);
@@ -528,15 +530,16 @@ export default function LeadsPage() {
   }, [search]);
 
   const loadLeads = useCallback(async () => {
+    if (!currentWorkspace?.id) {
+      setLoading(false);
+      return;
+    }
     const supabase = createClient();
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.id) { setLoading(false); return; }
-
       const { data, error } = await supabase
         .from("leads")
         .select("id,name,first_name,last_name,title,company,phone,email,ai_score,status,call_attempts,last_called_at,notes,tags,linkedin,source,created_at,dnc,deleted_at")
-        .eq("user_id", user.id)
+        .eq("workspace_id", currentWorkspace.id)
         .order("ai_score", { ascending: false });
 
       if (error) { console.error("Leads load error:", error); return; }
@@ -544,9 +547,9 @@ export default function LeadsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentWorkspace?.id]);
 
-  useEffect(() => { loadLeads(); }, [loadLeads, contextLeads.length]);
+  useEffect(() => { loadLeads(); }, [loadLeads, contextLeads.length, currentWorkspace?.id]);
 
   // Real-time: reflect lead changes (status, call_attempts, dnc, deleted_at) without full reload
   useEffect(() => {
@@ -649,7 +652,7 @@ export default function LeadsPage() {
   }, [router]);
 
   const handleDeleteSingle = useCallback(async (lead: FullLead) => {
-    const res = await fetch(`/api/leads/${lead.id}`, { method: "DELETE" });
+    const res = await apiFetch(`/api/leads/${lead.id}`, { method: "DELETE" });
     if (!res.ok) { toast.error("Failed to delete"); return; }
     setLeads((p) => p.map((l) => l.id === lead.id ? { ...l, deleted_at: new Date().toISOString() } : l));
     toast.success(`${lead.name} deleted`, {
@@ -659,7 +662,7 @@ export default function LeadsPage() {
   }, []);
 
   const handleRestoreFromTrash = useCallback(async (lead: FullLead) => {
-    const res = await fetch(`/api/leads/${lead.id}/restore`, { method: "POST" });
+    const res = await apiFetch(`/api/leads/${lead.id}/restore`, { method: "POST" });
     if (!res.ok) { toast.error("Restore failed"); return; }
     setLeads((p) => p.map((l) => l.id === lead.id ? { ...l, deleted_at: null } : l));
     toast.success(`${lead.name} restored`);

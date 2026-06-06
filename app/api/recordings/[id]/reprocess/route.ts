@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -10,24 +13,42 @@ export async function POST(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const access = await requireWorkspaceFromRequest(request, supabase, user.id);
+    if (isWorkspaceError(access)) return access;
+
+    if (
+      !hasPermission(access.role, 'VIEW_ALL_RECORDINGS')
+      && !hasPermission(access.role, 'VIEW_OWN_RECORDINGS')
+    ) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { id } = await params;
     console.log('[REPROCESS] Requested for call:', id, '| user:', user.id);
 
-    const { data: call } = await supabase
+    const call = await requireCallAccess(
+      supabase,
+      { id },
+      access,
+      user.id,
+      hasPermission(access.role, 'VIEW_ALL_RECORDINGS') ? 'read' : 'control',
+    );
+    if (isCallAccessError(call)) return call;
+
+    const { data: callRow } = await supabase
       .from('calls')
       .select('id, recording_url, ai_processing_status, analytics_id')
       .eq('id', id)
-      .eq('user_id', user.id)
       .maybeSingle();
 
-    if (!call) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    if (!call.recording_url) {
+    if (!callRow) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (!callRow.recording_url) {
       console.warn('[REPROCESS] No recording_url on call:', id);
       return NextResponse.json({ error: 'No recording URL — recording may not have saved yet' }, { status: 400 });
     }
 
-    console.log('[REPROCESS] Call found, recording_url:', call.recording_url,
-      '| current status:', call.ai_processing_status, '| analytics_id:', call.analytics_id);
+    console.log('[REPROCESS] Call found, recording_url:', callRow.recording_url,
+      '| current status:', callRow.ai_processing_status, '| analytics_id:', callRow.analytics_id);
 
     // Reset AI state so process-call doesn't skip it as already processed
     await supabase

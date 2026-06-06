@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import telnyxClient, { toE164 } from '@/lib/telnyx';
 import { normalizePhone } from '@/lib/phone';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { hasPermission } from '@/lib/auth/permissions';
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user: authUser } } = await supabase.auth.getUser();
     const userId = authUser?.id;
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const body = await request.json();
     const { to, lead_id, call_control_id } = body as {
@@ -24,6 +29,13 @@ export async function POST(request: NextRequest) {
     console.log(`[dial] original="${to}" normalized="${e164}" webrtc=${!!call_control_id}`);
     if (!e164) {
       return NextResponse.json({ error: 'Phone number format is invalid' }, { status: 400 });
+    }
+
+    const access = await requireWorkspaceFromRequest(request, supabase, userId, { body });
+    if (isWorkspaceError(access)) return access;
+
+    if (!hasPermission(access.role, 'MAKE_CALLS')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Determine from number (user's default purchased number or env fallback)
@@ -51,29 +63,25 @@ export async function POST(request: NextRequest) {
     // Returns db_id (UUID) so the client can use it for notes/disposition APIs.
     if (call_control_id) {
       let dbId: string | null = null;
-      if (userId) {
-        const nowIso = new Date().toISOString();
-        const { data: insertedRow, error: insertError } = await supabase
-          .from('calls')
-          .insert({
-            user_id: userId,
-            lead_id: lead_id ?? null,
-            direction: 'outbound',
-            to_number: e164,
-            from_number: fromNumber,
-            telnyx_call_id: call_control_id,
-            status: 'initiated',
-            // started_at is required for numbers/list stats, recordings ordering,
-            // analytics distribution, dashboard charts. Without it, every outbound
-            // call is invisible to those queries.
-            started_at: nowIso,
-            created_at: nowIso,
-          })
-          .select('id')
-          .single();
-        if (insertError) console.error('[dial] insert error:', insertError);
-        dbId = insertedRow?.id ?? null;
-      }
+      const nowIso = new Date().toISOString();
+      const { data: insertedRow, error: insertError } = await supabase
+        .from('calls')
+        .insert({
+          user_id: userId,
+          workspace_id: access.workspaceId,
+          lead_id: lead_id ?? null,
+          direction: 'outbound',
+          to_number: e164,
+          from_number: fromNumber,
+          telnyx_call_id: call_control_id,
+          status: 'initiated',
+          started_at: nowIso,
+          created_at: nowIso,
+        })
+        .select('id')
+        .single();
+      if (insertError) console.error('[dial] insert error:', insertError);
+      dbId = insertedRow?.id ?? null;
       return NextResponse.json({ call_control_id, db_id: dbId, to: e164, status: 'initiated' });
     }
 
@@ -99,10 +107,11 @@ export async function POST(request: NextRequest) {
 
     const newCallControlId = result.data?.call_control_id;
 
-    if (userId && newCallControlId) {
+    if (newCallControlId) {
       const nowIso = new Date().toISOString();
       const { error: insertError } = await supabase.from('calls').insert({
         user_id: userId,
+        workspace_id: access.workspaceId,
         lead_id: lead_id ?? null,
         direction: 'outbound',
         to_number: e164,

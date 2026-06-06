@@ -13,6 +13,7 @@ import { CallProvider, useCallContext } from "@/lib/call-context";
 import ActiveCallOverlay from "@/components/active-call-overlay";
 import SaveAsLeadModal from "@/components/save-as-lead-modal";
 import { WorkspaceProvider } from "@/contexts/workspace-context";
+import { WorkspaceGate } from "@/components/workspace/workspace-gate";
 import { IncomingCallPopup } from "@/components/call/incoming-call-popup";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { Grain } from "@/components/marketing/live-floor/Grain";
@@ -80,6 +81,9 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const isOnboarding = pathname.startsWith("/workspace/setup");
+
   return (
     <WorkspaceProvider>
       <WebPhoneProvider>
@@ -97,15 +101,20 @@ export default function DashboardLayout({
               />
               <div className="pointer-events-none absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full opacity-[0.08] blur-3xl bg-[oklch(0.71_0.13_207)]" aria-hidden />
 
-              <Sidebar />
+              {!isOnboarding && <Sidebar />}
               <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
-                <TopHeader />
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                  {children}
+                {!isOnboarding && <TopHeader />}
+                <div
+                  className={cn(
+                    "flex min-h-0 flex-1 flex-col overflow-hidden",
+                    !isOnboarding && "pb-[calc(56px+env(safe-area-inset-bottom,0px))] lg:pb-0",
+                  )}
+                >
+                  <WorkspaceGate>{children}</WorkspaceGate>
                 </div>
               </div>
             </div>
-            <MobileBottomTabBar />
+            {!isOnboarding && <MobileBottomTabBar />}
             <DashboardOverlays />
             </MobileNavProvider>
           </LeadsProvider>

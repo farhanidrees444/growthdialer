@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Phone, Mail, Building2, Briefcase, User, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useWorkspace } from '@/contexts/workspace-context';
 
 interface LeadToEdit {
   id: string;
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export function LeadEditModal({ lead, onClose, onSaved }: Props) {
+  const { apiFetch } = useWorkspace();
   const [form, setForm] = useState({
     first_name: lead.first_name ?? '',
     last_name: lead.last_name ?? '',
@@ -59,7 +61,7 @@ export function LeadEditModal({ lead, onClose, onSaved }: Props) {
     const name = `${form.first_name} ${form.last_name}`.trim() || lead.name;
 
     try {
-      const res = await fetch(`/api/leads/${lead.id}`, {
+      const res = await apiFetch(`/api/leads/${lead.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, name }),

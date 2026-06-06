@@ -9,6 +9,7 @@ import {
   ChevronRight, Volume2, X,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useWorkspace } from '@/contexts/workspace-context';
 import { toast } from 'sonner';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -421,6 +422,7 @@ const SENTIMENT_FILTERS = [
 ];
 
 export default function RecordingsPage() {
+  const { currentWorkspace, apiFetch } = useWorkspace();
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -431,13 +433,14 @@ export default function RecordingsPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchRecordings = useCallback(async (searchVal = search, sentimentVal = sentimentFilter) => {
+    if (!currentWorkspace?.id) return;
     setLoading(true);
     setLoadError(null);
     try {
       const params = new URLSearchParams();
       if (searchVal) params.set('search', searchVal);
       if (sentimentVal) params.set('sentiment', sentimentVal);
-      const res = await fetch(`/api/recordings/list?${params}`);
+      const res = await apiFetch(`/api/recordings/list?${params}`);
       const data = await res.json() as { recordings?: Recording[]; error?: string };
       if (!res.ok || data.error) {
         const msg = data.error ?? `Server returned ${res.status}`;
@@ -455,7 +458,7 @@ export default function RecordingsPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, sentimentFilter]);
+  }, [search, sentimentFilter, currentWorkspace?.id, apiFetch]);
 
   useEffect(() => {
     void fetchRecordings('', '');
@@ -490,7 +493,7 @@ export default function RecordingsPage() {
   const handleReprocess = async (id: string) => {
     toast.loading('Queuing AI analysis…', { id: `rp-${id}` });
     try {
-      const res = await fetch(`/api/recordings/${id}/reprocess`, { method: 'POST' });
+      const res = await apiFetch(`/api/recordings/${id}/reprocess`, { method: 'POST' });
       const data = await res.json() as { error?: string };
       if (data.error) {
         toast.error(data.error, { id: `rp-${id}` });

@@ -18,6 +18,8 @@ import {
 import { useLeads } from "@/contexts/leads-context";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { createClient } from "@/lib/supabase/client";
+import { useWorkspace } from "@/contexts/workspace-context";
+import { WORKSPACE_ID_HEADER } from "@/lib/auth/workspace-access";
 import { cn } from "@/lib/utils";
 import type { SystemMetricsData, HourlyMetricPoint } from "@/lib/dashboard-types";
 
@@ -451,6 +453,7 @@ function RecentCallsList({ calls, loading }: { calls: RecentCall[] | null; loadi
 export default function DashboardPage() {
   const session = useSupabaseSession();
   const { leads } = useLeads();
+  const { currentWorkspace, apiFetch } = useWorkspace();
   void leads;
 
   const tokenRef = useRef<string | null>(null);
@@ -481,9 +484,9 @@ export default function DashboardPage() {
 
   const fetchMetrics = useCallback(async (token: string) => {
     try {
-      const res = await fetch('/api/dashboard/metrics', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+      if (currentWorkspace?.id) headers[WORKSPACE_ID_HEADER] = currentWorkspace.id;
+      const res = await fetch('/api/dashboard/metrics', { headers });
       if (res.ok) {
         setMetrics(await res.json() as SystemMetricsData);
       } else {
@@ -494,13 +497,13 @@ export default function DashboardPage() {
     } finally {
       setMetricsLoading(false);
     }
-  }, []);
+  }, [currentWorkspace?.id]);
 
   useEffect(() => {
-    if (!session?.access_token) return;
+    if (!session?.access_token || !currentWorkspace?.id) return;
     tokenRef.current = session.access_token;
     fetchMetrics(session.access_token);
-  }, [session?.access_token, fetchMetrics]);
+  }, [session?.access_token, currentWorkspace?.id, fetchMetrics]);
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -517,12 +520,15 @@ export default function DashboardPage() {
   }, [session?.user?.id, fetchMetrics]);
 
   useEffect(() => {
+    if (!currentWorkspace?.id) return;
     let cancelled = false;
     const supabase = createClient();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const wsId = currentWorkspace.id;
+    const userId = session?.user?.id;
 
-    fetch('/api/stats/today')
+    apiFetch('/api/stats/today')
       .then(r => r.json())
       .then(data => {
         if (!cancelled && !data.error) {
@@ -541,25 +547,35 @@ export default function DashboardPage() {
       })
       .catch(() => { if (!cancelled) setStatsLoading(false); });
 
-    supabase
+    let talkQuery = supabase
       .from('calls')
       .select('duration_seconds')
       .gte('ended_at', today.toISOString())
-      .not('duration_seconds', 'is', null)
-      .then(({ data }) => {
+      .not('duration_seconds', 'is', null);
+    if (userId) {
+      talkQuery = talkQuery.or(`and(workspace_id.eq.${wsId},user_id.eq.${userId}),and(workspace_id.is.null,user_id.eq.${userId})`);
+    } else {
+      talkQuery = talkQuery.eq('workspace_id', wsId);
+    }
+    talkQuery.then(({ data }) => {
         if (!cancelled) {
           const total = (data ?? []).reduce((s, c) => s + ((c.duration_seconds as number) ?? 0), 0);
           setTalkTime(total);
         }
       });
 
-    void supabase
+    let recentQuery = supabase
       .from('calls')
       .select('id, to_number, duration_seconds, ended_at, disposition, leads(name, company)')
       .not('ended_at', 'is', null)
       .order('ended_at', { ascending: false })
-      .limit(5)
-      .then(({ data }) => {
+      .limit(5);
+    if (userId) {
+      recentQuery = recentQuery.or(`and(workspace_id.eq.${wsId},user_id.eq.${userId}),and(workspace_id.is.null,user_id.eq.${userId})`);
+    } else {
+      recentQuery = recentQuery.eq('workspace_id', wsId);
+    }
+    void recentQuery.then(({ data }) => {
         if (!cancelled) {
           setRecentCalls((data ?? []) as unknown as RecentCall[]);
           setRecentCallsLoading(false);
@@ -567,7 +583,7 @@ export default function DashboardPage() {
       });
 
     return () => { cancelled = true; };
-  }, []);
+  }, [currentWorkspace?.id, session?.user?.id, apiFetch]);
 
   useEffect(() => {
     if (timeRange !== '7D' || weeklyLoadedRef.current) return;
