@@ -4,7 +4,8 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { GsapCountUp } from "@/components/gsap/GsapCountUp";
+import { GsapScrollReveal, refreshGsapScrollTriggers } from "@/components/gsap/GsapScrollReveal";
 import {
   Phone, Users, CalendarCheck, Clock, TrendingUp, TrendingDown,
   ChevronRight,
@@ -158,6 +159,7 @@ function Skeleton({ className }: { className?: string }) {
 function KpiCard({
   title,
   displayValue,
+  countUp,
   loading,
   hasActivity,
   icon: Icon,
@@ -170,6 +172,7 @@ function KpiCard({
 }: {
   title: string;
   displayValue: string;
+  countUp?: { value: number; decimals?: number; suffix?: string };
   loading: boolean;
   hasActivity: boolean;
   icon: typeof Phone;
@@ -185,10 +188,8 @@ function KpiCard({
   const hasData = hasActivity;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
+    <div
+      data-gsap-reveal
       className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl transition-colors hover:border-white/[0.10]"
     >
       <div className="p-4 pb-1">
@@ -201,7 +202,15 @@ function KpiCard({
         ) : hasData ? (
           <>
             <p className="mt-1.5 font-display text-4xl font-light tabular-nums text-white">
-              {displayValue}
+              {countUp ? (
+                <GsapCountUp
+                  value={countUp.value}
+                  decimals={countUp.decimals}
+                  suffix={countUp.suffix}
+                />
+              ) : (
+                displayValue
+              )}
             </p>
             {trend !== undefined && trend !== null && (
               <div className={cn(
@@ -246,7 +255,7 @@ function KpiCard({
           </AreaChart>
         </ResponsiveContainer>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -280,7 +289,10 @@ function CallActivityChart({
   const enoughToChart = nonZeroPoints >= 2;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+    <div
+      data-gsap-reveal
+      className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]"
+    >
       <div className="flex items-center justify-between p-5 pb-3">
         <div className="flex items-center gap-2.5">
           <h3 className="text-sm font-semibold text-white">Call Activity</h3>
@@ -424,7 +436,11 @@ function RecentCallsList({ calls, loading }: { calls: RecentCall[] | null; loadi
             const grad = avatarGradient(name);
 
             return (
-              <div key={call.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-white/[0.02]">
+              <div
+                key={call.id}
+                data-gsap-reveal
+                className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-white/[0.02]"
+              >
                 <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[11px] font-bold text-white", grad)}>
                   {getInitials(name)}
                 </div>
@@ -636,10 +652,16 @@ export default function DashboardPage() {
   // Single source of truth for the KPI empty-state so all four cards agree.
   const hasCallsToday = (stats?.callsToday ?? 0) > 0;
 
+  useEffect(() => {
+    if (!allLoading) {
+      refreshGsapScrollTriggers();
+    }
+  }, [allLoading, stats, recentCalls]);
+
   return (
-    <main className="flex-1 overflow-y-auto">
+    <GsapScrollReveal className="flex-1 overflow-y-auto">
         {/* Hero */}
-        <div className="px-4 pt-6 pb-4 lg:px-6 lg:pt-8 lg:pb-5">
+        <div data-gsap-reveal className="px-4 pt-6 pb-4 lg:px-6 lg:pt-8 lg:pb-5">
           <h1 className="text-2xl font-light text-white md:text-3xl">
             {greeting}{firstName ? ', ' : ''}<span className="font-semibold">{firstName}</span>
           </h1>
@@ -653,6 +675,7 @@ export default function DashboardPage() {
           <KpiCard
             title="Calls Today"
             displayValue={String(stats?.callsToday ?? 0)}
+            countUp={{ value: stats?.callsToday ?? 0 }}
             loading={allLoading}
             hasActivity={hasCallsToday}
             icon={Phone}
@@ -666,6 +689,7 @@ export default function DashboardPage() {
           <KpiCard
             title="Connect Rate"
             displayValue={`${(stats?.connectRate ?? 0).toFixed(1)}%`}
+            countUp={{ value: stats?.connectRate ?? 0, decimals: 1, suffix: '%' }}
             loading={allLoading}
             hasActivity={hasCallsToday}
             icon={Users}
@@ -692,6 +716,7 @@ export default function DashboardPage() {
           <KpiCard
             title="Meetings Booked"
             displayValue={String(stats?.meetingsBooked ?? 0)}
+            countUp={{ value: stats?.meetingsBooked ?? 0 }}
             loading={allLoading}
             hasActivity={hasCallsToday}
             icon={CalendarCheck}
@@ -720,10 +745,13 @@ export default function DashboardPage() {
         </div>
 
         {/* Bottom Row — Recent Calls + Number Health */}
-        <div className="mt-4 grid grid-cols-1 gap-4 px-4 pb-6 lg:mt-5 lg:grid-cols-2 lg:px-6">
+        <div
+          data-gsap-reveal
+          className="mt-4 grid grid-cols-1 gap-4 px-4 pb-6 lg:mt-5 lg:grid-cols-2 lg:px-6"
+        >
           <RecentCallsList calls={recentCalls} loading={recentCallsLoading} />
           <NumberHealthCard />
         </div>
-    </main>
+    </GsapScrollReveal>
   );
 }

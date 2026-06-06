@@ -47,9 +47,9 @@ export default function ReplaceSDRTeamWithAI() {
     <article className="pt-24 pb-16 bg-black text-white">
       {/* Breadcrumb */}
       <nav className="max-w-4xl mx-auto px-4 mb-8 text-sm text-gray-400">
-        <Link href="/" className="hover:text-[#16a34a]">Home</Link>
+        <Link href="/" className="hover:text-[#8B5CF6]">Home</Link>
         <span className="mx-2">›</span>
-        <Link href="/blog" className="hover:text-[#16a34a]">Blog</Link>
+        <Link href="/blog" className="hover:text-[#8B5CF6]">Blog</Link>
         <span className="mx-2">›</span>
         <span className="text-gray-300">Replace Your SDR Team with AI</span>
       </nav>
@@ -125,7 +125,7 @@ export default function ReplaceSDRTeamWithAI() {
           <ul className="space-y-2">
             {tableOfContents.map((item) => (
               <li key={item.id} className={item.level === 3 ? "ml-6" : ""}>
-                <a href={`#${item.id}`} className="text-gray-300 hover:text-[#16a34a] transition-colors flex items-center gap-2">
+                <a href={`#${item.id}`} className="text-gray-300 hover:text-[#8B5CF6] transition-colors flex items-center gap-2">
                   <ChevronRight className="w-4 h-4" />
                   {item.title}
                 </a>
@@ -172,9 +172,9 @@ export default function ReplaceSDRTeamWithAI() {
                     <td className="text-right p-4 text-gray-400 text-xs">{row.note}</td>
                   </tr>
                 ))}
-                <tr className="bg-[#16a34a]/10 border-t-2 border-[#16a34a]">
+                <tr className="bg-[#8B5CF6]/10 border-t-2 border-[#8B5CF6]">
                   <td className="p-4 font-bold">Total Annual Cost</td>
-                  <td className="text-right p-4 font-bold text-[#16a34a]">$88,950</td>
+                  <td className="text-right p-4 font-bold text-[#8B5CF6]">$88,950</td>
                   <td className="text-right p-4"></td>
                 </tr>
               </tbody>
@@ -255,8 +255,8 @@ export default function ReplaceSDRTeamWithAI() {
             </table>
           </div>
 
-          <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-6">
-            <h3 className="font-bold text-[#16a34a] mb-2">💡 The 80/20 Rule</h3>
+          <div className="bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 rounded-lg p-6">
+            <h3 className="font-bold text-[#8B5CF6] mb-2">💡 The 80/20 Rule</h3>
             <p className="text-gray-300">AI excels at the 80% of work that's repetitive, high-volume, and rule-based: making calls, handling standard objections, booking meetings. It struggles with the 20% that requires contextual thinking and relationship skills. Focus AI on the 80%, keep humans for the 20%.</p>
           </div>
         </section>
@@ -344,7 +344,7 @@ export default function ReplaceSDRTeamWithAI() {
                   <h4 className="font-bold">{item.cost}</h4>
                   <p className="text-sm text-gray-400">{item.detail}</p>
                 </div>
-                <div className="text-[#16a34a] font-bold whitespace-nowrap">{item.amount}</div>
+                <div className="text-[#8B5CF6] font-bold whitespace-nowrap">{item.amount}</div>
               </div>
             ))}
           </div>
@@ -427,7 +427,7 @@ export default function ReplaceSDRTeamWithAI() {
             ].map((section) => (
               <div key={section.step} className="bg-gray-900/50 border border-gray-800 rounded-lg p-8">
                 <div className="flex items-start gap-4 mb-6">
-                  <div className="w-14 h-14 rounded-full bg-[#16a34a] flex items-center justify-center flex-shrink-0 font-bold text-xl">
+                  <div className="w-14 h-14 rounded-full bg-[#8B5CF6] flex items-center justify-center flex-shrink-0 font-bold text-xl">
                     {section.step}
                   </div>
                   <div>
@@ -438,14 +438,14 @@ export default function ReplaceSDRTeamWithAI() {
                 <ul className="space-y-3 mb-6">
                   {section.points.map((point) => (
                     <li key={point} className="flex items-start gap-3 text-gray-300">
-                      <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-5 h-5 text-[#8B5CF6] flex-shrink-0 mt-0.5" />
                       <span>{point}</span>
                     </li>
                   ))}
                 </ul>
 
-                <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded p-3">
-                  <p className="text-sm text-[#16a34a]">{section.cta}</p>
+                <div className="bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 rounded p-3">
+                  <p className="text-sm text-[#8B5CF6]">{section.cta}</p>
                 </div>
               </div>
             ))}
@@ -471,7 +471,7 @@ export default function ReplaceSDRTeamWithAI() {
           <p className="mt-8 text-sm text-zinc-500">On the roadmap (not live): {ROADMAP_NOT_LIVE.join(' · ')}</p>
 
           <Link href="/compare/vs-orum" className="mt-8 inline-block">
-            <Button className="bg-[#16a34a] text-white hover:bg-[#15803d]">
+            <Button className="bg-[#8B5CF6] text-white hover:bg-[#7C3AED]">
               See How GrowthDialer Compares →
             </Button>
           </Link>
@@ -518,7 +518,7 @@ export default function ReplaceSDRTeamWithAI() {
                 "Manager coaching / whisper on live calls",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <span className="text-[#16a34a]">✓</span>
+                  <span className="text-[#8B5CF6]">✓</span>
                   <span>{item}</span>
                 </li>
               ))}
@@ -563,7 +563,7 @@ export default function ReplaceSDRTeamWithAI() {
                 benefit: "Better fit for their skills, less pressure-driven environment"
               },
             ].map((scenario) => (
-              <div key={scenario.performer} className="border-l-4 border-[#16a34a] pl-6 py-4">
+              <div key={scenario.performer} className="border-l-4 border-[#8B5CF6] pl-6 py-4">
                 <h4 className="font-bold mb-1">{scenario.performer}</h4>
                 <p className="text-gray-300 mb-2"><strong>Transition:</strong> {scenario.transition}</p>
                 <p className="text-gray-400 text-sm">{scenario.benefit}</p>
@@ -571,8 +571,8 @@ export default function ReplaceSDRTeamWithAI() {
             ))}
           </div>
 
-          <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-6 mt-8">
-            <h3 className="font-bold text-[#16a34a] mb-2">💡 Pro Tip</h3>
+          <div className="bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 rounded-lg p-6 mt-8">
+            <h3 className="font-bold text-[#8B5CF6] mb-2">💡 Pro Tip</h3>
             <p className="text-gray-300">The key to smooth transition: communicate early and honestly. Tell your team "We're deploying AI to handle 80% of the grunt work so you can focus on what you're actually good at — building relationships and closing deals." Good SDRs see this as a promotion, not a threat.</p>
           </div>
         </section>
@@ -617,13 +617,13 @@ export default function ReplaceSDRTeamWithAI() {
         </section>
 
         {/* CTA Section */}
-        <div className="bg-gradient-to-r from-[#16a34a]/10 to-transparent border border-[#16a34a]/30 rounded-lg p-8 mb-12 text-center">
+        <div className="bg-gradient-to-r from-[#8B5CF6]/10 to-transparent border border-[#8B5CF6]/30 rounded-lg p-8 mb-12 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Replace Your SDR Team?</h2>
           <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
             Start with a pilot: deploy one AI agent on your coldest, most structured lead list for 2 weeks. Measure the results yourself.
           </p>
           <Link href="https://app.growthdialer.com/signup">
-            <Button size="lg" className="bg-[#16a34a] text-white hover:bg-[#15803d]">
+            <Button size="lg" className="bg-[#8B5CF6] text-white hover:bg-[#7C3AED]">
               Start Pilot Program Free <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
@@ -656,7 +656,7 @@ export default function ReplaceSDRTeamWithAI() {
                 a: "GrowthDialer includes TCPA compliance tools, GDPR data handling, and state-specific restrictions. But verify with your legal team — we provide the tools, you own compliance responsibility."
               },
             ].map((item) => (
-              <div key={item.q} className="border-l-4 border-[#16a34a] pl-6 py-4">
+              <div key={item.q} className="border-l-4 border-[#8B5CF6] pl-6 py-4">
                 <h3 className="font-bold text-lg mb-2">{item.q}</h3>
                 <p className="text-gray-300">{item.a}</p>
               </div>
@@ -667,7 +667,7 @@ export default function ReplaceSDRTeamWithAI() {
         {/* Author Bio */}
         <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8 mb-12">
           <div className="flex flex-col sm:flex-row items-start gap-6">
-            <div className="w-20 h-20 rounded-full bg-[#16a34a]/20 flex items-center justify-center text-2xl flex-shrink-0">
+            <div className="w-20 h-20 rounded-full bg-[#8B5CF6]/20 flex items-center justify-center text-2xl flex-shrink-0">
               👤
             </div>
             <div>
@@ -675,7 +675,7 @@ export default function ReplaceSDRTeamWithAI() {
               <p className="text-gray-400 mb-4">
                 We've helped 200+ companies make the transition from human SDRs to AI agents. This guide captures real data, honest objections, and practical implementation steps from 18+ months of working with sales teams across industries.
               </p>
-              <Link href="/about" className="text-[#16a34a] hover:text-[#15803d]">Learn more about our team →</Link>
+              <Link href="/about" className="text-[#8B5CF6] hover:text-[#7C3AED]">Learn more about our team →</Link>
             </div>
           </div>
         </div>
@@ -684,11 +684,11 @@ export default function ReplaceSDRTeamWithAI() {
         <div className="mb-12">
           <h2 className="text-3xl font-bold mb-8">Related Articles</h2>
           <div className="grid md:grid-cols-2 gap-6">
-            <Link href="/blog/best-ai-sales-dialer-2026" className="border border-gray-800 rounded-lg p-6 hover:border-[#16a34a] transition-colors">
+            <Link href="/blog/best-ai-sales-dialer-2026" className="border border-gray-800 rounded-lg p-6 hover:border-[#8B5CF6] transition-colors">
               <h3 className="font-bold text-lg mb-2">7 Best AI Sales Dialers in 2026: Honest Reviews & Comparisons</h3>
               <p className="text-gray-400 text-sm">Find the right platform for your specific needs.</p>
             </Link>
-            <Link href="/blog/how-parallel-dialing-works" className="border border-gray-800 rounded-lg p-6 hover:border-[#16a34a] transition-colors">
+            <Link href="/blog/how-parallel-dialing-works" className="border border-gray-800 rounded-lg p-6 hover:border-[#8B5CF6] transition-colors">
               <h3 className="font-bold text-lg mb-2">How Parallel Dialing 10x's Your Sales Connect Rate in 2026</h3>
               <p className="text-gray-400 text-sm">Understand the technology that makes AI SDRs possible.</p>
             </Link>
@@ -703,7 +703,7 @@ export default function ReplaceSDRTeamWithAI() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="https://app.growthdialer.com/signup">
-              <Button size="lg" className="bg-[#16a34a] text-white hover:bg-[#15803d]">
+              <Button size="lg" className="bg-[#8B5CF6] text-white hover:bg-[#7C3AED]">
                 Start Free Trial <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>

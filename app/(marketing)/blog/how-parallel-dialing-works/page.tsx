@@ -47,9 +47,9 @@ export default function ParallelDialingGuide() {
     <article className="pt-24 pb-16 bg-black text-white">
       {/* Breadcrumb */}
       <nav className="max-w-4xl mx-auto px-4 mb-8 text-sm text-gray-400">
-        <Link href="/" className="hover:text-[#16a34a]">Home</Link>
+        <Link href="/" className="hover:text-[#8B5CF6]">Home</Link>
         <span className="mx-2">›</span>
-        <Link href="/blog" className="hover:text-[#16a34a]">Blog</Link>
+        <Link href="/blog" className="hover:text-[#8B5CF6]">Blog</Link>
         <span className="mx-2">›</span>
         <span className="text-gray-300">How Parallel Dialing Works</span>
       </nav>
@@ -97,23 +97,23 @@ export default function ParallelDialingGuide() {
         <BlogHonestyBanner />
 
         {/* Key Takeaways */}
-        <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-8 mb-12">
-          <h2 className="text-2xl font-bold text-[#16a34a] mb-4">Key Takeaways</h2>
+        <div className="bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 rounded-lg p-8 mb-12">
+          <h2 className="text-2xl font-bold text-[#8B5CF6] mb-4">Key Takeaways</h2>
           <ul className="space-y-3">
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-[#8B5CF6] flex-shrink-0 mt-0.5" />
               <span><strong>Parallel dialing</strong> dials 10+ prospects simultaneously instead of waiting for one call to end</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-[#8B5CF6] flex-shrink-0 mt-0.5" />
               <span>The science is simple: <strong>more dials = more connects</strong>, assuming call quality doesn't decrease</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-[#8B5CF6] flex-shrink-0 mt-0.5" />
               <span><strong>Voicemail drop</strong> is the key innovation that makes parallel dialing work at scale</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-[#8B5CF6] flex-shrink-0 mt-0.5" />
               <span>Parallel dialing is <strong>100% TCPA compliant</strong> when implemented correctly with proper consent and disclosures</span>
             </li>
           </ul>
@@ -125,7 +125,7 @@ export default function ParallelDialingGuide() {
           <ul className="space-y-2">
             {tableOfContents.map((item) => (
               <li key={item.id} className={item.level === 3 ? "ml-6" : ""}>
-                <a href={`#${item.id}`} className="text-gray-300 hover:text-[#16a34a] transition-colors flex items-center gap-2">
+                <a href={`#${item.id}`} className="text-gray-300 hover:text-[#8B5CF6] transition-colors flex items-center gap-2">
                   <ChevronRight className="w-4 h-4" />
                   {item.title}
                 </a>
@@ -194,15 +194,15 @@ export default function ParallelDialingGuide() {
                     <td className="p-4 font-semibold">{row.feature}</td>
                     <td className="text-center p-4 text-gray-300">{row.preview}</td>
                     <td className="text-center p-4 text-gray-300">{row.power}</td>
-                    <td className="text-center p-4"><span className="text-[#16a34a] font-semibold">{row.parallel}</span></td>
+                    <td className="text-center p-4"><span className="text-[#8B5CF6] font-semibold">{row.parallel}</span></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-6 mt-6">
-            <h3 className="font-bold text-[#16a34a] mb-2">💡 Pro Tip</h3>
+          <div className="bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 rounded-lg p-6 mt-6">
+            <h3 className="font-bold text-[#8B5CF6] mb-2">💡 Pro Tip</h3>
             <p className="text-gray-300">The best teams don't use just one approach. They use preview dialing for warm leads, power dialing for known prospects, and parallel dialing for cold outbound. This hybrid approach maximizes both quality and quantity.</p>
           </div>
         </section>
@@ -218,19 +218,19 @@ export default function ParallelDialingGuide() {
           <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 mb-6">
             <h3 className="font-bold text-white mb-4">Single-Line Dialing (Traditional)</h3>
             <div className="space-y-3 text-gray-300 font-mono text-sm">
-              <div>Calls per hour: <span className="text-[#16a34a]">60</span></div>
-              <div>Average connect rate: <span className="text-[#16a34a]">25%</span></div>
+              <div>Calls per hour: <span className="text-[#8B5CF6]">60</span></div>
+              <div>Average connect rate: <span className="text-[#8B5CF6]">25%</span></div>
               <div>Connects per hour: <span className="text-white">60 × 0.25 = 15 connects</span></div>
             </div>
           </div>
 
-          <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-6 mb-6">
-            <h3 className="font-bold text-[#16a34a] mb-4">Parallel dialing (10 concurrent lines)</h3>
+          <div className="bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 rounded-lg p-6 mb-6">
+            <h3 className="font-bold text-[#8B5CF6] mb-4">Parallel dialing (10 concurrent lines)</h3>
             <div className="space-y-3 text-gray-300 font-mono text-sm">
-              <div>Calls per hour: <span className="text-[#16a34a]">600</span></div>
-              <div>Connect rate (slightly lower): <span className="text-[#16a34a]">22%</span></div>
+              <div>Calls per hour: <span className="text-[#8B5CF6]">600</span></div>
+              <div>Connect rate (slightly lower): <span className="text-[#8B5CF6]">22%</span></div>
               <div>Connects per hour: <span className="text-white">600 × 0.22 = 132 connects</span></div>
-              <div className="text-[#16a34a] font-bold mt-4">8.8x improvement in total connects</div>
+              <div className="text-[#8B5CF6] font-bold mt-4">8.8x improvement in total connects</div>
             </div>
           </div>
 
@@ -266,7 +266,7 @@ export default function ParallelDialingGuide() {
               { num: "6", title: "Data Logging", desc: "Every call is logged with disposition, notes, duration, and outcome. Synced to your CRM in real-time." },
             ].map((step) => (
               <div key={step.num} className="flex gap-4 items-start">
-                <div className="w-10 h-10 rounded-full bg-[#16a34a] flex items-center justify-center flex-shrink-0 font-bold">
+                <div className="w-10 h-10 rounded-full bg-[#8B5CF6] flex items-center justify-center flex-shrink-0 font-bold">
                   {step.num}
                 </div>
                 <div>
@@ -341,7 +341,7 @@ export default function ParallelDialingGuide() {
               { req: "Call Recording Disclosures", detail: "If recording calls, you must inform the prospect before the call recording begins." },
               { req: "Voicemail Message Requirements", detail: "Voicemail drops must include your company name, callback number, and purpose of call." },
             ].map((item) => (
-              <div key={item.req} className="border-l-4 border-[#16a34a] pl-6 py-3">
+              <div key={item.req} className="border-l-4 border-[#8B5CF6] pl-6 py-3">
                 <h4 className="font-bold text-white mb-1">{item.req}</h4>
                 <p className="text-gray-300">{item.detail}</p>
               </div>
@@ -366,14 +366,14 @@ export default function ParallelDialingGuide() {
               "Hawaii: Separate consent requirements for different types of calls",
             ].map((law) => (
               <li key={law} className="flex items-start gap-3 text-gray-300">
-                <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-[#8B5CF6] flex-shrink-0 mt-0.5" />
                 <span>{law}</span>
               </li>
             ))}
           </ul>
 
-          <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-6">
-            <h3 className="font-bold text-[#16a34a] mb-2">💡 Pro Tip</h3>
+          <div className="bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 rounded-lg p-6">
+            <h3 className="font-bold text-[#8B5CF6] mb-2">💡 Pro Tip</h3>
             <p className="text-gray-300">GrowthDialer includes built-in compliance tools: automatic DNC scrubbing, call recording disclosures, opt-out tracking, and state-specific rule enforcement. But always verify your own compliance program with legal counsel.</p>
           </div>
         </section>
@@ -437,7 +437,7 @@ export default function ParallelDialingGuide() {
             ].map((section) => (
               <div key={section.step} className="bg-gray-900/50 border border-gray-800 rounded-lg p-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-[#16a34a] flex items-center justify-center flex-shrink-0 font-bold">
+                  <div className="w-10 h-10 rounded-full bg-[#8B5CF6] flex items-center justify-center flex-shrink-0 font-bold">
                     {section.step}
                   </div>
                   <div className="flex-1">
@@ -445,7 +445,7 @@ export default function ParallelDialingGuide() {
                     <ul className="space-y-2">
                       {section.points.map((point) => (
                         <li key={point} className="flex items-start gap-2 text-gray-300">
-                          <span className="text-[#16a34a] mt-1">•</span>
+                          <span className="text-[#8B5CF6] mt-1">•</span>
                           <span>{point}</span>
                         </li>
                       ))}
@@ -497,11 +497,11 @@ export default function ParallelDialingGuide() {
         </section>
 
         {/* CTA Section */}
-        <div className="bg-gradient-to-r from-[#16a34a]/10 to-transparent border border-[#16a34a]/30 rounded-lg p-8 mb-12 text-center">
+        <div className="bg-gradient-to-r from-[#8B5CF6]/10 to-transparent border border-[#8B5CF6]/30 rounded-lg p-8 mb-12 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to try parallel on your floor?</h2>
           <p className="text-gray-300 mb-6 max-w-2xl mx-auto">{BLOG_CTA}</p>
           <Link href="https://app.growthdialer.com/signup">
-            <Button size="lg" className="bg-[#16a34a] text-white hover:bg-[#15803d]">
+            <Button size="lg" className="bg-[#8B5CF6] text-white hover:bg-[#7C3AED]">
               Try Parallel Dialing Free <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
@@ -534,7 +534,7 @@ export default function ParallelDialingGuide() {
                 a: "Yes, but regulations differ. B2C (consumer calls) are heavily regulated by TCPA. B2B is less regulated. Always verify compliance rules for your specific use case."
               },
             ].map((item) => (
-              <div key={item.q} className="border-l-4 border-[#16a34a] pl-6 py-4">
+              <div key={item.q} className="border-l-4 border-[#8B5CF6] pl-6 py-4">
                 <h3 className="font-bold text-lg mb-2">{item.q}</h3>
                 <p className="text-gray-300">{item.a}</p>
               </div>
@@ -545,13 +545,13 @@ export default function ParallelDialingGuide() {
         {/* Author Bio */}
         <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8 mb-12">
           <div className="flex flex-col sm:flex-row items-start gap-6">
-            <div className="w-20 h-20 rounded-full bg-[#16a34a]/20 flex items-center justify-center text-2xl flex-shrink-0">
+            <div className="w-20 h-20 rounded-full bg-[#8B5CF6]/20 flex items-center justify-center text-2xl flex-shrink-0">
               👤
             </div>
             <div>
               <h3 className="font-bold text-lg mb-1">Written by GrowthDialer Sales Team</h3>
               <p className="text-gray-400 mb-4">{AUTHOR_BIO}</p>
-              <Link href="/about" className="text-[#16a34a] hover:text-[#15803d]">Learn more about our team →</Link>
+              <Link href="/about" className="text-[#8B5CF6] hover:text-[#7C3AED]">Learn more about our team →</Link>
             </div>
           </div>
         </div>
@@ -560,11 +560,11 @@ export default function ParallelDialingGuide() {
         <div className="mb-12">
           <h2 className="text-3xl font-bold mb-8">Related Articles</h2>
           <div className="grid md:grid-cols-2 gap-6">
-            <Link href="/blog/best-ai-sales-dialer-2026" className="border border-gray-800 rounded-lg p-6 hover:border-[#16a34a] transition-colors">
+            <Link href="/blog/best-ai-sales-dialer-2026" className="border border-gray-800 rounded-lg p-6 hover:border-[#8B5CF6] transition-colors">
               <h3 className="font-bold text-lg mb-2">7 Best AI Sales Dialers in 2026: Honest Reviews & Comparisons</h3>
               <p className="text-gray-400 text-sm">Compare features, pricing, and capabilities of the top 7 platforms.</p>
             </Link>
-            <Link href="/blog/replace-sdr-team-with-ai" className="border border-gray-800 rounded-lg p-6 hover:border-[#16a34a] transition-colors">
+            <Link href="/blog/replace-sdr-team-with-ai" className="border border-gray-800 rounded-lg p-6 hover:border-[#8B5CF6] transition-colors">
               <h3 className="font-bold text-lg mb-2">How to Replace Your SDR Team with AI in 2026</h3>
               <p className="text-gray-400 text-sm">Where AI removes dial-and-log busywork vs where humans still own the call.</p>
             </Link>
@@ -579,7 +579,7 @@ export default function ParallelDialingGuide() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="https://app.growthdialer.com/signup">
-              <Button size="lg" className="bg-[#16a34a] text-white hover:bg-[#15803d]">
+              <Button size="lg" className="bg-[#8B5CF6] text-white hover:bg-[#7C3AED]">
                 Start Free Trial <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
