@@ -10,6 +10,7 @@ import { MobileNavProvider } from "@/contexts/mobile-nav-context";
 import { TopHeader } from "@/components/layout/top-header";
 import { WebPhoneProvider } from "@/contexts/webphone-context";
 import { CallProvider, useCallContext } from "@/lib/call-context";
+import { CallOrchestratorProvider } from "@/contexts/call-orchestrator-context";
 import ActiveCallOverlay from "@/components/active-call-overlay";
 import SaveAsLeadModal from "@/components/save-as-lead-modal";
 import { WorkspaceProvider } from "@/contexts/workspace-context";
@@ -88,6 +89,7 @@ export default function DashboardLayout({
     <WorkspaceProvider>
       <WebPhoneProvider>
         <CallProvider>
+          <CallOrchestratorProvider>
           <LeadsProvider>
             <MobileNavProvider>
             <ImportLeadsDialog />
@@ -118,6 +120,7 @@ export default function DashboardLayout({
             <DashboardOverlays />
             </MobileNavProvider>
           </LeadsProvider>
+          </CallOrchestratorProvider>
         </CallProvider>
       </WebPhoneProvider>
     </WorkspaceProvider>

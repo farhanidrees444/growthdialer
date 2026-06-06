@@ -4,6 +4,8 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { getSavedQueueConfig } from '@/lib/dialer/queue-config';
+import type { DialerQueueConfig } from '@/lib/dialer/queue-query';
 
 export type PowerDialerState =
   | 'idle'
@@ -159,10 +161,11 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     setCalledLeadIds(called);
 
     try {
+      const queue_config: DialerQueueConfig = getSavedQueueConfig();
       const res = await apiFetch(`/api/dialer/power-session/${sess.id}/next`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ excludeLeadId: doneLeadId, calledLeadIds: called }),
+        body: JSON.stringify({ excludeLeadId: doneLeadId, calledLeadIds: called, queue_config }),
       });
       const data = await res.json() as {
         next_lead?: LeadRecord | null;
@@ -202,7 +205,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
         await stopSession(sess);
       }
     }
-  }, [startCountdown, stopSession]);
+  }, [apiFetch, startCountdown, stopSession]);
 
   // ── Public: start ──────────────────────────────────────────────────────────
   const start = useCallback(async (cfg?: SessionConfig) => {
@@ -212,10 +215,11 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     setPdState('starting');
 
     try {
+      const queue_config = getSavedQueueConfig();
       const res = await apiFetch('/api/dialer/power-session/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(merged),
+        body: JSON.stringify({ ...merged, queue_config }),
       });
       if (!res.ok) throw new Error('Failed to start session');
 
@@ -246,7 +250,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     } catch {
       setPdState('idle');
     }
-  }, [startCountdown, saveLS]);
+  }, [apiFetch, startCountdown, saveLS]);
 
   // ── Public: called by page when the phone call actually connects ───────────
   const onCallStarted = useCallback(() => {

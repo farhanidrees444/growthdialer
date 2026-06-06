@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 import { useWebPhone } from '@/contexts/webphone-context';
 import { useCallContext } from '@/lib/call-context';
+import { useCallOrchestrator } from '@/contexts/call-orchestrator-context';
 import { useDialerMode } from '@/hooks/use-dialer-mode';
 import { useCallRealtime } from '@/hooks/use-call-realtime';
 import { useDialerHotkeys } from '@/hooks/use-dialer-hotkeys';
@@ -24,7 +25,6 @@ import { PreviewStage } from '@/components/dialer/preview-stage';
 import { LiveCallStage } from '@/components/dialer/live-call-stage';
 import { AiBriefPanel } from '@/components/dialer/ai-brief-panel';
 import { LiveInsightsPanel } from '@/components/dialer/live-insights-panel';
-import { DispositionModal } from '@/components/dialer/disposition-modal';
 import { ManualDialpadOverlay } from '@/components/dialer/manual-dialpad-overlay';
 import { ShortcutsHelpModal } from '@/components/dialer/shortcuts-help-modal';
 import { PowerBanner } from '@/components/dialer/power-banner';
@@ -114,6 +114,13 @@ export default function DialerPage() {
 
   const { mode, selectedLead, activeCallDbId, selectLead, startCall, endCall } = useDialerMode();
   const { registerCallMeta } = useCallContext();
+  const {
+    callDbId,
+    dispositionOpen,
+    beginOutboundCall,
+    registerPowerDialBridge,
+    saveDisposition,
+  } = useCallOrchestrator();
   const { currentWorkspace, apiFetch } = useWorkspace();
 
   // Stable ref so powerDialer.onShouldDial can call initiateCall once it's defined
@@ -156,13 +163,11 @@ export default function DialerPage() {
   const [stats, setStats] = useState<TodayStats>({ calls: 0, connects: 0, meetings: 0, streak: 0 });
   const [todayCalls, setTodayCalls] = useState<CallDot[]>([]);
   const [queueCounts, setQueueCounts] = useState({ queue: 0, hot: 0, callbacks: 0 });
-  const [dispositionOpen, setDispositionOpen] = useState(false);
   const [dialpadOpen, setDialpadOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [dtmfOpen, setDtmfOpen] = useState(false);
   const [mobileQueueOpen, setMobileQueueOpen] = useState(false);
   const [mobileAiBriefOpen, setMobileAiBriefOpen] = useState(false);
-  const [pendingCallDbId, setPendingCallDbId] = useState<string | null>(null);
   const [queueIndex, setQueueIndex] = useState(0);
   const [queueLeads, setQueueLeads] = useState<LeadRecord[]>([]);
   const [fromNumber, setFromNumber] = useState<string>('');
@@ -253,72 +258,42 @@ export default function DialerPage() {
     onLeadUpdate: () => { /* queue self-refreshes */ },
   });
 
-  // ── Call status transitions ─────────────────────────────────────────────────
+  // Bridge power dialer ↔ global call orchestrator
+  useEffect(() => {
+    registerPowerDialBridge({
+      onCallStarted: () => powerDialerRef.current.onCallStarted(),
+      onCallEnd: () => powerDialerRef.current.onCallEnd(),
+      onDispositionSaved: (disp, wasConnected, wasMeeting) => {
+        powerDialerRef.current.onDispositionSaved(disp, wasConnected, wasMeeting);
+      },
+      isActive: () => powerDialerRef.current.isActive,
+      getState: () => powerDialerRef.current.state,
+    });
+    return () => registerPowerDialBridge(null);
+  }, [registerPowerDialBridge]);
+
+  // Dialer UI mode transitions + stats refresh
   useEffect(() => {
     const prev = prevCallStatus.current;
     prevCallStatus.current = callStatus;
 
     if ((prev === 'connecting' || prev === 'ringing') && callStatus === 'active') {
-      powerDialerRef.current.onCallStarted();
-      // Update call IDs now that DB record exists (mode already 'live' from initiateCall)
       if (selectedLead) {
-        startCall(pendingCallDbId ?? '', pendingCallDbId ?? '');
+        startCall(callDbId ?? '', callDbId ?? '');
       }
     }
 
-    if ((prev === 'active' || prev === 'held' || prev === 'connecting' || prev === 'ringing') &&
-        (callStatus === 'ended' || callStatus === 'idle')) {
-      powerDialerRef.current.onCallEnd();
+    if (
+      (prev === 'active' || prev === 'held' || prev === 'connecting' || prev === 'ringing') &&
+      (callStatus === 'ended' || callStatus === 'idle')
+    ) {
       endCall();
-      const seconds = callTimerRef.current.seconds;
-      const dbId = pendingCallDbId;
-      if (seconds >= 10) {
-        setDispositionOpen(true);
-      } else {
-        if (dbId) {
-          apiFetch(`/api/calls/${dbId}/disposition`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ disposition: 'voicemail' }),
-          }).catch(() => {});
-        }
-        // Power mode: auto-advance to next lead after short or failed call
-        if (powerDialerRef.current.isActive) {
-          setTimeout(() => {
-            powerDialerRef.current.onDispositionSaved('voicemail', false, false);
-          }, 2000);
-        }
-        setPendingCallDbId(null);
-        callTimerRef.current.reset();
-      }
+      callTimerRef.current.reset();
       loadStats();
       loadTodayCalls();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [callStatus]);
-
-  // Pending call info for DB registration (set before makeCall, consumed by effect below)
-  const pendingRegRef = useRef<{ e164: string; leadId?: string } | null>(null);
-
-  // When WebRTC assigns a call_control_id (activeCallId), register the DB record.
-  // This fires once per call and avoids the double-call bug: no server-side dial
-  // is made in initiateCall, so only the WebRTC call goes out.
-  useEffect(() => {
-    if (!activeCallId || !pendingRegRef.current) return;
-    const { e164, leadId } = pendingRegRef.current;
-    pendingRegRef.current = null;
-    apiFetch('/api/calls/dial', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: e164, lead_id: leadId, call_control_id: activeCallId }),
-    })
-      .then((r) => r.json())
-      .then((data: { db_id?: string; call_control_id?: string }) => {
-        const id = data.db_id ?? data.call_control_id ?? null;
-        if (id) setPendingCallDbId(id);
-      })
-      .catch(() => { /* non-fatal */ });
-  }, [activeCallId, apiFetch]);
+  }, [callStatus, callDbId]);
 
   // ── Call initiation ─────────────────────────────────────────────────────────
   const initiateCall = useCallback((phone: string, lead?: LeadRecord) => {
@@ -340,9 +315,9 @@ export default function DialerPage() {
       selectLead(null);
       registerCallMeta(null, e164);
     }
-    pendingRegRef.current = { e164, leadId: lead?.id };
+    beginOutboundCall(e164, lead?.id);
     makeCall(e164, fromNumber || undefined);
-  }, [phoneStatus, callStatus, makeCall, fromNumber, startCall, registerCallMeta, selectLead, callTimer]);
+  }, [phoneStatus, callStatus, makeCall, fromNumber, startCall, registerCallMeta, selectLead, callTimer, beginOutboundCall]);
 
   // Update ref on every render so powerDialer.onShouldDial always calls latest version
   initiateCallRef.current = initiateCall;
@@ -361,7 +336,7 @@ export default function DialerPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         call_control_id: activeCallId,
-        call_db_id: pendingCallDbId ?? undefined,
+        call_db_id: callDbId ?? undefined,
       }),
     });
     const data = await res.json().catch(() => ({})) as { error?: string; voicemail_name?: string };
@@ -370,61 +345,7 @@ export default function DialerPage() {
     } else {
       toast.success(`Voicemail dropped${data.voicemail_name ? ` · ${data.voicemail_name}` : ''}`);
     }
-  }, [activeCallId, pendingCallDbId, apiFetch]);
-
-  // ── Disposition ─────────────────────────────────────────────────────────────
-  const handleDispositionSave = useCallback(async (
-    disposition: DispositionType,
-    notes?: string,
-    callbackAt?: string,
-    meetingAt?: string,
-  ) => {
-    const dbId = pendingCallDbId;
-    if (dbId) {
-      try {
-        const res = await apiFetch(`/api/calls/${dbId}/disposition`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ disposition, notes, callback_at: callbackAt, meeting_at: meetingAt }),
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({})) as { error?: string };
-          toast.error(err.error ?? 'Failed to save disposition');
-          return;
-        }
-      } catch {
-        toast.error('Failed to save disposition');
-        return;
-      }
-    }
-
-    if (powerDialer.isActive) {
-      toast.success('Saved · Loading next lead…', { duration: 2000 });
-    } else {
-      toast.success(`Marked as ${disposition.replace(/_/g, ' ')}`);
-    }
-
-    setDispositionOpen(false);
-    setPendingCallDbId(null);
-    callTimer.reset();
-    loadStats();
-    loadTodayCalls();
-
-    // Power dial: advance to next lead automatically
-    if (powerDialer.isActive && selectedLead) {
-      const wasConnected = ['interested','meeting_booked','callback','gatekeeper'].includes(disposition);
-      const wasMeeting = disposition === 'meeting_booked';
-      powerDialer.onDispositionSaved(disposition, wasConnected, wasMeeting);
-    }
-  }, [pendingCallDbId, loadStats, loadTodayCalls, powerDialer, selectedLead, callTimer]);
-
-  const handleDispositionClose = useCallback(() => {
-    if (powerDialer.isActive && powerDialer.state === 'disposition') {
-      void handleDispositionSave('voicemail');
-      return;
-    }
-    setDispositionOpen(false);
-  }, [powerDialer.isActive, powerDialer.state, handleDispositionSave]);
+  }, [activeCallId, callDbId, apiFetch]);
 
   // ── Lead actions ────────────────────────────────────────────────────────────
   const handleMarkHot = useCallback(async () => {
@@ -488,7 +409,7 @@ export default function DialerPage() {
         'interested','meeting_booked','callback','voicemail',
         'gatekeeper','not_interested','wrong_number','dnc',
       ];
-      if (dispositionOpen && disps[idx]) handleDispositionSave(disps[idx]);
+      if (dispositionOpen && disps[idx]) void saveDisposition(disps[idx]);
     },
     onClose: () => { setDialpadOpen(false); setShortcutsOpen(false); setDtmfOpen(false); },
   });
@@ -647,7 +568,7 @@ export default function DialerPage() {
                   onDropVoicemail={handleDropVoicemail}
                   onOpenKeypad={() => setDtmfOpen((p) => !p)}
                   onEndCall={handleEndCall}
-                  callDbId={pendingCallDbId}
+                  callDbId={callDbId}
                 />
               </motion.div>
             )}
@@ -831,14 +752,6 @@ export default function DialerPage() {
         open={dialpadOpen}
         onClose={() => setDialpadOpen(false)}
         onDial={(phone) => initiateCall(phone)}
-      />
-
-      <DispositionModal
-        open={dispositionOpen}
-        lead={selectedLead}
-        callDuration={callTimer.seconds}
-        onSave={handleDispositionSave}
-        onClose={handleDispositionClose}
       />
 
       <ShortcutsHelpModal
