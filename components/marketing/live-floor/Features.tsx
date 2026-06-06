@@ -99,7 +99,7 @@ export function Features() {
                   <Brain className="h-5 w-5" />
                 </span>
                 <span className="rounded-full border border-white/[0.08] px-2.5 py-1 text-[11px] font-medium text-zinc-400">
-                  Whisper + Gemini
+                  AI pipeline
                 </span>
               </div>
               <h3 className="font-display text-2xl font-medium tracking-tight text-[#F5F5F7]">

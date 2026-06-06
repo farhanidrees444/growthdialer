@@ -50,7 +50,7 @@ function AiDialerView({ active }: { active: boolean }) {
       </div>
       <LiveWaveform bars={48} height={56} />
       <div className="space-y-2">
-        {['Positive sentiment', 'Intent: pricing · 12 seats', 'Whisper: mention annual discount'].map(
+        {['Positive sentiment', 'Intent: pricing · 12 seats', 'Coach tip: mention annual discount'].map(
           (t, i) => (
             <motion.div
               key={t}

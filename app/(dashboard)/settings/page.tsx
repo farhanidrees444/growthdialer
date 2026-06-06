@@ -456,7 +456,7 @@ function AiTab({ settings, onChange }: { settings: UserSettings; onChange: (patc
         <div>
           <p className="text-xs font-semibold text-white/70">How AI processing works</p>
           <p className="mt-0.5 text-[11px] text-white/35 leading-relaxed">
-            After each recorded call, the recording pipeline transcribes audio via Whisper (Groq) then runs Gemini 2.0 Flash for analysis. Fallback to Groq LLaMA if Gemini is unavailable. These settings are read at the trigger point — turning off a feature stops new processing without affecting existing results.
+            After each recorded call, the recording pipeline transcribes audio and runs AI analysis for summaries, sentiment, and intent. These settings are read at the trigger point — turning off a feature stops new processing without affecting existing results.
           </p>
         </div>
       </div>

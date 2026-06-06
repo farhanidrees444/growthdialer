@@ -32,7 +32,7 @@ export default function VsPowerDialerPage() {
             <span className="font-medium">AI summaries are the new one.</span>
           </>
         }
-        subtitle="PowerDialer.com focuses on multi-line dialing and CRM sync. GrowthDialer pairs parallel and power modes with Whisper transcription, Gemini summaries, and a live coaching floor."
+        subtitle="PowerDialer.com focuses on multi-line dialing and CRM sync. GrowthDialer pairs parallel and power modes with AI transcription, call summaries, and a live coaching floor."
         priceGrowthdialer="$49"
         priceCompetitor="$129+"
         rows={[

@@ -114,10 +114,8 @@ export function SiteFooter() {
         <p className="text-[12px] text-zinc-600">
           © {new Date().getFullYear()} GrowthDialer. All rights reserved.
         </p>
-        <a
+        <Link
           href={STATUS_URL}
-          target="_blank"
-          rel="noopener noreferrer"
           className="inline-flex items-center gap-2 text-[12px] text-zinc-500 transition-colors hover:text-zinc-300"
         >
           <span className="relative flex h-2 w-2">
@@ -125,7 +123,7 @@ export function SiteFooter() {
             <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
           </span>
           All systems operational
-        </a>
+        </Link>
         <div className="flex flex-wrap items-center justify-center gap-4 text-[12px]">
           <Link href="/privacy" className="text-zinc-500 transition-colors hover:text-[#F5F5F7]">
             Privacy

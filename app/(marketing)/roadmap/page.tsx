@@ -29,7 +29,7 @@ const IN_PROGRESS = [
 
 const PLANNED = [
   'AI inbound voice agent',
-  'Telnyx coaching audio bridge (manager whisper)',
+  'Live coaching audio bridge (manager whisper mode)',
   'Slack + Zapier automation triggers',
   'Enterprise SSO (SAML)',
 ];

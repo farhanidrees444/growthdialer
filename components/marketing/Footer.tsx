@@ -51,7 +51,7 @@ const footerLinks = {
     { label: "Blog", href: "/blog" },
     { label: "Case Studies", href: "/customers" },
     { label: "API Reference", href: "/docs#api" },
-    { label: "Status", href: "https://vercel-status.com" },
+    { label: "Status", href: "/status" },
   ],
   Company: [
     { label: "About", href: "/about" },

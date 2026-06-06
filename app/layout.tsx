@@ -160,7 +160,7 @@ const faqSchema = {
       "name": "How does the AI analysis work?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "After a recorded call, GrowthDialer transcribes the audio with Whisper and analyzes it with Gemini to produce a bullet summary, sentiment (positive, neutral or negative) and detected intent — no manual note-taking required.",
+        "text": "After a recorded call, GrowthDialer transcribes the audio and runs AI analysis to produce a bullet summary, sentiment (positive, neutral or negative) and detected intent — no manual note-taking required.",
       },
     },
     {

@@ -19,8 +19,8 @@ const NODES = [
 
 const TABS = [
   { id: 'connect', label: 'Connect', litTo: 2, blurb: 'Import a list, dial from the AI or Power Dialer, and recording starts the moment the prospect answers.' },
-  { id: 'listen', label: 'Listen', litTo: 3, blurb: 'Whisper transcribes the conversation in real time — no bot on the line, no manual notes.' },
-  { id: 'summarize', label: 'Summarize', litTo: 5, blurb: 'Gemini turns the transcript into a summary, sentiment and intent, then logs it to analytics.' },
+  { id: 'listen', label: 'Listen', litTo: 3, blurb: 'Calls are transcribed in real time — no bot on the line, no manual notes.' },
+  { id: 'summarize', label: 'Summarize', litTo: 5, blurb: 'AI turns each transcript into a summary, sentiment score, and intent, then logs it to analytics.' },
 ] as const;
 
 export function InteractivePipeline() {

@@ -14,7 +14,7 @@ import { MotionConfig } from 'framer-motion';
  *
  * Accessibility is preserved where it matters: the continuous / infinite-loop
  * animations (waveform, marquee, pulses, tickers, cursor spotlight) each call
- * `useReducedMotion()` directly and disable themselves for users who request
+ * `useMarketingMotionReduced()` directly and disable themselves for users who request
  * reduced motion — independent of this prop.
  */
 export function MotionShell({ children }: { children: React.ReactNode }) {

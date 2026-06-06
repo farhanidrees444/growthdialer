@@ -8,8 +8,8 @@ const NODES = [
   { icon: Upload,    title: 'Lead Import',      sub: 'CSV & manual' },
   { icon: PhoneCall, title: 'AI / Power Dialer', sub: 'Focus + speed' },
   { icon: Mic,       title: 'Call Recording',   sub: 'Automatic' },
-  { icon: FileText,  title: 'Transcription',    sub: 'Whisper' },
-  { icon: Sparkles,  title: 'Summary + Sentiment', sub: 'Gemini' },
+  { icon: FileText,  title: 'Transcription',    sub: 'Live speech-to-text' },
+  { icon: Sparkles,  title: 'Summary + Sentiment', sub: 'AI analysis' },
   { icon: BarChart3, title: 'Analytics',        sub: 'Searchable' },
 ];
 

@@ -30,7 +30,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     items: [
       '2–10 line parallel dial with live leg grid',
       'AMD webhook skips machines; auto VM drop on non-winner lines',
-      'Realtime leg status via Supabase',
+      'Realtime leg status in the parallel dialer',
     ],
   },
   {

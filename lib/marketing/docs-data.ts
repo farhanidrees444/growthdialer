@@ -31,7 +31,7 @@ export const DOC_SECTIONS: DocSection[] = [
   {
     id: 'recordings',
     title: 'Recordings & AI',
-    description: 'Whisper transcription, Gemini summaries, sentiment, and recording library.',
+    description: 'AI transcription, call summaries, sentiment, and recording library.',
     href: '/docs#recordings',
     topics: ['Auto-record policy', 'AI summary bullets', 'Playback from Call Logs', 'Export links'],
   },

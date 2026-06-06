@@ -10,8 +10,8 @@ import { EASE_OUT } from './motion';
 const STAGES = [
   { id: 'dial',    label: 'Dial',        icon: Phone,     desc: 'You start the call from the AI Dialer or Power Dialer.' },
   { id: 'connect', label: 'Connect',     icon: Radio,     desc: 'The prospect picks up. Recording begins automatically.' },
-  { id: 'listen',  label: 'AI listens',  icon: Ear,       desc: 'Whisper transcribes the conversation as it happens.' },
-  { id: 'analyze', label: 'AI analyzes', icon: Sparkles,  desc: 'Gemini distills a summary, sentiment and next steps.' },
+  { id: 'listen',  label: 'AI listens',  icon: Ear,       desc: 'Speech is transcribed as the conversation happens.' },
+  { id: 'analyze', label: 'AI analyzes', icon: Sparkles,  desc: 'Summaries, sentiment, and next steps are generated automatically.' },
   { id: 'log',     label: 'Logged',      icon: BarChart3, desc: 'Everything lands in Analytics — searchable, forever.' },
 ] as const;
 

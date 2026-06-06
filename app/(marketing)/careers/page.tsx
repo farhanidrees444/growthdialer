@@ -16,7 +16,7 @@ const ROLES = [
   {
     title: 'Full-stack engineer',
     location: 'Remote · Full-time',
-    body: 'Next.js, Supabase, Telnyx, real-time dialer UX. You ship end-to-end — schema to pixels.',
+    body: 'Next.js, Postgres, real-time telephony, and dialer UX. You ship end-to-end — schema to pixels.',
   },
   {
     title: 'Founding account executive',

@@ -39,7 +39,7 @@ export default function ApiReferencePage() {
           <article className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8 backdrop-blur-xl">
             <h2 className="font-display text-xl font-medium text-[#F5F5F7]">Authentication</h2>
             <p className="mt-4 text-[15px] leading-relaxed text-zinc-400">
-              Browser sessions use Supabase auth cookies. Server-to-server integrations should use a
+              Browser sessions use secure workspace auth cookies. Server-to-server integrations should use a
               service token from your workspace settings (Enterprise) or contact us for early API access.
             </p>
           </article>

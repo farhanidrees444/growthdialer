@@ -25,7 +25,7 @@ export const SOLUTION_PAGES: Record<string, SolutionPageData> = {
     capabilities: [
       'Power dialer with countdown and session stats',
       'Eight dispositions with callback and meeting scheduling',
-      'Call recording + Whisper transcription + Gemini summaries',
+      'Call recording + AI transcription + conversation summaries',
       'HubSpot call logging (live integration)',
       'Local presence numbers and spam-score checks',
     ],
@@ -148,8 +148,8 @@ export const SOLUTION_PAGES: Record<string, SolutionPageData> = {
     ],
     capabilities: [
       'Team and Enterprise workspace tiers',
-      'Telnyx-backed voice with purchased local numbers',
-      'Sentry-monitored production stack on Vercel',
+      'Browser-based voice with purchased local numbers',
+      'Monitored production infrastructure with uptime reporting',
       'Custom onboarding and security questionnaire support',
       'API and webhook access (contact sales for SLAs)',
     ],

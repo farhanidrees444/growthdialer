@@ -23,7 +23,7 @@ const SECTIONS = [
   {
     id: 'conversation-intelligence',
     title: 'Conversation Intelligence',
-    body: 'Whisper transcription plus Gemini analysis produces bullet summaries, sentiment scores, detected intent, and keywords — linked to the lead and recording automatically.',
+    body: 'Calls are transcribed and analyzed automatically — bullet summaries, sentiment scores, detected intent, and keywords linked to the lead and recording.',
   },
   {
     id: 'call-brief',

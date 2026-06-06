@@ -9,7 +9,8 @@ export type NavItem = NavLink & { children?: NavLink[] };
 export const APP_SIGNIN = 'https://app.growthdialer.com/login';
 export const APP_SIGNUP = 'https://app.growthdialer.com/signup';
 export const MARKETING_SITE = 'https://growthdialer.com';
-export const STATUS_URL = 'https://www.vercel-status.com';
+/** Public status page — always internal, never third-party vendor dashboards */
+export const STATUS_URL = '/status';
 
 /** Top nav — full legacy IA + current product pages */
 export const TOP_NAV: NavItem[] = [

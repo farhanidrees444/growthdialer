@@ -1,25 +1,25 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CheckCircle2, ExternalLink } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
 import { MarketingPageHero } from '@/components/marketing/live-floor/MarketingPageHero';
 import { JsonLd } from '@/components/marketing/live-floor/JsonLd';
-import { MARKETING_SITE, STATUS_URL } from '@/lib/marketing/navigation';
+import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
   title: 'System Status — GrowthDialer uptime',
   description:
-    'GrowthDialer platform status: app, voice (Telnyx), database, and AI pipeline. Hosted on Vercel with Supabase backend.',
+    'Current operational status for the GrowthDialer web app, dialer, call intelligence, and integrations.',
   alternates: { canonical: `${MARKETING_SITE}/status` },
 };
 
 const SERVICES = [
-  { name: 'Web app (app.growthdialer.com)', status: 'operational' as const, note: 'Next.js on Vercel' },
+  { name: 'Web application', status: 'operational' as const, note: 'Dashboard, dialer, and workspace tools' },
   { name: 'Marketing site', status: 'operational' as const, note: 'growthdialer.com' },
-  { name: 'Voice & telephony', status: 'operational' as const, note: 'Telnyx WebRTC + PSTN' },
-  { name: 'Database & auth', status: 'operational' as const, note: 'Supabase' },
-  { name: 'AI transcription & summaries', status: 'operational' as const, note: 'Whisper + Gemini pipeline' },
-  { name: 'HubSpot integration', status: 'operational' as const, note: 'OAuth + call logging' },
+  { name: 'Outbound calling', status: 'operational' as const, note: 'Browser dialer and call routing' },
+  { name: 'Account & data', status: 'operational' as const, note: 'Sign-in, leads, and call history' },
+  { name: 'Call intelligence', status: 'operational' as const, note: 'Recording, transcription, and AI summaries' },
+  { name: 'CRM integration', status: 'operational' as const, note: 'HubSpot call logging' },
 ];
 
 function StatusDot({ status }: { status: 'operational' | 'degraded' | 'outage' }) {
@@ -52,7 +52,7 @@ export default function StatusPage() {
             <span className="font-medium">operational.</span>
           </>
         }
-        description="Real-time infrastructure depends on Vercel and Telnyx. This page summarizes GrowthDialer service health; for hosting incidents see the Vercel status board."
+        description="High-level health for GrowthDialer product surfaces. We post updates here when customers may be affected."
       />
 
       <section className="mx-auto max-w-2xl px-5 pb-12 lg:px-8">
@@ -74,17 +74,9 @@ export default function StatusPage() {
         <div className="mt-8 flex flex-col items-center gap-3 text-center">
           <p className="flex items-center gap-2 text-[13px] text-zinc-500">
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            Last checked: page load (manual verification)
+            Last checked: page load
           </p>
-          <a
-            href={STATUS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-[13px] font-medium text-[#A78BFA] hover:underline"
-          >
-            Vercel platform status <ExternalLink className="h-3.5 w-3.5" />
-          </a>
-          <Link href="/contact-sales" className="text-[13px] text-zinc-500 hover:text-zinc-300">
+          <Link href="/contact-sales" className="text-[13px] font-medium text-[#A78BFA] hover:underline">
             Report an issue → contact support
           </Link>
         </div>
