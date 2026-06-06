@@ -14,6 +14,7 @@ interface TelnyxEventPayload {
   to?: string;
   state?: string;
   hangup_cause?: string;
+  result?: string;
   start_time?: string;
   end_time?: string;
   // recording.saved: private Telnyx storage URL (requires auth header)
@@ -323,6 +324,24 @@ export async function POST(request: NextRequest) {
           .update({ status: 'ringing', updated_at: new Date().toISOString() })
           .eq('telnyx_call_id', callControlId)
           .in('status', ['dialing']);
+      }
+    }
+
+    // ── AMD (parallel dial machine/human detection) ─────────────────────────
+    else if (
+      event_type === 'call.machine.detection.ended'
+      || event_type === 'call.machine.premium.detection.ended'
+    ) {
+      if (callControlId) {
+        const amdResult = payload.result ?? 'not_sure';
+        const { handleParallelLegAmd } = await import('@/lib/parallel-dial/handle-amd');
+        await handleParallelLegAmd(
+          supabase,
+          callControlId,
+          amdResult,
+          payload.from ?? null,
+        );
+        console.log('[WEBHOOK] AMD result:', amdResult, 'for', callControlId);
       }
     }
 

@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({})) as {
       lines_count?: number;
       amd_enabled?: boolean;
+      vm_drop_enabled?: boolean;
       workspace_id?: string;
       queue_config?: DialerQueueConfig;
       auto_dial?: boolean;
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
         workspace_id: access.workspaceId,
         lines_count,
         amd_enabled: body.amd_enabled ?? false,
+        vm_drop_enabled: body.vm_drop_enabled ?? true,
         queue_config: body.queue_config ?? { tab: 'queue', sort: 'priority' },
         status: 'active',
       })

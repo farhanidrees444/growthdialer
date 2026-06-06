@@ -6,6 +6,7 @@ import type { LeadRecord } from '@/lib/dialer/state-machine';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { getSavedQueueConfig } from '@/lib/dialer/queue-config';
 import { setParallelAutoAnswer } from '@/lib/parallel-dial/auto-answer-flag';
+import { useParallelRealtime } from '@/hooks/use-parallel-realtime';
 import type {
   ParallelDialLeg,
   ParallelDialSession,
@@ -24,6 +25,7 @@ export type ParallelDialerState =
 export interface ParallelSessionConfig {
   lines_count: number;
   amd_enabled?: boolean;
+  vm_drop_enabled?: boolean;
 }
 
 interface UseParallelDialerOptions {
@@ -49,12 +51,47 @@ export function useParallelDialer(options: UseParallelDialerOptions = {}) {
   const winnerHandledRef = useRef(false);
   const onLeadConnectedRef = useRef(options.onLeadConnected);
   const onSessionCompleteRef = useRef(options.onSessionComplete);
+  const legsRef = useRef(legs);
 
   stateRef.current = state;
   sessionRef.current = session;
   dialedRef.current = dialedLeadIds;
   onLeadConnectedRef.current = options.onLeadConnected;
   onSessionCompleteRef.current = options.onSessionComplete;
+  legsRef.current = legs;
+
+  const handleLegRealtime = useCallback((leg: ParallelDialLeg) => {
+    setLegs((prev) => {
+      const idx = prev.findIndex((l) => l.id === leg.id);
+      if (idx === -1) return [...prev, leg];
+      const next = [...prev];
+      next[idx] = leg;
+      return next;
+    });
+
+    if (leg.is_winner && leg.status === 'connected' && !winnerHandledRef.current && leg.lead_id) {
+      winnerHandledRef.current = true;
+      setWinnerLeg(leg);
+      const lead: LeadRecord = {
+        id: leg.lead_id,
+        name: leg.lead_name ?? 'Lead',
+        phone: leg.phone,
+        status: 'new',
+      };
+      onLeadConnectedRef.current?.(lead, leg);
+    }
+  }, []);
+
+  const handleSessionRealtime = useCallback((sess: ParallelDialSession) => {
+    setSession(sess);
+  }, []);
+
+  useParallelRealtime({
+    sessionId: session?.id ?? null,
+    enabled: state !== 'idle' && state !== 'ending',
+    onLegUpdate: handleLegRealtime,
+    onSessionUpdate: handleSessionRealtime,
+  });
 
   const clearLS = useCallback(() => {
     try { localStorage.removeItem(LS_KEY); } catch { /* noop */ }
@@ -131,7 +168,7 @@ export function useParallelDialer(options: UseParallelDialerOptions = {}) {
 
   const start = useCallback(async (cfg?: Partial<ParallelSessionConfig>) => {
     if (stateRef.current !== 'idle') return;
-    const merged = { lines_count: 3, amd_enabled: false, ...cfg };
+    const merged = { lines_count: 3, amd_enabled: true, vm_drop_enabled: true, ...cfg };
     setConfig(merged);
     setState('starting');
     setParallelAutoAnswer(true);
@@ -232,7 +269,7 @@ export function useParallelDialer(options: UseParallelDialerOptions = {}) {
     if (!hasMore) await endSession(sess);
   }, [dialNextBatch, endSession]);
 
-  // Poll leg status while dialing
+  // Fallback poll (5s) if realtime misses an event
   useEffect(() => {
     const sess = session;
     if (!sess || !['dialing', 'connected'].includes(state)) return;
@@ -267,7 +304,7 @@ export function useParallelDialer(options: UseParallelDialerOptions = {}) {
           }
         }
       });
-    }, 1500);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [session, state, refreshSession, dialNextBatch, endSession]);

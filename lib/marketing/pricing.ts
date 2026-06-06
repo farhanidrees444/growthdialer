@@ -58,7 +58,9 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     lead: 'Everything in Starter, plus',
     features: [
       { label: 'AI Dialer (Browse · Preview · Live)' },
-      { label: 'Power Dialer with smart queue' },
+      { label: 'Power + Parallel Dialer (up to 10 lines)' },
+      { label: 'AMD + auto voicemail drop on parallel' },
+      { label: 'Local presence caller ID rotation' },
       { label: 'AI brief before every call' },
       { label: 'Sentiment, intent & keyword extraction' },
       { label: 'Live manager coaching floor' },
@@ -80,10 +82,13 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     features: [
       { label: 'Team workspaces & role permissions' },
       { label: 'Invite members + seat management' },
+      { label: 'Team leaderboard & connect-rate wall' },
+      { label: 'Custom dispositions per workspace' },
+      { label: 'Sequences / sales cadences' },
+      { label: 'HubSpot call logging' },
       { label: 'Manager team performance dashboard' },
       { label: 'Workspace billing & Stripe portal' },
       { label: 'Priority support' },
-      { label: 'CRM integrations', soon: true },
     ],
   },
   {
@@ -114,9 +119,9 @@ export const MARKETING_ADDONS = [
     soon: false,
   },
   {
-    title: 'Parallel Dialer',
-    price: 'Up to 10 lines',
-    desc: 'Dial multiple lines at once — first connect wins, losers auto-hang.',
+    title: 'Extra parallel lines',
+    price: 'Up to 10 lines on Pro+',
+    desc: 'AMD skip + auto VM drop on machines — included in Pro and Team plans.',
     soon: false,
   },
   {

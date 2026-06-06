@@ -8,7 +8,7 @@ interface ParallelDialConfigModalProps {
   open: boolean;
   queueCount: number;
   onClose: () => void;
-  onStart: (config: { lines_count: number; amd_enabled: boolean }) => void;
+  onStart: (config: { lines_count: number; amd_enabled: boolean; vm_drop_enabled: boolean }) => void;
 }
 
 const LINE_PRESETS = [2, 3, 4, 5, 6, 8, 10] as const;
@@ -20,7 +20,8 @@ export function ParallelDialConfigModal({
   onStart,
 }: ParallelDialConfigModalProps) {
   const [lines, setLines] = useState(4);
-  const [amd, setAmd] = useState(false);
+  const [amd, setAmd] = useState(true);
+  const [vmDrop, setVmDrop] = useState(true);
 
   return (
     <AnimatePresence>
@@ -90,7 +91,25 @@ export function ParallelDialConfigModal({
                     Answering machine detection
                   </div>
                   <p className="mt-1 text-xs text-zinc-500">
-                    Telnyx AMD flags machine answers so you focus on live connects.
+                    Skip machines automatically — only live humans reach you.
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
+                <input
+                  type="checkbox"
+                  checked={vmDrop}
+                  onChange={(e) => setVmDrop(e.target.checked)}
+                  className="mt-1"
+                />
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-medium text-white">
+                    <Zap className="h-4 w-4 text-amber-400" />
+                    Auto voicemail drop
+                  </div>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Drop your VM on machines and losing lines — CloudTalk-style parallel power.
                   </p>
                 </div>
               </label>
@@ -114,7 +133,7 @@ export function ParallelDialConfigModal({
                 type="button"
                 disabled={queueCount === 0}
                 onClick={() => {
-                  onStart({ lines_count: lines, amd_enabled: amd });
+                  onStart({ lines_count: lines, amd_enabled: amd, vm_drop_enabled: vmDrop });
                   onClose();
                 }}
                 className="flex-[2] min-h-11 rounded-xl text-sm font-semibold text-white gradient-brand disabled:opacity-40"

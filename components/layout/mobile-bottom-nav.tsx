@@ -13,6 +13,8 @@ import {
   Hash,
   Zap,
   Headset,
+  ListOrdered,
+  Trophy,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -34,7 +36,9 @@ type MoreLink = {
 const MORE_LINKS: MoreLink[] = [
   { icon: Building2, label: 'Team', href: '/team' },
   { icon: Headphones, label: 'Recordings', href: '/recordings' },
+  { icon: ListOrdered, label: 'Sequences', href: '/sequences' },
   { icon: BarChart2, label: 'Analytics', href: '/analytics' },
+  { icon: Trophy, label: 'Leaderboard', href: '/leaderboard', managerOnly: true },
   { icon: Hash, label: 'Numbers', href: '/numbers' },
   { icon: Headset, label: 'Coaching', href: '/coaching/live', managerOnly: true },
   { icon: Zap, label: 'Integrations', href: '/integrations' },

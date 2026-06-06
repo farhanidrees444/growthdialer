@@ -2,7 +2,10 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useWorkspace } from "@/contexts/workspace-context";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Zap, CheckCircle2, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -159,7 +162,7 @@ const INTEGRATIONS: Integration[] = [
     color: 'text-[#FF7A59]',
     bg: 'bg-[#FF7A59]/10',
     logo: <HubSpotLogo />,
-    comingSoon: true,
+    comingSoon: false,
     popular: true,
   },
   {
@@ -445,7 +448,15 @@ function WaitlistModal({
 
 // ─── Integration card ─────────────────────────────────────────────────────────
 
-function IntegrationCard({ item, onClick }: { item: Integration; onClick: () => void }) {
+function IntegrationCard({
+  item,
+  connected,
+  onClick,
+}: {
+  item: Integration;
+  connected?: boolean;
+  onClick: () => void;
+}) {
   return (
     <motion.button
       type="button"
@@ -465,9 +476,15 @@ function IntegrationCard({ item, onClick }: { item: Integration; onClick: () => 
             {item.popular && (
               <span className="rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-bold text-brand">Popular</span>
             )}
-            <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-              Soon
-            </span>
+            {connected ? (
+              <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400">
+                Connected
+              </span>
+            ) : item.comingSoon ? (
+              <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                Soon
+              </span>
+            ) : null}
           </div>
           <span className={cn("text-[10px] font-semibold uppercase tracking-wide", item.color)}>
             {item.categoryLabel}
@@ -490,10 +507,12 @@ function IntegrationCard({ item, onClick }: { item: Integration; onClick: () => 
 
       {/* CTA */}
       <div className="flex items-center justify-between">
-        <span className="text-[11px] text-slate-600">Click to join waitlist</span>
+        <span className="text-[11px] text-slate-600">
+          {connected ? 'Manage connection' : item.comingSoon ? 'Click to join waitlist' : 'Click to connect'}
+        </span>
         <span className="flex items-center gap-1 text-[11px] font-semibold text-brand opacity-0 transition-opacity group-hover:opacity-100">
-          <Bell className="h-3 w-3" />
-          Notify me
+          {connected ? <CheckCircle2 className="h-3 w-3" /> : <Bell className="h-3 w-3" />}
+          {connected ? 'Connected' : item.comingSoon ? 'Notify me' : 'Connect'}
         </span>
       </div>
     </motion.button>
@@ -503,8 +522,47 @@ function IntegrationCard({ item, onClick }: { item: Integration; onClick: () => 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function IntegrationsPage() {
+  const { currentWorkspace, apiFetch } = useWorkspace();
+  const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<Category>('all');
   const [modal, setModal] = useState<string | null>(null);
+  const [connectedProviders, setConnectedProviders] = useState<string[]>([]);
+
+  const refreshStatus = useCallback(async () => {
+    const res = await apiFetch('/api/integrations/status');
+    if (res.ok) {
+      const data = await res.json() as { connected: { provider: string }[] };
+      setConnectedProviders((data.connected ?? []).map((c) => c.provider));
+    }
+  }, [apiFetch]);
+
+  useEffect(() => { void refreshStatus(); }, [refreshStatus]);
+
+  useEffect(() => {
+    if (searchParams.get('connected') === 'hubspot') {
+      toast.success('HubSpot connected — calls will log after disposition');
+      void refreshStatus();
+    }
+    if (searchParams.get('error')?.startsWith('hubspot')) {
+      toast.error('HubSpot connection failed');
+    }
+  }, [searchParams, refreshStatus]);
+
+  function handleCardClick(item: Integration) {
+    if (item.id === 'hubspot' && !item.comingSoon) {
+      if (connectedProviders.includes('hubspot')) {
+        void apiFetch('/api/integrations/hubspot/disconnect', { method: 'POST' }).then(() => {
+          toast.success('HubSpot disconnected');
+          void refreshStatus();
+        });
+        return;
+      }
+      const ws = currentWorkspace?.id ? `?workspace_id=${currentWorkspace.id}` : '';
+      window.location.href = `/api/integrations/hubspot/authorize${ws}`;
+      return;
+    }
+    setModal(item.id);
+  }
 
   const filtered = activeCategory === 'all'
     ? INTEGRATIONS
@@ -547,7 +605,7 @@ export default function IntegrationsPage() {
         <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.05] px-4 py-3 max-w-4xl">
           <Zap className="h-4 w-4 shrink-0 text-amber-400" />
           <p className="text-xs text-amber-300/80">
-            Native integrations are actively in development. Join the waitlist for any integration to get early access and help prioritize our roadmap.
+            HubSpot is live — connect to log calls on disposition. More integrations on the waitlist below.
           </p>
         </div>
 
@@ -562,7 +620,12 @@ export default function IntegrationsPage() {
             className="grid max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-3"
           >
             {filtered.map((item) => (
-              <IntegrationCard key={item.id} item={item} onClick={() => setModal(item.id)} />
+              <IntegrationCard
+                key={item.id}
+                item={item}
+                connected={connectedProviders.includes(item.id)}
+                onClick={() => handleCardClick(item)}
+              />
             ))}
           </motion.div>
         </AnimatePresence>

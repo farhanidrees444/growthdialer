@@ -4,22 +4,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, FileText } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { DISPOSITION_LABELS, type DispositionType } from '@/lib/dialer/state-machine';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
+import { useWorkspaceDispositions } from '@/hooks/use-workspace-dispositions';
+import type { WorkspaceDispositionDef } from '@/lib/dispositions/defaults';
 
 interface DispositionModalProps {
   open: boolean;
   lead: LeadRecord | null;
   callDuration: number;
-  onSave: (disposition: DispositionType, notes?: string, callbackAt?: string, meetingAt?: string) => void;
+  onSave: (disposition: string, notes?: string, callbackAt?: string, meetingAt?: string) => void;
   onClose: () => void;
 }
-
-const ORDERED: DispositionType[] = [
-  'interested', 'meeting_booked', 'callback',
-  'voicemail', 'gatekeeper', 'not_interested',
-  'wrong_number', 'dnc',
-];
 
 const COLOR_CLASS: Record<string, string> = {
   positive: 'border-green-500/30 hover:border-green-500/60 hover:bg-green-500/10',
@@ -40,7 +35,8 @@ function getLastNoteLines(notes: string | undefined, maxLines = 3): string | nul
 }
 
 export function DispositionModal({ open, lead, callDuration, onSave, onClose }: DispositionModalProps) {
-  const [selected, setSelected] = useState<DispositionType | null>(null);
+  const { dispositions } = useWorkspaceDispositions();
+  const [selected, setSelected] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [showCallback, setShowCallback] = useState(false);
   const [showMeeting, setShowMeeting] = useState(false);
@@ -58,10 +54,10 @@ export function DispositionModal({ open, lead, callDuration, onSave, onClose }: 
     }
   }, [open]);
 
-  const handleSelect = useCallback((disp: DispositionType) => {
-    setSelected(disp);
-    setShowCallback(disp === 'callback');
-    setShowMeeting(disp === 'meeting_booked');
+  const handleSelect = useCallback((disp: WorkspaceDispositionDef) => {
+    setSelected(disp.key);
+    setShowCallback(disp.triggers_callback);
+    setShowMeeting(disp.triggers_meeting);
   }, []);
 
   const handleSubmit = useCallback(() => {
@@ -76,9 +72,10 @@ export function DispositionModal({ open, lead, callDuration, onSave, onClose }: 
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
       const digit = parseInt(e.key, 10);
-      if (digit >= 1 && digit <= 8) {
+      const byHotkey = dispositions.find((d) => d.hotkey === digit);
+      if (byHotkey) {
         e.preventDefault();
-        handleSelect(ORDERED[digit - 1]);
+        handleSelect(byHotkey);
       }
       if (e.key === 'Enter' && selected) {
         e.preventDefault();
@@ -87,7 +84,7 @@ export function DispositionModal({ open, lead, callDuration, onSave, onClose }: 
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [open, selected, handleSelect, handleSubmit]);
+  }, [open, selected, handleSelect, handleSubmit, dispositions]);
 
   const recentNote = getLastNoteLines(lead?.notes ?? undefined);
 
@@ -111,26 +108,27 @@ export function DispositionModal({ open, lead, callDuration, onSave, onClose }: 
 
         {/* Disposition grid */}
         <div className="px-5 pb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {ORDERED.map((disp) => {
-            const info = DISPOSITION_LABELS[disp];
-            const isSelected = selected === disp;
+          {dispositions.map((disp) => {
+            const isSelected = selected === disp.key;
             return (
               <motion.button
-                key={disp}
+                key={disp.key}
                 onClick={() => handleSelect(disp)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.96 }}
                 className={`relative flex flex-col items-center gap-1.5 p-3 rounded-lg border text-center transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 min-h-[64px] ${
                   isSelected
                     ? 'border-cyan-500/60 bg-cyan-500/10'
-                    : COLOR_CLASS[info.color]
+                    : COLOR_CLASS[disp.category]
                 }`}
                 aria-pressed={isSelected}
-                aria-label={info.label}
+                aria-label={disp.label}
               >
-                <span className="text-xl leading-none">{info.icon}</span>
-                <span className="text-[11px] text-white/80 leading-tight">{info.label}</span>
-                <kbd className="absolute top-1 right-1 text-[9px] text-white/30 font-mono hidden sm:block">{info.hotkey}</kbd>
+                <span className="text-xl leading-none">{disp.emoji}</span>
+                <span className="text-[11px] text-white/80 leading-tight">{disp.label}</span>
+                {disp.hotkey && (
+                  <kbd className="absolute top-1 right-1 text-[9px] text-white/30 font-mono hidden sm:block">{disp.hotkey}</kbd>
+                )}
               </motion.button>
             );
           })}
@@ -249,7 +247,7 @@ export function DispositionModal({ open, lead, callDuration, onSave, onClose }: 
             className="w-full h-11 rounded-lg font-medium text-sm transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 disabled:opacity-30 disabled:cursor-not-allowed"
             style={selected ? { background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' } : { background: 'rgba(255,255,255,0.05)' }}
           >
-            {selected ? `Save · ${DISPOSITION_LABELS[selected].label}` : 'Select a disposition'}
+            {selected ? `Save · ${dispositions.find((d) => d.key === selected)?.label ?? selected}` : 'Select a disposition'}
           </motion.button>
         </div>
       </DialogContent>

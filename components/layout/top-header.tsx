@@ -18,6 +18,7 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   '/team':         { title: 'Team',         subtitle: 'Workspace members' },
   '/coaching':     { title: 'Coaching',     subtitle: 'Real-time call coaching' },
   '/sequences':    { title: 'Sequences',    subtitle: 'Multi-step outreach cadences' },
+  '/leaderboard':  { title: 'Leaderboard',  subtitle: 'Team rankings & connect rates' },
 };
 
 export function TopHeader() {

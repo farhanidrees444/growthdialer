@@ -3,25 +3,8 @@ import telnyxClient, { toE164 } from '@/lib/telnyx';
 import { buildDialerLeadsQuery } from '@/lib/dialer/queue-query';
 import type { DialerQueueConfig } from '@/lib/dialer/queue-query';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
+import { resolveCallerIdForLead } from '@/lib/dialer/resolve-caller-id';
 import type { ParallelDialLeg, ParallelDialSession } from './types';
-
-async function resolveFromNumber(
-  supabase: SupabaseClient,
-  userId: string,
-): Promise<string> {
-  const { data: defaultNum } = await supabase
-    .from('purchased_numbers')
-    .select('phone_number')
-    .eq('user_id', userId)
-    .eq('status', 'active')
-    .order('is_default', { ascending: false })
-    .order('purchased_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (defaultNum?.phone_number) return defaultNum.phone_number;
-  return process.env.TELNYX_FROM_NUMBER ?? '';
-}
 
 export async function dialParallelBatch(
   supabase: SupabaseClient,
@@ -49,7 +32,6 @@ export async function dialParallelBatch(
   if (!leads?.length) return { legs: [], leads: [] };
 
   const batchNumber = session.total_batches + 1;
-  const fromNumber = await resolveFromNumber(supabase, userId);
   const webhookUrl = `${process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL}/api/telnyx/webhook`;
   const amd = session.amd_enabled ? 'detect' : undefined;
 
@@ -58,6 +40,8 @@ export async function dialParallelBatch(
   for (const lead of leads as LeadRecord[]) {
     const e164 = toE164(lead.phone);
     if (!e164) continue;
+
+    const { fromNumber } = await resolveCallerIdForLead(supabase, userId, lead.phone);
 
     const { data: legRow, error: legErr } = await supabase
       .from('parallel_dial_legs')

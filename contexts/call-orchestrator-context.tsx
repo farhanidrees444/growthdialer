@@ -21,7 +21,7 @@ const DISPOSITION_THRESHOLD_SEC = 10;
 export interface PowerDialBridge {
   onCallStarted: () => void;
   onCallEnd: () => void;
-  onDispositionSaved: (disposition: DispositionType, wasConnected: boolean, wasMeeting: boolean) => void;
+  onDispositionSaved: (disposition: string, wasConnected: boolean, wasMeeting: boolean) => void;
   isActive: () => boolean;
   getState: () => string;
 }
@@ -39,7 +39,7 @@ export interface CallOrchestratorValue {
   beginOutboundCall: (e164: string, leadId?: string) => void;
   registerPowerDialBridge: (bridge: PowerDialBridge | null) => void;
   saveDisposition: (
-    disposition: DispositionType,
+    disposition: string,
     notes?: string,
     callbackAt?: string,
     meetingAt?: string,
@@ -195,7 +195,7 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
   }, [callStatus, activeLead, handleCallEnded]);
 
   const saveDisposition = useCallback(async (
-    disposition: DispositionType,
+    disposition: string,
     notes?: string,
     callbackAt?: string,
     meetingAt?: string,

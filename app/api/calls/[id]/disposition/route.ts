@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { LEAD_STATUS_TO_DISPOSITION, type DispositionType } from '@/lib/dialer/state-machine';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { apiUnauthorized, parseJsonBody } from '@/lib/api/errors';
 import { dispositionRequestSchema } from '@/lib/validations';
+import { getWorkspaceDispositions, dispositionMeta, isValidWorkspaceDisposition } from '@/lib/dispositions/workspace';
+import { logCallToHubspot } from '@/lib/integrations/hubspot';
+import { advanceSequenceAfterCall } from '@/lib/sequences/advance';
 
 export async function POST(
   request: NextRequest,
@@ -24,6 +26,14 @@ export async function POST(
     const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body: rawBody });
     if (isWorkspaceError(access)) return access;
 
+    const valid = await isValidWorkspaceDisposition(supabase, access.workspaceId, disposition);
+    if (!valid) {
+      return NextResponse.json({ error: 'Invalid disposition' }, { status: 400 });
+    }
+
+    const dispositions = await getWorkspaceDispositions(supabase, access.workspaceId);
+    const meta = dispositionMeta(dispositions, disposition);
+
     const call = await requireCallAccess(
       supabase,
       { id },
@@ -33,10 +43,9 @@ export async function POST(
     );
     if (isCallAccessError(call)) return call;
 
-    const leadStatus = LEAD_STATUS_TO_DISPOSITION[disposition];
+    const leadStatus = meta?.lead_status ?? 'contacted';
     const now = new Date().toISOString();
 
-    // Update call record
     const callUpdate: Record<string, unknown> = {
       disposition,
       disposition_notes: notes ?? null,
@@ -46,18 +55,16 @@ export async function POST(
     await supabase.from('calls').update(callUpdate).eq('id', id);
 
     if (call.lead_id) {
-      // Fetch current lead to append notes properly
       const { data: currentLead } = await supabase
         .from('leads')
-        .select('notes, call_attempts')
+        .select('notes, call_attempts, name, phone')
         .eq('id', call.lead_id)
         .eq('workspace_id', access.workspaceId)
         .single();
 
-      // Append note with timestamp + disposition label
       let updatedNotes: string | null = currentLead?.notes ?? null;
       if (notes && notes.trim()) {
-        const label = disposition.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+        const label = meta?.label ?? disposition.replace(/_/g, ' ');
         const stamp = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
         const entry = `[${stamp} · ${label}] ${notes.trim()}`;
         updatedNotes = updatedNotes ? `${updatedNotes}\n${entry}` : entry;
@@ -71,13 +78,11 @@ export async function POST(
           ? { call_attempts: (currentLead?.call_attempts ?? 0) + 1 }
           : {}),
         ...(updatedNotes !== null ? { notes: updatedNotes } : {}),
-        ...(disposition === 'dnc' ? { dnc: true } : {}),
-        ...(disposition === 'wrong_number' ? { status: 'wrong_number' } : {}),
-        ...(callback_at ? { callback_at } : {}),
-        ...(meeting_at ? { meeting_at } : {}),
+        ...(meta?.sets_dnc ? { dnc: true } : {}),
+        ...(meta?.triggers_callback && callback_at ? { callback_at } : {}),
+        ...(meta?.triggers_meeting && meeting_at ? { meeting_at } : {}),
       };
 
-      // wrong_number overrides generic leadStatus
       if (disposition === 'wrong_number') {
         leadUpdate.status = 'wrong_number';
       }
@@ -88,9 +93,8 @@ export async function POST(
         .eq('id', call.lead_id)
         .eq('workspace_id', access.workspaceId);
 
-      // Activity log entry
-      const activitySummary = buildActivitySummary(disposition, notes);
-      await supabase.from('lead_activities').insert({
+      const activitySummary = buildActivitySummary(meta?.label ?? disposition, notes);
+      void supabase.from('lead_activities').insert({
         lead_id: call.lead_id,
         user_id: user.id,
         call_id: id,
@@ -98,7 +102,27 @@ export async function POST(
         disposition,
         notes: activitySummary,
         created_at: now,
-      }).then(() => { /* fire-and-forget — don't fail disposition save if activity table missing */ });
+      });
+
+      void advanceSequenceAfterCall(supabase, access.workspaceId, call.lead_id);
+
+      if (currentLead?.phone) {
+        const { data: callMeta } = await supabase
+          .from('calls')
+          .select('duration_seconds, direction')
+          .eq('id', id)
+          .single();
+        void logCallToHubspot(supabase, {
+          workspaceId: access.workspaceId,
+          userId: user.id,
+          leadPhone: currentLead.phone,
+          leadName: currentLead.name ?? 'Lead',
+          disposition,
+          notes,
+          durationSeconds: callMeta?.duration_seconds ?? undefined,
+          direction: callMeta?.direction ?? 'outbound',
+        });
+      }
     }
 
     return NextResponse.json({ success: true });
@@ -108,17 +132,7 @@ export async function POST(
   }
 }
 
-function buildActivitySummary(disposition: DispositionType, notes?: string): string {
-  const labels: Record<DispositionType, string> = {
-    interested: 'Lead expressed interest',
-    meeting_booked: 'Meeting booked',
-    callback: 'Callback scheduled',
-    voicemail: 'Left voicemail',
-    gatekeeper: 'Reached gatekeeper',
-    not_interested: 'Not interested',
-    wrong_number: 'Wrong number',
-    dnc: 'Added to do-not-call list',
-  };
-  const base = labels[disposition] ?? disposition;
+function buildActivitySummary(label: string, notes?: string): string {
+  const base = label || 'Call logged';
   return notes?.trim() ? `${base}: ${notes.trim()}` : base;
 }

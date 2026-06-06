@@ -31,6 +31,7 @@ export interface ParallelDialSession {
   total_connects: number;
   total_meetings: number;
   amd_enabled: boolean;
+  vm_drop_enabled: boolean;
   queue_config: DialerQueueConfig | null;
   started_at: string;
   ended_at: string | null;

@@ -7,6 +7,7 @@ import { hasPermission } from '@/lib/auth/permissions';
 import { assertWorkspaceCanPlaceCalls } from '@/lib/billing/workspace-billing-gate';
 import { apiUnauthorized, parseJsonBody } from '@/lib/api/errors';
 import { dialRequestSchema } from '@/lib/validations';
+import { resolveCallerIdForLead } from '@/lib/dialer/resolve-caller-id';
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,24 +39,18 @@ export async function POST(request: NextRequest) {
     const billingBlock = await assertWorkspaceCanPlaceCalls(supabase, access.workspaceId);
     if (billingBlock) return billingBlock;
 
-    // Determine from number (user's default purchased number or env fallback)
-    // .maybeSingle() is used (not .single()) so the route doesn't throw when
-    // the user has multiple active numbers but none are flagged is_default —
-    // we pick the most recent active one in that case instead of leaking the
-    // shared env-fallback number across users.
-    let fromNumber = process.env.TELNYX_FROM_NUMBER ?? '';
-    if (userId) {
-      const { data: defaultNum } = await supabase
-        .from('purchased_numbers')
-        .select('phone_number')
-        .eq('user_id', userId)
-        .eq('status', 'active')
-        .order('is_default', { ascending: false })
-        .order('purchased_at', { ascending: false })
-        .limit(1)
+    let leadPhone: string | null = null;
+    if (lead_id) {
+      const { data: leadRow } = await supabase
+        .from('leads')
+        .select('phone')
+        .eq('id', lead_id)
+        .eq('workspace_id', access.workspaceId)
         .maybeSingle();
-      if (defaultNum?.phone_number) fromNumber = defaultNum.phone_number;
+      leadPhone = leadRow?.phone ?? null;
     }
+
+    const { fromNumber } = await resolveCallerIdForLead(supabase, userId, leadPhone ?? to);
 
     // ── WebRTC mode: browser already dialed via SDK ──────────────────────────
     // call_control_id comes from the TelnyxRTC newCall() return value.

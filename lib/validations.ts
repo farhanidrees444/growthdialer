@@ -60,7 +60,7 @@ export const dialRequestSchema = z.object({
 });
 
 export const dispositionRequestSchema = z.object({
-  disposition: z.enum(dispositionTypes),
+  disposition: z.string().min(1).max(40),
   notes: z.string().max(5000).optional(),
   callback_at: z.string().optional(),
   meeting_at: z.string().optional(),
