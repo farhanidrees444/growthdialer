@@ -16,9 +16,16 @@ export function isWorkspaceError(
   return result instanceof NextResponse;
 }
 
+function workspaceIdFromBody(body: unknown): string | null {
+  if (!body || typeof body !== 'object') return null;
+  const id = (body as { workspace_id?: unknown }).workspace_id;
+  if (typeof id === 'string' && id.trim()) return id.trim();
+  return null;
+}
+
 export function getWorkspaceIdFromRequest(
   request: NextRequest,
-  body?: { workspace_id?: string },
+  body?: unknown,
 ): string | null {
   const header = request.headers.get(WORKSPACE_ID_HEADER);
   if (header?.trim()) return header.trim();
@@ -26,9 +33,7 @@ export function getWorkspaceIdFromRequest(
   const query = request.nextUrl.searchParams.get('workspace_id');
   if (query?.trim()) return query.trim();
 
-  if (body?.workspace_id?.trim()) return body.workspace_id.trim();
-
-  return null;
+  return workspaceIdFromBody(body);
 }
 
 /**
@@ -99,7 +104,7 @@ export async function requireWorkspaceFromRequest(
   request: NextRequest,
   supabase: SupabaseClient,
   userId: string,
-  options?: { permission?: Permission; body?: { workspace_id?: string } },
+  options?: { permission?: Permission; body?: unknown },
 ): Promise<WorkspaceAccess | NextResponse> {
   const workspaceId = getWorkspaceIdFromRequest(request, options?.body);
   return resolveWorkspaceAccess(supabase, userId, workspaceId, {

@@ -25,9 +25,7 @@ export async function GET(req: NextRequest) {
 
   const teamView = canViewTeamCalls(access);
   const wsId = access.workspaceId;
-
-  const scopeCalls = <T extends { eq: (c: string, v: string) => T; or: (f: string) => T }>(q: T) =>
-    teamView ? q.eq('workspace_id', wsId) : q.or(ownCallsOrFilter(wsId, userId));
+  const ownFilter = ownCallsOrFilter(wsId, userId);
 
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
@@ -47,19 +45,26 @@ export async function GET(req: NextRequest) {
   }> | null = null;
 
   {
-    const { data, error } = await scopeCalls(supabase
+    const hourlyBase = supabase
       .from('calls')
-      .select('created_at, status, disposition, duration_seconds, analytics_id, ai_processed'))
+      .select('created_at, status, disposition, duration_seconds, analytics_id, ai_processed')
       .gte('created_at', todayStart)
       .order('created_at', { ascending: true });
 
+    const { data, error } = teamView
+      ? await hourlyBase.eq('workspace_id', wsId)
+      : await hourlyBase.or(ownFilter);
+
     if (error && /column .* does not exist/i.test(error.message)) {
       console.warn('[dashboard/metrics] analytics_id missing — retrying without it. Run migration 033.');
-      const retry = await scopeCalls(supabase
+      const retryBase = supabase
         .from('calls')
-        .select('created_at, status, disposition, duration_seconds, ai_processed'))
+        .select('created_at, status, disposition, duration_seconds, ai_processed')
         .gte('created_at', todayStart)
         .order('created_at', { ascending: true });
+      const retry = teamView
+        ? await retryBase.eq('workspace_id', wsId)
+        : await retryBase.or(ownFilter);
       hourlyCalls = retry.data;
     } else {
       hourlyCalls = data;
@@ -97,18 +102,25 @@ export async function GET(req: NextRequest) {
   }> | null = null;
 
   {
-    const { data, error } = await scopeCalls(supabase
+    const aiBase = supabase
       .from('calls')
-      .select('duration_seconds, analytics_id, disposition'))
+      .select('duration_seconds, analytics_id, disposition')
       .eq('ai_processed', true)
       .gte('created_at', monthStart);
 
+    const { data, error } = teamView
+      ? await aiBase.eq('workspace_id', wsId)
+      : await aiBase.or(ownFilter);
+
     if (error && /column .* does not exist/i.test(error.message)) {
-      const retry = await scopeCalls(supabase
+      const retryBase = supabase
         .from('calls')
-        .select('duration_seconds, disposition'))
+        .select('duration_seconds, disposition')
         .eq('ai_processed', true)
         .gte('created_at', monthStart);
+      const retry = teamView
+        ? await retryBase.eq('workspace_id', wsId)
+        : await retryBase.or(ownFilter);
       aiCalls = retry.data;
     } else {
       aiCalls = data;
@@ -136,11 +148,14 @@ export async function GET(req: NextRequest) {
 
   const numberStats: Array<{ number: string; answerRate: number; status: 'clean' | 'warn' | 'flagged' }> = [];
   for (const n of numbers ?? []) {
-    const { data: ncalls } = await scopeCalls(supabase
+    const ncallsBase = supabase
       .from('calls')
-      .select('status, duration_seconds'))
+      .select('status, duration_seconds')
       .eq('from_number', n.phone_number)
       .gte('created_at', sevenDaysAgo);
+    const { data: ncalls } = teamView
+      ? await ncallsBase.eq('workspace_id', wsId)
+      : await ncallsBase.or(ownFilter);
 
     const total = ncalls?.length ?? 0;
     const answered = ncalls?.filter((c) => c.status === 'completed' && (c.duration_seconds ?? 0) > 5).length ?? 0;

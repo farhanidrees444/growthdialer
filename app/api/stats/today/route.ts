@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { canViewTeamCalls, ownCallsOrFilter } from '@/lib/auth/call-access';
@@ -7,14 +8,28 @@ function startOfDayUTC(date: Date) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())).toISOString();
 }
 
-function applyCallScope<T extends { or: (f: string) => T; eq: (c: string, v: string) => T }>(
-  query: T,
-  workspaceId: string,
+async function countCallsInRange(
+  supabase: SupabaseClient,
+  wsId: string,
   userId: string,
   teamView: boolean,
-): T {
-  if (teamView) return query.eq('workspace_id', workspaceId);
-  return query.or(ownCallsOrFilter(workspaceId, userId));
+  range: { gte: string; lt: string },
+  answeredOnly = false,
+) {
+  const ownFilter = ownCallsOrFilter(wsId, userId);
+  let query = supabase
+    .from('calls')
+    .select('id', { count: 'exact', head: true })
+    .gte('created_at', range.gte)
+    .lt('created_at', range.lt);
+
+  if (answeredOnly) {
+    query = query.not('answered_at', 'is', null);
+  }
+
+  return teamView
+    ? query.eq('workspace_id', wsId)
+    : query.or(ownFilter);
 }
 
 export async function GET(request: NextRequest) {
@@ -32,6 +47,7 @@ export async function GET(request: NextRequest) {
 
     const teamView = canViewTeamCalls(access);
     const wsId = access.workspaceId;
+    const ownFilter = ownCallsOrFilter(wsId, userId);
 
     const now = new Date();
     const todayStart = startOfDayUTC(now);
@@ -42,6 +58,9 @@ export async function GET(request: NextRequest) {
       Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1),
     ).toISOString();
 
+    const todayRange = { gte: todayStart, lt: tomorrowStart };
+    const yesterdayRange = { gte: yesterdayStart, lt: todayStart };
+
     const [
       { count: callsToday },
       { count: answeredToday },
@@ -50,40 +69,10 @@ export async function GET(request: NextRequest) {
       { count: leadsCount },
       { count: meetingsBooked },
     ] = await Promise.all([
-      applyCallScope(
-        supabase.from('calls').select('id', { count: 'exact', head: true }),
-        wsId,
-        userId,
-        teamView,
-      )
-        .gte('created_at', todayStart)
-        .lt('created_at', tomorrowStart),
-      applyCallScope(
-        supabase.from('calls').select('id', { count: 'exact', head: true }),
-        wsId,
-        userId,
-        teamView,
-      )
-        .not('answered_at', 'is', null)
-        .gte('created_at', todayStart)
-        .lt('created_at', tomorrowStart),
-      applyCallScope(
-        supabase.from('calls').select('id', { count: 'exact', head: true }),
-        wsId,
-        userId,
-        teamView,
-      )
-        .gte('created_at', yesterdayStart)
-        .lt('created_at', todayStart),
-      applyCallScope(
-        supabase.from('calls').select('id', { count: 'exact', head: true }),
-        wsId,
-        userId,
-        teamView,
-      )
-        .not('answered_at', 'is', null)
-        .gte('created_at', yesterdayStart)
-        .lt('created_at', todayStart),
+      countCallsInRange(supabase, wsId, userId, teamView, todayRange),
+      countCallsInRange(supabase, wsId, userId, teamView, todayRange, true),
+      countCallsInRange(supabase, wsId, userId, teamView, yesterdayRange),
+      countCallsInRange(supabase, wsId, userId, teamView, yesterdayRange, true),
       supabase
         .from('leads')
         .select('id', { count: 'exact', head: true })
@@ -102,16 +91,16 @@ export async function GET(request: NextRequest) {
 
     let pipelineValue = 0;
     try {
-      let dealQuery = applyCallScope(
-        supabase.from('calls').select('deal_value_usd'),
-        wsId,
-        userId,
-        teamView,
-      )
+      const dealBase = supabase
+        .from('calls')
+        .select('deal_value_usd')
         .in('disposition', ['interested', 'meeting_booked', 'callback'])
         .not('deal_value_usd', 'is', null);
 
-      const { data: dealData } = await dealQuery;
+      const { data: dealData } = teamView
+        ? await dealBase.eq('workspace_id', wsId)
+        : await dealBase.or(ownFilter);
+
       if (dealData) {
         pipelineValue = dealData.reduce((sum, r) => sum + (Number((r as { deal_value_usd: number | null }).deal_value_usd) || 0), 0);
       }
