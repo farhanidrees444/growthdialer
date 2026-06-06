@@ -2,15 +2,17 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, XCircle, Clock, ChevronRight, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BlogHonestyBanner } from "@/components/marketing/BlogHonestyBanner";
+import { AUTHOR_BIO, BLOG_CTA, GROWTHDIALER_PRICING, ROADMAP_NOT_LIVE, SHIPPED_TODAY } from "@/lib/marketing/honest-copy";
 
 export const metadata: Metadata = {
-  title: "How to Replace Your SDR Team with AI in 2026 (Complete Guide)",
-  description: "AI is replacing SDR teams at record speed in 2026. Learn the exact process to transition from human SDRs to AI sales agents — with real cost savings and implementation steps.",
-  keywords: "AI SDR replacement, AI sales agent, replace sales development rep, autonomous outbound sales, AI alternative to SDR",
+  title: "SDR Teams and AI: What Actually Ships Today (2026 Guide)",
+  description: "Where AI removes dial-and-log busywork vs where humans still own discovery and closing. Honest cost math using GrowthDialer Pro — no autonomous agent hype.",
+  keywords: "AI SDR, sales dialer AI, conversation intelligence, outbound automation, AI call summaries",
   authors: [{ name: "GrowthDialer Sales Team" }],
   openGraph: {
-    title: "How to Replace Your SDR Team with AI in 2026 (Complete Guide)",
-    description: "AI is replacing SDR teams at record speed in 2026. Learn the exact process to transition from human SDRs to AI sales agents.",
+    title: "SDR Teams and AI: What Actually Ships Today",
+    description: "Post-call AI, parallel dial, and coaching — what GrowthDialer ships vs what's still roadmap.",
     type: "article",
     publishedTime: "2026-04-09T00:00:00Z",
     modifiedTime: "2026-04-09T00:00:00Z",
@@ -18,8 +20,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "How to Replace Your SDR Team with AI in 2026 (Complete Guide)",
-    description: "Learn the exact process to transition from human SDRs to AI sales agents — with real cost savings and implementation steps.",
+    title: "SDR Teams and AI: What Actually Ships Today",
+    description: "Honest guide to AI-assisted outbound — not replacing your team with fictional voice bots.",
   },
 };
 
@@ -30,8 +32,8 @@ const tableOfContents = [
   { id: "what-ai-can", title: "What AI Sales Agents Can (and Cannot) Do", level: 2 },
   { id: "cost-comparison", title: "The Real Cost Comparison: Human SDR vs AI Agent", level: 2 },
   { id: "transition-plan", title: "Step-by-Step: How to Transition to AI SDRs", level: 2 },
-  { id: "how-growthdialer", title: "How GrowthDialer Replaces Your SDR Team", level: 2 },
-  { id: "case-studies", title: "Real Companies That Made the Switch", level: 2 },
+  { id: "case-studies", title: "What We Will (and Won't) Claim", level: 2 },
+  { id: "how-growthdialer", title: "How GrowthDialer Helps SDRs Today", level: 2 },
   { id: "human-sdrs", title: "What Happens to Your Human SDRs?", level: 2 },
   { id: "objections", title: "Common Objections (Answered Honestly)", level: 2 },
   { id: "faq", title: "Frequently Asked Questions", level: 2 },
@@ -56,8 +58,8 @@ export default function ReplaceSDRTeamWithAI() {
         {/* Hero Section */}
         <div className="mb-12">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-            How to Replace Your SDR Team with AI in 2026
-            <span className="block text-[#16a34a]">(Complete Guide)</span>
+            SDR Teams and AI in 2026
+            <span className="block text-[#A78BFA]">What Actually Ships</span>
           </h1>
           
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-gray-400 mb-8">
@@ -72,45 +74,47 @@ export default function ReplaceSDRTeamWithAI() {
           </div>
 
           <p className="text-xl text-gray-300 leading-relaxed mb-6">
-            The SDR model is broken. A human making $50K/year, reaching 40-60 people per day, ramp time of 6 months, and 15% turnover. Compare that to an AI agent making $200/month, reaching 500+ people per day, fully productive in 2 weeks, and 100% reliability. This guide walks through the exact transition process.
+            AI in outbound today means recording, transcription, summaries, and coaching — not a voice bot that replaces your SDRs. This guide separates what GrowthDialer ships from roadmap hype, and shows honest cost math for a human SDR vs an AI-assisted dialer stack.
           </p>
         </div>
 
-        {/* Stats Bar */}
-        <div className="grid grid-cols-3 gap-4 mb-12 bg-gradient-to-r from-[#16a34a]/10 to-transparent border border-[#16a34a]/30 rounded-lg p-6">
+        <BlogHonestyBanner />
+
+        {/* Stats Bar — shipped product facts */}
+        <div className="grid grid-cols-3 gap-4 mb-12 bg-gradient-to-r from-[#7C3AED]/10 to-transparent border border-[#7C3AED]/30 rounded-lg p-6">
           <div>
-            <div className="text-3xl font-bold text-[#16a34a] mb-2">68%</div>
-            <p className="text-sm text-gray-400">of B2B sales teams are replacing SDRs with AI</p>
+            <div className="text-3xl font-bold text-[#A78BFA] mb-2">{GROWTHDIALER_PRICING.proAnnualShort}</div>
+            <p className="text-sm text-gray-400">Pro workspace (annual) — AI summaries included</p>
           </div>
           <div>
-            <div className="text-3xl font-bold text-[#16a34a] mb-2">$285K</div>
-            <p className="text-sm text-gray-400">Average annual savings per SDR replaced</p>
+            <div className="text-3xl font-bold text-[#A78BFA] mb-2">Free</div>
+            <p className="text-sm text-gray-400">Starter tier to validate before you scale seats</p>
           </div>
           <div>
-            <div className="text-3xl font-bold text-[#16a34a] mb-2">73%</div>
-            <p className="text-sm text-gray-400">Reduction in time-to-qualified-lead</p>
+            <div className="text-3xl font-bold text-[#A78BFA] mb-2">HubSpot</div>
+            <p className="text-sm text-gray-400">Live CRM integration today (others on roadmap)</p>
           </div>
         </div>
 
         {/* Key Takeaways */}
-        <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-8 mb-12">
-          <h2 className="text-2xl font-bold text-[#16a34a] mb-4">Key Takeaways</h2>
+        <div className="bg-[#7C3AED]/10 border border-[#7C3AED]/30 rounded-lg p-8 mb-12">
+          <h2 className="text-2xl font-bold text-[#A78BFA] mb-4">Key Takeaways</h2>
           <ul className="space-y-3">
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
-              <span><strong>Full replacement</strong> is possible for 60-80% of your SDR workload (initial outreach, qualification, meeting booking)</span>
+              <CheckCircle2 className="w-5 h-5 text-[#A78BFA] flex-shrink-0 mt-0.5" />
+              <span><strong>Humans still close.</strong> AI today removes notes, logging, and prep — not discovery calls.</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
-              <span><strong>Cost savings</strong> are 70-85% vs hiring an SDR ($200/month vs $50K annually)</span>
+              <CheckCircle2 className="w-5 h-5 text-[#A78BFA] flex-shrink-0 mt-0.5" />
+              <span><strong>Autonomous voice agents</strong> are on GrowthDialer&apos;s roadmap — not in production.</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
-              <span><strong>Implementation</strong> takes 4-8 weeks if you have good sales processes and CRM hygiene</span>
+              <CheckCircle2 className="w-5 h-5 text-[#A78BFA] flex-shrink-0 mt-0.5" />
+              <span><strong>Compare tools honestly:</strong> dialer + AI summaries vs fully loaded SDR cost — not fictional $200/mo bots.</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
-              <span><strong>Your best SDRs</strong> will be promoted to AE roles or strategic account responsibility, not fired</span>
+              <CheckCircle2 className="w-5 h-5 text-[#A78BFA] flex-shrink-0 mt-0.5" />
+              <span><strong>Start on Starter free</strong> — measure time saved on your actual call volume before upgrading.</span>
             </li>
           </ul>
         </div>
@@ -181,37 +185,33 @@ export default function ReplaceSDRTeamWithAI() {
             So one fully-loaded SDR costs you ~$89K per year. Productivity metrics: most reach 50-70 people per day, with 4-6 month ramp time. After ramp, they book 6-12 qualified meetings per month.
           </p>
 
-          <h3 className="text-2xl font-bold mb-6">The AI Agent Alternative</h3>
+          <h3 className="text-2xl font-bold mb-6">Dialer software vs loaded SDR cost</h3>
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-6">
-              <h3 className="font-bold text-[#16a34a] mb-4">Traditional SDR Annual Cost</h3>
-              <div className="text-3xl font-bold mb-2">$88,950</div>
+            <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6">
+              <h3 className="font-bold text-white mb-4">Traditional SDR (loaded, illustrative)</h3>
+              <div className="text-3xl font-bold mb-2">~$89K/yr</div>
               <ul className="space-y-2 text-sm text-gray-300">
-                <li>• 6-month ramp time</li>
-                <li>• 50-70 dials/day max</li>
-                <li>• 15% annual turnover</li>
-                <li>• Requires constant coaching</li>
-                <li>• Burns out in 18-24 months</li>
+                <li>• Salary, benefits, manager time</li>
+                <li>• Ramp and turnover</li>
+                <li>• Humans still required to sell</li>
               </ul>
             </div>
             
-            <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6">
-              <h3 className="font-bold text-white mb-4">AI Agent Annual Cost</h3>
-              <div className="text-3xl font-bold text-[#16a34a] mb-2">$2,400</div>
+            <div className="bg-[#7C3AED]/10 border border-[#7C3AED]/30 rounded-lg p-6">
+              <h3 className="font-bold text-[#A78BFA] mb-4">GrowthDialer Pro (annual)</h3>
+              <div className="text-3xl font-bold text-[#A78BFA] mb-2">{GROWTHDIALER_PRICING.proAnnualTotal}</div>
               <ul className="space-y-2 text-sm text-gray-300">
-                <li>• 2-week ramp time</li>
-                <li>• 500+ dials/day continuously</li>
-                <li>• 100% uptime (24/7)</li>
-                <li>• Improves with usage</li>
-                <li>• No burnout, no turnover</li>
+                <li>• Up to 3 seats per workspace</li>
+                <li>• AI summaries on recorded calls</li>
+                <li>• Not an autonomous voice agent</li>
               </ul>
             </div>
           </div>
 
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-6">
-            <h3 className="font-bold text-yellow-400 mb-2">⚠️ The Honest Truth</h3>
-            <p className="text-gray-300">These numbers are real, but they don't capture everything. An SDR brings contextual thinking, relationship building, and decision-making that AI still struggles with. The best approach isn't pure replacement — it's strategic replacement focused on high-volume objection handling and meeting booking.</p>
+            <h3 className="font-bold text-yellow-400 mb-2">The honest truth</h3>
+            <p className="text-gray-300">Software cost is tiny next to people cost. GrowthDialer saves rep time on notes and logging — it does not replace headcount by itself.</p>
           </div>
         </section>
 
@@ -292,33 +292,26 @@ export default function ReplaceSDRTeamWithAI() {
               </div>
             </div>
 
-            <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-8">
-              <h3 className="text-xl font-bold mb-6">Using 1 AI Agent for 3 Years</h3>
+            <div className="bg-[#7C3AED]/10 border border-[#7C3AED]/30 rounded-lg p-8">
+              <h3 className="text-xl font-bold mb-6">GrowthDialer Pro for 3 years (3-seat workspace)</h3>
               <div className="space-y-4 text-gray-300">
                 <div>
-                  <p className="text-sm text-gray-400">Year 1</p>
-                  <p className="font-bold">$2,400 × 12 = <span className="text-[#16a34a]">$28,800</span></p>
+                  <p className="text-sm text-gray-400">Year 1–3 (annual billing)</p>
+                  <p className="font-bold">{GROWTHDIALER_PRICING.proAnnualTotal} × 3 = <span className="text-[#A78BFA]">$1,404</span></p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-400">Year 2</p>
-                  <p className="font-bold">$2,400 × 12 = <span className="text-[#16a34a]">$28,800</span></p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">Year 3</p>
-                  <p className="font-bold">$2,400 × 12 = <span className="text-[#16a34a]">$28,800</span></p>
-                </div>
-                <div className="border-t border-[#16a34a] pt-4">
-                  <p className="text-sm text-gray-400 mb-1">3-Year Total</p>
-                  <p className="text-2xl font-bold text-[#16a34a]">$86,400</p>
+                <p className="text-sm text-zinc-500">Includes parallel dial, AI summaries, coaching floor, HubSpot sync — not an autonomous voice agent.</p>
+                <div className="border-t border-[#7C3AED]/30 pt-4">
+                  <p className="text-sm text-gray-400 mb-1">3-Year software total</p>
+                  <p className="text-2xl font-bold text-[#A78BFA]">~$1,400</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-[#16a34a]/10 to-transparent border border-[#16a34a]/30 rounded-lg p-8 text-center">
-            <p className="text-gray-300 mb-2">3-Year Savings</p>
-            <p className="text-5xl font-bold text-[#16a34a] mb-2">$207,300</p>
-            <p className="text-gray-300">That's $69,100 per year in savings from just one SDR replacement</p>
+          <div className="bg-gradient-to-r from-[#7C3AED]/10 to-transparent border border-[#7C3AED]/30 rounded-lg p-8 text-center">
+            <p className="text-gray-300 mb-2">Illustrative savings vs one loaded SDR</p>
+            <p className="text-3xl font-bold text-[#A78BFA] mb-2">Software is the small line item</p>
+            <p className="text-gray-300">GrowthDialer augments reps — it does not replace salary, benefits, or manager time. Budget honestly.</p>
           </div>
 
           <h3 className="text-2xl font-bold mt-8 mb-6">But There Are Hidden Costs to Consider</h3>
@@ -357,7 +350,7 @@ export default function ReplaceSDRTeamWithAI() {
           </div>
 
           <p className="text-gray-300 leading-relaxed mt-6">
-            Even accounting for these costs, the net savings over 3 years is still $185K-195K per SDR replaced. That's the real financial case.
+            Even with GrowthDialer on Pro, you still pay people to sell. The win is fewer hours on notes, logging, and list babysitting — measure that on your floor, not with a fabricated ROI slide.
           </p>
         </section>
 
@@ -461,45 +454,21 @@ export default function ReplaceSDRTeamWithAI() {
 
         {/* How GrowthDialer Does It */}
         <section id="how-growthdialer" className="mb-12">
-          <h2 className="text-3xl font-bold mb-6">How GrowthDialer Replaces Your SDR Team</h2>
+          <h2 className="text-3xl font-bold mb-6">How GrowthDialer Helps SDRs Today</h2>
           
           <p className="text-gray-300 leading-relaxed mb-8">
-            Our approach combines AI agents with intelligent routing to replace the full SDR workflow:
+            GrowthDialer is a revenue dialer for humans — not a replacement SDR bot. Here is what ships in production:
           </p>
 
           <div className="space-y-6">
-            {[
-              {
-                feature: "Autonomous Calling Agent",
-                description: "AI makes outbound calls, handles objections, qualifies prospects, and books meetings — no human intervention needed. Operates 24/7."
-              },
-              {
-                feature: "Multi-Language Support",
-                description: "Reaches prospects globally in 16+ languages. Scale beyond your local market without hiring multilingual SDRs."
-              },
-              {
-                feature: "Smart Lead Qualification",
-                description: "AI understands buying stage, company fit, and authority level. Only routes qualified leads to your sales team."
-              },
-              {
-                feature: "Real-Time CRM Sync",
-                description: "Every call, disposition, and note syncs to your CRM in real-time. Your sales team always has current information."
-              },
-              {
-                feature: "Voicemail Intelligence",
-                description: "Detects voicemail vs answering machine vs human. Drops professional, personalized voicemails when no one answers."
-              },
-              {
-                feature: "Conversation Analytics",
-                description: "Every call transcribed, analyzed for sentiment and outcome. Learn what works and what doesn't."
-              },
-            ].map((item) => (
-              <div key={item.feature} className="border-l-4 border-[#16a34a] pl-6">
-                <h3 className="font-bold text-lg mb-2">{item.feature}</h3>
-                <p className="text-gray-300">{item.description}</p>
+            {SHIPPED_TODAY.map((item) => (
+              <div key={item} className="border-l-4 border-[#7C3AED] pl-6">
+                <p className="text-gray-300">{item}</p>
               </div>
             ))}
           </div>
+
+          <p className="mt-8 text-sm text-zinc-500">On the roadmap (not live): {ROADMAP_NOT_LIVE.join(' · ')}</p>
 
           <Link href="/compare/vs-orum" className="mt-8 inline-block">
             <Button className="bg-[#16a34a] text-white hover:bg-[#15803d]">
@@ -508,90 +477,24 @@ export default function ReplaceSDRTeamWithAI() {
           </Link>
         </section>
 
-        {/* Case Studies */}
+        {/* What we won't claim */}
         <section id="case-studies" className="mb-12">
-          <h2 className="text-3xl font-bold mb-6">Real Companies That Made the Switch</h2>
-          
-          {[
-            {
-              company: "EdTech Platform (Series B)",
-              team_before: "5 SDRs booking 20 meetings/week",
-              challenge: "High sales costs eating into margins before Series B",
-              transition: "Replaced 4 of 5 SDRs with 3 AI agents (kept top performer as AE)",
-              results: [
-                "Meetings/week increased to 42 (2.1x)",
-                "Cost per meeting decreased 64%",
-                "Team morale improved — top SDR promoted to AE makes more money",
-                "Sales cycle decreased from 45 to 31 days",
-                "Annual savings: $312K"
-              ],
-              timeline: "3 months to full transition"
-            },
-            {
-              company: "B2B SaaS (Growth Stage)",
-              team_before: "3 SDRs (1 good, 2 struggling)",
-              challenge: "Couldn't hire quality SDRs due to local market competition",
-              transition: "Deployed 2 AI agents to handle all cold outreach, kept 1 best SDR for warm accounts",
-              results: [
-                "Cold pipeline qualified increased 250%",
-                "Hiring burden removed — no more SDR recruitment",
-                "Warm leads converted 23% better than cold (as expected)",
-                "Second SDR transitioned to Customer Success role",
-                "Third SDR left naturally, not replaced, saved salary"
-              ],
-              timeline: "6 weeks to full automation"
-            },
-            {
-              company: "Financial Services (Enterprise)",
-              team_before: "12 SDRs across 3 regions",
-              challenge: "Compliance complexity (TCPA, FINRA), high turnover (22%)",
-              transition: "Centralized all compliance in AI platform, reduced to 4 human SDRs for relationship building",
-              results: [
-                "Compliance violations decreased to zero (vs 3 in prior year)",
-                "Turnover decreased to 11% (lower stress = better retention)",
-                "Same meetings booked with 67% fewer headcount",
-                "Training time eliminated — AI doesn't need ramp",
-                "Annual savings: $420K in headcount alone"
-              ],
-              timeline: "4 months (longer due to compliance auditing)"
-            },
-          ].map((case_study, idx) => (
-            <div key={case_study.company} className={`mb-8 p-8 rounded-lg border ${idx % 2 === 0 ? "bg-gray-900/50 border-gray-800" : "bg-[#16a34a]/5 border-[#16a34a]/20"}`}>
-              <h3 className="text-2xl font-bold mb-6">{case_study.company}</h3>
-              
-              <div className="grid md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <p className="text-sm text-gray-400 mb-1">Before</p>
-                  <p className="text-lg font-semibold text-gray-300">{case_study.team_before}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400 mb-1">Challenge</p>
-                  <p className="text-lg font-semibold text-gray-300">{case_study.challenge}</p>
-                </div>
-              </div>
-
-              <div className="mb-6 bg-black/30 p-4 rounded border border-gray-800">
-                <p className="text-sm text-gray-400 mb-1">Transition Strategy</p>
-                <p className="text-gray-300">{case_study.transition}</p>
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-400 mb-3">Results (after 90 days)</p>
-                <ul className="space-y-2">
-                  {case_study.results.map((result) => (
-                    <li key={result} className="flex items-start gap-3 text-gray-300">
-                      <TrendingUp className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
-                      <span>{result}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-gray-800">
-                <p className="text-sm text-gray-400">Implementation Timeline: <span className="text-[#16a34a] font-semibold">{case_study.timeline}</span></p>
-              </div>
-            </div>
-          ))}
+          <h2 className="text-3xl font-bold mb-6">What We Will (and Won&apos;t) Claim</h2>
+          <p className="text-gray-300 leading-relaxed mb-6">
+            We do not publish named customer case studies with percentage lifts until customers approve them. Until then:
+          </p>
+          <ul className="space-y-4">
+            {[
+              'We will not cite “2,400+ teams” or star ratings without a verified source.',
+              'We will not promise autonomous AI agents — they are on the roadmap.',
+              'We will publish your story when you opt in — with real numbers you provide.',
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-3 text-gray-300">
+                <CheckCircle2 className="w-5 h-5 text-[#A78BFA] flex-shrink-0 mt-0.5" />
+                {item}
+              </li>
+            ))}
+          </ul>
         </section>
 
         {/* What Happens to Human SDRs */}
@@ -599,21 +502,20 @@ export default function ReplaceSDRTeamWithAI() {
           <h2 className="text-3xl font-bold mb-6">What Happens to Your Human SDRs?</h2>
           
           <p className="text-gray-300 leading-relaxed mb-8">
-            This is the question your team is asking. Here's the honest answer: the SDR role is changing, not disappearing. The best SDRs transition to higher-value work.
+            GrowthDialer does not eliminate SDR jobs. It removes busywork after and between calls — logging, summaries, prep — so the same headcount can run more quality conversations.
           </p>
 
-          <h3 className="text-2xl font-bold mb-6">The New SDR Role</h3>
+          <h3 className="text-2xl font-bold mb-6">What the dialer automates today</h3>
 
           <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8 mb-8">
-            <h4 className="font-bold text-lg mb-4 text-[#16a34a]">What AI Handles (70-80% of work)</h4>
+            <h4 className="font-bold text-lg mb-4 text-[#A78BFA]">Software handles</h4>
             <ul className="space-y-2 text-gray-300 mb-6">
               {[
-                "Cold outbound calling (1000+ calls/month per person)",
-                "Initial lead qualification",
-                "Voicemail drops and follow-ups",
-                "Calendar sync and meeting booking",
-                "CRM data entry and note-taking",
-                "Basic objection handling"
+                "Call recording and transcription",
+                "AI summaries, sentiment, and next steps",
+                "Power / parallel dialing with AMD",
+                "Dispositions and pipeline logging",
+                "Manager coaching / whisper on live calls",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
                   <span className="text-[#16a34a]">✓</span>
@@ -623,19 +525,18 @@ export default function ReplaceSDRTeamWithAI() {
             </ul>
           </div>
 
-          <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-8">
-            <h4 className="font-bold text-lg mb-4 text-[#16a34a]">What Humans Handle (20-30% of work)</h4>
+          <div className="bg-[#7C3AED]/10 border border-[#7C3AED]/30 rounded-lg p-8">
+            <h4 className="font-bold text-lg mb-4 text-[#A78BFA]">Humans still own</h4>
             <ul className="space-y-2 text-gray-300">
               {[
-                "Relationship development with warm leads",
-                "Complex deal qualification",
-                "Executive outreach and account planning",
-                "Objection handling for sophisticated prospects",
-                "Sales coaching and mentoring",
-                "Account management for expansion opportunities"
+                "Discovery and qualification conversations",
+                "Executive outreach and account strategy",
+                "Complex objection handling",
+                "Closing and negotiation",
+                "Account expansion and relationship work",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <span className="text-[#16a34a]">✓</span>
+                  <span className="text-[#A78BFA]">✓</span>
                   <span>{item}</span>
                 </li>
               ))}
@@ -688,7 +589,7 @@ export default function ReplaceSDRTeamWithAI() {
               },
               {
                 obj: "Our prospects will know they're talking to AI",
-                answer: "In 2026, 68% of B2B buyers expect they might reach AI. The real question is: does it matter? Most prospects don't care if it's AI, they care if (1) you sound professional and (2) you're offering real value. AI agents do both better than struggling SDRs. Plus, once you reach a decision maker, handoff to your human sales team — they take the relationship from there."
+                answer: "Prospects care that you sound professional and offer real value — whether notes are AI-generated or hand-typed. GrowthDialer keeps humans on the call; AI handles summaries and prep afterward. Autonomous voice agents are a separate category we have not shipped."
               },
               {
                 obj: "AI won't understand our complex sales process",

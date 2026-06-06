@@ -2,15 +2,17 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, XCircle, Clock, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BlogHonestyBanner } from "@/components/marketing/BlogHonestyBanner";
+import { AUTHOR_BIO, BLOG_CTA, GROWTHDIALER_PRICING } from "@/lib/marketing/honest-copy";
 
 export const metadata: Metadata = {
-  title: "How Parallel Dialing 10x's Your Sales Connect Rate in 2026",
-  description: "Parallel dialing lets your team dial 10 prospects simultaneously. Learn exactly how it works, the science behind it, and how to implement it to 10x your connect rates.",
-  keywords: "parallel dialing, power dialer vs parallel dialer, increase sales connect rate, outbound sales productivity, sales automation",
+  title: "How Parallel Dialing Raises Connect Volume in 2026",
+  description: "Parallel dialing lets reps dial multiple prospects at once. Learn how line count, AMD, and list quality affect connects — without inflated ROI claims.",
+  keywords: "parallel dialing, power dialer vs parallel dialer, outbound sales productivity, AMD voicemail drop",
   authors: [{ name: "GrowthDialer Sales Team" }],
   openGraph: {
-    title: "How Parallel Dialing 10x's Your Sales Connect Rate in 2026",
-    description: "Parallel dialing lets your team dial 10 prospects simultaneously. Learn exactly how it works, the science behind it, and how to implement it.",
+    title: "How Parallel Dialing Raises Connect Volume in 2026",
+    description: "How parallel dial works: line math, AMD, compliance, and setup on GrowthDialer Pro.",
     type: "article",
     publishedTime: "2026-04-09T00:00:00Z",
     modifiedTime: "2026-04-09T00:00:00Z",
@@ -18,8 +20,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "How Parallel Dialing 10x's Your Sales Connect Rate in 2026",
-    description: "Learn how parallel dialing works and why it increases sales connect rates by 40-60%.",
+    title: "How Parallel Dialing Raises Connect Volume in 2026",
+    description: "Line math and AMD — how parallel dial increases conversations per hour.",
   },
 };
 
@@ -28,9 +30,9 @@ const tableOfContents = [
   { id: "key-takeaways", title: "Key Takeaways", level: 2 },
   { id: "what-is-parallel", title: "What Is Parallel Dialing? (Simple Explanation)", level: 2 },
   { id: "comparison", title: "Parallel vs Power vs Preview Dialer — Key Differences", level: 2 },
-  { id: "science", title: "The Science Behind 10x Connect Rates", level: 2 },
+  { id: "science", title: "The Math Behind More Conversations per Hour", level: 2 },
   { id: "how-it-works", title: "How GrowthDialer's Parallel Dialing Works", level: 2 },
-  { id: "real-results", title: "Real Results: Teams Using Parallel Dialing", level: 2 },
+  { id: "real-results", title: "What to Measure (No Vanity Benchmarks)", level: 2 },
   { id: "compliance", title: "Is Parallel Dialing Legal? Compliance Guide", level: 2 },
   { id: "setup", title: "How to Set Up Parallel Dialing (Step by Step)", level: 2 },
   { id: "mistakes", title: "Common Mistakes to Avoid", level: 2 },
@@ -57,7 +59,7 @@ export default function ParallelDialingGuide() {
         <div className="mb-12">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
             How Parallel Dialing
-            <span className="block text-[#16a34a]">10x's Your Sales Connect Rate</span>
+            <span className="block text-[#A78BFA]">Raises Connect Volume</span>
           </h1>
           
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-gray-400 mb-8">
@@ -76,21 +78,23 @@ export default function ParallelDialingGuide() {
           </p>
         </div>
 
-        {/* Stats Bar */}
-        <div className="grid grid-cols-3 gap-4 mb-12 bg-gradient-to-r from-[#16a34a]/10 to-transparent border border-[#16a34a]/30 rounded-lg p-6">
+        {/* Stats Bar — mechanics, not fabricated ROI */}
+        <div className="grid grid-cols-3 gap-4 mb-12 bg-gradient-to-r from-[#7C3AED]/10 to-transparent border border-[#7C3AED]/30 rounded-lg p-6">
           <div>
-            <div className="text-3xl font-bold text-[#16a34a] mb-2">10x</div>
-            <p className="text-sm text-gray-400">Connect rate improvement vs single-line dialing</p>
+            <div className="text-3xl font-bold text-[#A78BFA] mb-2">10</div>
+            <p className="text-sm text-gray-400">Max parallel lines on GrowthDialer Pro</p>
           </div>
           <div>
-            <div className="text-3xl font-bold text-[#16a34a] mb-2">61%</div>
-            <p className="text-sm text-gray-400">Average improvement in meetings booked</p>
+            <div className="text-3xl font-bold text-[#A78BFA] mb-2">AMD</div>
+            <p className="text-sm text-gray-400">Auto hang-up on machines + VM drop</p>
           </div>
           <div>
-            <div className="text-3xl font-bold text-[#16a34a] mb-2">$2.1M</div>
-            <p className="text-sm text-gray-400">Annual revenue impact per sales team*</p>
+            <div className="text-3xl font-bold text-[#A78BFA] mb-2">{GROWTHDIALER_PRICING.proAnnualShort}</div>
+            <p className="text-sm text-gray-400">Pro workspace (annual) includes parallel</p>
           </div>
         </div>
+
+        <BlogHonestyBanner />
 
         {/* Key Takeaways */}
         <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-8 mb-12">
@@ -205,7 +209,7 @@ export default function ParallelDialingGuide() {
 
         {/* The Science */}
         <section id="science" className="mb-12">
-          <h2 className="text-3xl font-bold mb-6">The Science Behind 10x Connect Rates</h2>
+          <h2 className="text-3xl font-bold mb-6">The Math Behind More Conversations per Hour</h2>
           
           <p className="text-gray-300 leading-relaxed mb-6">
             The mathematics behind parallel dialing is surprisingly simple. Let's break it down:
@@ -221,7 +225,7 @@ export default function ParallelDialingGuide() {
           </div>
 
           <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-6 mb-6">
-            <h3 className="font-bold text-[#16a34a] mb-4">Parallel Dialing (10x concurrent)</h3>
+            <h3 className="font-bold text-[#16a34a] mb-4">Parallel dialing (10 concurrent lines)</h3>
             <div className="space-y-3 text-gray-300 font-mono text-sm">
               <div>Calls per hour: <span className="text-[#16a34a]">600</span></div>
               <div>Connect rate (slightly lower): <span className="text-[#16a34a]">22%</span></div>
@@ -286,75 +290,31 @@ export default function ParallelDialingGuide() {
           </div>
         </section>
 
-        {/* Real Results */}
+        {/* What to measure */}
         <section id="real-results" className="mb-12">
-          <h2 className="text-3xl font-bold mb-6">Real Results: Teams Using Parallel Dialing</h2>
+          <h2 className="text-3xl font-bold mb-6">What to Measure (No Vanity Benchmarks)</h2>
           
           <p className="text-gray-300 leading-relaxed mb-8">
-            Here are three real examples from GrowthDialer customers who implemented parallel dialing:
+            We do not publish customer case studies with invented percentages. When you turn on parallel dial, track these on your own floor:
           </p>
 
           {[
             {
-              company: "CloudTech Ventures (SaaS)",
-              industry: "Enterprise software",
-              challenge: "3-person SDR team struggling to hit 40 meetings/month quota",
-              implementation: "Parallel dialing with 6-line batches, optimized voicemail scripts",
-              results: [
-                "Connects increased from 180/week to 420/week (+133%)",
-                "Meetings booked increased from 35/month to 89/month (+154%)",
-                "Cost per meeting decreased 38% despite same team size",
-                "Time to productivity decreased from 8 weeks to 3 weeks for new SDRs"
-              ]
+              title: 'Conversations per rep-hour',
+              body: 'Count human connects divided by dial time. Parallel dial should raise attempts and often raises absolute connects even if connect rate % dips slightly on broader lists.',
             },
             {
-              company: "B2B Marketing Solutions",
-              industry: "Digital marketing services",
-              challenge: "Unpredictable sales pipeline, high cost per lead",
-              implementation: "Parallel dialing + AI voicemail drops, 10-line batches",
-              results: [
-                "Weekly dials increased from 800 to 3,200 per rep (+300%)",
-                "Lead quality actually improved (better list scrubbing)",
-                "Cost per SQLs declined by 52%",
-                "Sales cycle shortened by 18%"
-              ]
+              title: 'Meetings set per session',
+              body: 'Compare the same rep on power vs parallel with identical lists — that A/B is the only honest benchmark for your ICP.',
             },
             {
-              company: "Financial Services Firm",
-              industry: "Wealth management",
-              challenge: "Manual process took 40 hours/week per rep",
-              implementation: "Parallel dialing + CRM automation, 4-line batches (quality over quantity)",
-              results: [
-                "Time per prospect decreased from 12 minutes to 2 minutes",
-                "Connect rate maintained at 31% despite higher volume",
-                "New business pipeline increased $4.2M annually",
-                "SDR satisfaction scores increased 47% (less busywork)"
-              ]
-            }
-          ].map((case_study, idx) => (
-            <div key={case_study.company} className={`mb-8 p-6 rounded-lg border ${idx % 2 === 0 ? "bg-gray-900/50 border-gray-800" : "bg-[#16a34a]/5 border-[#16a34a]/20"}`}>
-              <h3 className="text-xl font-bold mb-1">{case_study.company}</h3>
-              <p className="text-sm text-gray-400 mb-4">{case_study.industry}</p>
-              
-              <div className="mb-4">
-                <p className="text-gray-300"><strong>Challenge:</strong> {case_study.challenge}</p>
-              </div>
-              
-              <div className="mb-4">
-                <p className="text-gray-300"><strong>Implementation:</strong> {case_study.implementation}</p>
-              </div>
-
-              <div>
-                <p className="text-gray-300 font-semibold mb-2">Results:</p>
-                <ul className="space-y-2">
-                  {case_study.results.map((result) => (
-                    <li key={result} className="flex items-start gap-3 text-gray-300">
-                      <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
-                      <span>{result}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              title: 'Cost per connect',
+              body: 'Include dialer workspace cost, numbers, and talk time. GrowthDialer Pro is a fixed workspace fee — not per-minute surprise bills.',
+            },
+          ].map((item) => (
+            <div key={item.title} className="mb-6 p-6 rounded-lg border border-white/10 bg-gray-900/50">
+              <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+              <p className="text-gray-300">{item.body}</p>
             </div>
           ))}
         </section>
@@ -538,10 +498,8 @@ export default function ParallelDialingGuide() {
 
         {/* CTA Section */}
         <div className="bg-gradient-to-r from-[#16a34a]/10 to-transparent border border-[#16a34a]/30 rounded-lg p-8 mb-12 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to 10x Your Connect Rates?</h2>
-          <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
-            Start with parallel dialing in GrowthDialer. Most teams see meaningful improvements in connects within 2 weeks.
-          </p>
+          <h2 className="text-3xl font-bold mb-4">Ready to try parallel on your floor?</h2>
+          <p className="text-gray-300 mb-6 max-w-2xl mx-auto">{BLOG_CTA}</p>
           <Link href="https://app.growthdialer.com/signup">
             <Button size="lg" className="bg-[#16a34a] text-white hover:bg-[#15803d]">
               Try Parallel Dialing Free <ArrowRight className="ml-2 w-5 h-5" />
@@ -592,9 +550,7 @@ export default function ParallelDialingGuide() {
             </div>
             <div>
               <h3 className="font-bold text-lg mb-1">Written by GrowthDialer Sales Team</h3>
-              <p className="text-gray-400 mb-4">
-                We've monitored and optimized parallel dialing campaigns across 2,400+ teams. This guide includes real data, compliance frameworks, and best practices from teams that have successfully 10x'd their connect rates.
-              </p>
+              <p className="text-gray-400 mb-4">{AUTHOR_BIO}</p>
               <Link href="/about" className="text-[#16a34a] hover:text-[#15803d]">Learn more about our team →</Link>
             </div>
           </div>
@@ -610,7 +566,7 @@ export default function ParallelDialingGuide() {
             </Link>
             <Link href="/blog/replace-sdr-team-with-ai" className="border border-gray-800 rounded-lg p-6 hover:border-[#16a34a] transition-colors">
               <h3 className="font-bold text-lg mb-2">How to Replace Your SDR Team with AI in 2026</h3>
-              <p className="text-gray-400 text-sm">The complete guide to transitioning from human SDRs to autonomous AI agents.</p>
+              <p className="text-gray-400 text-sm">Where AI removes dial-and-log busywork vs where humans still own the call.</p>
             </Link>
           </div>
         </div>
@@ -643,8 +599,8 @@ export default function ParallelDialingGuide() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Article",
-            headline: "How Parallel Dialing 10x's Your Sales Connect Rate in 2026",
-            description: "Parallel dialing lets your team dial 10 prospects simultaneously. Learn exactly how it works, the science behind it, and how to implement it to 10x your connect rates.",
+            headline: "How Parallel Dialing Raises Connect Volume in 2026",
+            description: "How parallel dial works: line math, AMD, compliance, and honest metrics to track on your floor.",
             image: "https://growthdialer.com/og-image.png",
             datePublished: "2026-04-09T00:00:00Z",
             dateModified: "2026-04-09T00:00:00Z",

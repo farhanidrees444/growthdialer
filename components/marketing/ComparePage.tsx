@@ -129,7 +129,7 @@ export function ComparePage({
       </section>
 
       {testimonial && (
-        <section className="px-5 pb-20 lg:px-8">
+        <section className="px-5 pb-12 lg:px-8">
           <blockquote className="mx-auto max-w-2xl rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8 text-center backdrop-blur-xl">
             <p className="text-[17px] leading-relaxed text-zinc-300">&ldquo;{testimonial.quote}&rdquo;</p>
             <footer className="mt-4 text-sm text-zinc-500">
@@ -138,6 +138,16 @@ export function ComparePage({
           </blockquote>
         </section>
       )}
+
+      <section className="px-5 pb-20 lg:px-8">
+        <p className="mx-auto max-w-2xl text-center text-[12px] leading-relaxed text-zinc-600">
+          Competitor prices shown are approximate public list rates — confirm with each vendor.
+          GrowthDialer Pro is {priceGrowthdialer}/workspace/mo; Starter is free.{' '}
+          <a href="/pricing" className="text-[#A78BFA] hover:underline">
+            Full pricing →
+          </a>
+        </p>
+      </section>
     </>
   );
 }

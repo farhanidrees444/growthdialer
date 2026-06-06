@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, XCircle, Clock, Share2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BlogHonestyBanner } from "@/components/marketing/BlogHonestyBanner";
+import { AUTHOR_BIO, BLOG_CTA, GROWTHDIALER_PRICING, NO_VANITY_METRICS, SHIPPED_TODAY } from "@/lib/marketing/honest-copy";
 
 export const metadata: Metadata = {
   title: "7 Best AI Sales Dialers in 2026: Honest Reviews & Comparisons",
@@ -80,21 +82,23 @@ export default function BestAISalesDialers2026() {
           </p>
         </div>
 
-        {/* Stats Bar */}
-        <div className="grid grid-cols-3 gap-4 mb-12 bg-gradient-to-r from-[#16a34a]/10 to-transparent border border-[#16a34a]/30 rounded-lg p-6">
+        {/* Stats Bar — product facts, not market vanity metrics */}
+        <div className="grid grid-cols-3 gap-4 mb-12 bg-gradient-to-r from-[#7C3AED]/10 to-transparent border border-[#7C3AED]/30 rounded-lg p-6">
           <div>
-            <div className="text-3xl font-bold text-[#16a34a] mb-2">$8.2B</div>
-            <p className="text-sm text-gray-400">Global sales dialer market in 2026</p>
+            <div className="text-3xl font-bold text-[#A78BFA] mb-2">10</div>
+            <p className="text-sm text-gray-400">Parallel lines on GrowthDialer Pro</p>
           </div>
           <div>
-            <div className="text-3xl font-bold text-[#16a34a] mb-2">73%</div>
-            <p className="text-sm text-gray-400">of teams adopted AI in outbound</p>
+            <div className="text-3xl font-bold text-[#A78BFA] mb-2">Free</div>
+            <p className="text-sm text-gray-400">Starter tier — dial, record, AI summaries</p>
           </div>
           <div>
-            <div className="text-3xl font-bold text-[#16a34a] mb-2">3.8x</div>
-            <p className="text-sm text-gray-400">ROI on sales dialer investment</p>
+            <div className="text-3xl font-bold text-[#A78BFA] mb-2">{GROWTHDIALER_PRICING.proAnnualShort}</div>
+            <p className="text-sm text-gray-400">Pro workspace (annual billing, up to 3 seats)</p>
           </div>
         </div>
+
+        <BlogHonestyBanner />
 
         {/* Key Takeaways */}
         <div className="bg-[#16a34a]/10 border border-[#16a34a]/30 rounded-lg p-8 mb-12">
@@ -141,12 +145,12 @@ export default function BestAISalesDialers2026() {
             Traditional power dialers have been the standard for SDR teams for over a decade. They automated the dialing process, but they still required humans to handle every conversation. In 2026, AI sales dialers have fundamentally changed the game.
           </p>
           <p className="text-gray-300 leading-relaxed mb-6">
-            An AI sales dialer combines parallel dialing technology with autonomous AI agents that can actually have conversations with prospects. These systems can handle objections, qualify leads, and even schedule meetings — all without human intervention.
+            An AI sales dialer in 2026 usually means parallel or power dial plus conversation intelligence — transcripts, summaries, sentiment, and coaching — not necessarily a robot that runs the full call alone. We label which tools ship autonomous voice agents vs post-call AI only.
           </p>
           
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-6 mb-6">
             <h3 className="font-bold text-yellow-400 mb-2">⚠️ Important Note</h3>
-            <p className="text-gray-300">Not all "AI dialers" actually use autonomous AI agents. Some are just power dialers with AI-enhanced features like call recording and sentiment analysis. We'll clearly distinguish between the two in our reviews.</p>
+            <p className="text-gray-300">GrowthDialer&apos;s AI today is post-call and in-call intelligence (summaries, briefs, coaching) — not an autonomous voice agent. We call out competitors the same way in the table below.</p>
           </div>
 
           <div className="overflow-x-auto mb-8">
@@ -189,11 +193,11 @@ export default function BestAISalesDialers2026() {
           <h2 className="text-3xl font-bold mb-4">1. GrowthDialer — Best Overall AI Sales Dialer</h2>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 pb-6 border-b border-gray-800">
             <div>
-              <p className="text-gray-300 mb-2">Starter: $29/month | Growth: $79/month | Enterprise: Custom</p>
-              <div className="flex gap-2">
-                <span className="text-xl font-bold">★★★★★</span>
-                <span className="text-gray-400">4.9/5 (500+ reviews)</span>
-              </div>
+              <p className="text-gray-300 mb-2">
+                Starter: {GROWTHDIALER_PRICING.starter} · Pro: {GROWTHDIALER_PRICING.proMonthly} ({GROWTHDIALER_PRICING.proAnnual} annual) · Team & Enterprise on{' '}
+                <Link href="/pricing" className="text-[#A78BFA] hover:underline">pricing</Link>
+              </p>
+              <p className="text-sm text-zinc-500">{NO_VANITY_METRICS}</p>
             </div>
             <Link href="/signup">
               <Button className="bg-[#16a34a] text-white hover:bg-[#15803d]">
@@ -203,18 +207,26 @@ export default function BestAISalesDialers2026() {
           </div>
 
           <p className="text-gray-300 leading-relaxed mb-6">
-            GrowthDialer is our top pick for 2026. It combines true autonomous AI agents with industry-leading ease of use, making it accessible to teams of all technical levels.
+            GrowthDialer is our pick for teams that want a modern dialer with AI on every recorded call — power and parallel modes, live coaching floor, and HubSpot sync — without enterprise seat pricing. Autonomous voice agents are on the roadmap, not in production.
           </p>
+
+          <h3 className="text-xl font-bold mb-4">Ships today:</h3>
+          <ul className="space-y-2 mb-6">
+            {SHIPPED_TODAY.map((item) => (
+              <li key={item} className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-[#A78BFA] flex-shrink-0 mt-0.5" />
+                <span className="text-gray-300">{item}</span>
+              </li>
+            ))}
+          </ul>
 
           <h3 className="text-xl font-bold mb-4">Pros:</h3>
           <ul className="space-y-2 mb-6">
             {[
-              "Autonomous AI agent handles full conversations and objections",
-              "Parallel dialing with 10+ simultaneous lines",
-              "16 languages for global outreach",
-              "3.8x better connect rates vs traditional dialers",
-              "Integrates with all major CRMs",
-              "Transparent, affordable pricing with no setup fees",
+              "Free Starter tier — validate recording and AI summaries before you pay",
+              "Parallel dialing with AMD + voicemail drop on Pro",
+              "Transparent workspace pricing (not opaque per-seat enterprise quotes)",
+              "HubSpot integration live; other CRMs labeled on roadmap",
             ].map((pro) => (
               <li key={pro} className="flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
@@ -226,8 +238,9 @@ export default function BestAISalesDialers2026() {
           <h3 className="text-xl font-bold mb-4">Cons:</h3>
           <ul className="space-y-2">
             {[
-              "Smaller company than Orum or Nooks (less enterprise support)",
-              "Limited mobile app compared to competitors",
+              "Smaller vendor than Orum or Nooks — fewer enterprise references today",
+              "Autonomous AI voice agent not shipped yet (roadmap)",
+              "HubSpot is the live CRM integration; others coming",
             ].map((con) => (
               <li key={con} className="flex items-start gap-3">
                 <XCircle className="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5" />
@@ -255,13 +268,13 @@ export default function BestAISalesDialers2026() {
               </thead>
               <tbody>
                 {[
-                  { name: "GrowthDialer", ai: "✓", parallel: "✓", price: "$29", best: "Best Overall" },
-                  { name: "Orum", ai: "✓", parallel: "✓", price: "$59", best: "Enterprise" },
-                  { name: "Nooks", ai: "Partial", parallel: "✓", price: "$49", best: "SDR Teams" },
-                  { name: "PhoneBurner", ai: "✗", parallel: "✓", price: "$39", best: "Power Dialing" },
-                  { name: "Kixie", ai: "✗", parallel: "✓", price: "$25", best: "Small Teams" },
-                  { name: "Aircall", ai: "✗", parallel: "✗", price: "$45", best: "Call Centers" },
-                  { name: "Apollo.io", ai: "Partial", parallel: "✓", price: "$165", best: "All-in-One" },
+                  { name: "GrowthDialer", ai: "Post-call", parallel: "✓", price: GROWTHDIALER_PRICING.proAnnualShort, best: "Best value" },
+                  { name: "Orum", ai: "Live coach", parallel: "✓", price: "$650+", best: "Enterprise" },
+                  { name: "Nooks", ai: "Live coach", parallel: "✓", price: "$800+", best: "Virtual floor" },
+                  { name: "PhoneBurner", ai: "✗", parallel: "✓", price: "$149+", best: "Power dial" },
+                  { name: "Kixie", ai: "Partial", parallel: "✓", price: "$35+", best: "Small teams" },
+                  { name: "Aircall", ai: "✗", parallel: "✗", price: "$45+", best: "Call centers" },
+                  { name: "Apollo.io", ai: "Partial", parallel: "✓", price: "$165+", best: "All-in-one" },
                 ].map((row, idx) => (
                   <tr key={row.name} className={idx % 2 === 0 ? "bg-gray-900/30" : "border-b border-gray-800"}>
                     <td className="p-3 font-semibold">{row.name}</td>
@@ -303,7 +316,7 @@ export default function BestAISalesDialers2026() {
             {[
               {
                 q: "What's the difference between parallel dialing and AI autonomous agents?",
-                a: "Parallel dialing automatically dials multiple prospects simultaneously. An AI autonomous agent can actually speak to prospects, answer questions, handle objections, and schedule meetings. A true AI sales dialer combines both."
+                a: "Parallel dialing connects your rep to the first human answer across multiple lines. Post-call AI (summaries, sentiment, briefs) helps reps after they talk. Autonomous voice agents — a separate category — are not what GrowthDialer ships today."
               },
               {
                 q: "How much can I save by switching to an AI sales dialer?",
@@ -338,9 +351,7 @@ export default function BestAISalesDialers2026() {
             </div>
             <div>
               <h3 className="font-bold text-lg mb-1">Written by GrowthDialer Sales Team</h3>
-              <p className="text-gray-400 mb-4">
-                We've spent 15+ years in B2B sales and specifically in sales automation technology. This guide is based on hands-on testing, customer interviews, and real sales data from 2,400+ teams using AI dialers.
-              </p>
+              <p className="text-gray-400 mb-4">{AUTHOR_BIO}</p>
               <Link href="/about" className="text-[#16a34a] hover:text-[#15803d]">Learn more about our team →</Link>
             </div>
           </div>
@@ -351,12 +362,12 @@ export default function BestAISalesDialers2026() {
           <h2 className="text-3xl font-bold mb-8">Related Articles</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <Link href="/blog/how-parallel-dialing-works" className="border border-gray-800 rounded-lg p-6 hover:border-[#16a34a] transition-colors">
-              <h3 className="font-bold text-lg mb-2">How Parallel Dialing 10x's Your Sales Connect Rate in 2026</h3>
-              <p className="text-gray-400 text-sm">Learn the science behind parallel dialing and why connect rates skyrocket by 40-60%.</p>
+              <h3 className="font-bold text-lg mb-2">How Parallel Dialing Raises Connect Rates</h3>
+              <p className="text-gray-400 text-sm">Line math, AMD, and when parallel beats single-line power dial.</p>
             </Link>
             <Link href="/blog/replace-sdr-team-with-ai" className="border border-gray-800 rounded-lg p-6 hover:border-[#16a34a] transition-colors">
-              <h3 className="font-bold text-lg mb-2">How to Replace Your SDR Team with AI in 2026</h3>
-              <p className="text-gray-400 text-sm">The complete guide to transitioning from human SDRs to autonomous AI agents.</p>
+              <h3 className="font-bold text-lg mb-2">SDR Teams and AI: What Actually Ships Today</h3>
+              <p className="text-gray-400 text-sm">Where AI removes dial-and-log busywork vs where humans still own the call.</p>
             </Link>
           </div>
         </div>
@@ -364,9 +375,7 @@ export default function BestAISalesDialers2026() {
         {/* Final CTA */}
         <div className="text-center">
           <h2 className="text-3xl font-bold mb-4">Start Getting More Sales Meetings Today</h2>
-          <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
-            Join 2,400+ sales teams that are already using AI dialers to book more qualified meetings, faster than ever before.
-          </p>
+          <p className="text-gray-300 mb-8 max-w-2xl mx-auto">{BLOG_CTA}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="https://app.growthdialer.com/signup">
               <Button size="lg" className="bg-[#16a34a] text-white hover:bg-[#15803d]">

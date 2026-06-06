@@ -37,7 +37,7 @@ export default function CTASection() {
           </h2>
 
           <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-10">
-            Join 2,400+ sales teams using GrowthDialer to dial smarter, connect faster, and close more deals.
+            Built for growing sales teams using GrowthDialer to dial smarter, connect faster, and log every call with AI.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Clock, User, Calendar, Share2, X, Link2, ArrowRight } from "lucide-react";
+import { GROWTHDIALER_PRICING } from "@/lib/marketing/honest-copy";
 
 interface BlogPost {
   title: string;
@@ -23,40 +24,32 @@ interface BlogPost {
 const posts: Record<string, BlogPost> = {
   "best-b2b-sales-dialer-2026": {
     title: "10 Best B2B Sales Dialer Software in 2026 (Honest Review)",
-    body: `After testing 50+ B2B sales dialers and surveying 200+ sales leaders, we've identified the top 10 sales dialer tools that actually deliver results in 2026.
+    body: `We evaluate B2B sales dialers on what they ship today — dial modes, recording, AI summaries, CRM sync, and transparent pricing — not marketing superlatives.
 
-Our testing focused on three key criteria: call quality, feature completeness, and ROI. We spent months evaluating each tool with real sales teams.
+Our testing focused on call quality, feature completeness, and time-to-first-call. We label live integrations vs roadmap items for every vendor.
 
-## 1. GrowthDialer — Best Overall B2B Sales Dialer
+## 1. GrowthDialer — Best for AI-assisted outbound (human reps)
 
-**Rating: 9.8/10 | Price: $29/user/month**
+**Pricing:** ${GROWTHDIALER_PRICING.starter} · Pro ${GROWTHDIALER_PRICING.proMonthly} (${GROWTHDIALER_PRICING.proAnnual})
 
-GrowthDialer leads the pack with its autonomous AI agent that handles the entire sales cycle. Unlike traditional dialers that just make calls, GrowthDialer's AI can:
+GrowthDialer is a revenue dialer where humans talk and AI handles the paperwork. Unlike hype-heavy listings, we do not claim autonomous voice agents in production.
 
-- Qualify prospects autonomously
-- Handle objections intelligently
-- Book meetings 24/7
-- Support 16 languages
-- Provide real-time coaching
-
-**Key Features:**
-- Autonomous AI agent with human-like conversation
-- Parallel dialing with smart call routing
-- 16 language support for global teams
-- Omnichannel outreach (calls, emails, texts)
-- Advanced analytics and reporting
+**Ships today:**
+- AI Dialer focus stages (Browse · Preview · Live)
+- Power + parallel dial (up to 10 lines on Pro)
+- Recording, transcription, AI summaries & sentiment
+- Live coaching floor + HubSpot sync
 
 **Pros:**
-- Reduces manual calling by 80%
-- Increases qualified meetings by 3x
-- Works around the clock
-- Human-like AI voice quality
+- Free Starter tier to validate before you pay
+- Workspace pricing — not opaque enterprise quotes
+- Honest roadmap labels for CRMs beyond HubSpot
 
 **Cons:**
-- Newer platform (launched 2024)
-- Enterprise features require custom pricing
+- Autonomous AI voice agent is roadmap, not live
+- Smaller vendor than Orum/Nooks for enterprise references
 
-**Best For:** Growing B2B sales teams that want to scale without hiring more reps.
+**Best For:** Outbound teams that want Smartlead-class UX with conversation intelligence on every call.
 
 ## 2. Orum — Established Player with Strong AI
 

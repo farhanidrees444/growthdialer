@@ -198,7 +198,7 @@ export default function HeroSection() {
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Trusted by <span className="text-foreground font-medium">2,400+</span> sales teams
+                  Trusted by <span className="text-foreground font-medium">growing outbound teams</span>
                 </p>
               </div>
             </motion.div>
