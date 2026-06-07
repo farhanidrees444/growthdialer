@@ -22,9 +22,10 @@ interface UserMenuProps {
   /** header = compact in top bar; sidebar = full-width footer profile */
   placement?: 'header' | 'sidebar';
   collapsed?: boolean;
+  className?: string;
 }
 
-export function UserMenu({ placement = 'header', collapsed = false }: UserMenuProps) {
+export function UserMenu({ placement = 'header', collapsed = false, className }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [coords, setCoords] = useState<{
@@ -54,8 +55,7 @@ export function UserMenu({ placement = 'header', collapsed = false }: UserMenuPr
       if (isSidebar) {
         setCoords({
           bottom: window.innerHeight - r.top + 8,
-          left: r.left,
-          width: r.width,
+          left: collapsed ? r.right + 8 : r.left,
         });
       } else {
         setCoords({ top: r.bottom + 8, right: window.innerWidth - r.right });
@@ -68,7 +68,7 @@ export function UserMenu({ placement = 'header', collapsed = false }: UserMenuPr
       window.removeEventListener('resize', place);
       window.removeEventListener('scroll', place, true);
     };
-  }, [open, isSidebar]);
+  }, [open, isSidebar, collapsed]);
 
   async function handleSignOut() {
     setOpen(false);
@@ -82,7 +82,6 @@ export function UserMenu({ placement = 'header', collapsed = false }: UserMenuPr
         position: 'fixed' as const,
         bottom: coords.bottom,
         left: coords.left,
-        width: coords.width,
       }
     : {
         position: 'fixed' as const,
@@ -91,7 +90,7 @@ export function UserMenu({ placement = 'header', collapsed = false }: UserMenuPr
       };
 
   return (
-    <div className={cn('relative', isSidebar && 'w-full')}>
+    <div className={cn('relative', isSidebar && 'w-full', className)}>
       <button
         ref={btnRef}
         type="button"

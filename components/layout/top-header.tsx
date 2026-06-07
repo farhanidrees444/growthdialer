@@ -63,7 +63,7 @@ export function TopHeader() {
           </button>
         )}
 
-        <UserMenu placement="header" />
+        <UserMenu placement="header" className="lg:hidden" />
       </div>
     </header>
   );

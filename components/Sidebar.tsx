@@ -481,54 +481,54 @@ function SidebarInner() {
         />
       )}
 
-      <motion.aside
-        initial={false}
-        animate={{
-          width: isDesktopCollapsed ? 72 : undefined,
-        }}
-        transition={reduceMotion ? { duration: 0 } : SPRING}
+      <aside
         className={cn(
           "flex flex-col border-r border-zinc-800/50 bg-zinc-950 text-sidebar-foreground",
-          "fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+          "fixed inset-y-0 left-0 z-50 transition-[width,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
           isOpen ? "translate-x-0" : "-translate-x-full",
           "lg:static lg:z-auto lg:h-screen lg:shrink-0 lg:translate-x-0",
-          isDesktopCollapsed ? "lg:w-[72px]" : "w-[280px] lg:w-[240px]",
+          isDesktopCollapsed ? "w-[72px]" : "w-[280px] lg:w-[240px]",
         )}
       >
         {/* Logo + collapse */}
         <div
           className={cn(
-            "flex items-center border-b border-zinc-800/50",
-            collapsed ? "justify-center px-2 py-4" : "justify-between gap-2 px-4 py-4",
+            "flex shrink-0 items-center border-b border-zinc-800/50",
+            isDesktopCollapsed
+              ? "flex-col gap-2 px-2 py-3"
+              : "justify-between gap-2 px-4 py-4",
           )}
         >
           <Link
             href="/dashboard"
             onClick={close}
-            className={cn("group flex min-w-0 items-center gap-2.5", collapsed && "justify-center")}
+            className={cn(
+              "group flex min-w-0 items-center gap-2.5",
+              isDesktopCollapsed && "justify-center",
+            )}
           >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-800 text-violet-400">
               <Zap className="h-4 w-4" fill="currentColor" />
             </div>
-            {!collapsed && (
-              <motion.span
-                initial={false}
-                animate={{ opacity: 1 }}
-                className="truncate font-display text-base font-semibold tracking-tight text-zinc-100"
-              >
+            {!isDesktopCollapsed && (
+              <span className="truncate font-display text-base font-semibold tracking-tight text-zinc-100">
                 Growth<span className="text-violet-400">Dialer</span>
-              </motion.span>
+              </span>
             )}
           </Link>
 
-          <div className="flex items-center gap-1">
+          <div className={cn("flex items-center gap-1", isDesktopCollapsed && "w-full justify-center")}>
             <button
               type="button"
               onClick={() => setCollapsed((v) => !v)}
               className="hidden min-h-9 min-w-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-200 lg:flex"
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-label={isDesktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+              {isDesktopCollapsed ? (
+                <PanelLeft className="h-4 w-4" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4" />
+              )}
             </button>
             <button
               type="button"
@@ -541,17 +541,18 @@ function SidebarInner() {
           </div>
         </div>
 
-        <div className={cn("pt-3", collapsed && "pt-2")}>
-          <WorkspaceSwitcher collapsed={collapsed} />
+        <div className={cn("shrink-0 pt-3", isDesktopCollapsed && "pt-2")}>
+          <WorkspaceSwitcher collapsed={isDesktopCollapsed} />
         </div>
 
-        <LayoutGroup>
-          <motion.nav
-            initial={reduceMotion ? false : "hidden"}
-            animate="show"
-            variants={reduceMotion ? undefined : STAGGER}
-            className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-2 py-2 scrollbar-thin"
-          >
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <LayoutGroup>
+            <motion.nav
+              initial={reduceMotion ? false : "hidden"}
+              animate="show"
+              variants={reduceMotion ? undefined : STAGGER}
+              className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-2 py-2 scrollbar-thin"
+            >
             {/* Dashboard — standalone */}
             <motion.div
               variants={
@@ -567,7 +568,7 @@ function SidebarInner() {
               <SidebarNavItem
                 item={DASHBOARD_ITEM}
                 active={isNavActive(pathname, searchParams, DASHBOARD_ITEM)}
-                collapsed={collapsed}
+                collapsed={isDesktopCollapsed}
                 counts={sidebarCounts}
                 onNavigate={close}
                 reduceMotion={!!reduceMotion}
@@ -577,7 +578,7 @@ function SidebarInner() {
             <NavSection
               title="Engage"
               items={ENGAGE_ITEMS}
-              collapsed={collapsed}
+              collapsed={isDesktopCollapsed}
               canCoach={canCoach}
               pathname={pathname}
               searchParams={searchParams}
@@ -589,7 +590,7 @@ function SidebarInner() {
             <NavSection
               title="Intelligence"
               items={INTELLIGENCE_ITEMS}
-              collapsed={collapsed}
+              collapsed={isDesktopCollapsed}
               canCoach={canCoach}
               pathname={pathname}
               searchParams={searchParams}
@@ -602,7 +603,7 @@ function SidebarInner() {
             <NavSection
               title="Team"
               items={TEAM_ITEMS}
-              collapsed={collapsed}
+              collapsed={isDesktopCollapsed}
               canCoach={canCoach}
               pathname={pathname}
               searchParams={searchParams}
@@ -612,13 +613,14 @@ function SidebarInner() {
               showDivider
             />
           </motion.nav>
+          </LayoutGroup>
 
           {/* Setup — pinned bottom */}
-          <div className="mt-auto border-t border-zinc-800/50 px-2 py-3">
+          <div className="shrink-0 border-t border-zinc-800/50 px-2 py-3">
             <NavSection
               title="Setup"
               items={SETUP_ITEMS}
-              collapsed={collapsed}
+              collapsed={isDesktopCollapsed}
               canCoach={canCoach}
               pathname={pathname}
               searchParams={searchParams}
@@ -628,12 +630,27 @@ function SidebarInner() {
             />
           </div>
 
-          {/* User profile — bottom rail */}
-          <div className="border-t border-zinc-800/50 p-2 pb-3">
-            <UserMenu placement="sidebar" collapsed={collapsed} />
+          {/* User profile — bottom rail (desktop only; mobile uses header menu) */}
+          <div className="hidden shrink-0 border-t border-zinc-800/50 p-2 pb-3 lg:block">
+            {isDesktopCollapsed ? (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <div className="w-full">
+                      <UserMenu placement="sidebar" collapsed />
+                    </div>
+                  }
+                />
+                <TooltipContent side="right" sideOffset={8}>
+                  Account menu
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <UserMenu placement="sidebar" collapsed={false} />
+            )}
           </div>
-        </LayoutGroup>
-      </motion.aside>
+        </div>
+      </aside>
     </>
   );
 }
