@@ -69,7 +69,7 @@ export default function ApiReferencePage() {
               Documentation
             </Link>
             . See also{' '}
-            <Link href="/features/integrations" className="text-[#A78BFA] hover:underline">
+            <Link href="/integrations" className="text-[#A78BFA] hover:underline">
               Integrations
             </Link>
             .

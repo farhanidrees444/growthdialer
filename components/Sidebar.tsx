@@ -83,7 +83,7 @@ const TEAM_ITEMS: NavItem[] = [
 
 const SETUP_ITEMS: NavItem[] = [
   { id: "numbers", icon: Hash, label: "My Numbers", href: "/numbers", countKey: "numbers" },
-  { id: "integrations", icon: Zap, label: "Integrations", href: "/integrations" },
+  { id: "integrations", icon: Zap, label: "Integrations", href: "/dashboard/integrations" },
   { id: "settings", icon: Settings, label: "Settings", href: "/settings" },
 ];
 

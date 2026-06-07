@@ -45,7 +45,7 @@ const MORE_LINKS: MoreLink[] = [
   { icon: Trophy, label: 'Leaderboard', href: '/leaderboard', managerOnly: true },
   { icon: Hash, label: 'Numbers', href: '/numbers' },
   { icon: Headset, label: 'Coaching', href: '/coaching/live', managerOnly: true },
-  { icon: Zap, label: 'Integrations', href: '/integrations' },
+  { icon: Zap, label: 'Integrations', href: '/dashboard/integrations' },
   { icon: Settings, label: 'Settings', href: '/settings' },
 ];
 

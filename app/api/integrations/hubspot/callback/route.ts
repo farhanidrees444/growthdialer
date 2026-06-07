@@ -8,19 +8,19 @@ export async function GET(request: NextRequest) {
   const appBase = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
 
   if (!code || !stateRaw) {
-    return NextResponse.redirect(`${appBase}/integrations?error=hubspot_denied`);
+    return NextResponse.redirect(`${appBase}/dashboard/integrations?error=hubspot_denied`);
   }
 
   let state: { userId: string; workspaceId: string };
   try {
     state = JSON.parse(Buffer.from(stateRaw, 'base64url').toString()) as typeof state;
   } catch {
-    return NextResponse.redirect(`${appBase}/integrations?error=hubspot_state`);
+    return NextResponse.redirect(`${appBase}/dashboard/integrations?error=hubspot_state`);
   }
 
   const tokens = await exchangeHubspotCode(code);
   if (!tokens) {
-    return NextResponse.redirect(`${appBase}/integrations?error=hubspot_token`);
+    return NextResponse.redirect(`${appBase}/dashboard/integrations?error=hubspot_token`);
   }
 
   const supabase = await createClient();
@@ -37,5 +37,5 @@ export async function GET(request: NextRequest) {
     updated_at: new Date().toISOString(),
   }, { onConflict: 'user_id,provider' });
 
-  return NextResponse.redirect(`${appBase}/integrations?connected=hubspot`);
+  return NextResponse.redirect(`${appBase}/dashboard/integrations?connected=hubspot`);
 }

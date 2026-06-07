@@ -47,7 +47,7 @@ const NAV_ITEMS = [
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy, keywords: 'rank team' },
   { href: '/coaching', label: 'Coaching', icon: Brain, keywords: 'manager review' },
   { href: '/numbers', label: 'My Numbers', icon: Hash, keywords: 'phone caller id' },
-  { href: '/integrations', label: 'Integrations', icon: Radio, keywords: 'crm sync' },
+  { href: '/dashboard/integrations', label: 'Integrations', icon: Radio, keywords: 'crm sync' },
   { href: '/settings', label: 'Settings', icon: Settings, keywords: 'preferences account' },
   { href: '/settings?tab=calling', label: 'Inbound Calling', icon: Phone, keywords: 'inbound forward' },
 ];

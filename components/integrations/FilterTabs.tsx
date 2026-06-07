@@ -8,23 +8,30 @@ import {
   type MarketplaceCategory,
 } from '@/lib/integrations/marketplace-catalog';
 
-interface IntegrationFiltersProps {
+interface FilterTabsProps {
   query: string;
   onQueryChange: (value: string) => void;
   category: MarketplaceCategory;
   onCategoryChange: (category: MarketplaceCategory) => void;
   resultCount: number;
+  sticky?: boolean;
 }
 
-export function IntegrationFilters({
+export function FilterTabs({
   query,
   onQueryChange,
   category,
   onCategoryChange,
   resultCount,
-}: IntegrationFiltersProps) {
+  sticky = true,
+}: FilterTabsProps) {
   return (
-    <div className="sticky top-0 z-20 -mx-4 border-b border-zinc-800/60 bg-zinc-950/90 px-4 py-4 backdrop-blur-md lg:-mx-6 lg:px-6">
+    <div
+      className={cn(
+        'z-20 border-b border-zinc-800/60 bg-zinc-950/90 py-4 backdrop-blur-md',
+        sticky && 'sticky top-0 -mx-4 px-4 lg:-mx-6 lg:px-6',
+      )}
+    >
       <div className="flex flex-col gap-4">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-600" />
@@ -32,7 +39,7 @@ export function IntegrationFilters({
             type="search"
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Search integrations..."
+            placeholder="Search 100+ integrations..."
             className="w-full rounded-lg border border-zinc-800/60 bg-zinc-900/40 py-2.5 pl-10 pr-4 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none backdrop-blur-md transition-colors focus:border-zinc-700 focus:bg-zinc-900/60"
           />
         </div>

@@ -13,7 +13,7 @@ export const MARKETING_ROUTES: SitemapEntry[] = [
   { path: '/demo', priority: 0.85, changeFrequency: 'monthly' },
   { path: '/features', priority: 0.85, changeFrequency: 'monthly' },
   { path: '/features/ai', priority: 0.8, changeFrequency: 'monthly' },
-  { path: '/features/integrations', priority: 0.85, changeFrequency: 'monthly' },
+  { path: '/integrations', priority: 0.9, changeFrequency: 'weekly' },
   { path: '/features/salesfloor', priority: 0.75, changeFrequency: 'monthly' },
   { path: '/about', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/contact-sales', priority: 0.7, changeFrequency: 'monthly' },

@@ -26,7 +26,7 @@ const GUIDES = [
   },
   {
     title: 'HubSpot + dialer setup',
-    href: '/features/integrations',
+    href: '/integrations',
     description: 'Connect HubSpot, log calls automatically, and keep activity data clean.',
     readTime: '8 min',
   },

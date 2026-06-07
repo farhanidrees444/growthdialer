@@ -14,7 +14,7 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   '/recordings':   { title: 'Recordings',   subtitle: 'Call library' },
   '/call-logs':    { title: 'Call Logs',    subtitle: 'Activity history' },
   '/numbers':      { title: 'My Numbers',   subtitle: 'Caller IDs' },
-  '/integrations': { title: 'Integrations', subtitle: 'Connected apps' },
+  '/dashboard/integrations': { title: 'Integrations', subtitle: 'Connected apps' },
   '/settings':     { title: 'Settings',     subtitle: 'Workspace' },
   '/team':         { title: 'Team',         subtitle: 'Members' },
   '/coaching':     { title: 'Coaching',     subtitle: 'Live sessions' },

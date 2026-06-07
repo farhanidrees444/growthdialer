@@ -18,7 +18,7 @@ export function IntegrationsMarquee() {
           Connect CRM and automation tools so every dial logs itself — no rep data entry.
         </p>
         <Link
-          href="/features/integrations"
+          href="/integrations"
           className="mt-5 inline-flex text-sm font-medium text-[#F5F5F7] underline-offset-4 hover:underline"
         >
           See all integrations →

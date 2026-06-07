@@ -32,7 +32,7 @@ const DEMO_STEPS = [
   {
     title: 'Log every outcome',
     body: 'Eight dispositions, notes, and HubSpot timeline sync — no double entry after hang-up.',
-    href: '/features/integrations',
+    href: '/integrations',
   },
   {
     title: 'Review and coach',

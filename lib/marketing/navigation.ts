@@ -20,7 +20,7 @@ export const TOP_NAV: NavItem[] = [
     children: [
       { label: 'All features', href: '/features' },
       { label: 'AI intelligence', href: '/features/ai' },
-      { label: 'Integrations', href: '/features/integrations' },
+      { label: 'Integrations', href: '/integrations' },
       { label: 'Live salesfloor', href: '/features/salesfloor' },
     ],
   },
@@ -49,7 +49,7 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     links: [
       { label: 'Features', href: '/features' },
       { label: 'Pricing', href: '/pricing' },
-      { label: 'Integrations', href: '/features/integrations' },
+      { label: 'Integrations', href: '/integrations' },
       { label: 'Changelog', href: '/changelog' },
       { label: 'Roadmap', href: '/roadmap' },
     ],

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Settings2, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceIntegration } from '@/lib/integrations/marketplace-catalog';
+import { IntegrationLogo } from './IntegrationLogo';
 
 export type CardConnectionState = 'connected' | 'configured' | 'idle' | 'requested';
 
@@ -23,7 +24,10 @@ function StatusBadge({
   if (connectionState === 'connected' || connectionState === 'configured') {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-400">
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-40" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+        </span>
         Connected
       </span>
     );
@@ -93,8 +97,13 @@ export function IntegrationCard({ integration, connectionState, onOpen }: Integr
       )}
     >
       <div className="mb-4 flex items-start justify-between gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-zinc-800/80 bg-zinc-950/80">
-          {integration.logo}
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-zinc-800/80 bg-zinc-950/80 p-2">
+          <IntegrationLogo
+            name={integration.name}
+            logoDomain={integration.logoDomain}
+            brandColor={integration.brandColor}
+            size="sm"
+          />
         </div>
         <StatusBadge integration={integration} connectionState={connectionState} />
       </div>

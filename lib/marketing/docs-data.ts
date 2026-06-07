@@ -39,7 +39,7 @@ export const DOC_SECTIONS: DocSection[] = [
     id: 'integrations',
     title: 'Integrations',
     description: 'HubSpot OAuth, call logging rules, and waitlist for upcoming connectors.',
-    href: '/features/integrations',
+    href: '/integrations',
     topics: ['HubSpot connect', 'Disposition sync', 'Recording URL on timeline', 'CRM waitlist'],
   },
   {
