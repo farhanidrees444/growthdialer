@@ -4,6 +4,7 @@ import { hangupCall } from '@/lib/telnyx';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
+import { emitCallWebhooks } from '@/lib/webhooks/outgoing';
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,14 +38,22 @@ export async function POST(request: NextRequest) {
 
     await hangupCall(call_control_id);
 
+    const endedAt = new Date().toISOString();
     try {
       await supabase
         .from('calls')
-        .update({ status: 'completed', ended_at: new Date().toISOString() })
+        .update({ status: 'completed', ended_at: endedAt })
         .eq('id', callRow.id);
     } catch (dbError) {
       console.error('Failed to update call status on hangup:', dbError);
     }
+
+    emitCallWebhooks(callRow.user_id, ['call_completed'], {
+      call_id: callRow.id,
+      workspace_id: access.workspaceId,
+      lead_id: callRow.lead_id ?? null,
+      disposition: callRow.disposition ?? null,
+    });
 
     return NextResponse.json({ success: true, call_control_id });
   } catch (error) {

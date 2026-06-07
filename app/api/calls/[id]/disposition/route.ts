@@ -7,6 +7,7 @@ import { dispositionRequestSchema } from '@/lib/validations';
 import { getWorkspaceDispositions, dispositionMeta, isValidWorkspaceDisposition } from '@/lib/dispositions/workspace';
 import { logCallToHubspot } from '@/lib/integrations/hubspot';
 import { advanceSequenceAfterCall } from '@/lib/sequences/advance';
+import { emitCallWebhooks } from '@/lib/webhooks/outgoing';
 
 export async function POST(
   request: NextRequest,
@@ -54,6 +55,15 @@ export async function POST(
     };
     await supabase.from('calls').update(callUpdate).eq('id', id);
 
+    const { data: callMeta } = await supabase
+      .from('calls')
+      .select('duration_seconds, direction')
+      .eq('id', id)
+      .single();
+
+    let leadName: string | null = null;
+    let leadPhone: string | null = null;
+
     if (call.lead_id) {
       const { data: currentLead } = await supabase
         .from('leads')
@@ -61,6 +71,9 @@ export async function POST(
         .eq('id', call.lead_id)
         .eq('workspace_id', access.workspaceId)
         .single();
+
+      leadName = currentLead?.name ?? null;
+      leadPhone = currentLead?.phone ?? null;
 
       let updatedNotes: string | null = currentLead?.notes ?? null;
       if (notes && notes.trim()) {
@@ -107,11 +120,6 @@ export async function POST(
       void advanceSequenceAfterCall(supabase, access.workspaceId, call.lead_id);
 
       if (currentLead?.phone) {
-        const { data: callMeta } = await supabase
-          .from('calls')
-          .select('duration_seconds, direction')
-          .eq('id', id)
-          .single();
         void logCallToHubspot(supabase, {
           workspaceId: access.workspaceId,
           userId: user.id,
@@ -124,6 +132,25 @@ export async function POST(
         });
       }
     }
+
+    const webhookEvents: Array<'disposition_set' | 'call_completed' | 'meeting_booked'> = [
+      'disposition_set',
+      'call_completed',
+    ];
+    if (meeting_at) webhookEvents.push('meeting_booked');
+    emitCallWebhooks(call.user_id, webhookEvents, {
+      call_id: id,
+      workspace_id: access.workspaceId,
+      lead_id: call.lead_id ?? null,
+      disposition,
+      notes: notes ?? null,
+      duration_seconds: callMeta?.duration_seconds ?? null,
+      direction: callMeta?.direction ?? 'outbound',
+      lead_name: leadName,
+      lead_phone: leadPhone,
+      meeting_at: meeting_at ?? null,
+      callback_at: callback_at ?? null,
+    });
 
     return NextResponse.json({ success: true });
   } catch (err) {

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
+import { emitCallWebhooks } from '@/lib/webhooks/outgoing';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -53,6 +54,13 @@ export async function POST(request: NextRequest, { params }: Ctx) {
       .from('calls')
       .update({ status: 'completed', ended_at: new Date().toISOString() })
       .eq('id', call.id);
+
+    emitCallWebhooks(call.user_id, ['call_completed'], {
+      call_id: call.id,
+      workspace_id: access.workspaceId,
+      lead_id: call.lead_id ?? null,
+      disposition: call.disposition ?? null,
+    });
 
     console.log('[CALL-END] Success — call:', call.id);
     return NextResponse.json({ ok: true });
