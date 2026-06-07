@@ -7,3 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Project context
 
 Before large changes, read **`PROJECT_STATUS.md`** — what's shipped, what was fixed recently, and the prioritized build backlog for GrowthDialer.
+
+## Vendor confidentiality
+
+Never expose infrastructure vendors or internal APIs to end users (marketing copy, UI labels, toasts, or API error messages shown in the app). Use generic product language instead — e.g. "voice service", "billing portal", "call analysis". Partner integrations users connect to (HubSpot, Salesforce, Zapier) are fine to name. Internal code, logs, and admin-only routes may reference vendors.

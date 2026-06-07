@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
 
     return Response.json({ url: checkoutSession.url });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Stripe error";
+    const message = err instanceof Error ? err.message : "Billing error";
     return Response.json({ error: message }, { status: 500 });
   }
 }

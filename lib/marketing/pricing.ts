@@ -87,7 +87,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
       { label: 'Sequences / sales cadences' },
       { label: 'HubSpot call logging' },
       { label: 'Manager team performance dashboard' },
-      { label: 'Workspace billing & Stripe portal' },
+      { label: 'Workspace billing & self-serve portal' },
       { label: 'Priority support' },
     ],
   },

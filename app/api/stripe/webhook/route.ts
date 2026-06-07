@@ -29,7 +29,7 @@ async function syncWorkspaceBilling(
 export async function POST(req: NextRequest) {
   if (!isStripeConfigured()) {
     return Response.json(
-      { error: "Stripe is not configured on this deployment" },
+      { error: "Billing is not configured on this deployment" },
       { status: 503 },
     );
   }

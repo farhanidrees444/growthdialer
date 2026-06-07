@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
     tests: {},
   };
 
-  // Test Gemini
-  const geminiStart = Date.now();
+  // Test primary AI provider
+  const primaryStart = Date.now();
   try {
     const analysis = await analyzeCallWithGemini(
       transcript,
@@ -58,9 +58,9 @@ export async function POST(request: NextRequest) {
     );
     results.tests = {
       ...results.tests as Record<string, unknown>,
-      gemini: {
+      primary: {
         ok: true,
-        latency_ms: Date.now() - geminiStart,
+        latency_ms: Date.now() - primaryStart,
         sentiment: analysis.sentiment,
         sentiment_score: analysis.sentiment_score,
         suggested_disposition: analysis.suggested_disposition,
@@ -72,12 +72,12 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     results.tests = {
       ...results.tests as Record<string, unknown>,
-      gemini: { ok: false, latency_ms: Date.now() - geminiStart, error: String(err) },
+      primary: { ok: false, latency_ms: Date.now() - primaryStart, error: String(err) },
     };
   }
 
-  // Test Groq Llama fallback
-  const groqStart = Date.now();
+  // Test fallback AI provider
+  const fallbackStart = Date.now();
   try {
     const analysis = await analyzeCallWithGroq(
       transcript,
@@ -88,9 +88,9 @@ export async function POST(request: NextRequest) {
     );
     results.tests = {
       ...results.tests as Record<string, unknown>,
-      groq: {
+      fallback: {
         ok: true,
-        latency_ms: Date.now() - groqStart,
+        latency_ms: Date.now() - fallbackStart,
         sentiment: analysis.sentiment,
         suggested_disposition: analysis.suggested_disposition,
         summary_count: analysis.summary?.length ?? 0,
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     results.tests = {
       ...results.tests as Record<string, unknown>,
-      groq: { ok: false, latency_ms: Date.now() - groqStart, error: String(err) },
+      fallback: { ok: false, latency_ms: Date.now() - fallbackStart, error: String(err) },
     };
   }
 
