@@ -4,8 +4,6 @@ import { Nav } from '@/components/marketing/live-floor/Nav';
 import { BackgroundSystem } from '@/components/marketing/live-floor/BackgroundSystem';
 import { ScrollProgress } from '@/components/marketing/live-floor/ScrollProgress';
 import { Hero } from '@/components/marketing/live-floor/Hero';
-import { TrustStrip } from '@/components/marketing/premium/TrustStrip';
-import { ValuePillars } from '@/components/marketing/premium/ValuePillars';
 import { Features } from '@/components/marketing/live-floor/Features';
 import { FinalCTA } from '@/components/marketing/live-floor/FinalCTA';
 import { IntegrationsMarquee } from '@/components/marketing/home/IntegrationsMarquee';
@@ -32,10 +30,6 @@ export default function LandingPage() {
         <Nav />
         <main className="relative z-[2]">
           <Hero />
-          <TrustStrip />
-          <div className="marketing-section">
-            <ValuePillars />
-          </div>
           <div className="marketing-section">
             <IntegrationsMarquee />
           </div>
