@@ -82,6 +82,45 @@ export function LiveWaveform({
   );
 }
 
+/** Static equalizer bars — no animation, GPU-friendly hero mockup. */
+export function StaticWaveform({
+  bars = 48,
+  className = '',
+  height = 64,
+  color = '#06B6D4',
+  barWidth = 2.5,
+  gap = 2.5,
+}: LiveWaveformProps) {
+  const items = Array.from({ length: bars }, (_, i) => {
+    const center = (bars - 1) / 2;
+    const dist = Math.abs(i - center) / center;
+    const envelope = 1 - dist * 0.55;
+    const seed = Math.sin(i * 12.9898) * 43758.5453;
+    const rand = seed - Math.floor(seed);
+    return Math.max(18, (0.35 + rand * 0.45) * envelope * 100);
+  });
+
+  return (
+    <div
+      className={`flex items-end justify-center ${className}`}
+      style={{ gap, height }}
+      aria-hidden
+    >
+      {items.map((h, i) => (
+        <span
+          key={i}
+          className="rounded-full"
+          style={{
+            width: barWidth,
+            height: `${h}%`,
+            background: `linear-gradient(to top, ${color}40, ${color})`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 /** A single mini-waveform glyph for inline/label use. */
 export function MiniWave({ color = '#06B6D4', className = '' }: { color?: string; className?: string }) {
   const reduce = useMarketingMotionReduced();

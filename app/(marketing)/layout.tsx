@@ -1,20 +1,13 @@
 "use client";
 
-import { SmoothScroll } from "@/components/marketing/live-floor/SmoothScroll";
-
 /**
- * All marketing routes use Live Floor chrome (Nav, Grain, SiteFooter) via
- * MarketingShell or page-level shells. Layout only enables Lenis smooth scroll.
+ * Marketing routes use native scroll for maximum speed (no Lenis smoothing).
+ * Live Floor chrome (Nav, footer) is composed per page.
  */
 export default function MarketingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="marketing-site">
-      <SmoothScroll />
-      {children}
-    </div>
-  );
+  return <div className="marketing-site">{children}</div>;
 }

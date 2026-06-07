@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { MotionShell } from '@/components/marketing/live-floor/MotionShell';
 import { Nav } from '@/components/marketing/live-floor/Nav';
-import { Grain } from '@/components/marketing/live-floor/Grain';
 import { BackgroundSystem } from '@/components/marketing/live-floor/BackgroundSystem';
 import { ScrollProgress } from '@/components/marketing/live-floor/ScrollProgress';
 import { Hero } from '@/components/marketing/live-floor/Hero';
@@ -27,19 +26,34 @@ export default function LandingPage() {
     <MotionShell>
       <div className="relative min-h-screen bg-[#08080A] text-[#F8F8FF] antialiased selection:bg-[#7C3AED]/30 selection:text-white">
         <BackgroundSystem />
-        <Grain />
         <ScrollProgress />
         <Nav />
         <main className="relative z-[2]">
           <Hero />
-          <IntegrationsMarquee />
-          <ProductPreviewTabs />
-          <Features />
-          <StickyHowItWorks />
-          <StatsStrip />
-          <TestimonialsTicker />
-          <HomePricing />
-          <HomeFAQ />
+          <div className="marketing-section">
+            <IntegrationsMarquee />
+          </div>
+          <div className="marketing-section">
+            <ProductPreviewTabs />
+          </div>
+          <div className="marketing-section">
+            <Features />
+          </div>
+          <div className="marketing-section">
+            <StickyHowItWorks />
+          </div>
+          <div className="marketing-section">
+            <StatsStrip />
+          </div>
+          <div className="marketing-section">
+            <TestimonialsTicker />
+          </div>
+          <div className="marketing-section">
+            <HomePricing />
+          </div>
+          <div className="marketing-section">
+            <HomeFAQ />
+          </div>
           <FinalCTA />
         </main>
       </div>

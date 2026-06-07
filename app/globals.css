@@ -219,7 +219,6 @@
 }
 .marquee-track {
   animation: marquee-x 38s linear infinite;
-  will-change: transform;
 }
 .marquee-track:hover {
   animation-play-state: paused;
@@ -230,7 +229,6 @@
 }
 .marquee-track-reverse {
   animation: marquee-x-reverse 40s linear infinite;
-  will-change: transform;
 }
 .marquee-track-reverse:hover {
   animation-play-state: paused;
@@ -280,9 +278,15 @@
   }
 }
 
-/* ─── Smooth scroll ─── */
+/* Native scroll — Lenis-style smoothing removed for snappier marketing pages */
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
+}
+
+/* Defer paint for below-fold marketing sections during scroll */
+.marketing-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 720px;
 }
 
 /* ─── Mobile / touch ─── */
