@@ -33,14 +33,9 @@ export function IntegrationsMarquee() {
             return (
               <li
                 key={`${b.id}-${i}`}
-                className="group relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl sm:h-[4.5rem] sm:w-[4.5rem]"
+                className="group relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.05] p-3 backdrop-blur-xl sm:h-[4.5rem] sm:w-[4.5rem] sm:p-3.5"
                 style={{ ['--brand']: b.color } as React.CSSProperties}
               >
-                {b.live && (
-                  <span className="absolute -right-1 -top-1 z-10 rounded-full bg-emerald-500 px-1.5 py-px text-[8px] font-bold uppercase text-white">
-                    Live
-                  </span>
-                )}
                 {/* Localized radial glow on hover */}
                 <span
                   aria-hidden
@@ -49,9 +44,10 @@ export function IntegrationsMarquee() {
                 />
                 <Icon
                   aria-hidden
-                  className="relative h-6 w-6 text-zinc-500 opacity-40 transition-all duration-300 group-hover:opacity-100 group-hover:[color:var(--brand)] sm:h-7 sm:w-7"
+                  className="relative h-8 w-8 shrink-0 transition-transform duration-300 group-hover:scale-105 sm:h-9 sm:w-9"
+                  style={{ color: b.color }}
                 />
-                <span className="sr-only">{b.name}{b.live ? ' — live integration' : ' — coming soon'}</span>
+                <span className="sr-only">{b.name}</span>
               </li>
             );
           })}

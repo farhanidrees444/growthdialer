@@ -116,17 +116,12 @@ export default function IntegrationsContent() {
                     whileHover={{ y: -3 }}
                     className="group relative rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 backdrop-blur-xl transition-colors hover:border-white/[0.14]"
                   >
-                    {item.live && (
-                      <span className="absolute right-4 top-4 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-300">
-                        Live
-                      </span>
-                    )}
                     <div className="mb-3 flex items-center gap-3">
                       <span
-                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04]"
+                        className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.05] p-2.5"
                         style={{ color: item.color }}
                       >
-                        <Icon className="h-5 w-5" aria-hidden />
+                        <Icon className="h-full w-full" aria-hidden />
                       </span>
                       <h3 className="font-semibold text-white">{item.name}</h3>
                     </div>
