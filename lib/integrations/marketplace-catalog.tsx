@@ -1,19 +1,37 @@
 import type { ReactNode } from 'react';
 
-export type MarketplaceAction = 'connect' | 'configure' | 'vote';
+export type MarketplaceCategory =
+  | 'all'
+  | 'crm'
+  | 'ai_voice'
+  | 'sales_outbound'
+  | 'automation';
+
+export type ConfigureMode = 'webhook' | 'api_key' | 'oauth';
+
+export type IntegrationBadge = 'connected' | 'configure' | 'enterprise' | 'early_access';
 
 export type MarketplaceIntegration = {
   id: string;
   name: string;
-  tagline: string;
   description: string;
-  category: 'crm' | 'automation' | 'communication' | 'productivity';
-  action: MarketplaceAction;
+  category: Exclude<MarketplaceCategory, 'all'>;
+  /** How the user connects this integration */
+  configureMode: ConfigureMode | 'vote';
   brandColor: string;
-  popular?: boolean;
-  live?: boolean;
   logo: ReactNode;
+  /** Live OAuth or webhook pipeline */
+  live?: boolean;
+  /** Requires enterprise plan — shows premium badge */
+  enterprise?: boolean;
+  /** Setup checklist shown in configure modal */
+  setupSteps: string[];
+  /** Form fields for configure modal */
+  fields?: { id: string; label: string; type: 'text' | 'password' | 'url'; placeholder: string; optional?: boolean }[];
+  docsUrl?: string;
 };
+
+// ─── Brand logos (minimal SVG placeholders) ─────────────────────────────────
 
 function HubSpotLogo() {
   return (
@@ -55,6 +73,71 @@ function PipedriveLogo() {
   );
 }
 
+function AttioLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden>
+      <rect width="24" height="24" rx="6" fill="#18181B" stroke="#3F3F46" strokeWidth="1" />
+      <path d="M8 16V8l4 4 4-4v8" stroke="#FAFAFA" strokeWidth="1.75" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function FolkLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden>
+      <rect width="24" height="24" rx="6" fill="#5B21B6" />
+      <circle cx="9" cy="10" r="2.5" fill="white" />
+      <circle cx="15" cy="10" r="2.5" fill="white" />
+      <path d="M7 16c1.2-2 2.8-3 5-3s3.8 1 5 3" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function VapiLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden>
+      <rect width="24" height="24" rx="6" fill="#09090B" stroke="#27272A" />
+      <path d="M7 8h4l3 8 3-8h4" stroke="#FAFAFA" strokeWidth="1.75" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function BlandLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden>
+      <rect width="24" height="24" rx="6" fill="#F97316" />
+      <path d="M8 16V8h3.5a3 3 0 0 1 0 6H8" stroke="white" strokeWidth="1.75" fill="none" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function RetellLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden>
+      <rect width="24" height="24" rx="6" fill="#2563EB" />
+      <path d="M8 8h8M8 12h5M8 16h8" stroke="white" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SmartleadLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden>
+      <rect width="24" height="24" rx="6" fill="#059669" />
+      <path d="M7 12h10M12 7v10" stroke="white" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function InstantlyLogo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden>
+      <rect width="24" height="24" rx="6" fill="#0284C7" />
+      <path d="M8 16l8-8M10 8h6v6" stroke="white" strokeWidth="1.75" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function ZapierLogo() {
   return (
     <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden>
@@ -64,29 +147,14 @@ function ZapierLogo() {
   );
 }
 
-function SlackLogo() {
+function MakeLogo() {
   return (
     <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden>
-      <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52z" fill="#E01E5A" />
-      <path d="M6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313z" fill="#E01E5A" />
-      <path d="M8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834z" fill="#36C5F0" />
-      <path d="M8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312z" fill="#36C5F0" />
-      <path d="M18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834z" fill="#2EB67D" />
-      <path d="M17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312z" fill="#2EB67D" />
-      <path d="M15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52z" fill="#ECB22E" />
-      <path d="M15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" fill="#ECB22E" />
-    </svg>
-  );
-}
-
-function NotionLogo() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden>
-      <rect width="24" height="24" rx="5" fill="#FFFFFF" />
-      <path
-        d="M6.5 5.5h11l-1 12.5-4.5 1.5-4.5-1.5L6.5 5.5zm2.2 2.2v8.6l2.3.8V7.7H8.7zm4.6 0v9.4l2.3-.8V7.7h-2.3z"
-        fill="#000000"
-      />
+      <rect width="24" height="24" rx="6" fill="#6D00CC" />
+      <circle cx="8" cy="12" r="2" fill="white" />
+      <circle cx="16" cy="8" r="2" fill="white" />
+      <circle cx="16" cy="16" r="2" fill="white" />
+      <path d="M10 12h4M14 10l2-2M14 14l2 2" stroke="white" strokeWidth="1.25" strokeLinecap="round" />
     </svg>
   );
 }
@@ -95,112 +163,20 @@ function WebhookLogo() {
   return (
     <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden fill="none">
       <rect width="24" height="24" rx="6" fill="#18181B" stroke="#3F3F46" />
-      <path d="M8 12h8M12 8v8" stroke="#A78BFA" strokeWidth="1.75" strokeLinecap="round" />
-      <circle cx="7" cy="12" r="1.5" fill="#06B6D4" />
-      <circle cx="17" cy="12" r="1.5" fill="#06B6D4" />
-      <circle cx="12" cy="7" r="1.5" fill="#06B6D4" />
-      <circle cx="12" cy="17" r="1.5" fill="#06B6D4" />
+      <path d="M8 12h8M12 8v8" stroke="#A1A1AA" strokeWidth="1.75" strokeLinecap="round" />
+      <circle cx="7" cy="12" r="1.5" fill="#71717A" />
+      <circle cx="17" cy="12" r="1.5" fill="#71717A" />
     </svg>
   );
 }
 
-export const MARKETPLACE_INTEGRATIONS: MarketplaceIntegration[] = [
-  {
-    id: 'hubspot',
-    name: 'HubSpot',
-    tagline: 'CRM sync',
-    description: 'Log calls, dispositions, and recordings to contact timelines automatically.',
-    category: 'crm',
-    action: 'connect',
-    brandColor: '#FF7A59',
-    popular: true,
-    live: true,
-    logo: <HubSpotLogo />,
-  },
-  {
-    id: 'salesforce',
-    name: 'Salesforce',
-    tagline: 'Enterprise CRM',
-    description: 'Bi-directional activity logging for opportunities, contacts, and custom objects.',
-    category: 'crm',
-    action: 'vote',
-    brandColor: '#00A1E0',
-    popular: true,
-    logo: <SalesforceLogo />,
-  },
-  {
-    id: 'zoho',
-    name: 'Zoho CRM',
-    tagline: 'CRM suite',
-    description: 'Sync leads and call outcomes into Zoho pipelines and deal stages.',
-    category: 'crm',
-    action: 'vote',
-    brandColor: '#E42527',
-    logo: <ZohoLogo />,
-  },
-  {
-    id: 'pipedrive',
-    name: 'Pipedrive',
-    tagline: 'Pipeline CRM',
-    description: 'Push dispositions to deals and auto-log every dial to your pipeline.',
-    category: 'crm',
-    action: 'vote',
-    brandColor: '#25C16F',
-    logo: <PipedriveLogo />,
-  },
-  {
-    id: 'zapier',
-    name: 'Zapier',
-    tagline: '5,000+ apps',
-    description: 'Trigger Zaps on call completed, meeting booked, or disposition set.',
-    category: 'automation',
-    action: 'configure',
-    brandColor: '#FF4A00',
-    popular: true,
-    logo: <ZapierLogo />,
-  },
-  {
-    id: 'webhooks',
-    name: 'Custom Webhooks',
-    tagline: 'Your stack',
-    description: 'Receive signed JSON events at any HTTPS endpoint you control.',
-    category: 'automation',
-    action: 'configure',
-    brandColor: '#A78BFA',
-    logo: <WebhookLogo />,
-  },
-  {
-    id: 'slack',
-    name: 'Slack',
-    tagline: 'Team alerts',
-    description: 'Notify channels when reps connect, book meetings, or hit key dispositions.',
-    category: 'communication',
-    action: 'vote',
-    brandColor: '#ECB22E',
-    popular: true,
-    logo: <SlackLogo />,
-  },
-  {
-    id: 'notion',
-    name: 'Notion',
-    tagline: 'Knowledge base',
-    description: 'Push AI summaries and call notes into your Notion workspace.',
-    category: 'productivity',
-    action: 'vote',
-    brandColor: '#FFFFFF',
-    logo: <NotionLogo />,
-  },
-];
-
 export const MARKETPLACE_CATEGORIES = [
-  { id: 'all', label: 'All' },
-  { id: 'crm', label: 'CRM' },
-  { id: 'automation', label: 'Automation' },
-  { id: 'communication', label: 'Communication' },
-  { id: 'productivity', label: 'Productivity' },
-] as const;
-
-export type MarketplaceCategory = (typeof MARKETPLACE_CATEGORIES)[number]['id'];
+  { id: 'all' as const, label: 'All' },
+  { id: 'crm' as const, label: 'CRMs' },
+  { id: 'ai_voice' as const, label: 'AI Voice Agents' },
+  { id: 'sales_outbound' as const, label: 'Sales Outbound' },
+  { id: 'automation' as const, label: 'Automations' },
+];
 
 export const WEBHOOK_EVENT_TYPES = [
   'call_completed',
@@ -208,3 +184,241 @@ export const WEBHOOK_EVENT_TYPES = [
   'disposition_set',
   'meeting_booked',
 ] as const;
+
+export const MARKETPLACE_INTEGRATIONS: MarketplaceIntegration[] = [
+  // ─── CRMs ─────────────────────────────────────────────────────────────────
+  {
+    id: 'hubspot',
+    name: 'HubSpot',
+    description: 'Log calls, dispositions, and recordings to contact timelines automatically.',
+    category: 'crm',
+    configureMode: 'oauth',
+    brandColor: '#FF7A59',
+    live: true,
+    logo: <HubSpotLogo />,
+    setupSteps: [
+      'Authorize GrowthDialer in your HubSpot account',
+      'Select the portal you want to sync',
+      'Calls log automatically after disposition',
+    ],
+    docsUrl: 'https://developers.hubspot.com/docs/api/overview',
+  },
+  {
+    id: 'salesforce',
+    name: 'Salesforce',
+    description: 'Bi-directional activity logging for opportunities, contacts, and custom objects.',
+    category: 'crm',
+    configureMode: 'vote',
+    brandColor: '#00A1E0',
+    enterprise: true,
+    setupSteps: [
+      'Request early access for your workspace',
+      'Our team provisions Salesforce Connected App credentials',
+      'Map custom objects and activity fields',
+    ],
+  },
+  {
+    id: 'zoho',
+    name: 'Zoho CRM',
+    description: 'Sync leads and call outcomes into Zoho pipelines and deal stages.',
+    category: 'crm',
+    configureMode: 'vote',
+    brandColor: '#E42527',
+    enterprise: true,
+    setupSteps: [
+      'Join the Zoho integration waitlist',
+      'Receive OAuth credentials from our team',
+      'Map deal stages to dispositions',
+    ],
+  },
+  {
+    id: 'pipedrive',
+    name: 'Pipedrive',
+    description: 'Push dispositions to deals and auto-log every dial to your pipeline.',
+    category: 'crm',
+    configureMode: 'vote',
+    brandColor: '#25C16F',
+    setupSteps: [
+      'Vote to prioritize Pipedrive on our roadmap',
+      'Connect via OAuth when available',
+      'Map pipeline stages to call outcomes',
+    ],
+  },
+  {
+    id: 'attio',
+    name: 'Attio',
+    description: 'Modern relationship CRM — sync contacts, notes, and call intelligence in real time.',
+    category: 'crm',
+    configureMode: 'vote',
+    brandColor: '#FAFAFA',
+    setupSteps: [
+      'Request early access for Attio sync',
+      'Authorize your Attio workspace',
+      'Call notes and AI summaries sync to records',
+    ],
+  },
+  {
+    id: 'folk',
+    name: 'Folk',
+    description: 'Collaborative CRM for teams — push call outcomes and AI briefs to people records.',
+    category: 'crm',
+    configureMode: 'vote',
+    brandColor: '#5B21B6',
+    setupSteps: [
+      'Request early access for Folk integration',
+      'Connect via API key when launched',
+      'Map groups and custom fields',
+    ],
+  },
+  // ─── AI Voice Agents ────────────────────────────────────────────────────────
+  {
+    id: 'vapi',
+    name: 'Vapi',
+    description: 'Orchestrate AI voice agents alongside human reps — handoff context on every transfer.',
+    category: 'ai_voice',
+    configureMode: 'api_key',
+    brandColor: '#FAFAFA',
+    enterprise: true,
+    setupSteps: [
+      'Copy your Vapi private API key from the dashboard',
+      'Paste it below — we validate the connection live',
+      'Route inbound AI calls into GrowthDialer disposition flow',
+    ],
+    fields: [{ id: 'api_key', label: 'API Key', type: 'password', placeholder: 'vapi_...' }],
+  },
+  {
+    id: 'bland',
+    name: 'Bland AI',
+    description: 'Enterprise AI phone agents — sync call transcripts and outcomes to your dialer workspace.',
+    category: 'ai_voice',
+    configureMode: 'api_key',
+    brandColor: '#F97316',
+    enterprise: true,
+    setupSteps: [
+      'Generate an API key in Bland AI dashboard',
+      'Enter the key below to authenticate',
+      'Transcripts and dispositions sync on call end',
+    ],
+    fields: [{ id: 'api_key', label: 'API Key', type: 'password', placeholder: 'sk-...' }],
+  },
+  {
+    id: 'retell',
+    name: 'Retell AI',
+    description: 'Low-latency voice agents with real-time transcription into GrowthDialer intelligence.',
+    category: 'ai_voice',
+    configureMode: 'api_key',
+    brandColor: '#2563EB',
+    enterprise: true,
+    setupSteps: [
+      'Copy your Retell API key from Settings → API Keys',
+      'Save below — we verify against Retell servers',
+      'Agent calls appear in your call log automatically',
+    ],
+    fields: [{ id: 'api_key', label: 'API Key', type: 'password', placeholder: 'key_...' }],
+  },
+  // ─── Sales Outbound ─────────────────────────────────────────────────────────
+  {
+    id: 'smartlead',
+    name: 'Smartlead.ai',
+    description: 'Sync outbound email sequences with call dispositions — close the loop on every lead.',
+    category: 'sales_outbound',
+    configureMode: 'api_key',
+    brandColor: '#059669',
+    setupSteps: [
+      'Copy your Smartlead API key from Settings',
+      'Authenticate below — we test the connection live',
+      'Call outcomes update lead status in Smartlead',
+    ],
+    fields: [{ id: 'api_key', label: 'API Key', type: 'password', placeholder: 'sl_...' }],
+  },
+  {
+    id: 'instantly',
+    name: 'Instantly.ai',
+    description: 'Bridge cold email and phone — push meeting-booked and connected dispositions to campaigns.',
+    category: 'sales_outbound',
+    configureMode: 'api_key',
+    brandColor: '#0284C7',
+    setupSteps: [
+      'Generate an Instantly API key in your workspace',
+      'Paste below to connect your account',
+      'Disposition events update lead tags automatically',
+    ],
+    fields: [{ id: 'api_key', label: 'API Key', type: 'password', placeholder: 'inst_...' }],
+  },
+  // ─── Automations ────────────────────────────────────────────────────────────
+  {
+    id: 'zapier',
+    name: 'Zapier',
+    description: 'Trigger Zaps on call completed, meeting booked, or disposition set — 5,000+ apps.',
+    category: 'automation',
+    configureMode: 'webhook',
+    brandColor: '#FF4A00',
+    live: true,
+    setupSteps: [
+      'Create a Zap with Webhooks by Zapier → Catch Hook',
+      'Copy the custom webhook URL Zapier provides',
+      'Paste it below — GrowthDialer POSTs call events to it',
+    ],
+    fields: [{ id: 'webhook_url', label: 'Zapier Catch Hook URL', type: 'url', placeholder: 'https://hooks.zapier.com/hooks/catch/...' }],
+    docsUrl: 'https://zapier.com/apps/webhook/integrations',
+  },
+  {
+    id: 'make',
+    name: 'Make.com',
+    description: 'Visual automation scenarios — receive signed call events and route to any module.',
+    category: 'automation',
+    configureMode: 'api_key',
+    brandColor: '#6D00CC',
+    setupSteps: [
+      'Create a Custom Webhook module in Make',
+      'Copy your Make API token for authenticated scenarios',
+      'Save below — events flow into your scenarios',
+    ],
+    fields: [
+      { id: 'webhook_url', label: 'Webhook URL', type: 'url', placeholder: 'https://hook.eu1.make.com/...' },
+      { id: 'api_key', label: 'API Token', type: 'password', placeholder: 'make_...', optional: true },
+    ],
+  },
+  {
+    id: 'webhooks',
+    name: 'Custom Webhooks',
+    description: 'Receive signed JSON events at any HTTPS endpoint you control.',
+    category: 'automation',
+    configureMode: 'webhook',
+    brandColor: '#71717A',
+    live: true,
+    setupSteps: [
+      'Deploy an HTTPS endpoint that accepts POST requests',
+      'Optionally configure an HMAC signing secret',
+      'Save your URL — we deliver call lifecycle events instantly',
+    ],
+    fields: [
+      { id: 'webhook_url', label: 'Webhook URL', type: 'url', placeholder: 'https://api.yourcompany.com/growthdialer' },
+      { id: 'webhook_secret', label: 'Signing secret', type: 'password', placeholder: 'Optional HMAC secret', optional: true },
+    ],
+  },
+].map((item) => ({
+  ...item,
+  logo:
+    item.logo ??
+    {
+      hubspot: <HubSpotLogo />,
+      salesforce: <SalesforceLogo />,
+      zoho: <ZohoLogo />,
+      pipedrive: <PipedriveLogo />,
+      attio: <AttioLogo />,
+      folk: <FolkLogo />,
+      vapi: <VapiLogo />,
+      bland: <BlandLogo />,
+      retell: <RetellLogo />,
+      smartlead: <SmartleadLogo />,
+      instantly: <InstantlyLogo />,
+      zapier: <ZapierLogo />,
+      make: <MakeLogo />,
+      webhooks: <WebhookLogo />,
+    }[item.id],
+})) as MarketplaceIntegration[];
+
+export function getIntegrationById(id: string): MarketplaceIntegration | undefined {
+  return MARKETPLACE_INTEGRATIONS.find((i) => i.id === id);
+}
