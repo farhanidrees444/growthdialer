@@ -64,48 +64,55 @@ const GROUPS: { group: string; rows: { label: string; cells: [Cell, Cell, Cell, 
 ];
 
 function CellContent({ v, popular }: { v: Cell; popular: boolean }) {
-  if (v === true) return <Check className={`mx-auto h-4 w-4 ${popular ? 'text-[#8B5CF6]' : 'text-zinc-300'}`} />;
+  if (v === true)
+    return <Check className={`mx-auto h-4 w-4 ${popular ? 'text-violet-400' : 'text-zinc-400'}`} />;
   if (v === false) return <Minus className="mx-auto h-4 w-4 text-zinc-700" />;
   if (v === 'soon')
     return (
-      <span className="inline-block rounded border border-white/[0.08] px-1.5 py-0.5 text-[10px] text-zinc-500">
+      <span className="inline-block rounded border border-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-600">
         Soon
       </span>
     );
-  return <span className="text-[13px] text-zinc-300">{v}</span>;
+  return <span className="text-[13px] text-zinc-400">{v}</span>;
 }
 
 export function ComparisonTable() {
   return (
-    <section className="relative px-5 py-24 lg:px-8 lg:py-32">
+    <section className="border-t border-zinc-800/60 px-5 py-16 lg:px-8 lg:py-20">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-100px' }}
-        transition={{ duration: 0.8, ease: EASE_OUT }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ duration: 0.55, ease: EASE_OUT }}
         className="mx-auto max-w-2xl text-center"
       >
-        <p className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">Compare plans</p>
-        <h2 className="font-display text-[clamp(1.9rem,4vw,3rem)] font-light leading-[1.05] tracking-tight text-[#F5F5F7]">
+        <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.2em] text-zinc-600">
+          Compare plans
+        </p>
+        <h2 className="font-display text-[clamp(1.75rem,3.5vw,2.75rem)] font-light leading-[1.08] tracking-tight text-zinc-50">
           Everything, side by side.
         </h2>
       </motion.div>
 
-      <div className="mx-auto mt-12 max-w-6xl overflow-x-auto lg:overflow-visible">
+      <div className="mx-auto mt-10 max-w-6xl overflow-x-auto rounded-xl border border-zinc-800/60 bg-zinc-900/20 backdrop-blur-md lg:overflow-visible">
         <table className="w-full min-w-[760px] border-collapse">
           <thead className="sticky top-16 z-20">
             <tr>
-              <th className="bg-[#08080A]/95 py-4 pr-4 text-left align-bottom backdrop-blur-xl">
+              <th className="bg-zinc-950/95 py-4 pl-5 pr-4 text-left align-bottom backdrop-blur-md">
                 <span className="text-[13px] font-medium text-zinc-500">Features</span>
               </th>
               {PLANS.map((p, i) => (
                 <th
                   key={p}
-                  className={`bg-[#08080A]/95 px-4 py-4 text-center align-bottom backdrop-blur-xl ${
-                    i === 1 ? 'rounded-t-xl border-x border-t border-[#8B5CF6]/20' : ''
+                  className={`bg-zinc-950/95 px-4 py-4 text-center align-bottom backdrop-blur-md ${
+                    i === 1 ? 'border-x border-violet-500/20 bg-violet-500/[0.04]' : ''
                   }`}
                 >
-                  <span className={`text-[14px] font-semibold ${i === 1 ? 'text-[#8B5CF6]' : 'text-[#F5F5F7]'}`}>{p}</span>
+                  <span
+                    className={`text-[14px] font-semibold ${i === 1 ? 'text-violet-300' : 'text-zinc-100'}`}
+                  >
+                    {p}
+                  </span>
                 </th>
               ))}
             </tr>
@@ -115,19 +122,24 @@ export function ComparisonTable() {
             {GROUPS.map((g) => (
               <Fragment key={g.group}>
                 <tr>
-                  <td colSpan={5} className="pb-2 pt-7">
+                  <td colSpan={5} className="pb-2 pl-5 pt-6">
                     <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-600">
                       {g.group}
                     </span>
                   </td>
                 </tr>
                 {g.rows.map((row) => (
-                  <tr key={row.label} className="group border-t border-white/[0.05] transition-colors hover:bg-white/[0.02]">
-                    <td className="py-3 pr-4 text-[13px] text-zinc-300">{row.label}</td>
+                  <tr
+                    key={row.label}
+                    className="group border-t border-zinc-800/40 transition-colors hover:bg-zinc-900/30"
+                  >
+                    <td className="py-3 pl-5 pr-4 text-[13px] text-zinc-400">{row.label}</td>
                     {row.cells.map((c, i) => (
                       <td
                         key={i}
-                        className={`px-4 py-3 text-center ${i === 1 ? 'border-x border-[#8B5CF6]/15 bg-[#8B5CF6]/[0.03]' : ''}`}
+                        className={`px-4 py-3 text-center ${
+                          i === 1 ? 'border-x border-violet-500/10 bg-violet-500/[0.03]' : ''
+                        }`}
                       >
                         <CellContent v={c} popular={i === 1} />
                       </td>
