@@ -8,8 +8,8 @@ import {
   SiGooglecalendar,
   SiNotion,
   SiGmail,
-  SiTwilio,
-  SiStripe,
+  SiPipedrive,
+  SiMicrosoftteams,
 } from 'react-icons/si';
 
 export type IntegrationBrand = {
@@ -42,12 +42,12 @@ export const INTEGRATION_BRANDS: IntegrationBrand[] = [
     description: 'Bi-directional activity logging for opportunities and contacts.',
   },
   {
-    id: 'twilio',
-    name: 'Twilio',
-    Icon: SiTwilio,
-    color: '#F22F46',
+    id: 'pipedrive',
+    name: 'Pipedrive',
+    Icon: SiPipedrive,
+    color: '#017737',
     category: 'crm',
-    description: 'Carrier-grade voice infrastructure behind every dial.',
+    description: 'Push dispositions and call outcomes into your pipeline automatically.',
   },
   {
     id: 'slack',
@@ -74,12 +74,12 @@ export const INTEGRATION_BRANDS: IntegrationBrand[] = [
     description: 'Connect to 5,000+ apps on call ended or meeting booked.',
   },
   {
-    id: 'stripe',
-    name: 'Stripe',
-    Icon: SiStripe,
-    color: '#635BFF',
-    category: 'automation',
-    description: 'Workspace billing and seat management for growing teams.',
+    id: 'microsoft-teams',
+    name: 'Microsoft Teams',
+    Icon: SiMicrosoftteams,
+    color: '#6264A7',
+    category: 'communication',
+    description: 'Notify managers when reps book meetings or hit key dispositions.',
   },
   {
     id: 'calendly',

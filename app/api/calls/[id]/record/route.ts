@@ -20,7 +20,7 @@ async function telnyxCallAction(callControlId: string, action: string, payload =
   );
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    const detail = (err as { errors?: { detail?: string }[] }).errors?.[0]?.detail ?? `Telnyx ${action} failed`;
+    const detail = (err as { errors?: { detail?: string }[] }).errors?.[0]?.detail ?? `${action} failed`;
     throw new Error(detail);
   }
   return res.json();

@@ -20,8 +20,13 @@ Sales Rep: Perfect. I'll send the overview and a calendar link for Friday. Thank
 `;
 
 export async function POST(request: NextRequest) {
+  const expected = process.env.INTERNAL_API_SECRET?.trim();
+  if (!expected) {
+    console.error('[AI test-pipeline] INTERNAL_API_SECRET is not configured — refusing to run');
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 503 });
+  }
   const secret = request.headers.get('x-internal-secret');
-  if (secret !== process.env.INTERNAL_API_SECRET) {
+  if (secret !== expected) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

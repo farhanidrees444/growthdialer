@@ -10,16 +10,15 @@ export async function GET(_req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // 1. Env vars the recording pipeline needs
+  // 1. Internal pipeline configuration (generic keys only — never vendor names)
   const env = {
-    TELNYX_API_KEY: !!process.env.TELNYX_API_KEY,
-    TELNYX_CONNECTION_ID: !!process.env.TELNYX_CONNECTION_ID,
-    APP_URL: !!process.env.APP_URL,
-    NEXT_PUBLIC_APP_URL: !!process.env.NEXT_PUBLIC_APP_URL,
-    INTERNAL_API_SECRET: !!process.env.INTERNAL_API_SECRET,
-    GROQ_API_KEY: !!process.env.GROQ_API_KEY,
-    GEMINI_API_KEY: !!process.env.GEMINI_API_KEY,
-    SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    voice_provider: !!process.env.TELNYX_API_KEY,
+    voice_connection: !!process.env.TELNYX_CONNECTION_ID,
+    app_url: !!process.env.APP_URL || !!process.env.NEXT_PUBLIC_APP_URL,
+    internal_pipeline: !!process.env.INTERNAL_API_SECRET,
+    transcription: !!process.env.GROQ_API_KEY,
+    call_analysis: !!process.env.GEMINI_API_KEY,
+    database_service: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
   };
 
   // 2. User recording preferences
@@ -66,13 +65,13 @@ export async function GET(_req: NextRequest) {
   // 5. Generate a human-readable diagnosis
   const issues: string[] = [];
 
-  if (!env.TELNYX_API_KEY) issues.push('TELNYX_API_KEY missing — recordings cannot be started.');
-  if (!env.APP_URL && !env.NEXT_PUBLIC_APP_URL)
-    issues.push('APP_URL / NEXT_PUBLIC_APP_URL missing — Telnyx webhook cannot reach AI pipeline.');
-  if (!env.SUPABASE_SERVICE_ROLE_KEY)
-    issues.push('SUPABASE_SERVICE_ROLE_KEY missing — webhook cannot write to DB.');
-  if (!env.GROQ_API_KEY) issues.push('GROQ_API_KEY missing — Whisper transcription disabled.');
-  if (!env.GEMINI_API_KEY) issues.push('GEMINI_API_KEY missing — AI analysis will fall back to Groq only.');
+  if (!env.voice_provider) issues.push('Voice provider is not configured — recordings cannot be started.');
+  if (!env.app_url)
+    issues.push('Application URL is not configured — call webhooks cannot reach the AI pipeline.');
+  if (!env.database_service)
+    issues.push('Database service is not configured — webhooks cannot persist call data.');
+  if (!env.transcription) issues.push('Transcription service is not configured.');
+  if (!env.call_analysis) issues.push('Call analysis service is not configured — summaries may be limited.');
 
   if (settings?.recording_mode === 'never') {
     issues.push("Settings → Calling → Recording mode is 'never'. Set it to 'always' to record.");
@@ -81,11 +80,11 @@ export async function GET(_req: NextRequest) {
   if (totalCalls && totalCalls > 0) {
     if (recordedFlag === 0) {
       issues.push(
-        'You have calls but none have was_recorded=true. Telnyx webhook never fired call.answered → record_start. Check that the Telnyx Voice App webhook URL points at https://YOUR-DOMAIN/api/telnyx/webhook.',
+        'You have calls but none are marked as recorded. Verify your voice webhook URL is configured in your telephony provider settings.',
       );
     } else if (withUrl === 0) {
       issues.push(
-        'Calls have was_recorded=true but no recording_url. Telnyx never fired call.recording.saved. In the Telnyx portal → Voice App, enable "Programmatic Voice Recording" OR check storage settings (S3 vs Telnyx storage).',
+        'Calls are marked recorded but no recording URL was saved. Enable programmatic recording in your voice provider portal.',
       );
     }
   }
@@ -111,6 +110,6 @@ export async function GET(_req: NextRequest) {
     next_step:
       issues.length === 0
         ? 'Pipeline looks healthy. Make a test call >30s and refresh /recordings within 60s.'
-        : 'Fix the issues above. Most common: Telnyx webhook URL not configured.',
+        : 'Fix the issues above. Most common: voice webhook URL not configured.',
   });
 }

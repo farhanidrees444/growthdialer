@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
   const telnyxApiKey = process.env.TELNYX_API_KEY;
   if (!telnyxApiKey) {
-    return NextResponse.json({ error: 'Telnyx API key not configured' }, { status: 503 });
+    return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
   }
 
   // Map action to Telnyx endpoint
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     if (!telnyxRes.ok) {
       const errText = await telnyxRes.text();
       console.error(`[call-control] Telnyx error ${telnyxRes.status}:`, errText);
-      return NextResponse.json({ error: `Telnyx API error: ${telnyxRes.status}` }, { status: 502 });
+      return NextResponse.json({ error: 'Call control request failed' }, { status: 502 });
     }
 
     // Update was_recorded flag in DB

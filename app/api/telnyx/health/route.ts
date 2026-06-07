@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { apiUnauthorized } from '@/lib/api/errors';
 import { createServiceClient } from '@/lib/supabase/service';
 
 export async function GET() {
-  const supabase = createServiceClient();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return apiUnauthorized();
+
+  const serviceSupabase = createServiceClient();
   const checks: Record<string, { ok: boolean; latencyMs?: number; detail?: string }> = {};
 
   // Check Telnyx API reachability
@@ -12,38 +20,38 @@ export async function GET() {
       headers: { Authorization: `Bearer ${process.env.TELNYX_API_KEY ?? ''}` },
       signal: AbortSignal.timeout(5000),
     });
-    checks.telnyx = { ok: res.ok, latencyMs: Date.now() - t0 };
+    checks.voice_network = { ok: res.ok, latencyMs: Date.now() - t0 };
   } catch {
-    checks.telnyx = { ok: false, detail: 'timeout' };
+    checks.voice_network = { ok: false, detail: 'timeout' };
   }
 
-  // Check Groq reachability
+  // Check transcription service reachability
   try {
     const t0 = Date.now();
     const res = await fetch('https://api.groq.com/openai/v1/models', {
       headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY ?? ''}` },
       signal: AbortSignal.timeout(5000),
     });
-    checks.groq = { ok: res.ok, latencyMs: Date.now() - t0 };
+    checks.transcription = { ok: res.ok, latencyMs: Date.now() - t0 };
   } catch {
-    checks.groq = { ok: false, detail: 'timeout' };
+    checks.transcription = { ok: false, detail: 'timeout' };
   }
 
-  // Check Gemini reachability
+  // Check call analysis service reachability
   try {
     const t0 = Date.now();
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY ?? ''}`, {
       signal: AbortSignal.timeout(5000),
     });
-    checks.gemini = { ok: res.ok, latencyMs: Date.now() - t0 };
+    checks.call_analysis = { ok: res.ok, latencyMs: Date.now() - t0 };
   } catch {
-    checks.gemini = { ok: false, detail: 'timeout' };
+    checks.call_analysis = { ok: false, detail: 'timeout' };
   }
 
   // Check most recent AI processing in DB
-  if (supabase) {
+  if (serviceSupabase) {
     try {
-      const { data } = await supabase
+      const { data } = await serviceSupabase
         .from('call_analytics')
         .select('created_at')
         .order('created_at', { ascending: false })
