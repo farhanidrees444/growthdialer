@@ -55,6 +55,7 @@ Copy the same vars to **Vercel** (production) as `.env.local` where applicable.
 - [ ] Run Supabase migrations **037 → 046** in SQL Editor (incl. `046_protect_webhook_secret_column.sql`)
 - [x] Storage bucket `call-recordings` (private) — exists in dashboard
 - [ ] Run migration **047** for storage RLS policies + index
+- [ ] Run migration **048** to backfill `ended_at` on completed calls
 - [ ] Supabase Realtime on `calls` ✅
 - [ ] HubSpot app redirect → `https://app.growthdialer.com/api/integrations/hubspot/callback`
 - [ ] Test call **>30s** → open `/api/recordings/diagnostics` while logged in
@@ -105,7 +106,7 @@ Features that **beat** PhoneBurner, CallHippo, CloudTalk, Nooks when fully worki
 
 | Step | Title | Status | Moat? | Notes |
 |------|-------|--------|-------|-------|
-| **9** | Dashboard Recent Calls empty bug | ⬜ | UX | `ended_at` not set on disposition; query filters it out |
+| **9** | Dashboard Recent Calls empty bug | 🟡 | UX | Recent-calls API + ended_at backfill; verify after test call |
 | **10** | Call Logs visual polish | 🟡 | **Moat** | Date groups, premium cards, sticky filters — verify in prod |
 | **11** | Leaderboard solo state | ⬜ | UX | Empty podium for 1 user |
 | **12** | Floating right-edge icons bug | ⬜ | UX | Stacked fixed FABs/overlays |

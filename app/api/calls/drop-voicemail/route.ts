@@ -90,9 +90,15 @@ export async function POST(req: NextRequest) {
       .eq('id', vm.id);
 
     const resolvedDbId = call_db_id ?? callRow.id;
+    const now = new Date().toISOString();
     void supabase
       .from('calls')
-      .update({ disposition: 'voicemail', updated_at: new Date().toISOString() })
+      .update({
+        disposition: 'voicemail',
+        status: 'completed',
+        updated_at: now,
+        ended_at: now,
+      })
       .eq('id', resolvedDbId);
 
     return NextResponse.json({

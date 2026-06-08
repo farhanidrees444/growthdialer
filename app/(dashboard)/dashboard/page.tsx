@@ -24,6 +24,12 @@ import { WORKSPACE_ID_HEADER } from "@/lib/auth/workspace-access";
 import { cn } from "@/lib/utils";
 import type { SystemMetricsData, HourlyMetricPoint } from "@/lib/dashboard-types";
 import { ActivationChecklist } from "@/components/activation/activation-checklist";
+import {
+  type DashboardRecentCall,
+  getRecentCallCounterparty,
+  getRecentCallHref,
+  getRecentDispositionLabel,
+} from "@/lib/calls/recent";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,16 +40,6 @@ interface StatsData {
   pipelineValue: number;
   yesterday: { calls: number; connectRate: number };
 }
-
-interface RecentCall {
-  id: string;
-  to_number: string | null;
-  duration_seconds: number | null;
-  ended_at: string | null;
-  disposition: string | null;
-  leads: { name: string; company: string } | null;
-}
-
 
 interface DailyPoint {
   label: string;
@@ -80,17 +76,6 @@ const DISP_STYLES: Record<string, string> = {
   dnc: "border-red-500/20 bg-red-500/10 text-red-400",
 };
 
-const DISP_LABELS: Record<string, string> = {
-  interested: "Interested",
-  callback: "Callback",
-  meeting_booked: "Meeting",
-  voicemail: "Voicemail",
-  not_interested: "No Interest",
-  no_answer: "No Answer",
-  wrong_number: "Wrong #",
-  dnc: "DNC",
-};
-
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtHour(h: number): string {
@@ -125,12 +110,6 @@ function timeAgo(isoStr: string | null): string {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
-}
-
-function formatPhone(phone: string): string {
-  const m = phone.match(/^\+1(\d{3})(\d{3})(\d{4})$/);
-  if (m) return `(${m[1]}) ${m[2]}-${m[3]}`;
-  return phone;
 }
 
 function getInitials(name: string): string {
@@ -393,12 +372,12 @@ function CallActivityChart({
 
 // ── Recent Calls ──────────────────────────────────────────────────────────────
 
-function RecentCallsList({ calls, loading }: { calls: RecentCall[] | null; loading: boolean }) {
+function RecentCallsList({ calls, loading }: { calls: DashboardRecentCall[] | null; loading: boolean }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
       <div className="flex items-center justify-between px-5 py-4">
         <h3 className="text-sm font-semibold text-white">Recent Calls</h3>
-        <Link href="/analytics" className="flex items-center gap-1 text-xs text-slate-600 transition-colors hover:text-slate-400">
+        <Link href="/call-logs" className="flex items-center gap-1 text-xs text-slate-600 transition-colors hover:text-slate-400">
           All <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
@@ -429,17 +408,20 @@ function RecentCallsList({ calls, loading }: { calls: RecentCall[] | null; loadi
       ) : (
         <div className="divide-y divide-white/[0.04]">
           {calls.map(call => {
-            const name = call.leads?.name ?? (call.to_number ? formatPhone(call.to_number) : 'Unknown');
+            const name = getRecentCallCounterparty(call);
             const company = call.leads?.company;
-            const dispStyle = call.disposition ? (DISP_STYLES[call.disposition] ?? DISP_STYLES.no_answer) : DISP_STYLES.no_answer;
-            const dispLabel = call.disposition ? (DISP_LABELS[call.disposition] ?? call.disposition) : 'No Answer';
+            const dispKey = call.disposition ?? 'no_answer';
+            const dispStyle = DISP_STYLES[dispKey] ?? DISP_STYLES.no_answer;
+            const dispLabel = getRecentDispositionLabel(call.disposition);
             const grad = avatarGradient(name);
+            const href = getRecentCallHref(call);
 
             return (
-              <div
+              <Link
                 key={call.id}
+                href={href}
                 data-gsap-reveal
-                className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-white/[0.02]"
+                className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-white/[0.03]"
               >
                 <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[11px] font-bold text-white", grad)}>
                   {getInitials(name)}
@@ -448,14 +430,17 @@ function RecentCallsList({ calls, loading }: { calls: RecentCall[] | null; loadi
                   <p className="truncate text-sm font-medium text-white">{name}</p>
                   <p className="text-xs text-slate-500">
                     {company && <span className="mr-1">{company} ·</span>}
-                    {timeAgo(call.ended_at)}
+                    {timeAgo(call.display_at)}
                     {call.duration_seconds ? ` · ${fmtDuration(call.duration_seconds)}` : ''}
+                    {call.direction === 'inbound' && (
+                      <span className="ml-1 text-cyan-500/80">· Inbound</span>
+                    )}
                   </p>
                 </div>
                 <span className={cn("shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold", dispStyle)}>
                   {dispLabel}
                 </span>
-              </div>
+              </Link>
             );
           })}
         </div>
@@ -484,7 +469,7 @@ export default function DashboardPage() {
   const [talkTime, setTalkTime] = useState<number | null>(null);
 
   const [recentCallsLoading, setRecentCallsLoading] = useState(true);
-  const [recentCalls, setRecentCalls] = useState<RecentCall[] | null>(null);
+  const [recentCalls, setRecentCalls] = useState<DashboardRecentCall[] | null>(null);
 
   const [weeklyData, setWeeklyData] = useState<DailyPoint[] | null>(null);
   const [weeklyLoading, setWeeklyLoading] = useState(false);
@@ -498,6 +483,21 @@ export default function DashboardPage() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  const fetchRecentCalls = useCallback(async () => {
+    if (!currentWorkspace?.id) return;
+    try {
+      const res = await apiFetch('/api/dashboard/recent-calls');
+      if (res.ok) {
+        const data = await res.json() as { calls?: DashboardRecentCall[] };
+        setRecentCalls(data.calls ?? []);
+      }
+    } catch {
+      // keep prior list on transient errors
+    } finally {
+      setRecentCallsLoading(false);
+    }
+  }, [apiFetch, currentWorkspace?.id]);
 
   const fetchMetrics = useCallback(async (token: string) => {
     try {
@@ -530,11 +530,14 @@ export default function DashboardPage() {
     const channel = sb
       .channel('dash-rt')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'calls', filter: `user_id=eq.${session.user.id}` },
-        () => { if (tokenRef.current) fetchMetrics(tokenRef.current); },
+        () => {
+          if (tokenRef.current) fetchMetrics(tokenRef.current);
+          void fetchRecentCalls();
+        },
       )
       .subscribe();
     return () => { sb.removeChannel(channel); };
-  }, [session?.user?.id, fetchMetrics]);
+  }, [session?.user?.id, fetchMetrics, fetchRecentCalls]);
 
   useEffect(() => {
     if (!currentWorkspace?.id) return;
@@ -567,8 +570,8 @@ export default function DashboardPage() {
     let talkQuery = supabase
       .from('calls')
       .select('duration_seconds')
-      .gte('ended_at', today.toISOString())
-      .not('duration_seconds', 'is', null);
+      .gte('created_at', today.toISOString())
+      .gt('duration_seconds', 0);
     if (userId) {
       talkQuery = talkQuery.or(`and(workspace_id.eq.${wsId},user_id.eq.${userId}),and(workspace_id.is.null,user_id.eq.${userId})`);
     } else {
@@ -581,26 +584,10 @@ export default function DashboardPage() {
         }
       });
 
-    let recentQuery = supabase
-      .from('calls')
-      .select('id, to_number, duration_seconds, ended_at, disposition, leads(name, company)')
-      .not('ended_at', 'is', null)
-      .order('ended_at', { ascending: false })
-      .limit(5);
-    if (userId) {
-      recentQuery = recentQuery.or(`and(workspace_id.eq.${wsId},user_id.eq.${userId}),and(workspace_id.is.null,user_id.eq.${userId})`);
-    } else {
-      recentQuery = recentQuery.eq('workspace_id', wsId);
-    }
-    void recentQuery.then(({ data }) => {
-        if (!cancelled) {
-          setRecentCalls((data ?? []) as unknown as RecentCall[]);
-          setRecentCallsLoading(false);
-        }
-      });
+    void fetchRecentCalls();
 
     return () => { cancelled = true; };
-  }, [currentWorkspace?.id, session?.user?.id, apiFetch]);
+  }, [currentWorkspace?.id, session?.user?.id, apiFetch, fetchRecentCalls]);
 
   useEffect(() => {
     if (timeRange !== '7D' || weeklyLoadedRef.current) return;
