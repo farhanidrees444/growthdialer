@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { EASE_OUT } from '@/components/marketing/live-floor/motion';
+import { PRICING_FAQ_ROADMAP } from '@/lib/marketing/honest-copy';
 
 const FAQS = [
   {
@@ -28,7 +29,7 @@ const FAQS = [
   },
   {
     q: 'Which features are still on the roadmap?',
-    a: 'Parallel dialing, an AI voice agent / receptionist, CRM integrations and a public API are in active development. Team workspaces, live coaching and manager analytics are live today on Pro and Team — we only charge for what works.',
+    a: PRICING_FAQ_ROADMAP,
   },
 ];
 

@@ -243,7 +243,7 @@ function HealthVisual() {
 const FEATURES = [
   { icon: Target, eyebrow: 'AI Dialer', title: 'A focused stage for every call.', body: 'Three modes — browse, focus and power — give reps one clean surface to move through leads, with live controls and instant recording.', Visual: DialerVisual },
   { icon: Zap, eyebrow: 'Power Dialer', title: 'Work the list, not the dialer.', body: 'Move call to call back-to-back. The queue auto-advances, dispositions in a tap, and you never lose your rhythm.', Visual: PowerVisual },
-  { icon: Brain, eyebrow: 'Conversation Intelligence', title: 'The AI listens so you don’t take notes.', body: 'Every recorded call is transcribed live, then distilled into a summary, sentiment and intent — ready the moment you hang up.', Visual: IntelVisual },
+  { icon: Brain, eyebrow: 'Conversation Intelligence', title: 'The AI listens so you don’t take notes.', body: 'When recording saves, each call is transcribed and distilled into a summary, sentiment, and intent — linked to the lead without manual notes.', Visual: IntelVisual },
   { icon: Users, eyebrow: 'Smart Leads', title: 'Your pipeline, in one place.', body: 'Import and organize leads, then work them straight from the dialer. Every call links back with full history and disposition.', Visual: LeadsVisual },
   { icon: BarChart3, eyebrow: 'Analytics', title: 'See what’s actually working.', body: 'Connect rate, talk time, dispositions and sentiment trends — your whole calling operation at a glance.', Visual: AnalyticsVisual },
   { icon: ShieldCheck, eyebrow: 'Number Health', title: 'Keep your calls landing.', body: 'Track carrier reputation and spam risk on every number, continuously, so your connect rates stay high.', Visual: HealthVisual },

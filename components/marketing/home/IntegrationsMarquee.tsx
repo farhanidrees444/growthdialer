@@ -15,7 +15,7 @@ export function IntegrationsMarquee() {
           HubSpot is live. The rest of your stack is next.
         </h2>
         <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-zinc-500">
-          Connect CRM and automation tools so every dial logs itself — no rep data entry.
+          HubSpot connects today; other CRM and automation tools are on the waitlist — every dial still logs in GrowthDialer.
         </p>
         <Link
           href="/integrations"

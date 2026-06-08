@@ -55,7 +55,7 @@ export function Plans() {
             className="mx-auto mt-5 max-w-xl text-[16px] leading-relaxed text-zinc-400"
           >
             Start free on Starter. Upgrade your workspace when you need more seats, parallel lines,
-            and team analytics — every plan includes recording and AI summaries.
+            and team analytics — every plan includes recording; AI summaries run when calls are recorded.
           </motion.p>
 
           <motion.div variants={reveal} className="mt-9 flex flex-wrap items-center justify-center gap-3">

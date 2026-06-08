@@ -4,13 +4,9 @@ import { motion } from 'framer-motion';
 import { CountUp } from './CountUp';
 import { InViewReveal } from '@/components/marketing/live-floor/Reveal';
 import { reveal, revealContainer } from '@/components/marketing/live-floor/motion';
+import { MARKETING_STATS } from '@/lib/marketing/honest-copy';
 
-const STATS = [
-  { to: 50, suffix: '+', label: 'Countries you can dial', prefix: '' },
-  { to: 3, suffix: '', label: 'AI Dialer focus modes', prefix: '' },
-  { to: 100, suffix: '%', label: 'Calls recorded & analyzed', prefix: '' },
-  { to: 4, suffix: 's', label: 'To an AI call summary', prefix: '<' },
-];
+const STATS = MARKETING_STATS;
 
 export function StatsStrip() {
   return (

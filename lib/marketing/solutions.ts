@@ -55,7 +55,7 @@ export const SOLUTION_PAGES: Record<string, SolutionPageData> = {
     ],
     capabilities: [
       'Manual dial + click-to-call from lead detail',
-      'AI conversation intelligence on every recorded call',
+      'Built-in conversation intelligence when calls are recorded',
       'Activity timeline with dispositions and notes',
       'Recording playback with keyword highlights',
       'Workspace-scoped lead and call history',

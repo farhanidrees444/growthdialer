@@ -1,4 +1,5 @@
-import type { IconType } from 'react-icons';
+import type { ComponentType, SVGProps } from 'react';
+import { Users } from 'lucide-react';
 import {
   SiSalesforce,
   SiHubspot,
@@ -8,14 +9,15 @@ import {
   SiGooglecalendar,
   SiNotion,
   SiGmail,
-  SiPipedrive,
-  SiMicrosoftteams,
+  SiPiped,
 } from 'react-icons/si';
+
+export type BrandIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
 export type IntegrationBrand = {
   id: string;
   name: string;
-  Icon: IconType;
+  Icon: BrandIcon;
   color: string;
   category: 'crm' | 'communication' | 'automation' | 'calendar' | 'productivity';
   live?: boolean;
@@ -44,7 +46,7 @@ export const INTEGRATION_BRANDS: IntegrationBrand[] = [
   {
     id: 'pipedrive',
     name: 'Pipedrive',
-    Icon: SiPipedrive,
+    Icon: SiPiped,
     color: '#017737',
     category: 'crm',
     description: 'Push dispositions and call outcomes into your pipeline automatically.',
@@ -76,7 +78,7 @@ export const INTEGRATION_BRANDS: IntegrationBrand[] = [
   {
     id: 'microsoft-teams',
     name: 'Microsoft Teams',
-    Icon: SiMicrosoftteams,
+    Icon: Users,
     color: '#6264A7',
     category: 'communication',
     description: 'Notify managers when reps book meetings or hit key dispositions.',

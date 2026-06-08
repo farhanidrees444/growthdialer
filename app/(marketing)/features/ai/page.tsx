@@ -10,7 +10,7 @@ import { APP_SIGNUP } from '@/lib/marketing/navigation';
 export const metadata: Metadata = {
   title: 'AI Platform — Conversation Intelligence, Coaching & Voice Agents',
   description:
-    'GrowthDialer AI pillars: conversation intelligence and call briefs live today, manager coaching on Team plans, and AI voice agents on the roadmap.',
+    'GrowthDialer AI pillars: call briefs live today, built-in conversation intelligence when recording saves, coaching listen mode on Pro/Team, voice agents on the roadmap.',
   alternates: { canonical: 'https://growthdialer.com/features/ai' },
   openGraph: {
     title: 'GrowthDialer AI Platform',
@@ -22,18 +22,18 @@ export const metadata: Metadata = {
 const SECTIONS = [
   {
     id: 'conversation-intelligence',
-    title: 'Conversation Intelligence',
-    body: 'Calls are transcribed and analyzed automatically — bullet summaries, sentiment scores, detected intent, and keywords linked to the lead and recording.',
+    title: 'Conversation Intelligence (built-in)',
+    body: 'When a call is recorded, audio is transcribed and analyzed — bullet summaries, sentiment, detected intent, and keywords linked to the lead and recording.',
   },
   {
     id: 'call-brief',
-    title: 'AI Call Brief',
+    title: 'AI Call Brief (live)',
     body: 'The dialer surfaces company context, prior notes, and a suggested opener before each call so reps sound prepared without digging through tabs.',
   },
   {
     id: 'coaching',
-    title: 'Live Coaching',
-    body: 'Managers on Pro and Team plans use the live coaching floor to monitor active calls, switch listen / whisper / barge modes, and leave structured feedback.',
+    title: 'Live Coaching (listen mode)',
+    body: 'Managers on Pro and Team plans use the coaching floor to monitor active calls in listen mode and leave structured feedback after hang-up. Whisper and barge audio are on the roadmap.',
   },
   {
     id: 'voice-agent',

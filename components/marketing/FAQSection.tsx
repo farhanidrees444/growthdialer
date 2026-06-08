@@ -3,51 +3,56 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Minus } from "lucide-react";
+import { HOME_FAQ_LIVE_VS_ROADMAP } from "@/lib/marketing/honest-copy";
 
 const faqs = [
   {
     q: "How does GrowthDialer compare to Orum and Nooks?",
-    a: "GrowthDialer offers parallel dialing up to 10 lines, AI call summaries on every recorded call, and a live coaching floor. Pro starts at $49/workspace/mo (annual billing) — compare our full feature set on the pricing page.",
+    a: "GrowthDialer pairs power and parallel dialing with built-in conversation intelligence when calls are recorded, plus a manager coaching floor. Pro starts at $49/workspace/mo — compare features honestly on our pricing and compare pages.",
   },
   {
     q: "How does parallel dialing work?",
-    a: "GrowthDialer dials up to 10 lines simultaneously. When any prospect answers, your rep is immediately connected — no hold music, no delays. Unanswered lines are automatically hung up or routed to AI voicemail drop.",
+    a: "On Pro and Team, dial up to 10 lines at once. When a prospect answers, your rep connects on that leg; other lines can be hung up or sent voicemail drop per your session settings.",
   },
   {
     q: "Will my numbers get flagged as spam?",
-    a: "We continuously monitor carrier health for all numbers in your pool and rotate them before they hit spam thresholds. Our Spam Protection feature keeps your numbers clean and your connect rates high.",
+    a: "We surface carrier health and spam status on numbers you own in GrowthDialer so you can rotate caller ID and retire risky lines before connect rates drop.",
   },
   {
     q: "Does GrowthDialer integrate with my CRM?",
-    a: "HubSpot integration is live today. Additional CRM connectors are on the roadmap — see Integrations for what's shipping next. Every call is logged with disposition, duration, and AI-generated notes in GrowthDialer.",
+    a: "HubSpot OAuth is available today — calls log on disposition with duration and recording link. Salesforce and other CRMs are on the waitlist; every call still lives in Call Logs with disposition and notes.",
   },
   {
-    q: "Is there a free trial?",
-    a: "All plans include a 14-day free trial with no credit card required. You get access to all features on the Growth plan so you can see exactly what GrowthDialer can do for your team.",
+    q: "Is there a free plan?",
+    a: "Starter is free (1 seat) with no credit card. Upgrade to Pro or Team when you need parallel dial, coaching floor, or more seats.",
   },
   {
     q: "How long does it take to get set up?",
-    a: "Most teams are live within 2 hours. Our onboarding team handles CRM integration, number provisioning, and initial lead import. You can be making calls the same day you sign up.",
+    a: "Most solo reps sign in, import a CSV, provision a number, and place a first call the same day. Team workspaces add invites and role setup — no mandatory onboarding call.",
   },
   {
     q: "Can I import my existing leads?",
-    a: "Yes — you can import leads via CSV, sync directly from your CRM, or connect via our API. Our AI will automatically score and prioritize your entire list on import.",
+    a: "Yes — CSV import is live today. CRM sync beyond HubSpot is on the roadmap; you can also push events via outgoing webhooks when configured.",
   },
   {
     q: "What compliance features do you have?",
-    a: "GrowthDialer includes built-in DNC list scrubbing, TCPA-compliant consent management, call recording disclosure prompts, and audit logs. We're SOC 2 Type II certified.",
+    a: "DNC flags on leads, TCPA-oriented import fields, disposition audit trail, and configurable recording behavior. Formal SOC 2 certification is on the roadmap — not claimed today.",
   },
   {
-    q: "How does AI coaching work?",
-    a: "Our AI listens to your calls in real-time and provides live suggestions via text or voice. It analyzes conversation flow, objection handling, and closing techniques to help you improve immediately.",
+    q: "How does AI analysis work?",
+    a: "When recording saves, Groq transcribes the audio and Gemini produces summary, sentiment, intent, and next steps — visible on the recording and lead timeline. No separate 'AI coach' listens in real time.",
   },
   {
     q: "Can managers monitor calls in real-time?",
-    a: "Yes — managers can join calls silently, provide live coaching, or take over if needed. All activity is logged for performance reviews and training purposes.",
+    a: "Managers on Pro and Team can use listen mode on the coaching floor and leave post-call feedback. Whisper and barge into the live audio bridge are planned — not shipped yet.",
   },
   {
     q: "What's included in the free Starter plan?",
-    a: "Starter is free (1 seat) with recording and AI summaries. Pro is $49/mo monthly or $39/mo billed annually for up to 3 seats with the full AI dialer, power dialing, and coaching floor.",
+    a: "Starter is free (1 seat) with web dialer, leads, recording settings, and built-in AI when recordings save. Pro adds parallel dial, AI briefs, coaching floor, and up to 3 seats.",
+  },
+  {
+    q: "Which features are live versus coming soon?",
+    a: HOME_FAQ_LIVE_VS_ROADMAP,
   },
 ];
 
@@ -55,64 +60,50 @@ export default function FAQSection() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section className="py-24 lg:py-32 border-t border-white/8">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-14"
-        >
-          <p className="text-brand text-sm font-semibold uppercase tracking-widest mb-3">FAQ</p>
-          <h2 className="font-display text-4xl lg:text-5xl font-bold tracking-tight mb-4">
-            Common questions
-          </h2>
-          <p className="text-muted-foreground">
-            Everything you need to know before you get started.
-          </p>
-        </motion.div>
-
+    <section className="py-24 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto">
+        <h2 className="font-display text-3xl sm:text-4xl font-bold text-center mb-12">
+          Frequently asked questions
+        </h2>
         <div className="space-y-3">
-          {faqs.map((faq, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.06, duration: 0.35 }}
-              className="rounded-xl border border-white/8 bg-[oklch(0.09_0.006_285)] overflow-hidden"
-            >
-              <button
-                onClick={() => setOpen(open === i ? null : i)}
-                className="flex items-center justify-between w-full px-6 py-4 text-left gap-4 hover:bg-white/3 transition-colors"
+          {faqs.map((faq, i) => {
+            const isOpen = open === i;
+            return (
+              <div
+                key={faq.q}
+                className="rounded-xl border border-white/8 bg-white/[0.02] overflow-hidden"
               >
-                <span className="text-sm font-medium">{faq.q}</span>
-                <div className="shrink-0 w-6 h-6 rounded-full bg-white/6 flex items-center justify-center">
-                  {open === i ? (
-                    <Minus className="w-3.5 h-3.5 text-brand" />
+                <button
+                  type="button"
+                  onClick={() => setOpen(isOpen ? null : i)}
+                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+                  aria-expanded={isOpen}
+                >
+                  <span className="font-medium text-foreground/90">{faq.q}</span>
+                  {isOpen ? (
+                    <Minus className="h-4 w-4 shrink-0 text-muted-foreground" />
                   ) : (
-                    <Plus className="w-3.5 h-3.5 text-muted-foreground" />
+                    <Plus className="h-4 w-4 shrink-0 text-muted-foreground" />
                   )}
-                </div>
-              </button>
-              <AnimatePresence initial={false}>
-                {open === i && (
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: "auto" }}
-                    exit={{ height: 0 }}
-                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-6 pb-5 text-sm text-muted-foreground leading-relaxed border-t border-white/6 pt-4">
-                      {faq.a}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          ))}
+                </button>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="overflow-hidden"
+                    >
+                      <p className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed">
+                        {faq.a}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

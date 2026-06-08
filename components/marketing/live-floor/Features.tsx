@@ -13,7 +13,7 @@ const SMALL_CARDS = [
   { icon: Users, title: 'Smart Leads', body: 'Import, organize and work your pipeline with full call history.', col: 'lg:col-span-2' },
   { icon: BarChart3, title: 'Analytics', body: 'Connect rate, talk time, dispositions and sentiment trends.', col: 'lg:col-span-3' },
   { icon: ShieldCheck, title: 'Number Health', body: 'Carrier reputation and spam risk on every number you own.', col: 'lg:col-span-5' },
-  { icon: Headphones, title: 'Live Coaching', body: 'Manager floor with whisper mode while reps stay on calls.', col: 'lg:col-span-4' },
+  { icon: Headphones, title: 'Live Coaching', body: 'Manager floor with listen mode and post-call feedback — whisper audio on the roadmap.', col: 'lg:col-span-4' },
 ];
 
 const COMING_SOON = ['CRM sync (beyond HubSpot)', 'AI voice agent'];

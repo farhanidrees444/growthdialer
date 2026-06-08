@@ -3,25 +3,29 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 
-const stats = [
-  { value: 50, suffix: '+', label: 'Countries you can dial', prefix: '' },
-  { value: 3, suffix: '', label: 'AI Dialer focus modes', prefix: '' },
-  { value: 100, suffix: '%', label: 'Calls recorded & analyzed', prefix: '' },
-  { value: 4, suffix: 's', label: 'To an AI call summary', prefix: '<' },
-];
+import { MARKETING_STATS } from '@/lib/marketing/honest-copy';
+
+const stats = MARKETING_STATS.map((s) => ({
+  value: s.to,
+  suffix: s.suffix,
+  label: s.label,
+  prefix: s.prefix,
+}));
 
 function Counter({ target, suffix, prefix }: { target: number; suffix: string; prefix: string }) {
   const [count, setCount] = useState(target);
-  const [animated, setAnimated] = useState(false);
+  const animatedRef = useRef(false);
   const ref = useRef(null);
   const inView = useInView(ref, { once: true });
 
   useEffect(() => {
-    if (!inView || animated) return;
-    setAnimated(true);
-    setCount(0);
+    if (!inView || animatedRef.current) return;
+    animatedRef.current = true;
+
     const duration = 1800;
     const start = performance.now();
+    setCount(0);
+
     const update = (now: number) => {
       const t = Math.min((now - start) / duration, 1);
       const ease = 1 - Math.pow(1 - t, 3);
@@ -30,9 +34,10 @@ function Counter({ target, suffix, prefix }: { target: number; suffix: string; p
         : Math.round(ease * target);
       setCount(next);
       if (t < 1) requestAnimationFrame(update);
+      else setCount(target);
     };
     requestAnimationFrame(update);
-  }, [inView, target, animated]);
+  }, [inView, target]);
 
   return (
     <span ref={ref} className="tabular-nums" suppressHydrationWarning>

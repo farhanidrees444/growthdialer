@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { EASE_OUT } from '@/components/marketing/live-floor/motion';
+import { HOME_FAQ_LIVE_VS_ROADMAP } from '@/lib/marketing/honest-copy';
 
 const FAQS = [
   {
     q: 'What exactly is GrowthDialer?',
-    a: 'An AI sales dialer. You make outbound calls from a focused web dialer, every call is recorded, and the AI turns each conversation into a summary, sentiment read and suggested next steps — automatically.',
+    a: 'An AI sales dialer for outbound teams. Call from the browser, disposition in one tap, and — when recording is on — get transcription, summaries, and sentiment without manual notes.',
   },
   {
     q: 'Do I need to install anything?',
@@ -16,15 +17,15 @@ const FAQS = [
   },
   {
     q: 'How does the AI analysis work?',
-    a: 'After a recorded call, the audio is transcribed and then analyzed to produce a bullet summary, sentiment (positive, neutral or negative) and detected intent. It happens in seconds, with no manual note-taking.',
+    a: 'After a recorded call saves, audio is transcribed and analyzed into a bullet summary, sentiment (positive, neutral, or negative), detected intent, and suggested next steps — typically within seconds.',
   },
   {
     q: 'Which features are live versus coming soon?',
-    a: 'Live today: AI Dialer, Power Dialer, AI call briefs, conversation intelligence, live manager coaching, team workspaces (Team plan), leads, analytics and number-health monitoring. Parallel dialing, AI voice agents and CRM integrations are on the roadmap and clearly marked “Coming soon.”',
+    a: HOME_FAQ_LIVE_VS_ROADMAP,
   },
   {
     q: 'Can I try it before paying?',
-    a: 'Yes — start free with no credit card. Make real calls and see the AI summaries for yourself before deciding on a plan.',
+    a: 'Yes — Starter is free with no credit card. Make real calls, turn recording on in Settings, and test summaries on your own conversations before upgrading.',
   },
   {
     q: 'Are my calls recorded automatically?',
@@ -44,7 +45,7 @@ const FAQS = [
   },
   {
     q: 'Do you support inbound calls?',
-    a: 'Yes — inbound calls ring in the browser (or forward to your phone / go to voicemail per your settings), and they get recorded and analyzed just like outbound calls.',
+    a: 'Inbound routing is in Settings (browser, forward, or voicemail). Browser ringing is available today; we are polishing WebRTC audio. Recorded inbound calls use the same AI pipeline as outbound when recording is enabled.',
   },
   {
     q: 'Is my data secure?',

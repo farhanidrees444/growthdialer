@@ -4,35 +4,14 @@ import { MarketingShell } from '@/components/marketing/MarketingShell';
 import { MarketingPageHero } from '@/components/marketing/live-floor/MarketingPageHero';
 import { JsonLd } from '@/components/marketing/live-floor/JsonLd';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
+import { BETA_TODAY, IN_PROGRESS, LIVE_TODAY, ROADMAP_NOT_LIVE } from '@/lib/marketing/honest-copy';
 
 export const metadata: Metadata = {
   title: 'Roadmap — What ships next | GrowthDialer',
   description:
-    'GrowthDialer product roadmap: live today (dialer, recordings, HubSpot), in progress, and planned integrations. Updated honestly.',
+    'GrowthDialer product roadmap: live today (dialer, power dial, HubSpot), built-in AI pipeline, in progress, and planned integrations. Updated honestly.',
   alternates: { canonical: `${MARKETING_SITE}/roadmap` },
 };
-
-const LIVE = [
-  'WebRTC dialer + power dialer',
-  'Call recording, transcription, AI summaries',
-  'HubSpot call logging',
-  'Workspace teams + role-based access',
-  'Analytics dashboard + call logs',
-];
-
-const IN_PROGRESS = [
-  'Salesforce + Pipedrive CRM connectors',
-  'Webhook event API for call.completed',
-  'Power queue filter parity with dialer UI',
-  'Sequences builder (multi-step cadences)',
-];
-
-const PLANNED = [
-  'AI inbound voice agent',
-  'Live coaching audio bridge (manager whisper mode)',
-  'Slack + Zapier automation triggers',
-  'Enterprise SSO (SAML)',
-];
 
 export default function RoadmapPage() {
   return (
@@ -54,15 +33,16 @@ export default function RoadmapPage() {
             <span className="font-medium">What is next.</span>
           </>
         }
-        description="We ship in the open. Live features match the product today — waitlist items stay labeled until they land in your workspace."
+        description="We ship in the open. Live features match the product today — waitlist and roadmap items stay labeled until they land in your workspace."
       />
 
       <section className="px-5 pb-20 lg:px-8">
-        <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
+        <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-2 lg:grid-cols-4">
           {[
-            { title: 'Live today', items: LIVE, accent: 'text-emerald-400' },
+            { title: 'Live today', items: LIVE_TODAY, accent: 'text-emerald-400' },
+            { title: 'Built-in', items: BETA_TODAY, accent: 'text-cyan-400' },
             { title: 'In progress', items: IN_PROGRESS, accent: 'text-[#A78BFA]' },
-            { title: 'Planned', items: PLANNED, accent: 'text-zinc-500' },
+            { title: 'Roadmap', items: ROADMAP_NOT_LIVE, accent: 'text-zinc-500' },
           ].map((col) => (
             <article
               key={col.title}

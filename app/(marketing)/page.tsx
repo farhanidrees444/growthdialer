@@ -17,7 +17,7 @@ import { HomeFAQ } from '@/components/marketing/home/HomeFAQ';
 export const metadata: Metadata = {
   title: 'AI Sales Dialer — Record, Transcribe & Analyze Every Call',
   description:
-    'GrowthDialer is the AI sales dialer with conversation intelligence, AI call briefs, live coaching, and power dialing. Start free — upgrade your workspace when your team grows.',
+    'GrowthDialer is the AI sales dialer with power + parallel dialing, AI call briefs, built-in conversation intelligence, and a manager coaching floor. Start free — upgrade when your team grows.',
   alternates: { canonical: 'https://growthdialer.com' },
 };
 

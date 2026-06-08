@@ -2,44 +2,33 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Brain, Sparkles, Headphones, Bot, ArrowRight } from 'lucide-react';
+import { Brain, Sparkles, Headphones, Bot, ArrowRight, type LucideIcon } from 'lucide-react';
 import { Spotlight } from '@/components/marketing/live-floor/Spotlight';
 import { EASE_OUT, reveal, revealContainer } from '@/components/marketing/live-floor/motion';
+import {
+  AI_PILLARS,
+  AI_PILLARS_SUBHEAD,
+  type ProductFeatureStatus,
+} from '@/lib/marketing/honest-copy';
 
-const PILLARS = [
-  {
-    icon: Brain,
-    title: 'Conversation Intelligence',
-    status: 'live' as const,
-    body: 'Every recorded call is transcribed, summarized, and tagged with sentiment and intent — automatically when you hang up.',
-    href: '/features#conversation-intelligence',
-    accent: '#06B6D4',
-  },
-  {
-    icon: Sparkles,
-    title: 'AI Call Brief',
-    status: 'live' as const,
-    body: 'Before you dial, see company context, past notes, and a one-line opener tailored to the lead — right in the dialer.',
-    href: '/features/ai#call-brief',
-    accent: '#8B5CF6',
-  },
-  {
-    icon: Headphones,
-    title: 'Live Coaching',
-    status: 'live' as const,
-    body: 'Managers listen, whisper, or barge on live calls from the coaching floor — built for teams on Pro and Team plans.',
-    href: '/features/ai#coaching',
-    accent: '#10B981',
-  },
-  {
-    icon: Bot,
-    title: 'AI Voice Agent',
-    status: 'roadmap' as const,
-    body: 'Inbound AI receptionist that answers, qualifies, and books meetings — the next pillar in the GrowthDialer platform.',
-    href: '/features/ai#voice-agent',
-    accent: '#F59E0B',
-  },
-];
+const PILLAR_ICONS: Record<string, LucideIcon> = {
+  'conversation-intelligence': Brain,
+  'call-brief': Sparkles,
+  coaching: Headphones,
+  'voice-agent': Bot,
+};
+
+const STATUS_STYLES: Record<ProductFeatureStatus, string> = {
+  live: 'border border-emerald-500/25 bg-emerald-500/10 text-emerald-400',
+  beta: 'border border-cyan-500/25 bg-cyan-500/10 text-cyan-400',
+  roadmap: 'border border-amber-500/25 bg-amber-500/10 text-amber-400',
+};
+
+const STATUS_LABELS: Record<ProductFeatureStatus, string> = {
+  live: 'Live',
+  beta: 'Built-in',
+  roadmap: 'Roadmap',
+};
 
 export function AiProductPillars() {
   return (
@@ -56,11 +45,12 @@ export function AiProductPillars() {
             AI platform
           </motion.p>
           <motion.h2 variants={reveal} className="font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.05] tracking-tight text-[#F5F5F7]">
-            Four pillars. <span className="font-medium">Three live today.</span>
+            Four pillars.
+            <br />
+            <span className="font-medium">Two live · one built-in · one roadmap.</span>
           </motion.h2>
           <motion.p variants={reveal} className="mt-4 text-[16px] leading-relaxed text-zinc-400">
-            GrowthDialer is built around AI that helps reps before, during, and after every call —
-            with a clear roadmap for autonomous voice agents.
+            {AI_PILLARS_SUBHEAD}
           </motion.p>
         </motion.div>
 
@@ -71,11 +61,12 @@ export function AiProductPillars() {
           variants={revealContainer}
           className="grid gap-4 sm:grid-cols-2"
         >
-          {PILLARS.map((p) => {
-            const Icon = p.icon;
+          {AI_PILLARS.map((p) => {
+            const Icon = PILLAR_ICONS[p.id] ?? Brain;
+            const badge = p.statusLabel ?? STATUS_LABELS[p.status];
             return (
               <motion.article
-                key={p.title}
+                key={p.id}
                 variants={reveal}
                 className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12]"
               >
@@ -88,13 +79,9 @@ export function AiProductPillars() {
                     <Icon className="h-5 w-5" />
                   </span>
                   <span
-                    className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${
-                      p.status === 'live'
-                        ? 'border border-emerald-500/25 bg-emerald-500/10 text-emerald-400'
-                        : 'border border-amber-500/25 bg-amber-500/10 text-amber-400'
-                    }`}
+                    className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${STATUS_STYLES[p.status]}`}
                   >
-                    {p.status === 'live' ? 'Live' : 'Roadmap'}
+                    {badge}
                   </span>
                 </div>
                 <h3 className="text-lg font-semibold text-[#F5F5F7]">{p.title}</h3>
