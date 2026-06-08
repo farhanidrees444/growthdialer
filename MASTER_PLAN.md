@@ -108,7 +108,7 @@ Features that **beat** PhoneBurner, CallHippo, CloudTalk, Nooks when fully worki
 |------|-------|--------|-------|-------|
 | **9** | Dashboard Recent Calls empty bug | 🟡 | UX | Recent-calls API + ended_at backfill; verify after test call |
 | **10** | Call Logs visual polish | 🟡 | **Moat** | Date groups, premium cards, sticky filters — verify in prod |
-| **11** | Leaderboard solo state | ⬜ | UX | Empty podium for 1 user |
+| **11** | Leaderboard solo state | 🟡 | UX | Solo floor hero + invite CTA; podium placeholders for 2-member teams |
 | **12** | Floating right-edge icons bug | ⬜ | UX | Stacked fixed FABs/overlays |
 | **13** | Number Health contradiction | ⬜ | UX | Healthy label vs 0 reputation |
 | **14** | Sequences demo cleanup | ⬜ | Demo | Delete junk sequence names |
@@ -200,6 +200,7 @@ These are **working** today — outbound dialer, leads, power/parallel dialer, w
 | 2026-06-08 | Steps 5–7 | Fixed webhook `ai_analysis_status`→`ai_processing_status`; trigger/backfill/cron; diagnostics |
 | 2026-06-08 | Step 8 | Mirror Telnyx recordings → `call-recordings`; signed playback URLs; backfill + cron |
 | 2026-06-08 | Step 10 | Call Logs polish — date grouping, stat cards, row cards, recording links |
+| 2026-06-08 | Step 9 | Dashboard Recent Calls — API, ended_at backfill, realtime refresh |
 
 ---
 

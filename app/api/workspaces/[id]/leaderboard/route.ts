@@ -42,7 +42,7 @@ export async function GET(
 
   const userIds = (members ?? []).map((m) => m.user_id);
   if (!userIds.length) {
-    return NextResponse.json({ days, rankings: [] });
+    return NextResponse.json({ days, member_count: 0, solo: true, rankings: [] });
   }
 
   const { data: calls } = await supabase
@@ -119,5 +119,12 @@ export async function GET(
     .sort((a, b) => b.points - a.points || b.connects - a.connects)
     .map((a, i) => ({ ...a, rank: i + 1 }));
 
-  return NextResponse.json({ days, rankings });
+  const memberCount = members?.length ?? 0;
+
+  return NextResponse.json({
+    days,
+    member_count: memberCount,
+    solo: memberCount <= 1,
+    rankings,
+  });
 }

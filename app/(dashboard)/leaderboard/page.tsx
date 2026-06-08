@@ -4,26 +4,19 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Phone, Target, Calendar, Medal, Loader2 } from 'lucide-react';
+import { Trophy, Phone, Target, Calendar, Loader2 } from 'lucide-react';
 import { useWorkspace } from '@/contexts/workspace-context';
-import { cn } from '@/lib/utils';
 import { PageHeader, PeriodToggle } from '@/components/ui/page-header';
 import { SurfaceCard } from '@/components/ui/surface-card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
-
-interface RankRow {
-  rank: number;
-  user_id: string;
-  full_name: string | null;
-  role: string;
-  calls: number;
-  connects: number;
-  meetings: number;
-  connect_rate: number;
-  points: number;
-}
+import {
+  SoloLeaderboardFloor,
+  PodiumPlaceholder,
+  PodiumCard,
+  type LeaderboardRow,
+} from '@/components/leaderboard/solo-floor';
 
 const PERIODS = [
   { days: 1, label: 'Today' },
@@ -31,17 +24,22 @@ const PERIODS = [
   { days: 30, label: '30 days' },
 ] as const;
 
-const PODIUM_VARIANT: ('amber' | 'default' | 'violet')[] = ['amber', 'default', 'violet'];
-
 function initials(name: string | null) {
   const n = name ?? 'Agent';
   return n.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
 }
 
+/** Classic podium order: 2nd · 1st · 3rd */
+function buildPodiumSlots(rankings: LeaderboardRow[]): (LeaderboardRow | null)[] {
+  const byRank = new Map(rankings.filter((r) => r.rank <= 3).map((r) => [r.rank, r]));
+  return [byRank.get(2) ?? null, byRank.get(1) ?? null, byRank.get(3) ?? null];
+}
+
 export default function LeaderboardPage() {
   const { currentWorkspace, apiFetch } = useWorkspace();
   const [days, setDays] = useState(7);
-  const [rankings, setRankings] = useState<RankRow[]>([]);
+  const [rankings, setRankings] = useState<LeaderboardRow[]>([]);
+  const [solo, setSolo] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,21 +47,31 @@ export default function LeaderboardPage() {
     setLoading(true);
     void apiFetch(`/api/workspaces/${currentWorkspace.id}/leaderboard?days=${days}`)
       .then((r) => r.json())
-      .then((d: { rankings?: RankRow[] }) => setRankings(d.rankings ?? []))
+      .then((d: { rankings?: LeaderboardRow[]; solo?: boolean }) => {
+        setRankings(d.rankings ?? []);
+        setSolo(d.solo ?? (d.rankings?.length ?? 0) <= 1);
+      })
       .finally(() => setLoading(false));
   }, [apiFetch, currentWorkspace?.id, days]);
 
-  const top3 = rankings.filter((r) => r.rank <= 3);
   const rest = rankings.filter((r) => r.rank > 3);
+  const podiumSlots = buildPodiumSlots(rankings);
+  const showSolo = !loading && solo && rankings.length === 1;
+  const showPodium = !loading && rankings.length > 0 && !showSolo;
+  const showEmpty = !loading && rankings.length === 0;
 
   return (
     <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
       <div className="mx-auto max-w-4xl">
         <PageHeader
           title="Team Leaderboard"
-          description="Live salesfloor rankings — points from connects, meetings, and outcomes."
+          description={
+            solo
+              ? 'You’re on a solo floor — invite teammates to unlock live rankings.'
+              : 'Live salesfloor rankings — points from connects, meetings, and outcomes.'
+          }
           icon={Trophy}
-          badge="Live"
+          badge={solo ? 'Solo' : 'Live'}
         >
           <PeriodToggle value={days} onChange={setDays} periods={PERIODS} />
         </PageHeader>
@@ -75,49 +83,35 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        {!loading && rankings.length === 0 && (
+        {showEmpty && (
           <PremiumEmptyState
             icon={Trophy}
             title="No activity yet"
-            description="Start dialing as a team — rankings update in real time as calls complete."
+            description="Start dialing — your points appear here as calls complete. Invite reps from Team to race on connect rate."
             primaryAction={{ label: 'Open dialer', href: '/dialer' }}
+            secondaryAction={{ label: 'Invite teammates', href: '/team' }}
             accent="violet"
           />
         )}
 
-        {!loading && top3.length > 0 && (
+        {showSolo && rankings[0] && (
+          <SoloLeaderboardFloor row={rankings[0]} days={days} />
+        )}
+
+        {showPodium && (
           <div className="mb-6 grid gap-3 sm:grid-cols-3">
-            {top3.map((row, i) => (
+            {podiumSlots.map((row, i) => (
               <motion.div
-                key={row.user_id}
+                key={row?.user_id ?? `placeholder-${i}`}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.06 }}
               >
-                <SurfaceCard
-                  variant={PODIUM_VARIANT[i]}
-                  glow={row.rank === 1}
-                  className={cn('p-4 text-center', row.rank === 1 && 'sm:-mt-2 sm:pb-6')}
-                >
-                  <div className="mb-2 flex justify-center">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
-                      {row.rank === 1 ? (
-                        <Medal className="h-4 w-4 text-amber-400" />
-                      ) : (
-                        <span className="text-sm font-bold text-white/70">#{row.rank}</span>
-                      )}
-                    </span>
-                  </div>
-                  <Avatar size="lg" className="mx-auto mb-2">
-                    <AvatarFallback className="gradient-brand text-white text-sm font-bold">
-                      {initials(row.full_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <p className="font-semibold text-white truncate">{row.full_name ?? 'Agent'}</p>
-                  <p className="text-[10px] text-muted-foreground capitalize mb-2">{row.role}</p>
-                  <p className="text-2xl font-bold tabular-nums text-primary">{row.points}</p>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">points</p>
-                </SurfaceCard>
+                {row ? (
+                  <PodiumCard row={row} elevated={row.rank === 1} />
+                ) : (
+                  <PodiumPlaceholder slot={i === 0 ? 2 : i === 2 ? 3 : 1} />
+                )}
               </motion.div>
             ))}
           </div>
