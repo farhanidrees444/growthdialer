@@ -1,10 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import {
-  HEALTH_TIER_STYLES,
-  type NumberHealthTier,
-} from '@/lib/numbers/health';
+import { PRESENTATION_STYLES, type PresentationTier } from '@/lib/numbers/health';
 
 export function NumberHealthBadge({
   label,
@@ -12,18 +9,19 @@ export function NumberHealthBadge({
   className,
 }: {
   label: string;
-  tier: NumberHealthTier;
+  tier: PresentationTier;
   className?: string;
 }) {
-  const styles = HEALTH_TIER_STYLES[tier];
+  const styles = PRESENTATION_STYLES[tier];
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold',
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold tracking-wide',
         styles.badge,
         className,
       )}
     >
+      <span className={cn('h-1.5 w-1.5 rounded-full', styles.dot)} aria-hidden />
       {label}
     </span>
   );

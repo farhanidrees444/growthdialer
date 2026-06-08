@@ -362,38 +362,38 @@ export default function NumbersPage() {
   }
 
   return (
-    <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
-      <div className="mx-auto max-w-5xl">
+    <main className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
+      <div className="mx-auto max-w-6xl">
         <PageHeader
-          title="My Numbers"
-          description="Monitor caller ID health, carrier reputation, and rotation across your outbound lines."
+          title="Caller IDs"
+          description="Buy lines, verify deliverability, and let GrowthDialer rotate automatically — calm monitoring, alerts only when it matters."
           icon={Phone}
-          badge="Deliverability"
+          badge="Protected"
         >
           {tab === 'my' && (
             <button
               type="button"
               onClick={() => setTab('buy')}
-              className="inline-flex items-center gap-2 rounded-xl border border-violet-500/30 bg-violet-600/90 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-600"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-900/25 transition hover:from-violet-500 hover:to-violet-400"
             >
-              <Plus className="h-4 w-4" /> Buy number
+              <Plus className="h-4 w-4" /> Add number
             </button>
           )}
         </PageHeader>
 
-        <div className="mb-6 flex gap-1 border-b border-white/[0.06]">
+        <div className="mb-8 inline-flex rounded-xl border border-white/[0.08] bg-white/[0.02] p-1">
           {([
-            { key: 'my', label: 'Inventory' },
-            { key: 'buy', label: 'Buy new' },
+            { key: 'my', label: 'Your lines' },
+            { key: 'buy', label: 'Add new' },
           ] as const).map(({ key, label }) => (
             <button
               key={key}
               type="button"
               onClick={() => setTab(key)}
-              className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              className={`rounded-lg px-5 py-2 text-sm font-semibold transition-all ${
                 tab === key
-                  ? 'border-violet-500 text-violet-300'
-                  : 'border-transparent text-slate-500 hover:text-slate-300'
+                  ? 'bg-violet-500/20 text-violet-100 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-300'
               }`}
             >
               {label}

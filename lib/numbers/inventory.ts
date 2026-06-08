@@ -1,6 +1,12 @@
-import { averageComputedHealth, type NumberHealthAction, type NumberHealthTier } from '@/lib/numbers/health';
+import {
+  averageComputedHealth,
+  isConfirmedIssue,
+  type NumberHealthAction,
+  type NumberHealthTier,
+  type PresentationTier,
+} from '@/lib/numbers/health';
 
-export type NumberFilter = 'all' | 'needs_check' | 'at_risk' | 'expiring';
+export type NumberFilter = 'all' | 'needs_check' | 'flagged' | 'expiring';
 
 export type PurchasedNumberRecord = {
   id: string;
@@ -23,6 +29,9 @@ export type PurchasedNumberRecord = {
   reputation_score?: number | null;
   health_label?: string;
   health_tier?: NumberHealthTier;
+  presentation_label?: string;
+  presentation_tier?: PresentationTier;
+  needs_attention?: boolean;
   health_insight?: string;
   action_required?: NumberHealthAction;
   has_call_data?: boolean;
@@ -44,14 +53,8 @@ export function filterNumbers(numbers: PurchasedNumberRecord[], filter: NumberFi
   switch (filter) {
     case 'needs_check':
       return numbers.filter((n) => !n.has_reputation_check);
-    case 'at_risk':
-      return numbers.filter(
-        (n) =>
-          n.health_tier === 'at_risk' ||
-          n.health_tier === 'critical' ||
-          n.spam_status === 'flagged' ||
-          n.spam_status === 'blocked',
-      );
+    case 'flagged':
+      return numbers.filter(isConfirmedIssue);
     case 'expiring':
       return numbers.filter(isExpiringSoon);
     default:
@@ -61,18 +64,16 @@ export function filterNumbers(numbers: PurchasedNumberRecord[], filter: NumberFi
 
 export function portfolioStats(numbers: PurchasedNumberRecord[]) {
   const active = numbers.filter((n) => n.status !== 'released');
+  const flagged = active.filter(isConfirmedIssue);
+  const needsCheck = active.filter((n) => !n.has_reputation_check);
+  const verified = active.filter((n) => n.has_reputation_check);
   return {
     count: active.length,
-    needsCheck: active.filter((n) => !n.has_reputation_check).length,
-    atRisk: active.filter(
-      (n) =>
-        n.health_tier === 'at_risk' ||
-        n.health_tier === 'critical' ||
-        n.spam_status === 'flagged' ||
-        n.spam_status === 'blocked',
-    ).length,
+    needsCheck: needsCheck.length,
+    flagged: flagged.length,
     expiring: active.filter(isExpiringSoon).length,
-    avgHealth: averageComputedHealth(active),
-    scoredCount: active.filter((n) => n.computed_health !== null && n.computed_health !== undefined).length,
+    verified: verified.length,
+    avgHealth: averageComputedHealth(verified),
+    scoredCount: verified.filter((n) => n.computed_health !== null && n.computed_health !== undefined).length,
   };
 }
