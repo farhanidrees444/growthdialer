@@ -76,6 +76,19 @@ export async function GET(_req: NextRequest) {
     .eq('user_id', user.id)
     .eq('ai_processing_status', 'failed');
 
+  const { count: mirroredToStorage } = await supabase
+    .from('calls')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .not('recording_supabase_path', 'is', null);
+
+  const { count: needsMirror } = await supabase
+    .from('calls')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .not('recording_url', 'is', null)
+    .is('recording_supabase_path', null);
+
   const staleBefore = new Date(Date.now() - AI_PROCESSING_STALE_MS).toISOString();
   const { count: aiStuck } = await supabase
     .from('calls')
@@ -88,7 +101,7 @@ export async function GET(_req: NextRequest) {
   const { data: recent } = await supabase
     .from('calls')
     .select(
-      'id, created_at, status, duration_seconds, was_recorded, recording_url, ai_processing_status, ai_error, hangup_cause',
+      'id, created_at, status, duration_seconds, was_recorded, recording_url, recording_supabase_path, ai_processing_status, ai_error, hangup_cause',
     )
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
@@ -149,6 +162,12 @@ export async function GET(_req: NextRequest) {
     issues.push(`${aiFailed} recording(s) failed AI — open Recent calls for ai_error, then reprocess from Recordings.`);
   }
 
+  if ((withUrl ?? 0) > 0 && (needsMirror ?? 0) > 0) {
+    issues.push(
+      `${needsMirror} recording(s) not yet mirrored to storage — POST /api/recordings/backfill-storage or wait for cron.`,
+    );
+  }
+
   return NextResponse.json({
     ok: issues.length === 0,
     summary: {
@@ -160,6 +179,8 @@ export async function GET(_req: NextRequest) {
       ai_pending_or_processing: aiPending ?? 0,
       ai_failed: aiFailed ?? 0,
       ai_stuck_processing: aiStuck ?? 0,
+      mirrored_to_storage: mirroredToStorage ?? 0,
+      pending_storage_mirror: needsMirror ?? 0,
     },
     env,
     settings: settings ?? { note: 'No user_settings row — using defaults (recording_mode=always)' },
@@ -167,7 +188,9 @@ export async function GET(_req: NextRequest) {
     issues,
     actions: {
       backfill_ai: 'POST /api/recordings/backfill-ai',
+      backfill_storage: 'POST /api/recordings/backfill-storage',
       reprocess_one: 'POST /api/recordings/{call_id}/reprocess',
+      playback_url: 'GET /api/recordings/{call_id}/playback',
     },
     next_step:
       issues.length === 0

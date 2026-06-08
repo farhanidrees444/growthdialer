@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { canViewTeamCalls, ownCallsOrFilter } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
+import { createServiceClient } from '@/lib/supabase/service';
+import { createCallRecordingSignedUrl } from '@/lib/recordings/storage';
 
 export async function GET(request: NextRequest) {
   try {
@@ -120,8 +122,23 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.log('[RECORDINGS-LIST]', user.email, 'returned:', enriched.length);
-    return NextResponse.json({ recordings: enriched });
+    const service = createServiceClient();
+    const withPlayback = await Promise.all(
+      enriched.map(async (r) => {
+        let playback_url = r.recording_url as string;
+        if (r.recording_supabase_path && service) {
+          const signed = await createCallRecordingSignedUrl(
+            service,
+            r.recording_supabase_path as string,
+          );
+          if (signed) playback_url = signed;
+        }
+        return { ...r, playback_url };
+      }),
+    );
+
+    console.log('[RECORDINGS-LIST]', user.email, 'returned:', withPlayback.length);
+    return NextResponse.json({ recordings: withPlayback });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     console.error('[RECORDINGS-LIST] Crash:', msg);

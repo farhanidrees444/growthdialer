@@ -6,6 +6,10 @@ import {
 } from '@/lib/ai/clients';
 import { checkAIRateLimit } from '@/lib/ai/rate-limiter';
 import { shouldSkipAiProcessing } from '@/lib/ai/pipeline-status';
+import {
+  downloadRecordingAudio,
+  downloadRecordingFromStorage,
+} from '@/lib/recordings/storage';
 
 export const maxDuration = 120;
 
@@ -47,6 +51,7 @@ export async function POST(request: NextRequest) {
     user_id: string;
     lead_id: string | null;
     recording_url: string | null;
+    recording_supabase_path?: string | null;
     analytics_id?: string | null;
     ai_processed?: boolean | null;
     ai_processing_status?: string | null;
@@ -54,7 +59,7 @@ export async function POST(request: NextRequest) {
   } | null = null;
 
   const fullSelect =
-    'id, user_id, lead_id, recording_url, analytics_id, ai_processed, ai_processing_status, ai_processed_at';
+    'id, user_id, lead_id, recording_url, recording_supabase_path, analytics_id, ai_processed, ai_processing_status, ai_processed_at';
   const { data: callFull, error: callError } = await supabase
     .from('calls')
     .select(fullSelect)
@@ -65,7 +70,7 @@ export async function POST(request: NextRequest) {
     console.warn('[AI] analytics_id column missing — retrying select without it. Run migration 033.');
     const { data: callLite, error: liteErr } = await supabase
       .from('calls')
-      .select('id, user_id, lead_id, recording_url, ai_processed, ai_processing_status, ai_processed_at')
+      .select('id, user_id, lead_id, recording_url, recording_supabase_path, ai_processed, ai_processing_status, ai_processed_at')
       .eq('id', callId)
       .single();
     if (liteErr || !callLite) {
@@ -165,28 +170,17 @@ export async function POST(request: NextRequest) {
 
   if (doTranscribe) {
     try {
-      console.log('[AI] Downloading recording from:', call.recording_url);
-      // Telnyx recording URLs require Authorization header
-      console.log('[AI-2] Downloading recording from:', call.recording_url);
-      // Try without auth first (public_recording_urls from Telnyx S3 are unauthenticated).
-      // Fall back to Telnyx API key auth for private storage URLs.
-      let audioRes = await fetch(call.recording_url, {
-        signal: AbortSignal.timeout(30000),
-      });
-      if (!audioRes.ok && audioRes.status === 401) {
-        console.log('[AI-2] Public URL failed 401, retrying with Telnyx auth...');
-        audioRes = await fetch(call.recording_url, {
-          headers: { Authorization: `Bearer ${process.env.TELNYX_API_KEY ?? ''}` },
-          signal: AbortSignal.timeout(30000),
-        });
+      let audioBuffer: ArrayBuffer;
+      if (call.recording_supabase_path) {
+        console.log('[AI-2] Downloading recording from storage:', call.recording_supabase_path);
+        const stored = await downloadRecordingFromStorage(supabase, call.recording_supabase_path);
+        audioBuffer = stored.buffer;
+      } else {
+        console.log('[AI-2] Downloading recording from URL:', call.recording_url);
+        const remote = await downloadRecordingAudio(call.recording_url);
+        audioBuffer = remote.buffer;
       }
-      if (!audioRes.ok) {
-        const errBody = await audioRes.text().catch(() => '');
-        throw new Error(`Audio download failed: ${audioRes.status} ${audioRes.statusText} — ${errBody.slice(0, 200)}`);
-      }
-      console.log('[AI-2] Recording downloaded, content-type:', audioRes.headers.get('content-type'), '| size:', audioRes.headers.get('content-length'));
-
-      const audioBuffer = await audioRes.arrayBuffer();
+      console.log('[AI-2] Recording downloaded | bytes:', audioBuffer.byteLength);
       const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
       const audioFile = new File([audioBlob], 'recording.mp3', { type: 'audio/mpeg' });
 

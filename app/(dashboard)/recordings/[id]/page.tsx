@@ -11,6 +11,7 @@ import {
   Target, ChevronRight, Brain, Search, X,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useWorkspace } from '@/contexts/workspace-context';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -474,9 +475,11 @@ function MemoryTab({ memories, leadName }: { memories: LeadMemory[]; leadName: s
 export default function RecordingDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { apiFetch } = useWorkspace();
   const id = params?.id as string;
 
   const [call, setCall] = useState<CallDetail | null>(null);
+  const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<CallAnalytics | null>(null);
   const [memories, setMemories] = useState<LeadMemory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -496,6 +499,16 @@ export default function RecordingDetailPage() {
 
         if (!callData) { setLoading(false); return; }
         setCall(callData as unknown as CallDetail);
+
+        if (callData.recording_url) {
+          const playbackRes = await apiFetch(`/api/recordings/${id}/playback`);
+          if (playbackRes.ok) {
+            const playback = await playbackRes.json() as { playback_url?: string };
+            if (playback.playback_url) setPlaybackUrl(playback.playback_url);
+          } else {
+            setPlaybackUrl(callData.recording_url);
+          }
+        }
 
         if (callData.analytics_id) {
           const { data: analyticsData } = await supabase
@@ -525,7 +538,7 @@ export default function RecordingDetailPage() {
       }
     }
     load();
-  }, [id]);
+  }, [id, apiFetch]);
 
   if (loading) {
     return (
@@ -593,9 +606,9 @@ export default function RecordingDetailPage() {
         </div>
 
         {/* Audio player */}
-        {call.recording_url && (
+        {(playbackUrl ?? call.recording_url) && (
           <AudioPlayer
-            url={call.recording_url}
+            url={playbackUrl ?? call.recording_url!}
             duration={call.duration_seconds}
             onTimeUpdate={setCurrentTime}
             seekTo={seekTo}

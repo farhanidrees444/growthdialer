@@ -4,6 +4,7 @@ import { verifyTelnyxSignature } from '@/lib/telnyx-signature';
 import { claimWebhookEvent } from '@/lib/webhooks/dedup';
 import { triggerProcessCallAsync } from '@/lib/ai/trigger-process-call';
 import { shouldSkipRecordingAiQueue } from '@/lib/ai/pipeline-status';
+import { triggerMirrorRecordingAsync } from '@/lib/recordings/trigger-mirror';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -58,6 +59,7 @@ interface CallRow {
   ai_processed: boolean | null;
   ai_processed_at: string | null;
   recording_url: string | null;
+  recording_supabase_path: string | null;
   analytics_id: string | null;
 }
 
@@ -73,7 +75,7 @@ async function findCall(
   supabase: NonNullable<SupabaseClient>,
   sessionId: string | undefined,
   callControlId: string | undefined,
-  select = 'id, user_id, lead_id, to_number, from_number, answered_at, direction, duration_seconds, was_recorded, ai_processing_status, ai_processed, ai_processed_at, recording_url, analytics_id',
+  select = 'id, user_id, lead_id, to_number, from_number, answered_at, direction, duration_seconds, was_recorded, ai_processing_status, ai_processed, ai_processed_at, recording_url, recording_supabase_path, analytics_id',
 ): Promise<CallRow | null> {
   // Try session ID first (more stable across call legs)
   if (sessionId) {
@@ -648,6 +650,13 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true, error: 'recording_save_failed' });
       }
       console.log('[REC-C] recording_url saved to DB for call:', callRow.id);
+
+      triggerMirrorRecordingAsync(
+        callRow.id,
+        callRow.user_id,
+        recordingUrl,
+        callRow.recording_supabase_path,
+      );
 
       // Determine if any AI feature is enabled (default to true when no settings row exists)
       const anyAiEnabled =

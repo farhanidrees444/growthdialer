@@ -23,6 +23,7 @@ interface RecordingLead {
 interface Recording {
   id: string;
   recording_url: string;
+  playback_url?: string;
   duration_seconds: number | null;
   transcript: string | null;
   started_at: string;
@@ -210,7 +211,7 @@ function RecordingCard({
       <div className="flex items-center gap-3 p-4">
         {/* Player */}
         <MiniPlayer
-          url={rec.recording_url}
+          url={rec.playback_url ?? rec.recording_url}
           id={rec.id}
           activeId={activePlayId}
           onActivate={onActivatePlay}

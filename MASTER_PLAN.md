@@ -53,7 +53,8 @@ Copy the same vars to **Vercel** (production) as `.env.local` where applicable.
 - [ ] Telnyx balance positive (was negative — blocks all voice)
 - [ ] Telnyx webhook → `https://app.growthdialer.com/api/telnyx/webhook` (API v2, include `call.recording.saved`)
 - [ ] Run Supabase migrations **037 → 046** in SQL Editor (incl. `046_protect_webhook_secret_column.sql`)
-- [ ] Storage bucket `call-recordings` (private) + RLS policies
+- [x] Storage bucket `call-recordings` (private) — exists in dashboard
+- [ ] Run migration **047** for storage RLS policies + index
 - [ ] Supabase Realtime on `calls` ✅
 - [ ] HubSpot app redirect → `https://app.growthdialer.com/api/integrations/hubspot/callback`
 - [ ] Test call **>30s** → open `/api/recordings/diagnostics` while logged in
@@ -96,7 +97,7 @@ Features that **beat** PhoneBurner, CallHippo, CloudTalk, Nooks when fully worki
 | **5** | Recordings diagnostics pass | 🟡 | **Moat** | Enhanced `/api/recordings/diagnostics` — run after test call in prod |
 | **6** | Recordings save pipeline | 🟡 | **Moat** | Fixed `ai_processing_status` bug blocking `recording_url` saves |
 | **7** | AI pipeline end-to-end | 🟡 | **Moat** | Shared trigger, backfill, cron retry; Gemini 2.5 Flash — verify live call |
-| **8** | Supabase recording storage | ⬜ | Ops | Mirror to `call-recordings` bucket |
+| **8** | Supabase recording storage | 🟡 | Ops | Auto-mirror on webhook + signed playback; run migration 047 |
 
 ---
 
@@ -196,6 +197,7 @@ These are **working** today — outbound dialer, leads, power/parallel dialer, w
 | 2026-06-08 | Step 1 | Fixed `CountUp` + `StatsBand` — stats show 50+/3/100%/&lt;4s on first paint; build passes |
 | 2026-06-08 | Step 2 | Marketing claims audit — honest-copy.ts, pillars, FAQ, roadmap, pricing; build + push |
 | 2026-06-08 | Steps 5–7 | Fixed webhook `ai_analysis_status`→`ai_processing_status`; trigger/backfill/cron; diagnostics |
+| 2026-06-08 | Step 8 | Mirror Telnyx recordings → `call-recordings`; signed playback URLs; backfill + cron |
 
 ---
 
