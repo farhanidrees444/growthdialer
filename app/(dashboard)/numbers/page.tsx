@@ -17,6 +17,15 @@ import {
   TELNYX_COUNTRIES, POPULAR_COUNTRIES, NUMBER_TYPE_LABELS,
   type TelnyxCountry,
 } from '@/lib/telnyx-countries';
+import { NumberHealthBadge } from '@/components/numbers/number-health-badge';
+import {
+  averageComputedHealth,
+  formatHealthPercent,
+  formatReputationScore,
+  healthScoreBar,
+  healthScoreColor,
+  type NumberHealthTier,
+} from '@/lib/numbers/health';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,7 +56,12 @@ interface PurchasedNumber {
   health_score: number | null;
   spam_status: string | null;
   stats?: NumberStats;
-  computed_health?: number;
+  computed_health?: number | null;
+  reputation_score?: number | null;
+  health_label?: string;
+  health_tier?: NumberHealthTier;
+  has_call_data?: boolean;
+  has_reputation_check?: boolean;
 }
 
 interface AvailableNumber {
@@ -106,7 +120,9 @@ function NumberCard({ num, isOnlyNumber, onSetDefault, onRelease, onSpamCheck, o
   const [labelVal, setLabelVal] = useState(num.label ?? '');
 
   const retailPrice = calculateRetailPrice(Number(num.monthly_cost));
-  const health = num.computed_health ?? 100;
+  const health = num.computed_health ?? null;
+  const healthTier = num.health_tier ?? 'unknown';
+  const healthLabel = num.health_label ?? 'New';
   const spamStatus = num.spam_status ?? 'clean';
   const spam = SPAM_CONFIG[spamStatus] ?? SPAM_CONFIG.clean;
   const stats = num.stats ?? { total_calls: 0, connected: 0, connect_rate: 0, last_used: null };
@@ -114,8 +130,9 @@ function NumberCard({ num, isOnlyNumber, onSetDefault, onRelease, onSpamCheck, o
   const isExpiringSoon = renewDays !== null && renewDays <= 7 && renewDays >= 0;
   const hasBilling = !!num.stripe_subscription_id;
 
-  const healthColor = health >= 80 ? 'text-emerald-400' : health >= 50 ? 'text-amber-400' : 'text-red-400';
-  const healthBar   = health >= 80 ? 'bg-emerald-500' : health >= 50 ? 'bg-amber-500' : 'bg-red-500';
+  const healthColor = healthScoreColor(health);
+  const healthBar = healthScoreBar(health);
+  const healthBarWidth = health ?? 0;
 
   async function handleSetDefault() {
     setSettingDefault(true);
@@ -173,6 +190,7 @@ function NumberCard({ num, isOnlyNumber, onSetDefault, onRelease, onSpamCheck, o
                   <Star className="h-2.5 w-2.5 fill-cyan-400" /> DEFAULT
                 </span>
               )}
+              <NumberHealthBadge label={healthLabel} tier={healthTier} />
               <button
                 onClick={handleCopy}
                 className="flex items-center gap-1 p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/[0.05] transition-all text-[10px]"
@@ -232,11 +250,12 @@ function NumberCard({ num, isOnlyNumber, onSetDefault, onRelease, onSpamCheck, o
         </p>
 
         {/* ── Stats grid ── */}
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           {[
             { label: 'Calls 30d',    value: stats.total_calls.toLocaleString(), icon: Phone,     color: 'text-white/80' },
             { label: 'Connect Rate', value: `${stats.connect_rate}%`,           icon: TrendingUp, color: stats.connect_rate >= 20 ? 'text-emerald-400' : 'text-white/80' },
-            { label: 'Health',       value: `${health}%`,                       icon: Zap,        color: healthColor },
+            { label: 'Reputation',   value: formatReputationScore(num.reputation_score ?? null), icon: Shield, color: num.reputation_score !== null && num.reputation_score !== undefined ? healthColor : 'text-slate-400' },
+            { label: 'Health',       value: formatHealthPercent(health),        icon: Zap,        color: healthColor },
             { label: 'Spam Status',  value: spam.label,                         icon: Shield,     color: spam.color, bg: spam.bg, border: spam.border },
           ].map((stat) => (
             <div key={stat.label}
@@ -249,8 +268,16 @@ function NumberCard({ num, isOnlyNumber, onSetDefault, onRelease, onSpamCheck, o
 
         {/* ── Health bar ── */}
         <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/[0.05]">
-          <div className={`h-full rounded-full transition-all duration-500 ${healthBar}`} style={{ width: `${health}%` }} />
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${healthBar} ${health === null ? 'opacity-40' : ''}`}
+            style={{ width: health === null ? '8%' : `${healthBarWidth}%` }}
+          />
         </div>
+        {!num.has_reputation_check && (
+          <p className="mt-2 text-[10px] text-slate-500">
+            Run spam check to unlock carrier reputation score.
+          </p>
+        )}
 
         {/* ── Billing expiry warning ── */}
         {isExpiringSoon && !hasBilling && (
@@ -416,7 +443,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
   }
 
   const totalCost = active.reduce((s, n) => s + calculateRetailPrice(Number(n.monthly_cost)), 0);
-  const avgHealth = Math.round(active.reduce((s, n) => s + (n.computed_health ?? 100), 0) / active.length);
+  const avgHealth = averageComputedHealth(active);
   const expiringCount = active.filter((n) => {
     if (!n.next_billing_date || n.stripe_subscription_id) return false;
     const d = daysUntil(n.next_billing_date);
@@ -455,7 +482,7 @@ function MyNumbers({ refreshSignal, onBuyNew }: MyNumbersProps) {
         <span className="text-white/10 hidden sm:inline">·</span>
         <span>Monthly: <span className="font-bold text-white">${totalCost.toFixed(2)}</span></span>
         <span className="text-white/10 hidden sm:inline">·</span>
-        <span>Avg health: <span className={`font-bold ${avgHealth >= 80 ? 'text-emerald-400' : avgHealth >= 50 ? 'text-amber-400' : 'text-red-400'}`}>{avgHealth}%</span></span>
+        <span>Avg health: <span className={`font-bold ${healthScoreColor(avgHealth)}`}>{formatHealthPercent(avgHealth)}</span></span>
       </div>
 
       {/* Search */}

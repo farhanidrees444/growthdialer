@@ -2,8 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, ChevronRight, Phone, Shield } from 'lucide-react';
+import { Activity, ChevronRight, Phone } from 'lucide-react';
 import Link from 'next/link';
+import { NumberHealthBadge } from '@/components/numbers/number-health-badge';
+import {
+  averageComputedHealth,
+  formatHealthPercent,
+  formatReputationScore,
+  healthScoreBar,
+  healthScoreColor,
+  type NumberHealthTier,
+} from '@/lib/numbers/health';
 
 interface NumberStats {
   total_calls: number;
@@ -18,7 +27,12 @@ interface NumberItem {
   label: string | null;
   is_default: boolean;
   spam_status: string | null;
-  computed_health?: number;
+  computed_health?: number | null;
+  reputation_score?: number | null;
+  health_label?: string;
+  health_tier?: NumberHealthTier;
+  has_call_data?: boolean;
+  has_reputation_check?: boolean;
   stats?: NumberStats;
 }
 
@@ -27,13 +41,6 @@ function fmtPhone(p: string): string {
   if (d.length === 11) return `(${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`;
   return p;
 }
-
-const SPAM_DOT: Record<string, string> = {
-  clean:    'bg-emerald-400',
-  low_risk: 'bg-amber-400',
-  flagged:  'bg-orange-400',
-  blocked:  'bg-red-500',
-};
 
 export function NumberHealthCard() {
   const [numbers, setNumbers] = useState<NumberItem[]>([]);
@@ -57,19 +64,15 @@ export function NumberHealthCard() {
     return () => clearInterval(interval);
   }, []);
 
-  const active = numbers.filter((n) => true); // list route already filters released
-  const avgHealth = active.length
-    ? Math.round(active.reduce((s, n) => s + (n.computed_health ?? 100), 0) / active.length)
-    : 0;
+  const active = numbers;
+  const avgHealth = averageComputedHealth(active);
+  const withData = active.filter((n) => n.computed_health !== null && n.computed_health !== undefined);
   const cleanCount = active.filter((n) => (n.spam_status ?? 'clean') === 'clean').length;
   const atRisk = active.filter((n) => n.spam_status === 'flagged' || n.spam_status === 'blocked').length;
-
-  const healthColor =
-    avgHealth >= 80 ? 'text-emerald-400' : avgHealth >= 50 ? 'text-amber-400' : 'text-red-400';
+  const needsCheck = active.filter((n) => !n.has_reputation_check).length;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl">
-      {/* Header */}
       <div className="flex items-center justify-between px-5 py-4">
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-cyan-400" />
@@ -91,8 +94,10 @@ export function NumberHealthCard() {
         </div>
       ) : active.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-5 py-10 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.03]"
-            style={{ background: 'linear-gradient(135deg,rgba(139,92,246,0.08),rgba(6,182,212,0.08))' }}>
+          <div
+            className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.03]"
+            style={{ background: 'linear-gradient(135deg,rgba(139,92,246,0.08),rgba(6,182,212,0.08))' }}
+          >
             <Phone className="h-5 w-5 text-white/30" />
           </div>
           <p className="text-sm text-white/40">No numbers configured</p>
@@ -102,27 +107,49 @@ export function NumberHealthCard() {
         </div>
       ) : (
         <>
-          {/* Summary stats */}
           <div className="grid grid-cols-3 gap-2 px-5 pb-4">
             {[
-              { label: 'Avg Health', value: `${avgHealth}%`, color: healthColor },
-              { label: 'Clean',      value: `${cleanCount}/${active.length}`, color: 'text-cyan-400' },
-              { label: 'At Risk',    value: String(atRisk), color: atRisk > 0 ? 'text-red-400' : 'text-white/50' },
+              {
+                label: 'Avg Health',
+                value: formatHealthPercent(avgHealth),
+                color: healthScoreColor(avgHealth),
+                hint: withData.length < active.length ? `${withData.length}/${active.length} scored` : undefined,
+              },
+              {
+                label: 'Clean',
+                value: `${cleanCount}/${active.length}`,
+                color: 'text-cyan-400',
+              },
+              {
+                label: 'At Risk',
+                value: String(atRisk),
+                color: atRisk > 0 ? 'text-red-400' : 'text-white/50',
+              },
             ].map((stat) => (
-              <div key={stat.label}
-                className="rounded-xl border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-center">
+              <div
+                key={stat.label}
+                className="rounded-xl border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-center"
+              >
                 <p className={`text-lg font-light tabular-nums leading-none ${stat.color}`}>{stat.value}</p>
                 <p className="mt-1 text-[9px] uppercase tracking-wider text-white/35">{stat.label}</p>
+                {stat.hint && <p className="mt-0.5 text-[9px] text-white/25">{stat.hint}</p>}
               </div>
             ))}
           </div>
 
-          {/* Number rows */}
+          {needsCheck > 0 && (
+            <p className="px-5 pb-3 text-[11px] text-slate-500">
+              {needsCheck} number{needsCheck === 1 ? '' : 's'} need a spam check for reputation score.
+            </p>
+          )}
+
           <div className="flex-1 space-y-1.5 overflow-y-auto px-5 pb-5">
             {active.slice(0, 6).map((num, i) => {
-              const health = num.computed_health ?? 100;
-              const barColor = health >= 80 ? 'bg-emerald-500' : health >= 50 ? 'bg-amber-500' : 'bg-red-500';
-              const dotColor = SPAM_DOT[num.spam_status ?? 'clean'] ?? SPAM_DOT.clean;
+              const health = num.computed_health ?? null;
+              const tier = num.health_tier ?? 'unknown';
+              const label = num.health_label ?? 'New';
+              const barColor = healthScoreBar(health);
+              const barWidth = health ?? 0;
 
               return (
                 <motion.div
@@ -132,32 +159,30 @@ export function NumberHealthCard() {
                   transition={{ delay: i * 0.05, duration: 0.2 }}
                   className="flex items-center gap-3 rounded-xl border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 transition-colors hover:bg-white/[0.04]"
                 >
-                  {/* Spam dot */}
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${dotColor}`} />
-
-                  {/* Number info */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate font-mono text-sm text-white/90">
                         {fmtPhone(num.phone_number)}
                       </span>
-                      <span className="shrink-0 tabular-nums text-xs text-white/40">{health}%</span>
+                      <NumberHealthBadge label={label} tier={tier} />
                     </div>
                     {num.label && (
                       <p className="truncate text-[10px] text-white/30">{num.label}</p>
                     )}
-                    {/* Health bar */}
+                    <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-white/35">
+                      <span>Health {formatHealthPercent(health)}</span>
+                      <span>Rep. {formatReputationScore(num.reputation_score ?? null)}</span>
+                    </div>
                     <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/[0.05]">
                       <motion.div
                         initial={{ width: 0 }}
-                        animate={{ width: `${health}%` }}
+                        animate={{ width: health === null ? '8%' : `${barWidth}%` }}
                         transition={{ delay: i * 0.05 + 0.2, duration: 0.5, ease: 'easeOut' }}
-                        className={`h-full rounded-full ${barColor}`}
+                        className={`h-full rounded-full ${barColor} ${health === null ? 'opacity-40' : ''}`}
                       />
                     </div>
                   </div>
 
-                  {/* Default badge */}
                   {num.is_default && (
                     <span className="shrink-0 text-[9px] font-bold text-cyan-400">DEF</span>
                   )}

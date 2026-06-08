@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { computeNumberHealth } from '@/lib/numbers/health';
 
 export async function GET() {
   try {
@@ -56,23 +57,24 @@ export async function GET() {
 
         const total = totalRes.count ?? 0;
         const connected = connectedRes.count ?? 0;
-
-        const spamStatus = num.spam_status ?? 'clean';
-        let health = 100;
-        if (spamStatus === 'low_risk') health -= 20;
-        if (spamStatus === 'flagged') health -= 50;
-        if (spamStatus === 'blocked') health = 10;
-        if (total > 200) health -= 15;
+        const connectRate = total > 0 ? Math.round((connected / total) * 100) : 0;
+        const health = computeNumberHealth({
+          spam_status: num.spam_status,
+          spam_score: num.spam_score,
+          last_spam_check: num.last_spam_check,
+          total_calls: total,
+          connect_rate: connectRate,
+        });
 
         return {
           ...num,
           stats: {
             total_calls: total,
             connected,
-            connect_rate: total > 0 ? Math.round((connected / total) * 100) : 0,
+            connect_rate: connectRate,
             last_used: lastRes.data?.started_at ?? null,
           },
-          computed_health: Math.max(0, health),
+          ...health,
         };
       }),
     );
