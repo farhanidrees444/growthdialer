@@ -109,7 +109,7 @@ Features that **beat** PhoneBurner, CallHippo, CloudTalk, Nooks when fully worki
 | **9** | Dashboard Recent Calls empty bug | 🟡 | UX | Recent-calls API + ended_at backfill; verify after test call |
 | **10** | Call Logs visual polish | 🟡 | **Moat** | Date groups, premium cards, sticky filters — verify in prod |
 | **11** | Leaderboard solo state | 🟡 | UX | Solo floor hero + invite CTA; podium placeholders for 2-member teams |
-| **12** | Floating right-edge icons bug | ⬜ | UX | Stacked fixed FABs/overlays |
+| **12** | Floating right-edge icons bug | 🟡 | UX | Unified FAB dock + call-bar reserve; verify dialer + active call |
 | **13** | Number Health contradiction | ⬜ | UX | Healthy label vs 0 reputation |
 | **14** | Sequences demo cleanup | ⬜ | Demo | Delete junk sequence names |
 

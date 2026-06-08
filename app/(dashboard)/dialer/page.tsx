@@ -17,7 +17,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { ownCallsOrFilter } from '@/lib/auth/call-access';
 import { normalizePhone } from '@/lib/phone';
-import { Users, Sparkles, X as XIcon } from 'lucide-react';
+import { X as XIcon } from 'lucide-react';
 
 import { HeaderStrip } from '@/components/dialer/header-strip';
 import { QueueColumn } from '@/components/dialer/queue-column';
@@ -34,6 +34,7 @@ import DialModeSegmented, { type DialMode } from '@/components/dialer/DialModeSe
 import { ParallelDialConfigModal } from '@/components/dialer/parallel-dial-config-modal';
 import { ParallelDialStage } from '@/components/dialer/parallel-dial-stage';
 import { ParallelSessionBanner } from '@/components/dialer/parallel-session-banner';
+import { DialerFloatingActions } from '@/components/dialer/dialer-floating-actions';
 
 import type { LeadRecord, DispositionType } from '@/lib/dialer/state-machine';
 
@@ -47,7 +48,10 @@ function DtmfKeypad({ onSend, onClose }: { onSend: (d: string) => void; onClose:
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 8 }}
       className="fixed right-4 z-[var(--z-drawer)] w-[min(16rem,calc(100vw-2rem))] rounded-2xl border border-white/[0.10] p-4 shadow-2xl backdrop-blur-2xl bg-zinc-900/95 lg:right-6"
-      style={{ bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 5rem)' }}
+      style={{
+        bottom:
+          'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 5rem + var(--gd-dock-call-height, 0px))',
+      }}
     >
       <div className="flex justify-between items-center mb-3">
         <span className="text-xs text-white/40 uppercase tracking-widest">Keypad</span>
@@ -704,29 +708,15 @@ export default function DialerPage() {
         )}
       </AnimatePresence>
 
-      {/* Floating manual dial button — desktop only, browse + preview */}
-      <AnimatePresence>
-        {mode !== 'live' && (
-          <motion.button
-            key="fab"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.06, boxShadow: '0 0 24px rgba(124,58,237,0.35)' }}
-            whileTap={{ scale: 0.94 }}
-            onClick={() => setDialpadOpen(true)}
-            className="hidden lg:flex fixed bottom-6 right-6 z-30 w-14 h-14 rounded-full items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-            style={{
-              background: 'rgba(255,255,255,0.07)',
-              backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(255,255,255,0.10)',
-            }}
-            aria-label="Open manual dialer (D)"
-          >
-            <Phone className="w-5 h-5 text-white" />
-          </motion.button>
-        )}
-      </AnimatePresence>
+      <DialerFloatingActions
+        mode={mode}
+        selectedLead={selectedLead}
+        queueCount={queueCounts.queue}
+        onOpenDialpad={() => setDialpadOpen(true)}
+        onOpenQueue={() => setMobileQueueOpen(true)}
+        onOpenAiBrief={() => setMobileAiBriefOpen(true)}
+        onOpenLiveInsights={() => setMobileLiveInsightsOpen(true)}
+      />
 
       {/* ── Overlays ── */}
 
@@ -977,52 +967,6 @@ export default function DialerPage() {
             onClose={() => setDtmfOpen(false)}
           />
         )}
-      </AnimatePresence>
-
-      {/* ── Mobile floating buttons — hidden on md+ (queue column visible) ── */}
-      <AnimatePresence>
-        <motion.div
-          key="mobile-fabs"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8 }}
-          className="md:hidden fixed right-4 z-30 flex flex-col gap-2.5"
-          style={{ bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 4.5rem)' }}
-        >
-          {mode === 'live' && selectedLead && (
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setMobileLiveInsightsOpen(true)}
-              className="flex h-12 w-12 items-center justify-center rounded-full shadow-xl text-white gradient-brand"
-              aria-label="Open live insights"
-            >
-              <Sparkles className="h-5 w-5" />
-            </motion.button>
-          )}
-          {mode === 'preview' && selectedLead && (
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setMobileAiBriefOpen(true)}
-              className="flex h-12 w-12 items-center justify-center rounded-full shadow-xl text-white gradient-brand"
-              aria-label="Open AI Brief"
-            >
-              <Sparkles className="h-5 w-5" />
-            </motion.button>
-          )}
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setMobileQueueOpen(true)}
-            className="relative flex h-12 w-12 items-center justify-center rounded-full shadow-xl text-white bg-white/[0.08] backdrop-blur-xl border border-white/[0.12]"
-            aria-label="Open Queue"
-          >
-            <Users className="h-5 w-5" />
-            {queueCounts.queue > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">
-                {queueCounts.queue > 99 ? '99+' : queueCounts.queue}
-              </span>
-            )}
-          </motion.button>
-        </motion.div>
       </AnimatePresence>
 
       {/* ── Mobile Queue Drawer ── */}

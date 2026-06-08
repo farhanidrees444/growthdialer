@@ -343,7 +343,7 @@ function PopoutBadge({ onReturn }: { onReturn: () => void }) {
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0.8, opacity: 0 }}
       transition={{ type: 'spring', damping: 22, stiffness: 300 }}
-      className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-2xl border border-white/[0.12] bg-[oklch(0.09_0.006_285)]/96 px-3.5 py-2.5 shadow-2xl shadow-black/60 backdrop-blur-xl transition hover:border-white/20"
+      className="gd-call-dock z-[var(--z-popout-badge)] flex items-center gap-2.5 rounded-2xl border border-white/[0.12] bg-[oklch(0.09_0.006_285)]/96 px-3.5 py-2.5 shadow-2xl shadow-black/60 backdrop-blur-xl transition hover:border-white/20"
       aria-label="Return to call"
     >
       <div className="relative flex h-2 w-2 shrink-0">

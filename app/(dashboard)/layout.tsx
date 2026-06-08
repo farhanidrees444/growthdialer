@@ -16,6 +16,7 @@ import { WorkspaceGate } from "@/components/workspace/workspace-gate";
 import { IncomingCallPopup } from "@/components/call/incoming-call-popup";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { PremiumOverlays } from "@/components/premium/premium-overlays";
+import { FloatingEdgeProvider } from "@/components/layout/floating-edge-provider";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 
@@ -46,6 +47,7 @@ export default function DashboardLayout({
     <WorkspaceProvider>
       <WebPhoneProvider>
         <CallProvider>
+          <FloatingEdgeProvider>
           <CallOrchestratorProvider>
           <LeadsProvider>
             <MobileNavProvider>
@@ -72,6 +74,7 @@ export default function DashboardLayout({
             </MobileNavProvider>
           </LeadsProvider>
           </CallOrchestratorProvider>
+          </FloatingEdgeProvider>
         </CallProvider>
       </WebPhoneProvider>
     </WorkspaceProvider>

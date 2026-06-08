@@ -95,20 +95,21 @@ export function PersistentCallBar({
   );
 
   return (
-    <SentimentAmbient sentiment={sentiment} className="fixed z-[60]">
+    <SentimentAmbient
+      sentiment={sentiment}
+      className={cn('fixed', isMobile ? 'z-[var(--z-call-bar)]' : 'gd-call-dock')}
+    >
       <motion.div
         layoutId={layoutId}
         layout={!reduce}
         transition={SPRING}
         className={cn(
           'flex items-center gap-2.5 border border-white/[0.10] bg-[oklch(0.09_0.006_285)]/96 px-3.5 py-2.5 shadow-2xl shadow-black/60 backdrop-blur-xl',
-          isMobile
-            ? 'left-0 right-0 border-t border-b-0 rounded-none'
-            : 'bottom-5 right-5 rounded-2xl',
+          isMobile ? 'left-0 right-0 border-t border-b-0 rounded-none' : 'rounded-2xl',
         )}
         style={
           isMobile
-            ? { bottom: 'calc(56px + env(safe-area-inset-bottom, 0px))' }
+            ? { bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))' }
             : { minWidth: 280, maxWidth: 'min(92vw, 380px)' }
         }
       >

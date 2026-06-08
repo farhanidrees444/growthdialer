@@ -54,8 +54,14 @@
   --bottom-nav-height: 56px;
   --touch-target-min: 44px;
   --z-nav: 40;
+  --z-fab-stack: 35;
   --z-drawer: 50;
+  --z-popout-badge: 55;
+  --z-call-bar: 60;
   --z-modal: 60;
+  --z-milestone: 70;
+  --gd-dock-call-height: 0px;
+  --gd-dock-call-active: 0;
   /* ─── Enterprise app shell (Smartlead-inspired) ───
      zinc-950 canvas · zinc-900 surfaces · zinc-800/50 borders
      Primary copy zinc-100 · secondary zinc-400 · violet accent for CTAs only */
@@ -329,6 +335,35 @@ html {
   /* Bottom tab bar height helper */
   .pb-bottom-bar {
     padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Bottom-right floating controls — single column host (Step 12) */
+  .gd-floating-edge {
+    position: fixed;
+    z-index: var(--z-fab-stack);
+    right: max(1rem, env(safe-area-inset-right, 0px));
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 0.625rem;
+    pointer-events: none;
+  }
+  .gd-floating-edge > * {
+    pointer-events: auto;
+  }
+  .gd-floating-edge--desktop {
+    bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px) + var(--gd-dock-call-height, 0px));
+  }
+  .gd-floating-edge--mobile-dialer {
+    bottom: calc(
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 4.5rem + var(--gd-dock-call-height, 0px)
+    );
+  }
+  .gd-call-dock {
+    position: fixed;
+    z-index: var(--z-call-bar);
+    right: max(1.25rem, env(safe-area-inset-right, 0px));
+    bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
   }
 }
 
