@@ -106,7 +106,7 @@ Features that **beat** PhoneBurner, CallHippo, CloudTalk, Nooks when fully worki
 | Step | Title | Status | Moat? | Notes |
 |------|-------|--------|-------|-------|
 | **9** | Dashboard Recent Calls empty bug | ⬜ | UX | `ended_at` not set on disposition; query filters it out |
-| **10** | Call Logs visual polish | ⬜ | **Moat** | Weakest page vs rest of app |
+| **10** | Call Logs visual polish | 🟡 | **Moat** | Date groups, premium cards, sticky filters — verify in prod |
 | **11** | Leaderboard solo state | ⬜ | UX | Empty podium for 1 user |
 | **12** | Floating right-edge icons bug | ⬜ | UX | Stacked fixed FABs/overlays |
 | **13** | Number Health contradiction | ⬜ | UX | Healthy label vs 0 reputation |
@@ -198,6 +198,7 @@ These are **working** today — outbound dialer, leads, power/parallel dialer, w
 | 2026-06-08 | Step 2 | Marketing claims audit — honest-copy.ts, pillars, FAQ, roadmap, pricing; build + push |
 | 2026-06-08 | Steps 5–7 | Fixed webhook `ai_analysis_status`→`ai_processing_status`; trigger/backfill/cron; diagnostics |
 | 2026-06-08 | Step 8 | Mirror Telnyx recordings → `call-recordings`; signed playback URLs; backfill + cron |
+| 2026-06-08 | Step 10 | Call Logs polish — date grouping, stat cards, row cards, recording links |
 
 ---
 

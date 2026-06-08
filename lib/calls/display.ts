@@ -87,3 +87,59 @@ export function dispositionLabel(disp: string | null): string | null {
   if (!disp) return null;
   return DISP_LABELS[disp] ?? disp.replace(/_/g, ' ');
 }
+
+export const DISP_COLORS: Record<string, string> = {
+  interested: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+  callback: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+  meeting_booked: 'bg-violet-500/15 text-violet-400 border-violet-500/20',
+  voicemail: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
+  not_interested: 'bg-slate-500/15 text-slate-400 border-slate-500/20',
+  wrong_number: 'bg-red-500/15 text-red-400 border-red-500/20',
+  gatekeeper: 'bg-purple-500/15 text-purple-300 border-purple-500/20',
+  dnc: 'bg-red-600/15 text-red-500 border-red-600/20',
+  missed: 'bg-red-500/10 text-red-400 border-red-500/15',
+  no_answer: 'bg-slate-500/10 text-slate-500 border-slate-500/15',
+};
+
+export type CallDateGroup = 'today' | 'yesterday' | 'this_week' | 'earlier';
+
+export function callDateGroup(iso: string | null | undefined): CallDateGroup {
+  if (!iso) return 'earlier';
+  const d = new Date(iso);
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfYesterday = new Date(startOfToday);
+  startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+  const startOfWeek = new Date(startOfToday);
+  startOfWeek.setDate(startOfWeek.getDate() - 6);
+
+  if (d >= startOfToday) return 'today';
+  if (d >= startOfYesterday) return 'yesterday';
+  if (d >= startOfWeek) return 'this_week';
+  return 'earlier';
+}
+
+export const DATE_GROUP_ORDER: CallDateGroup[] = ['today', 'yesterday', 'this_week', 'earlier'];
+
+export const DATE_GROUP_LABELS: Record<CallDateGroup, string> = {
+  today: 'Today',
+  yesterday: 'Yesterday',
+  this_week: 'This week',
+  earlier: 'Earlier',
+};
+
+export function getCallStatusPill(call: CallLogRow): { label: string; className: string } {
+  if (isMissedCall(call)) {
+    return { label: 'Missed', className: 'bg-red-500/10 text-red-400 border-red-500/20' };
+  }
+  if (isConnected(call)) {
+    return { label: 'Connected', className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
+  }
+  return { label: 'No answer', className: 'bg-slate-500/10 text-slate-500 border-slate-500/15' };
+}
+
+export function getCallDetailHref(call: CallLogRow): string | null {
+  if (call.recording_url || call.was_recorded) return `/recordings/${call.id}`;
+  if (call.lead_id) return `/leads/${call.lead_id}`;
+  return null;
+}
