@@ -2,6 +2,7 @@
   "installCommand": "yarn install --ignore-engines",
   "crons": [
     { "path": "/api/cron/cleanup-trash", "schedule": "0 3 * * *" },
-    { "path": "/api/cron/release-expired-numbers", "schedule": "0 4 * * *" }
+    { "path": "/api/cron/release-expired-numbers", "schedule": "0 4 * * *" },
+    { "path": "/api/cron/retry-ai-pipeline", "schedule": "*/15 * * * *" }
   ]
 }

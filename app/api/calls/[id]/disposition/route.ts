@@ -47,19 +47,24 @@ export async function POST(
     const leadStatus = meta?.lead_status ?? 'contacted';
     const now = new Date().toISOString();
 
+    const { data: callMeta } = await supabase
+      .from('calls')
+      .select('duration_seconds, direction, ended_at')
+      .eq('id', id)
+      .single();
+
     const callUpdate: Record<string, unknown> = {
       disposition,
       disposition_notes: notes ?? null,
       notes: notes ?? null,
       updated_at: now,
     };
+    // Dashboard Recent Calls filters on ended_at — set when rep dispositions before hangup webhook.
+    if (!callMeta?.ended_at) {
+      callUpdate.ended_at = now;
+      callUpdate.status = 'completed';
+    }
     await supabase.from('calls').update(callUpdate).eq('id', id);
-
-    const { data: callMeta } = await supabase
-      .from('calls')
-      .select('duration_seconds, direction')
-      .eq('id', id)
-      .single();
 
     let leadName: string | null = null;
     let leadPhone: string | null = null;

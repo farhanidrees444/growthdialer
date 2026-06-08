@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
+import { triggerProcessCall } from '@/lib/ai/trigger-process-call';
 
 export async function POST(
   request: NextRequest,
@@ -60,43 +61,15 @@ export async function POST(
       })
       .eq('id', id);
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? 'http://localhost:3000';
-    const aiUrl = `${baseUrl}/api/ai/process-call`;
-    console.log('[REPROCESS] Triggering AI at:', aiUrl);
-
-    // Start the request — don't await completion (maxDuration=120 in process-call).
-    // We check that the request started successfully before returning.
-    let triggerStatus = 0;
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s to confirm the request started
-      const res = await fetch(aiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-internal-secret': process.env.INTERNAL_API_SECRET ?? '',
-        },
-        body: JSON.stringify({ call_id: id }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      triggerStatus = res.status;
-      const body = await res.text().catch(() => '');
-      console.log('[REPROCESS] AI trigger status:', triggerStatus, '| body:', body.slice(0, 200));
-    } catch (fetchErr) {
-      // AbortError means the 5s timeout hit — request was still sent (process-call started)
-      if ((fetchErr as Error).name === 'AbortError') {
-        console.log('[REPROCESS] Trigger started (5s timeout) — process-call is running');
-      } else {
-        console.error('[REPROCESS] Trigger fetch error:', fetchErr);
-        return NextResponse.json({ error: 'Failed to reach AI processing endpoint' }, { status: 500 });
-      }
+    const triggered = await triggerProcessCall(id);
+    if (!triggered.ok) {
+      console.error('[REPROCESS] AI trigger failed:', triggered.detail);
+      return NextResponse.json({ error: triggered.detail }, { status: 500 });
     }
-
-    if (triggerStatus === 401) {
-      console.error('[REPROCESS] AI endpoint 401 — check INTERNAL_API_SECRET env var');
+    if (triggered.status === 401) {
       return NextResponse.json({ error: 'AI endpoint authentication failed — check INTERNAL_API_SECRET' }, { status: 500 });
     }
+    console.log('[REPROCESS] AI trigger status:', triggered.status, '| body:', triggered.body.slice(0, 200));
 
     return NextResponse.json({ success: true, message: 'Processing started' });
   } catch (err: unknown) {

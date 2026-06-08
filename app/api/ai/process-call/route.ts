@@ -5,6 +5,7 @@ import {
   analyzeCallWithGemini, analyzeCallWithGroq,
 } from '@/lib/ai/clients';
 import { checkAIRateLimit } from '@/lib/ai/rate-limiter';
+import { shouldSkipAiProcessing } from '@/lib/ai/pipeline-status';
 
 export const maxDuration = 120;
 
@@ -41,20 +42,48 @@ export async function POST(request: NextRequest) {
   const startedAt = Date.now();
 
   // ── Step 1: Fetch call + idempotency check ─────────────────────────────────
-  const { data: call, error: callError } = await supabase
+  let call: {
+    id: string;
+    user_id: string;
+    lead_id: string | null;
+    recording_url: string | null;
+    analytics_id?: string | null;
+    ai_processed?: boolean | null;
+    ai_processing_status?: string | null;
+    ai_processed_at?: string | null;
+  } | null = null;
+
+  const fullSelect =
+    'id, user_id, lead_id, recording_url, analytics_id, ai_processed, ai_processing_status, ai_processed_at';
+  const { data: callFull, error: callError } = await supabase
     .from('calls')
-    .select('id, user_id, lead_id, recording_url, analytics_id, ai_processed')
+    .select(fullSelect)
     .eq('id', callId)
     .single();
 
-  if (callError || !call) {
+  if (callError?.code === '42703' || callError?.message?.includes('analytics_id')) {
+    console.warn('[AI] analytics_id column missing — retrying select without it. Run migration 033.');
+    const { data: callLite, error: liteErr } = await supabase
+      .from('calls')
+      .select('id, user_id, lead_id, recording_url, ai_processed, ai_processing_status, ai_processed_at')
+      .eq('id', callId)
+      .single();
+    if (liteErr || !callLite) {
+      console.error('[AI] Call not found:', callId, liteErr);
+      return NextResponse.json({ error: 'Call not found' }, { status: 404 });
+    }
+    call = callLite;
+  } else if (callError || !callFull) {
     console.error('[AI] Call not found:', callId, callError);
     return NextResponse.json({ error: 'Call not found' }, { status: 404 });
+  } else {
+    call = callFull;
   }
 
-  if (call.analytics_id || call.ai_processed) {
-    console.log('[AI] Already processed — skipping:', callId);
-    return NextResponse.json({ skipped: true, reason: 'already_processed' });
+  const skip = shouldSkipAiProcessing(call);
+  if (skip.skip) {
+    console.log('[AI] Skipping call:', callId, '| reason:', skip.reason);
+    return NextResponse.json({ skipped: true, reason: skip.reason });
   }
 
   if (!call.recording_url) {

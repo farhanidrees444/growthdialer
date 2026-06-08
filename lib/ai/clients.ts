@@ -7,7 +7,7 @@ export const groq = new Groq({
 
 export const geminiAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-export const GEMINI_MODEL = 'gemini-2.0-flash';
+export const GEMINI_MODEL = 'gemini-2.5-flash';
 export const EMBEDDING_MODEL = 'text-embedding-004';
 
 export async function generateEmbedding(text: string): Promise<number[] | null> {

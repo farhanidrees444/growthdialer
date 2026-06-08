@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { verifyTelnyxSignature } from '@/lib/telnyx-signature';
 import { claimWebhookEvent } from '@/lib/webhooks/dedup';
+import { triggerProcessCallAsync } from '@/lib/ai/trigger-process-call';
+import { shouldSkipRecordingAiQueue } from '@/lib/ai/pipeline-status';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -52,7 +54,11 @@ interface CallRow {
   direction: string | null;
   duration_seconds: number | null;
   was_recorded: boolean | null;
-  ai_analysis_status: string | null;
+  ai_processing_status: string | null;
+  ai_processed: boolean | null;
+  ai_processed_at: string | null;
+  recording_url: string | null;
+  analytics_id: string | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -67,7 +73,7 @@ async function findCall(
   supabase: NonNullable<SupabaseClient>,
   sessionId: string | undefined,
   callControlId: string | undefined,
-  select = 'id, user_id, lead_id, to_number, from_number, answered_at, direction, duration_seconds, was_recorded, ai_analysis_status',
+  select = 'id, user_id, lead_id, to_number, from_number, answered_at, direction, duration_seconds, was_recorded, ai_processing_status, ai_processed, ai_processed_at, recording_url, analytics_id',
 ): Promise<CallRow | null> {
   // Try session ID first (more stable across call legs)
   if (sessionId) {
@@ -575,14 +581,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true });
       }
 
-      console.log('[REC-B] Call:', callRow.id, '| ai_analysis_status:', callRow.ai_analysis_status);
+      console.log('[REC-B] Call:', callRow.id, '| ai_processing_status:', callRow.ai_processing_status);
 
-      // Idempotency — skip if already completed or in-flight
-      if (
-        callRow.ai_analysis_status === 'completed' ||
-        callRow.ai_analysis_status === 'processing'
-      ) {
-        console.log('[REC-B] Already processed/processing — skipping. status:', callRow.ai_analysis_status);
+      if (shouldSkipRecordingAiQueue(callRow)) {
+        console.log('[REC-B] Already queued/completed — skipping AI re-queue. status:', callRow.ai_processing_status);
+        // Still ensure recording_url is persisted if this is a duplicate webhook with URL
+        if (!callRow.recording_url) {
+          await supabase.from('calls').update({ recording_url: recordingUrl, was_recorded: true }).eq('id', callRow.id);
+        }
         return NextResponse.json({ received: true });
       }
 
@@ -617,7 +623,7 @@ export async function POST(request: NextRequest) {
         console.log(`[REC-B] Call too short (${dur}s < ${MIN_RECORDING_SECONDS}s) — skipping recording AND AI`);
         await supabase
           .from('calls')
-          .update({ ai_analysis_status: 'skipped_short' })
+          .update({ ai_processing_status: 'skipped_short' })
           .eq('id', callRow.id);
         return NextResponse.json({ received: true, skipped: 'short_call' });
       }
@@ -626,7 +632,7 @@ export async function POST(request: NextRequest) {
       const recordingUpdate: Record<string, unknown> = {
         recording_url: recordingUrl,
         was_recorded: true,
-        ai_analysis_status: 'processing',
+        ai_processing_status: 'pending',
       };
       if (payloadDuration && payloadDuration > 0) {
         recordingUpdate.recording_duration_seconds = payloadDuration;
@@ -639,9 +645,9 @@ export async function POST(request: NextRequest) {
 
       if (updateErr) {
         console.error('[REC-B] Failed to save recording_url:', updateErr);
-      } else {
-        console.log('[REC-C] recording_url saved to DB for call:', callRow.id);
+        return NextResponse.json({ received: true, error: 'recording_save_failed' });
       }
+      console.log('[REC-C] recording_url saved to DB for call:', callRow.id);
 
       // Determine if any AI feature is enabled (default to true when no settings row exists)
       const anyAiEnabled =
@@ -651,41 +657,21 @@ export async function POST(request: NextRequest) {
         (settings?.ai_extract_talking_points ?? true);
 
       if (anyAiEnabled) {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? 'http://localhost:3000';
-        const aiUrl = `${baseUrl}/api/ai/process-call`;
-        const internalSecret = process.env.INTERNAL_API_SECRET?.trim();
-
-        if (!internalSecret) {
+        if (!process.env.INTERNAL_API_SECRET?.trim()) {
           console.error('[REC-D] INTERNAL_API_SECRET not set — cannot trigger AI pipeline for call:', callRow.id);
           await supabase
             .from('calls')
-            .update({ ai_analysis_status: 'failed' })
+            .update({ ai_processing_status: 'failed', ai_error: 'INTERNAL_API_SECRET not configured' })
             .eq('id', callRow.id);
         } else {
-          console.log('[REC-D] Triggering AI pipeline for call:', callRow.id, '| endpoint:', aiUrl);
-
-          // Fire-and-forget — Telnyx needs a fast 200 response.
-          void fetch(aiUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-internal-secret': internalSecret,
-            },
-            body: JSON.stringify({ call_id: callRow.id }),
-          })
-            .then(async (r) => {
-              const text = await r.text().catch(() => '');
-              console.log('[REC-D] AI trigger response status:', r.status, '| body:', text.slice(0, 300));
-            })
-            .catch((err) => {
-              console.error('[REC-D] AI trigger error:', err);
-            });
+          console.log('[REC-D] Triggering AI pipeline for call:', callRow.id);
+          triggerProcessCallAsync(callRow.id);
         }
       } else {
         console.log('[REC-B] All AI settings disabled — recording saved, skipping AI');
         await supabase
           .from('calls')
-          .update({ ai_analysis_status: 'completed' })
+          .update({ ai_processing_status: 'completed' })
           .eq('id', callRow.id);
       }
 

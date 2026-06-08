@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { resolveAppBaseUrl } from '@/lib/ai/trigger-process-call';
+import { AI_PROCESSING_STALE_MS } from '@/lib/ai/pipeline-status';
 
 // GET /api/recordings/diagnostics
 // Authenticated. Returns a checklist that explains exactly why the recordings
@@ -11,10 +13,13 @@ export async function GET(_req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   // 1. Internal pipeline configuration (generic keys only — never vendor names)
+  const appBaseUrl = resolveAppBaseUrl();
   const env = {
     voice_provider: !!process.env.TELNYX_API_KEY,
     voice_connection: !!process.env.TELNYX_CONNECTION_ID,
-    app_url: !!process.env.APP_URL || !!process.env.NEXT_PUBLIC_APP_URL,
+    webhook_signature: !!process.env.TELNYX_PUBLIC_KEY,
+    app_url: !!appBaseUrl,
+    app_url_value: appBaseUrl || null,
     internal_pipeline: !!process.env.INTERNAL_API_SECRET,
     transcription: !!process.env.GROQ_API_KEY,
     call_analysis: !!process.env.GEMINI_API_KEY,
@@ -52,6 +57,33 @@ export async function GET(_req: NextRequest) {
     .eq('user_id', user.id)
     .eq('was_recorded', true);
 
+  const { count: aiCompleted } = await supabase
+    .from('calls')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('ai_processed', true);
+
+  const { count: aiPending } = await supabase
+    .from('calls')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .not('recording_url', 'is', null)
+    .in('ai_processing_status', ['pending', 'processing']);
+
+  const { count: aiFailed } = await supabase
+    .from('calls')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('ai_processing_status', 'failed');
+
+  const staleBefore = new Date(Date.now() - AI_PROCESSING_STALE_MS).toISOString();
+  const { count: aiStuck } = await supabase
+    .from('calls')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('ai_processing_status', 'processing')
+    .lt('ai_processed_at', staleBefore);
+
   // 4. Most recent 5 calls — show what state they are in
   const { data: recent } = await supabase
     .from('calls')
@@ -66,8 +98,14 @@ export async function GET(_req: NextRequest) {
   const issues: string[] = [];
 
   if (!env.voice_provider) issues.push('Voice provider is not configured — recordings cannot be started.');
-  if (!env.app_url)
-    issues.push('Application URL is not configured — call webhooks cannot reach the AI pipeline.');
+  if (!env.webhook_signature) {
+    issues.push(
+      'Webhook signature key is not configured — production Telnyx webhooks may be rejected (set TELNYX_PUBLIC_KEY).',
+    );
+  }
+  if (!env.app_url) {
+    issues.push('Application URL is not configured — set APP_URL or NEXT_PUBLIC_APP_URL so AI can be triggered.');
+  }
   if (!env.database_service)
     issues.push('Database service is not configured — webhooks cannot persist call data.');
   if (!env.transcription) issues.push('Transcription service is not configured.');
@@ -95,6 +133,22 @@ export async function GET(_req: NextRequest) {
     );
   }
 
+  if ((withUrl ?? 0) > 0 && (aiCompleted ?? 0) === 0 && (aiPending ?? 0) === 0) {
+    issues.push(
+      'Recordings exist but none completed AI analysis. POST /api/recordings/backfill-ai to retry, or check GROQ/GEMINI keys.',
+    );
+  }
+
+  if ((aiStuck ?? 0) > 0) {
+    issues.push(
+      `${aiStuck} recording(s) stuck in processing >12 min — cron or POST /api/recordings/backfill-ai will retry.`,
+    );
+  }
+
+  if ((aiFailed ?? 0) > 0) {
+    issues.push(`${aiFailed} recording(s) failed AI — open Recent calls for ai_error, then reprocess from Recordings.`);
+  }
+
   return NextResponse.json({
     ok: issues.length === 0,
     summary: {
@@ -102,11 +156,19 @@ export async function GET(_req: NextRequest) {
       calls_with_recording_url: withUrl ?? 0,
       calls_marked_was_recorded: recordedFlag ?? 0,
       calls_over_30s: longEnough ?? 0,
+      ai_completed: aiCompleted ?? 0,
+      ai_pending_or_processing: aiPending ?? 0,
+      ai_failed: aiFailed ?? 0,
+      ai_stuck_processing: aiStuck ?? 0,
     },
     env,
     settings: settings ?? { note: 'No user_settings row — using defaults (recording_mode=always)' },
     recent_calls: recent ?? [],
     issues,
+    actions: {
+      backfill_ai: 'POST /api/recordings/backfill-ai',
+      reprocess_one: 'POST /api/recordings/{call_id}/reprocess',
+    },
     next_step:
       issues.length === 0
         ? 'Pipeline looks healthy. Make a test call >30s and refresh /recordings within 60s.'

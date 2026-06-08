@@ -56,8 +56,8 @@ type CallRow = {
   from_number:       string | null;
   to_number:         string | null;
   ai_sentiment:      string | null;
-  ai_intent:         string | null;
-  ai_analysis_status: string | null;
+  ai_processing_status: string | null;
+  ai_processed:      boolean | null;
   ai_keywords:       unknown;
 };
 
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
       .select(`
         started_at, answered_at, duration_seconds, direction,
         disposition, from_number, to_number,
-        ai_sentiment, ai_intent, ai_analysis_status, ai_keywords
+        ai_sentiment, ai_processing_status, ai_processed, ai_keywords
       `)
       .eq('user_id', user.id)
       .gte('started_at', prevStart)
@@ -243,7 +243,9 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.total - a.total);
 
     // ── AI Insights (only from completed analysis) ────────────────────────
-    const analyzed = current.filter((c) => c.ai_analysis_status === 'completed');
+    const analyzed = current.filter(
+      (c) => c.ai_processed || c.ai_processing_status === 'completed',
+    );
 
     const sentMap = new Map<string, number>();
     for (const c of analyzed) {
@@ -253,14 +255,8 @@ export async function GET(request: NextRequest) {
       .map(([s, count]) => ({ sentiment: s, count, color: SENT_COLORS[s] ?? '#94a3b8' }))
       .sort((a, b) => b.count - a.count);
 
-    const intentMap = new Map<string, number>();
-    for (const c of analyzed) {
-      if (c.ai_intent) intentMap.set(c.ai_intent, (intentMap.get(c.ai_intent) ?? 0) + 1);
-    }
-    const intents = Array.from(intentMap.entries())
-      .map(([intent, count]) => ({ intent, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 8);
+    // ai_intent column does not exist — intents chart uses top keywords as proxy
+    const intents: { intent: string; count: number }[] = [];
 
     const kwMap = new Map<string, number>();
     for (const c of analyzed) {
