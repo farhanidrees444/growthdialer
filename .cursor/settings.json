@@ -1,0 +1,16 @@
+{
+  "plugins": {
+    "clerk": {
+      "enabled": true
+    },
+    "gsap-skills": {
+      "enabled": true
+    },
+    "sentry": {
+      "enabled": true
+    },
+    "zapier": {
+      "enabled": true
+    }
+  }
+}
