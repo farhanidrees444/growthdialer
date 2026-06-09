@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { AmbientShell } from "@/components/dashboard/ambient-shell";
 import { PageEnter } from "@/components/layout/page-enter";
+import { resolveRouteAccent } from "@/lib/ui/route-accents";
 
 function DashboardOverlays() {
   const { showSaveAsLead, activePhone, dismissSaveAsLead } = useCallContext();
@@ -44,6 +45,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const isOnboarding = pathname.startsWith("/workspace/setup");
+  const routeAccent = resolveRouteAccent(pathname);
 
   return (
     <WorkspaceProvider>
@@ -55,7 +57,7 @@ export default function DashboardLayout({
             <MobileNavProvider>
             <ImportLeadsDialog />
             <div className="dashboard-shell relative flex h-[100dvh] overflow-hidden bg-zinc-950 text-zinc-100">
-              <AmbientShell />
+              <AmbientShell accent={routeAccent.ambient} />
               <div className="pointer-events-none absolute inset-0 grid-bg opacity-[0.12]" aria-hidden />
 
               {!isOnboarding && <Sidebar />}

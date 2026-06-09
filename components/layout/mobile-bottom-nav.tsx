@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { resolveMobileTabAccent, resolveRouteAccent } from '@/lib/ui/route-accents';
 
 const PRIMARY_TABS = [
   { icon: LayoutDashboard, label: 'Home', href: '/dashboard' },
@@ -72,20 +73,27 @@ export function MobileBottomNav() {
       >
         {PRIMARY_TABS.map(({ icon: Icon, label, href }) => {
           const active = isActive(pathname, href);
+          const accent = resolveMobileTabAccent(href);
           return (
             <Link
               key={href}
               href={href}
               className={cn(
-                'relative flex flex-1 flex-col items-center justify-center gap-0.5 min-h-[var(--bottom-nav-height)] py-2 transition-colors',
-                active ? 'text-[oklch(0.64_0.21_293)]' : 'text-slate-500 hover:text-slate-300',
+                'relative flex flex-1 flex-col items-center justify-center gap-0.5 min-h-[var(--bottom-nav-height)] py-2 transition-all duration-200',
+                active ? accent.activeText : 'text-slate-500 hover:text-slate-300',
+                active && 'drop-shadow-[0_0_8px_rgba(139,92,246,0.25)]',
               )}
               aria-current={active ? 'page' : undefined}
             >
               {active && (
-                <span className="absolute top-0 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[oklch(0.64_0.21_293)]" />
+                <span
+                  className={cn(
+                    'absolute top-0 left-1/2 h-0.5 w-7 -translate-x-1/2 rounded-full bg-gradient-to-r',
+                    accent.bar,
+                  )}
+                />
               )}
-              <Icon className="h-5 w-5" aria-hidden />
+              <Icon className={cn('h-5 w-5', active && accent.icon)} aria-hidden />
               <span className="text-[11px] font-medium">{label}</span>
             </Link>
           );
@@ -142,6 +150,7 @@ export function MobileBottomNav() {
                 {MORE_LINKS.map((item) => {
                   if (item.managerOnly && !canCoach) return null;
                   const active = isActive(pathname, item.href);
+                  const accent = resolveRouteAccent(item.href.split('?')[0]);
                   const Icon = item.icon;
                   return (
                     <Link
@@ -149,13 +158,13 @@ export function MobileBottomNav() {
                       href={item.href}
                       onClick={() => setMoreOpen(false)}
                       className={cn(
-                        'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors',
+                        'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200',
                         active
-                          ? 'bg-[oklch(0.64_0.21_293)]/15 text-[oklch(0.72_0.18_293)]'
+                          ? cn(accent.activePill, accent.activeText)
                           : 'text-slate-300 hover:bg-white/[0.05] hover:text-white',
                       )}
                     >
-                      <Icon className="h-4 w-4 shrink-0" />
+                      <Icon className={cn('h-4 w-4 shrink-0', active && accent.icon)} />
                       {item.label}
                     </Link>
                   );

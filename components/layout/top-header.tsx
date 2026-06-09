@@ -1,10 +1,13 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Upload, Menu } from 'lucide-react';
 import { UserMenu } from './user-menu';
 import { useMobileNav } from '@/contexts/mobile-nav-context';
 import { useLeads } from '@/contexts/leads-context';
+import { resolveRouteAccent } from '@/lib/ui/route-accents';
+import { cn } from '@/lib/utils';
 
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   '/dashboard':    { title: 'Dashboard',    subtitle: 'Overview' },
@@ -26,6 +29,8 @@ export function TopHeader() {
   const pathname = usePathname();
   const { toggle } = useMobileNav();
   const { setImportOpen } = useLeads();
+  const reduce = useReducedMotion();
+  const accent = resolveRouteAccent(pathname);
 
   const pageKey = Object.keys(PAGE_TITLES).find((k) => pathname.startsWith(k)) ?? '/dashboard';
   const page = PAGE_TITLES[pageKey] ?? PAGE_TITLES['/dashboard'];
@@ -43,11 +48,22 @@ export function TopHeader() {
           <Menu size={18} />
         </button>
 
-        <div className="min-w-0">
+        <div className="relative min-w-0">
           <h1 className="truncate text-[15px] font-medium leading-tight text-zinc-100 sm:text-base">
             {page.title}
           </h1>
           <p className="hidden truncate text-xs text-zinc-500 sm:block">{page.subtitle}</p>
+          {!reduce && (
+            <motion.div
+              key={accent.id}
+              aria-hidden
+              initial={{ scaleX: 0, opacity: 0 }}
+              animate={{ scaleX: 1, opacity: 1 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className={cn('mt-1.5 hidden h-px w-10 bg-gradient-to-r sm:block', accent.bar)}
+              style={{ transformOrigin: 'left' }}
+            />
+          )}
         </div>
       </div>
 

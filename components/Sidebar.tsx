@@ -42,6 +42,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { ROLE_LABELS } from "@/lib/auth/permissions";
 import { EASE_OUT, SPRING } from "@/components/marketing/live-floor/motion";
 import { UserMenu } from "@/components/layout/user-menu";
+import { getNavItemAccent, resolveRouteAccent } from "@/lib/ui/route-accents";
 
 type CountKey = "leads" | "recordings" | "numbers" | "calls";
 
@@ -283,30 +284,42 @@ function SidebarNavItem({
   reduceMotion: boolean;
 }) {
   const Icon = item.icon;
+  const accent = getNavItemAccent(item.id);
 
   const linkInner = (
     <Link
       href={item.href}
       onClick={onNavigate}
       className={cn(
-        "relative flex items-center rounded-lg text-sm font-medium transition-colors",
+        "relative flex items-center rounded-lg text-sm font-medium transition-all duration-200",
         collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
         active ? "text-white" : "text-zinc-400 hover:text-zinc-100",
       )}
       aria-current={active ? "page" : undefined}
     >
       {active && (
-        <motion.span
-          layoutId="sidebar-active-pill"
-          className="absolute inset-0 rounded-lg nav-active-glass"
-          transition={reduceMotion ? { duration: 0 } : SPRING}
-        />
+        <>
+          <motion.span
+            layoutId="sidebar-active-pill"
+            className={cn("absolute inset-0 rounded-lg backdrop-blur-sm", accent.activePill)}
+            transition={reduceMotion ? { duration: 0 } : SPRING}
+          />
+          <span
+            className={cn(
+              "absolute left-0 top-2 bottom-2 w-0.5 rounded-full bg-gradient-to-b",
+              accent.bar,
+            )}
+            aria-hidden
+          />
+        </>
       )}
 
       <motion.span
-        className="relative z-[1] flex shrink-0 items-center justify-center text-zinc-400"
-        animate={{ color: active ? '#f4f4f5' : undefined }}
-        whileHover={reduceMotion ? undefined : { scale: 1.04 }}
+        className={cn(
+          "relative z-[1] flex shrink-0 items-center justify-center",
+          active ? accent.icon : "text-zinc-500",
+        )}
+        whileHover={reduceMotion ? undefined : { scale: 1.06 }}
         transition={SPRING}
       >
         <Icon className="h-4 w-4" aria-hidden />
@@ -341,13 +354,9 @@ function SidebarNavItem({
 
   const hoverWrap = (
     <motion.div
-      whileHover={
-        reduceMotion || active
-          ? undefined
-          : { backgroundColor: "rgba(255,255,255,0.04)" }
-      }
+      whileHover={reduceMotion || active ? undefined : { x: 2 }}
       transition={{ duration: 0.15, ease: EASE_OUT }}
-      className="rounded-lg"
+      className={cn("rounded-lg transition-shadow duration-200", !active && accent.hoverGlow)}
     >
       {linkInner}
     </motion.div>
@@ -467,6 +476,7 @@ function SidebarInner() {
 
   const canCoach = Boolean(currentRole && ["owner", "admin", "manager"].includes(currentRole));
   const isDesktopCollapsed = collapsed;
+  const routeAccent = resolveRouteAccent(pathname);
 
   return (
     <>
@@ -483,13 +493,20 @@ function SidebarInner() {
 
       <aside
         className={cn(
-          "flex flex-col border-r border-zinc-800/50 bg-zinc-950 text-sidebar-foreground",
+          "relative flex flex-col border-r border-zinc-800/50 bg-zinc-950 text-sidebar-foreground",
           "fixed inset-y-0 left-0 z-50 transition-[width,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
           isOpen ? "translate-x-0" : "-translate-x-full",
           "lg:static lg:z-auto lg:h-screen lg:shrink-0 lg:translate-x-0",
           isDesktopCollapsed ? "w-[72px]" : "w-[280px] lg:w-[240px]",
         )}
       >
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-y-0 left-0 w-px bg-gradient-to-b opacity-60",
+            routeAccent.bar,
+          )}
+          aria-hidden
+        />
         {/* Logo + collapse */}
         <div
           className={cn(
