@@ -86,6 +86,7 @@ export default function LeaderboardPage() {
         {showEmpty && (
           <PremiumEmptyState
             icon={Trophy}
+            scene="leaderboard"
             title="No activity yet"
             description="Start dialing — your points appear here as calls complete. Invite reps from Team to race on connect rate."
             primaryAction={{ label: 'Open dialer', href: '/dialer' }}

@@ -36,6 +36,7 @@ export function BrowseStage({
       <div className="flex h-full w-full items-center justify-center p-6">
         <PremiumEmptyState
           icon={Upload}
+          scene="dialer"
           title="No leads in queue"
           description="Import a CSV or add leads to start dialing. Your AI dialer will pick up automatically once the queue has contacts."
           primaryAction={{ label: 'Import leads', onClick: () => setImportOpen(true) }}

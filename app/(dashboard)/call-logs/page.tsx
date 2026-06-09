@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { PageHeader } from '@/components/ui/page-header';
+import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
 import { Input } from '@/components/ui/input';
 import { CallLogRowCard } from '@/components/calls/call-log-row';
 import type { CallLogRow, CallDateGroup } from '@/lib/calls/display';
@@ -293,38 +294,20 @@ function StatCard({
 
 function EmptyState({ direction }: { direction: DirectionFilter }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="relative mb-6">
-        <motion.div
-          animate={{ scale: [1, 1.12, 1], opacity: [0.1, 0.22, 0.1] }}
-          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute inset-0 -m-5 rounded-full bg-cyan-500/20"
-        />
-        <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/[0.06]">
-          <PhoneMissed className="h-7 w-7 text-cyan-400/80" />
-        </div>
-      </div>
-      <h2 className="text-lg font-bold text-white">No calls match</h2>
-      <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-500">
-        {direction === 'inbound'
-          ? 'Inbound calls to your numbers will appear here with duration, disposition, and recording links.'
-          : 'Start dialing from the AI Dialer — every call logs automatically with disposition and AI analysis.'}
-      </p>
-      <div className="mt-6 flex flex-wrap justify-center gap-2">
-        <Link
-          href="/dialer"
-          className="flex items-center gap-2 rounded-xl border border-violet-500/30 bg-gradient-to-r from-violet-600/20 to-cyan-600/10 px-5 py-2.5 text-sm font-bold text-violet-200 transition hover:from-violet-600/30"
-        >
-          <Phone className="h-4 w-4" />
-          Open dialer
-        </Link>
-        <Link
-          href="/settings?tab=calling"
-          className="rounded-xl border border-white/[0.08] px-5 py-2.5 text-sm font-semibold text-slate-400 transition hover:text-white"
-        >
-          Calling settings
-        </Link>
-      </div>
+    <div className="py-8">
+      <PremiumEmptyState
+        icon={PhoneMissed}
+        scene="calls"
+        accent="cyan"
+        title="No calls yet"
+        description={
+          direction === 'inbound'
+            ? 'Inbound calls to your numbers will appear here with duration, disposition, and recording links.'
+            : 'Start dialing from the AI Dialer — every call logs automatically with disposition and AI analysis.'
+        }
+        primaryAction={{ label: 'Open dialer', href: '/dialer' }}
+        secondaryAction={{ label: 'Call settings', href: '/settings?tab=calling' }}
+      />
     </div>
   );
 }

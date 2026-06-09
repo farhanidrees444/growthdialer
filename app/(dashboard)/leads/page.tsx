@@ -456,6 +456,7 @@ function EmptyState({
     return (
       <PremiumEmptyState
         icon={UserPlus}
+        scene="leads"
         accent="violet"
         title="Your pipeline starts here"
         description="Import a CSV from HubSpot, Salesforce, or a spreadsheet — or add leads one at a time."

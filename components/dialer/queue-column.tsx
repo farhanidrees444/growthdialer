@@ -297,6 +297,7 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
           ) : tab === 'queue' ? (
             <PremiumEmptyState
               icon={Users}
+              scene="dialer"
               accent="violet"
               compact
               title="Queue is empty"

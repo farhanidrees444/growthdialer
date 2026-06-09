@@ -195,6 +195,12 @@
       linear-gradient(90deg, oklch(1 0 0 / 3%) 1px, transparent 1px);
     background-size: 60px 60px;
   }
+  .empty-state-panel {
+    @apply relative overflow-hidden rounded-2xl border border-zinc-800/60 bg-zinc-900/35 backdrop-blur-sm;
+  }
+  .empty-state-halo {
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgb(139 92 246 / 0.08), transparent 70%);
+  }
   /* Premium canvas depth — 40px grid, white at ~5% */
   .bg-grid-pattern {
     background-image:

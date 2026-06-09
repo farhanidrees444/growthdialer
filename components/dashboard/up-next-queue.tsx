@@ -72,6 +72,7 @@ export default function UpNextQueue() {
         ) : leads.length === 0 ? (
           <PremiumEmptyState
             icon={Phone}
+            scene="dialer"
             accent="violet"
             compact
             title="Nothing queued yet"

@@ -19,6 +19,8 @@ import { PremiumOverlays } from "@/components/premium/premium-overlays";
 import { FloatingEdgeProvider } from "@/components/layout/floating-edge-provider";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
+import { AmbientShell } from "@/components/dashboard/ambient-shell";
+import { PageEnter } from "@/components/layout/page-enter";
 
 function DashboardOverlays() {
   const { showSaveAsLead, activePhone, dismissSaveAsLead } = useCallContext();
@@ -53,7 +55,8 @@ export default function DashboardLayout({
             <MobileNavProvider>
             <ImportLeadsDialog />
             <div className="dashboard-shell relative flex h-[100dvh] overflow-hidden bg-zinc-950 text-zinc-100">
-              <div className="pointer-events-none absolute inset-0 grid-bg opacity-[0.15]" aria-hidden />
+              <AmbientShell />
+              <div className="pointer-events-none absolute inset-0 grid-bg opacity-[0.12]" aria-hidden />
 
               {!isOnboarding && <Sidebar />}
               <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -64,7 +67,11 @@ export default function DashboardLayout({
                     !isOnboarding && "pb-[calc(var(--bottom-nav-height)+env(safe-area-inset-bottom,0px))] lg:pb-0",
                   )}
                 >
-                  <WorkspaceGate>{children}</WorkspaceGate>
+                  <WorkspaceGate>
+                    <PageEnter className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                      {children}
+                    </PageEnter>
+                  </WorkspaceGate>
                 </div>
               </div>
             </div>

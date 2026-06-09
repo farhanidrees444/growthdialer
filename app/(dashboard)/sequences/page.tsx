@@ -171,6 +171,7 @@ export default function SequencesPage() {
         {!loading && sequences.length === 0 && (
           <PremiumEmptyState
             icon={Zap}
+            scene="sequences"
             title="No sequences yet"
             description="Build your first cadence above — then enroll leads from the Leads page."
             primaryAction={{ label: 'Go to leads', href: '/leads' }}

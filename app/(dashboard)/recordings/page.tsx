@@ -11,6 +11,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { toast } from 'sonner';
+import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -376,39 +377,21 @@ function RecordingCard({
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-24 text-center">
-      <div className="relative mb-8">
-        <motion.div
-          animate={{ scale: [1, 1.15, 1], opacity: [0.12, 0.25, 0.12] }}
-          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute inset-0 -m-6 rounded-full bg-emerald-500/20"
-        />
-        <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/[0.06]">
-          <Volume2 className="h-9 w-9 text-emerald-400/70" />
-        </div>
-      </div>
-      <h2 className="text-xl font-bold text-white">Your call library is empty</h2>
-      <p className="mt-2 max-w-xs text-sm leading-relaxed text-slate-500">
-        Calls 30 seconds or longer are automatically recorded. Enable recording in Settings.
-      </p>
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-        {[
-          { icon: Mic,      label: 'Auto-recording' },
+    <div className="py-8">
+      <PremiumEmptyState
+        icon={Volume2}
+        scene="recordings"
+        accent="emerald"
+        title="Your call library is empty"
+        description="Calls 30 seconds or longer are automatically recorded. Enable recording in Settings."
+        features={[
+          { icon: Mic, label: 'Auto-recording' },
           { icon: FileText, label: 'Transcription' },
-          { icon: Sparkles, label: 'AI Insights' },
-          { icon: Search,   label: 'Full-text search' },
-        ].map(({ icon: Icon, label }) => (
-          <span key={label} className="flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 text-xs text-slate-400">
-            <Icon className="h-3 w-3 text-emerald-400" /> {label}
-          </span>
-        ))}
-      </div>
-      <Link
-        href="/dialer"
-        className="mt-8 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-600/20 to-teal-600/10 px-6 py-3 text-sm font-bold text-emerald-300 transition hover:from-emerald-600/30"
-      >
-        <Phone className="h-4 w-4" /> Start your first call
-      </Link>
+          { icon: Sparkles, label: 'AI insights' },
+          { icon: Search, label: 'Full-text search' },
+        ]}
+        primaryAction={{ label: 'Start dialing', href: '/dialer' }}
+      />
     </div>
   );
 }

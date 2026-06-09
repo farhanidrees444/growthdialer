@@ -172,6 +172,7 @@ export function MyNumbersPanel({
     return (
       <PremiumEmptyState
         icon={Plus}
+        scene="numbers"
         title="Your caller ID inventory"
         description="Add local and toll-free lines, verify deliverability, and rotate automatically as you scale outbound."
         primaryAction={{ label: 'Get your first number', onClick: onBuyNew }}
