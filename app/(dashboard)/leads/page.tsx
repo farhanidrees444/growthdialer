@@ -891,9 +891,9 @@ export default function LeadsPage() {
         {/* Toolbar */}
         <div className="border-b border-white/[0.06] px-4 py-3 space-y-3 lg:px-6">
           {/* Top row: search + actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Search */}
-            <div className="relative flex-1 max-w-md">
+            <div className="relative min-w-[180px] flex-1 sm:max-w-md">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
               <input
                 value={search}

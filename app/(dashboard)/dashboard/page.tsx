@@ -180,7 +180,7 @@ function KpiCard({
           </div>
         ) : hasData ? (
           <>
-            <p className="mt-1.5 font-display text-4xl font-light tabular-nums text-white">
+            <p className="mt-1.5 font-display text-3xl font-light tabular-nums text-white sm:text-4xl">
               {countUp ? (
                 <GsapCountUp
                   value={countUp.value}

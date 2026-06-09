@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { apiUnauthorized } from '@/lib/api/errors';
+import { normalizeSequenceName, sequenceNameError } from '@/lib/sequences/cleanup';
 import { z } from 'zod';
 
 const createSchema = z.object({
@@ -50,11 +51,15 @@ export async function POST(request: NextRequest) {
   const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body: raw });
   if (isWorkspaceError(access)) return access;
 
+  const name = normalizeSequenceName(parsed.name);
+  const nameErr = sequenceNameError(name);
+  if (nameErr) return NextResponse.json({ error: nameErr }, { status: 400 });
+
   const { data: seq, error } = await supabase
     .from('sequences')
     .insert({
       workspace_id: access.workspaceId,
-      name: parsed.name,
+      name,
       description: parsed.description ?? null,
       created_by: user.id,
       status: 'active',

@@ -132,7 +132,7 @@ function CoachingPanel({ call, sessionId, currentMode, onModeChange, onEnd, busy
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 40 }}
       transition={{ type: 'spring', damping: 26, stiffness: 280 }}
-      className="fixed right-4 top-20 bottom-4 z-50 w-80 rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] shadow-2xl shadow-black/60 flex flex-col overflow-hidden"
+      className="fixed inset-x-4 top-20 bottom-4 z-50 flex flex-col overflow-hidden rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] shadow-2xl shadow-black/60 sm:left-auto sm:right-4 sm:w-80"
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3">

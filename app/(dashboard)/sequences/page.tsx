@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Zap, Play, Users, ArrowRight } from 'lucide-react';
+import { Plus, Zap, Play, Users, ArrowRight, Trash2 } from 'lucide-react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,9 @@ import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/ui/page-header';
 import { SurfaceCard } from '@/components/ui/surface-card';
 import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { SequenceTimeline } from '@/components/sequences/sequence-timeline';
+import { sequenceNameError } from '@/lib/sequences/cleanup';
 import { toast } from 'sonner';
 
 interface SequenceStep {
@@ -37,6 +39,8 @@ export default function SequencesPage() {
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
   const [waitDays, setWaitDays] = useState(2);
+  const [archiveTarget, setArchiveTarget] = useState<Sequence | null>(null);
+  const [archiving, setArchiving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -54,7 +58,11 @@ export default function SequencesPage() {
   useEffect(() => { void load(); }, [load]);
 
   async function createSequence() {
-    if (!name.trim()) return;
+    const nameErr = sequenceNameError(name);
+    if (nameErr) {
+      toast.error(nameErr);
+      return;
+    }
     setCreating(true);
     try {
       const res = await apiFetch('/api/sequences', {
@@ -70,7 +78,8 @@ export default function SequencesPage() {
         }),
       });
       if (!res.ok) {
-        toast.error('Could not create sequence');
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        toast.error(data.error ?? 'Could not create sequence');
         return;
       }
       toast.success('Sequence created');
@@ -89,24 +98,41 @@ export default function SequencesPage() {
     }
   }
 
+  async function archiveSequence() {
+    if (!archiveTarget) return;
+    setArchiving(true);
+    try {
+      const res = await apiFetch(`/api/sequences/${archiveTarget.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        toast.error('Could not remove sequence');
+        return;
+      }
+      toast.success(`Removed "${archiveTarget.name}"`);
+      setArchiveTarget(null);
+      await load();
+    } finally {
+      setArchiving(false);
+    }
+  }
+
   return (
     <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
       <div className="mx-auto max-w-4xl">
         <PageHeader
           title="Sequences"
-          description="Multi-touch call cadences — lemlist-style outreach with auto-advance between steps."
+          description="Call cadences with automatic step advance — call, wait, call again."
           icon={Zap}
         >
           <Button variant="outline" size="sm" onClick={() => void processDue()} className="gap-2 border-white/10">
             <Play className="h-3.5 w-3.5" />
-            Process due
+            Run due steps
           </Button>
         </PageHeader>
 
         <SurfaceCard className="mb-8 p-5">
           <h2 className="text-sm font-semibold text-white mb-1">New sequence</h2>
           <p className="text-xs text-muted-foreground mb-4">
-            Template: Call → Wait → Call. Customize steps in a future builder.
+            Starts as Call → Wait → Call. Give it a clear name your team will recognize.
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <Input
@@ -129,7 +155,7 @@ export default function SequencesPage() {
             </div>
             <Button
               onClick={() => void createSequence()}
-              disabled={creating || !name.trim()}
+              disabled={creating || !!sequenceNameError(name)}
               className="gap-2 shrink-0 gradient-brand text-white border-0"
             >
               <Plus className="h-4 w-4" />
@@ -169,6 +195,14 @@ export default function SequencesPage() {
                   <Badge className="bg-primary/15 text-primary border-0">
                     {seq.sequence_steps?.length ?? 0} steps
                   </Badge>
+                  <button
+                    type="button"
+                    onClick={() => setArchiveTarget(seq)}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] text-slate-500 transition hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400"
+                    aria-label={`Remove ${seq.name}`}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
 
@@ -190,6 +224,21 @@ export default function SequencesPage() {
             </SurfaceCard>
           ))}
         </div>
+
+        <ConfirmDialog
+          open={archiveTarget !== null}
+          onOpenChange={(open) => { if (!open) setArchiveTarget(null); }}
+          title="Remove sequence?"
+          description={
+            archiveTarget
+              ? `"${archiveTarget.name}" will be archived and hidden. Active enrollments are stopped.`
+              : ''
+          }
+          confirmLabel="Remove"
+          variant="destructive"
+          loading={archiving}
+          onConfirm={() => void archiveSequence()}
+        />
       </div>
     </main>
   );

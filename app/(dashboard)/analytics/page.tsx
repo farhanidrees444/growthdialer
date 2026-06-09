@@ -365,7 +365,7 @@ export default function AnalyticsPage() {
       {/* ── Controls ──────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         {/* Date range pills */}
-        <div className="flex gap-1 rounded-xl border border-white/[0.06] bg-white/[0.02] p-1">
+        <div className="flex flex-wrap gap-1 rounded-xl border border-white/[0.06] bg-white/[0.02] p-1">
           {RANGE_OPTIONS.map(({ key, label }) => (
             <button
               key={key}

@@ -110,8 +110,8 @@ Features that **beat** PhoneBurner, CallHippo, CloudTalk, Nooks when fully worki
 | **10** | Call Logs visual polish | 🟡 | **Moat** | Date groups, premium cards, sticky filters — verify in prod |
 | **11** | Leaderboard solo state | 🟡 | UX | Solo floor hero + invite CTA; podium placeholders for 2-member teams |
 | **12** | Floating right-edge icons bug | 🟡 | UX | Unified FAB dock + call-bar reserve; verify dialer + active call |
-| **13** | Number Health contradiction | 🟡 | UX | Honest health/reputation scoring; verify new numbers show "New" |
-| **14** | Sequences demo cleanup | ⬜ | Demo | Delete junk sequence names |
+| **13** | Number Health contradiction | ✅ | **Moat** | Calm presentation tiers (Ready/Monitoring/Needs check/Active/Flagged/Blocked); escalate only on confirmed carrier flags; bento KPIs + premium inventory UI |
+| **14** | Sequences demo cleanup | ✅ | Demo | Junk name guard on create; archive API + UI remove; migration 049 archives test rows |
 
 ---
 
@@ -120,8 +120,8 @@ Features that **beat** PhoneBurner, CallHippo, CloudTalk, Nooks when fully worki
 | Step | Title | Status | Moat? | Notes |
 |------|-------|--------|-------|-------|
 | **15** | Sidebar polish | 🟡 | UX | ENGAGE/INTELLIGENCE/TEAM/SETUP exists; tune motion/collapse |
-| **16** | Floating call bar + waveform | 🟡 | **Moat** | `ActiveCallOverlay` exists; add Web Audio waveform |
-| **17** | Command palette expansion | 🟡 | **Moat** | Cmd+K exists; add power dial, disposition, workspace |
+| **16** | Floating call bar + waveform | ✅ | **Moat** | Live Web Audio waveform (AnalyserNode + synthetic fallback) in full overlay, desktop pill, and mobile bar; sentiment ambient, quality dot, drag-snap, pop-out |
+| **17** | Command palette expansion | ✅ | **Moat** | Cmd+K adds live "On this call" actions (mute/hold/end), workspace switching, Buy a number, Invite teammate, lead search + call |
 | **18** | Page transitions + spotlight | ⬜ | UX | `layoutId` on more routes |
 | **19** | Milestones + sound design | 🟡 | Delight | `MilestoneCelebration` exists; wire meeting_booked |
 
@@ -201,6 +201,11 @@ These are **working** today — outbound dialer, leads, power/parallel dialer, w
 | 2026-06-08 | Step 8 | Mirror Telnyx recordings → `call-recordings`; signed playback URLs; backfill + cron |
 | 2026-06-08 | Step 10 | Call Logs polish — date grouping, stat cards, row cards, recording links |
 | 2026-06-08 | Step 9 | Dashboard Recent Calls — API, ended_at backfill, realtime refresh |
+| 2026-06-08 | Steps 11–13 | Solo leaderboard, unified floating dock, number health honesty |
+| 2026-06-09 | Step 13 | Caller IDs rebuild — list-first inventory, then calm presentation tiers + premium UI (no false "Critical"/at-risk) |
+| 2026-06-09 | Responsive | Hardened 7 dashboard pages for phone/tablet (dialer banner, coaching panel, recordings player, leads toolbar, settings save bar, analytics pills, dashboard KPIs) |
+| 2026-06-09 | Steps 16–17 | Verified live-waveform call bar; expanded Cmd+K with on-call actions, workspace switch, buy-number, invite |
+| 2026-06-09 | Step 14 | Sequences demo cleanup — junk name validation, archive/delete API, remove UI, migration 049 |
 
 ---
 

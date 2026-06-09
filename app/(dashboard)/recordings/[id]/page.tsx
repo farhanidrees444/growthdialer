@@ -141,7 +141,7 @@ function AudioPlayer({
   const pct = total > 0 ? (current / total) * 100 : 0;
 
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.02] px-5 py-4">
+    <div className="flex items-center gap-2.5 rounded-2xl border border-white/[0.07] bg-white/[0.02] px-3 py-4 sm:gap-4 sm:px-5">
       <audio
         ref={audioRef}
         src={url}
@@ -162,7 +162,7 @@ function AudioPlayer({
       </button>
 
       {/* Waveform bar visualization */}
-      <div className="flex flex-1 items-end gap-px h-8 cursor-pointer"
+      <div className="flex h-8 min-w-0 flex-1 cursor-pointer items-end gap-px"
         onClick={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           const pct2 = (e.clientX - rect.left) / rect.width;

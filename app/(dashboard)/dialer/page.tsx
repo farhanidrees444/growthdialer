@@ -500,20 +500,20 @@ export default function DialerPage() {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 40, opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="flex-shrink-0 flex items-center gap-3 px-4 border-b border-red-500/20 overflow-hidden"
+            className="flex-shrink-0 flex min-w-0 items-center gap-3 px-4 border-b border-red-500/20 overflow-hidden"
             style={{ background: 'rgba(239,68,68,0.06)' }}
           >
             <motion.div
-              className="w-2 h-2 rounded-full bg-red-400"
+              className="w-2 h-2 shrink-0 rounded-full bg-red-400"
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 1, repeat: Infinity }}
             />
-            <span className="text-sm font-semibold text-red-400">LIVE</span>
-            <span className="text-sm text-white/50 tabular-nums font-mono">{callTimer.formatted}</span>
-            <span className="text-white/25">·</span>
-            <span className="text-sm text-white/50 font-mono">{selectedLead.phone}</span>
-            <span className="text-white/25">→</span>
-            <span className="text-sm text-white/80">{selectedLead.name}</span>
+            <span className="shrink-0 text-sm font-semibold text-red-400">LIVE</span>
+            <span className="shrink-0 text-sm text-white/50 tabular-nums font-mono">{callTimer.formatted}</span>
+            <span className="hidden text-white/25 sm:inline">·</span>
+            <span className="hidden text-sm text-white/50 font-mono sm:inline">{selectedLead.phone}</span>
+            <span className="hidden text-white/25 sm:inline">→</span>
+            <span className="min-w-0 truncate text-sm text-white/80">{selectedLead.name}</span>
           </motion.div>
         )}
       </AnimatePresence>

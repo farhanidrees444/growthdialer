@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   BarChart3, Brain, FileText, Hash, LayoutDashboard, Phone, Settings,
   Trophy, Upload, Users, Zap, Search, Mic, Radio,
+  PhoneOff, MicOff, Pause, Play, Building2, UserPlus, Check,
 } from 'lucide-react';
 import {
   Command,
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/command';
 import { useLeads } from '@/contexts/leads-context';
 import { useCallContext } from '@/lib/call-context';
+import { useWebPhone } from '@/contexts/webphone-context';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { navigateWithTransition, setLeadTransitionId } from '@/lib/ui/lead-transition';
@@ -56,8 +58,11 @@ export function AppCommandPalette({ open, onOpenChange }: AppCommandPaletteProps
   const router = useRouter();
   const { setImportOpen } = useLeads();
   const { startCall } = useCallContext();
-  const { currentWorkspace } = useWorkspace();
+  const { callStatus, isMuted, isOnHold, toggleMute, toggleHold, hangup } = useWebPhone();
+  const { currentWorkspace, workspaces, setCurrentWorkspace } = useWorkspace();
   const workspaceId = currentWorkspace?.id;
+  const callLive = callStatus === 'active' || callStatus === 'held';
+  const otherWorkspaces = workspaces.filter((w) => w.id !== workspaceId);
   const [query, setQuery] = useState('');
   const [leadHits, setLeadHits] = useState<LeadHit[]>([]);
   const [searching, setSearching] = useState(false);
@@ -142,6 +147,37 @@ export function AppCommandPalette({ open, onOpenChange }: AppCommandPaletteProps
           {searching ? 'Searching…' : 'No results — try a lead name or page.'}
         </CommandEmpty>
 
+        {callLive && (
+          <>
+            <CommandGroup heading="On this call">
+              <CommandItem
+                onSelect={() => run(() => toggleMute())}
+                className="gap-2 aria-selected:bg-white/[0.06]"
+              >
+                {isMuted ? <MicOff className="h-4 w-4 text-red-400" /> : <Mic className="h-4 w-4 text-emerald-400" />}
+                {isMuted ? 'Unmute' : 'Mute'}
+                <CommandShortcut>M</CommandShortcut>
+              </CommandItem>
+              <CommandItem
+                onSelect={() => run(() => toggleHold())}
+                className="gap-2 aria-selected:bg-white/[0.06]"
+              >
+                {isOnHold ? <Play className="h-4 w-4 text-emerald-400" /> : <Pause className="h-4 w-4 text-amber-400" />}
+                {isOnHold ? 'Resume call' : 'Hold call'}
+                <CommandShortcut>H</CommandShortcut>
+              </CommandItem>
+              <CommandItem
+                onSelect={() => run(() => hangup())}
+                className="gap-2 aria-selected:bg-white/[0.06]"
+              >
+                <PhoneOff className="h-4 w-4 text-red-400" />
+                End call
+              </CommandItem>
+            </CommandGroup>
+            <CommandSeparator className="bg-white/[0.06]" />
+          </>
+        )}
+
         <CommandGroup heading="Actions">
           <CommandItem
             onSelect={() => run(() => router.push('/dialer'))}
@@ -157,6 +193,20 @@ export function AppCommandPalette({ open, onOpenChange }: AppCommandPaletteProps
           >
             <Upload className="h-4 w-4 text-[#8B5CF6]" />
             Import leads
+          </CommandItem>
+          <CommandItem
+            onSelect={() => run(() => router.push('/numbers'))}
+            className="gap-2 aria-selected:bg-white/[0.06]"
+          >
+            <Hash className="h-4 w-4 text-emerald-400" />
+            Buy a number
+          </CommandItem>
+          <CommandItem
+            onSelect={() => run(() => router.push('/team'))}
+            className="gap-2 aria-selected:bg-white/[0.06]"
+          >
+            <UserPlus className="h-4 w-4 text-[#06B6D4]" />
+            Invite teammate
           </CommandItem>
           <CommandItem
             onSelect={() => run(() => window.dispatchEvent(new CustomEvent('gd:open-shortcuts')))}
@@ -187,6 +237,26 @@ export function AppCommandPalette({ open, onOpenChange }: AppCommandPaletteProps
                   <Users className="h-4 w-4 text-emerald-400" />
                   <span className="flex-1 truncate">{lead.name}</span>
                   <span className="text-[10px] text-slate-500 font-mono">{lead.phone}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </>
+        )}
+
+        {otherWorkspaces.length > 0 && (
+          <>
+            <CommandSeparator className="bg-white/[0.06]" />
+            <CommandGroup heading="Switch workspace">
+              {workspaces.map((ws) => (
+                <CommandItem
+                  key={ws.id}
+                  value={`workspace ${ws.name}`}
+                  onSelect={() => run(() => { void setCurrentWorkspace(ws); })}
+                  className="gap-2 aria-selected:bg-white/[0.06]"
+                >
+                  <Building2 className="h-4 w-4 text-[#8B5CF6]" />
+                  <span className="flex-1 truncate">{ws.name}</span>
+                  {ws.id === workspaceId && <Check className="h-3.5 w-3.5 text-emerald-400" />}
                 </CommandItem>
               ))}
             </CommandGroup>

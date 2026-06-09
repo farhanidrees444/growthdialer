@@ -1477,9 +1477,9 @@ export default function SettingsPage() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
-            className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2"
+            className="fixed left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 px-2 bottom-[calc(var(--bottom-nav-height)+env(safe-area-inset-bottom,0px)+1rem)] lg:w-auto lg:max-w-none lg:px-0 lg:bottom-6"
           >
-            <div className="flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-[oklch(0.09_0.006_285)]/95 px-4 py-2.5 shadow-2xl backdrop-blur-xl">
+            <div className="flex items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-[oklch(0.09_0.006_285)]/95 px-4 py-2.5 shadow-2xl backdrop-blur-xl">
               {saveError && <p className="text-xs text-red-400">{saveError}</p>}
               <button
                 type="button"
