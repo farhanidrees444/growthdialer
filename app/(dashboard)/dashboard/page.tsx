@@ -24,6 +24,12 @@ import { WORKSPACE_ID_HEADER } from "@/lib/auth/workspace-access";
 import { cn } from "@/lib/utils";
 import type { SystemMetricsData, HourlyMetricPoint } from "@/lib/dashboard-types";
 import { ActivationChecklist } from "@/components/activation/activation-checklist";
+import { DashboardHero } from "@/components/dashboard/dashboard-hero";
+import { KpiGhostSparkline } from "@/components/dashboard/kpi-ghost-sparkline";
+import UpNextQueue from "@/components/dashboard/up-next-queue";
+import { PremiumEmptyState } from "@/components/ui/premium-empty-state";
+import { WorkflowSceneMotion } from "@/components/ui/workflow-scene-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   type DashboardRecentCall,
   getRecentCallCounterparty,
@@ -165,12 +171,16 @@ function KpiCard({
   // Empty-state is shared across all KPI cards: if there are calls today,
   // every card shows its value (even 0) so the row stays consistent.
   const hasData = hasActivity;
+  const reduce = useReducedMotion();
 
   return (
-    <div
+    <motion.div
       data-gsap-reveal
-      className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl transition-colors hover:border-white/[0.10]"
+      whileHover={reduce ? undefined : { y: -2 }}
+      transition={{ duration: 0.2 }}
+      className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl transition-shadow hover:border-white/[0.10] hover:shadow-lg hover:shadow-black/20"
     >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" aria-hidden />
       <div className="p-4 pb-1">
         <p className="text-[10px] uppercase tracking-widest text-white/40">{title}</p>
         {loading ? (
@@ -202,39 +212,51 @@ function KpiCard({
             )}
           </>
         ) : (
-          <div className="mt-2 flex flex-col gap-1.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03]">
+          <div className="mt-2 flex flex-col gap-2">
+            <motion.div
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03]"
+              animate={reduce ? {} : { scale: [1, 1.06, 1] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            >
               <Icon className={cn("h-4 w-4", iconColor)} />
-            </div>
-            <p className="text-xs text-slate-600">No calls yet today</p>
-            <Link href="/dialer" className="text-xs font-semibold text-brand underline-offset-2 hover:underline">
-              Start dialing →
+            </motion.div>
+            <p className="text-xs text-slate-500">Waiting for your first call</p>
+            <Link
+              href="/dialer"
+              className="inline-flex w-fit items-center gap-1 rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-semibold text-zinc-200 transition hover:bg-white/[0.1]"
+            >
+              Open dialer
+              <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
         )}
       </div>
-      <div className="h-8 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={sparkline} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-            <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={color} stopOpacity={0.25} />
-                <stop offset="95%" stopColor={color} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <Area
-              type="monotone"
-              dataKey={dataKey}
-              stroke={color}
-              strokeWidth={1.5}
-              fill={`url(#${gradientId})`}
-              dot={false}
-              isAnimationActive={false}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+      <div className="h-8 w-full px-1">
+        {hasData ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={sparkline} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+              <defs>
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={color} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={color} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <Area
+                type="monotone"
+                dataKey={dataKey}
+                stroke={color}
+                strokeWidth={1.5}
+                fill={`url(#${gradientId})`}
+                dot={false}
+                isAnimationActive={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <KpiGhostSparkline color={color} className="h-full w-full" />
+        )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -354,15 +376,18 @@ function CallActivityChart({
           </div>
         </>
       ) : (
-        <div className="flex h-[240px] flex-col items-center justify-center gap-3 px-5 lg:h-[280px]">
-          <div className="flex h-12 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] px-4">
-            <MiniWave className="h-5" />
+        <div className="flex h-[240px] flex-col items-center justify-center gap-4 px-5 lg:h-[280px]">
+          <div className="relative h-20 w-20 overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/60">
+            <WorkflowSceneMotion scene="analytics" />
           </div>
-          <p className="text-sm text-slate-600">
+          <p className="max-w-xs text-center text-sm text-slate-500">
             {anyData ? 'Your activity chart builds as more calls come in' : 'Activity will appear once you start calling'}
           </p>
-          <Link href="/dialer" className="text-xs font-semibold text-brand underline-offset-2 hover:underline">
-            Go to dialer →
+          <Link
+            href="/dialer"
+            className="rounded-full bg-zinc-100 px-4 py-2 text-xs font-semibold text-zinc-950 transition hover:bg-white"
+          >
+            Go to dialer
           </Link>
         </div>
       )}
@@ -396,14 +421,17 @@ function RecentCallsList({ calls, loading }: { calls: DashboardRecentCall[] | nu
           ))}
         </div>
       ) : !calls || calls.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 px-5 py-10">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02]">
-            <Phone className="h-5 w-5 text-slate-600" />
-          </div>
-          <p className="text-sm text-slate-600">No recent calls</p>
-          <Link href="/dialer" className="text-xs font-semibold text-brand underline-offset-2 hover:underline">
-            Start dialing →
-          </Link>
+        <div className="px-4 py-6">
+          <PremiumEmptyState
+            icon={Phone}
+            scene="calls"
+            accent="cyan"
+            compact
+            title="No recent calls"
+            description="Your latest conversations will show up here with disposition and duration."
+            primaryAction={{ label: 'Start dialing', href: '/dialer' }}
+            className="border-0 bg-transparent py-6 shadow-none"
+          />
         </div>
       ) : (
         <div className="divide-y divide-white/[0.04]">
@@ -647,13 +675,7 @@ export default function DashboardPage() {
 
   return (
     <GsapScrollReveal className="flex-1 overflow-y-auto">
-        {/* Hero */}
-        <div data-gsap-reveal className="px-4 pt-6 pb-4 lg:px-6 lg:pt-8 lg:pb-5">
-          <h1 className="text-2xl font-light text-white md:text-3xl">
-            {greeting}{firstName ? ', ' : ''}<span className="font-semibold">{firstName}</span>
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">{dateStr}</p>
-        </div>
+        <DashboardHero greeting={greeting} firstName={firstName} dateStr={dateStr} />
 
         <ActivationChecklist />
 
@@ -731,12 +753,13 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Bottom Row — Recent Calls + Number Health */}
+        {/* Bottom Row — Recent · Up Next · Number Health */}
         <div
           data-gsap-reveal
-          className="mt-4 grid grid-cols-1 gap-4 px-4 pb-6 lg:mt-5 lg:grid-cols-2 lg:px-6"
+          className="mt-4 grid grid-cols-1 gap-4 px-4 pb-6 lg:mt-5 lg:grid-cols-2 xl:grid-cols-3 lg:px-6"
         >
           <RecentCallsList calls={recentCalls} loading={recentCallsLoading} />
+          <UpNextQueue />
           <NumberHealthCard />
         </div>
     </GsapScrollReveal>

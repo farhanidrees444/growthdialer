@@ -51,7 +51,7 @@ export default function UpNextQueue() {
   }, [currentWorkspace?.id, apiFetch]);
 
   return (
-    <Card className="flex h-full flex-col border-white/10 bg-[oklch(0.09_0.006_285)]/90 shadow-lg shadow-black/20">
+    <Card className="flex h-full flex-col overflow-hidden border-white/[0.06] bg-white/[0.02] shadow-lg shadow-black/20 backdrop-blur-xl transition-shadow hover:shadow-xl hover:shadow-black/25">
       <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-indigo-400" />
