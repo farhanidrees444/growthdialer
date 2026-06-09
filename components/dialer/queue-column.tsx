@@ -308,6 +308,7 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
           ) : (
             <PremiumEmptyState
               icon={tab === 'hot' ? Flame : Clock}
+              scene={tab === 'hot' ? 'leads' : 'calls'}
               accent="emerald"
               compact
               title={tab === 'hot' ? 'No hot leads' : 'No callbacks due'}

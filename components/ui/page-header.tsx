@@ -1,5 +1,6 @@
 'use client';
 
+import { motion, useReducedMotion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -21,12 +22,16 @@ export function PageHeader({
   children,
   className,
 }: PageHeaderProps) {
+  const reduce = useReducedMotion();
+
   return (
     <div className={cn('mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between', className)}>
-      <div className="min-w-0">
+      <div className="min-w-0 relative">
         <h1 className="font-display text-xl font-semibold tracking-tight text-white flex items-center gap-2 flex-wrap">
           {Icon && <Icon className="h-5 w-5 shrink-0 text-primary" />}
-          {title}
+          <span className="bg-gradient-to-r from-white via-zinc-100 to-zinc-400 bg-clip-text text-transparent">
+            {title}
+          </span>
           {badge && (
             <Badge variant="secondary" className="text-[10px] font-bold bg-primary/15 text-primary border-0">
               {badge}
@@ -35,6 +40,16 @@ export function PageHeader({
         </h1>
         {description && (
           <p className="mt-1 text-sm text-muted-foreground max-w-xl leading-relaxed">{description}</p>
+        )}
+        {!reduce && (
+          <motion.div
+            aria-hidden
+            className="mt-3 h-px max-w-[120px] bg-gradient-to-r from-violet-500/60 via-cyan-500/30 to-transparent"
+            initial={{ scaleX: 0, opacity: 0 }}
+            animate={{ scaleX: 1, opacity: 1 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            style={{ transformOrigin: 'left' }}
+          />
         )}
       </div>
       {children && <div className="flex shrink-0 items-center gap-2 flex-wrap">{children}</div>}

@@ -1,5 +1,6 @@
 'use client';
 
+import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface SurfaceCardProps {
@@ -25,17 +26,28 @@ export function SurfaceCard({
   glow = false,
   as: Tag = 'div',
 }: SurfaceCardProps) {
+  const reduce = useReducedMotion();
+  const MotionTag = motion.create(Tag);
+
   return (
-    <Tag
+    <MotionTag
+      initial={reduce ? false : { opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={reduce ? undefined : { y: -1 }}
       className={cn(
-        'relative overflow-hidden rounded-2xl border backdrop-blur-xl',
+        'relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-shadow duration-300',
         VARIANT[variant],
         glow && 'shadow-lg shadow-primary/10',
+        !reduce && 'hover:shadow-xl hover:shadow-black/20',
         className,
       )}
     >
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.05] via-transparent to-violet-500/[0.03]" />
+      {!reduce && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+      )}
       <div className="relative">{children}</div>
-    </Tag>
+    </MotionTag>
   );
 }

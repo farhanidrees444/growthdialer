@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Lottie from 'lottie-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -10,11 +8,11 @@ import {
   type WorkflowScene,
   type SceneAccent,
 } from '@/lib/ui/workflow-scenes';
+import { WorkflowSceneMotion } from '@/components/ui/workflow-scene-motion';
 
 interface WorkflowIllustrationProps {
   scene?: WorkflowScene;
   accent?: SceneAccent;
-  /** Fallback when no scene or Lottie fails */
   icon?: LucideIcon;
   compact?: boolean;
   className?: string;
@@ -29,70 +27,87 @@ export function WorkflowIllustration({
 }: WorkflowIllustrationProps) {
   const reduce = useReducedMotion();
   const config = resolveSceneConfig(scene, accent);
-  const [data, setData] = useState<object | null>(null);
-  const [failed, setFailed] = useState(false);
 
-  useEffect(() => {
-    if (!scene) return;
-    let cancelled = false;
-    fetch(config.lottie)
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((json) => { if (!cancelled) setData(json); })
-      .catch(() => { if (!cancelled) setFailed(true); });
-    return () => { cancelled = true; };
-  }, [scene, config.lottie]);
-
-  const size = compact ? 'h-[72px] w-[72px]' : 'h-[108px] w-[108px]';
-  const lottieSize = compact ? 'h-14 w-14' : 'h-[88px] w-[88px]';
+  const boxSize = compact ? 'h-[80px] w-[80px]' : 'h-[128px] w-[128px]';
+  const innerSize = compact ? 'h-[64px] w-[64px]' : 'h-[104px] w-[104px]';
 
   return (
     <div className={cn('relative flex items-center justify-center', className)}>
       {!reduce && (
-        <motion.div
-          aria-hidden
-          className={cn(
-            'pointer-events-none absolute rounded-full bg-gradient-to-br blur-2xl',
-            config.halo,
-            compact ? 'h-20 w-20' : 'h-36 w-36',
-          )}
-          animate={{ scale: [0.92, 1.06, 0.92], opacity: [0.55, 0.85, 0.55] }}
-          transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
-        />
+        <>
+          <motion.div
+            aria-hidden
+            className={cn(
+              'pointer-events-none absolute rounded-full bg-gradient-to-br blur-3xl',
+              config.halo,
+              compact ? 'h-24 w-24' : 'h-44 w-44',
+            )}
+            animate={{ scale: [0.88, 1.1, 0.88], opacity: [0.45, 0.9, 0.45] }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.div
+            aria-hidden
+            className={cn(
+              'pointer-events-none absolute rounded-full opacity-40 blur-2xl',
+              compact ? 'h-16 w-16' : 'h-28 w-28',
+            )}
+            style={{
+              background: 'conic-gradient(from 180deg, #8B5CF6, #22D3EE, #8B5CF6)',
+            }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+          />
+        </>
       )}
 
-      <div
-        className={cn(
-          'relative flex items-center justify-center rounded-2xl border border-white/[0.08]',
-          'bg-gradient-to-b from-zinc-900/90 to-zinc-950/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]',
-          size,
-        )}
+      <motion.div
+        className={cn('relative', boxSize)}
+        initial={reduce ? false : { scale: 0.92, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
+        {!reduce && (
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute -inset-[1px] rounded-[18px] opacity-70"
+            style={{
+              background: 'linear-gradient(135deg, rgba(139,92,246,0.5), rgba(34,211,238,0.2), rgba(139,92,246,0.1))',
+            }}
+            animate={{ opacity: [0.4, 0.75, 0.4] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        )}
+
         <div
           className={cn(
-            'pointer-events-none absolute inset-0 rounded-2xl opacity-60',
-            'bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.08),transparent_65%)]',
+            'relative flex items-center justify-center overflow-hidden rounded-[17px]',
+            'border border-white/[0.1] bg-gradient-to-b from-zinc-800/80 to-zinc-950',
+            'shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_8px_32px_rgba(0,0,0,0.4)]',
+            boxSize,
           )}
-          aria-hidden
-        />
-
-        {scene && data && !failed ? (
-          <Lottie
-            animationData={data}
-            loop
-            className={cn('pointer-events-none', lottieSize)}
-          />
-        ) : Icon ? (
-          <Icon className={cn('text-zinc-400', compact ? 'h-6 w-6' : 'h-9 w-9')} />
-        ) : (
+        >
           <div
-            className={cn(
-              'rounded-full bg-gradient-to-br from-violet-500/30 to-cyan-500/20',
-              compact ? 'h-8 w-8' : 'h-12 w-12',
-              !reduce && 'animate-pulse',
-            )}
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.12),transparent_55%)]"
+            aria-hidden
           />
-        )}
-      </div>
+
+          {scene ? (
+            <div className={cn('relative', innerSize)}>
+              <WorkflowSceneMotion scene={scene} />
+            </div>
+          ) : Icon ? (
+            <Icon className={cn('text-zinc-400', compact ? 'h-7 w-7' : 'h-10 w-10')} />
+          ) : (
+            <div
+              className={cn(
+                'rounded-full bg-gradient-to-br from-violet-500/40 to-cyan-500/30',
+                compact ? 'h-10 w-10' : 'h-14 w-14',
+                !reduce && 'animate-pulse',
+              )}
+            />
+          )}
+        </div>
+      </motion.div>
     </div>
   );
 }

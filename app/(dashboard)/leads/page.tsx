@@ -483,6 +483,7 @@ function EmptyState({
   return (
     <PremiumEmptyState
       icon={UserPlus}
+      scene="leads"
       accent="emerald"
       title={title}
       description={sub}
