@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Phone, Zap, Grid3x3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,10 +21,11 @@ const SEGMENTS: {
   id: DialMode;
   label: string;
   Icon: typeof Phone;
+  activeGradient: string;
 }[] = [
-  { id: 'manual', label: 'Manual', Icon: Phone },
-  { id: 'power', label: 'Power', Icon: Zap },
-  { id: 'parallel', label: 'Parallel', Icon: Grid3x3 },
+  { id: 'manual', label: 'Manual', Icon: Phone, activeGradient: 'from-zinc-700/80 to-zinc-800/80' },
+  { id: 'power', label: 'Power', Icon: Zap, activeGradient: 'from-violet-600/90 to-violet-500/80' },
+  { id: 'parallel', label: 'Parallel', Icon: Grid3x3, activeGradient: 'from-cyan-600/80 to-violet-600/70' },
 ];
 
 export default function DialModeSegmented({
@@ -37,6 +38,8 @@ export default function DialModeSegmented({
   powerActive = false,
   className,
 }: DialModeSegmentedProps) {
+  const reduce = useReducedMotion();
+
   const handleClick = (id: DialMode) => {
     if (disabled) return;
     onModeChange?.(id);
@@ -47,13 +50,20 @@ export default function DialModeSegmented({
   return (
     <div
       className={cn(
-        'inline-flex w-full max-w-md rounded-lg border border-zinc-800/50 bg-zinc-900/80 p-1 backdrop-blur-sm',
+        'relative inline-flex w-full max-w-md rounded-xl border border-white/[0.06] bg-zinc-900/70 p-1 backdrop-blur-md',
         className,
       )}
       role="tablist"
       aria-label="Dial mode"
     >
-      {SEGMENTS.map(({ id, label, Icon }) => {
+      {!reduce && (
+        <div
+          className="pointer-events-none absolute inset-0 rounded-xl bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(139,92,246,0.08),transparent_70%)]"
+          aria-hidden
+        />
+      )}
+
+      {SEGMENTS.map(({ id, label, Icon, activeGradient }) => {
         const isActive =
           mode === id || (id === 'power' && powerActive) || (id === 'parallel' && parallelActive);
         return (
@@ -65,21 +75,40 @@ export default function DialModeSegmented({
             disabled={disabled}
             onClick={() => handleClick(id)}
             className={cn(
-              'relative flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-all',
+              'relative flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-medium transition-colors',
               disabled && 'cursor-not-allowed opacity-50',
-              !disabled && !isActive && 'cursor-pointer text-zinc-500 hover:text-zinc-200 hover:shadow-enterprise-hover',
-              isActive && 'text-zinc-100',
+              !disabled && !isActive && 'cursor-pointer text-zinc-500 hover:text-zinc-200',
+              isActive && 'text-white',
             )}
           >
             {isActive && (
               <motion.div
                 layoutId="dial-mode-pill-enterprise"
-                className="absolute inset-0 rounded-md nav-active-glass"
-                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                className={cn('absolute inset-0 rounded-lg bg-gradient-to-r shadow-sm', activeGradient)}
+                transition={{ type: 'spring', stiffness: 400, damping: 34 }}
               />
             )}
-            <Icon className="relative z-10 h-3.5 w-3.5 shrink-0" />
-            <span className="relative z-10 truncate">{label}</span>
+            {isActive && !reduce && id !== 'manual' && (
+              <motion.div
+                aria-hidden
+                className="absolute inset-0 rounded-lg opacity-50"
+                style={{
+                  background: id === 'power'
+                    ? 'radial-gradient(circle at 50% 0%, rgba(167,139,250,0.4), transparent 70%)'
+                    : 'radial-gradient(circle at 50% 0%, rgba(34,211,238,0.35), transparent 70%)',
+                }}
+                animate={{ opacity: [0.3, 0.6, 0.3] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            )}
+            <motion.span
+              className="relative z-10 flex items-center gap-1.5"
+              animate={isActive && !reduce ? { scale: [1, 1.04, 1] } : { scale: 1 }}
+              transition={{ duration: 2, repeat: isActive ? Infinity : 0, ease: 'easeInOut' }}
+            >
+              <Icon className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{label}</span>
+            </motion.span>
           </button>
         );
       })}

@@ -35,6 +35,7 @@ import { ParallelDialConfigModal } from '@/components/dialer/parallel-dial-confi
 import { ParallelDialStage } from '@/components/dialer/parallel-dial-stage';
 import { ParallelSessionBanner } from '@/components/dialer/parallel-session-banner';
 import { DialerFloatingActions } from '@/components/dialer/dialer-floating-actions';
+import { DialerStageAmbient } from '@/components/dialer/dialer-stage-ambient';
 
 import type { LeadRecord, DispositionType } from '@/lib/dialer/state-machine';
 
@@ -582,7 +583,12 @@ export default function DialerPage() {
         </div>
 
         {/* Center stage */}
-        <div className="flex-1 min-w-0 relative overflow-hidden">
+        <div className="relative min-w-0 flex-1 overflow-hidden">
+          <DialerStageAmbient
+            variant={
+              isLive ? 'live' : powerDialer.isActive ? 'power' : 'idle'
+            }
+          />
           <AnimatePresence mode="wait">
             {mode === 'browse' && parallelDialer.isActive && parallelDialer.session && (
               <motion.div key="parallel" className="absolute inset-0">

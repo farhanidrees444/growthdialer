@@ -318,21 +318,15 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
             />
           )
         ) : (
-          <AnimatePresence initial={false}>
-            {displayLeads.map((lead) => (
-              <motion.div
+          <AnimatePresence initial={false} mode="popLayout">
+            {displayLeads.map((lead, index) => (
+              <QueueLeadCard
                 key={lead.id}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
-              >
-                <QueueLeadCard
-                  lead={lead}
-                  selected={lead.id === selectedLeadId}
-                  onClick={() => onSelectLead(lead)}
-                />
-              </motion.div>
+                lead={lead}
+                index={index}
+                selected={lead.id === selectedLeadId}
+                onClick={() => onSelectLead(lead)}
+              />
             ))}
           </AnimatePresence>
         )}

@@ -6,6 +6,7 @@ import { PhoneOff, Wifi } from 'lucide-react';
 import { getAvatarGradient, getInitials } from '@/lib/dialer/avatar-color';
 import { CallerWaveform } from './caller-waveform';
 import { ActionDock } from './action-dock';
+import { DialerStageAmbient } from './dialer-stage-ambient';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
 import { useWorkspace } from '@/contexts/workspace-context';
 
@@ -78,14 +79,36 @@ export function LiveCallStage({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-      className="flex flex-col items-center h-full pt-8 pb-6 px-6 gap-5"
+      className="relative flex h-full flex-col items-center gap-5 px-6 pb-6 pt-8"
     >
+      <DialerStageAmbient variant="live" />
+
       {/* Avatar */}
-      <div className="relative">
+      <div className="relative z-10">
+        {isConnected && (
+          <>
+            <motion.div
+              aria-hidden
+              className="absolute inset-0 -m-4 rounded-full border border-cyan-400/20"
+              animate={{ scale: [1, 1.35], opacity: [0.5, 0] }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeOut' }}
+            />
+            <motion.div
+              aria-hidden
+              className="absolute inset-0 -m-2 rounded-full border border-violet-400/15"
+              animate={{ scale: [1, 1.2], opacity: [0.4, 0] }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeOut', delay: 0.5 }}
+            />
+          </>
+        )}
         <motion.div
-          className="w-28 h-28 rounded-full flex items-center justify-center text-3xl font-semibold text-white"
+          className="relative flex h-28 w-28 items-center justify-center rounded-full text-3xl font-semibold text-white shadow-xl shadow-black/30"
           style={{ background: gradient.css }}
-          animate={isConnected ? { boxShadow: ['0 0 0 0 rgba(6,182,212,0)', '0 0 0 12px rgba(6,182,212,0.12)', '0 0 0 0 rgba(6,182,212,0)'] } : {}}
+          animate={
+            isConnected
+              ? { boxShadow: ['0 0 0 0 rgba(6,182,212,0)', '0 0 0 16px rgba(6,182,212,0.1)', '0 0 0 0 rgba(6,182,212,0)'] }
+              : {}
+          }
           transition={{ duration: 2, repeat: Infinity }}
         >
           {getInitials(lead.name)}
@@ -97,8 +120,10 @@ export function LiveCallStage({
       </div>
 
       {/* Name & status */}
-      <div className="text-center space-y-1">
-        <h1 className="text-4xl font-light text-white">{lead.name}</h1>
+      <div className="relative z-10 space-y-1 text-center">
+        <h1 className="bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-4xl font-light text-transparent">
+          {lead.name}
+        </h1>
         <p className="text-base text-white/50">{[lead.title, lead.company].filter(Boolean).join(' · ')}</p>
         <div className="flex items-center justify-center gap-2 mt-1">
           <span className={`text-sm ${isOnHold ? 'text-yellow-400' : isConnected ? 'text-green-400' : 'text-white/40'}`}>
@@ -108,12 +133,16 @@ export function LiveCallStage({
       </div>
 
       {/* Waveform */}
-      <div className="w-full max-w-sm">
+      <div className="relative z-10 w-full max-w-sm">
         <CallerWaveform active={isConnected && !isOnHold} />
       </div>
 
       {/* Timer */}
-      <div className="text-2xl font-mono tabular-nums text-white/80" aria-live="polite" aria-label={`Call duration ${formatted}`}>
+      <div
+        className="relative z-10 font-mono text-2xl tabular-nums text-white/80"
+        aria-live="polite"
+        aria-label={`Call duration ${formatted}`}
+      >
         {formatted}
       </div>
 
@@ -124,7 +153,7 @@ export function LiveCallStage({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="w-full max-w-sm overflow-hidden"
+            className="relative z-10 w-full max-w-sm overflow-hidden"
           >
             <div className="relative">
               <textarea
@@ -144,6 +173,7 @@ export function LiveCallStage({
       </AnimatePresence>
 
       {/* Action dock */}
+      <div className="relative z-10 w-full max-w-sm">
       <ActionDock
         isMuted={isMuted}
         isOnHold={isOnHold}
@@ -179,6 +209,7 @@ export function LiveCallStage({
         End Call
         <kbd className="ml-1 hidden text-red-200/50 text-xs font-mono font-normal [@media(pointer:fine)]:inline">Space</kbd>
       </motion.button>
+      </div>
     </motion.div>
   );
 }
