@@ -75,7 +75,7 @@ export function MilestoneCelebration() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 12, scale: 0.98 }}
           transition={SPRING}
-          className="fixed bottom-24 left-1/2 z-[var(--z-milestone)] -translate-x-1/2 sm:bottom-[calc(2rem+var(--gd-dock-call-height,0px))]"
+          className="fixed left-1/2 z-[var(--z-milestone)] -translate-x-1/2 bottom-[calc(var(--bottom-nav-height)+env(safe-area-inset-bottom,0px)+1.5rem)] sm:bottom-[calc(2rem+var(--gd-dock-call-height,0px))]"
           role="status"
           aria-live="polite"
         >

@@ -352,7 +352,7 @@ export default function TeamPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <div data-page-scroll className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Workspace banner */}
         {currentWorkspace && (
           <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-emerald-600/10 via-transparent to-violet-600/10 p-5">

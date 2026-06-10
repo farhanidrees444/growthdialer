@@ -575,7 +575,7 @@ export default function RecordingDetailPage() {
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto px-3 py-4 lg:px-8 lg:py-6">
+    <div data-page-scroll className="flex-1 overflow-y-auto px-3 py-4 lg:px-8 lg:py-6">
       <div className="max-w-3xl mx-auto space-y-5">
         <RecordingDetailHero
           leadName={lead?.name ?? 'Unknown Caller'}

@@ -1420,7 +1420,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Content area */}
-        <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6 mt-10 lg:mt-0">
+        <main data-page-scroll className="flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6 mt-10 lg:mt-0">
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="h-6 w-6 animate-spin text-white/25" />

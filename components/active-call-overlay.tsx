@@ -716,7 +716,9 @@ export default function ActiveCallOverlay() {
           className={[
             'z-50 w-full max-w-[480px] rounded-3xl border border-white/[0.12]',
             'bg-[oklch(0.085_0.006_285)]/98 shadow-2xl shadow-black/70 backdrop-blur-2xl overflow-hidden',
-            isMobile ? 'fixed bottom-4 left-4 right-4 mx-auto' : 'cursor-default select-none',
+            isMobile
+              ? 'fixed left-4 right-4 mx-auto bottom-[calc(var(--bottom-nav-height)+env(safe-area-inset-bottom,0px)+1rem)]'
+              : 'cursor-default select-none',
           ].join(' ')}
           aria-label="Active call overlay"
           aria-live="polite"

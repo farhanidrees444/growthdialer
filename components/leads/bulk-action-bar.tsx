@@ -157,7 +157,7 @@ export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
         exit={{ y: 80, opacity: 0 }}
         transition={{ type: 'spring', damping: 24, stiffness: 280 }}
         className="fixed left-3 right-3 z-40 flex flex-wrap items-center gap-2 rounded-2xl border border-white/[0.12] bg-[oklch(0.09_0.006_285)]/96 px-4 py-3 shadow-2xl shadow-black/60 backdrop-blur-xl lg:bottom-6 lg:left-1/2 lg:right-auto lg:w-auto lg:-translate-x-1/2 lg:flex-nowrap"
-        style={{ bottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}
+        style={{ bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 1rem)' }}
       >
         {/* Selection count */}
         <div className="flex items-center gap-2">

@@ -1,11 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Phone, Users, MoreHorizontal } from 'lucide-react';
-import { useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+  LayoutDashboard,
+  Phone,
+  Users,
+  MoreHorizontal,
   Headphones,
   Settings,
   Building2,
@@ -19,6 +22,7 @@ import {
   PhoneIncoming,
   X,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { resolveMobileTabAccent, resolveRouteAccent } from '@/lib/ui/route-accents';
@@ -27,41 +31,91 @@ const PRIMARY_TABS = [
   { icon: LayoutDashboard, label: 'Home', href: '/dashboard' },
   { icon: Phone, label: 'Dialer', href: '/dialer' },
   { icon: Users, label: 'Leads', href: '/leads' },
+  { icon: BarChart2, label: 'Analytics', href: '/analytics' },
 ] as const;
 
 type MoreLink = {
-  icon: typeof Building2;
+  icon: LucideIcon;
   label: string;
   href: string;
   managerOnly?: boolean;
 };
 
-const MORE_LINKS: MoreLink[] = [
-  { icon: Building2, label: 'Team', href: '/team' },
-  { icon: ScrollText, label: 'Call Logs', href: '/call-logs' },
-  { icon: PhoneIncoming, label: 'Inbound', href: '/settings?tab=calling' },
-  { icon: Headphones, label: 'Recordings', href: '/recordings' },
-  { icon: ListOrdered, label: 'Sequences', href: '/sequences' },
-  { icon: BarChart2, label: 'Analytics', href: '/analytics' },
-  { icon: Trophy, label: 'Leaderboard', href: '/leaderboard', managerOnly: true },
-  { icon: Hash, label: 'Numbers', href: '/numbers' },
-  { icon: Headset, label: 'Coaching', href: '/coaching/live', managerOnly: true },
-  { icon: Zap, label: 'Integrations', href: '/dashboard/integrations' },
-  { icon: Settings, label: 'Settings', href: '/settings' },
+type MoreSection = {
+  title: string;
+  links: MoreLink[];
+};
+
+const MORE_SECTIONS: MoreSection[] = [
+  {
+    title: 'Engage',
+    links: [
+      { icon: ListOrdered, label: 'Sequences', href: '/sequences' },
+      { icon: PhoneIncoming, label: 'Inbound', href: '/settings?tab=calling' },
+    ],
+  },
+  {
+    title: 'Intelligence',
+    links: [
+      { icon: ScrollText, label: 'Call Logs', href: '/call-logs' },
+      { icon: Headphones, label: 'Recordings', href: '/recordings' },
+    ],
+  },
+  {
+    title: 'Team',
+    links: [
+      { icon: Building2, label: 'Team', href: '/team' },
+      { icon: Trophy, label: 'Leaderboard', href: '/leaderboard', managerOnly: true },
+      { icon: Headset, label: 'Coaching', href: '/coaching/live', managerOnly: true },
+    ],
+  },
+  {
+    title: 'Setup',
+    links: [
+      { icon: Hash, label: 'Numbers', href: '/numbers' },
+      { icon: Zap, label: 'Integrations', href: '/dashboard/integrations' },
+      { icon: Settings, label: 'Settings', href: '/settings' },
+    ],
+  },
 ];
 
-function isActive(pathname: string, href: string) {
-  return href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
+const ALL_MORE_LINKS = MORE_SECTIONS.flatMap((section) => section.links);
+
+function isPrimaryActive(pathname: string, href: string) {
+  if (href === '/dashboard') return pathname === '/dashboard';
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function MobileBottomNav() {
+function isMoreLinkActive(pathname: string, searchParams: URLSearchParams, href: string) {
+  if (href.includes('?')) {
+    const [path, query] = href.split('?');
+    if (pathname !== path) return false;
+    const expected = new URLSearchParams(query);
+    for (const [key, val] of expected.entries()) {
+      if (searchParams.get(key) !== val) return false;
+    }
+    return true;
+  }
+
+  if (href === '/settings') {
+    if (pathname !== '/settings' && !pathname.startsWith('/settings/')) return false;
+    return searchParams.get('tab') !== 'calling';
+  }
+
+  if (href === '/dashboard') return pathname === '/dashboard';
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function MobileBottomNavInner() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [moreOpen, setMoreOpen] = useState(false);
   const { currentRole } = useWorkspace();
   const canCoach = currentRole && ['owner', 'admin', 'manager'].includes(currentRole);
 
-  const moreActive = MORE_LINKS.some(
-    (l) => !l.managerOnly || canCoach ? isActive(pathname, l.href) : false,
+  const moreActive = ALL_MORE_LINKS.some(
+    (link) => (!link.managerOnly || canCoach) && isMoreLinkActive(pathname, searchParams, link.href),
   );
 
   return (
@@ -72,7 +126,7 @@ export function MobileBottomNav() {
         aria-label="Mobile navigation"
       >
         {PRIMARY_TABS.map(({ icon: Icon, label, href }) => {
-          const active = isActive(pathname, href);
+          const active = isPrimaryActive(pathname, href);
           const accent = resolveMobileTabAccent(href);
           return (
             <Link
@@ -130,12 +184,12 @@ export function MobileBottomNav() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 32, stiffness: 320 }}
-              className="lg:hidden fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl border-t border-white/[0.10] bg-[oklch(0.09_0.006_285)] shadow-2xl"
+              className="lg:hidden fixed bottom-0 left-0 right-0 z-50 max-h-[min(80vh,640px)] overflow-y-auto rounded-t-2xl border-t border-white/[0.10] bg-[oklch(0.09_0.006_285)] shadow-2xl"
               style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
               role="dialog"
               aria-label="More navigation"
             >
-              <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.06] bg-[oklch(0.09_0.006_285)] px-5 py-4">
                 <span className="text-sm font-semibold text-white">Navigate</span>
                 <button
                   type="button"
@@ -146,27 +200,40 @@ export function MobileBottomNav() {
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-1 p-3 sm:grid-cols-3">
-                {MORE_LINKS.map((item) => {
-                  if (item.managerOnly && !canCoach) return null;
-                  const active = isActive(pathname, item.href);
-                  const accent = resolveRouteAccent(item.href.split('?')[0]);
-                  const Icon = item.icon;
+              <div className="space-y-4 p-3">
+                {MORE_SECTIONS.map((section) => {
+                  const visibleLinks = section.links.filter((link) => !link.managerOnly || canCoach);
+                  if (visibleLinks.length === 0) return null;
+
                   return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMoreOpen(false)}
-                      className={cn(
-                        'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200',
-                        active
-                          ? cn(accent.activePill, accent.activeText)
-                          : 'text-slate-300 hover:bg-white/[0.05] hover:text-white',
-                      )}
-                    >
-                      <Icon className={cn('h-4 w-4 shrink-0', active && accent.icon)} />
-                      {item.label}
-                    </Link>
+                    <div key={section.title}>
+                      <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
+                        {section.title}
+                      </p>
+                      <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
+                        {visibleLinks.map((item) => {
+                          const active = isMoreLinkActive(pathname, searchParams, item.href);
+                          const accent = resolveRouteAccent(item.href.split('?')[0]);
+                          const Icon = item.icon;
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={() => setMoreOpen(false)}
+                              className={cn(
+                                'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200',
+                                active
+                                  ? cn(accent.activePill, accent.activeText)
+                                  : 'text-slate-300 hover:bg-white/[0.05] hover:text-white',
+                              )}
+                            >
+                              <Icon className={cn('h-4 w-4 shrink-0', active && accent.icon)} />
+                              {item.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -175,5 +242,13 @@ export function MobileBottomNav() {
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+export function MobileBottomNav() {
+  return (
+    <Suspense fallback={null}>
+      <MobileBottomNavInner />
+    </Suspense>
   );
 }

@@ -381,7 +381,8 @@ html {
    (1024px) where the bottom tab bar is visible.
    ── */
 @media (max-width: 1023px) {
-  .dashboard-shell main {
+  .dashboard-shell main,
+  .dashboard-shell [data-page-scroll] {
     padding-bottom: calc(var(--bottom-nav-height) + 16px + env(safe-area-inset-bottom, 0px));
   }
 }

@@ -217,5 +217,6 @@ export function resolveMobileTabAccent(href: string): RouteAccent {
   if (href === '/dashboard') return ROUTE_ACCENTS.dashboard;
   if (href === '/dialer') return ROUTE_ACCENTS.dialer;
   if (href === '/leads') return ROUTE_ACCENTS.leads;
+  if (href === '/analytics') return ROUTE_ACCENTS.analytics;
   return ROUTE_ACCENTS.default;
 }
