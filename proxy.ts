@@ -38,6 +38,18 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
+  if (user) {
+    if (path === '/integrations') {
+      return NextResponse.redirect(new URL('/dashboard/integrations', request.url))
+    }
+    if (path === '/my-numbers') {
+      return NextResponse.redirect(new URL('/numbers', request.url))
+    }
+    if (path === '/inbound') {
+      return NextResponse.redirect(new URL('/settings?tab=calling', request.url))
+    }
+  }
+
   return supabaseResponse
 }
 

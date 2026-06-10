@@ -83,7 +83,11 @@ export async function POST(request: NextRequest) {
     let invalidPhones = 0;
     const prepared = rows.reduce((acc: Array<Record<string, unknown>>, row: Record<string, string>) => {
       const rawPhone = row.phone || row.mobile || row['phone number'] || '';
-      const phone = normalizePhone(rawPhone, defaultCountry);
+      const rowCountryRaw = (row.country || row['country code'] || row.country_code || '').trim();
+      const rowCountry = /^[A-Za-z]{2}$/.test(rowCountryRaw)
+        ? (rowCountryRaw.toUpperCase() as CountryCode)
+        : defaultCountry;
+      const phone = normalizePhone(rawPhone, rowCountry);
 
       const firstName = row.first_name || row.firstname || row.name?.split(' ').slice(0, 1).join('') || '';
       const lastName = row.last_name || row.lastname || row.name?.split(' ').slice(1).join('') || '';

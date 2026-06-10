@@ -27,6 +27,18 @@ export function normalizePhone(raw: string, defaultCountry: CountryCode = 'US'):
     if (parsed?.isValid()) return parsed.format('E.164');
   }
 
+  // Third attempt: CRM export bug — international numbers prefixed with spurious +1
+  // while import defaultCountry is US (e.g. UK "+11342833034" → "+441342833034")
+  if ((defaultCountry === 'US' || defaultCountry === 'CA') && cleaned.startsWith('+1')) {
+    const stripped = cleaned.slice(2);
+    const intlFallbacks: CountryCode[] = ['GB', 'AU', 'IE', 'NZ', 'DE', 'FR'];
+    for (const cc of intlFallbacks) {
+      parsed = parsePhoneNumberFromString(stripped, cc)
+        ?? parsePhoneNumberFromString(stripped.replace(/^0+/, ''), cc);
+      if (parsed?.isValid()) return parsed.format('E.164');
+    }
+  }
+
   // Fallback for plain 10-digit US numbers not caught above
   const digits = cleaned.replace(/\D/g, '');
   if (digits.length === 10 && (defaultCountry === 'US' || defaultCountry === 'CA')) {

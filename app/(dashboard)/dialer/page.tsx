@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Phone } from 'lucide-react';
 import { toast } from 'sonner';
@@ -118,6 +119,7 @@ interface TodayStats { calls: number; connects: number; meetings: number; streak
 
 // ══════════════════════════════════════════════════════════════════════════════
 export default function DialerPage() {
+  const router = useRouter();
   const {
     callStatus, isMuted, isOnHold, phoneStatus, activeCallId,
     makeCall, hangup, toggleMute, toggleHold, sendDTMF,
@@ -864,6 +866,16 @@ export default function DialerPage() {
                 <button
                   disabled={queueCounts.queue === 0}
                   onClick={() => {
+                    if (!fromNumber) {
+                      toast.error('Claim a caller ID before starting power dial');
+                      setPowerConfirmOpen(false);
+                      router.push('/numbers');
+                      return;
+                    }
+                    if (phoneStatus !== 'ready') {
+                      toast.error('Phone not ready — wait for Ready status');
+                      return;
+                    }
                     setPowerConfirmOpen(false);
                     powerDialer.start({ delay_seconds: 5 });
                   }}
