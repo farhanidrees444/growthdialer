@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, Play, Pause, Download, Sparkles, Clock, Phone,
+  Play, Pause, Download, Sparkles,
   TrendingUp, TrendingDown, Minus, AlertTriangle, CheckCircle2,
   Target, ChevronRight, Brain, Search, X,
 } from 'lucide-react';
