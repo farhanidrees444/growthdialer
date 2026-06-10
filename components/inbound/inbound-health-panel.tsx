@@ -7,6 +7,12 @@ import { cn } from '@/lib/utils';
 
 type InboundStatus = 'live' | 'almost_ready' | 'needs_setup' | 'offline';
 
+interface InboundBlocker {
+  code: string;
+  label: string;
+  fix: string;
+}
+
 interface HealthData {
   status: InboundStatus;
   ready: boolean;
@@ -18,6 +24,7 @@ interface HealthData {
   needs_activation?: boolean;
   unrouted_count?: number;
   routed_count?: number;
+  blockers?: InboundBlocker[];
 }
 
 interface Props {
@@ -180,6 +187,14 @@ export function InboundHealthPanel({ phoneReady, onActivated }: Props) {
 
       {activateMsg && (
         <p className="relative mt-3 text-xs text-cyan-200/90">{activateMsg}</p>
+      )}
+
+      {!isLive && (health.blockers?.length ?? 0) > 1 && (
+        <ul className="relative mt-3 space-y-1.5 text-xs text-amber-200/80">
+          {health.blockers!.slice(1, 4).map((b) => (
+            <li key={b.code}>• {b.fix}</li>
+          ))}
+        </ul>
       )}
     </div>
   );

@@ -8,7 +8,11 @@ import {
   fetchProviderPhoneIndex,
 } from '@/lib/voice/provider-numbers';
 import { ensureVoiceConnectionConfigured } from '@/lib/voice/configure-connection';
-import { resolveVoiceAppBaseUrl } from '@/lib/voice/webhook-url';
+import {
+  listInboundBlockers,
+  resolveInboundAppUrl,
+} from '@/lib/voice/inbound-readiness';
+import { resolveActiveCredentialId } from '@/lib/telnyx/active-credential';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -24,7 +28,7 @@ export async function GET(request: NextRequest) {
 
   const connectionId = process.env.TELNYX_CONNECTION_ID?.trim() ?? null;
 
-  const [settingsRes, numbersRes, recentInboundRes, providerIndex, connectionConfig] = await Promise.all([
+  const [settingsRes, numbersRes, recentInboundRes, providerIndex, connectionConfig, credentialId] = await Promise.all([
     supabase
       .from('user_settings')
       .select('inbound_mode')
@@ -46,6 +50,7 @@ export async function GET(request: NextRequest) {
       .maybeSingle(),
     fetchProviderPhoneIndex(),
     ensureVoiceConnectionConfigured(),
+    resolveActiveCredentialId(supabase, user.id),
   ]);
 
   const mode = (settingsRes.data?.inbound_mode as string | null) ?? 'browser';
@@ -60,12 +65,22 @@ export async function GET(request: NextRequest) {
 
   const routing = await auditNumberRouting(numbers, connectionId, providerIndex);
   const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
-  const appUrl = resolveVoiceAppBaseUrl() || (host ? `https://${host}` : '');
+  const appUrl = resolveInboundAppUrl(host);
   const eventsVerified = Boolean(process.env.TELNYX_PUBLIC_KEY?.trim());
   const voiceConfigured = connectionConfig.ok && Boolean(process.env.TELNYX_API_KEY?.trim());
-
   const inboundEnabled = mode !== 'off';
   const browserAnswering = mode === 'browser' || mode === 'forward';
+
+  const blockers = listInboundBlockers({
+    connection: connectionConfig,
+    eventsVerified,
+    appUrl,
+    primaryRouted: routing.primary_routed,
+    hasNumbers: numbers.length > 0,
+    inboundEnabled,
+    browserAnswering,
+    credentialReady: Boolean(credentialId),
+  });
 
   let status: 'live' | 'almost_ready' | 'needs_setup' | 'offline' = 'needs_setup';
   let headline = 'Setting up your inbound line';
@@ -90,10 +105,10 @@ export async function GET(request: NextRequest) {
     status = 'almost_ready';
     headline = 'Voicemail mode is on';
     subline = 'Calls go straight to voicemail — switch to browser ringing to answer live.';
-  } else if (!voiceConfigured || !eventsVerified || !appUrl) {
+  } else if (!voiceConfigured || !eventsVerified || !appUrl || blockers.length > 0) {
     status = 'almost_ready';
-    headline = 'Your line is being finalized';
-    subline = 'Keep this page open — inbound will be fully live shortly.';
+    headline = blockers[0]?.label ?? 'Your line is being finalized';
+    subline = blockers[0]?.fix ?? 'Keep this page open — inbound will be fully live shortly.';
   } else {
     status = 'live';
     headline = 'Inbound line is live';
@@ -106,7 +121,10 @@ export async function GET(request: NextRequest) {
     && inboundEnabled
     && browserAnswering
     && eventsVerified
-    && Boolean(appUrl);
+    && voiceConfigured
+    && Boolean(appUrl)
+    && Boolean(credentialId)
+    && blockers.length === 0;
 
   return NextResponse.json({
     status,
@@ -122,5 +140,6 @@ export async function GET(request: NextRequest) {
     needs_activation: routing.needs_activation,
     primary_number: numbers.find((n) => n.is_default)?.phone_number ?? numbers[0]?.phone_number ?? null,
     last_inbound_at: recentInboundRes.data?.started_at ?? null,
+    blockers,
   });
 }

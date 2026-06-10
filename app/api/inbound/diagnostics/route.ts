@@ -10,6 +10,7 @@ import {
 } from '@/lib/voice/provider-numbers';
 import { ensureVoiceConnectionConfigured } from '@/lib/voice/configure-connection';
 import { resolveVoiceWebhookUrl } from '@/lib/voice/webhook-url';
+import { listInboundBlockers } from '@/lib/voice/inbound-readiness';
 import { resolveActiveCredentialId, fetchCredentialSipUsername } from '@/lib/telnyx/active-credential';
 
 /** Owner-facing inbound diagnostics (no vendor names in response). */
@@ -59,13 +60,25 @@ export async function GET(request: NextRequest) {
     .eq('direction', 'inbound')
     .gte('started_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 
+  const blockers = listInboundBlockers({
+    connection,
+    eventsVerified,
+    appUrl: resolveVoiceWebhookUrl().replace(/\/api\/telnyx\/webhook$/, ''),
+    primaryRouted: routing.primary_routed,
+    hasNumbers: dbNumbers.length > 0,
+    inboundEnabled: true,
+    browserAnswering: true,
+    credentialReady: Boolean(credentialId),
+  });
+
   return NextResponse.json({
     line_ready:
       connection.ok
       && routing.primary_routed
       && eventsVerified
       && Boolean(credentialId)
-      && Boolean(webhookUrl),
+      && Boolean(webhookUrl)
+      && blockers.length === 0,
     connection_configured: connection.ok,
     event_verification: eventsVerified,
     browser_credential: Boolean(credentialId),
@@ -81,6 +94,8 @@ export async function GET(request: NextRequest) {
       { label: 'Primary number routing', ok: routing.primary_routed },
       { label: 'Browser voice endpoint', ok: Boolean(sipUsername) },
     ],
+    blockers,
+    webhook_url: webhookUrl || null,
   });
 }
 

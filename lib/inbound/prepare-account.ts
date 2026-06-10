@@ -166,6 +166,10 @@ export async function prepareInboundAccount(
     credential_ready: Boolean(credentialId),
     primary_routed: afterAudit.primary_routed,
     connection_configured: connectionConfig.ok,
-    message: connectionConfig.ok ? message : connectionConfig.message,
+    message: connectionConfig.ok
+      ? message
+      : connectionConfig.message.includes('incorrect')
+        ? 'Server voice connection ID needs to be corrected in deployment settings, then refresh this page.'
+        : connectionConfig.message,
   };
 }
