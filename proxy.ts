@@ -25,7 +25,7 @@ export async function proxy(request: NextRequest) {
   const protectedRoutes = [
     '/dashboard', '/dialer', '/leads', '/call-logs', '/sequences', '/leaderboard',
     '/analytics', '/recordings', '/settings',
-    '/team', '/numbers', '/coaching', '/workspace',
+    '/team', '/numbers', '/my-numbers', '/inbound', '/coaching', '/workspace',
   ]
   const authRoutes = ['/login', '/signup']
   const path = request.nextUrl.pathname

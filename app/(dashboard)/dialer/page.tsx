@@ -158,7 +158,13 @@ export default function DialerPage() {
   const powerDialer = usePowerDialer({
     onLeadReady: (lead) => { selectLead(lead); },
     onShouldDial: (lead) => {
-      // Retry up to 10 × 500 ms while phone warms up, then give up
+      if (!fromNumberRef.current) {
+        toast.error('Claim a caller ID before power dialing');
+        void powerDialerRef.current.stop();
+        router.push('/numbers');
+        return;
+      }
+      // Retry up to 10 × 500 ms while phone warms up, then stop session
       let attempts = 0;
       const tryCall = () => {
         if (phoneStatusRef.current === 'ready') {
@@ -166,8 +172,8 @@ export default function DialerPage() {
           return;
         }
         if (attempts >= 10) {
-          toast.error('Phone not ready — skipping to next lead');
-          powerDialerRef.current.skipCountdown();
+          toast.error('Phone not ready — power dial stopped');
+          void powerDialerRef.current.stop();
           return;
         }
         attempts++;
@@ -199,6 +205,8 @@ export default function DialerPage() {
   const [queueIndex, setQueueIndex] = useState(0);
   const [queueLeads, setQueueLeads] = useState<LeadRecord[]>([]);
   const [fromNumber, setFromNumber] = useState<string>('');
+  const fromNumberRef = useRef(fromNumber);
+  fromNumberRef.current = fromNumber;
 
   const searchRef = useRef<HTMLInputElement | null>(null);
   const callTimer = useTimer(callStatus === 'active');
