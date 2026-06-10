@@ -1,13 +1,11 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { BrandIconDarkSvg, BrandMarkSvg, BrandWordmarkSvg } from '@/components/ui/brand-svg';
 
-/** Icon variants — all 1:1 */
 export type BrandLogoVariant = 'mark' | 'icon-dark' | 'icon-light' | 'icon-purple';
 
-/** Responsive size presets — tuned for clarity on retina displays */
 export type BrandLogoSize =
   | 'xs'
   | 'sm'
@@ -19,117 +17,170 @@ export type BrandLogoSize =
   | 'auth'
   | 'footer';
 
-const SIZE_PRESETS: Record<
-  BrandLogoSize,
-  { icon: number; wordmarkH: number }
+const WORDMARK = { src: '/brand/wordmark.png', w: 300, h: 75 } as const;
+const RATIO = WORDMARK.w / WORDMARK.h;
+
+const ICON_ASSETS: Record<
+  BrandLogoVariant,
+  { src: string; w: number; h: number }
 > = {
-  xs: { icon: 32, wordmarkH: 28 },
-  sm: { icon: 36, wordmarkH: 32 },
-  md: { icon: 44, wordmarkH: 36 },
-  lg: { icon: 52, wordmarkH: 40 },
-  xl: { icon: 60, wordmarkH: 48 },
-  nav: { icon: 40, wordmarkH: 36 },
-  sidebar: { icon: 48, wordmarkH: 42 },
-  auth: { icon: 52, wordmarkH: 44 },
-  footer: { icon: 44, wordmarkH: 38 },
+  mark: { src: '/brand/mark.png', w: 1024, h: 1024 },
+  'icon-dark': { src: '/brand/icon-dark.png', w: 150, h: 150 },
+  'icon-light': { src: '/brand/icon-light.png', w: 150, h: 150 },
+  'icon-purple': { src: '/brand/icon-purple.png', w: 150, h: 150 },
+};
+
+/** Tailwind height classes — aspect ratio locked via w-auto */
+const WORDMARK_HEIGHT: Record<BrandLogoSize, string> = {
+  xs: 'h-7 sm:h-8',
+  sm: 'h-8 sm:h-9',
+  md: 'h-9 sm:h-10',
+  lg: 'h-10 sm:h-11',
+  xl: 'h-11 sm:h-12',
+  nav: 'h-8 w-auto sm:h-9 md:h-10',
+  sidebar: 'h-9 w-auto sm:h-10 lg:h-[42px]',
+  auth: 'h-10 w-auto sm:h-11 md:h-12',
+  footer: 'h-9 w-auto sm:h-10',
+};
+
+const ICON_SIZE: Record<BrandLogoSize, string> = {
+  xs: 'size-8',
+  sm: 'size-9',
+  md: 'size-10',
+  lg: 'size-11',
+  xl: 'size-12',
+  nav: 'size-9 sm:size-10',
+  sidebar: 'size-10 sm:size-11',
+  auth: 'size-11 sm:size-12',
+  footer: 'size-10',
 };
 
 export interface BrandLogoProps {
-  /** Explicit width in px (overrides `size` when set with height). */
   width?: number;
-  /** Explicit height in px (overrides `size`). */
   height?: number;
-  /** Preset sizing — responsive-friendly defaults per surface. */
   size?: BrandLogoSize;
-  /** When true, renders the horizontal wordmark lockup. */
   showText?: boolean;
-  /** Icon variant when `showText` is false. */
   variant?: BrandLogoVariant;
+  /** Premium squircle frame for rail / favicon-style marks */
+  framed?: boolean;
   className?: string;
-  /** Preload hint for above-the-fold placements (nav, auth). */
   priority?: boolean;
-  /** Wraps the logo in a Next.js Link when set. */
   href?: string;
-  /** Fires when the logo link is clicked (e.g. close mobile nav). */
   onClick?: () => void;
 }
 
-function resolveIconSize(
-  size: BrandLogoSize | undefined,
-  width: number | undefined,
-  height: number | undefined,
-  showText: boolean,
-): number {
-  if (width != null && height != null && !showText) return Math.min(width, height);
-  if (height != null && !showText) return height;
-  if (width != null && !showText) return width;
-  if (size) return SIZE_PRESETS[size].icon;
-  return 40;
+function resolveWordmarkClass(size: BrandLogoSize | undefined): string {
+  if (size) return WORDMARK_HEIGHT[size];
+  return 'h-9 w-auto sm:h-10';
 }
 
-function resolveWordmarkHeight(
-  size: BrandLogoSize | undefined,
-  width: number | undefined,
-  height: number | undefined,
-): number {
-  if (height != null) return height;
-  if (width != null) return Math.round(width / (300 / 75));
-  if (size) return SIZE_PRESETS[size].wordmarkH;
-  return 36;
+function resolveIconClass(size: BrandLogoSize | undefined): string {
+  if (size) return ICON_SIZE[size];
+  return 'size-10';
 }
 
-function IconGraphic({
-  variant,
-  iconSize,
+function BrandIconFrame({
+  children,
+  className,
 }: {
-  variant: BrandLogoVariant;
-  iconSize: number;
+  children: React.ReactNode;
+  className?: string;
 }) {
-  switch (variant) {
-    case 'mark':
-      return <BrandMarkSvg size={iconSize} />;
-    case 'icon-dark':
-      return <BrandIconDarkSvg size={iconSize} />;
-    case 'icon-light':
-    case 'icon-purple':
-      // Light/purple PNG variants kept for press kit; UI uses vector marks
-      return <BrandMarkSvg size={iconSize} />;
-    default:
-      return <BrandMarkSvg size={iconSize} />;
-  }
+  return (
+    <span
+      className={cn(
+        'inline-flex shrink-0 items-center justify-center rounded-[11px]',
+        'border border-white/[0.09] bg-gradient-to-b from-white/[0.05] to-white/[0.01]',
+        'shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]',
+        'ring-1 ring-black/20',
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
 }
 
 export function BrandLogo({
   width,
   height,
-  size,
+  size = 'md',
   showText = false,
-  variant = 'mark',
+  variant = 'icon-dark',
+  framed = false,
   className,
-  priority: _priority,
+  priority = false,
   href,
   onClick,
 }: BrandLogoProps) {
-  const wordmarkH = resolveWordmarkHeight(size, width, height);
-  const iconSize = resolveIconSize(size, width, height, showText);
+  const asset = ICON_ASSETS[variant];
+  const wordmarkClass = resolveWordmarkClass(size);
+  const iconClass = resolveIconClass(size);
 
   const inner = showText ? (
-    <BrandWordmarkSvg
-      height={wordmarkH}
+    <Image
+      src={WORDMARK.src}
+      alt="GrowthDialer"
+      width={WORDMARK.w}
+      height={WORDMARK.h}
+      priority={priority}
+      sizes="(max-width: 640px) 160px, (max-width: 1024px) 180px, 220px"
       className={cn(
-        'h-auto w-auto max-w-full',
-        size === 'sidebar' && 'min-h-[38px] sm:min-h-[42px]',
-        size === 'nav' && 'min-h-[34px] sm:min-h-[36px]',
-        size === 'auth' && 'min-h-[40px] sm:min-h-[44px]',
-        size === 'footer' && 'min-h-[36px] sm:min-h-[38px]',
+        'block max-w-full object-contain object-left',
+        wordmarkClass,
+        width == null && height == null ? 'w-auto' : '',
       )}
+      style={
+        width != null || height != null
+          ? {
+              width: width ?? (height != null ? Math.round(height * RATIO) : undefined),
+              height: height ?? (width != null ? Math.round(width / RATIO) : undefined),
+              maxWidth: '100%',
+            }
+          : undefined
+      }
     />
   ) : (
-    <IconGraphic variant={variant} iconSize={iconSize} />
+    (() => {
+      const img = (
+        <Image
+          src={asset.src}
+          alt="GrowthDialer"
+          width={asset.w}
+          height={asset.h}
+          priority={priority}
+          sizes="(max-width: 640px) 44px, 52px"
+          className={cn(
+            'block object-contain',
+            !framed && iconClass,
+            variant === 'mark' && !framed && 'rounded-lg',
+            variant !== 'mark' && !framed && 'rounded-[10px]',
+            framed && 'size-full rounded-[9px]',
+          )}
+          style={
+            !framed && (width != null || height != null)
+              ? {
+                  width: width ?? height,
+                  height: height ?? width,
+                  maxWidth: '100%',
+                }
+              : undefined
+          }
+        />
+      );
+      if (framed) {
+        return (
+          <BrandIconFrame className={cn('p-[3px]', iconClass)}>
+            {img}
+          </BrandIconFrame>
+        );
+      }
+      return img;
+    })()
   );
 
   const wrapperClass = cn(
-    'inline-flex shrink-0 items-center',
+    'inline-flex shrink-0 items-center transition-opacity hover:opacity-95',
     showText && 'min-w-0 max-w-full',
     className,
   );
@@ -150,15 +201,17 @@ export function BrandLogo({
   return <span className={wrapperClass}>{inner}</span>;
 }
 
-/** Square mark only — compare pages, avatars, compact slots. */
 export function BrandLogoMark({
-  size = 40,
+  size = 44,
   variant = 'mark',
   className,
+  framed,
+  priority,
 }: {
   size?: number;
   variant?: BrandLogoVariant;
   className?: string;
+  framed?: boolean;
   priority?: boolean;
 }) {
   return (
@@ -166,7 +219,9 @@ export function BrandLogoMark({
       width={size}
       height={size}
       variant={variant}
+      framed={framed}
       className={className}
+      priority={priority}
     />
   );
 }

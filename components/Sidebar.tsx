@@ -513,8 +513,8 @@ function SidebarInner() {
           className={cn(
             "flex shrink-0 items-center border-b border-zinc-800/50",
             isDesktopCollapsed
-              ? "flex-col gap-2 px-2 py-3"
-              : "justify-between gap-2 px-4 py-4 min-h-[60px]",
+              ? "flex-col gap-2.5 px-2 py-3.5"
+              : "justify-between gap-3 px-4 py-4 min-h-[64px]",
           )}
         >
           <BrandLogo
@@ -522,11 +522,14 @@ function SidebarInner() {
             onClick={close}
             showText={!isDesktopCollapsed}
             size="sidebar"
-            variant="mark"
+            variant="icon-dark"
+            framed={isDesktopCollapsed}
             priority
             className={cn(
               "min-w-0",
-              isDesktopCollapsed ? "justify-center" : "flex-1 pr-1",
+              isDesktopCollapsed
+                ? "mx-auto justify-center"
+                : "flex-1 min-w-0 max-w-[calc(100%-2.5rem)]",
             )}
           />
 
