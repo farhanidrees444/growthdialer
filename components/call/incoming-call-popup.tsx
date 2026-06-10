@@ -183,8 +183,7 @@ export function IncomingCallPopup({ userId }: Props) {
             hasOutboundSessionRef.current ||
             callStatusRef.current === 'connecting' ||
             callStatusRef.current === 'active' ||
-            callStatusRef.current === 'held' ||
-            callStatusRef.current === 'ringing';
+            callStatusRef.current === 'held';
           if (outboundBusy) {
             console.log('[POPUP] Declining inbound — outbound session in progress');
             void apiFetchRef.current(`/api/calls/${row.id as string}/end`, { method: 'POST' }).catch(() => {});
@@ -234,6 +233,39 @@ export function IncomingCallPopup({ userId }: Props) {
       supabase.removeChannel(channel);
       stopRingtone();
     };
+  }, [userId]);
+
+  // Poll fallback when Supabase Realtime misses the INSERT event
+  useEffect(() => {
+    if (!userId) return;
+
+    const showFromPoll = async () => {
+      if (callIdRef.current) return;
+      const outboundBusy =
+        hasOutboundSessionRef.current ||
+        callStatusRef.current === 'connecting' ||
+        callStatusRef.current === 'active' ||
+        callStatusRef.current === 'held';
+      if (outboundBusy) return;
+
+      try {
+        const res = await apiFetchRef.current('/api/inbound/ringing');
+        if (!res.ok) return;
+        const data = await res.json() as { call?: InboundCall | null };
+        if (!data.call || data.call.status !== 'ringing') return;
+
+        callIdRef.current = data.call.id;
+        setCall(data.call);
+        playRingtone();
+        console.log('[POPUP] Showing inbound from poll fallback:', data.call.id);
+      } catch {
+        /* non-fatal */
+      }
+    };
+
+    void showFromPoll();
+    const interval = setInterval(() => void showFromPoll(), 2500);
+    return () => clearInterval(interval);
   }, [userId]);
 
   // Hide when an outbound session or active call overlay is already in control

@@ -8,6 +8,16 @@ import { triggerMirrorRecordingAsync } from '@/lib/recordings/trigger-mirror';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import { findLeadByCallerPhone } from '@/lib/inbound/match-lead';
 import { triggerInboundRingTimeoutAsync } from '@/lib/inbound/trigger-ring-timeout';
+import { findNumberOwner } from '@/lib/inbound/lookup-number';
+import { bridgeInboundToBrowser } from '@/lib/inbound/bridge-to-browser';
+import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
+
+function directionSaysInbound(direction: string | undefined): boolean | null {
+  const d = (direction ?? '').toLowerCase();
+  if (d === 'incoming' || d === 'inbound') return true;
+  if (d === 'outgoing' || d === 'outbound') return false;
+  return null;
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -204,23 +214,20 @@ export async function POST(request: NextRequest) {
     if (event_type === 'call.initiated') {
       if (!callControlId) {
         console.warn('[WEBHOOK] call.initiated missing call_control_id — skipping');
-      } else if (payload.direction === 'incoming') {
-        // ── INBOUND CALL ────────────────────────────────────────────────────
+      } else {
         const toNumber = normalizeE164(payload.to ?? '');
         const fromNumber = normalizeE164(payload.from ?? '');
-        console.log('[INBOUND] Incoming call:', fromNumber, '→', toNumber, '| raw_to:', payload.to, '| raw_from:', payload.from);
+        const ownedTo = await findNumberOwner(supabase, toNumber);
+        const dirInbound = directionSaysInbound(payload.direction);
+        const treatAsInbound = dirInbound === true || (dirInbound === null && Boolean(ownedTo));
 
-        // Look up the user who owns toNumber in purchased_numbers — same table
-        // and column the My Numbers page uses. Use neq('released') so suspended
-        // or other non-released statuses still resolve correctly.
-        const { data: ownedNumber, error: numErr } = await supabase
-          .from('purchased_numbers')
-          .select('user_id, phone_number, status')
-          .eq('phone_number', toNumber)
-          .neq('status', 'released')
-          .maybeSingle();
+        if (treatAsInbound) {
+        // ── INBOUND CALL ────────────────────────────────────────────────────
+        console.log('[INBOUND] Incoming call:', fromNumber, '→', toNumber, '| raw_to:', payload.to, '| raw_from:', payload.from, '| direction:', payload.direction);
 
-        console.log('[INBOUND] Number lookup — to:', toNumber, '| found:', ownedNumber?.phone_number ?? 'none', '| status:', ownedNumber?.status ?? 'n/a', '| err:', numErr?.message ?? 'none');
+        const ownedNumber = ownedTo;
+
+        console.log('[INBOUND] Number lookup — to:', toNumber, '| found:', ownedNumber?.phone_number ?? 'none', '| status:', ownedNumber?.status ?? 'n/a');
 
         if (!ownedNumber) {
           console.log('[INBOUND] No active owner for number — rejecting:', toNumber);
@@ -229,14 +236,16 @@ export async function POST(request: NextRequest) {
         }
 
         const userId = ownedNumber.user_id as string;
+        const workspaceId = await resolveUserWorkspaceId(supabase, userId);
 
         const lead = await findLeadByCallerPhone(supabase, userId, fromNumber);
 
         // Create inbound call record (realtime subscription in browser will pick this up)
-        const { data: newCall } = await supabase
+        const { data: newCall, error: insertErr } = await supabase
           .from('calls')
           .insert({
             user_id: userId,
+            workspace_id: workspaceId,
             lead_id: lead?.id ?? null,
             direction: 'inbound',
             telnyx_call_id: callControlId,
@@ -249,7 +258,11 @@ export async function POST(request: NextRequest) {
           .select('id')
           .single();
 
-        console.log('[INBOUND] Call record created:', newCall?.id, '| lead:', lead?.id ?? 'unknown');
+        if (insertErr) {
+          console.error('[INBOUND] Call insert failed:', insertErr.message);
+        }
+
+        console.log('[INBOUND] Call record created:', newCall?.id, '| lead:', lead?.id ?? 'unknown', '| workspace:', workspaceId ?? 'none');
 
         // Get user routing settings
         const { data: inboundSettings } = await supabase
@@ -300,14 +313,14 @@ export async function POST(request: NextRequest) {
           }
           console.log('[INBOUND] Voicemail: answered + recording started for user:', userId);
         } else {
-          // browser mode (default): Telnyx routes to registered WebRTC SIP endpoint.
-          // The frontend popup appears via Supabase realtime subscription on the call record.
-          console.log('[INBOUND] Ringing browser for user:', userId);
+          // browser mode (default): answer + bridge to user's WebRTC SIP endpoint.
+          const bridged = await bridgeInboundToBrowser(supabase, userId, callControlId, toNumber);
+          console.log('[INBOUND] Browser bridge:', bridged ? 'ok' : 'failed', '| user:', userId);
           if (newCall?.id) {
             triggerInboundRingTimeoutAsync(newCall.id, callControlId, userId, ringSeconds, mode);
           }
         }
-      } else {
+        } else {
         // ── OUTBOUND CALL (existing upsert logic) ────────────────────────────
         const { error } = await supabase
           .from('calls')
@@ -323,6 +336,7 @@ export async function POST(request: NextRequest) {
           );
         if (error) console.error('[WEBHOOK] call.initiated upsert error:', error);
         else console.log('[WEBHOOK] call.initiated — upserted, session_id:', callSessionId);
+        }
       }
     }
 

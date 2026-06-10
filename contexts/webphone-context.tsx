@@ -197,7 +197,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         safeSet(setActiveCallId, call.id ?? null);
         safeSet(setCallStatus, mapped);
 
-        if (mapped === 'ringing') {
+        if (mapped === 'ringing' && outboundDialRef.current) {
           void import('@/lib/parallel-dial/auto-answer-flag').then(({ shouldParallelAutoAnswer }) => {
             if (!shouldParallelAutoAnswer() || !activeCallRef.current) return;
             try {
@@ -345,15 +345,24 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const answerIncomingCall = useCallback(() => {
-    if (activeCallRef.current) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (activeCallRef.current as any).answer?.();
-        console.log('[WebPhone] answered inbound call');
-      } catch (err) {
-        console.error('[WebPhone] answerIncomingCall error:', err);
+    const tryAnswer = (attempt: number) => {
+      if (activeCallRef.current) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (activeCallRef.current as any).answer?.();
+          console.log('[WebPhone] answered inbound call');
+        } catch (err) {
+          console.error('[WebPhone] answerIncomingCall error:', err);
+        }
+        return;
       }
-    }
+      if (attempt < 20) {
+        setTimeout(() => tryAnswer(attempt + 1), 200);
+      } else {
+        console.warn('[WebPhone] answerIncomingCall: no incoming WebRTC leg after wait');
+      }
+    };
+    tryAnswer(0);
   }, []);
 
   const hangup = useCallback(() => {
