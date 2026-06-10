@@ -131,7 +131,7 @@ Features that **beat** PhoneBurner, CallHippo, CloudTalk, Nooks when fully worki
 
 | Step | Title | Status | Moat? | Notes |
 |------|-------|--------|-------|-------|
-| **20** | Inbound calling | 🟡 | Product | Popup + webhook ✅; WebRTC answer needs Telnyx balance test |
+| **20** | Inbound calling | ✅ | Product | `/inbound` hub, ring timeout→voicemail, lead screen-pop, missed handling; prod WebRTC test still manual |
 | **21** | Live coaching audio | 🟡 | **Moat** | UI ✅; Telnyx conference for whisper/barge = TODO in code |
 | **22** | Voicemail drop polish | 🟡 | Product | Library exists; parallel/power reliability |
 | **23** | Local presence | 🟡 | **Moat** | `resolve-caller-id.ts` ✅; settings UI + number buying |
@@ -206,6 +206,7 @@ These are **working** today — outbound dialer, leads, power/parallel dialer, w
 | 2026-06-09 | Responsive | Hardened 7 dashboard pages for phone/tablet (dialer banner, coaching panel, recordings player, leads toolbar, settings save bar, analytics pills, dashboard KPIs) |
 | 2026-06-09 | Steps 16–17 | Verified live-waveform call bar; expanded Cmd+K with on-call actions, workspace switch, buy-number, invite |
 | 2026-06-09 | Step 14 | Sequences demo cleanup — junk name validation, archive/delete API, remove UI, migration 049 |
+| 2026-06-11 | Step 20 | Inbound hub page, ring timeout→voicemail, E.164 lead screen-pop, missed/decline handling, sidebar→`/inbound`; build passes |
 
 ---
 

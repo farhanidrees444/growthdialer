@@ -10,6 +10,9 @@ export interface CallRow {
   telnyx_call_id?: string | null;
   lead_id?: string | null;
   disposition?: string | null;
+  direction?: string | null;
+  status?: string | null;
+  answered_at?: string | null;
 }
 
 export type CallLookup = { id?: string; telnyxCallId?: string };
@@ -50,7 +53,7 @@ export async function findCall(
 
   let query = supabase
     .from('calls')
-    .select('id, user_id, workspace_id, telnyx_call_id, lead_id, disposition');
+    .select('id, user_id, workspace_id, telnyx_call_id, lead_id, disposition, direction, status, answered_at');
 
   if (lookup.id && lookup.telnyxCallId) {
     query = query.or(`id.eq.${lookup.id},telnyx_call_id.eq.${lookup.telnyxCallId}`);

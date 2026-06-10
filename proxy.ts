@@ -45,9 +45,6 @@ export async function proxy(request: NextRequest) {
     if (path === '/my-numbers') {
       return NextResponse.redirect(new URL('/numbers', request.url))
     }
-    if (path === '/inbound') {
-      return NextResponse.redirect(new URL('/settings?tab=calling', request.url))
-    }
   }
 
   return supabaseResponse

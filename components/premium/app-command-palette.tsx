@@ -51,7 +51,7 @@ const NAV_ITEMS = [
   { href: '/numbers', label: 'My Numbers', icon: Hash, keywords: 'phone caller id' },
   { href: '/dashboard/integrations', label: 'Integrations', icon: Radio, keywords: 'crm sync' },
   { href: '/settings', label: 'Settings', icon: Settings, keywords: 'preferences account' },
-  { href: '/settings?tab=calling', label: 'Inbound Calling', icon: Phone, keywords: 'inbound forward' },
+  { href: '/inbound', label: 'Inbound Calling', icon: Phone, keywords: 'inbound forward voicemail' },
 ];
 
 export function AppCommandPalette({ open, onOpenChange }: AppCommandPaletteProps) {

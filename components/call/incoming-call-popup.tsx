@@ -141,8 +141,8 @@ export function IncomingCallPopup({ userId }: Props) {
   const [declining, setDeclining] = useState(false);
   const callIdRef = useRef<string | null>(null);
 
-  const { answerIncomingCall, hasOutboundSession, callStatus } = useWebPhone();
-  const { registerCallMeta } = useCallContext();
+  const { answerIncomingCall, hasOutboundSession, callStatus, phoneStatus } = useWebPhone();
+  const { registerCallMeta, callInitiatedAt } = useCallContext();
   const { apiFetch } = useWorkspace();
 
   const hasOutboundSessionRef = useRef(hasOutboundSession);
@@ -220,7 +220,7 @@ export function IncomingCallPopup({ userId }: Props) {
         (payload) => {
           const row = payload.new as Record<string, unknown>;
           if (row.id !== callIdRef.current) return;
-          if (['missed', 'completed', 'rejected'].includes(row.status as string)) {
+          if (['missed', 'completed', 'rejected', 'voicemail'].includes(row.status as string)) {
             setCall(null);
             stopRingtone();
           }
@@ -236,7 +236,15 @@ export function IncomingCallPopup({ userId }: Props) {
     };
   }, [userId]);
 
-  if (!call) return null;
+  // Hide when an outbound session or active call overlay is already in control
+  const outboundActive =
+    hasOutboundSession
+    || callStatus === 'connecting'
+    || callStatus === 'active'
+    || callStatus === 'held'
+    || (callInitiatedAt != null && callStatus === 'ringing');
+
+  if (!call || outboundActive) return null;
 
   const leadName = call.lead
     ? [call.lead.first_name, call.lead.last_name].filter(Boolean).join(' ')
@@ -295,7 +303,7 @@ export function IncomingCallPopup({ userId }: Props) {
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -32, scale: 0.92 }}
         transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-        className="fixed left-1/2 top-5 z-[60] w-[360px] max-w-[92vw] -translate-x-1/2 overflow-hidden
+        className="fixed left-1/2 top-16 z-[55] w-[360px] max-w-[92vw] -translate-x-1/2 overflow-hidden
                    rounded-3xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl
                    shadow-2xl shadow-black/60"
         style={{ background: 'rgba(8, 8, 14, 0.96)' }}
@@ -347,6 +355,9 @@ export function IncomingCallPopup({ userId }: Props) {
               </h3>
               {call.lead?.company && (
                 <p className="text-sm text-white/50">{call.lead.company}</p>
+              )}
+              {phoneStatus !== 'ready' && (
+                <p className="mt-1 text-[11px] text-amber-400/80">Voice connection warming up…</p>
               )}
               {/* Always show formatted from_number */}
               <p className="mt-0.5 font-mono text-xs tabular-nums text-white/35">

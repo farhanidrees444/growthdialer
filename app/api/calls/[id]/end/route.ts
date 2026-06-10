@@ -50,9 +50,18 @@ export async function POST(request: NextRequest, { params }: Ctx) {
       return NextResponse.json({ error: detail }, { status: 500 });
     }
 
+    const isInboundDecline =
+      call.direction === 'inbound'
+      && !call.answered_at
+      && ['ringing', 'in_progress'].includes(call.status ?? 'ringing');
+
     await supabase
       .from('calls')
-      .update({ status: 'completed', ended_at: new Date().toISOString() })
+      .update({
+        status: isInboundDecline ? 'missed' : 'completed',
+        disposition: isInboundDecline ? 'missed' : call.disposition,
+        ended_at: new Date().toISOString(),
+      })
       .eq('id', call.id);
 
     emitCallWebhooks(call.user_id, ['call_completed'], {

@@ -5,6 +5,9 @@ import { claimWebhookEvent } from '@/lib/webhooks/dedup';
 import { triggerProcessCallAsync } from '@/lib/ai/trigger-process-call';
 import { shouldSkipRecordingAiQueue } from '@/lib/ai/pipeline-status';
 import { triggerMirrorRecordingAsync } from '@/lib/recordings/trigger-mirror';
+import { normalizeE164 } from '@/lib/inbound/phone';
+import { findLeadByCallerPhone } from '@/lib/inbound/match-lead';
+import { triggerInboundRingTimeoutAsync } from '@/lib/inbound/trigger-ring-timeout';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -53,6 +56,8 @@ interface CallRow {
   from_number: string | null;
   answered_at: string | null;
   direction: string | null;
+  status: string | null;
+  disposition: string | null;
   duration_seconds: number | null;
   was_recorded: boolean | null;
   ai_processing_status: string | null;
@@ -201,12 +206,6 @@ export async function POST(request: NextRequest) {
         console.warn('[WEBHOOK] call.initiated missing call_control_id — skipping');
       } else if (payload.direction === 'incoming') {
         // ── INBOUND CALL ────────────────────────────────────────────────────
-        // Normalize both numbers to E.164 (+digits only) to avoid format
-        // mismatches between Telnyx payload and what's stored in purchased_numbers.
-        const normalizeE164 = (raw: string): string => {
-          const digits = raw.replace(/\D/g, '');
-          return digits ? `+${digits}` : raw.trim();
-        };
         const toNumber = normalizeE164(payload.to ?? '');
         const fromNumber = normalizeE164(payload.from ?? '');
         console.log('[INBOUND] Incoming call:', fromNumber, '→', toNumber, '| raw_to:', payload.to, '| raw_from:', payload.from);
@@ -231,14 +230,7 @@ export async function POST(request: NextRequest) {
 
         const userId = ownedNumber.user_id as string;
 
-        // Match caller to an existing lead by phone number
-        const { data: lead } = await supabase
-          .from('leads')
-          .select('id, first_name, last_name, company')
-          .eq('user_id', userId)
-          .eq('phone', fromNumber)
-          .is('deleted_at', null)
-          .maybeSingle();
+        const lead = await findLeadByCallerPhone(supabase, userId, fromNumber);
 
         // Create inbound call record (realtime subscription in browser will pick this up)
         const { data: newCall } = await supabase
@@ -267,9 +259,16 @@ export async function POST(request: NextRequest) {
           .maybeSingle();
 
         const mode = (inboundSettings?.inbound_mode as string | null) ?? 'browser';
+        const ringSeconds = (inboundSettings?.inbound_ring_seconds as number | null) ?? 25;
 
         if (mode === 'off') {
           await telnyxCallAction(callControlId, 'reject', { cause: 'CALL_REJECTED' });
+          if (newCall?.id) {
+            await supabase
+              .from('calls')
+              .update({ status: 'rejected', disposition: 'missed', ended_at: new Date().toISOString() })
+              .eq('id', newCall.id);
+          }
           console.log('[INBOUND] Rejected (off mode)');
         } else if (mode === 'forward' && inboundSettings?.inbound_forward_number) {
           // Answer then bridge/transfer to user's personal number
@@ -280,6 +279,9 @@ export async function POST(request: NextRequest) {
             from: toNumber,
           });
           console.log('[INBOUND] Forwarded to:', inboundSettings.inbound_forward_number);
+          if (newCall?.id) {
+            triggerInboundRingTimeoutAsync(newCall.id, callControlId, userId, ringSeconds, mode);
+          }
         } else if (mode === 'voicemail') {
           // Answer + immediately start recording with a beep — caller hears
           // the beep and knows to leave a message. Recording saved via
@@ -290,11 +292,20 @@ export async function POST(request: NextRequest) {
             channels: 'single',
             play_beep: true,
           });
+          if (newCall?.id) {
+            await supabase
+              .from('calls')
+              .update({ status: 'voicemail', disposition: 'voicemail' })
+              .eq('id', newCall.id);
+          }
           console.log('[INBOUND] Voicemail: answered + recording started for user:', userId);
         } else {
           // browser mode (default): Telnyx routes to registered WebRTC SIP endpoint.
           // The frontend popup appears via Supabase realtime subscription on the call record.
           console.log('[INBOUND] Ringing browser for user:', userId);
+          if (newCall?.id) {
+            triggerInboundRingTimeoutAsync(newCall.id, callControlId, userId, ringSeconds, mode);
+          }
         }
       } else {
         // ── OUTBOUND CALL (existing upsert logic) ────────────────────────────
@@ -426,7 +437,7 @@ export async function POST(request: NextRequest) {
 
       const callRow = await findCall(
         supabase, callSessionId, callControlId,
-        'id, user_id, lead_id, answered_at, to_number, from_number, direction, duration_seconds, was_recorded',
+        'id, user_id, lead_id, answered_at, to_number, from_number, direction, duration_seconds, was_recorded, disposition, status',
       );
 
       const endedAt = new Date().toISOString();
@@ -471,8 +482,10 @@ export async function POST(request: NextRequest) {
           metadata: { event: 'call.hangup', call_id: callRow.id, duration_seconds: durationSeconds, hangup_cause: hangupCause },
         }).maybeSingle();
 
-        // Detect missed inbound call (hung up before answered)
-        if (callRow.direction === 'inbound' && !callRow.answered_at) {
+        // Detect missed inbound call (hung up before answered — not voicemail)
+        const isVoicemail =
+          callRow.disposition === 'voicemail' || callRow.status === 'voicemail';
+        if (callRow.direction === 'inbound' && !callRow.answered_at && !isVoicemail) {
           await supabase
             .from('calls')
             .update({ disposition: 'missed', status: 'missed' })
@@ -501,7 +514,7 @@ export async function POST(request: NextRequest) {
         if (callControlId) {
           const { data: inboundRow } = await supabase
             .from('calls')
-            .select('id, user_id, lead_id, answered_at, direction, from_number')
+            .select('id, user_id, lead_id, answered_at, direction, from_number, status, disposition')
             .eq('telnyx_call_id', callControlId)
             .maybeSingle();
 
@@ -516,7 +529,9 @@ export async function POST(request: NextRequest) {
               })
               .eq('id', inboundRow.id);
 
-            if (inboundRow.direction === 'inbound' && !inboundRow.answered_at) {
+            const fallbackVoicemail =
+              inboundRow.disposition === 'voicemail' || inboundRow.status === 'voicemail';
+            if (inboundRow.direction === 'inbound' && !inboundRow.answered_at && !fallbackVoicemail) {
               await supabase
                 .from('calls')
                 .update({ disposition: 'missed', status: 'missed' })
