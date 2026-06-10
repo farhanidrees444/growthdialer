@@ -49,7 +49,7 @@ export function useCallContext(): CallContextValue {
 }
 
 export function CallProvider({ children }: { children: ReactNode }) {
-  const { makeCall, callStatus, phoneStatus } = useWebPhone();
+  const { makeCall, callStatus, waitForPhoneReady } = useWebPhone();
 
   const [activeLead, setActiveLead] = useState<LeadRecord | null>(null);
   const [activePhone, setActivePhone] = useState('');
@@ -104,12 +104,14 @@ export function CallProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (phoneStatus !== 'ready') {
-      toast.warning('Phone not ready — attempting call anyway');
-    }
-
     if (callStatus === 'connecting' || callStatus === 'ringing' || callStatus === 'active' || callStatus === 'held') {
       toast.error('End the current call before starting a new one');
+      return;
+    }
+
+    const ready = await waitForPhoneReady();
+    if (!ready) {
+      toast.error('Phone not ready — please wait a moment');
       return;
     }
 
@@ -126,12 +128,13 @@ export function CallProvider({ children }: { children: ReactNode }) {
     }
 
     if (!fromNumber) {
-      toast.warning('No outbound caller ID configured — call may fail');
+      toast.error('No outbound caller ID — add a number in My Numbers');
+      return;
     }
 
     registerCallMeta(lead ?? null, e164);
     makeCall(e164, fromNumber);
-  }, [registerCallMeta, makeCall, phoneStatus, callStatus]);
+  }, [registerCallMeta, makeCall, waitForPhoneReady, callStatus]);
 
   const dismissSaveAsLead = useCallback(() => setShowSaveAsLead(false), []);
 

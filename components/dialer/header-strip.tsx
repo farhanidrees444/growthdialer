@@ -19,9 +19,12 @@ interface TodayStats {
   streak: number;
 }
 
+type PhoneStatus = 'idle' | 'initializing' | 'ready' | 'error';
+
 interface HeaderStripProps {
   stats: TodayStats;
   callStatus: string;
+  phoneStatus?: PhoneStatus;
   callTimer?: string;
   activeLeadName?: string;
   todayCalls: CallDot[];
@@ -32,6 +35,7 @@ interface HeaderStripProps {
 export function HeaderStrip({
   stats,
   callStatus,
+  phoneStatus = 'idle',
   callTimer,
   activeLeadName,
   todayCalls,
@@ -39,7 +43,7 @@ export function HeaderStrip({
   onDotClick,
 }: HeaderStripProps) {
   const [statsExpanded, setStatsExpanded] = useState(false);
-  const isLive = callStatus === 'active' || callStatus === 'connecting' || callStatus === 'ringing';
+  const isLive = callStatus === 'active' || callStatus === 'connecting' || callStatus === 'ringing' || callStatus === 'held';
 
   return (
     <header
@@ -105,6 +109,16 @@ export function HeaderStrip({
             {callTimer ? `${callTimer}` : 'On Call'}
             {activeLeadName && <span className="text-red-300/70 hidden lg:inline"> · {activeLeadName}</span>}
           </motion.div>
+        ) : phoneStatus === 'error' ? (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
+            Offline
+          </div>
+        ) : phoneStatus === 'initializing' || phoneStatus === 'idle' ? (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            Connecting…
+          </div>
         ) : (
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-medium">
             <div className="w-1.5 h-1.5 rounded-full bg-green-400" />

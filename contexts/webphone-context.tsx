@@ -33,6 +33,8 @@ export interface WebPhoneContextValue {
   sendDTMF: (digit: string) => void;
   reconnect: () => void;
   requestMicPermission: () => Promise<boolean>;
+  /** Poll until WebRTC client is ready or timeout (ms). */
+  waitForPhoneReady: (timeoutMs?: number) => Promise<boolean>;
 }
 
 const WebPhoneContext = createContext<WebPhoneContextValue | null>(null);
@@ -83,7 +85,9 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const callStatusRef = useRef<WebRTCCallStatus>('idle');
   const outboundDialRef = useRef(false);
   const [hasOutboundSession, setHasOutboundSession] = useState(false);
+  const phoneStatusRef = useRef<PhoneStatus>('idle');
   callStatusRef.current = callStatus;
+  phoneStatusRef.current = phoneStatus;
   // Track whether we are mounted to avoid setState after unmount
   const mountedRef = useRef(true);
 
@@ -221,14 +225,32 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const waitForPhoneReady = useCallback((timeoutMs = 8000): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const deadline = Date.now() + timeoutMs;
+      const check = () => {
+        if (clientRef.current && phoneStatusRef.current === 'ready') {
+          resolve(true);
+          return;
+        }
+        if (phoneStatusRef.current === 'error' || Date.now() >= deadline) {
+          resolve(false);
+          return;
+        }
+        setTimeout(check, 200);
+      };
+      check();
+    });
+  }, []);
+
   // ── Call actions ─────────────────────────────────────────────────────────────
   const makeCall = useCallback((destination: string, callerNumber?: string) => {
     if (!clientRef.current) {
       console.warn('[WebPhone] makeCall: client not initialized');
       return;
     }
-    if (phoneStatus !== 'ready') {
-      console.warn('[WebPhone] makeCall: phone not ready, status:', phoneStatus);
+    if (phoneStatusRef.current !== 'ready') {
+      console.warn('[WebPhone] makeCall: phone not ready, status:', phoneStatusRef.current);
       return;
     }
     const currentStatus = callStatusRef.current;
@@ -276,7 +298,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       setHasOutboundSession(false);
       setCallStatus('idle');
     }
-  }, [phoneStatus]);
+  }, []);
 
   const answerIncomingCall = useCallback(() => {
     if (activeCallRef.current) {
@@ -356,6 +378,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         sendDTMF,
         reconnect,
         requestMicPermission,
+        waitForPhoneReady,
       }}
     >
       {/* Hidden audio element — Telnyx WebRTC plays remote audio through this */}

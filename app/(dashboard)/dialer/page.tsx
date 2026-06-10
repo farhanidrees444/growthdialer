@@ -122,7 +122,7 @@ export default function DialerPage() {
   const router = useRouter();
   const {
     callStatus, isMuted, isOnHold, phoneStatus, activeCallId,
-    makeCall, hangup, toggleMute, toggleHold, sendDTMF,
+    makeCall, hangup, toggleMute, toggleHold, sendDTMF, waitForPhoneReady,
   } = useWebPhone();
 
   const { mode, selectedLead, activeCallDbId, selectLead, startCall, endCall } = useDialerMode();
@@ -138,10 +138,6 @@ export default function DialerPage() {
 
   // Stable ref so powerDialer.onShouldDial can call initiateCall once it's defined
   const initiateCallRef = useRef<((phone: string, lead?: LeadRecord) => void) | null>(null);
-  // Stable ref for phoneStatus so the retry closure always sees the latest value
-  const phoneStatusRef = useRef(phoneStatus);
-  phoneStatusRef.current = phoneStatus;
-
   // Power dialer state machine
   const [powerConfirmOpen, setPowerConfirmOpen] = useState(false);
   const [parallelConfirmOpen, setParallelConfirmOpen] = useState(false);
@@ -158,28 +154,21 @@ export default function DialerPage() {
   const powerDialer = usePowerDialer({
     onLeadReady: (lead) => { selectLead(lead); },
     onShouldDial: (lead) => {
-      if (!fromNumberRef.current) {
-        toast.error('Claim a caller ID before power dialing');
-        void powerDialerRef.current.stop();
-        router.push('/numbers');
-        return;
-      }
-      // Retry up to 10 × 500 ms while phone warms up, then stop session
-      let attempts = 0;
-      const tryCall = () => {
-        if (phoneStatusRef.current === 'ready') {
-          initiateCallRef.current?.(lead.phone, lead);
+      void (async () => {
+        if (!fromNumberRef.current) {
+          toast.error('Claim a caller ID before power dialing');
+          void powerDialerRef.current.stop();
+          router.push('/numbers');
           return;
         }
-        if (attempts >= 10) {
+        const ready = await waitForPhoneReady();
+        if (!ready) {
           toast.error('Phone not ready — power dial stopped');
           void powerDialerRef.current.stop();
           return;
         }
-        attempts++;
-        setTimeout(tryCall, 500);
-      };
-      tryCall();
+        initiateCallRef.current?.(lead.phone, lead);
+      })();
     },
     onSessionComplete: () => { selectLead(null); },
   });
@@ -220,22 +209,22 @@ export default function DialerPage() {
     supabase.auth.getSession().then(({ data }) => setUserId(data.session?.user?.id ?? null));
   }, []);
 
-  // Fetch the user's outbound caller-ID number once userId is known.
-  // Passed as callerNumber to makeCall() so Telnyx uses the purchased E.164
-  // number instead of the SIP username (which caused call_rejected errors).
+  // Default outbound caller ID — same source as /api/numbers/list
+  const loadFromNumber = useCallback(async () => {
+    try {
+      const res = await apiFetch('/api/numbers/list');
+      if (!res.ok) return;
+      const data = await res.json() as { numbers?: Array<{ phone_number: string; is_default: boolean; status: string }> };
+      const nums = (data.numbers ?? []).filter((n) => n.status !== 'released');
+      const defaultNum = nums.find((n) => n.is_default) ?? nums[0];
+      if (defaultNum?.phone_number) setFromNumber(defaultNum.phone_number);
+    } catch { /* non-fatal */ }
+  }, [apiFetch]);
+
   useEffect(() => {
     if (!userId) return;
-    const supabase = createClient();
-    supabase
-      .from('purchased_numbers')
-      .select('phone_number')
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .order('is_default', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => { if (data?.phone_number) setFromNumber(data.phone_number); });
-  }, [userId]);
+    void loadFromNumber();
+  }, [userId, loadFromNumber]);
 
   // ── Stats ──────────────────────────────────────────────────────────────────
   const loadStats = useCallback(async () => {
@@ -345,10 +334,7 @@ export default function DialerPage() {
   }, [callStatus, callDbId]);
 
   // ── Call initiation ─────────────────────────────────────────────────────────
-  const initiateCall = useCallback((phone: string, lead?: LeadRecord) => {
-    if (phoneStatus !== 'ready') {
-      toast.warning('Phone not ready — attempting call anyway');
-    }
+  const initiateCall = useCallback(async (phone: string, lead?: LeadRecord) => {
     if (callStatus === 'connecting' || callStatus === 'ringing' || callStatus === 'active' || callStatus === 'held') {
       toast.error('End the current call before starting a new one');
       return;
@@ -358,19 +344,43 @@ export default function DialerPage() {
       toast.error('Invalid phone number');
       return;
     }
+
+    const ready = await waitForPhoneReady();
+    if (!ready) {
+      toast.error('Phone not ready — please wait a moment');
+      return;
+    }
+
+    let callerId = fromNumber;
+    if (!callerId) {
+      try {
+        const res = await apiFetch('/api/numbers/list');
+        if (res.ok) {
+          const data = await res.json() as { numbers?: Array<{ phone_number: string; is_default: boolean; status: string }> };
+          const nums = (data.numbers ?? []).filter((n) => n.status !== 'released');
+          const defaultNum = nums.find((n) => n.is_default) ?? nums[0];
+          callerId = defaultNum?.phone_number ?? '';
+          if (callerId) setFromNumber(callerId);
+        }
+      } catch { /* non-fatal */ }
+    }
+    if (!callerId) {
+      toast.error('No outbound caller ID — add a number in My Numbers');
+      router.push('/numbers');
+      return;
+    }
+
     callTimer.reset();
     if (lead) {
-      // Register meta first so overlay hides on /dialer, then switch to live stage
       registerCallMeta(lead as import('@/components/dialer/LeadCard').LeadRecord, e164);
       startCall('', '');
     } else {
-      // Manual dial (no lead): clear queue selection and use overlay
       selectLead(null);
       registerCallMeta(null, e164);
     }
     beginOutboundCall(e164, lead?.id, lead ?? null);
-    makeCall(e164, fromNumber || undefined);
-  }, [phoneStatus, callStatus, makeCall, fromNumber, startCall, registerCallMeta, selectLead, callTimer, beginOutboundCall]);
+    makeCall(e164, callerId);
+  }, [callStatus, waitForPhoneReady, makeCall, fromNumber, apiFetch, startCall, registerCallMeta, selectLead, callTimer, beginOutboundCall, router]);
 
   // Update ref on every render so powerDialer.onShouldDial always calls latest version
   initiateCallRef.current = initiateCall;
@@ -489,6 +499,7 @@ export default function DialerPage() {
       <HeaderStrip
         stats={stats}
         callStatus={callStatus}
+        phoneStatus={phoneStatus}
         callTimer={callStatus === 'active' ? callTimer.formatted : undefined}
         activeLeadName={selectedLead?.name}
         todayCalls={todayCalls}
@@ -634,7 +645,7 @@ export default function DialerPage() {
                   onMarkHot={handleMarkHot}
                   onDnc={handleDnc}
                   onClose={() => selectLead(null)}
-                  disabled={false}
+                  disabled={phoneStatus !== 'ready' || !fromNumber}
                 />
               </motion.div>
             )}
@@ -874,18 +885,21 @@ export default function DialerPage() {
                 <button
                   disabled={queueCounts.queue === 0}
                   onClick={() => {
-                    if (!fromNumber) {
-                      toast.error('Claim a caller ID before starting power dial');
+                    void (async () => {
+                      if (!fromNumber) {
+                        toast.error('Claim a caller ID before starting power dial');
+                        setPowerConfirmOpen(false);
+                        router.push('/numbers');
+                        return;
+                      }
+                      const ready = await waitForPhoneReady();
+                      if (!ready) {
+                        toast.error('Phone not ready — wait for Ready status');
+                        return;
+                      }
                       setPowerConfirmOpen(false);
-                      router.push('/numbers');
-                      return;
-                    }
-                    if (phoneStatus !== 'ready') {
-                      toast.error('Phone not ready — wait for Ready status');
-                      return;
-                    }
-                    setPowerConfirmOpen(false);
-                    powerDialer.start({ delay_seconds: 5 });
+                      powerDialer.start({ delay_seconds: 5 });
+                    })();
                   }}
                   className="flex-[2] h-10 rounded-xl text-sm font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed"
                   style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}
