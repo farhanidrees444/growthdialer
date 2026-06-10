@@ -34,6 +34,10 @@ export async function POST(
     return NextResponse.json({ error: 'Valid email address is required' }, { status: 400 });
   }
 
+  if (inviteRole === 'owner') {
+    return NextResponse.json({ error: 'Owner role cannot be assigned via invitation' }, { status: 403 });
+  }
+
   if (!canAssignRole(callerMember.role as Role, inviteRole)) {
     return NextResponse.json({ error: 'You cannot assign that role' }, { status: 403 });
   }

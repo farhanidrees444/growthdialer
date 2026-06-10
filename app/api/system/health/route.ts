@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { apiUnauthorized } from '@/lib/api/errors';
+import { apiForbidden, apiUnauthorized } from '@/lib/api/errors';
+import { userCanViewOpsHealth } from '@/lib/auth/health-access';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,6 +73,9 @@ export async function GET() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return apiUnauthorized();
+
+  const canView = await userCanViewOpsHealth(supabase, user.id);
+  if (!canView) return apiForbidden('Insufficient permissions to view system health');
 
   const [voice, ai, transcription, database] = await Promise.all([
     checkVoiceNetwork(),

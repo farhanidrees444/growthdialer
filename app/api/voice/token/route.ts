@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { issueVoiceLoginToken } from '@/lib/telnyx/voice-token';
 
 export async function POST(_request: NextRequest) {
   try {
@@ -9,47 +10,17 @@ export async function POST(_request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Preferred: short-lived JWT via Telnyx telephony credential.
-    // The endpoint expects no body and returns the JWT as plain text.
-    // Accept both the documented env name and the legacy short alias so this
-    // works regardless of which one is set in Vercel.
-    const credentialId =
-      process.env.TELNYX_TELEPHONY_CREDENTIAL_ID ?? process.env.TELNYX_CREDENTIAL_ID;
-    if (!credentialId) {
-      console.warn(
-        '[voice/token] no TELNYX_TELEPHONY_CREDENTIAL_ID set — falling back to SIP password auth',
-      );
-    }
-    if (credentialId) {
-      const res = await fetch(
-        `https://api.telnyx.com/v2/telephony_credentials/${credentialId}/token`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${process.env.TELNYX_API_KEY}`,
-          },
-        },
-      );
-      if (res.ok) {
-        const token = (await res.text()).trim();
-        if (token) {
-          return NextResponse.json({ login_token: token });
-        }
-      } else {
-        console.error('[voice/token] credential token fetch failed:', res.status, await res.text().catch(() => ''));
-      }
+    const result = await issueVoiceLoginToken(supabase, authUser.id);
+
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
-    // Fallback: return SIP credentials directly
-    const login = process.env.NEXT_PUBLIC_TELNYX_SIP_USERNAME;
-    const password = process.env.TELNYX_SIP_PASSWORD;
-    if (!login || !password) {
-      return NextResponse.json(
-        { error: 'Voice credentials not configured' },
-        { status: 503 },
-      );
+    if (result.kind === 'jwt') {
+      return NextResponse.json({ login_token: result.login_token });
     }
-    return NextResponse.json({ login, password });
+
+    return NextResponse.json({ login: result.login, password: result.password });
   } catch (error) {
     console.error('[voice/token] error:', error);
     return NextResponse.json({ error: 'Could not issue credentials' }, { status: 500 });

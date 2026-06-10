@@ -92,7 +92,7 @@ export function hasPermission(role: string, permission: Permission): boolean {
 export function canAssignRole(callerRole: string, targetRole: Role): boolean {
   const caller = callerRole as Role;
   if (!(caller in ROLE_RANK) || !(targetRole in ROLE_RANK)) return false;
-  if (targetRole === 'owner') return caller === 'owner';
+  if (targetRole === 'owner') return false;
   return ROLE_RANK[targetRole] <= ROLE_RANK[caller];
 }
 

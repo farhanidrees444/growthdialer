@@ -133,9 +133,6 @@ export function LoginForm({ showGoogle }: { showGoogle: boolean }) {
           Start free trial
         </Link>
       </p>
-      <p className="text-center text-xs text-muted-foreground mt-4">
-        Demo: <span className="text-foreground/80">demo@growthdialer.com</span> / <span className="text-foreground/80">demo1234</span>
-      </p>
     </motion.div>
   );
 }

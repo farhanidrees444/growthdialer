@@ -34,6 +34,10 @@ export async function PATCH(request: NextRequest, { params }: RouteCtx) {
 
   const body = await request.json() as { role?: Role; status?: string };
 
+  if (body.role === 'owner') {
+    return NextResponse.json({ error: 'Owner role cannot be assigned via this endpoint' }, { status: 403 });
+  }
+
   if (body.role && !canAssignRole(callerRole, body.role)) {
     return NextResponse.json({ error: 'You cannot assign that role' }, { status: 403 });
   }

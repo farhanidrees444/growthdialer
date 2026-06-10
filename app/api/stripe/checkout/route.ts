@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       metadata: {
         plan,
         annual: annual ? "true" : "false",
-        userId: user?.id ?? "guest",
+        userId: user.id,
       },
       subscription_data: {
         trial_period_days: 14,
