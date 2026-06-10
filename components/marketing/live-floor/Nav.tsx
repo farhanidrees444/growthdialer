@@ -46,7 +46,7 @@ export function Nav() {
             : 'border-b border-transparent bg-transparent'
         )}
       >
-        <BrandLogo href="/" showText width={128} height={28} priority className="shrink-0 transition-opacity hover:opacity-90" />
+        <BrandLogo href="/" showText size="nav" priority className="shrink-0 transition-opacity hover:opacity-90" />
 
         <nav
           className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 lg:flex"

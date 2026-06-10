@@ -62,7 +62,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <BrandLogo href="/" showText width={132} height={28} priority className="shrink-0" />
+          <BrandLogo href="/" showText size="nav" priority className="shrink-0" />
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-1">

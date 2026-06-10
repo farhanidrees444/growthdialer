@@ -1,0 +1,11 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GrowthDialer">
+  <defs>
+    <linearGradient id="gd-mark" x1="4" y1="24" x2="44" y2="24" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A855F7"/>
+      <stop offset="0.45" stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#gd-mark)" d="M8 24c0-8.837 7.163-16 16-16 2.8 0 5.4.72 7.7 1.98l-2.4 4.1A11.8 11.8 0 0 0 24 12c-6.627 0-12 5.373-12 12s5.373 12 12 12c2.6 0 5-.78 7-2.12l2.4 4.14A15.9 15.9 0 0 1 24 40C15.163 40 8 32.837 8 24Zm8-6.5h6v5h-6a3.5 3.5 0 1 0 0 7h4v5h-4c-5.523 0-10-4.477-10-10s4.477-10 10-10Z"/>
+  <path fill="url(#gd-mark)" d="M30 8h10c6.627 0 12 5.373 12 12s-5.373 12-12 12H30V8Zm6 5v14h4a7 7 0 1 0 0-14h-4Z"/>
+</svg>

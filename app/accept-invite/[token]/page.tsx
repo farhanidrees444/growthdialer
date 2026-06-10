@@ -101,7 +101,7 @@ export default function AcceptInvitePage() {
         className="relative z-10 w-full max-w-md"
       >
         {/* Logo */}
-        <BrandLogo showText width={148} height={32} className="mb-8 justify-center" />
+        <BrandLogo showText size="auth" className="mb-8 justify-center" />
 
         {/* Card */}
         <div className="rounded-2xl border border-white/[0.08] bg-[oklch(0.09_0.006_285)] p-8 shadow-2xl">

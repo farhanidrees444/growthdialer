@@ -136,7 +136,7 @@ export default function WorkspaceSetupPage() {
       </div>
 
       <header className="relative z-10 flex shrink-0 items-center justify-between px-5 py-4 sm:px-10 sm:py-5">
-        <BrandLogo showText width={132} height={28} />
+        <BrandLogo showText size="auth" />
         <div className="hidden items-center gap-2 text-xs text-zinc-500 sm:flex">
           <Shield className="h-3.5 w-3.5" />
           SOC2-ready infrastructure

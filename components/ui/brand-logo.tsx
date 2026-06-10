@@ -1,39 +1,52 @@
-import Image from 'next/image';
+'use client';
+
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-
-/** Intrinsic dimensions of `public/brand/wordmark.png` */
-const WORDMARK_NATIVE_W = 300;
-const WORDMARK_NATIVE_H = 75;
+import { BrandIconDarkSvg, BrandMarkSvg, BrandWordmarkSvg } from '@/components/ui/brand-svg';
 
 /** Icon variants — all 1:1 */
 export type BrandLogoVariant = 'mark' | 'icon-dark' | 'icon-light' | 'icon-purple';
 
-const ICON_SRC: Record<BrandLogoVariant, string> = {
-  mark: '/brand/mark.png',
-  'icon-dark': '/brand/icon-dark.png',
-  'icon-light': '/brand/icon-light.png',
-  'icon-purple': '/brand/icon-purple.png',
-};
+/** Responsive size presets — tuned for clarity on retina displays */
+export type BrandLogoSize =
+  | 'xs'
+  | 'sm'
+  | 'md'
+  | 'lg'
+  | 'xl'
+  | 'nav'
+  | 'sidebar'
+  | 'auth'
+  | 'footer';
 
-const ICON_NATIVE: Record<BrandLogoVariant, number> = {
-  mark: 1024,
-  'icon-dark': 150,
-  'icon-light': 150,
-  'icon-purple': 150,
+const SIZE_PRESETS: Record<
+  BrandLogoSize,
+  { icon: number; wordmarkH: number }
+> = {
+  xs: { icon: 32, wordmarkH: 28 },
+  sm: { icon: 36, wordmarkH: 32 },
+  md: { icon: 44, wordmarkH: 36 },
+  lg: { icon: 52, wordmarkH: 40 },
+  xl: { icon: 60, wordmarkH: 48 },
+  nav: { icon: 40, wordmarkH: 36 },
+  sidebar: { icon: 48, wordmarkH: 42 },
+  auth: { icon: 52, wordmarkH: 44 },
+  footer: { icon: 44, wordmarkH: 38 },
 };
 
 export interface BrandLogoProps {
-  /** Render width in px. */
+  /** Explicit width in px (overrides `size` when set with height). */
   width?: number;
-  /** Render height in px. Aspect ratio is always preserved. */
+  /** Explicit height in px (overrides `size`). */
   height?: number;
+  /** Preset sizing — responsive-friendly defaults per surface. */
+  size?: BrandLogoSize;
   /** When true, renders the horizontal wordmark lockup. */
   showText?: boolean;
   /** Icon variant when `showText` is false. */
   variant?: BrandLogoVariant;
   className?: string;
-  /** Preload for above-the-fold placements (nav, auth). */
+  /** Preload hint for above-the-fold placements (nav, auth). */
   priority?: boolean;
   /** Wraps the logo in a Next.js Link when set. */
   href?: string;
@@ -41,76 +54,85 @@ export interface BrandLogoProps {
   onClick?: () => void;
 }
 
-function resolveIconSize(width?: number, height?: number): number {
-  if (width != null && height != null) return Math.min(width, height);
-  return width ?? height ?? 32;
+function resolveIconSize(
+  size: BrandLogoSize | undefined,
+  width: number | undefined,
+  height: number | undefined,
+  showText: boolean,
+): number {
+  if (width != null && height != null && !showText) return Math.min(width, height);
+  if (height != null && !showText) return height;
+  if (width != null && !showText) return width;
+  if (size) return SIZE_PRESETS[size].icon;
+  return 40;
 }
 
-function resolveWordmarkSize(
-  width?: number,
-  height?: number,
-): { w: number; h: number } {
-  if (width != null && height != null) return { w: width, h: height };
-  if (height != null) {
-    return {
-      w: Math.round(height * (WORDMARK_NATIVE_W / WORDMARK_NATIVE_H)),
-      h: height,
-    };
+function resolveWordmarkHeight(
+  size: BrandLogoSize | undefined,
+  width: number | undefined,
+  height: number | undefined,
+): number {
+  if (height != null) return height;
+  if (width != null) return Math.round(width / (300 / 75));
+  if (size) return SIZE_PRESETS[size].wordmarkH;
+  return 36;
+}
+
+function IconGraphic({
+  variant,
+  iconSize,
+}: {
+  variant: BrandLogoVariant;
+  iconSize: number;
+}) {
+  switch (variant) {
+    case 'mark':
+      return <BrandMarkSvg size={iconSize} />;
+    case 'icon-dark':
+      return <BrandIconDarkSvg size={iconSize} />;
+    case 'icon-light':
+    case 'icon-purple':
+      // Light/purple PNG variants kept for press kit; UI uses vector marks
+      return <BrandMarkSvg size={iconSize} />;
+    default:
+      return <BrandMarkSvg size={iconSize} />;
   }
-  const w = width ?? 140;
-  return { w, h: Math.round(w / (WORDMARK_NATIVE_W / WORDMARK_NATIVE_H)) };
 }
 
 export function BrandLogo({
   width,
   height,
+  size,
   showText = false,
-  variant = 'icon-dark',
+  variant = 'mark',
   className,
-  priority = false,
+  priority: _priority,
   href,
   onClick,
 }: BrandLogoProps) {
+  const wordmarkH = resolveWordmarkHeight(size, width, height);
+  const iconSize = resolveIconSize(size, width, height, showText);
+
   const inner = showText ? (
-    (() => {
-      const { w, h } = resolveWordmarkSize(width, height);
-      return (
-        <Image
-          src="/brand/wordmark.png"
-          alt="GrowthDialer"
-          width={WORDMARK_NATIVE_W}
-          height={WORDMARK_NATIVE_H}
-          sizes={`${w}px`}
-          priority={priority}
-          className="block max-w-none object-contain object-left"
-          style={{
-            width: w,
-            height: h,
-            aspectRatio: `${WORDMARK_NATIVE_W} / ${WORDMARK_NATIVE_H}`,
-          }}
-        />
-      );
-    })()
+    <BrandWordmarkSvg
+      height={wordmarkH}
+      className={cn(
+        'h-auto w-auto max-w-full',
+        size === 'sidebar' && 'min-h-[38px] sm:min-h-[42px]',
+        size === 'nav' && 'min-h-[34px] sm:min-h-[36px]',
+        size === 'auth' && 'min-h-[40px] sm:min-h-[44px]',
+        size === 'footer' && 'min-h-[36px] sm:min-h-[38px]',
+      )}
+    />
   ) : (
-    (() => {
-      const size = resolveIconSize(width, height);
-      const native = ICON_NATIVE[variant];
-      return (
-        <Image
-          src={ICON_SRC[variant]}
-          alt="GrowthDialer"
-          width={native}
-          height={native}
-          sizes={`${size}px`}
-          priority={priority}
-          className="block max-w-none object-contain"
-          style={{ width: size, height: size, aspectRatio: '1 / 1' }}
-        />
-      );
-    })()
+    <IconGraphic variant={variant} iconSize={iconSize} />
   );
 
-  const wrapperClass = cn('inline-flex shrink-0 items-center', className);
+  const wrapperClass = cn(
+    'inline-flex shrink-0 items-center',
+    showText && 'min-w-0 max-w-full',
+    className,
+  );
 
   if (href) {
     return (
@@ -130,10 +152,9 @@ export function BrandLogo({
 
 /** Square mark only — compare pages, avatars, compact slots. */
 export function BrandLogoMark({
-  size = 32,
-  variant = 'icon-dark',
+  size = 40,
+  variant = 'mark',
   className,
-  priority,
 }: {
   size?: number;
   variant?: BrandLogoVariant;
@@ -146,7 +167,6 @@ export function BrandLogoMark({
       height={size}
       variant={variant}
       className={className}
-      priority={priority}
     />
   );
 }

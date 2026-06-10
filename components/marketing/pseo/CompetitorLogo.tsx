@@ -64,5 +64,5 @@ export function CompetitorLogo({ domain, name, size = 48, className }: Competito
 }
 
 export function GrowthDialerLogoMark({ size = 48, className }: { size?: number; className?: string }) {
-  return <BrandLogoMark size={size} variant="icon-dark" className={className} />;
+  return <BrandLogoMark size={size} variant="mark" className={className} />;
 }

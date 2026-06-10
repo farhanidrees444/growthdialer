@@ -53,7 +53,7 @@ export function SiteFooter() {
 
       <div className="relative mx-auto grid max-w-7xl gap-10 sm:grid-cols-2 lg:grid-cols-6">
         <div className="sm:col-span-2 lg:col-span-1">
-          <BrandLogo href="/" showText width={128} height={28} />
+          <BrandLogo href="/" showText size="footer" />
           <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-zinc-500">
             The AI sales dialer that turns every conversation into searchable revenue intelligence.
           </p>

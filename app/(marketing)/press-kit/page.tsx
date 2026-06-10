@@ -61,10 +61,20 @@ export default function PressKitPage() {
           <article className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8 backdrop-blur-xl">
             <h2 className="font-display text-xl font-medium text-[#F5F5F7]">Brand assets</h2>
             <div className="mt-6 flex flex-wrap items-center gap-8">
-              <BrandLogo showText width={180} height={40} />
-              <BrandLogo width={56} height={56} variant="icon-dark" />
+              <BrandLogo showText size="xl" />
+              <BrandLogo size="lg" variant="mark" />
             </div>
             <ul className="mt-6 space-y-2 text-[14px] text-zinc-400">
+              <li>
+                <a href="/brand/wordmark.svg" className="text-[#A78BFA] hover:underline">
+                  Wordmark (SVG)
+                </a>
+              </li>
+              <li>
+                <a href="/brand/mark.svg" className="text-[#A78BFA] hover:underline">
+                  Gradient mark (SVG)
+                </a>
+              </li>
               <li>
                 <a href="/brand/wordmark.png" className="text-[#A78BFA] hover:underline">
                   Wordmark (PNG)
@@ -78,11 +88,6 @@ export default function PressKitPage() {
               <li>
                 <a href="/brand/icon-dark.png" className="text-[#A78BFA] hover:underline">
                   App icon — dark (PNG)
-                </a>
-              </li>
-              <li>
-                <a href="/logo.png" className="text-[#A78BFA] hover:underline">
-                  Logo mark — high resolution (PNG)
                 </a>
               </li>
             </ul>

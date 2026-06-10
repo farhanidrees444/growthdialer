@@ -514,18 +514,20 @@ function SidebarInner() {
             "flex shrink-0 items-center border-b border-zinc-800/50",
             isDesktopCollapsed
               ? "flex-col gap-2 px-2 py-3"
-              : "justify-between gap-2 px-4 py-4",
+              : "justify-between gap-2 px-4 py-4 min-h-[60px]",
           )}
         >
           <BrandLogo
             href="/dashboard"
             onClick={close}
             showText={!isDesktopCollapsed}
-            width={isDesktopCollapsed ? 32 : 120}
-            height={isDesktopCollapsed ? 32 : 28}
-            variant="icon-dark"
+            size="sidebar"
+            variant="mark"
             priority
-            className={cn("min-w-0", isDesktopCollapsed && "justify-center")}
+            className={cn(
+              "min-w-0",
+              isDesktopCollapsed ? "justify-center" : "flex-1 pr-1",
+            )}
           />
 
           <div className={cn("flex items-center gap-1", isDesktopCollapsed && "w-full justify-center")}>

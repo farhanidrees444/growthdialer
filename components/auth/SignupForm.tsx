@@ -81,7 +81,7 @@ export function SignupForm({ showGoogle }: { showGoogle: boolean }) {
       className="w-full max-w-md rounded-2xl border border-white/10 bg-[oklch(0.09_0.006_285)] p-8 shadow-2xl shadow-black/40"
     >
       <div className="mb-8 text-center">
-        <BrandLogo href="/" showText width={132} height={28} className="mb-6" />
+        <BrandLogo href="/" showText size="auth" className="mb-6" />
         <h1 className="font-display text-2xl font-bold tracking-tight">Create your account</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {plan ? (

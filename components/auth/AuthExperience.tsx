@@ -215,7 +215,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
       <div className="relative z-10 grid min-h-screen lg:grid-cols-[1.05fr_0.95fr]">
         {/* ── Brand panel ── */}
         <div className="relative hidden flex-col justify-between border-r border-white/[0.06] p-10 xl:p-14 lg:flex">
-          <BrandLogo href="https://growthdialer.com" showText width={148} height={32} priority />
+          <BrandLogo href="https://growthdialer.com" showText size="auth" priority />
 
           <div className="max-w-lg">
             <motion.div
@@ -324,8 +324,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
             <BrandLogo
               href="https://growthdialer.com"
               showText
-              width={148}
-              height={32}
+              size="auth"
               priority
               className="mb-8 lg:hidden"
             />

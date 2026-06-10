@@ -80,7 +80,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-12 mb-16">
           {/* Brand */}
           <div className="col-span-1 sm:col-span-2 lg:col-span-2">
-            <BrandLogo href="/" showText width={148} height={32} className="mb-6" />
+            <BrandLogo href="/" showText size="footer" className="mb-6" />
             <p className="text-gray-400 leading-relaxed max-w-sm mb-8 text-sm">
               The AI-powered sales dialer that helps B2B teams connect with more
               prospects and close more deals, faster.
