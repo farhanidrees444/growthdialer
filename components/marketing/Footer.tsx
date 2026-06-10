@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Zap } from "lucide-react";
+import { BrandLogo } from "@/components/ui/brand-logo";
 
 // Inline SVG social icons (lucide-react dropped brand icons)
 const TwitterIcon = () => (
@@ -80,14 +80,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-12 mb-16">
           {/* Brand */}
           <div className="col-span-1 sm:col-span-2 lg:col-span-2">
-            <Link href="/" className="flex items-center gap-3 mb-6 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#16a34a] to-[#15803d] flex items-center justify-center shadow-lg shadow-[#16a34a]/20">
-                <Zap className="w-5 h-5 text-white" fill="currentColor" />
-              </div>
-              <span className="font-display font-bold text-xl text-white">
-                Growth<span className="text-[#16a34a]">Dialer</span>
-              </span>
-            </Link>
+            <BrandLogo href="/" showText width={148} height={32} className="mb-6" />
             <p className="text-gray-400 leading-relaxed max-w-sm mb-8 text-sm">
               The AI-powered sales dialer that helps B2B teams connect with more
               prospects and close more deals, faster.

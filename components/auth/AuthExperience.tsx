@@ -20,7 +20,8 @@ import {
   Users,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { LiveWaveform, MiniWave } from '@/components/marketing/live-floor/LiveWaveform';
+import { LiveWaveform } from '@/components/marketing/live-floor/LiveWaveform';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import { Grain } from '@/components/marketing/live-floor/Grain';
 import { EASE_OUT } from '@/components/marketing/live-floor/motion';
 import { cn } from '@/lib/utils';
@@ -70,28 +71,6 @@ function getPasswordStrength(password: string) {
 
 const inputClass =
   'w-full rounded-xl border border-white/[0.08] bg-black/20 py-3.5 pl-11 pr-4 text-sm text-[#F5F5F7] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] placeholder:text-zinc-600 outline-none transition focus:border-[#8B5CF6]/45 focus:bg-black/30 focus:ring-2 focus:ring-[#8B5CF6]/15';
-
-function AuthLogo({ className }: { className?: string }) {
-  return (
-    <Link href="https://growthdialer.com" className={cn('group inline-flex items-center gap-3', className)}>
-      <span className="relative flex h-11 w-11 items-center justify-center">
-        <span
-          aria-hidden
-          className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#8B5CF6]/50 via-[#06B6D4]/30 to-[#10B981]/20 opacity-70 blur-md transition-opacity group-hover:opacity-100"
-        />
-        <span className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-white/[0.12] bg-[#0a0a0c]/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-          <MiniWave className="scale-100" />
-        </span>
-      </span>
-      <span className="font-display text-[1.35rem] font-semibold tracking-tight text-[#F5F5F7]">
-        Growth
-        <span className="bg-gradient-to-r from-[#A78BFA] via-[#8B5CF6] to-[#06B6D4] bg-clip-text text-transparent">
-          Dialer
-        </span>
-      </span>
-    </Link>
-  );
-}
 
 function AuthMesh() {
   return (
@@ -236,7 +215,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
       <div className="relative z-10 grid min-h-screen lg:grid-cols-[1.05fr_0.95fr]">
         {/* ── Brand panel ── */}
         <div className="relative hidden flex-col justify-between border-r border-white/[0.06] p-10 xl:p-14 lg:flex">
-          <AuthLogo />
+          <BrandLogo href="https://growthdialer.com" showText width={148} height={32} priority />
 
           <div className="max-w-lg">
             <motion.div
@@ -342,7 +321,14 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
             transition={{ duration: 0.55, ease: EASE_OUT }}
             className="w-full max-w-[420px]"
           >
-            <AuthLogo className="mb-8 lg:hidden" />
+            <BrandLogo
+              href="https://growthdialer.com"
+              showText
+              width={148}
+              height={32}
+              priority
+              className="mb-8 lg:hidden"
+            />
 
             <div className="relative overflow-hidden rounded-3xl border border-white/[0.09] bg-gradient-to-b from-white/[0.07] via-white/[0.03] to-white/[0.015] p-7 shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_32px_100px_-24px_rgba(0,0,0,0.8)] backdrop-blur-2xl sm:p-8">
               <div

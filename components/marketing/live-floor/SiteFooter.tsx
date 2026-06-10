@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { MiniWave } from './LiveWaveform';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import { APP_SIGNUP, FOOTER_COLUMNS, SOCIAL_LINKS, STATUS_URL } from '@/lib/marketing/navigation';
 
 function TwitterIcon() {
@@ -53,14 +53,7 @@ export function SiteFooter() {
 
       <div className="relative mx-auto grid max-w-7xl gap-10 sm:grid-cols-2 lg:grid-cols-6">
         <div className="sm:col-span-2 lg:col-span-1">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03]">
-              <MiniWave className="scale-90" />
-            </span>
-            <span className="font-display text-[15px] font-semibold tracking-tight text-[#F5F5F7]">
-              GrowthDialer
-            </span>
-          </div>
+          <BrandLogo href="/" showText width={128} height={28} />
           <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-zinc-500">
             The AI sales dialer that turns every conversation into searchable revenue intelligence.
           </p>

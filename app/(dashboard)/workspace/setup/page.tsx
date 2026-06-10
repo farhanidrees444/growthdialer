@@ -12,6 +12,7 @@ import {
 import { useWorkspace } from '@/contexts/workspace-context';
 import type { Workspace } from '@/contexts/workspace-context';
 import { Grain } from '@/components/marketing/live-floor/Grain';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import { EASE_OUT } from '@/components/marketing/live-floor/motion';
 import { cn } from '@/lib/utils';
 
@@ -135,17 +136,7 @@ export default function WorkspaceSetupPage() {
       </div>
 
       <header className="relative z-10 flex shrink-0 items-center justify-between px-5 py-4 sm:px-10 sm:py-5">
-        <div className="flex items-center gap-2.5">
-          <div
-            className="flex h-9 w-9 items-center justify-center rounded-xl shadow-lg shadow-emerald-500/20"
-            style={{ background: 'linear-gradient(135deg, #059669 0%, #7C3AED 100%)' }}
-          >
-            <Zap className="h-4 w-4 text-white" fill="white" />
-          </div>
-          <span className="font-display text-lg font-bold tracking-tight">
-            Growth<span className="text-emerald-400">Dialer</span>
-          </span>
-        </div>
+        <BrandLogo showText width={132} height={28} />
         <div className="hidden items-center gap-2 text-xs text-zinc-500 sm:flex">
           <Shield className="h-3.5 w-3.5" />
           SOC2-ready infrastructure

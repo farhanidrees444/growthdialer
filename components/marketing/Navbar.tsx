@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Zap, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -61,14 +62,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0 group">
-            <div className="w-8 h-8 rounded-lg gradient-brand flex items-center justify-center glow-brand-sm">
-              <Zap className="w-4 h-4 text-[oklch(0.08_0.04_153)]" fill="currentColor" />
-            </div>
-            <span className="font-display font-bold text-lg text-foreground">
-              Growth<span className="text-brand">Dialer</span>
-            </span>
-          </Link>
+          <BrandLogo href="/" showText width={132} height={28} priority className="shrink-0" />
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-1">

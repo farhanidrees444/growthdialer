@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ChevronDown, Target, Zap, BarChart3, Headphones, ArrowRight } from 'lucide-react';
-import { MiniWave } from './LiveWaveform';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import { ShimmerButton } from './ShimmerButton';
 import { EASE_OUT } from './motion';
 import { APP_SIGNIN, APP_SIGNUP, TOP_NAV } from '@/lib/marketing/navigation';
@@ -46,14 +46,7 @@ export function Nav() {
             : 'border-b border-transparent bg-transparent'
         )}
       >
-        <Link href="/" className="group flex shrink-0 items-center gap-2.5">
-          <span className="relative flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] transition-transform group-hover:scale-105">
-            <MiniWave className="scale-90" />
-          </span>
-          <span className="font-display text-[15px] font-semibold tracking-tight text-[#F5F5F7]">
-            GrowthDialer
-          </span>
-        </Link>
+        <BrandLogo href="/" showText width={128} height={28} priority className="shrink-0 transition-opacity hover:opacity-90" />
 
         <nav
           className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 lg:flex"

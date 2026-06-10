@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { Zap } from 'lucide-react';
+import { BrandLogoMark } from '@/components/ui/brand-logo';
 import { cn } from '@/lib/utils';
 
 type CompetitorLogoProps = {
@@ -64,16 +64,5 @@ export function CompetitorLogo({ domain, name, size = 48, className }: Competito
 }
 
 export function GrowthDialerLogoMark({ size = 48, className }: { size?: number; className?: string }) {
-  return (
-    <div
-      className={cn(
-        'flex shrink-0 items-center justify-center rounded-lg border border-violet-500/20 bg-violet-500/10 text-violet-400',
-        className,
-      )}
-      style={{ width: size, height: size }}
-      aria-hidden
-    >
-      <Zap className="h-5 w-5" fill="currentColor" style={{ width: size * 0.42, height: size * 0.42 }} />
-    </div>
-  );
+  return <BrandLogoMark size={size} variant="icon-dark" className={className} />;
 }

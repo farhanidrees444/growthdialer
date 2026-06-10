@@ -62,6 +62,16 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png", sizes: "32x32" },
+      { url: "/brand/mark.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/icon.png",
+  },
   openGraph: {
     title: "GrowthDialer — AI Sales Dialer",
     description: "Record, transcribe and analyze every call. GrowthDialer turns conversations into AI summaries, sentiment and next steps — automatically.",

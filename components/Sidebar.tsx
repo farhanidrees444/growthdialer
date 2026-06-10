@@ -42,6 +42,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { ROLE_LABELS } from "@/lib/auth/permissions";
 import { EASE_OUT, SPRING } from "@/components/marketing/live-floor/motion";
 import { UserMenu } from "@/components/layout/user-menu";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { getNavItemAccent, resolveRouteAccent } from "@/lib/ui/route-accents";
 
 type CountKey = "leads" | "recordings" | "numbers" | "calls";
@@ -516,23 +517,16 @@ function SidebarInner() {
               : "justify-between gap-2 px-4 py-4",
           )}
         >
-          <Link
+          <BrandLogo
             href="/dashboard"
             onClick={close}
-            className={cn(
-              "group flex min-w-0 items-center gap-2.5",
-              isDesktopCollapsed && "justify-center",
-            )}
-          >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-800 text-violet-400">
-              <Zap className="h-4 w-4" fill="currentColor" />
-            </div>
-            {!isDesktopCollapsed && (
-              <span className="truncate font-display text-base font-semibold tracking-tight text-zinc-100">
-                Growth<span className="text-violet-400">Dialer</span>
-              </span>
-            )}
-          </Link>
+            showText={!isDesktopCollapsed}
+            width={isDesktopCollapsed ? 32 : 120}
+            height={isDesktopCollapsed ? 32 : 28}
+            variant="icon-dark"
+            priority
+            className={cn("min-w-0", isDesktopCollapsed && "justify-center")}
+          />
 
           <div className={cn("flex items-center gap-1", isDesktopCollapsed && "w-full justify-center")}>
             <button

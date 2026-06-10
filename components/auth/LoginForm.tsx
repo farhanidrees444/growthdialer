@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, Zap } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,14 +51,7 @@ export function LoginForm({ showGoogle }: { showGoogle: boolean }) {
       className="w-full max-w-md rounded-2xl border border-white/10 bg-[oklch(0.09_0.006_285)] p-8 shadow-2xl shadow-black/40"
     >
       <div className="mb-8 text-center">
-        <Link href="/" className="inline-flex items-center gap-2 mb-6">
-          <div className="w-9 h-9 rounded-lg gradient-brand flex items-center justify-center glow-brand-sm">
-            <Zap className="w-4 h-4 text-[oklch(0.08_0.04_153)]" fill="currentColor" />
-          </div>
-          <span className="font-display font-bold text-lg">
-            Growth<span className="text-brand">Dialer</span>
-          </span>
-        </Link>
+        <BrandLogo href="/" showText width={132} height={28} className="mb-6" />
         <h1 className="font-display text-2xl font-bold tracking-tight">Welcome back</h1>
         <p className="text-sm text-muted-foreground mt-1">Sign in to open your workspace.</p>
       </div>

@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { ImageResponse } from 'next/og';
 
 export const alt = 'GrowthDialer';
@@ -9,6 +11,9 @@ export const size = {
 export const contentType = 'image/png';
 
 export default async function Image() {
+  const wordmarkBuffer = await readFile(join(process.cwd(), 'public/brand/wordmark.png'));
+  const wordmarkSrc = `data:image/png;base64,${wordmarkBuffer.toString('base64')}`;
+
   return new ImageResponse(
     (
       <div
@@ -58,41 +63,13 @@ export default async function Image() {
           }}
         >
           {/* Logo */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              marginBottom: '24px',
-            }}
-          >
-            <div
-              style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '32px',
-                fontWeight: 'bold',
-                color: 'white',
-              }}
-            >
-              ⚡
-            </div>
-            <h1
-              style={{
-                fontSize: '56px',
-                fontWeight: 'bold',
-                color: 'white',
-                margin: 0,
-              }}
-            >
-              Growth<span style={{ color: '#16a34a' }}>Dialer</span>
-            </h1>
-          </div>
+          <img
+            src={wordmarkSrc}
+            alt="GrowthDialer"
+            width={360}
+            height={90}
+            style={{ objectFit: 'contain', marginBottom: 24 }}
+          />
 
           {/* Tagline */}
           <p
@@ -141,7 +118,7 @@ export default async function Image() {
             left: '0',
             right: '0',
             height: '2px',
-            background: 'linear-gradient(to right, transparent, #16a34a, transparent)',
+            background: 'linear-gradient(to right, transparent, #8B5CF6, transparent)',
           }}
         />
       </div>

@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Zap, Loader2, CheckCircle2, XCircle, UserPlus, LogIn } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, UserPlus, LogIn } from 'lucide-react';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import { createClient } from '@/lib/supabase/client';
 import { useSupabaseSession } from '@/lib/supabase/hooks';
 import { ROLE_LABELS, ROLE_COLORS, type Role } from '@/lib/auth/permissions';
@@ -100,17 +101,7 @@ export default function AcceptInvitePage() {
         className="relative z-10 w-full max-w-md"
       >
         {/* Logo */}
-        <div className="mb-8 flex items-center justify-center gap-2.5">
-          <div
-            className="flex h-9 w-9 items-center justify-center rounded-xl"
-            style={{ background: 'linear-gradient(135deg, #059669, #7C3AED)' }}
-          >
-            <Zap className="h-4.5 w-4.5 text-white" fill="white" />
-          </div>
-          <span className="font-display text-xl font-bold text-white">
-            Growth<span className="text-emerald-400">Dialer</span>
-          </span>
-        </div>
+        <BrandLogo showText width={148} height={32} className="mb-8 justify-center" />
 
         {/* Card */}
         <div className="rounded-2xl border border-white/[0.08] bg-[oklch(0.09_0.006_285)] p-8 shadow-2xl">
