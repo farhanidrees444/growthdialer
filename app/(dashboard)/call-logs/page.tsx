@@ -11,7 +11,6 @@ import {
   PhoneOutgoing,
   PhoneMissed,
   Search,
-  TrendingUp,
   Clock,
   RefreshCw,
   BarChart2,
@@ -19,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { PageHeader } from '@/components/ui/page-header';
+import { CallLogsStatsStrip } from '@/components/calls/call-logs-stats-strip';
 import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
 import { Input } from '@/components/ui/input';
 import { CallLogRowCard } from '@/components/calls/call-log-row';
@@ -144,26 +144,10 @@ export default function CallLogsPage() {
         </PageHeader>
 
         {stats && (
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4"
-          >
-            <StatCard label="Today" value={stats.todayTotal} sub="total calls" gradient="from-slate-500/10 to-transparent" />
-            <StatCard label="Inbound" value={stats.inboundToday} sub="today" gradient="from-cyan-500/15 to-transparent" valueClass="text-cyan-300" />
-            <StatCard label="Outbound" value={stats.outboundToday} sub="today" gradient="from-violet-500/15 to-transparent" valueClass="text-violet-300" />
-            <StatCard
-              label="Connect rate"
-              value={`${stats.connectRate}%`}
-              sub={`${stats.missedToday} missed`}
-              icon={TrendingUp}
-              gradient="from-emerald-500/15 to-transparent"
-              valueClass="text-emerald-300"
-            />
-          </motion.div>
+          <CallLogsStatsStrip stats={stats} className="mb-6" />
         )}
 
-        <div className="sticky top-0 z-10 -mx-1 mb-4 space-y-3 rounded-2xl border border-white/[0.06] bg-[oklch(0.07_0.006_285)]/95 p-3 backdrop-blur-md">
+        <div className="sticky top-0 z-10 -mx-1 mb-4 space-y-3 rounded-2xl border border-white/[0.06] bg-zinc-950/80 p-3 backdrop-blur-md">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex gap-1 rounded-xl border border-white/[0.08] bg-black/30 p-1">
               {TABS.map(({ id, label, icon: Icon }) => (
@@ -174,7 +158,7 @@ export default function CallLogsPage() {
                   className={cn(
                     'flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-all',
                     direction === id
-                      ? 'bg-gradient-to-r from-violet-500/20 to-cyan-500/15 text-white shadow-sm'
+                      ? 'border border-sky-500/25 bg-sky-500/10 text-sky-200 shadow-[0_0_16px_rgba(56,189,248,0.12)]'
                       : 'text-slate-500 hover:text-white',
                   )}
                 >
@@ -192,7 +176,7 @@ export default function CallLogsPage() {
                   className={cn(
                     'rounded-lg px-2.5 py-1.5 text-[11px] font-semibold capitalize border transition',
                     statusFilter === f
-                      ? 'border-primary/35 bg-primary/12 text-primary'
+                      ? 'border-sky-500/30 bg-sky-500/10 text-sky-300'
                       : 'border-white/[0.08] text-slate-500 hover:text-white',
                   )}
                 >
@@ -208,7 +192,7 @@ export default function CallLogsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search name, number, or company…"
-              className="h-10 pl-9 bg-white/[0.04] border-white/[0.08] focus-visible:ring-violet-500/30"
+              className="h-10 pl-9 border-white/[0.08] bg-white/[0.04] focus-visible:ring-sky-500/30"
             />
           </div>
         </div>
@@ -239,12 +223,12 @@ export default function CallLogsPage() {
           {grouped.map(({ group, calls: sectionCalls }) => (
             <section key={group}>
               <h2 className="mb-2.5 flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                <span className="h-px flex-1 bg-gradient-to-r from-white/[0.08] to-transparent" />
+                <span className="h-px flex-1 bg-gradient-to-r from-sky-500/20 to-transparent" />
                 {DATE_GROUP_LABELS[group]}
-                <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[10px] tabular-nums text-slate-600">
+                <span className="rounded-full border border-sky-500/15 bg-sky-500/10 px-2 py-0.5 text-[10px] tabular-nums text-sky-400/80">
                   {sectionCalls.length}
                 </span>
-                <span className="h-px flex-1 bg-gradient-to-l from-white/[0.08] to-transparent" />
+                <span className="h-px flex-1 bg-gradient-to-l from-sky-500/20 to-transparent" />
               </h2>
               <div className="space-y-2">
                 {sectionCalls.map((call) => {
@@ -257,38 +241,6 @@ export default function CallLogsPage() {
         </div>
       </div>
     </main>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  sub,
-  gradient,
-  valueClass = 'text-white',
-  icon: Icon,
-}: {
-  label: string;
-  value: number | string;
-  sub: string;
-  gradient: string;
-  valueClass?: string;
-  icon?: typeof TrendingUp;
-}) {
-  return (
-    <div
-      className={cn(
-        'rounded-2xl border border-white/[0.07] bg-gradient-to-br p-4',
-        gradient,
-      )}
-    >
-      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-        {Icon && <Icon className="h-3 w-3" />}
-        {label}
-      </p>
-      <p className={cn('mt-1 text-2xl font-bold tabular-nums', valueClass)}>{value}</p>
-      <p className="text-[10px] text-slate-600">{sub}</p>
-    </div>
   );
 }
 

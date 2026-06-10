@@ -12,6 +12,8 @@ import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { toast } from 'sonner';
 import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
+import { RecordingsStatsStrip } from '@/components/recordings/recordings-stats-strip';
+import { cn } from '@/lib/utils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -144,15 +146,15 @@ function MiniPlayer({ url, id, activeId, onActivate }: {
         onClick={toggle}
         aria-label={isPlaying ? 'Pause' : 'Play'}
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-all
-                   border-violet-500/30 bg-gradient-to-br from-violet-500/15 to-cyan-500/15
-                   hover:from-violet-500/25 hover:to-cyan-500/25 active:scale-95"
+                   border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 to-teal-500/15
+                   hover:from-emerald-500/25 hover:to-teal-500/25 hover:shadow-[0_0_16px_rgba(52,211,153,0.15)] active:scale-95"
       >
         {isPlaying
-          ? <Pause className="h-4 w-4 text-cyan-400" />
-          : <Play className="h-4 w-4 translate-x-0.5 text-violet-400" />}
+          ? <Pause className="h-4 w-4 text-emerald-400" />
+          : <Play className="h-4 w-4 translate-x-0.5 text-emerald-400" />}
       </button>
       <div className="h-1 w-16 overflow-hidden rounded-full bg-white/[0.07] sm:w-24">
-        <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 transition-all"
+        <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all"
           style={{ width: `${progress}%` }} />
       </div>
     </div>
@@ -206,8 +208,9 @@ function RecordingCard({
     <motion.div
       variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}
       transition={{ duration: 0.2 }}
-      className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[oklch(0.09_0.006_285)] transition-all hover:border-white/[0.11]"
+      className="group relative overflow-hidden rounded-2xl border border-white/[0.07] bg-[oklch(0.09_0.006_285)] transition-all hover:border-emerald-500/20 hover:shadow-[0_8px_32px_rgba(52,211,153,0.08)]"
     >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/25 to-transparent opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
       {/* ── Main row ── */}
       <div className="flex items-center gap-3 p-4">
         {/* Player */}
@@ -291,15 +294,15 @@ function RecordingCard({
 
               {/* AI Summary */}
               {hasAi && summaryBullets.length > 0 && (
-                <div className="rounded-xl border border-violet-500/15 bg-gradient-to-br from-violet-500/[0.07] to-cyan-500/[0.05] p-4">
+                <div className="rounded-xl border border-emerald-500/15 bg-gradient-to-br from-emerald-500/[0.07] to-teal-500/[0.05] p-4">
                   <div className="mb-2.5 flex items-center gap-2">
-                    <Sparkles className="h-3.5 w-3.5 text-violet-400" />
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-violet-300">AI Summary</span>
+                    <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">AI Summary</span>
                   </div>
                   <ul className="space-y-1.5">
                     {summaryBullets.map((b, i) => (
                       <li key={i} className="flex gap-2 text-sm text-white/75 leading-relaxed">
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400/60" />
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400/60" />
                         {b}
                       </li>
                     ))}
@@ -323,7 +326,7 @@ function RecordingCard({
                       <ul className="space-y-1">
                         {nextSteps.map((s, i) => (
                           <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
-                            <span className="mt-0.5 shrink-0 text-cyan-400">→</span>{s}
+                            <span className="mt-0.5 shrink-0 text-teal-400">→</span>{s}
                           </li>
                         ))}
                       </ul>
@@ -345,7 +348,7 @@ function RecordingCard({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onReprocess(rec.id); }}
-                  className="flex items-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/[0.08] px-4 py-2.5 text-sm font-semibold text-violet-300 transition hover:bg-violet-500/15"
+                  className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.08] px-4 py-2.5 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/15 hover:shadow-[0_0_20px_rgba(52,211,153,0.1)]"
                 >
                   <Sparkles className="h-4 w-4" /> Transcribe & Analyze with AI
                 </button>
@@ -474,6 +477,15 @@ export default function RecordingsPage() {
     void fetchRecordings(search, s);
   };
 
+  const recordingStats = {
+    total: recordings.length,
+    analyzed: recordings.filter((r) => r.analytics_id).length,
+    positive: recordings.filter((r) => r.ai_sentiment === 'positive').length,
+    totalMinutes: Math.round(
+      recordings.reduce((sum, r) => sum + (r.duration_seconds ?? 0), 0) / 60,
+    ),
+  };
+
   const handleReprocess = async (id: string) => {
     toast.loading('Queuing AI analysis…', { id: `rp-${id}` });
     try {
@@ -495,8 +507,14 @@ export default function RecordingsPage() {
         <div className="mx-auto max-w-4xl">
 
           {/* Controls */}
+          {!loading && recordings.length > 0 && (
+            <div className="mb-5">
+              <RecordingsStatsStrip stats={recordingStats} />
+            </div>
+          )}
+
           {(!loading || recordings.length > 0) && (
-            <div className="mb-5 space-y-3">
+            <div className="mb-5 space-y-3 rounded-2xl border border-white/[0.06] bg-zinc-950/40 p-3 backdrop-blur-sm sm:p-4">
               {/* Search */}
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
@@ -506,7 +524,7 @@ export default function RecordingsPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
-                  className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] py-2.5 pl-9 pr-10 text-sm text-white placeholder-slate-600 outline-none transition focus:border-white/[0.14] focus:bg-white/[0.05]"
+                  className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] py-2.5 pl-9 pr-10 text-sm text-white placeholder-slate-600 outline-none transition focus:border-emerald-500/30 focus:shadow-[0_0_0_3px_rgba(52,211,153,0.08)]"
                 />
                 {search && (
                   <button type="button" onClick={() => { setSearch(''); void fetchRecordings('', sentimentFilter); }}
@@ -524,11 +542,12 @@ export default function RecordingsPage() {
                     key={key}
                     type="button"
                     onClick={() => handleSentimentChange(key)}
-                    className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition-all ${
+                    className={cn(
+                      'rounded-full border px-3 py-1 text-[11px] font-semibold transition-all',
                       sentimentFilter === key
-                        ? 'border-violet-500/40 bg-violet-500/10 text-violet-300'
-                        : 'border-white/[0.07] bg-white/[0.03] text-slate-500 hover:text-slate-300'
-                    }`}
+                        ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.1)]'
+                        : 'border-white/[0.07] bg-white/[0.03] text-slate-500 hover:text-slate-300',
+                    )}
                   >
                     {label}
                   </button>

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { RecordingDetailHero } from '@/components/recordings/recording-detail-hero';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -576,34 +577,16 @@ export default function RecordingDetailPage() {
   return (
     <div className="flex-1 overflow-y-auto px-3 py-4 lg:px-8 lg:py-6">
       <div className="max-w-3xl mx-auto space-y-5">
-        {/* Back */}
-        <button type="button" onClick={() => router.push('/recordings')}
-          className="flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-slate-300"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to Recordings
-        </button>
-
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-lg font-bold text-white">
-              {lead?.name ?? 'Unknown Caller'}
-            </h1>
-            <div className="mt-0.5 flex items-center gap-2 flex-wrap text-xs text-slate-500">
-              {lead?.company && <span>{lead.company}</span>}
-              {lead?.phone && <><span className="text-slate-700">·</span><span className="flex items-center gap-1"><Phone className="h-3 w-3" />{lead.phone}</span></>}
-              <span className="text-slate-700">·</span>
-              <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatDuration(call.duration_seconds)}</span>
-              <span className="text-slate-700">·</span>
-              <span>{formatDate(call.created_at)}</span>
-            </div>
-          </div>
-          {analytics && !analytics.error && (
-            <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-400/80">
-              <Sparkles className="h-3 w-3" /> AI Analyzed
-            </span>
-          )}
-        </div>
+        <RecordingDetailHero
+          leadName={lead?.name ?? 'Unknown Caller'}
+          company={lead?.company ?? null}
+          phone={lead?.phone ?? null}
+          duration={formatDuration(call.duration_seconds)}
+          date={formatDate(call.created_at)}
+          disposition={call.disposition}
+          hasAi={Boolean(analytics && !analytics.error)}
+          onBack={() => router.push('/recordings')}
+        />
 
         {/* Audio player */}
         {(playbackUrl ?? call.recording_url) && (

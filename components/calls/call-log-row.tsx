@@ -51,14 +51,14 @@ export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
   const iconWrap = missed
     ? 'bg-red-500/10 border-red-500/20'
     : inbound
-      ? 'bg-cyan-500/10 border-cyan-500/20'
-      : 'bg-violet-500/10 border-violet-500/20';
+      ? 'bg-sky-500/10 border-sky-500/20'
+      : 'bg-cyan-500/10 border-cyan-500/20';
 
   const iconColor = missed
     ? 'text-red-400'
     : inbound
-      ? 'text-cyan-400'
-      : 'text-violet-400';
+      ? 'text-sky-400'
+      : 'text-cyan-400';
 
   const cardInner = (
     <>
@@ -72,8 +72,8 @@ export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm font-semibold text-white truncate">{counterparty}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="truncate text-sm font-semibold text-white">{counterparty}</p>
           <span
             className={cn(
               'rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider',
@@ -101,14 +101,14 @@ export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
           <span>{fmtCallTime(call.started_at ?? call.created_at)}</span>
-          <span className="tabular-nums font-medium text-slate-400">
+          <span className="font-medium tabular-nums text-slate-400">
             {fmtCallDuration(call.duration_seconds)}
           </span>
           {rawNumber && counterparty !== fmtPhone(rawNumber) && (
             <span className="tabular-nums">{fmtPhone(rawNumber)}</span>
           )}
           {call.leads?.company && (
-            <span className="flex items-center gap-1 truncate max-w-[140px] sm:max-w-none">
+            <span className="flex max-w-[140px] items-center gap-1 truncate sm:max-w-none">
               <Building2 className="h-3 w-3 shrink-0" />
               {call.leads.company}
             </span>
@@ -121,7 +121,7 @@ export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
           <Link
             href={`/recordings/${call.id}`}
             onClick={(e) => e.stopPropagation()}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-cyan-500/10 text-violet-300 transition hover:border-violet-500/40 hover:from-violet-500/20"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 text-emerald-300 transition hover:border-emerald-500/40 hover:from-emerald-500/20 hover:shadow-[0_0_12px_rgba(52,211,153,0.12)]"
             title="Play recording"
             aria-label="Play recording"
           >
@@ -147,11 +147,12 @@ export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
   );
 
   const cardClass = cn(
-    'group flex items-center gap-3 rounded-2xl border p-3.5 sm:p-4 transition-all duration-200',
+    'group relative flex items-center gap-3 rounded-2xl border p-3.5 transition-all duration-200 sm:p-4',
     'border-white/[0.07] bg-[oklch(0.09_0.006_285)]',
-    'hover:border-white/[0.14] hover:bg-white/[0.02]',
-    missed && 'hover:border-red-500/25',
-    connected && !missed && 'hover:border-emerald-500/20',
+    missed && 'hover:border-red-500/25 hover:shadow-[0_8px_24px_rgba(239,68,68,0.08)]',
+    connected && !missed && 'hover:border-emerald-500/20 hover:shadow-[0_8px_24px_rgba(52,211,153,0.08)]',
+    !missed && !connected && inbound && 'hover:border-sky-500/20 hover:shadow-[0_8px_24px_rgba(56,189,248,0.08)]',
+    !missed && !connected && !inbound && 'hover:border-cyan-500/20 hover:shadow-[0_8px_24px_rgba(34,211,238,0.08)]',
   );
 
   return (
@@ -162,10 +163,14 @@ export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
     >
       {detailHref ? (
         <Link href={detailHref} className={cardClass}>
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-500/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
           {cardInner}
         </Link>
       ) : (
-        <div className={cardClass}>{cardInner}</div>
+        <div className={cardClass}>
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-500/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
+          {cardInner}
+        </div>
       )}
     </motion.div>
   );
