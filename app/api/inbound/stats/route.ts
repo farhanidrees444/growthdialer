@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
   }).length;
 
   const mode = (settings?.inbound_mode as string | null) ?? 'browser';
+  const primary = numbers.find((n) => n.is_default) ?? numbers[0] ?? null;
 
   return NextResponse.json({
     inbound_mode: mode,
@@ -81,5 +82,6 @@ export async function GET(request: NextRequest) {
     missed_count: missedCount,
     today_inbound: todayInbound,
     answered_today: answeredToday,
+    primary_number: primary?.phone_number ?? null,
   });
 }

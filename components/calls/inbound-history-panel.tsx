@@ -1,29 +1,57 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, Loader2, PhoneIncoming, PhoneMissed } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { useSupabaseSession } from '@/lib/supabase/hooks';
 import type { CallLogRow } from '@/lib/calls/display';
 import { fmtCallDuration, fmtCallTime, getCounterparty, isMissedCall } from '@/lib/calls/display';
 import { cn } from '@/lib/utils';
 
-export function InboundHistoryPanel() {
+interface Props {
+  /** Subscribe to realtime inserts for live refresh */
+  live?: boolean;
+}
+
+export function InboundHistoryPanel({ live = false }: Props) {
+  const session = useSupabaseSession();
+  const userId = session?.user?.id;
   const { apiFetch } = useWorkspace();
   const [calls, setCalls] = useState<CallLogRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    void apiFetch('/api/calls/logs?direction=inbound&limit=6')
+  const load = useCallback(() => {
+    void apiFetch('/api/calls/logs?direction=inbound&limit=8')
       .then((r) => r.json())
       .then((d: { calls?: CallLogRow[] }) => setCalls(d.calls ?? []))
       .finally(() => setLoading(false));
   }, [apiFetch]);
 
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!live || !userId) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`inbound-history-${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'calls', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const row = payload.new as Record<string, unknown> | undefined;
+          if (row?.direction === 'inbound') load();
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [live, userId, load]);
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
+      <div className="flex items-center justify-center py-10">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
@@ -31,11 +59,13 @@ export function InboundHistoryPanel() {
 
   if (calls.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-white/[0.08] p-6 text-center">
-        <PhoneIncoming className="mx-auto h-8 w-8 text-muted-foreground/40 mb-2" />
-        <p className="text-sm text-muted-foreground">No inbound calls yet.</p>
-        <p className="text-xs text-muted-foreground/70 mt-1">
-          When someone dials your GrowthDialer number, it shows up here instantly.
+      <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.01] p-8 text-center">
+        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10">
+          <PhoneIncoming className="h-7 w-7 text-cyan-400/60" />
+        </div>
+        <p className="text-sm font-medium text-white/80">Waiting for your first inbound call</p>
+        <p className="text-xs text-muted-foreground mt-1.5 max-w-sm mx-auto">
+          Share your inbound number. When someone calls, it appears here instantly — with lead screen-pop if they&apos;re in your CRM.
         </p>
       </div>
     );
@@ -50,12 +80,12 @@ export function InboundHistoryPanel() {
             key={call.id}
             initial={{ opacity: 0, x: -6 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.05 }}
+            transition={{ delay: i * 0.04 }}
             className={cn(
-              'flex items-center gap-3 rounded-xl border px-3 py-2.5',
+              'flex items-center gap-3 rounded-xl border px-3.5 py-3 transition',
               missed
-                ? 'border-red-500/20 bg-red-500/[0.04]'
-                : 'border-white/[0.06] bg-white/[0.02]',
+                ? 'border-red-500/20 bg-red-500/[0.05]'
+                : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.1]',
             )}
           >
             {missed ? (
@@ -79,9 +109,9 @@ export function InboundHistoryPanel() {
       })}
       <Link
         href="/call-logs?filter=inbound"
-        className="mt-2 flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.02] py-2.5 text-xs font-semibold text-primary hover:bg-primary/10 transition"
+        className="mt-2 flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.02] py-2.5 text-xs font-semibold text-cyan-400 hover:bg-cyan-500/10 transition"
       >
-        View all call logs
+        View all inbound logs
         <ArrowRight className="h-3.5 w-3.5" />
       </Link>
     </div>
