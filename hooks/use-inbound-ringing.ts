@@ -123,9 +123,15 @@ export function useInboundRinging(userId: string | undefined) {
       } catch { /* non-fatal */ }
     };
 
+    const onWebrtcRing = () => void poll();
+    window.addEventListener('gd-webrtc-inbound-ring', onWebrtcRing);
+
     void poll();
     const interval = setInterval(() => void poll(), 2000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('gd-webrtc-inbound-ring', onWebrtcRing);
+    };
   }, [userId, isOutboundBusy, showCall]);
 
   const outboundActive =

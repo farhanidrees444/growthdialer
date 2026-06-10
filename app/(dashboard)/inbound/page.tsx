@@ -222,8 +222,16 @@ export default function InboundPage() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-transparent p-6 sm:p-8"
+            className={cn(
+              'relative overflow-hidden rounded-3xl border p-6 sm:p-8',
+              phoneStatus === 'ready'
+                ? 'border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.06] via-white/[0.03] to-transparent'
+                : 'border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-transparent',
+            )}
           >
+            {phoneStatus === 'ready' && (
+              <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-emerald-400/20 ring-offset-0" />
+            )}
             <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-cyan-500/[0.08] blur-3xl" />
             <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -234,7 +242,9 @@ export default function InboundPage() {
                   {fmtPhone(primaryNumber)}
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Share this number — calls ring here with instant caller ID and lead match.
+                  {phoneStatus === 'ready'
+                    ? 'Line is active — share this number and answer calls right from this page.'
+                    : 'Share this number — calls ring here with instant caller ID and lead match.'}
                 </p>
               </div>
               <button

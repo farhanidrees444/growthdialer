@@ -263,9 +263,15 @@ export function IncomingCallPopup({ userId }: Props) {
       }
     };
 
+    const onWebrtcRing = () => void showFromPoll();
+    window.addEventListener('gd-webrtc-inbound-ring', onWebrtcRing);
+
     void showFromPoll();
-    const interval = setInterval(() => void showFromPoll(), 2500);
-    return () => clearInterval(interval);
+    const interval = setInterval(() => void showFromPoll(), 2000);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('gd-webrtc-inbound-ring', onWebrtcRing);
+    };
   }, [userId]);
 
   // Hide when an outbound session or active call overlay is already in control

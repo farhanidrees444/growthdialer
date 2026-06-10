@@ -59,11 +59,27 @@ export function InboundHealthPanel({ phoneReady, onActivated }: Props) {
 
   useEffect(() => { load(); }, [load]);
 
+  const runPrepare = useCallback(async () => {
+    setActivating(true);
+    setActivateMsg(null);
+    try {
+      const res = await apiFetch('/api/inbound/prepare', { method: 'POST' });
+      const data = await res.json() as { message?: string; primary_routed?: boolean };
+      setActivateMsg(data.message ?? 'Line setup refreshed.');
+      load();
+      if (data.primary_routed) onActivated?.();
+    } catch {
+      setActivateMsg('Could not refresh your line setup. Try again.');
+    } finally {
+      setActivating(false);
+    }
+  }, [apiFetch, load, onActivated]);
+
   useEffect(() => {
-    if (!health?.needs_activation || autoActivateTried.current || activating) return;
+    if (autoActivateTried.current || activating) return;
     autoActivateTried.current = true;
-    void handleActivate();
-  }, [health?.needs_activation, activating, handleActivate]);
+    void runPrepare();
+  }, [activating, runPrepare]);
 
   if (loading && !health) {
     return (
@@ -152,7 +168,7 @@ export function InboundHealthPanel({ phoneReady, onActivated }: Props) {
           </p>
           <button
             type="button"
-            onClick={() => void handleActivate()}
+            onClick={() => void (health.needs_activation ? handleActivate() : runPrepare())}
             disabled={activating}
             className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-2.5 text-sm font-semibold text-black shadow-lg shadow-cyan-500/20 transition hover:opacity-95 disabled:opacity-60"
           >

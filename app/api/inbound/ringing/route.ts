@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
-import { ownCallsOrFilter } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
 
 export async function GET(request: NextRequest) {
@@ -19,9 +18,9 @@ export async function GET(request: NextRequest) {
   const { data: call } = await supabase
     .from('calls')
     .select('id, from_number, to_number, lead_id, status, direction, started_at')
+    .eq('user_id', user.id)
     .eq('direction', 'inbound')
     .eq('status', 'ringing')
-    .or(ownCallsOrFilter(access.workspaceId, user.id))
     .order('started_at', { ascending: false })
     .limit(1)
     .maybeSingle();

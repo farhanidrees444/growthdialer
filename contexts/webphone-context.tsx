@@ -197,6 +197,10 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         safeSet(setActiveCallId, call.id ?? null);
         safeSet(setCallStatus, mapped);
 
+        if (mapped === 'ringing' && !outboundDialRef.current) {
+          window.dispatchEvent(new CustomEvent('gd-webrtc-inbound-ring'));
+        }
+
         if (mapped === 'ringing' && outboundDialRef.current) {
           void import('@/lib/parallel-dial/auto-answer-flag').then(({ shouldParallelAutoAnswer }) => {
             if (!shouldParallelAutoAnswer() || !activeCallRef.current) return;

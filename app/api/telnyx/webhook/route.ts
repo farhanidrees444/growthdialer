@@ -8,7 +8,7 @@ import { triggerMirrorRecordingAsync } from '@/lib/recordings/trigger-mirror';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import { findLeadByCallerPhone } from '@/lib/inbound/match-lead';
 import { triggerInboundRingTimeoutAsync } from '@/lib/inbound/trigger-ring-timeout';
-import { findNumberOwner } from '@/lib/inbound/lookup-number';
+import { findNumberOwnerWithMeta } from '@/lib/inbound/lookup-number';
 import { bridgeInboundToBrowser } from '@/lib/inbound/bridge-to-browser';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
 
@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
       } else {
         const toNumber = normalizeE164(payload.to ?? '');
         const fromNumber = normalizeE164(payload.from ?? '');
-        const ownedTo = await findNumberOwner(supabase, toNumber);
+        const ownedTo = await findNumberOwnerWithMeta(supabase, toNumber);
         const dirInbound = directionSaysInbound(payload.direction);
         const treatAsInbound = dirInbound === true || (dirInbound === null && Boolean(ownedTo));
 
@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
 
         const ownedNumber = ownedTo;
 
-        console.log('[INBOUND] Number lookup — to:', toNumber, '| found:', ownedNumber?.phone_number ?? 'none', '| status:', ownedNumber?.status ?? 'n/a');
+        console.log('[INBOUND] Number lookup — to:', toNumber, '| found:', ownedNumber?.phone_number ?? 'none', '| status:', ownedNumber?.status ?? 'n/a', '| user:', ownedNumber?.user_id ?? 'none');
 
         if (!ownedNumber) {
           console.log('[INBOUND] No active owner for number — rejecting:', toNumber);
@@ -236,7 +236,9 @@ export async function POST(request: NextRequest) {
         }
 
         const userId = ownedNumber.user_id as string;
-        const workspaceId = await resolveUserWorkspaceId(supabase, userId);
+        const workspaceId =
+          (ownedNumber.workspace_id as string | null | undefined)
+          ?? await resolveUserWorkspaceId(supabase, userId);
 
         const lead = await findLeadByCallerPhone(supabase, userId, fromNumber);
 

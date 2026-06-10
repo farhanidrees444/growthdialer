@@ -12,7 +12,7 @@ function sipUriFromUsername(username: string): string {
 }
 
 /**
- * Answer the inbound PSTN leg and connect to the same WebRTC SIP session the user registered.
+ * Answer the inbound PSTN leg and connect to the WebRTC SIP session the user registered.
  */
 export async function bridgeInboundToBrowser(
   supabase: SupabaseClient,
@@ -22,24 +22,20 @@ export async function bridgeInboundToBrowser(
 ): Promise<boolean> {
   const credentialId = await resolveActiveCredentialId(supabase, userId);
   const sipUsername = credentialId ? await fetchCredentialSipUsername(credentialId) : null;
-  const connectionId = process.env.TELNYX_CONNECTION_ID?.trim();
 
   const envUsername =
     process.env.NEXT_PUBLIC_TELNYX_SIP_USERNAME?.trim()
     ?? process.env.TELNYX_SIP_USERNAME?.trim();
 
-  const sipUri = sipUsername
-    ? sipUriFromUsername(sipUsername)
-    : envUsername
-      ? sipUriFromUsername(envUsername)
-      : null;
+  const username = sipUsername ?? envUsername ?? null;
+  const sipUri = username ? sipUriFromUsername(username) : null;
 
-  if (!sipUri && !sipUsername) {
+  if (!sipUri) {
     console.error('[INBOUND] No browser SIP destination for user:', userId);
     return false;
   }
 
-  console.log('[INBOUND] Bridging PSTN → browser | credential:', credentialId ?? 'env', '| sip:', sipUsername ?? envUsername);
+  console.log('[INBOUND] Bridging PSTN → browser | credential:', credentialId ?? 'env', '| sip:', username);
 
   const answered = await telnyxCallAction(callControlId, 'answer');
   if (!answered) {
@@ -47,33 +43,25 @@ export async function bridgeInboundToBrowser(
     return false;
   }
 
-  await sleep(500);
+  await sleep(400);
 
-  // Prefer dial on connection — works best with Call Control apps
-  if (connectionId && sipUsername) {
-    const dialed = await telnyxCallAction(callControlId, 'dial', {
-      connection_id: connectionId,
-      to: sipUsername,
-      from: fromDid,
-    });
-    if (dialed) {
-      console.log('[INBOUND] Browser bridge via dial OK');
-      return true;
-    }
-    console.warn('[INBOUND] dial failed — trying transfer');
+  const transferred = await telnyxCallAction(callControlId, 'transfer', {
+    to: sipUri,
+    from: fromDid,
+  });
+  if (transferred) {
+    console.log('[INBOUND] Browser bridge via SIP transfer OK');
+    return true;
   }
 
-  if (sipUri) {
-    const transferred = await telnyxCallAction(callControlId, 'transfer', {
-      to: sipUri,
-      from: fromDid,
-    });
-    if (transferred) {
-      console.log('[INBOUND] Browser bridge via transfer OK');
-      return true;
-    }
+  const transferredBare = username
+    ? await telnyxCallAction(callControlId, 'transfer', { to: username, from: fromDid })
+    : false;
+  if (transferredBare) {
+    console.log('[INBOUND] Browser bridge via username transfer OK');
+    return true;
   }
 
-  console.error('[INBOUND] All browser bridge strategies failed');
+  console.error('[INBOUND] Browser bridge failed for user:', userId);
   return false;
 }
