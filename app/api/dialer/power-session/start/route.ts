@@ -3,8 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { assertWorkspaceCanPlaceCalls } from '@/lib/billing/workspace-billing-gate';
 import {
-  buildDialerLeadsQuery,
-  buildDialerQueueCountQuery,
+  countDialerQueueLeads,
+  fetchDialerQueueLeads,
   type DialerQueueConfig,
 } from '@/lib/dialer/queue-query';
 
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       offset: 0,
     };
 
-    const { data: leads, error: queueError } = await buildDialerLeadsQuery(
+    const { data: leads, error: queueError } = await fetchDialerQueueLeads(
       supabase,
       workspaceId,
       queueConfig,
@@ -69,11 +69,12 @@ export async function POST(request: NextRequest) {
 
     const firstLead = leads?.[0] ?? null;
 
-    const { count: queueSize } = await buildDialerQueueCountQuery(
+    const { count: queueSize, error: countError } = await countDialerQueueLeads(
       supabase,
       workspaceId,
       { ...queueConfig, limit: undefined, offset: undefined },
     );
+    if (countError) throw countError;
 
     return NextResponse.json({
       session: powerSession,

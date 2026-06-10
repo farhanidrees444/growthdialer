@@ -1,4 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  filterTimezoneSafeLeads,
+  requiresTimezonePostFilter,
+} from './queue-timezone';
 
 export type DialerQueueTab = 'queue' | 'hot' | 'callbacks';
 export type DialerQueueSort = 'priority' | 'recent' | 'az' | 'tz_safe';
@@ -158,6 +162,95 @@ export function buildDialerQueueCountQuery(
   }
 
   return query;
+}
+
+const TZ_SCAN_BATCH = 50;
+const TZ_SCAN_MAX = 2000;
+
+type QueueLeadRow = { id: string; phone: string };
+
+/** Fetch queue leads; applies timezone-safe post-filter when `filters.tzSafe` is set. */
+export async function fetchDialerQueueLeads(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  rawConfig: DialerQueueConfig = {},
+) {
+  const normalized = normalizeQueueConfig(rawConfig);
+
+  if (!requiresTimezonePostFilter(normalized)) {
+    return buildDialerLeadsQuery(supabase, workspaceId, rawConfig);
+  }
+
+  const sqlConfig: DialerQueueConfig = {
+    ...rawConfig,
+    filters: { ...normalized.filters, tzSafe: false },
+  };
+
+  const collected: QueueLeadRow[] = [];
+  let offset = normalized.offset;
+  let scanned = 0;
+
+  while (scanned < TZ_SCAN_MAX && collected.length < normalized.limit) {
+    const { data, error } = await buildDialerLeadsQuery(supabase, workspaceId, {
+      ...sqlConfig,
+      limit: TZ_SCAN_BATCH,
+      offset,
+    });
+    if (error) return { data: null, error };
+    if (!data?.length) break;
+
+    for (const lead of filterTimezoneSafeLeads(data as QueueLeadRow[])) {
+      collected.push(lead);
+      if (collected.length >= normalized.limit) break;
+    }
+
+    offset += data.length;
+    scanned += data.length;
+    if (data.length < TZ_SCAN_BATCH) break;
+  }
+
+  return { data: collected.slice(0, normalized.limit), error: null };
+}
+
+/** Count queue leads; paginates with timezone post-filter when `filters.tzSafe` is set. */
+export async function countDialerQueueLeads(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  rawConfig: DialerQueueConfig = {},
+): Promise<{ count: number; error: Error | null }> {
+  const normalized = normalizeQueueConfig({ ...rawConfig, limit: 1, offset: 0 });
+
+  if (!requiresTimezonePostFilter(normalized)) {
+    const result = await buildDialerQueueCountQuery(supabase, workspaceId, rawConfig);
+    if (result.error) return { count: 0, error: result.error };
+    return { count: result.count ?? 0, error: null };
+  }
+
+  const sqlConfig: DialerQueueConfig = {
+    ...rawConfig,
+    filters: { ...normalized.filters, tzSafe: false },
+  };
+
+  let total = 0;
+  let offset = 0;
+  let scanned = 0;
+
+  while (scanned < TZ_SCAN_MAX) {
+    const { data, error } = await buildDialerLeadsQuery(supabase, workspaceId, {
+      ...sqlConfig,
+      limit: TZ_SCAN_BATCH,
+      offset,
+    });
+    if (error) return { count: 0, error };
+    if (!data?.length) break;
+
+    total += filterTimezoneSafeLeads(data as QueueLeadRow[]).length;
+    offset += data.length;
+    scanned += data.length;
+    if (data.length < TZ_SCAN_BATCH) break;
+  }
+
+  return { count: total, error: null };
 }
 
 export async function fetchDialerQueueCounts(

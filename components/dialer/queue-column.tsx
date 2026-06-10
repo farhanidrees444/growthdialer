@@ -10,7 +10,6 @@ import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
 import { useLeads } from '@/contexts/leads-context';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { QueueLeadCard } from './queue-lead-card';
-import { getLocalTime } from '@/lib/utils/timezone';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
 import { useWorkspace } from '@/contexts/workspace-context';
 
@@ -120,13 +119,11 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      // tzSafe applied client-side; tz_safe sort maps to priority on server
-      const serverFilters = { ...filters, tzSafe: false };
       const params = new URLSearchParams({
         tab,
         sort: sort === 'tz_safe' ? 'priority' : sort,
         search: debouncedSearch,
-        filters: JSON.stringify(serverFilters),
+        filters: JSON.stringify(filters),
       });
       const res = await apiFetch(`/api/dialer/queue?${params}`);
       if (!res.ok) return;
@@ -142,13 +139,7 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
 
   useEffect(() => { load(); }, [load]);
 
-  // Client-side tzSafe filter: hide leads in unsafe calling hours (TCPA 8am–9pm)
-  const displayLeads = filters.tzSafe
-    ? leads.filter((lead) => {
-        const info = getLocalTime(lead.phone);
-        return !info.hasData || !info.isUnsafe;
-      })
-    : leads;
+  const displayLeads = leads;
 
   const tabDefs: { key: QueueTab; label: string; count: number }[] = [
     { key: 'queue', label: 'Queue', count: counts.queue },

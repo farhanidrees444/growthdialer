@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import {
-  buildDialerLeadsQuery,
   fetchDialerQueueCounts,
+  fetchDialerQueueLeads,
   type DialerQueueFilters,
 } from '@/lib/dialer/queue-query';
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       if (raw) filters = JSON.parse(raw) as DialerQueueFilters;
     } catch { /* malformed JSON — ignore */ }
 
-    const { data, error } = await buildDialerLeadsQuery(supabase, access.workspaceId, {
+    const { data, error } = await fetchDialerQueueLeads(supabase, access.workspaceId, {
       tab,
       search,
       sort,

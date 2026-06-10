@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import telnyxClient, { toE164 } from '@/lib/telnyx';
-import { buildDialerLeadsQuery } from '@/lib/dialer/queue-query';
+import { fetchDialerQueueLeads } from '@/lib/dialer/queue-query';
 import type { DialerQueueConfig } from '@/lib/dialer/queue-query';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
 import { resolveCallerIdForLead } from '@/lib/dialer/resolve-caller-id';
@@ -23,7 +23,7 @@ export async function dialParallelBatch(
     excludeIds: options.excludeLeadIds ?? [],
   };
 
-  const { data: leads, error } = await buildDialerLeadsQuery(
+  const { data: leads, error } = await fetchDialerQueueLeads(
     supabase,
     session.workspace_id!,
     queueConfig,

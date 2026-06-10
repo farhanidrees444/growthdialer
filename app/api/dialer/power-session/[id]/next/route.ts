@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import {
-  buildDialerLeadsQuery,
-  buildDialerQueueCountQuery,
+  countDialerQueueLeads,
+  fetchDialerQueueLeads,
+  normalizeQueueConfig,
   type DialerQueueConfig,
 } from '@/lib/dialer/queue-query';
 
@@ -54,7 +55,7 @@ export async function POST(
       offset: 0,
     };
 
-    const { data: leads, error: queueError } = await buildDialerLeadsQuery(
+    const { data: leads, error: queueError } = await fetchDialerQueueLeads(
       supabase,
       access.workspaceId,
       queueConfig,
@@ -75,12 +76,18 @@ export async function POST(
     }
 
     const allExcluded = [...excluded, nextLead.id];
-    const { count } = await buildDialerQueueCountQuery(supabase, access.workspaceId, {
+    const countConfig = normalizeQueueConfig({
+      tab: 'queue',
+      sort: 'priority',
       ...queue_config,
-      tab: queue_config?.tab ?? 'queue',
-      sort: queue_config?.sort ?? 'priority',
       excludeIds: allExcluded,
     });
+    const { count, error: countError } = await countDialerQueueLeads(
+      supabase,
+      access.workspaceId,
+      countConfig,
+    );
+    if (countError) throw countError;
 
     return NextResponse.json({
       next_lead: nextLead,
