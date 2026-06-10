@@ -17,9 +17,6 @@ export type BrandLogoSize =
   | 'auth'
   | 'footer';
 
-const WORDMARK = { src: '/brand/wordmark.png', w: 300, h: 75 } as const;
-const RATIO = WORDMARK.w / WORDMARK.h;
-
 const ICON_ASSETS: Record<
   BrandLogoVariant,
   { src: string; w: number; h: number }
@@ -30,29 +27,49 @@ const ICON_ASSETS: Record<
   'icon-purple': { src: '/brand/icon-purple.png', w: 150, h: 150 },
 };
 
-/** Tailwind height classes — aspect ratio locked via w-auto */
-const WORDMARK_HEIGHT: Record<BrandLogoSize, string> = {
-  xs: 'h-7 sm:h-8',
-  sm: 'h-8 sm:h-9',
-  md: 'h-9 sm:h-10',
-  lg: 'h-10 sm:h-11',
-  xl: 'h-11 sm:h-12',
-  nav: 'h-8 w-auto sm:h-9 md:h-10',
-  sidebar: 'h-9 w-auto sm:h-10 lg:h-[42px]',
-  auth: 'h-10 w-auto sm:h-11 md:h-12',
-  footer: 'h-9 w-auto sm:h-10',
+/** Icon-only sizes (collapsed rail, favicon slots) */
+const ICON_ONLY: Record<BrandLogoSize, string> = {
+  xs: 'size-9',
+  sm: 'size-10',
+  md: 'size-11',
+  lg: 'size-12',
+  xl: 'size-14',
+  nav: 'size-10 sm:size-11',
+  sidebar: 'size-11 sm:size-12',
+  auth: 'size-12 sm:size-14',
+  footer: 'size-11',
 };
 
-const ICON_SIZE: Record<BrandLogoSize, string> = {
-  xs: 'size-8',
-  sm: 'size-9',
-  md: 'size-10',
-  lg: 'size-11',
-  xl: 'size-12',
-  nav: 'size-9 sm:size-10',
-  sidebar: 'size-10 sm:size-11',
-  auth: 'size-11 sm:size-12',
-  footer: 'size-10',
+/** Lockup: framed icon beside wordmark text (Aircall-style) */
+const LOCKUP: Record<
+  BrandLogoSize,
+  { icon: string; gap: string; text: string }
+> = {
+  xs: { icon: 'size-8', gap: 'gap-2', text: 'text-sm' },
+  sm: { icon: 'size-9', gap: 'gap-2', text: 'text-[15px]' },
+  md: { icon: 'size-10', gap: 'gap-2.5', text: 'text-base' },
+  lg: { icon: 'size-11', gap: 'gap-2.5', text: 'text-lg' },
+  xl: { icon: 'size-12', gap: 'gap-3', text: 'text-xl' },
+  nav: {
+    icon: 'size-10 sm:size-11 md:size-12',
+    gap: 'gap-2.5 sm:gap-3',
+    text: 'text-[17px] sm:text-[19px] md:text-[21px]',
+  },
+  sidebar: {
+    icon: 'size-9 lg:size-10',
+    gap: 'gap-2 lg:gap-2.5',
+    text: 'text-[15px] lg:text-[17px]',
+  },
+  auth: {
+    icon: 'size-12 sm:size-14',
+    gap: 'gap-3 sm:gap-3.5',
+    text: 'text-xl sm:text-2xl',
+  },
+  footer: {
+    icon: 'size-10 sm:size-11',
+    gap: 'gap-2.5',
+    text: 'text-base sm:text-lg',
+  },
 };
 
 export interface BrandLogoProps {
@@ -61,7 +78,6 @@ export interface BrandLogoProps {
   size?: BrandLogoSize;
   showText?: boolean;
   variant?: BrandLogoVariant;
-  /** Premium squircle frame for rail / favicon-style marks */
   framed?: boolean;
   className?: string;
   priority?: boolean;
@@ -69,36 +85,101 @@ export interface BrandLogoProps {
   onClick?: () => void;
 }
 
-function resolveWordmarkClass(size: BrandLogoSize | undefined): string {
-  if (size) return WORDMARK_HEIGHT[size];
-  return 'h-9 w-auto sm:h-10';
-}
-
-function resolveIconClass(size: BrandLogoSize | undefined): string {
-  if (size) return ICON_SIZE[size];
-  return 'size-10';
-}
-
 function BrandIconFrame({
   children,
   className,
+  glow = false,
+  style,
 }: {
   children: React.ReactNode;
   className?: string;
+  glow?: boolean;
+  style?: React.CSSProperties;
 }) {
   return (
     <span
+      style={style}
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-[11px]',
-        'border border-white/[0.09] bg-gradient-to-b from-white/[0.05] to-white/[0.01]',
-        'shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]',
-        'ring-1 ring-black/20',
+        'inline-flex shrink-0 items-center justify-center rounded-[12px]',
+        'border border-white/[0.10] bg-gradient-to-b from-white/[0.07] to-white/[0.02]',
+        'shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_1px_2px_rgba(0,0,0,0.35)]',
+        glow && 'shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_0_20px_-4px_rgba(139,92,246,0.35)]',
         className,
       )}
     >
       {children}
     </span>
   );
+}
+
+function BrandWordmarkText({ size }: { size: BrandLogoSize }) {
+  const { text } = LOCKUP[size];
+  return (
+    <span
+      className={cn(
+        'font-display font-semibold leading-none tracking-tight whitespace-nowrap',
+        text,
+      )}
+    >
+      <span className="text-[#F5F5F7]">Growth</span>
+      <span className="bg-gradient-to-r from-[#C4B5FD] via-[#A78BFA] to-[#8B5CF6] bg-clip-text text-transparent">
+        Dialer
+      </span>
+    </span>
+  );
+}
+
+function BrandIconImage({
+  variant,
+  className,
+  priority,
+  framed,
+  glow,
+  pixelSize,
+}: {
+  variant: BrandLogoVariant;
+  className?: string;
+  priority?: boolean;
+  framed?: boolean;
+  glow?: boolean;
+  pixelSize?: number;
+}) {
+  const asset = ICON_ASSETS[variant];
+  const dimensionStyle =
+    pixelSize != null ? { width: pixelSize, height: pixelSize } : undefined;
+
+  const img = (
+    <Image
+      src={asset.src}
+      alt=""
+      aria-hidden
+      width={asset.w}
+      height={asset.h}
+      priority={priority}
+      sizes="(max-width: 640px) 48px, 56px"
+      className={cn(
+        'block object-contain',
+        framed ? 'size-full rounded-[10px]' : className,
+        !framed && variant !== 'mark' && 'rounded-[10px]',
+        !framed && variant === 'mark' && 'rounded-lg',
+        pixelSize != null && !framed && !className && 'size-full',
+      )}
+      style={!framed ? dimensionStyle : undefined}
+    />
+  );
+
+  if (framed) {
+    return (
+      <BrandIconFrame
+        className={cn('p-[3px]', className)}
+        glow={glow}
+        style={dimensionStyle}
+      >
+        {img}
+      </BrandIconFrame>
+    );
+  }
+  return img;
 }
 
 export function BrandLogo({
@@ -113,75 +194,36 @@ export function BrandLogo({
   href,
   onClick,
 }: BrandLogoProps) {
-  const asset = ICON_ASSETS[variant];
-  const wordmarkClass = resolveWordmarkClass(size);
-  const iconClass = resolveIconClass(size);
+  const lockup = LOCKUP[size];
+  const iconOnly = ICON_ONLY[size];
 
   const inner = showText ? (
-    <Image
-      src={WORDMARK.src}
-      alt="GrowthDialer"
-      width={WORDMARK.w}
-      height={WORDMARK.h}
-      priority={priority}
-      sizes="(max-width: 640px) 160px, (max-width: 1024px) 180px, 220px"
-      className={cn(
-        'block max-w-full object-contain object-left',
-        wordmarkClass,
-        width == null && height == null ? 'w-auto' : '',
-      )}
-      style={
-        width != null || height != null
-          ? {
-              width: width ?? (height != null ? Math.round(height * RATIO) : undefined),
-              height: height ?? (width != null ? Math.round(width / RATIO) : undefined),
-              maxWidth: '100%',
-            }
-          : undefined
-      }
-    />
+    <span className={cn('inline-flex min-w-0 items-center', lockup.gap)}>
+      <BrandIconImage
+        variant={variant}
+        className={lockup.icon}
+        priority={priority}
+        framed
+        glow={size === 'nav' || size === 'auth'}
+      />
+      <BrandWordmarkText size={size} />
+    </span>
   ) : (
-    (() => {
-      const img = (
-        <Image
-          src={asset.src}
-          alt="GrowthDialer"
-          width={asset.w}
-          height={asset.h}
-          priority={priority}
-          sizes="(max-width: 640px) 44px, 52px"
-          className={cn(
-            'block object-contain',
-            !framed && iconClass,
-            variant === 'mark' && !framed && 'rounded-lg',
-            variant !== 'mark' && !framed && 'rounded-[10px]',
-            framed && 'size-full rounded-[9px]',
-          )}
-          style={
-            !framed && (width != null || height != null)
-              ? {
-                  width: width ?? height,
-                  height: height ?? width,
-                  maxWidth: '100%',
-                }
-              : undefined
-          }
-        />
-      );
-      if (framed) {
-        return (
-          <BrandIconFrame className={cn('p-[3px]', iconClass)}>
-            {img}
-          </BrandIconFrame>
-        );
-      }
-      return img;
-    })()
+    <BrandIconImage
+      variant={variant}
+      className={width == null && height == null ? iconOnly : undefined}
+      pixelSize={width ?? height}
+      priority={priority}
+      framed={framed}
+      glow={framed}
+    />
   );
 
   const wrapperClass = cn(
-    'inline-flex shrink-0 items-center transition-opacity hover:opacity-95',
-    showText && 'min-w-0 max-w-full',
+    'group/brand inline-flex shrink-0 items-center',
+    'transition-[opacity,transform] duration-200 ease-out',
+    'hover:opacity-[0.92] active:scale-[0.99]',
+    showText && 'min-w-0',
     className,
   );
 
@@ -202,10 +244,10 @@ export function BrandLogo({
 }
 
 export function BrandLogoMark({
-  size = 44,
-  variant = 'mark',
+  size = 48,
+  variant = 'icon-dark',
   className,
-  framed,
+  framed = true,
   priority,
 }: {
   size?: number;

@@ -40,19 +40,13 @@ export function Nav() {
     >
       <div
         className={cn(
-          'mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 transition-all duration-300 lg:px-8',
+          'mx-auto flex h-[4.25rem] max-w-7xl items-center justify-between gap-5 px-5 transition-all duration-300 sm:h-[4.5rem] lg:px-8',
           scrolled
             ? 'border-b border-white/[0.06] bg-[#08080A]/80 backdrop-blur-xl'
             : 'border-b border-transparent bg-transparent'
         )}
       >
-        <BrandLogo
-          href="/"
-          showText
-          size="nav"
-          priority
-          className="shrink-0 max-w-[min(100%,200px)] sm:max-w-[220px]"
-        />
+        <BrandLogo href="/" showText size="nav" priority className="shrink-0" />
 
         <nav
           className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 lg:flex"

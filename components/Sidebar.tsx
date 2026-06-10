@@ -513,8 +513,8 @@ function SidebarInner() {
           className={cn(
             "flex shrink-0 items-center border-b border-zinc-800/50",
             isDesktopCollapsed
-              ? "flex-col gap-2.5 px-2 py-3.5"
-              : "justify-between gap-3 px-4 py-4 min-h-[64px]",
+              ? "flex-col gap-3 px-2 py-4"
+              : "justify-between gap-3 px-4 py-5 min-h-[72px]",
           )}
         >
           <BrandLogo
@@ -529,7 +529,7 @@ function SidebarInner() {
               "min-w-0",
               isDesktopCollapsed
                 ? "mx-auto justify-center"
-                : "flex-1 min-w-0 max-w-[calc(100%-2.5rem)]",
+                : "flex-1 min-w-0 pr-1",
             )}
           />
 
