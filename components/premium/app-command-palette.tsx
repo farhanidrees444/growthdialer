@@ -19,7 +19,7 @@ import {
   CommandShortcut,
 } from '@/components/ui/command';
 import { useLeads } from '@/contexts/leads-context';
-import { useCallContext } from '@/lib/call-context';
+import { useOutboundCall } from '@/hooks/use-outbound-call';
 import { useWebPhone } from '@/contexts/webphone-context';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -57,7 +57,7 @@ const NAV_ITEMS = [
 export function AppCommandPalette({ open, onOpenChange }: AppCommandPaletteProps) {
   const router = useRouter();
   const { setImportOpen } = useLeads();
-  const { startCall } = useCallContext();
+  const startOutboundCall = useOutboundCall();
   const { callStatus, isMuted, isOnHold, toggleMute, toggleHold, hangup } = useWebPhone();
   const { currentWorkspace, workspaces, setCurrentWorkspace } = useWorkspace();
   const workspaceId = currentWorkspace?.id;
@@ -286,7 +286,7 @@ export function AppCommandPalette({ open, onOpenChange }: AppCommandPaletteProps
                   key={`call-${lead.id}`}
                   onSelect={() =>
                     run(() => {
-                      void startCall(lead.phone, {
+                      startOutboundCall(lead.phone, {
                         id: lead.id,
                         name: lead.name,
                         company: lead.company ?? '',

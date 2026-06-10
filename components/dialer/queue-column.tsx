@@ -85,18 +85,26 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
   const onLeadsRef = useRef(onLeadsChange);
   onLeadsRef.current = onLeadsChange;
 
-  // Restore sort + filters from localStorage on mount
+  // Restore queue UI from localStorage on mount
   useEffect(() => {
     try {
+      const savedTab = localStorage.getItem('dialer-tab');
+      if (savedTab === 'queue' || savedTab === 'hot' || savedTab === 'callbacks') {
+        setTab(savedTab);
+      }
       const savedSort = localStorage.getItem('dialer-sort');
       if (savedSort && savedSort in SORT_LABELS) setSort(savedSort as SortKey);
       const savedFilters = localStorage.getItem('dialer-filters');
       if (savedFilters) setFilters({ ...DEFAULT_FILTERS, ...JSON.parse(savedFilters) });
+      const savedSearch = localStorage.getItem('dialer-search');
+      if (savedSearch) setSearch(savedSearch);
     } catch { /* ignore parse errors */ }
   }, []);
 
+  useEffect(() => { localStorage.setItem('dialer-tab', tab); }, [tab]);
   useEffect(() => { localStorage.setItem('dialer-sort', sort); }, [sort]);
   useEffect(() => { localStorage.setItem('dialer-filters', JSON.stringify(filters)); }, [filters]);
+  useEffect(() => { localStorage.setItem('dialer-search', search); }, [search]);
 
   // Debounce search
   useEffect(() => {

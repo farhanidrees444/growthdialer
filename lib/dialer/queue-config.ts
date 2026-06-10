@@ -9,6 +9,12 @@ export function getSavedQueueConfig(): DialerQueueConfig {
   }
 
   try {
+    const savedTab = localStorage.getItem('dialer-tab');
+    const tab: DialerQueueTab =
+      savedTab === 'hot' || savedTab === 'callbacks' || savedTab === 'queue'
+        ? savedTab
+        : 'queue';
+
     const savedSort = localStorage.getItem('dialer-sort');
     const sort = savedSort && SORT_KEYS.includes(savedSort as DialerQueueSort)
       ? (savedSort as DialerQueueSort)
@@ -19,10 +25,13 @@ export function getSavedQueueConfig(): DialerQueueConfig {
       ? { ...DEFAULT_QUEUE_FILTERS, ...JSON.parse(savedFilters) as DialerQueueFilters }
       : DEFAULT_QUEUE_FILTERS;
 
+    const search = localStorage.getItem('dialer-search') ?? '';
+
     return {
-      tab: 'queue' as DialerQueueTab,
+      tab,
       sort,
       filters,
+      search,
     };
   } catch {
     return { tab: 'queue', sort: 'priority', filters: DEFAULT_QUEUE_FILTERS };

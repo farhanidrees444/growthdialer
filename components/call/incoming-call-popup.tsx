@@ -141,9 +141,16 @@ export function IncomingCallPopup({ userId }: Props) {
   const [declining, setDeclining] = useState(false);
   const callIdRef = useRef<string | null>(null);
 
-  const { answerIncomingCall } = useWebPhone();
+  const { answerIncomingCall, hasOutboundSession, callStatus } = useWebPhone();
   const { registerCallMeta } = useCallContext();
   const { apiFetch } = useWorkspace();
+
+  const hasOutboundSessionRef = useRef(hasOutboundSession);
+  const callStatusRef = useRef(callStatus);
+  const apiFetchRef = useRef(apiFetch);
+  hasOutboundSessionRef.current = hasOutboundSession;
+  callStatusRef.current = callStatus;
+  apiFetchRef.current = apiFetch;
 
   // Keyboard: Enter = answer, Esc = decline (Space reserved for outbound dial)
   useEffect(() => {
@@ -170,6 +177,20 @@ export function IncomingCallPopup({ userId }: Props) {
           const row = payload.new as Record<string, unknown>;
           console.log('[POPUP] Inbound INSERT received:', row.id, '| direction:', row.direction, '| status:', row.status);
           if (row.direction !== 'inbound' || row.status !== 'ringing') return;
+
+          // Don't hijack an active outbound power/manual dial session
+          const outboundBusy =
+            hasOutboundSessionRef.current ||
+            callStatusRef.current === 'connecting' ||
+            callStatusRef.current === 'active' ||
+            callStatusRef.current === 'held' ||
+            callStatusRef.current === 'ringing';
+          if (outboundBusy) {
+            console.log('[POPUP] Declining inbound — outbound session in progress');
+            void apiFetchRef.current(`/api/calls/${row.id as string}/end`, { method: 'POST' }).catch(() => {});
+            return;
+          }
+
           callIdRef.current = row.id as string;
 
           let lead: InboundLead | null = null;

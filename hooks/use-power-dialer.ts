@@ -85,9 +85,21 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
   const consecutiveErrorsRef = useRef(0);
 
   // ── localStorage helpers ───────────────────────────────────────────────────
-  const saveLS = useCallback((sessionId: string, leadId?: string, countdownStart?: number) => {
+  const saveLS = useCallback((
+    sessionId: string,
+    leadId?: string,
+    countdownStart?: number,
+    delaySeconds?: number,
+    calledIds?: string[],
+  ) => {
     try {
-      localStorage.setItem(LS_KEY, JSON.stringify({ sessionId, leadId, countdownStart }));
+      localStorage.setItem(LS_KEY, JSON.stringify({
+        sessionId,
+        leadId,
+        countdownStart,
+        delaySeconds,
+        calledLeadIds: calledIds,
+      }));
     } catch { /* SSR safe */ }
   }, []);
 
@@ -116,7 +128,13 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     const secs = Math.max(1, seconds);
     autoCalledRef.current = false;
     setCountdown(secs);
-    saveLS(sessionRef.current?.id ?? '', lead.id, Date.now());
+    saveLS(
+      sessionRef.current?.id ?? '',
+      lead.id,
+      Date.now(),
+      configRef.current.delay_seconds ?? 5,
+      calledRef.current,
+    );
   }, [saveLS]);
 
   // ── Internal: end session ──────────────────────────────────────────────────
@@ -246,7 +264,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
       onLeadReadyRef.current?.(firstLead);
       setPdState('preview');
       startCountdown(merged.delay_seconds ?? 5, firstLead);
-      saveLS(sess.id, firstLead.id, Date.now());
+      saveLS(sess.id, firstLead.id, Date.now(), merged.delay_seconds ?? 5, []);
     } catch {
       setPdState('idle');
     }
@@ -357,27 +375,70 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     try {
       const stored = localStorage.getItem(LS_KEY);
       if (!stored) return;
-      const { sessionId } = JSON.parse(stored) as { sessionId?: string };
+      const parsed = JSON.parse(stored) as {
+        sessionId?: string;
+        leadId?: string;
+        countdownStart?: number;
+        delaySeconds?: number;
+        calledLeadIds?: string[];
+      };
+      const { sessionId, leadId, countdownStart, delaySeconds, calledLeadIds: savedCalled } = parsed;
       if (!sessionId) return;
 
-      apiFetch('/api/dialer/power-session/active')
-        .then((r) => r.json())
-        .then(({ activeSession }: { activeSession: PowerSession | null }) => {
+      void (async () => {
+        try {
+          const res = await apiFetch('/api/dialer/power-session/active');
+          const { activeSession } = await res.json() as { activeSession: PowerSession | null };
           if (!mounted || !activeSession || activeSession.id !== sessionId) {
             clearLS();
             return;
           }
+
           setSession(activeSession);
+          if (savedCalled?.length) setCalledLeadIds(savedCalled);
+          if (delaySeconds) setConfig((c) => ({ ...c, delay_seconds: delaySeconds }));
+
+          let lead: LeadRecord | null = null;
+          if (leadId) {
+            const leadRes = await apiFetch(`/api/leads/${leadId}`);
+            if (leadRes.ok) {
+              const data = await leadRes.json() as { lead?: LeadRecord };
+              lead = data.lead ?? null;
+            }
+          }
+
+          if (lead) {
+            setCurrentLead(lead);
+            onLeadReadyRef.current?.(lead);
+          }
+
           if (activeSession.status === 'paused') {
             setPdState('paused');
+            return;
+          }
+
+          if (lead && countdownStart && delaySeconds) {
+            const elapsed = Math.floor((Date.now() - countdownStart) / 1000);
+            const remaining = Math.max(0, delaySeconds - elapsed);
+            setPdState('preview');
+            if (remaining > 0) {
+              autoCalledRef.current = false;
+              setCountdown(remaining);
+            } else {
+              autoCalledRef.current = true;
+              setCountdown(0);
+              onShouldDialRef.current?.(lead);
+            }
           } else {
             setPdState('preview');
           }
-        })
-        .catch(() => clearLS());
+        } catch {
+          clearLS();
+        }
+      })();
     } catch {}
     return () => { mounted = false; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [apiFetch, clearLS]);
 
   const isActive = pdState !== 'idle' && pdState !== 'ending';
 

@@ -36,7 +36,7 @@ export interface CallOrchestratorValue {
   callDurationSeconds: number;
   dispositionOpen: boolean;
   dispositionLead: LeadRecord | null;
-  beginOutboundCall: (e164: string, leadId?: string) => void;
+  beginOutboundCall: (e164: string, leadId?: string, lead?: LeadRecord | null) => void;
   registerPowerDialBridge: (bridge: PowerDialBridge | null) => void;
   saveDisposition: (
     disposition: string,
@@ -72,6 +72,7 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
   const callDbIdRef = useRef<string | null>(null);
   const durationRef = useRef(0);
   const dispositionLeadRef = useRef<LeadRecord | null>(null);
+  const hadActiveCallRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   callDbIdRef.current = callDbId;
@@ -81,8 +82,13 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
     powerBridgeRef.current = bridge;
   }, []);
 
-  const beginOutboundCall = useCallback((e164: string, leadId?: string) => {
+  const beginOutboundCall = useCallback((e164: string, leadId?: string, lead?: LeadRecord | null) => {
     pendingRegRef.current = { e164, leadId };
+    if (lead) {
+      setDispositionLead(lead);
+      dispositionLeadRef.current = lead;
+    }
+    hadActiveCallRef.current = false;
     setCallDbId(null);
     setCallDurationSeconds(0);
     durationRef.current = 0;
@@ -113,12 +119,17 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
 
   // Pick up outbound calls started outside the dialer (e.g. leads page)
   useEffect(() => {
-    if (callStatus !== 'connecting' || pendingRegRef.current || !activePhone) return;
-    pendingRegRef.current = {
-      e164: activePhone,
-      leadId: activeLead?.id,
-    };
-    if (activeLead) setDispositionLead(activeLead);
+    if (!activePhone || callStatus === 'idle' || callStatus === 'ended') return;
+    if (!pendingRegRef.current && (callStatus === 'connecting' || callStatus === 'ringing')) {
+      pendingRegRef.current = {
+        e164: activePhone,
+        leadId: activeLead?.id,
+      };
+    }
+    if (activeLead) {
+      setDispositionLead(activeLead);
+      dispositionLeadRef.current = activeLead;
+    }
   }, [callStatus, activePhone, activeLead]);
 
   // Register DB call once Telnyx assigns call_control_id
@@ -158,9 +169,10 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
 
     bridge?.onCallEnd();
 
-    if (seconds >= DISPOSITION_THRESHOLD_SEC) {
+    if (seconds >= DISPOSITION_THRESHOLD_SEC || hadActiveCallRef.current) {
       setDispositionLead(lead);
       setDispositionOpen(true);
+      hadActiveCallRef.current = false;
       return;
     }
 
@@ -173,6 +185,7 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
     }
 
     setCallDbId(null);
+    hadActiveCallRef.current = false;
     resetTimer();
   }, [activeLead, autoSaveVoicemail, resetTimer]);
 
@@ -182,7 +195,11 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
     prevCallStatusRef.current = callStatus;
 
     if ((prev === 'connecting' || prev === 'ringing') && callStatus === 'active') {
-      if (activeLead) setDispositionLead(activeLead);
+      hadActiveCallRef.current = true;
+      if (activeLead) {
+        setDispositionLead(activeLead);
+        dispositionLeadRef.current = activeLead;
+      }
       powerBridgeRef.current?.onCallStarted();
     }
 

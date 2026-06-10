@@ -20,6 +20,8 @@ export interface WebPhoneContextValue {
   phoneStatus: PhoneStatus;
   callStatus: WebRTCCallStatus;
   activeCallId: string | null;
+  /** True while an outbound dial we initiated is connecting, ringing, or live */
+  hasOutboundSession: boolean;
   isMuted: boolean;
   isOnHold: boolean;
   micPermission: MicPermission;
@@ -79,6 +81,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const clientRef = useRef<any>(null);
   const activeCallRef = useRef<Call | null>(null);
   const callStatusRef = useRef<WebRTCCallStatus>('idle');
+  const outboundDialRef = useRef(false);
+  const [hasOutboundSession, setHasOutboundSession] = useState(false);
   callStatusRef.current = callStatus;
   // Track whether we are mounted to avoid setState after unmount
   const mountedRef = useRef(true);
@@ -162,6 +166,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
         if (mapped === 'ended') {
           activeCallRef.current = null;
+          outboundDialRef.current = false;
+          safeSet(setHasOutboundSession, false);
           safeSet(setActiveCallId, null);
           safeSet(setIsMuted, false);
           safeSet(setIsOnHold, false);
@@ -230,6 +236,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       console.warn('[WebPhone] makeCall: call already in progress');
       return;
     }
+    outboundDialRef.current = true;
+    setHasOutboundSession(true);
     setCallStatus('connecting');
     setIsMuted(false);
     setIsOnHold(false);
@@ -264,6 +272,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       activeCallRef.current = call;
     } catch (err) {
       console.error('[WebPhone] newCall error:', err);
+      outboundDialRef.current = false;
+      setHasOutboundSession(false);
       setCallStatus('idle');
     }
   }, [phoneStatus]);
@@ -285,6 +295,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       try { activeCallRef.current.hangup(); } catch { /* ignore */ }
     }
     activeCallRef.current = null;
+    outboundDialRef.current = false;
+    setHasOutboundSession(false);
     setActiveCallId(null);
     setIsMuted(false);
     setIsOnHold(false);
@@ -332,6 +344,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         phoneStatus,
         callStatus,
         activeCallId,
+        hasOutboundSession,
         isMuted,
         isOnHold,
         micPermission,

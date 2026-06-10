@@ -149,7 +149,7 @@ export default function DialerPage() {
     onLeadConnected: (lead, leg) => {
       selectLead(lead);
       startCall(leg.call_id ?? '', leg.call_id ?? '');
-      beginOutboundCall(lead.phone, lead.id);
+      beginOutboundCall(lead.phone, lead.id, lead);
     },
   });
 
@@ -354,7 +354,7 @@ export default function DialerPage() {
       selectLead(null);
       registerCallMeta(null, e164);
     }
-    beginOutboundCall(e164, lead?.id);
+    beginOutboundCall(e164, lead?.id, lead ?? null);
     makeCall(e164, fromNumber || undefined);
   }, [phoneStatus, callStatus, makeCall, fromNumber, startCall, registerCallMeta, selectLead, callTimer, beginOutboundCall]);
 

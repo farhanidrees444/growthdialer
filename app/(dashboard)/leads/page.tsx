@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useLeads } from "@/contexts/leads-context";
 import { useWorkspace } from "@/contexts/workspace-context";
-import { useCallContext } from "@/lib/call-context";
+import { useOutboundCall } from "@/hooks/use-outbound-call";
 import { AnimatePresence as AP } from "framer-motion";
 import { LeadAddModal } from "@/components/leads/lead-add-modal";
 import { LeadEditModal } from "@/components/leads/lead-edit-modal";
@@ -539,7 +539,7 @@ export default function LeadsPage() {
   const router = useRouter();
   const { leads: contextLeads, setImportOpen } = useLeads();
   const { currentWorkspace, apiFetch } = useWorkspace();
-  const { startCall } = useCallContext();
+  const startOutboundCall = useOutboundCall();
 
   const [leads, setLeads] = useState<FullLead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -679,7 +679,7 @@ export default function LeadsPage() {
   }, []);
 
   const handleCall = useCallback((lead: FullLead) => {
-    void startCall(lead.phone, {
+    startOutboundCall(lead.phone, {
       id: lead.id, name: lead.name, company: lead.company ?? "",
       phone: lead.phone, title: lead.title ?? "",
       email: lead.email ?? undefined, linkedin: lead.linkedin ?? undefined,
@@ -690,7 +690,7 @@ export default function LeadsPage() {
       company_size: undefined, industry: undefined, revenue: undefined,
       activity_summary: undefined, profile_url: undefined, dnc: lead.dnc ?? false,
     });
-  }, [startCall]);
+  }, [startOutboundCall]);
 
   const handleView = useCallback((lead: FullLead) => {
     setLeadTransitionId(lead.id);

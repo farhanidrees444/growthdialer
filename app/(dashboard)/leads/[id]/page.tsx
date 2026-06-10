@@ -12,7 +12,7 @@ import {
   PlayCircle, MessageSquare,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useCallContext } from '@/lib/call-context';
+import { useOutboundCall } from '@/hooks/use-outbound-call';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/lib/utils';
 import { clearLeadTransitionId } from '@/lib/ui/lead-transition';
@@ -301,7 +301,7 @@ function DeleteConfirmModal({ name, onConfirm, onCancel }: {
 export default function LeadDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { startCall } = useCallContext();
+  const startOutboundCall = useOutboundCall();
   const { currentWorkspace, apiFetch } = useWorkspace();
   const leadId = params.id as string;
 
@@ -431,7 +431,7 @@ export default function LeadDetailPage() {
         statusText={sText}
         leadId={lead.id}
         onBack={() => router.back()}
-        onCall={() => void startCall(lead.phone, {
+        onCall={() => startOutboundCall(lead.phone, {
           id: lead.id, name: lead.name, company: lead.company ?? '',
           phone: lead.phone, title: lead.title ?? '',
           email: lead.email ?? undefined, linkedin: lead.linkedin ?? undefined,
