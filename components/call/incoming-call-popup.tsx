@@ -219,7 +219,7 @@ export function IncomingCallPopup({ userId }: Props) {
         (payload) => {
           const row = payload.new as Record<string, unknown>;
           if (row.id !== callIdRef.current) return;
-          if (['missed', 'completed', 'rejected', 'voicemail'].includes(row.status as string)) {
+          if (['missed', 'completed', 'rejected', 'voicemail', 'in_progress'].includes(row.status as string)) {
             setCall(null);
             stopRingtone();
           }

@@ -81,7 +81,11 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Server-side dial (legacy / fallback when WebRTC unavailable) ─────────
-    const webhookUrl = `${process.env.APP_URL}/api/telnyx/webhook`;
+    const { resolveVoiceWebhookUrl } = await import('@/lib/voice/webhook-url');
+    const webhookUrl = resolveVoiceWebhookUrl();
+    if (!webhookUrl) {
+      return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
+    }
 
     console.log(`[dial] server-side: to=${e164} from=${fromNumber}`);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

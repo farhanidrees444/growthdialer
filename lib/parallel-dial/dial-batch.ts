@@ -32,7 +32,8 @@ export async function dialParallelBatch(
   if (!leads?.length) return { legs: [], leads: [] };
 
   const batchNumber = session.total_batches + 1;
-  const webhookUrl = `${process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL}/api/telnyx/webhook`;
+  const { resolveVoiceWebhookUrl } = await import('@/lib/voice/webhook-url');
+  const webhookUrl = resolveVoiceWebhookUrl();
   const amd = session.amd_enabled ? 'detect' : undefined;
 
   const legs: ParallelDialLeg[] = [];

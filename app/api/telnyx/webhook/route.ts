@@ -10,6 +10,7 @@ import { findLeadByCallerPhone } from '@/lib/inbound/match-lead';
 import { triggerInboundRingTimeoutAsync } from '@/lib/inbound/trigger-ring-timeout';
 import { findNumberOwnerWithMeta } from '@/lib/inbound/lookup-number';
 import { bridgeInboundToBrowser } from '@/lib/inbound/bridge-to-browser';
+import { decodeClientState } from '@/lib/inbound/telnyx-actions';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
 
 function directionSaysInbound(direction: string | undefined): boolean | null {
@@ -44,6 +45,8 @@ interface TelnyxEventPayload {
   recording_ended_at?: string;
   duration_millis?: number;
   duration_seconds?: number;
+  client_state?: string;
+  connection_id?: string;
 }
 
 interface TelnyxEvent {
@@ -76,6 +79,7 @@ interface CallRow {
   recording_url: string | null;
   recording_supabase_path: string | null;
   analytics_id: string | null;
+  telnyx_session_id: string | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -90,7 +94,7 @@ async function findCall(
   supabase: NonNullable<SupabaseClient>,
   sessionId: string | undefined,
   callControlId: string | undefined,
-  select = 'id, user_id, lead_id, to_number, from_number, answered_at, direction, duration_seconds, was_recorded, ai_processing_status, ai_processed, ai_processed_at, recording_url, recording_supabase_path, analytics_id',
+  select = 'id, user_id, lead_id, to_number, from_number, answered_at, direction, duration_seconds, was_recorded, ai_processing_status, ai_processed, ai_processed_at, recording_url, recording_supabase_path, analytics_id, telnyx_session_id',
 ): Promise<CallRow | null> {
   // Try session ID first (more stable across call legs)
   if (sessionId) {
@@ -103,7 +107,7 @@ async function findCall(
       .maybeSingle();
     if (data) return data as unknown as CallRow;
   }
-  // Fall back to call_control_id
+  // Fall back to call_control_id (PSTN leg)
   if (callControlId) {
     const { data } = await supabase
       .from('calls')
@@ -111,6 +115,14 @@ async function findCall(
       .eq('telnyx_call_id', callControlId)
       .maybeSingle();
     if (data) return data as unknown as CallRow;
+
+    // WebRTC bridge leg stored on telnyx_session_id
+    const { data: peer } = await supabase
+      .from('calls')
+      .select(select)
+      .eq('telnyx_session_id', callControlId)
+      .maybeSingle();
+    if (peer) return peer as unknown as CallRow;
   }
   return null;
 }
@@ -215,6 +227,14 @@ export async function POST(request: NextRequest) {
       if (!callControlId) {
         console.warn('[WEBHOOK] call.initiated missing call_control_id — skipping');
       } else {
+        const bridgeState = decodeClientState(
+          (payload as TelnyxEventPayload & { client_state?: string }).client_state,
+        );
+        if (bridgeState?.gd_inbound_bridge) {
+          console.log('[WEBHOOK] Inbound browser bridge leg initiated:', callControlId);
+          return NextResponse.json({ received: true });
+        }
+
         const toNumber = normalizeE164(payload.to ?? '');
         const fromNumber = normalizeE164(payload.from ?? '');
         const ownedTo = await findNumberOwnerWithMeta(supabase, toNumber);
@@ -286,11 +306,11 @@ export async function POST(request: NextRequest) {
           }
           console.log('[INBOUND] Rejected (off mode)');
         } else if (mode === 'forward' && inboundSettings?.inbound_forward_number) {
-          // Answer then bridge/transfer to user's personal number
+          const forwardTo = normalizeE164(inboundSettings.inbound_forward_number as string);
           await telnyxCallAction(callControlId, 'answer');
           await new Promise((r) => setTimeout(r, 600));
           await telnyxCallAction(callControlId, 'transfer', {
-            to: inboundSettings.inbound_forward_number as string,
+            to: forwardTo || (inboundSettings.inbound_forward_number as string),
             from: toNumber,
           });
           console.log('[INBOUND] Forwarded to:', inboundSettings.inbound_forward_number);
@@ -316,8 +336,20 @@ export async function POST(request: NextRequest) {
           console.log('[INBOUND] Voicemail: answered + recording started for user:', userId);
         } else {
           // browser mode (default): answer + bridge to user's WebRTC SIP endpoint.
-          const bridged = await bridgeInboundToBrowser(supabase, userId, callControlId, toNumber);
-          console.log('[INBOUND] Browser bridge:', bridged ? 'ok' : 'failed', '| user:', userId);
+          const bridged = await bridgeInboundToBrowser(
+            supabase,
+            userId,
+            callControlId,
+            toNumber,
+            newCall?.id,
+          );
+          console.log('[INBOUND] Browser bridge:', bridged.ok ? bridged.strategy : 'failed', '| user:', userId);
+          if (!bridged.ok && newCall?.id) {
+            await supabase
+              .from('calls')
+              .update({ status: 'failed', disposition: 'missed', ended_at: new Date().toISOString() })
+              .eq('id', newCall.id);
+          }
           if (newCall?.id) {
             triggerInboundRingTimeoutAsync(newCall.id, callControlId, userId, ringSeconds, mode);
           }
@@ -403,12 +435,13 @@ export async function POST(request: NextRequest) {
       console.log('[WEBHOOK] call.answered — call id:', callRow.id);
 
       // Update status (also save session ID here as a safety net)
+      const nextStatus = callRow.direction === 'inbound' ? 'in_progress' : 'answered';
       await supabase
         .from('calls')
         .update({
-          status: 'answered',
+          status: nextStatus,
           answered_at: new Date().toISOString(),
-          ...(callSessionId ? { telnyx_session_id: callSessionId } : {}),
+          ...(callSessionId && !callRow.telnyx_session_id ? { telnyx_session_id: callSessionId } : {}),
         })
         .eq('id', callRow.id);
 

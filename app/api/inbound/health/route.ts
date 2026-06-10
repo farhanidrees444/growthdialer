@@ -6,8 +6,9 @@ import {
   auditNumberRouting,
   backfillProviderIds,
   fetchProviderPhoneIndex,
-  resolveAppUrlFromRequest,
 } from '@/lib/voice/provider-numbers';
+import { ensureVoiceConnectionConfigured } from '@/lib/voice/configure-connection';
+import { resolveVoiceAppBaseUrl } from '@/lib/voice/webhook-url';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
 
   const connectionId = process.env.TELNYX_CONNECTION_ID?.trim() ?? null;
 
-  const [settingsRes, numbersRes, recentInboundRes, providerIndex] = await Promise.all([
+  const [settingsRes, numbersRes, recentInboundRes, providerIndex, connectionConfig] = await Promise.all([
     supabase
       .from('user_settings')
       .select('inbound_mode')
@@ -44,6 +45,7 @@ export async function GET(request: NextRequest) {
       .limit(1)
       .maybeSingle(),
     fetchProviderPhoneIndex(),
+    ensureVoiceConnectionConfigured(),
   ]);
 
   const mode = (settingsRes.data?.inbound_mode as string | null) ?? 'browser';
@@ -57,9 +59,10 @@ export async function GET(request: NextRequest) {
   await backfillProviderIds(supabase, numbers, providerIndex);
 
   const routing = await auditNumberRouting(numbers, connectionId, providerIndex);
-  const appUrl = resolveAppUrlFromRequest(request);
+  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
+  const appUrl = resolveVoiceAppBaseUrl() || (host ? `https://${host}` : '');
   const eventsVerified = Boolean(process.env.TELNYX_PUBLIC_KEY?.trim());
-  const voiceConfigured = Boolean(process.env.TELNYX_API_KEY?.trim() && connectionId);
+  const voiceConfigured = connectionConfig.ok && Boolean(process.env.TELNYX_API_KEY?.trim());
 
   const inboundEnabled = mode !== 'off';
   const browserAnswering = mode === 'browser' || mode === 'forward';

@@ -12,6 +12,7 @@ import {
   type DbNumberRow,
 } from '@/lib/voice/provider-numbers';
 import { assignNumberToVoiceConnection } from '@/lib/voice/assign-number-connection';
+import { ensureVoiceConnectionConfigured } from '@/lib/voice/configure-connection';
 
 const VOICE_API = 'https://api.telnyx.com/v2';
 
@@ -47,6 +48,7 @@ export interface PrepareInboundResult {
   workspace_linked: number;
   credential_ready: boolean;
   primary_routed: boolean;
+  connection_configured: boolean;
   message: string;
 }
 
@@ -60,6 +62,7 @@ export async function prepareInboundAccount(
   userEmail: string,
 ): Promise<PrepareInboundResult> {
   const connectionId = process.env.TELNYX_CONNECTION_ID?.trim() ?? null;
+  const connectionConfig = await ensureVoiceConnectionConfigured();
   const workspaceId = await resolveUserWorkspaceId(supabase, userId);
 
   const { data: rows } = await supabase
@@ -162,6 +165,7 @@ export async function prepareInboundAccount(
     workspace_linked: workspaceLinked,
     credential_ready: Boolean(credentialId),
     primary_routed: afterAudit.primary_routed,
-    message,
+    connection_configured: connectionConfig.ok,
+    message: connectionConfig.ok ? message : connectionConfig.message,
   };
 }

@@ -1,0 +1,101 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { hasPermission } from '@/lib/auth/permissions';
+import { prepareInboundAccount } from '@/lib/inbound/prepare-account';
+import {
+  auditNumberRouting,
+  fetchProviderPhoneIndex,
+  lookupProviderPhone,
+} from '@/lib/voice/provider-numbers';
+import { ensureVoiceConnectionConfigured } from '@/lib/voice/configure-connection';
+import { resolveVoiceWebhookUrl } from '@/lib/voice/webhook-url';
+import { resolveActiveCredentialId, fetchCredentialSipUsername } from '@/lib/telnyx/active-credential';
+
+/** Owner-facing inbound diagnostics (no vendor names in response). */
+export async function GET(request: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const access = await requireWorkspaceFromRequest(request, supabase, user.id);
+  if (isWorkspaceError(access)) return access;
+
+  if (access.role !== 'owner' && access.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const connection = await ensureVoiceConnectionConfigured();
+  const webhookUrl = resolveVoiceWebhookUrl();
+  const eventsVerified = Boolean(process.env.TELNYX_PUBLIC_KEY?.trim());
+
+  const { data: numbers } = await supabase
+    .from('purchased_numbers')
+    .select('id, phone_number, telnyx_number_id, is_default, status')
+    .eq('user_id', user.id)
+    .neq('status', 'released');
+
+  const providerIndex = await fetchProviderPhoneIndex();
+  const dbNumbers = (numbers ?? []).map((n) => ({
+    id: n.id as string,
+    phone_number: n.phone_number as string,
+    telnyx_number_id: n.telnyx_number_id as string | null,
+    is_default: Boolean(n.is_default),
+  }));
+
+  const routing = await auditNumberRouting(
+    dbNumbers,
+    process.env.TELNYX_CONNECTION_ID?.trim() ?? null,
+    providerIndex,
+  );
+
+  const credentialId = await resolveActiveCredentialId(supabase, user.id);
+  const sipUsername = credentialId ? await fetchCredentialSipUsername(credentialId) : null;
+
+  const { count: recentInbound } = await supabase
+    .from('calls')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('direction', 'inbound')
+    .gte('started_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+
+  return NextResponse.json({
+    line_ready:
+      connection.ok
+      && routing.primary_routed
+      && eventsVerified
+      && Boolean(credentialId)
+      && Boolean(webhookUrl),
+    connection_configured: connection.ok,
+    event_verification: eventsVerified,
+    browser_credential: Boolean(credentialId),
+    sip_endpoint_ready: Boolean(sipUsername),
+    primary_routed: routing.primary_routed,
+    numbers_total: routing.total,
+    numbers_routed: routing.routed,
+    unrouted_numbers: routing.unrouted_phones,
+    inbound_calls_7d: recentInbound ?? 0,
+    checks: [
+      { label: 'Voice connection', ok: connection.ok },
+      { label: 'Call events', ok: eventsVerified },
+      { label: 'Primary number routing', ok: routing.primary_routed },
+      { label: 'Browser voice endpoint', ok: Boolean(sipUsername) },
+    ],
+  });
+}
+
+export async function POST(request: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const access = await requireWorkspaceFromRequest(request, supabase, user.id);
+  if (isWorkspaceError(access)) return access;
+
+  if (!hasPermission(access.role, 'MAKE_CALLS')) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const result = await prepareInboundAccount(supabase, user.id, user.email ?? '');
+  return NextResponse.json(result);
+}

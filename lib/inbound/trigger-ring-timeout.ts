@@ -1,4 +1,4 @@
-import { resolveAppBaseUrl } from '@/lib/ai/trigger-process-call';
+import { resolveVoiceAppBaseUrl } from '@/lib/voice/webhook-url';
 
 export function triggerInboundRingTimeoutAsync(
   callId: string,
@@ -8,7 +8,7 @@ export function triggerInboundRingTimeoutAsync(
   inboundMode: string,
 ): void {
   const internalSecret = process.env.INTERNAL_API_SECRET?.trim();
-  const baseUrl = resolveAppBaseUrl();
+  const baseUrl = resolveVoiceAppBaseUrl();
   if (!internalSecret || !baseUrl) {
     console.warn('[INBOUND] Cannot schedule ring timeout — INTERNAL_API_SECRET or APP_URL missing');
     return;
