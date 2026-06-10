@@ -22,6 +22,7 @@ import { usePathname } from "next/navigation";
 import { AmbientShell } from "@/components/dashboard/ambient-shell";
 import { PageEnter } from "@/components/layout/page-enter";
 import { resolveRouteAccent } from "@/lib/ui/route-accents";
+import { PostHogIdentify } from "@/components/PostHogIdentify";
 
 function DashboardOverlays() {
   const { showSaveAsLead, activePhone, dismissSaveAsLead } = useCallContext();
@@ -49,6 +50,7 @@ export default function DashboardLayout({
 
   return (
     <WorkspaceProvider>
+      <PostHogIdentify />
       <WebPhoneProvider>
         <CallProvider>
           <FloatingEdgeProvider>

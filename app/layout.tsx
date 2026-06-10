@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Bricolage_Grotesque, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { PostHogProvider } from "@/components/PostHogProvider";
+import { PostHogPageView } from "@/components/PostHogPageView";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -214,7 +217,14 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <TooltipProvider delay={200}>{children}</TooltipProvider>
+        <PostHogProvider>
+          <TooltipProvider delay={200}>
+            <Suspense fallback={null}>
+              <PostHogPageView />
+            </Suspense>
+            {children}
+          </TooltipProvider>
+        </PostHogProvider>
         <Toaster theme="dark" position="bottom-right" richColors closeButton />
       </body>
     </html>
