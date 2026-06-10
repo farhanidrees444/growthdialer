@@ -88,7 +88,8 @@ export async function GET(request: NextRequest) {
   ];
 
   const score = checks.filter((c) => c.ok).length;
-  const ready = score >= checks.length - 1 && numbers.length > 0 && mode !== 'off';
+  const webhookOk = checks.find((c) => c.id === 'webhook_key')?.ok ?? false;
+  const ready = webhookOk && numbers.length > 0 && mode !== 'off' && Boolean(appUrl);
 
   return NextResponse.json({
     ready,

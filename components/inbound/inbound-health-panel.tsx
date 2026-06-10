@@ -20,6 +20,7 @@ interface HealthData {
   primary_number: string | null;
   last_inbound_at: string | null;
   inbound_mode: string;
+  webhook_url: string | null;
 }
 
 interface Props {
@@ -52,7 +53,8 @@ export function InboundHealthPanel({ phoneReady }: Props) {
 
   if (!health) return null;
 
-  const allGood = health.ready && phoneReady;
+  const failedChecks = health.checks.filter((c) => !c.ok);
+  const allGood = health.ready && phoneReady && failedChecks.length === 0;
 
   return (
     <div
@@ -92,7 +94,7 @@ export function InboundHealthPanel({ phoneReady }: Props) {
         </button>
       </div>
 
-      {!allGood && (
+      {(failedChecks.length > 0 || !phoneReady) && (
         <ul className="mt-3 space-y-1.5">
           {!phoneReady && (
             <li className="flex items-start gap-2 text-xs text-amber-400/90">
@@ -100,13 +102,18 @@ export function InboundHealthPanel({ phoneReady }: Props) {
               Voice connection not ready — keep this tab open
             </li>
           )}
-          {health.checks.filter((c) => !c.ok).map((c) => (
-            <li key={c.id} className="flex items-start gap-2 text-xs text-white/50">
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400/70" />
-              {c.hint ?? c.label}
+          {failedChecks.map((c) => (
+            <li key={c.id} className="flex items-start gap-2 text-xs text-amber-300/90">
+              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+              <span><strong className="font-semibold">{c.label}:</strong> {c.hint ?? 'Not configured'}</span>
             </li>
           ))}
         </ul>
+      )}
+      {health.webhook_url && (
+        <p className="mt-3 text-[10px] text-white/25 font-mono break-all">
+          Webhook: {health.webhook_url}
+        </p>
       )}
     </div>
   );
