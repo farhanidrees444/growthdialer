@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { hasPermission } from '@/lib/auth/permissions';
-import { resolveAppBaseUrl } from '@/lib/ai/trigger-process-call';
-import { getNumberConnectionId } from '@/lib/voice/assign-number-connection';
+import {
+  auditNumberRouting,
+  backfillProviderIds,
+  fetchProviderPhoneIndex,
+  resolveAppUrlFromRequest,
+} from '@/lib/voice/provider-numbers';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -19,7 +23,7 @@ export async function GET(request: NextRequest) {
 
   const connectionId = process.env.TELNYX_CONNECTION_ID?.trim() ?? null;
 
-  const [settingsRes, numbersRes, recentInboundRes] = await Promise.all([
+  const [settingsRes, numbersRes, recentInboundRes, providerIndex] = await Promise.all([
     supabase
       .from('user_settings')
       .select('inbound_mode')
@@ -39,95 +43,80 @@ export async function GET(request: NextRequest) {
       .order('started_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    fetchProviderPhoneIndex(),
   ]);
 
   const mode = (settingsRes.data?.inbound_mode as string | null) ?? 'browser';
-  const numbers = numbersRes.data ?? [];
-  const appUrl = resolveAppBaseUrl();
+  const numbers = (numbersRes.data ?? []).map((n) => ({
+    id: n.id as string,
+    phone_number: n.phone_number as string,
+    telnyx_number_id: n.telnyx_number_id as string | null,
+    is_default: Boolean(n.is_default),
+  }));
 
-  let routedCount = 0;
-  let unroutedCount = 0;
+  await backfillProviderIds(supabase, numbers, providerIndex);
 
-  if (connectionId) {
-    await Promise.all(
-      numbers.map(async (n) => {
-        const tid = n.telnyx_number_id as string | null;
-        if (!tid) {
-          unroutedCount++;
-          return;
-        }
-        const onConnection = await getNumberConnectionId(tid);
-        if (onConnection === connectionId) routedCount++;
-        else unroutedCount++;
-      }),
-    );
+  const routing = await auditNumberRouting(numbers, connectionId, providerIndex);
+  const appUrl = resolveAppUrlFromRequest(request);
+  const eventsVerified = Boolean(process.env.TELNYX_PUBLIC_KEY?.trim());
+  const voiceConfigured = Boolean(process.env.TELNYX_API_KEY?.trim() && connectionId);
+
+  const inboundEnabled = mode !== 'off';
+  const browserAnswering = mode === 'browser' || mode === 'forward';
+
+  let status: 'live' | 'almost_ready' | 'needs_setup' | 'offline' = 'needs_setup';
+  let headline = 'Setting up your inbound line';
+  let subline = 'Add a phone number to start receiving calls.';
+  let action: { type: 'activate_routing'; label: string } | null = null;
+
+  if (numbers.length === 0) {
+    status = 'needs_setup';
+  } else if (!inboundEnabled) {
+    status = 'offline';
+    headline = 'Inbound is turned off';
+    subline = 'Change routing to accept calls again.';
+  } else if (routing.needs_activation) {
+    status = 'almost_ready';
+    headline = 'One step left — link your numbers';
+    subline =
+      routing.unrouted === 1
+        ? 'Your line is almost ready. Link your number to start receiving calls in the browser.'
+        : `${routing.unrouted} numbers need to be linked to your voice line.`;
+    action = { type: 'activate_routing', label: 'Link numbers for inbound' };
+  } else if (!browserAnswering) {
+    status = 'almost_ready';
+    headline = 'Voicemail mode is on';
+    subline = 'Calls go straight to voicemail — switch to browser ringing to answer live.';
+  } else if (!voiceConfigured || !eventsVerified || !appUrl) {
+    status = 'almost_ready';
+    headline = 'Your line is being finalized';
+    subline = 'Keep this page open — inbound will be fully live shortly.';
   } else {
-    unroutedCount = numbers.length;
+    status = 'live';
+    headline = 'Inbound line is live';
+    subline = 'Ready to receive calls — keep this page open to answer in the browser.';
   }
 
-  const checks = [
-    {
-      id: 'voice_service',
-      label: 'Voice service',
-      ok: Boolean(process.env.TELNYX_API_KEY && connectionId),
-      hint: 'Voice service credentials are not fully configured.',
-    },
-    {
-      id: 'event_verification',
-      label: 'Call event verification',
-      ok: Boolean(process.env.TELNYX_PUBLIC_KEY),
-      hint: 'Call event verification is not configured — inbound calls may not register.',
-    },
-    {
-      id: 'app_url',
-      label: 'Server callbacks',
-      ok: Boolean(appUrl),
-      hint: 'Application URL is not configured for call events.',
-    },
-    {
-      id: 'numbers',
-      label: 'Phone numbers',
-      ok: numbers.length > 0,
-      hint: 'Buy or sync a number to receive inbound calls.',
-    },
-    {
-      id: 'number_routing',
-      label: 'Inbound number routing',
-      ok: numbers.length > 0 && unroutedCount === 0,
-      hint:
-        unroutedCount > 0
-          ? `${unroutedCount} number(s) are not linked to your voice line — tap Activate inbound below.`
-          : 'No numbers assigned for inbound.',
-    },
-    {
-      id: 'mode',
-      label: 'Call routing mode',
-      ok: mode !== 'off',
-      hint: 'Inbound is set to reject all calls — change in Routing settings.',
-    },
-    {
-      id: 'browser_mode',
-      label: 'Browser answering',
-      ok: mode === 'browser' || mode === 'forward',
-      hint: mode === 'voicemail' ? 'Voicemail only — browser will not ring.' : undefined,
-    },
-  ];
-
-  const score = checks.filter((c) => c.ok).length;
-  const eventOk = checks.find((c) => c.id === 'event_verification')?.ok ?? false;
-  const routingOk = checks.find((c) => c.id === 'number_routing')?.ok ?? false;
-  const ready = eventOk && routingOk && numbers.length > 0 && mode !== 'off' && Boolean(appUrl);
+  const ready =
+    status === 'live'
+    && routing.primary_routed
+    && inboundEnabled
+    && browserAnswering
+    && eventsVerified
+    && Boolean(appUrl);
 
   return NextResponse.json({
+    status,
     ready,
-    score,
-    total: checks.length,
-    checks,
+    headline,
+    subline,
+    action,
     inbound_mode: mode,
     number_count: numbers.length,
-    routed_count: routedCount,
-    unrouted_count: unroutedCount,
-    needs_activation: unroutedCount > 0,
+    routed_count: routing.routed,
+    unrouted_count: routing.unrouted,
+    primary_routed: routing.primary_routed,
+    needs_activation: routing.needs_activation,
     primary_number: numbers.find((n) => n.is_default)?.phone_number ?? numbers[0]?.phone_number ?? null,
     last_inbound_at: recentInboundRes.data?.started_at ?? null,
   });

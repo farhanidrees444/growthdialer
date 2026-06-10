@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { hasPermission } from '@/lib/auth/permissions';
-import { assignNumberToVoiceConnection, getNumberConnectionId } from '@/lib/voice/assign-number-connection';
+import {
+  activateRoutingForNumbers,
+  auditNumberRouting,
+  backfillProviderIds,
+  fetchProviderPhoneIndex,
+} from '@/lib/voice/provider-numbers';
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -23,54 +28,54 @@ export async function POST(request: NextRequest) {
     }, { status: 503 });
   }
 
-  const { data: numbers } = await supabase
+  const { data: rows } = await supabase
     .from('purchased_numbers')
-    .select('id, phone_number, telnyx_number_id')
+    .select('id, phone_number, telnyx_number_id, is_default')
     .eq('user_id', user.id)
     .neq('status', 'released');
 
-  let activated = 0;
-  let alreadyRouted = 0;
-  let failed = 0;
-  const results: { phone: string; status: 'activated' | 'already' | 'failed' | 'skipped' }[] = [];
+  const numbers = (rows ?? []).map((n) => ({
+    id: n.id as string,
+    phone_number: n.phone_number as string,
+    telnyx_number_id: n.telnyx_number_id as string | null,
+    is_default: Boolean(n.is_default),
+  }));
 
-  for (const num of numbers ?? []) {
-    const telnyxId = num.telnyx_number_id as string | null;
-    if (!telnyxId) {
-      results.push({ phone: num.phone_number as string, status: 'skipped' });
-      failed++;
-      continue;
-    }
+  const providerIndex = await fetchProviderPhoneIndex();
+  await backfillProviderIds(supabase, numbers, providerIndex);
 
-    const current = await getNumberConnectionId(telnyxId);
-    if (current === connectionId) {
-      alreadyRouted++;
-      results.push({ phone: num.phone_number as string, status: 'already' });
-      continue;
-    }
-
-    const ok = await assignNumberToVoiceConnection(telnyxId);
-    if (ok) {
-      activated++;
-      results.push({ phone: num.phone_number as string, status: 'activated' });
-    } else {
-      failed++;
-      results.push({ phone: num.phone_number as string, status: 'failed' });
-    }
+  const before = await auditNumberRouting(numbers, connectionId, providerIndex);
+  if (!before.needs_activation) {
+    return NextResponse.json({
+      success: true,
+      activated: 0,
+      already_routed: before.routed,
+      failed: 0,
+      total: before.total,
+      message: 'All numbers are already linked for inbound.',
+    });
   }
 
+  const result = await activateRoutingForNumbers(numbers, connectionId, providerIndex);
+  const after = await auditNumberRouting(numbers, connectionId, providerIndex);
+
+  const message =
+    result.activated > 0
+      ? `${result.activated} number(s) linked — inbound is ready.`
+      : after.primary_routed
+        ? 'Your primary line is linked for inbound.'
+        : result.already_routed > 0
+          ? 'Numbers are linked on the voice network — refresh in a moment.'
+          : 'We could not link every number. Try again or contact support.';
+
   return NextResponse.json({
-    success: failed === 0,
-    activated,
-    already_routed: alreadyRouted,
-    failed,
-    total: (numbers ?? []).length,
-    results,
-    message:
-      activated > 0
-        ? `${activated} number(s) now route inbound calls to your browser.`
-        : alreadyRouted > 0 && failed === 0
-          ? 'All numbers are already configured for inbound.'
-          : 'Some numbers could not be activated — contact support if this persists.',
+    success: result.failed === 0 || after.primary_routed,
+    activated: result.activated,
+    already_routed: result.already_routed,
+    failed: result.failed,
+    total: numbers.length,
+    primary_routed: after.primary_routed,
+    results: result.results,
+    message,
   });
 }

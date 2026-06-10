@@ -1,25 +1,20 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, AlertCircle, Loader2, RefreshCw, Zap } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { CheckCircle2, Loader2, RefreshCw, Sparkles, Zap } from 'lucide-react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/lib/utils';
 
-interface HealthCheck {
-  id: string;
-  label: string;
-  ok: boolean;
-  hint?: string;
-}
+type InboundStatus = 'live' | 'almost_ready' | 'needs_setup' | 'offline';
 
 interface HealthData {
+  status: InboundStatus;
   ready: boolean;
-  score: number;
-  total: number;
-  checks: HealthCheck[];
+  headline: string;
+  subline: string;
+  action: { type: 'activate_routing'; label: string } | null;
   primary_number: string | null;
   last_inbound_at: string | null;
-  inbound_mode: string;
   needs_activation?: boolean;
   unrouted_count?: number;
   routed_count?: number;
@@ -38,131 +33,137 @@ export function InboundHealthPanel({ phoneReady, onActivated }: Props) {
   const [activateMsg, setActivateMsg] = useState<string | null>(null);
   const autoActivateTried = useRef(false);
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true);
     void apiFetch('/api/inbound/health')
       .then((r) => r.json())
       .then((d: HealthData) => setHealth(d))
       .finally(() => setLoading(false));
-  };
+  }, [apiFetch]);
 
-  useEffect(() => { load(); }, [apiFetch]);
+  const handleActivate = useCallback(async () => {
+    setActivating(true);
+    setActivateMsg(null);
+    try {
+      const res = await apiFetch('/api/inbound/activate-routing', { method: 'POST' });
+      const data = await res.json() as { message?: string; activated?: number; primary_routed?: boolean };
+      setActivateMsg(data.message ?? 'Inbound routing updated.');
+      load();
+      if ((data.activated ?? 0) > 0 || data.primary_routed) onActivated?.();
+    } catch {
+      setActivateMsg('Could not link your numbers. Try again in a moment.');
+    } finally {
+      setActivating(false);
+    }
+  }, [apiFetch, load, onActivated]);
+
+  useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
     if (!health?.needs_activation || autoActivateTried.current || activating) return;
     autoActivateTried.current = true;
     void handleActivate();
-  }, [health?.needs_activation]);
-
-  const handleActivate = async () => {
-    setActivating(true);
-    setActivateMsg(null);
-    try {
-      const res = await apiFetch('/api/inbound/activate-routing', { method: 'POST' });
-      const data = await res.json() as { message?: string; activated?: number };
-      setActivateMsg(data.message ?? 'Inbound routing updated.');
-      load();
-      if ((data.activated ?? 0) > 0) onActivated?.();
-    } catch {
-      setActivateMsg('Could not activate inbound routing. Try again or contact support.');
-    } finally {
-      setActivating(false);
-    }
-  };
+  }, [health?.needs_activation, activating, handleActivate]);
 
   if (loading && !health) {
     return (
-      <div className="flex items-center gap-2 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Checking inbound readiness…
+      <div className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-gradient-to-r from-white/[0.03] to-transparent px-5 py-4">
+        <Loader2 className="h-4 w-4 animate-spin text-cyan-400/70" />
+        <p className="text-sm text-muted-foreground">Checking your inbound line…</p>
       </div>
     );
   }
 
   if (!health) return null;
 
-  const failedChecks = health.checks.filter((c) => !c.ok);
-  const allGood = health.ready && phoneReady && failedChecks.length === 0;
+  const isLive = health.ready && phoneReady && health.status === 'live';
+  const showAction = health.action?.type === 'activate_routing' && (health.needs_activation || activating);
 
   return (
     <div
       className={cn(
-        'rounded-2xl border px-4 py-4 sm:px-5',
-        allGood
-          ? 'border-emerald-500/25 bg-emerald-500/[0.06]'
-          : 'border-amber-500/25 bg-amber-500/[0.05]',
+        'relative overflow-hidden rounded-2xl border px-5 py-4 sm:py-5',
+        isLive
+          ? 'border-emerald-500/30 bg-gradient-to-br from-emerald-500/[0.12] via-emerald-500/[0.04] to-transparent'
+          : health.status === 'offline'
+            ? 'border-red-500/20 bg-gradient-to-br from-red-500/[0.08] to-transparent'
+            : 'border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.08] via-violet-500/[0.04] to-transparent',
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {allGood ? (
-            <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
-          ) : (
-            <AlertCircle className="h-5 w-5 text-amber-400 shrink-0" />
-          )}
-          <div>
-            <p className={cn('text-sm font-semibold', allGood ? 'text-emerald-300' : 'text-amber-300')}>
-              {allGood ? 'Inbound line is live — ready to receive calls' : 'Inbound setup needs attention'}
+      {isLive && (
+        <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-emerald-400/10 blur-2xl" />
+      )}
+
+      <div className="relative flex items-start justify-between gap-4">
+        <div className="flex gap-3 min-w-0">
+          <div
+            className={cn(
+              'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
+              isLive ? 'bg-emerald-500/20' : 'bg-white/[0.06]',
+            )}
+          >
+            {isLive ? (
+              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+            ) : activating ? (
+              <Loader2 className="h-5 w-5 animate-spin text-cyan-400" />
+            ) : (
+              <Sparkles className="h-5 w-5 text-cyan-400" />
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className={cn(
+              'text-sm font-semibold sm:text-base',
+              isLive ? 'text-emerald-200' : 'text-white',
+            )}>
+              {isLive ? 'Inbound line is live — ready to receive calls' : health.headline}
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {health.score}/{health.total} checks passed
-              {health.last_inbound_at
-                ? ` · Last call ${new Date(health.last_inbound_at).toLocaleString()}`
-                : ' · No inbound calls logged yet'}
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+              {health.subline}
+              {health.last_inbound_at && (
+                <span className="block mt-1 text-white/35">
+                  Last call {new Date(health.last_inbound_at).toLocaleString()}
+                </span>
+              )}
             </p>
+            {!phoneReady && health.status !== 'offline' && (
+              <p className="mt-2 text-xs text-amber-400/90">
+                Voice is connecting — keep this tab open with microphone access allowed.
+              </p>
+            )}
           </div>
         </div>
         <button
           type="button"
           onClick={load}
-          className="shrink-0 rounded-lg border border-white/[0.08] p-2 text-muted-foreground hover:text-white transition"
+          disabled={loading}
+          className="shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.03] p-2 text-muted-foreground hover:text-white transition disabled:opacity-50"
           aria-label="Refresh status"
         >
-          <RefreshCw className="h-3.5 w-3.5" />
+          <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
         </button>
       </div>
 
-      {health.needs_activation && (
-        <div className="mt-4 flex flex-col gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-cyan-200">
-              {health.unrouted_count ?? 0} number{(health.unrouted_count ?? 0) !== 1 ? 's' : ''} not linked to inbound
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              One tap links your numbers so calls ring in the browser.
-            </p>
-          </div>
+      {showAction && (
+        <div className="relative mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-white/[0.08] bg-black/20 px-4 py-3.5">
+          <p className="text-xs text-muted-foreground">
+            {activating
+              ? 'Linking your numbers to your voice line…'
+              : `${health.unrouted_count ?? 0} number${(health.unrouted_count ?? 0) === 1 ? '' : 's'} waiting to be linked`}
+          </p>
           <button
             type="button"
             onClick={() => void handleActivate()}
             disabled={activating}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-cyan-400 disabled:opacity-60"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-2.5 text-sm font-semibold text-black shadow-lg shadow-cyan-500/20 transition hover:opacity-95 disabled:opacity-60"
           >
             {activating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-            Activate inbound
+            {health.action?.label ?? 'Link numbers for inbound'}
           </button>
         </div>
       )}
 
       {activateMsg && (
-        <p className="mt-3 text-xs text-cyan-300/90">{activateMsg}</p>
-      )}
-
-      {(failedChecks.length > 0 || !phoneReady) && (
-        <ul className="mt-3 space-y-1.5">
-          {!phoneReady && (
-            <li className="flex items-start gap-2 text-xs text-amber-400/90">
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-              Voice connection not ready — keep this tab open
-            </li>
-          )}
-          {failedChecks.map((c) => (
-            <li key={c.id} className="flex items-start gap-2 text-xs text-amber-300/90">
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-              <span><strong className="font-semibold">{c.label}:</strong> {c.hint ?? 'Not configured'}</span>
-            </li>
-          ))}
-        </ul>
+        <p className="relative mt-3 text-xs text-cyan-200/90">{activateMsg}</p>
       )}
     </div>
   );
