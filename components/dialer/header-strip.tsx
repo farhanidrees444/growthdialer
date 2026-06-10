@@ -29,6 +29,7 @@ interface HeaderStripProps {
   activeLeadName?: string;
   todayCalls: CallDot[];
   onOpenShortcuts: () => void;
+  onReconnect?: () => void;
   onDotClick?: (callId: string) => void;
 }
 
@@ -40,6 +41,7 @@ export function HeaderStrip({
   activeLeadName,
   todayCalls,
   onOpenShortcuts,
+  onReconnect,
   onDotClick,
 }: HeaderStripProps) {
   const [statsExpanded, setStatsExpanded] = useState(false);
@@ -110,10 +112,15 @@ export function HeaderStrip({
             {activeLeadName && <span className="text-red-300/70 hidden lg:inline"> · {activeLeadName}</span>}
           </motion.div>
         ) : phoneStatus === 'error' ? (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium">
+          <button
+            type="button"
+            onClick={onReconnect}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/15 transition-colors"
+            title="Reconnect voice service"
+          >
             <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
-            Offline
-          </div>
+            Offline — tap to reconnect
+          </button>
         ) : phoneStatus === 'initializing' || phoneStatus === 'idle' ? (
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium">
             <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />

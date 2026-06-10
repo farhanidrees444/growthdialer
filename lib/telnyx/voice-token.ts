@@ -3,9 +3,15 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 const TELNYX_API = 'https://api.telnyx.com/v2';
 
 async function fetchCredentialToken(credentialId: string): Promise<string | null> {
+  const apiKey = process.env.TELNYX_API_KEY?.trim();
+  if (!apiKey) {
+    console.error('[voice/token] TELNYX_API_KEY is not set');
+    return null;
+  }
+
   const res = await fetch(`${TELNYX_API}/telephony_credentials/${credentialId}/token`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${process.env.TELNYX_API_KEY}` },
+    headers: { Authorization: `Bearer ${apiKey}` },
   });
   if (!res.ok) {
     console.error('[voice/token] credential token fetch failed:', res.status, await res.text().catch(() => ''));
@@ -40,7 +46,23 @@ async function createUserCredential(userId: string): Promise<string | null> {
   return json.data?.id ?? null;
 }
 
-async function resolveCredentialId(
+async function saveUserCredentialId(
+  supabase: SupabaseClient,
+  userId: string,
+  credentialId: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from('user_settings')
+    .upsert(
+      { user_id: userId, telnyx_telephony_credential_id: credentialId },
+      { onConflict: 'user_id' },
+    );
+  if (error) {
+    console.error('[voice/token] failed to persist credential id:', error.message);
+  }
+}
+
+async function resolvePerUserCredentialId(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<string | null> {
@@ -50,18 +72,18 @@ async function resolveCredentialId(
     .eq('user_id', userId)
     .maybeSingle();
 
-  if (settings?.telnyx_telephony_credential_id) {
-    return settings.telnyx_telephony_credential_id as string;
+  const stored = settings?.telnyx_telephony_credential_id as string | undefined;
+  if (stored) {
+    const token = await fetchCredentialToken(stored);
+    if (token) return stored;
+    // Stale credential — clear and recreate below
+    await saveUserCredentialId(supabase, userId, null);
   }
 
   const created = await createUserCredential(userId);
   if (!created) return null;
 
-  await supabase
-    .from('user_settings')
-    .update({ telnyx_telephony_credential_id: created })
-    .eq('user_id', userId);
-
+  await saveUserCredentialId(supabase, userId, created);
   return created;
 }
 
@@ -70,41 +92,45 @@ export type VoiceTokenResult =
   | { ok: true; kind: 'sip'; login: string; password: string }
   | { ok: false; status: number; error: string };
 
+/**
+ * Issue browser WebRTC credentials.
+ * Order matches pre-security builds: shared JWT first (all users), then per-user JWT, then SIP.
+ */
 export async function issueVoiceLoginToken(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<VoiceTokenResult> {
-  const isProd = process.env.NODE_ENV === 'production';
+  // 1. Shared telephony credential — worked for every account in prior builds
+  const sharedCredentialId =
+    process.env.TELNYX_TELEPHONY_CREDENTIAL_ID?.trim()
+    ?? process.env.TELNYX_CREDENTIAL_ID?.trim();
+  if (sharedCredentialId) {
+    const token = await fetchCredentialToken(sharedCredentialId);
+    if (token) return { ok: true, kind: 'jwt', login_token: token };
+  }
 
+  // 2. Per-user credential when connection ID is configured
   if (process.env.TELNYX_CONNECTION_ID?.trim()) {
-    const credentialId = await resolveCredentialId(supabase, userId);
+    const credentialId = await resolvePerUserCredentialId(supabase, userId);
     if (credentialId) {
       const token = await fetchCredentialToken(credentialId);
       if (token) return { ok: true, kind: 'jwt', login_token: token };
     }
   }
 
-  const sharedCredentialId =
-    process.env.TELNYX_TELEPHONY_CREDENTIAL_ID ?? process.env.TELNYX_CREDENTIAL_ID;
-  if (sharedCredentialId) {
-    const token = await fetchCredentialToken(sharedCredentialId);
-    if (token) return { ok: true, kind: 'jwt', login_token: token };
-  }
-
-  if (!isProd) {
-    const login = process.env.NEXT_PUBLIC_TELNYX_SIP_USERNAME ?? process.env.TELNYX_SIP_USERNAME;
-    const password = process.env.TELNYX_SIP_PASSWORD;
-    if (login && password) {
-      console.warn('[voice/token] dev SIP password fallback — configure TELNYX_CONNECTION_ID for JWT auth');
-      return { ok: true, kind: 'sip', login, password };
-    }
+  // 3. SIP fallback — restores legacy behavior when JWT paths are unavailable
+  const login =
+    process.env.NEXT_PUBLIC_TELNYX_SIP_USERNAME?.trim()
+    ?? process.env.TELNYX_SIP_USERNAME?.trim();
+  const password = process.env.TELNYX_SIP_PASSWORD?.trim();
+  if (login && password) {
+    console.warn('[voice/token] using SIP credential fallback');
+    return { ok: true, kind: 'sip', login, password };
   }
 
   return {
     ok: false,
     status: 503,
-    error: isProd
-      ? 'Voice service is not configured for secure browser login'
-      : 'Voice credentials not configured',
+    error: 'Voice service is not configured — check Telnyx credentials in environment',
   };
 }

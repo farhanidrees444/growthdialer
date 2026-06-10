@@ -90,28 +90,58 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   phoneStatusRef.current = phoneStatus;
   // Track whether we are mounted to avoid setState after unmount
   const mountedRef = useRef(true);
+  const initAttemptsRef = useRef(0);
+  const initClientRef = useRef<() => Promise<void>>(async () => {});
 
   const safeSet = useCallback(<T,>(setter: (v: T) => void, value: T) => {
     if (mountedRef.current) setter(value);
   }, []);
 
-  // ── Init / Reconnect ─────────────────────────────────────────────────────────
+  const scheduleReconnect = useCallback((reason: string) => {
+    if (initAttemptsRef.current >= 3) {
+      safeSet(setPhoneStatus, 'error');
+      return;
+    }
+    initAttemptsRef.current += 1;
+    const delay = 1200 * initAttemptsRef.current;
+    console.warn(`[WebPhone] reconnect scheduled (${reason}) attempt ${initAttemptsRef.current}`);
+    setTimeout(() => {
+      if (mountedRef.current) void initClientRef.current();
+    }, delay);
+  }, [safeSet]);
+
   const initClient = useCallback(async () => {
     safeSet(setPhoneStatus, 'initializing');
     try {
       // Dynamic import prevents SSR from pulling in browser-only code
       const { TelnyxRTC } = await import('@telnyx/webrtc');
 
-      const res = await fetch('/api/voice/token', { method: 'POST' });
+      const res = await fetch('/api/voice/token', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+      });
       if (!res.ok) {
         console.error('[WebPhone] token fetch failed:', res.status);
-        safeSet(setPhoneStatus, 'error');
+        scheduleReconnect(`token HTTP ${res.status}`);
         return;
       }
-      const creds = await res.json();
+      const creds = await res.json() as {
+        login_token?: string;
+        login?: string;
+        password?: string;
+        error?: string;
+      };
       if (creds.error) {
         console.error('[WebPhone] token error:', creds.error);
-        safeSet(setPhoneStatus, 'error');
+        scheduleReconnect('token error');
+        return;
+      }
+      const hasJwt = Boolean(creds.login_token);
+      const hasSip = Boolean(creds.login && creds.password);
+      if (!hasJwt && !hasSip) {
+        console.error('[WebPhone] token response missing credentials');
+        scheduleReconnect('empty credentials');
         return;
       }
 
@@ -137,12 +167,24 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
       client.on('telnyx.ready', () => {
         console.log('[WebPhone] ready');
+        initAttemptsRef.current = 0;
         safeSet(setPhoneStatus, 'ready');
       });
 
       client.on('telnyx.error', (err: unknown) => {
         console.error('[WebPhone] error event:', err);
+        // Keep ready during active calls; transient socket errors should not brick dialing
+        const live = callStatusRef.current;
+        if (live === 'connecting' || live === 'ringing' || live === 'active' || live === 'held') {
+          return;
+        }
         safeSet(setPhoneStatus, 'error');
+      });
+
+      client.on('telnyx.socket.close', () => {
+        if (phoneStatusRef.current === 'ready') {
+          safeSet(setPhoneStatus, 'initializing');
+        }
       });
 
       client.on('telnyx.notification', (notification: INotification) => {
@@ -185,9 +227,11 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       client.connect();
     } catch (err) {
       console.error('[WebPhone] init error:', err);
-      safeSet(setPhoneStatus, 'error');
+      scheduleReconnect('init exception');
     }
-  }, [safeSet]);
+  }, [safeSet, scheduleReconnect]);
+
+  initClientRef.current = initClient;
 
   useEffect(() => {
     mountedRef.current = true;
@@ -358,7 +402,10 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     try { activeCallRef.current?.dtmf(digit); } catch { /* ignore */ }
   }, []);
 
-  const reconnect = useCallback(() => { initClient(); }, [initClient]);
+  const reconnect = useCallback(() => {
+    initAttemptsRef.current = 0;
+    void initClient();
+  }, [initClient]);
 
   return (
     <WebPhoneContext.Provider

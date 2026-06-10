@@ -122,7 +122,7 @@ export default function DialerPage() {
   const router = useRouter();
   const {
     callStatus, isMuted, isOnHold, phoneStatus, activeCallId,
-    makeCall, hangup, toggleMute, toggleHold, sendDTMF, waitForPhoneReady,
+    makeCall, hangup, toggleMute, toggleHold, sendDTMF, waitForPhoneReady, reconnect,
   } = useWebPhone();
 
   const { mode, selectedLead, activeCallDbId, selectLead, startCall, endCall } = useDialerMode();
@@ -504,6 +504,7 @@ export default function DialerPage() {
         activeLeadName={selectedLead?.name}
         todayCalls={todayCalls}
         onOpenShortcuts={() => setShortcutsOpen(true)}
+        onReconnect={reconnect}
       />
 
       <div className="flex-shrink-0 border-b border-zinc-800/50 px-4 py-3">
