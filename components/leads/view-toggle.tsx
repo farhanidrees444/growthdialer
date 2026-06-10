@@ -1,6 +1,7 @@
 'use client';
 
 import { LayoutGrid, List } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export type ViewMode = 'grid' | 'table';
 
@@ -21,12 +22,12 @@ export function ViewToggle({ value, onChange }: Props) {
           type="button"
           onClick={() => onChange(mode)}
           aria-label={`${label} view`}
-          className={[
-            'flex h-7 w-7 items-center justify-center rounded-lg transition',
+          className={cn(
+            'flex h-7 w-7 items-center justify-center rounded-lg transition-all duration-200',
             value === mode
-              ? 'bg-white/[0.08] text-white'
+              ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.12)]'
               : 'text-slate-600 hover:text-slate-300',
-          ].join(' ')}
+          )}
         >
           <Icon className="h-3.5 w-3.5" />
         </button>

@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, Phone, Mail, Building2, Briefcase, ExternalLink,
+  Phone, Mail, Briefcase, ExternalLink,
   Edit3, Check, X, Trash2, Clock, PhoneMissed, Mic,
   FileText, Tag, Plus, Loader2, ChevronRight,
   PlayCircle, MessageSquare,
@@ -16,6 +16,7 @@ import { useCallContext } from '@/lib/call-context';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/lib/utils';
 import { clearLeadTransitionId } from '@/lib/ui/lead-transition';
+import { LeadDetailHero } from '@/components/leads/lead-detail-hero';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -419,75 +420,37 @@ export default function LeadDetailPage() {
         )}
       </AnimatePresence>
 
-      {/* ── Header ──────────────────────────────────────────── */}
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-4 py-3 lg:px-6">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-white transition"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Leads
-        </button>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void startCall(lead.phone, {
-              id: lead.id, name: lead.name, company: lead.company ?? '',
-              phone: lead.phone, title: lead.title ?? '',
-              email: lead.email ?? undefined, linkedin: lead.linkedin ?? undefined,
-              ai_score: lead.ai_score ?? 0, status: lead.status as never,
-              call_attempts: lead.call_attempts ?? 0,
-              last_called_at: lead.last_called_at ?? undefined,
-              notes: lead.notes ?? undefined, tags: lead.tags ?? [],
-              company_size: undefined, industry: undefined, revenue: undefined,
-              activity_summary: undefined, profile_url: undefined, dnc: false,
-            })}
-            className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-emerald-500 transition"
-          >
-            <Phone className="h-3.5 w-3.5" />
-            Call Now
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowDelete(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.08] text-slate-600 hover:border-red-500/30 hover:text-red-400 transition"
-            aria-label="Delete lead"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </div>
+      <LeadDetailHero
+        name={lead.name}
+        title={lead.title}
+        company={lead.company}
+        status={lead.status}
+        initials={getInitials(lead.name)}
+        avatarGradient={grad}
+        statusBg={sBg}
+        statusText={sText}
+        leadId={lead.id}
+        onBack={() => router.back()}
+        onCall={() => void startCall(lead.phone, {
+          id: lead.id, name: lead.name, company: lead.company ?? '',
+          phone: lead.phone, title: lead.title ?? '',
+          email: lead.email ?? undefined, linkedin: lead.linkedin ?? undefined,
+          ai_score: lead.ai_score ?? 0, status: lead.status as never,
+          call_attempts: lead.call_attempts ?? 0,
+          last_called_at: lead.last_called_at ?? undefined,
+          notes: lead.notes ?? undefined, tags: lead.tags ?? [],
+          company_size: undefined, industry: undefined, revenue: undefined,
+          activity_summary: undefined, profile_url: undefined, dnc: false,
+        })}
+        onDelete={() => setShowDelete(true)}
+      />
 
       {/* ── Body ────────────────────────────────────────────── */}
       <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
 
         {/* Left panel: profile */}
-        <div className="w-full shrink-0 overflow-y-auto border-b border-white/[0.06] lg:w-[380px] lg:border-b-0 lg:border-r">
+        <div className="w-full shrink-0 overflow-y-auto border-b border-white/[0.06] bg-zinc-950/30 lg:w-[380px] lg:border-b-0 lg:border-r">
           <div className="p-5">
-            {/* Avatar + name */}
-            <div className="mb-5 flex items-start gap-4">
-              <motion.div
-                layoutId={`lead-avatar-${lead.id}`}
-                className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${grad} text-xl font-bold text-white shadow-lg`}
-              >
-                {getInitials(lead.name)}
-              </motion.div>
-              <div className="min-w-0 flex-1">
-                <motion.h1 layoutId={`lead-name-${lead.id}`} className="text-lg font-bold text-white leading-tight truncate">{lead.name}</motion.h1>
-                {lead.title && <p className="text-sm text-slate-500 truncate">{lead.title}</p>}
-                {lead.company && (
-                  <p className="flex items-center gap-1 text-xs text-slate-600 truncate mt-0.5">
-                    <Building2 className="h-3 w-3 shrink-0" />
-                    {lead.company}
-                  </p>
-                )}
-                <span className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold capitalize ${sBg} ${sText}`}>
-                  {lead.status.replace(/_/g, ' ')}
-                </span>
-              </div>
-            </div>
-
             {/* Editable fields */}
             <div className="space-y-3">
               <InlineField label="First Name" value={lead.first_name ?? ''} onSave={(v) => patchLead({ first_name: v })} />
@@ -538,14 +501,15 @@ export default function LeadDetailPage() {
             {/* Stats strip */}
             <div className="mt-5 grid grid-cols-2 gap-2">
               {[
-                { label: 'Total Calls', value: totalCalls },
-                { label: 'Last Contact', value: formatRelative(lead.last_called_at) },
-                { label: 'AI Score', value: lead.ai_score != null ? `${lead.ai_score}/100` : '—' },
-                { label: 'Status', value: lead.status.replace(/_/g, ' ') },
-              ].map(({ label, value }) => (
-                <div key={label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
-                  <p className="text-[10px] text-slate-600">{label}</p>
-                  <p className="text-sm font-semibold text-white capitalize truncate">{value}</p>
+                { label: 'Total Calls', value: totalCalls, accent: 'from-emerald-500/15' },
+                { label: 'Last Contact', value: formatRelative(lead.last_called_at), accent: 'from-teal-500/15' },
+                { label: 'AI Score', value: lead.ai_score != null ? `${lead.ai_score}/100` : '—', accent: 'from-violet-500/15' },
+                { label: 'Status', value: lead.status.replace(/_/g, ' '), accent: 'from-amber-500/15' },
+              ].map(({ label, value, accent }) => (
+                <div key={label} className="relative overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+                  <div className={cn('pointer-events-none absolute inset-0 bg-gradient-to-b to-transparent', accent)} aria-hidden />
+                  <p className="relative text-[10px] text-slate-600">{label}</p>
+                  <p className="relative text-sm font-semibold capitalize truncate text-white">{value}</p>
                 </div>
               ))}
             </div>

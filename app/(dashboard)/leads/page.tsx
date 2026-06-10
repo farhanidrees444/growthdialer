@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Phone, Mail, Search, X, ExternalLink, ChevronLeft, ChevronRight,
-  Sparkles, TrendingUp, Clock, UserPlus, MoreHorizontal, Pencil,
+  Sparkles, Clock, UserPlus, MoreHorizontal, Pencil,
   Trash2, Eye, Filter, Download, Plus, Tag, Check,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ import { ViewToggle, type ViewMode } from "@/components/leads/view-toggle";
 import { PremiumEmptyState } from "@/components/ui/premium-empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SpotlightCard } from "@/components/premium/spotlight-card";
+import { LeadsStatsStrip } from "@/components/leads/leads-stats-strip";
 import { navigateWithTransition, setLeadTransitionId } from "@/lib/ui/lead-transition";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -252,9 +253,9 @@ function LeadCard({
       onClick={onView}
       className={cn(
         "group relative flex h-full cursor-pointer flex-col gap-3 rounded-2xl border p-4 transition-all",
-        "border-white/[0.07] bg-[oklch(0.09_0.006_285)] hover:border-white/[0.14] hover:bg-white/[0.04] hover:-translate-y-0.5",
-        isHot && "border-amber-500/20 hover:border-amber-500/35",
-        selected && "border-emerald-500/30 bg-emerald-500/5",
+        "border-white/[0.07] bg-[oklch(0.09_0.006_285)] hover:border-emerald-500/20 hover:bg-emerald-500/[0.03] hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(52,211,153,0.08)]",
+        isHot && "border-amber-500/25 hover:border-amber-500/40 hover:shadow-[0_8px_32px_rgba(245,158,11,0.1)]",
+        selected && "border-emerald-500/35 bg-emerald-500/5 shadow-[0_0_24px_rgba(52,211,153,0.1)]",
         focused && "ring-2 ring-[#8B5CF6]/40 ring-offset-2 ring-offset-[oklch(0.09_0.006_285)]",
       )}
     >
@@ -360,7 +361,7 @@ function LeadCard({
       {/* Action buttons */}
       <div className="grid grid-cols-2 gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
         <button type="button" onClick={onCall}
-          className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-2 text-xs font-semibold text-white transition hover:bg-emerald-500">
+          className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/25 bg-gradient-to-r from-emerald-600 to-teal-500 py-2 text-xs font-semibold text-white shadow-sm shadow-emerald-500/15 transition hover:shadow-emerald-500/25">
           <Phone className="h-3.5 w-3.5" /> Call
         </button>
         <button type="button" onClick={onView}
@@ -457,7 +458,7 @@ function EmptyState({
       <PremiumEmptyState
         icon={UserPlus}
         scene="leads"
-        accent="violet"
+        accent="emerald"
         title="Your pipeline starts here"
         description="Import a CSV from HubSpot, Salesforce, or a spreadsheet — or add leads one at a time."
         primaryAction={{ label: 'Import CSV', onClick: onImport }}
@@ -872,26 +873,13 @@ export default function LeadsPage() {
       <main className="flex-1 overflow-y-auto">
         {/* Stats strip */}
         {!loading && leads.filter((l) => !l.deleted_at).length > 0 && (
-          <div className="border-b border-white/[0.06] px-4 py-3 lg:px-6">
-            <div className="flex flex-wrap gap-4">
-              {[
-                { label: "Total", value: stats.total, color: "text-white" },
-                { label: "Contacted", value: stats.contacted, color: "text-amber-300" },
-                { label: "Connected", value: stats.connected, color: "text-emerald-300", icon: TrendingUp },
-                { label: "Connect Rate", value: `${stats.rate}%`, color: stats.rate >= 20 ? "text-emerald-300" : "text-slate-300" },
-              ].map(({ label, value, color, icon: Icon }) => (
-                <div key={label} className="flex items-center gap-2">
-                  {Icon && <Icon className="h-3.5 w-3.5 text-emerald-400/70" />}
-                  <span className={`text-lg font-bold tabular-nums ${color}`}>{value}</span>
-                  <span className="text-xs text-slate-600">{label}</span>
-                </div>
-              ))}
-            </div>
+          <div className="border-b border-white/[0.06] px-4 py-4 lg:px-6">
+            <LeadsStatsStrip stats={stats} />
           </div>
         )}
 
         {/* Toolbar */}
-        <div className="border-b border-white/[0.06] px-4 py-3 space-y-3 lg:px-6">
+        <div className="border-b border-white/[0.06] bg-zinc-950/40 px-4 py-3 space-y-3 backdrop-blur-sm lg:px-6">
           {/* Top row: search + actions */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Search */}
@@ -901,7 +889,7 @@ export default function LeadsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by name, company, phone…"
-                className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-emerald-500/25 transition"
+                className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-emerald-500/30 focus:shadow-[0_0_0_3px_rgba(52,211,153,0.08)]"
               />
               {search && (
                 <button type="button" onClick={() => setSearch("")}
@@ -949,7 +937,7 @@ export default function LeadsPage() {
               <button
                 type="button"
                 onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-emerald-500 transition"
+                className="flex items-center gap-1.5 rounded-xl border border-emerald-500/25 bg-gradient-to-r from-emerald-600 to-teal-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-emerald-500/15 transition hover:shadow-emerald-500/25"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Add Lead</span>
