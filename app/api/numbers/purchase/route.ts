@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
 
     // Tag the number with owner's user_id so sync can recover it later
     if (telnyxNumberId) {
+      const connectionId = process.env.TELNYX_CONNECTION_ID?.trim();
       fetch(`https://api.telnyx.com/v2/phone_numbers/${telnyxNumberId}`, {
         method: 'PATCH',
         headers: {
@@ -66,6 +67,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           tags: [`user:${userId}`, `email:${userEmail}`],
+          ...(connectionId ? { connection_id: connectionId } : {}),
         }),
       }).catch((err) => console.error('[NUMBERS-PURCHASE] Tag failed (non-critical):', err));
     }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { calculateRetailPrice } from '@/lib/pricing/calculate-price';
+import { assignNumberToVoiceConnection } from '@/lib/voice/assign-number-connection';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,8 +68,10 @@ export async function POST(_request: NextRequest) {
               next_billing_date: nextBillingDate,
             })
             .eq('id', existing.id);
-          if (!error) synced++;
-          else console.error('[NUMBERS-SYNC] Update error for', phoneNumber, ':', error);
+          if (!error) {
+            synced++;
+            void assignNumberToVoiceConnection(telnyxNumberId);
+          } else console.error('[NUMBERS-SYNC] Update error for', phoneNumber, ':', error);
         } else if (tagUserId === userId) {
           // Tagged to me but DB has wrong owner — correct it
           console.log('[NUMBERS-SYNC] Correcting ownership for', phoneNumber);
@@ -100,8 +103,10 @@ export async function POST(_request: NextRequest) {
             purchased_at: purchasedAt,
             next_billing_date: nextBillingDate,
           });
-        if (!error) synced++;
-        else console.error('[NUMBERS-SYNC] Recovery insert error for', phoneNumber, ':', error);
+        if (!error) {
+          synced++;
+          void assignNumberToVoiceConnection(telnyxNumberId);
+        } else console.error('[NUMBERS-SYNC] Recovery insert error for', phoneNumber, ':', error);
       } else {
         // Untagged number not in DB — do not auto-claim
         skipped++;

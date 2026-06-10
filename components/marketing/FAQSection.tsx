@@ -40,7 +40,7 @@ const faqs = [
   },
   {
     q: "How does AI analysis work?",
-    a: "When recording saves, Groq transcribes the audio and Gemini produces summary, sentiment, intent, and next steps — visible on the recording and lead timeline. No separate 'AI coach' listens in real time.",
+    a: "When a recording saves, our call analysis service transcribes the audio and produces summary, sentiment, intent, and next steps — visible on the recording and lead timeline. No separate 'AI coach' listens in real time.",
   },
   {
     q: "Can managers monitor calls in real-time?",

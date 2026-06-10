@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { hasPermission } from '@/lib/auth/permissions';
 import { resolveAppBaseUrl } from '@/lib/ai/trigger-process-call';
+import { getNumberConnectionId } from '@/lib/voice/assign-number-connection';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -16,18 +17,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
+  const connectionId = process.env.TELNYX_CONNECTION_ID?.trim() ?? null;
+
   const [settingsRes, numbersRes, recentInboundRes] = await Promise.all([
     supabase
       .from('user_settings')
-      .select('inbound_mode, telnyx_telephony_credential_id')
+      .select('inbound_mode')
       .eq('user_id', user.id)
       .maybeSingle(),
     supabase
       .from('purchased_numbers')
-      .select('id, phone_number, status')
+      .select('id, phone_number, status, telnyx_number_id, is_default')
       .eq('user_id', user.id)
       .neq('status', 'released')
-      .limit(5),
+      .order('is_default', { ascending: false }),
     supabase
       .from('calls')
       .select('id, started_at')
@@ -42,54 +45,78 @@ export async function GET(request: NextRequest) {
   const numbers = numbersRes.data ?? [];
   const appUrl = resolveAppBaseUrl();
 
+  let routedCount = 0;
+  let unroutedCount = 0;
+
+  if (connectionId) {
+    await Promise.all(
+      numbers.map(async (n) => {
+        const tid = n.telnyx_number_id as string | null;
+        if (!tid) {
+          unroutedCount++;
+          return;
+        }
+        const onConnection = await getNumberConnectionId(tid);
+        if (onConnection === connectionId) routedCount++;
+        else unroutedCount++;
+      }),
+    );
+  } else {
+    unroutedCount = numbers.length;
+  }
+
   const checks = [
     {
-      id: 'voice_api',
-      label: 'Voice API configured',
-      ok: Boolean(process.env.TELNYX_API_KEY),
-      hint: 'Set TELNYX_API_KEY in Vercel',
+      id: 'voice_service',
+      label: 'Voice service',
+      ok: Boolean(process.env.TELNYX_API_KEY && connectionId),
+      hint: 'Voice service credentials are not fully configured.',
     },
     {
-      id: 'connection',
-      label: 'Voice connection',
-      ok: Boolean(process.env.TELNYX_CONNECTION_ID),
-      hint: 'Set TELNYX_CONNECTION_ID in Vercel',
-    },
-    {
-      id: 'webhook_key',
-      label: 'Webhook signature key',
+      id: 'event_verification',
+      label: 'Call event verification',
       ok: Boolean(process.env.TELNYX_PUBLIC_KEY),
-      hint: 'Set TELNYX_PUBLIC_KEY or webhooks may be rejected',
+      hint: 'Call event verification is not configured — inbound calls may not register.',
     },
     {
       id: 'app_url',
-      label: 'App URL for callbacks',
+      label: 'Server callbacks',
       ok: Boolean(appUrl),
-      hint: 'Set APP_URL=https://app.growthdialer.com',
+      hint: 'Application URL is not configured for call events.',
     },
     {
       id: 'numbers',
-      label: 'Inbound number assigned',
+      label: 'Phone numbers',
       ok: numbers.length > 0,
-      hint: 'Buy or sync a number on My Numbers',
+      hint: 'Buy or sync a number to receive inbound calls.',
+    },
+    {
+      id: 'number_routing',
+      label: 'Inbound number routing',
+      ok: numbers.length > 0 && unroutedCount === 0,
+      hint:
+        unroutedCount > 0
+          ? `${unroutedCount} number(s) are not linked to your voice line — tap Activate inbound below.`
+          : 'No numbers assigned for inbound.',
     },
     {
       id: 'mode',
-      label: 'Routing accepts calls',
+      label: 'Call routing mode',
       ok: mode !== 'off',
-      hint: 'Change inbound mode from Reject All in settings',
+      hint: 'Inbound is set to reject all calls — change in Routing settings.',
     },
     {
       id: 'browser_mode',
-      label: 'Browser ring enabled',
+      label: 'Browser answering',
       ok: mode === 'browser' || mode === 'forward',
-      hint: mode === 'voicemail' ? 'Voicemail only — browser will not ring' : undefined,
+      hint: mode === 'voicemail' ? 'Voicemail only — browser will not ring.' : undefined,
     },
   ];
 
   const score = checks.filter((c) => c.ok).length;
-  const webhookOk = checks.find((c) => c.id === 'webhook_key')?.ok ?? false;
-  const ready = webhookOk && numbers.length > 0 && mode !== 'off' && Boolean(appUrl);
+  const eventOk = checks.find((c) => c.id === 'event_verification')?.ok ?? false;
+  const routingOk = checks.find((c) => c.id === 'number_routing')?.ok ?? false;
+  const ready = eventOk && routingOk && numbers.length > 0 && mode !== 'off' && Boolean(appUrl);
 
   return NextResponse.json({
     ready,
@@ -98,8 +125,10 @@ export async function GET(request: NextRequest) {
     checks,
     inbound_mode: mode,
     number_count: numbers.length,
-    primary_number: numbers[0]?.phone_number ?? null,
+    routed_count: routedCount,
+    unrouted_count: unroutedCount,
+    needs_activation: unroutedCount > 0,
+    primary_number: numbers.find((n) => n.is_default)?.phone_number ?? numbers[0]?.phone_number ?? null,
     last_inbound_at: recentInboundRes.data?.started_at ?? null,
-    webhook_url: appUrl ? `${appUrl}/api/telnyx/webhook` : null,
   });
 }

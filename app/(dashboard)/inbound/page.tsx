@@ -170,7 +170,7 @@ export default function InboundPage() {
               className="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:text-white transition disabled:opacity-50"
             >
               {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              Sync numbers from voice provider
+              Sync numbers from your account
             </button>
           </div>
         </div>
@@ -212,7 +212,10 @@ export default function InboundPage() {
           <InboundRingingHero call={ringingCall} onAccept={accept} onDecline={() => void decline()} />
         )}
 
-        <InboundHealthPanel phoneReady={phoneStatus === 'ready'} />
+        <InboundHealthPanel
+          phoneReady={phoneStatus === 'ready'}
+          onActivated={() => loadStats()}
+        />
 
         {/* Hero number card */}
         {primaryNumber && (

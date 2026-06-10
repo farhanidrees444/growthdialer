@@ -45,6 +45,6 @@ export async function issueVoiceLoginToken(
   return {
     ok: false,
     status: 503,
-    error: 'Voice service is not configured — check Telnyx credentials in environment',
+    error: 'Voice service is not configured. Contact your workspace owner.',
   };
 }

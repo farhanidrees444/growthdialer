@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { CheckCircle2, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { CheckCircle2, AlertCircle, Loader2, RefreshCw, Zap } from 'lucide-react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/lib/utils';
 
@@ -20,17 +20,23 @@ interface HealthData {
   primary_number: string | null;
   last_inbound_at: string | null;
   inbound_mode: string;
-  webhook_url: string | null;
+  needs_activation?: boolean;
+  unrouted_count?: number;
+  routed_count?: number;
 }
 
 interface Props {
   phoneReady: boolean;
+  onActivated?: () => void;
 }
 
-export function InboundHealthPanel({ phoneReady }: Props) {
+export function InboundHealthPanel({ phoneReady, onActivated }: Props) {
   const { apiFetch } = useWorkspace();
   const [health, setHealth] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activating, setActivating] = useState(false);
+  const [activateMsg, setActivateMsg] = useState<string | null>(null);
+  const autoActivateTried = useRef(false);
 
   const load = () => {
     setLoading(true);
@@ -41,6 +47,28 @@ export function InboundHealthPanel({ phoneReady }: Props) {
   };
 
   useEffect(() => { load(); }, [apiFetch]);
+
+  useEffect(() => {
+    if (!health?.needs_activation || autoActivateTried.current || activating) return;
+    autoActivateTried.current = true;
+    void handleActivate();
+  }, [health?.needs_activation]);
+
+  const handleActivate = async () => {
+    setActivating(true);
+    setActivateMsg(null);
+    try {
+      const res = await apiFetch('/api/inbound/activate-routing', { method: 'POST' });
+      const data = await res.json() as { message?: string; activated?: number };
+      setActivateMsg(data.message ?? 'Inbound routing updated.');
+      load();
+      if ((data.activated ?? 0) > 0) onActivated?.();
+    } catch {
+      setActivateMsg('Could not activate inbound routing. Try again or contact support.');
+    } finally {
+      setActivating(false);
+    }
+  };
 
   if (loading && !health) {
     return (
@@ -88,11 +116,37 @@ export function InboundHealthPanel({ phoneReady }: Props) {
           type="button"
           onClick={load}
           className="shrink-0 rounded-lg border border-white/[0.08] p-2 text-muted-foreground hover:text-white transition"
-          aria-label="Refresh health"
+          aria-label="Refresh status"
         >
           <RefreshCw className="h-3.5 w-3.5" />
         </button>
       </div>
+
+      {health.needs_activation && (
+        <div className="mt-4 flex flex-col gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-cyan-200">
+              {health.unrouted_count ?? 0} number{(health.unrouted_count ?? 0) !== 1 ? 's' : ''} not linked to inbound
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              One tap links your numbers so calls ring in the browser.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void handleActivate()}
+            disabled={activating}
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-cyan-400 disabled:opacity-60"
+          >
+            {activating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+            Activate inbound
+          </button>
+        </div>
+      )}
+
+      {activateMsg && (
+        <p className="mt-3 text-xs text-cyan-300/90">{activateMsg}</p>
+      )}
 
       {(failedChecks.length > 0 || !phoneReady) && (
         <ul className="mt-3 space-y-1.5">
@@ -109,11 +163,6 @@ export function InboundHealthPanel({ phoneReady }: Props) {
             </li>
           ))}
         </ul>
-      )}
-      {health.webhook_url && (
-        <p className="mt-3 text-[10px] text-white/25 font-mono break-all">
-          Webhook: {health.webhook_url}
-        </p>
       )}
     </div>
   );
