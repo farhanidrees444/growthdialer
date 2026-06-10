@@ -36,7 +36,7 @@ export function PersistentCallBar({
   onExpand,
   onHangup,
   onToggleMute,
-  layoutId = 'gd-call-bar',
+  layoutId = 'gd-call-pill',
 }: PersistentCallBarProps) {
   const reduce = useReducedMotion();
   const isLive = callStatus === 'active' || callStatus === 'held';
@@ -48,13 +48,13 @@ export function PersistentCallBar({
   const inner = (
     <>
       <div className="relative flex h-2 w-2 shrink-0">
-        {isLive && !reduce && (
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-        )}
-        <span className={cn(
-          'relative inline-flex h-2 w-2 rounded-full',
-          isLive ? 'bg-emerald-500' : callStatus === 'held' ? 'bg-amber-500' : 'bg-slate-500',
-        )} />
+        <span
+          className={cn(
+            'relative inline-flex h-2 w-2 rounded-full',
+            isLive ? 'bg-emerald-500' : callStatus === 'held' ? 'bg-amber-500' : 'bg-slate-500',
+            isLive && !reduce && 'gd-live-dot',
+          )}
+        />
       </div>
 
       <CallWaveform active={isLive} barCount={isMobile ? 14 : 18} className="hidden sm:flex shrink-0 w-16" />

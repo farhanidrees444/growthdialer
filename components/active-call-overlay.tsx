@@ -17,7 +17,7 @@ import { SentimentAmbient } from '@/components/premium/sentiment-ambient';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = 'gd-call-overlay-pos';
-const OVERLAY_W = 488;
+const OVERLAY_W = 420;
 const OVERLAY_H = 610;
 const SNAP_MARGIN = 12;
 const SNAP_THRESHOLD = 90;
@@ -65,81 +65,80 @@ function savePos(x: number, y: number) {
 function LiveWaveform({ active }: { active: boolean }) {
   const barsRef = useRef<HTMLDivElement[]>([]);
   const ctxRef = useRef<AudioContext | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
   const rafRef = useRef<number>(0);
   const activeRef = useRef(active);
+  const synthTRef = useRef(0);
   activeRef.current = active;
 
   useEffect(() => {
     let mounted = true;
-    let analyser: AnalyserNode | null = null;
-    let synthT = 0;
 
-    async function start() {
-      // Try to tap the microphone that's already open for the call
-      if (activeRef.current) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            audio: { echoCancellation: false, noiseSuppression: false },
-            video: false,
-          });
-          if (!mounted) { stream.getTracks().forEach((t) => t.stop()); return; }
-          streamRef.current = stream;
-
-          const audioCtx = new AudioContext();
-          ctxRef.current = audioCtx;
-          const source = audioCtx.createMediaStreamSource(stream);
-          const an = audioCtx.createAnalyser();
+    function setupAnalyser(): AnalyserNode | null {
+      const audioEl = document.getElementById('telnyx-remote-audio') as HTMLAudioElement | null;
+      if (!audioEl) return null;
+      try {
+        if (!ctxRef.current) ctxRef.current = new AudioContext();
+        const ctx = ctxRef.current;
+        if (!sourceRef.current) sourceRef.current = ctx.createMediaElementSource(audioEl);
+        if (!analyserRef.current) {
+          const an = ctx.createAnalyser();
           an.fftSize = 64;
           an.smoothingTimeConstant = 0.82;
-          source.connect(an);
-          analyser = an;
-        } catch {
-          // Mic access denied or unavailable — fall through to synthetic
+          sourceRef.current.connect(an);
+          an.connect(ctx.destination);
+          analyserRef.current = an;
         }
+        return analyserRef.current;
+      } catch {
+        return null;
       }
+    }
 
-      const data = new Uint8Array(analyser?.frequencyBinCount ?? 0);
+    const data = new Uint8Array(32);
 
-      function draw() {
-        if (!mounted) return;
-        const bars = barsRef.current;
+    function draw() {
+      if (!mounted) return;
+      const bars = barsRef.current;
+      const intensity = activeRef.current ? 1 : 0.4;
+      const analyser = analyserRef.current ?? setupAnalyser();
 
-        if (analyser && activeRef.current) {
-          // Real audio data
-          analyser.getByteFrequencyData(data);
+      if (analyser) {
+        analyser.getByteFrequencyData(data);
+        let hasSignal = false;
+        bars.forEach((bar, i) => {
+          const idx = Math.min(Math.floor((i / BAR_COUNT) * data.length), data.length - 1);
+          const raw = (data[idx] ?? 0) / 255;
+          if (raw > 0.04) hasSignal = true;
+          const level = Math.max(0.06, raw * intensity);
+          bar.style.transform = `scaleY(${level.toFixed(3)})`;
+        });
+        if (!hasSignal || !activeRef.current) {
+          synthTRef.current += activeRef.current ? 0.028 : 0.018;
           bars.forEach((bar, i) => {
-            const idx = Math.min(Math.floor((i / BAR_COUNT) * data.length), data.length - 1);
-            const level = Math.max(0.06, (data[idx] ?? 0) / 255);
+            const level = Math.max(0.07, 0.1 + intensity * (0.14 + 0.28 * Math.abs(Math.sin(synthTRef.current + i * 0.44))));
             bar.style.transform = `scaleY(${level.toFixed(3)})`;
           });
-        } else if (activeRef.current) {
-          // Synthetic fallback: smooth sine-based animation
-          synthT += 0.042;
-          bars.forEach((bar, i) => {
-            const level = Math.max(0.08, 0.18 + 0.38 * Math.abs(Math.sin(synthT + i * 0.44)));
-            bar.style.transform = `scaleY(${level.toFixed(3)})`;
-          });
-        } else {
-          // Inactive — flat line
-          bars.forEach((bar) => { bar.style.transform = 'scaleY(0.07)'; });
         }
-
-        rafRef.current = requestAnimationFrame(draw);
+      } else {
+        synthTRef.current += activeRef.current ? 0.042 : 0.022;
+        bars.forEach((bar, i) => {
+          const level = Math.max(0.07, 0.1 + intensity * (0.14 + 0.34 * Math.abs(Math.sin(synthTRef.current + i * 0.44))));
+          bar.style.transform = `scaleY(${level.toFixed(3)})`;
+        });
       }
 
       rafRef.current = requestAnimationFrame(draw);
     }
 
-    void start();
+    rafRef.current = requestAnimationFrame(draw);
 
     return () => {
       mounted = false;
       cancelAnimationFrame(rafRef.current);
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-      void ctxRef.current?.close();
     };
-  }, [active]); // restart when active changes
+  }, []);
 
   return (
     <div className="flex items-end justify-center gap-[3px]" style={{ height: 32 }}>
@@ -154,7 +153,6 @@ function LiveWaveform({ active }: { active: boolean }) {
             transform: 'scaleY(0.07)',
             transformOrigin: 'bottom',
             willChange: 'transform',
-            transition: active ? 'none' : 'transform 0.4s ease',
           }}
         />
       ))}
@@ -231,17 +229,14 @@ function QualityDot({ level }: { level: QualityLevel }) {
 
 function PulseRings() {
   return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      {[0, 0.5, 1].map((delay, i) => (
-        <motion.div
-          key={i}
-          className="absolute rounded-full border border-emerald-500/20"
-          initial={{ scale: 1, opacity: 0.5 }}
-          animate={{ scale: 1.9 + i * 0.3, opacity: 0 }}
-          transition={{ duration: 2, delay, repeat: Infinity, ease: 'easeOut' }}
-          style={{ width: '100%', height: '100%' }}
-        />
-      ))}
+    <div
+      className="absolute inset-0 flex items-center justify-center pointer-events-none rounded-2xl"
+      aria-hidden
+    >
+      <div
+        className="absolute rounded-2xl border border-emerald-500/15"
+        style={{ width: '100%', height: '100%', boxShadow: '0 0 24px rgba(16, 185, 129, 0.08)' }}
+      />
     </div>
   );
 }
@@ -298,6 +293,7 @@ function MinimizedPill({
       sentiment={sentiment}
       isMuted={isMuted}
       isMobile={false}
+      layoutId="gd-call-pill"
       onExpand={onExpand}
       onHangup={onHangup}
       onToggleMute={onToggleMute}
@@ -323,6 +319,7 @@ function MobileMinimizedBar({
       sentiment={sentiment}
       isMuted={isMuted}
       isMobile
+      layoutId="gd-call-pill"
       onExpand={onExpand}
       onHangup={onHangup}
       onToggleMute={onToggleMute}
@@ -347,7 +344,6 @@ function PopoutBadge({ onReturn }: { onReturn: () => void }) {
       aria-label="Return to call"
     >
       <div className="relative flex h-2 w-2 shrink-0">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
         <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
       </div>
       <span className="text-[11px] font-bold text-white">Live Call</span>
@@ -380,6 +376,8 @@ export default function ActiveCallOverlay() {
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const saveNotesRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasMountedRef = useRef(false);
+  const lastResetCallIdRef = useRef<string | null>(null);
 
   // Drag position (desktop only)
   const dragX = useMotionValue(0);
@@ -400,8 +398,8 @@ export default function ActiveCallOverlay() {
       dragX.set(saved.x);
       dragY.set(saved.y);
     } else {
-      dragX.set(Math.max(8, window.innerWidth - OVERLAY_W - 20));
-      dragY.set(Math.max(8, window.innerHeight / 2 - OVERLAY_H / 2));
+      dragX.set(Math.max(8, window.innerWidth - OVERLAY_W - 24));
+      dragY.set(24);
     }
   }, [dragX, dragY]);
 
@@ -418,20 +416,21 @@ export default function ActiveCallOverlay() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [callStatus, callAnsweredAt]);
 
-  // ── Reset on new call ──────────────────────────────────────────────────────
+  // ── Reset on new call session only ────────────────────────────────────────
   useEffect(() => {
-    if (callStatus === 'connecting') {
-      setNotes('');
-      setMode('full');
-      setShowDTMF(false);
-      setShowNotes(false);
-      setElapsed(0);
-      setDbCallId(null);
-      setVmDropped(false);
-      setVmDropping(false);
-      setCoachRequested(false);
-    }
-  }, [callStatus]);
+    if (callStatus !== 'connecting' || !telnyxCallId) return;
+    if (telnyxCallId === lastResetCallIdRef.current) return;
+    lastResetCallIdRef.current = telnyxCallId;
+    setNotes('');
+    setMode('full');
+    setShowDTMF(false);
+    setShowNotes(false);
+    setElapsed(0);
+    setDbCallId(null);
+    setVmDropped(false);
+    setVmDropping(false);
+    setCoachRequested(false);
+  }, [callStatus, telnyxCallId]);
 
   // ── Look up DB call ID from Telnyx call ID ─────────────────────────────────
   useEffect(() => {
@@ -653,7 +652,7 @@ export default function ActiveCallOverlay() {
   ] as const;
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       {/* ── State 2: Minimized pill / mobile bar ─────────────────── */}
       {mode === 'minimized' && (isMobile ? (
         <MobileMinimizedBar
@@ -690,7 +689,7 @@ export default function ActiveCallOverlay() {
       {mode === 'full' && (
         <SentimentAmbient sentiment={callSentiment}>
         <motion.div
-          layoutId="gd-call-bar"
+          layout={false}
           drag={!isMobile}
           dragMomentum={false}
           dragElastic={0}
@@ -702,13 +701,15 @@ export default function ActiveCallOverlay() {
             right: typeof window !== 'undefined' ? window.innerWidth - OVERLAY_W - SNAP_MARGIN : 800,
             bottom: typeof window !== 'undefined' ? window.innerHeight - OVERLAY_H - SNAP_MARGIN : 400,
           }}
-          initial={{ opacity: 0, scale: 0.94, y: isMobile ? 40 : 0 }}
+          initial={hasMountedRef.current ? false : { opacity: 0, scale: 0.97, y: isMobile ? 24 : 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.94, y: isMobile ? 40 : 0 }}
-          transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+          exit={{ opacity: 0, scale: 0.97, y: isMobile ? 24 : 8 }}
+          transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+          onAnimationComplete={() => { hasMountedRef.current = true; }}
           className={[
-            'z-[var(--z-call-bar)] w-full max-w-[480px] rounded-3xl border border-white/[0.12]',
-            'bg-[oklch(0.085_0.006_285)]/98 shadow-2xl shadow-black/70 backdrop-blur-2xl overflow-hidden',
+            'relative z-[var(--z-call-bar)] w-full max-w-[420px] rounded-3xl border border-white/[0.14]',
+            'bg-gradient-to-b from-[oklch(0.11_0.012_285)]/98 via-[oklch(0.085_0.008_285)]/98 to-[oklch(0.07_0.006_285)]/98',
+            'shadow-[0_24px_80px_-12px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-2xl overflow-hidden',
             isMobile
               ? 'fixed left-4 right-4 mx-auto bottom-[calc(var(--bottom-nav-height)+env(safe-area-inset-bottom,0px)+1rem)]'
               : 'cursor-default select-none',
@@ -716,16 +717,20 @@ export default function ActiveCallOverlay() {
           aria-label="Active call overlay"
           aria-live="polite"
         >
+          {/* Static ambient glow + top accent */}
+          <div className="pointer-events-none absolute inset-0 rounded-3xl" aria-hidden>
+            <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-emerald-500/[0.07] blur-3xl" />
+            <div className="absolute -bottom-12 -left-12 h-36 w-36 rounded-full bg-violet-500/[0.06] blur-3xl" />
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
+          </div>
+
           {/* ── Header ─────────────────────────────────────────────── */}
           <div className={`flex items-center justify-between px-4 pt-4 pb-2 ${!isMobile ? 'cursor-grab active:cursor-grabbing' : ''}`}>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5">
                 <div className="relative flex h-2 w-2">
-                  {callStatus === 'active' && (
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                  )}
                   <span className={`relative inline-flex h-2 w-2 rounded-full ${
-                    callStatus === 'active' ? 'bg-emerald-500'
+                    callStatus === 'active' ? 'bg-emerald-500 gd-live-dot'
                     : callStatus === 'held' ? 'bg-amber-500'
                     : 'bg-slate-500'
                   }`} />
@@ -767,11 +772,7 @@ export default function ActiveCallOverlay() {
             <div className="relative shrink-0">
               {(callStatus === 'ringing' || callStatus === 'connecting') && <PulseRings />}
               {callStatus === 'held' && (
-                <motion.div
-                  animate={{ opacity: [0.2, 0.6, 0.2] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="absolute inset-0 -m-2 rounded-full bg-amber-500/20"
-                />
+                <div className="absolute inset-0 -m-2 rounded-full bg-amber-500/15 ring-1 ring-amber-500/20" />
               )}
               <div className={`relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 text-lg font-bold text-white shadow-lg ${
                 callStatus === 'active' ? 'shadow-emerald-900/40' : ''
@@ -798,18 +799,14 @@ export default function ActiveCallOverlay() {
 
             <div className={`shrink-0 text-xl font-mono font-bold tabular-nums ${callStatus === 'held' ? 'text-amber-400' : 'text-white'}`}>
               {isCallActive ? fmtTime(elapsed) : (
-                <motion.span
-                  animate={{ opacity: [1, 0.3, 1] }}
-                  transition={{ duration: 1.2, repeat: Infinity }}
-                  className="text-slate-500"
-                >···</motion.span>
+                <span className="text-slate-500 tracking-widest">···</span>
               )}
             </div>
           </div>
 
-          {/* ── Live waveform (Web Audio API) ───────────────────────── */}
+          {/* ── Live waveform (remote audio tap) ────────────────────── */}
           {isCallActive && (
-            <div className="px-5 pb-3">
+            <div className="relative px-5 pb-3">
               <LiveWaveform active={callStatus === 'active' && !isOnHold} />
             </div>
           )}
@@ -825,10 +822,10 @@ export default function ActiveCallOverlay() {
                   onClick={onClick}
                   aria-label={label}
                   aria-pressed={active}
-                  className={`relative flex flex-col items-center gap-1 rounded-xl border py-2.5 text-[10px] font-semibold transition-all disabled:opacity-30 ${
+                  className={`relative flex flex-col items-center gap-1.5 rounded-xl border py-3 text-[10px] font-semibold transition-all disabled:opacity-30 ${
                     active
                       ? activeClass
-                      : 'border-white/[0.07] bg-white/[0.03] text-slate-500 hover:border-white/10 hover:text-slate-300'
+                      : 'border-white/[0.08] bg-white/[0.04] text-slate-500 hover:border-white/15 hover:bg-white/[0.06] hover:text-slate-300 hover:ring-1 hover:ring-white/[0.06]'
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" />

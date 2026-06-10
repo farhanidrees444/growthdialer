@@ -373,6 +373,15 @@ html {
   }
 }
 
+/* Subtle live indicator — no animate-ping flicker */
+@keyframes gd-live-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35); }
+  50% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12); }
+}
+.gd-live-dot {
+  animation: gd-live-glow 2.8s ease-in-out infinite;
+}
+
 /* ─── Dashboard scroll fix ─────────────────────────────────────────────────
    All dashboard pages use <main class="flex-1 overflow-y-auto">.
    On mobile, the fixed bottom tab bar (64px) would cover the last card.
