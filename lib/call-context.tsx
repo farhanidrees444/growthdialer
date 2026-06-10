@@ -9,7 +9,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { toast } from 'sonner';
 import { useWebPhone } from '@/contexts/webphone-context';
+import { normalizePhone, isE164 } from '@/lib/phone';
 import type { LeadRecord } from '@/components/dialer/LeadCard';
 
 export interface CallMeta {
@@ -47,7 +49,7 @@ export function useCallContext(): CallContextValue {
 }
 
 export function CallProvider({ children }: { children: ReactNode }) {
-  const { makeCall, callStatus } = useWebPhone();
+  const { makeCall, callStatus, phoneStatus } = useWebPhone();
 
   const [activeLead, setActiveLead] = useState<LeadRecord | null>(null);
   const [activePhone, setActivePhone] = useState('');
@@ -96,6 +98,22 @@ export function CallProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const startCall = useCallback(async (phone: string, lead?: LeadRecord | null, callerNumber?: string) => {
+    const e164 = normalizePhone(phone) ?? (isE164(phone) ? phone : null);
+    if (!e164) {
+      toast.error('Invalid phone number');
+      return;
+    }
+
+    if (phoneStatus !== 'ready') {
+      toast.error('Phone not ready — please wait a moment');
+      return;
+    }
+
+    if (callStatus === 'connecting' || callStatus === 'ringing' || callStatus === 'active' || callStatus === 'held') {
+      toast.error('End the current call before starting a new one');
+      return;
+    }
+
     let fromNumber = callerNumber;
     if (!fromNumber) {
       // Auto-fetch the user's default purchased number so Telnyx accepts the call
@@ -107,9 +125,14 @@ export function CallProvider({ children }: { children: ReactNode }) {
         fromNumber = defaultNum?.phone_number;
       } catch { /* proceed without — call may be rejected by Telnyx */ }
     }
-    registerCallMeta(lead ?? null, phone);
-    makeCall(phone, fromNumber);
-  }, [registerCallMeta, makeCall]);
+
+    if (!fromNumber) {
+      toast.warning('No outbound caller ID configured — call may fail');
+    }
+
+    registerCallMeta(lead ?? null, e164);
+    makeCall(e164, fromNumber);
+  }, [registerCallMeta, makeCall, phoneStatus, callStatus]);
 
   const dismissSaveAsLead = useCallback(() => setShowSaveAsLead(false), []);
 

@@ -344,10 +344,15 @@ export default function DialerPage() {
       toast.error('End the current call before starting a new one');
       return;
     }
-    const e164 = normalizePhone(phone) ?? phone;
+    const e164 = normalizePhone(phone);
+    if (!e164) {
+      toast.error('Invalid phone number');
+      return;
+    }
     callTimer.reset();
     if (lead) {
-      // Lead call: switch center column to live stage immediately
+      // Register meta first so overlay hides on /dialer, then switch to live stage
+      registerCallMeta(lead as import('@/components/dialer/LeadCard').LeadRecord, e164);
       startCall('', '');
     } else {
       // Manual dial (no lead): clear queue selection and use overlay

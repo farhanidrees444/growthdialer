@@ -343,7 +343,7 @@ function PopoutBadge({ onReturn }: { onReturn: () => void }) {
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0.8, opacity: 0 }}
       transition={{ type: 'spring', damping: 22, stiffness: 300 }}
-      className="gd-call-dock z-[var(--z-popout-badge)] flex items-center gap-2.5 rounded-2xl border border-white/[0.12] bg-[oklch(0.09_0.006_285)]/96 px-3.5 py-2.5 shadow-2xl shadow-black/60 backdrop-blur-xl transition hover:border-white/20"
+      className="gd-call-dock z-[var(--z-call-bar)] flex items-center gap-2.5 rounded-2xl border border-white/[0.12] bg-[oklch(0.09_0.006_285)]/96 px-3.5 py-2.5 shadow-2xl shadow-black/60 backdrop-blur-xl transition hover:border-white/20"
       aria-label="Return to call"
     >
       <div className="relative flex h-2 w-2 shrink-0">
@@ -714,7 +714,7 @@ export default function ActiveCallOverlay() {
           exit={{ opacity: 0, scale: 0.94, y: isMobile ? 40 : 0 }}
           transition={{ type: 'spring', damping: 26, stiffness: 300 }}
           className={[
-            'z-50 w-full max-w-[480px] rounded-3xl border border-white/[0.12]',
+            'z-[var(--z-call-bar)] w-full max-w-[480px] rounded-3xl border border-white/[0.12]',
             'bg-[oklch(0.085_0.006_285)]/98 shadow-2xl shadow-black/70 backdrop-blur-2xl overflow-hidden',
             isMobile
               ? 'fixed left-4 right-4 mx-auto bottom-[calc(var(--bottom-nav-height)+env(safe-area-inset-bottom,0px)+1rem)]'
