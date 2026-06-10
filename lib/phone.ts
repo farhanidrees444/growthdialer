@@ -42,3 +42,15 @@ export function normalizePhone(raw: string, defaultCountry: CountryCode = 'US'):
 export function isE164(phone: string): boolean {
   return /^\+[1-9]\d{6,14}$/.test(phone);
 }
+
+/** Last-resort E.164 shaping when strict normalization fails. */
+export function bestEffortE164(raw: string): string | null {
+  const normalized = normalizePhone(raw) ?? (isE164(raw) ? raw : null);
+  if (normalized) return normalized;
+
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return null;
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+  return `+${digits}`;
+}

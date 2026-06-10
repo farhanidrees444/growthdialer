@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 import { useWebPhone } from '@/contexts/webphone-context';
-import { normalizePhone, isE164 } from '@/lib/phone';
+import { bestEffortE164 } from '@/lib/phone';
 import type { LeadRecord } from '@/components/dialer/LeadCard';
 
 export interface CallMeta {
@@ -98,15 +98,14 @@ export function CallProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const startCall = useCallback(async (phone: string, lead?: LeadRecord | null, callerNumber?: string) => {
-    const e164 = normalizePhone(phone) ?? (isE164(phone) ? phone : null);
+    const e164 = bestEffortE164(phone);
     if (!e164) {
       toast.error('Invalid phone number');
       return;
     }
 
     if (phoneStatus !== 'ready') {
-      toast.error('Phone not ready — please wait a moment');
-      return;
+      toast.warning('Phone not ready — attempting call anyway');
     }
 
     if (callStatus === 'connecting' || callStatus === 'ringing' || callStatus === 'active' || callStatus === 'held') {

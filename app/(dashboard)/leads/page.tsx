@@ -679,14 +679,6 @@ export default function LeadsPage() {
   }, []);
 
   const handleCall = useCallback((lead: FullLead) => {
-    if (lead.status === 'invalid_phone') {
-      toast.error('This lead has an invalid phone number');
-      return;
-    }
-    if (lead.dnc) {
-      toast.error('This lead is on the Do Not Call list');
-      return;
-    }
     startOutboundCall(lead.phone, {
       id: lead.id, name: lead.name, company: lead.company ?? "",
       phone: lead.phone, title: lead.title ?? "",

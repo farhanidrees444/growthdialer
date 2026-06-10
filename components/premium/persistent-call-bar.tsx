@@ -105,7 +105,7 @@ export function PersistentCallBar({
         transition={SPRING}
         className={cn(
           'flex items-center gap-2.5 border border-white/[0.10] bg-[oklch(0.09_0.006_285)]/96 px-3.5 py-2.5 shadow-2xl shadow-black/60 backdrop-blur-xl',
-          isMobile ? 'left-0 right-0 border-t border-b-0 rounded-none' : 'rounded-2xl',
+          isMobile ? 'z-[var(--z-call-bar)] left-0 right-0 border-t border-b-0 rounded-none' : 'rounded-2xl',
         )}
         style={
           isMobile

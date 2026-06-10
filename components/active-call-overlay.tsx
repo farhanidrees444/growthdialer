@@ -476,13 +476,6 @@ export default function ActiveCallOverlay() {
     return () => { void supabase.removeChannel(ch); };
   }, [dbCallId]);
 
-  // ── Auto-minimize when navigating away from dialer ─────────────────────────
-  useEffect(() => {
-    if (pathname && !pathname.startsWith('/dialer')) {
-      setMode((m) => (m === 'full' ? 'minimized' : m));
-    }
-  }, [pathname]);
-
   // ── Document title pulse ───────────────────────────────────────────────────
   useEffect(() => {
     const isActive = callStatus === 'active' || callStatus === 'held';

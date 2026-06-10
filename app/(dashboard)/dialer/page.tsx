@@ -16,7 +16,7 @@ import { useParallelDialer } from '@/hooks/use-parallel-dialer';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { ownCallsOrFilter } from '@/lib/auth/call-access';
-import { normalizePhone } from '@/lib/phone';
+import { bestEffortE164 } from '@/lib/phone';
 import { X as XIcon } from 'lucide-react';
 
 import { HeaderStrip } from '@/components/dialer/header-strip';
@@ -337,14 +337,13 @@ export default function DialerPage() {
   // ── Call initiation ─────────────────────────────────────────────────────────
   const initiateCall = useCallback((phone: string, lead?: LeadRecord) => {
     if (phoneStatus !== 'ready') {
-      toast.error('Phone not ready — please wait a moment');
-      return;
+      toast.warning('Phone not ready — attempting call anyway');
     }
     if (callStatus === 'connecting' || callStatus === 'ringing' || callStatus === 'active' || callStatus === 'held') {
       toast.error('End the current call before starting a new one');
       return;
     }
-    const e164 = normalizePhone(phone);
+    const e164 = bestEffortE164(phone);
     if (!e164) {
       toast.error('Invalid phone number');
       return;
@@ -494,7 +493,7 @@ export default function DialerPage() {
           onStartParallelDial={() => setParallelConfirmOpen(true)}
           powerActive={powerDialer.isActive}
           parallelActive={parallelDialer.isActive}
-          disabled={isLive || phoneStatus !== 'ready'}
+          disabled={isLive}
         />
       </div>
 
@@ -625,7 +624,7 @@ export default function DialerPage() {
                   onMarkHot={handleMarkHot}
                   onDnc={handleDnc}
                   onClose={() => selectLead(null)}
-                  disabled={phoneStatus !== 'ready'}
+                  disabled={false}
                 />
               </motion.div>
             )}
