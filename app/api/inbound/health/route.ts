@@ -69,7 +69,15 @@ export async function GET(request: NextRequest) {
   const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
   const appUrl = resolveInboundAppUrl(host);
   const eventsVerified = Boolean(process.env.TELNYX_PUBLIC_KEY?.trim());
-  const voiceConfigured = connectionConfig.ok && Boolean(process.env.TELNYX_API_KEY?.trim());
+  const voiceApiPresent = Boolean(process.env.TELNYX_API_KEY?.trim());
+  const providerReachable = providerIndex.size > 0;
+  const hasRecentInbound = Boolean(recentInboundRes.data);
+  const credentialReady = Boolean(credentialId);
+  const voiceOperational =
+    connectionConfig.ok
+    || (providerReachable && voiceApiPresent && Boolean(connectionId) && credentialReady)
+    || (hasRecentInbound && credentialReady && voiceApiPresent);
+  const voiceConfigured = voiceOperational && voiceApiPresent;
   const inboundEnabled = mode !== 'off';
   const browserAnswering = mode === 'browser' || mode === 'forward';
 
@@ -81,7 +89,9 @@ export async function GET(request: NextRequest) {
     hasNumbers: numbers.length > 0,
     inboundEnabled,
     browserAnswering,
-    credentialReady: Boolean(credentialId),
+    credentialReady,
+    providerReachable,
+    hasRecentInbound,
   });
 
   let status: 'live' | 'almost_ready' | 'needs_setup' | 'offline' = 'needs_setup';

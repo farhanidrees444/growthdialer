@@ -17,6 +17,8 @@ export function listInboundBlockers(input: {
   inboundEnabled: boolean;
   browserAnswering: boolean;
   credentialReady: boolean;
+  providerReachable?: boolean;
+  hasRecentInbound?: boolean;
 }): InboundBlocker[] {
   const blockers: InboundBlocker[] = [];
 
@@ -44,54 +46,59 @@ export function listInboundBlockers(input: {
     });
   }
 
-  if (!input.connection.ok) {
+  const voiceLineOperational =
+    Boolean(input.providerReachable)
+    && input.credentialReady
+    && (input.primaryRouted || input.hasRecentInbound);
+
+  if (!input.connection.ok && !voiceLineOperational) {
     if (input.connection.env_mismatch) {
       blockers.push({
         code: 'connection_env_mismatch',
-        label: 'Connection ID mismatch on server',
+        label: 'Voice connection settings need attention',
         fix:
-          'TELNYX_CONNECTION_ID must be your SIP Connection ID — not the browser telephony credential ID (those are two different values). Update in deployment settings and redeploy; latest code also auto-resolves from your credential.',
+          'Your SIP connection ID and browser credential ID may be swapped in deployment settings. Update them and redeploy — we also try to auto-resolve on load.',
       });
     } else if (input.connection.failure_reason === 'auth_failed') {
       blockers.push({
         code: 'voice_api_auth',
         label: 'Voice API key rejected',
-        fix: 'Regenerate your voice API key in the provider portal and update TELNYX_API_KEY in Vercel, then redeploy.',
+        fix: 'Regenerate your voice API key in the provider portal, update deployment settings, and redeploy.',
       });
     } else if (input.connection.failure_reason === 'missing_api_key') {
       blockers.push({
         code: 'missing_api_key',
         label: 'Voice API key missing on server',
-        fix: 'Add TELNYX_API_KEY to your deployment environment and redeploy.',
+        fix: 'Add your voice API key to deployment settings and redeploy.',
       });
     } else if (input.connection.failure_reason === 'missing_connection_id') {
       blockers.push({
         code: 'missing_connection_id',
         label: 'Voice connection ID missing',
-        fix: 'Add TELNYX_CONNECTION_ID (SIP Connection ID) and TELNYX_TELEPHONY_CREDENTIAL_ID (browser credential) to your deployment environment.',
+        fix: 'Add your SIP connection ID and browser telephony credential to deployment settings, then redeploy.',
       });
     } else if (input.connection.failure_reason === 'not_found') {
       blockers.push({
         code: 'connection_not_found',
         label: 'Voice connection not found',
         fix:
-          'TELNYX_CONNECTION_ID must be the SIP Connection ID from your voice portal (Credential Connection), not the telephony credential or phone number ID.',
+          'Use your SIP connection ID from the voice portal — not the browser credential or phone number ID.',
       });
     } else {
       blockers.push({
         code: 'connection_config',
         label: 'Voice line setup incomplete',
-        fix: 'Refresh this page — we auto-configure on load. If this persists, check deployment logs for [VOICE].',
+        fix: 'Refresh this page — we auto-configure on load. If this persists, check deployment logs.',
       });
     }
   }
 
-  if (!input.eventsVerified) {
+  if (!input.eventsVerified && !input.hasRecentInbound) {
     blockers.push({
       code: 'webhook_verify',
       label: 'Call event verification not enabled',
       fix:
-        'Add TELNYX_PUBLIC_KEY (Public Key from your voice portal → API Keys) to your deployment environment and redeploy.',
+        'Add your voice public key to deployment settings so inbound webhooks are verified, then redeploy.',
     });
   }
 
@@ -108,7 +115,7 @@ export function listInboundBlockers(input: {
       code: 'browser_credential',
       label: 'Browser voice endpoint not ready',
       fix:
-        'Add TELNYX_TELEPHONY_CREDENTIAL_ID to your deployment environment, keep this tab open, and allow microphone access.',
+        'Add your browser telephony credential to deployment settings, keep this tab open, and allow microphone access.',
     });
   }
 

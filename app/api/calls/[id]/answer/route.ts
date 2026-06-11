@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
+import { completeInboundBridge } from '@/lib/inbound/bridge-to-browser';
 
 export async function POST(
   request: NextRequest,
@@ -36,7 +37,17 @@ export async function POST(
       .update({ status: 'in_progress', answered_at: new Date().toISOString() })
       .eq('id', id);
 
-    // PSTN ↔ browser bridge runs on call.answered for the WebRTC leg (after SDK answer()).
+    if (
+      call.direction === 'inbound'
+      && call.telnyx_call_id
+      && call.telnyx_session_id
+    ) {
+      await new Promise((r) => setTimeout(r, 700));
+      const bridged = await completeInboundBridge(call.telnyx_call_id, call.telnyx_session_id);
+      if (!bridged) {
+        console.warn('[ANSWER] Bridge backup did not complete — webhook may still bridge');
+      }
+    }
 
     console.log('[ANSWER] Inbound call answered:', id);
     return NextResponse.json({ success: true });

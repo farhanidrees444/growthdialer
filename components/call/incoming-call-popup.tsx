@@ -317,8 +317,13 @@ export function IncomingCallPopup({ userId }: Props) {
       console.warn('[POPUP] Microphone permission denied — inbound audio may not work');
     }
 
-    // Answer WebRTC leg first so audio path is live, then bridge PSTN on server
     answerIncomingCall();
+
+    for (let i = 0; i < 20; i++) {
+      const st = callStatusRef.current;
+      if (st === 'active' || st === 'connecting') break;
+      await new Promise((r) => setTimeout(r, 200));
+    }
 
     void apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch(
       (err) => console.error('[POPUP] REST answer failed:', err),

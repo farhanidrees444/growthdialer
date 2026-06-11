@@ -186,13 +186,18 @@ export function InboundHealthPanel({ phoneReady, onActivated }: Props) {
       )}
 
       {activateMsg && (
-        <p className="relative mt-3 text-xs text-cyan-200/90">{activateMsg}</p>
+        <p className="relative mt-3 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-100/90">
+          {activateMsg}
+        </p>
       )}
 
-      {!isLive && (health.blockers?.length ?? 0) > 1 && (
-        <ul className="relative mt-3 space-y-1.5 text-xs text-amber-200/80">
-          {health.blockers!.slice(1, 4).map((b) => (
-            <li key={b.code}>• {b.fix}</li>
+      {!isLive && (health.blockers?.length ?? 0) > 0 && (
+        <ul className="relative mt-3 space-y-2 rounded-xl border border-white/[0.06] bg-black/25 px-4 py-3">
+          {health.blockers!.slice(0, 3).map((b) => (
+            <li key={b.code} className="text-xs leading-relaxed">
+              <span className="font-medium text-amber-100/90">{b.label}</span>
+              <span className="text-white/45"> — {b.fix}</span>
+            </li>
           ))}
         </ul>
       )}

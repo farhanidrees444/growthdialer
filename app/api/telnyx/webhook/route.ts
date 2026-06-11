@@ -343,7 +343,7 @@ export async function POST(request: NextRequest) {
             supabase,
             userId,
             callControlId,
-            toNumber,
+            fromNumber,
             newCall?.id,
           );
           console.log('[INBOUND] Browser bridge:', bridged.ok ? bridged.strategy : 'failed', '| user:', userId);

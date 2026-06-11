@@ -4,7 +4,7 @@ export function readEnv(name: string): string | null {
   if (!raw) return null;
   const trimmed = raw.trim();
   if (!trimmed) return null;
-  return trimmed.replace(/^["']|["']$/g, '');
+  return trimmed.replace(/^["']|["']$/g, '').replace(/[\r\n]+/g, '');
 }
 
 export function readVoiceApiKey(): string | null {

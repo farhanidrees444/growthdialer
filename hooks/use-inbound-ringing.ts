@@ -23,9 +23,10 @@ export interface InboundRingingCall {
 
 export function useInboundRinging(userId: string | undefined) {
   const [call, setCall] = useState<InboundRingingCall | null>(null);
+  const [accepting, setAccepting] = useState(false);
   const callIdRef = useRef<string | null>(null);
 
-  const { answerIncomingCall, hasOutboundSession, callStatus, hangup } = useWebPhone();
+  const { answerIncomingCall, hasOutboundSession, callStatus, hangup, requestMicPermission } = useWebPhone();
   const { registerCallMeta, callInitiatedAt } = useCallContext();
   const { apiFetch } = useWorkspace();
 
@@ -48,12 +49,14 @@ export function useInboundRinging(userId: string | undefined) {
   const showCall = useCallback((incoming: InboundRingingCall) => {
     if (isOutboundBusy()) return false;
     callIdRef.current = incoming.id;
+    setAccepting(false);
     setCall(incoming);
     return true;
   }, [isOutboundBusy]);
 
   const clearCall = useCallback(() => {
     callIdRef.current = null;
+    setAccepting(false);
     setCall(null);
   }, []);
 
@@ -100,7 +103,7 @@ export function useInboundRinging(userId: string | undefined) {
         (payload) => {
           const row = payload.new as Record<string, unknown>;
           if (row.id !== callIdRef.current) return;
-          if (['missed', 'completed', 'rejected', 'voicemail', 'in_progress'].includes(row.status as string)) {
+          if (['missed', 'completed', 'rejected', 'voicemail'].includes(row.status as string)) {
             clearCall();
           }
         },
@@ -142,13 +145,13 @@ export function useInboundRinging(userId: string | undefined) {
     || (callInitiatedAt != null && callStatus === 'ringing');
 
   const accept = useCallback(async () => {
-    if (!call) return;
+    if (!call || accepting) return;
+    setAccepting(true);
+
     const callId = call.id;
     const leadName = call.lead
       ? [call.lead.first_name, call.lead.last_name].filter(Boolean).join(' ')
       : 'Unknown Caller';
-
-    clearCall();
 
     registerCallMeta(
       call.lead
@@ -162,24 +165,43 @@ export function useInboundRinging(userId: string | undefined) {
       call.from_number,
     );
 
-    void apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch(() => {});
+    const micOk = await requestMicPermission();
+    if (!micOk) {
+      console.warn('[INBOUND] Microphone permission denied — audio may not work');
+    }
+
     answerIncomingCall();
-  }, [call, clearCall, registerCallMeta, apiFetch, answerIncomingCall]);
+
+    for (let i = 0; i < 20; i++) {
+      const st = callStatusRef.current;
+      if (st === 'active' || st === 'connecting') break;
+      await new Promise((r) => setTimeout(r, 200));
+    }
+
+    try {
+      await apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' });
+    } catch {
+      console.error('[INBOUND] REST answer failed');
+    }
+
+    clearCall();
+  }, [call, accepting, registerCallMeta, requestMicPermission, answerIncomingCall, apiFetch, clearCall]);
 
   const decline = useCallback(async () => {
-    if (!call) return;
+    if (!call || accepting) return;
     const callId = call.id;
     clearCall();
     try {
       await apiFetch(`/api/calls/${callId}/end`, { method: 'POST' });
     } catch { /* non-fatal */ }
     hangup();
-  }, [call, clearCall, apiFetch, hangup]);
+  }, [call, accepting, clearCall, apiFetch, hangup]);
 
   return {
     call: outboundActive ? null : call,
     accept,
     decline,
+    accepting,
     isRinging: Boolean(call) && !outboundActive,
   };
 }

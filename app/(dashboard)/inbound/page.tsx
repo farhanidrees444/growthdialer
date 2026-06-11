@@ -83,7 +83,7 @@ export default function InboundPage() {
   const userId = session?.user?.id;
   const { apiFetch } = useWorkspace();
   const { phoneStatus, reconnect } = useWebPhone();
-  const { call: ringingCall, accept, decline, isRinging } = useInboundRinging(userId);
+  const { call: ringingCall, accept, decline, accepting, isRinging } = useInboundRinging(userId);
 
   const [stats, setStats] = useState<InboundStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -209,7 +209,12 @@ export default function InboundPage() {
         </PageHeader>
 
         {isRinging && ringingCall && (
-          <InboundRingingHero call={ringingCall} onAccept={accept} onDecline={() => void decline()} />
+          <InboundRingingHero
+            call={ringingCall}
+            onAccept={() => void accept()}
+            onDecline={() => void decline()}
+            accepting={accepting}
+          />
         )}
 
         <InboundHealthPanel
