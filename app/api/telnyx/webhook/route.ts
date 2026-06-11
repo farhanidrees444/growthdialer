@@ -522,7 +522,7 @@ export async function POST(request: NextRequest) {
         'id, user_id, lead_id, answered_at, to_number, from_number, direction, duration_seconds, was_recorded, disposition, status, telnyx_call_id, telnyx_session_id',
       );
 
-      // WebRTC ring leg dropped before agent answered — do not mark inbound as missed.
+      // Browser/WebRTC ring leg dropped before agent answered — PSTN caller stays ringing.
       if (
         callRow
         && callRow.direction === 'inbound'
@@ -530,15 +530,20 @@ export async function POST(request: NextRequest) {
         && callControlId
         && (callRow.status === 'ringing' || callRow.status === null)
       ) {
-        const isWebRtcLeg =
+        const pstnControlId = callRow.telnyx_call_id as string | null | undefined;
+        const isBrowserRingLeg =
           hangupBridgeState?.gd_inbound_bridge === true
           || (
+            pstnControlId
+            && pstnControlId !== callControlId
+          )
+          || (
             callRow.telnyx_session_id === callControlId
-            && callRow.telnyx_call_id
-            && callRow.telnyx_call_id !== callControlId
+            && pstnControlId
+            && pstnControlId !== callControlId
           );
 
-        if (isWebRtcLeg) {
+        if (isBrowserRingLeg) {
           const pstnId = String(hangupBridgeState?.pstn_call_control_id ?? callRow.telnyx_call_id);
           const userId = String(hangupBridgeState?.user_id ?? callRow.user_id);
           const ownedDid = callRow.to_number ?? '';
@@ -583,15 +588,35 @@ export async function POST(request: NextRequest) {
       console.log('[WEBHOOK] call.hangup — cause:', hangupCause, '| duration:', durationSeconds, 's');
 
       if (callRow) {
-        await supabase
-          .from('calls')
-          .update({
-            status: 'completed',
-            ended_at: endedAt,
-            hangup_cause: hangupCause,
-            ...(durationSeconds !== null ? { duration_seconds: durationSeconds } : {}),
-          })
-          .eq('id', callRow.id);
+        const isVoicemail =
+          callRow.disposition === 'voicemail' || callRow.status === 'voicemail';
+        const inboundStillRinging =
+          callRow.direction === 'inbound'
+          && !callRow.answered_at
+          && !isVoicemail
+          && (callRow.status === 'ringing' || callRow.status === null);
+
+        if (inboundStillRinging) {
+          await supabase
+            .from('calls')
+            .update({
+              disposition: 'missed',
+              status: 'missed',
+              ended_at: endedAt,
+              hangup_cause: hangupCause,
+            })
+            .eq('id', callRow.id);
+        } else {
+          await supabase
+            .from('calls')
+            .update({
+              status: 'completed',
+              ended_at: endedAt,
+              hangup_cause: hangupCause,
+              ...(durationSeconds !== null ? { duration_seconds: durationSeconds } : {}),
+            })
+            .eq('id', callRow.id);
+        }
 
         if (callRow.lead_id) {
           await supabase.from('leads').update({ last_called_at: endedAt }).eq('id', callRow.lead_id);
@@ -608,14 +633,7 @@ export async function POST(request: NextRequest) {
           metadata: { event: 'call.hangup', call_id: callRow.id, duration_seconds: durationSeconds, hangup_cause: hangupCause },
         }).maybeSingle();
 
-        // Detect missed inbound call (hung up before answered — not voicemail)
-        const isVoicemail =
-          callRow.disposition === 'voicemail' || callRow.status === 'voicemail';
-        if (callRow.direction === 'inbound' && !callRow.answered_at && !isVoicemail) {
-          await supabase
-            .from('calls')
-            .update({ disposition: 'missed', status: 'missed' })
-            .eq('id', callRow.id);
+        if (inboundStillRinging) {
 
           const { data: notifSettings } = await supabase
             .from('user_settings')

@@ -41,16 +41,15 @@ interface InboundRingingContextValue {
 
 const InboundRingingContext = createContext<InboundRingingContextValue | null>(null);
 
-const TERMINAL_STATUSES = new Set(['missed', 'completed', 'rejected', 'voicemail', 'failed']);
+/** Only statuses that mean the agent can no longer answer. */
+const DISMISS_STATUSES = new Set(['missed', 'rejected', 'voicemail', 'failed']);
 
-function blocksInboundUi(
+function blocksNewInbound(
   hasOutboundSession: boolean,
-  isInboundRinging: boolean,
   callStatus: string,
 ): boolean {
   if (hasOutboundSession) return true;
-  if (isInboundRinging) return false;
-  return callStatus === 'connecting' || callStatus === 'active' || callStatus === 'held';
+  return callStatus === 'active' || callStatus === 'held';
 }
 
 export function InboundRingingProvider({
@@ -66,11 +65,11 @@ export function InboundRingingProvider({
   const callIdRef = useRef<string | null>(null);
   const ringStartedRef = useRef<number | null>(null);
   const acceptingRef = useRef(false);
+  const stickyRingRef = useRef(false);
 
   const {
     answerIncomingCall,
     hasOutboundSession,
-    isInboundRinging,
     callStatus,
     hangup,
     requestMicPermission,
@@ -79,37 +78,35 @@ export function InboundRingingProvider({
   const { apiFetch } = useWorkspace();
 
   const hasOutboundSessionRef = useRef(hasOutboundSession);
-  const isInboundRingingRef = useRef(isInboundRinging);
   const callStatusRef = useRef(callStatus);
   const apiFetchRef = useRef(apiFetch);
   hasOutboundSessionRef.current = hasOutboundSession;
-  isInboundRingingRef.current = isInboundRinging;
   callStatusRef.current = callStatus;
   apiFetchRef.current = apiFetch;
   acceptingRef.current = accepting;
 
-  const isOutboundBusy = useCallback(() => {
-    return blocksInboundUi(
-      hasOutboundSessionRef.current,
-      isInboundRingingRef.current,
-      callStatusRef.current,
-    );
+  const blocksNewInboundNow = useCallback(() => {
+    return blocksNewInbound(hasOutboundSessionRef.current, callStatusRef.current);
   }, []);
 
   const beginRing = useCallback((incoming: InboundRingingCall) => {
-    if (isOutboundBusy()) return false;
+    if (blocksNewInboundNow()) return false;
     callIdRef.current = incoming.id;
-    ringStartedRef.current = Date.now();
-    setRingElapsedSec(0);
+    stickyRingRef.current = true;
+    if (!ringStartedRef.current) {
+      ringStartedRef.current = Date.now();
+      setRingElapsedSec(0);
+    }
     setAccepting(false);
     setCall(incoming);
     playInboundRingtone();
     return true;
-  }, [isOutboundBusy]);
+  }, [blocksNewInboundNow]);
 
   const clearCall = useCallback((stopAudio = true) => {
     callIdRef.current = null;
     ringStartedRef.current = null;
+    stickyRingRef.current = false;
     setAccepting(false);
     setCall(null);
     setRingElapsedSec(0);
@@ -117,8 +114,7 @@ export function InboundRingingProvider({
   }, []);
 
   const shouldDismissStatus = useCallback((status: string) => {
-    if (acceptingRef.current && status === 'in_progress') return false;
-    return TERMINAL_STATUSES.has(status);
+    return DISMISS_STATUSES.has(status);
   }, []);
 
   useEffect(() => {
@@ -133,7 +129,7 @@ export function InboundRingingProvider({
         async (payload) => {
           const row = payload.new as Record<string, unknown>;
           if (row.direction !== 'inbound' || row.status !== 'ringing') return;
-          if (isOutboundBusy()) {
+          if (blocksNewInboundNow()) {
             void apiFetchRef.current(`/api/calls/${row.id as string}/end`, { method: 'POST' }).catch(() => {});
             return;
           }
@@ -165,11 +161,13 @@ export function InboundRingingProvider({
           const row = payload.new as Record<string, unknown>;
           if (row.id !== callIdRef.current) return;
           const status = row.status as string;
+
           if (status === 'in_progress' && acceptingRef.current) {
             clearCall(true);
             window.dispatchEvent(new CustomEvent('gd-call-ended'));
             return;
           }
+
           if (shouldDismissStatus(status)) {
             clearCall(true);
             window.dispatchEvent(new CustomEvent('gd-call-ended'));
@@ -182,22 +180,45 @@ export function InboundRingingProvider({
       supabase.removeChannel(channel);
       stopInboundRingtone();
     };
-  }, [userId, isOutboundBusy, beginRing, clearCall, shouldDismissStatus]);
+  }, [userId, blocksNewInboundNow, beginRing, clearCall, shouldDismissStatus]);
 
   useEffect(() => {
     if (!userId) return;
 
     const poll = async () => {
-      if (callIdRef.current || isOutboundBusy()) return;
+      if (blocksNewInboundNow() && !stickyRingRef.current) return;
+
       try {
         const res = await apiFetchRef.current('/api/inbound/ringing');
         if (!res.ok) return;
         const data = await res.json() as { call?: InboundRingingCall | null };
-        if (data.call?.status === 'ringing') beginRing(data.call);
+
+        if (data.call?.status === 'ringing') {
+          if (!callIdRef.current) {
+            beginRing(data.call);
+          } else if (data.call.id === callIdRef.current) {
+            setCall((prev) => (prev ? { ...prev, ...data.call } : data.call!));
+            stickyRingRef.current = true;
+          }
+          return;
+        }
+
+        if (stickyRingRef.current && callIdRef.current && !data.call) {
+          const graceMs = Date.now() - (ringStartedRef.current ?? Date.now());
+          if (graceMs < 4000) return;
+          clearCall(true);
+        }
       } catch { /* non-fatal */ }
     };
 
-    const onWebrtcRing = () => void poll();
+    const onWebrtcRing = () => {
+      if (stickyRingRef.current && callIdRef.current) {
+        playInboundRingtone();
+        return;
+      }
+      void poll();
+    };
+
     window.addEventListener('gd-webrtc-inbound-ring', onWebrtcRing);
 
     void poll();
@@ -206,7 +227,7 @@ export function InboundRingingProvider({
       clearInterval(interval);
       window.removeEventListener('gd-webrtc-inbound-ring', onWebrtcRing);
     };
-  }, [userId, isOutboundBusy, beginRing]);
+  }, [userId, blocksNewInboundNow, beginRing, clearCall]);
 
   useEffect(() => {
     if (!call) return;
@@ -217,9 +238,6 @@ export function InboundRingingProvider({
     }, 1000);
     return () => clearInterval(tick);
   }, [call]);
-
-  const outboundBlocks = blocksInboundUi(hasOutboundSession, isInboundRinging, callStatus);
-  const visibleCall = outboundBlocks ? null : call;
 
   const accept = useCallback(async () => {
     if (!call || accepting) return;
@@ -263,6 +281,7 @@ export function InboundRingingProvider({
     }
 
     setAccepting(false);
+    stickyRingRef.current = false;
     if (callStatusRef.current === 'active' || callStatusRef.current === 'connecting') {
       clearCall(true);
     }
@@ -282,11 +301,11 @@ export function InboundRingingProvider({
   return (
     <InboundRingingContext.Provider
       value={{
-        call: visibleCall,
+        call,
         accept,
         decline,
         accepting,
-        isRinging: Boolean(visibleCall),
+        isRinging: Boolean(call),
         ringElapsedSec,
       }}
     >

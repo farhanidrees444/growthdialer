@@ -62,7 +62,7 @@ export async function ringBrowserForInbound(
     connectionId,
     to: sipUri,
     from: ownedDid,
-    timeoutSecs: 45,
+    timeoutSecs: 60,
     clientState: {
       gd_inbound_bridge: true,
       pstn_call_control_id: pstnCallControlId,
