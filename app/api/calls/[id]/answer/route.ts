@@ -32,20 +32,28 @@ export async function POST(
     );
     if (isCallAccessError(call)) return call;
 
+    if (call.direction === 'inbound' && call.status && !['ringing', 'in_progress'].includes(call.status)) {
+      return NextResponse.json({ error: 'Call is no longer answerable' }, { status: 409 });
+    }
+
     await supabase
       .from('calls')
       .update({ status: 'in_progress', answered_at: new Date().toISOString() })
-      .eq('id', id);
+      .eq('id', id)
+      .in('status', ['ringing', 'in_progress']);
 
     let bridged = false;
+    const webrtcLegId =
+      (call as { telnyx_webrtc_leg_id?: string | null }).telnyx_webrtc_leg_id
+      ?? call.telnyx_session_id;
     if (
       call.direction === 'inbound'
       && call.telnyx_call_id
-      && call.telnyx_session_id
+      && webrtcLegId
     ) {
       for (let attempt = 0; attempt < 5; attempt++) {
         await new Promise((r) => setTimeout(r, attempt === 0 ? 400 : 700));
-        bridged = await completeInboundBridge(call.telnyx_call_id, call.telnyx_session_id);
+        bridged = await completeInboundBridge(call.telnyx_call_id, webrtcLegId);
         if (bridged) break;
       }
       if (!bridged) {

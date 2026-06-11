@@ -171,12 +171,17 @@ export function InboundRingingProvider({
             return;
           }
 
-          if (shouldDismissStatus(status)) {
-            // WebRTC may still be ringing after a premature server failed/missed update.
+          if (row.ended_at || shouldDismissStatus(status)) {
+            const ringAgeMs = ringStartedRef.current
+              ? Date.now() - ringStartedRef.current
+              : Infinity;
+            // Brief grace only for bridge race — not for finished test calls.
             if (
-              isInboundRingingRef.current
+              !row.ended_at
+              && isInboundRingingRef.current
               && !hasOutboundSessionRef.current
               && (status === 'failed' || status === 'missed')
+              && ringAgeMs < 8000
             ) {
               return;
             }
@@ -207,7 +212,10 @@ export function InboundRingingProvider({
         if (data.call?.status === 'ringing') {
           if (!callIdRef.current) {
             beginRing(data.call);
-          } else if (data.call.id === callIdRef.current) {
+          } else if (data.call.id !== callIdRef.current) {
+            // Newer live ring supersedes a stale overlay (e.g. prior test call).
+            beginRing(data.call);
+          } else {
             setCall((prev) => (prev ? { ...prev, ...data.call } : data.call!));
             stickyRingRef.current = true;
           }
@@ -216,18 +224,17 @@ export function InboundRingingProvider({
 
         if (stickyRingRef.current && callIdRef.current && !data.call) {
           if (isInboundRingingRef.current && !hasOutboundSessionRef.current) {
-            return;
+            const graceMs = Date.now() - (ringStartedRef.current ?? Date.now());
+            if (graceMs < 10000) return;
           }
-          const graceMs = Date.now() - (ringStartedRef.current ?? Date.now());
-          if (graceMs < 15000) return;
           clearCall(true);
         }
       } catch { /* non-fatal */ }
     };
 
     const onWebrtcRing = () => {
-      stickyRingRef.current = true;
       if (callIdRef.current) {
+        stickyRingRef.current = true;
         playInboundRingtone();
       }
       void poll();
@@ -259,6 +266,18 @@ export function InboundRingingProvider({
     stopInboundRingtone();
 
     const callId = call.id;
+
+    try {
+      const check = await apiFetch('/api/inbound/ringing');
+      if (check.ok) {
+        const body = await check.json() as { call?: { id: string } | null };
+        if (!body.call || body.call.id !== callId) {
+          setAccepting(false);
+          clearCall(true);
+          return;
+        }
+      }
+    } catch { /* proceed if check fails */ }
     const leadName = call.lead
       ? [call.lead.first_name, call.lead.last_name].filter(Boolean).join(' ')
       : 'Unknown Caller';

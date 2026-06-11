@@ -122,7 +122,15 @@ async function findCall(
       .maybeSingle();
     if (data) return data as unknown as CallRow;
 
-    // WebRTC bridge leg stored on telnyx_session_id
+    // WebRTC bridge leg (preferred column)
+    const { data: webrtcPeer } = await supabase
+      .from('calls')
+      .select(select)
+      .eq('telnyx_webrtc_leg_id', callControlId)
+      .maybeSingle();
+    if (webrtcPeer) return webrtcPeer as unknown as CallRow;
+
+    // Legacy: WebRTC leg stored on telnyx_session_id before migration 051
     const { data: peer } = await supabase
       .from('calls')
       .select(select)
@@ -392,10 +400,28 @@ export async function POST(request: NextRequest) {
         to: payload.to,
       });
       if (callControlId) {
-        await supabase
+        const { data: ringRow } = await supabase
           .from('calls')
-          .update({ status: 'ringing', ...(callSessionId ? { telnyx_session_id: callSessionId } : {}) })
-          .eq('telnyx_call_id', callControlId);
+          .select('id, direction')
+          .eq('telnyx_call_id', callControlId)
+          .maybeSingle();
+
+        if (ringRow?.direction === 'inbound') {
+          // Inbound PSTN ring — never overwrite telnyx_webrtc_leg_id / session used for bridge.
+          await supabase
+            .from('calls')
+            .update({ status: 'ringing' })
+            .eq('id', ringRow.id);
+        } else {
+          await supabase
+            .from('calls')
+            .update({
+              status: 'ringing',
+              ...(callSessionId ? { telnyx_session_id: callSessionId } : {}),
+            })
+            .eq('telnyx_call_id', callControlId);
+        }
+
         await supabase
           .from('parallel_dial_legs')
           .update({ status: 'ringing', updated_at: new Date().toISOString() })
@@ -534,6 +560,7 @@ export async function POST(request: NextRequest) {
         && (callRow.status === 'ringing' || callRow.status === null)
       ) {
         const pstnControlId = callRow.telnyx_call_id as string | null | undefined;
+        const webrtcLegId = (callRow as CallRow & { telnyx_webrtc_leg_id?: string | null }).telnyx_webrtc_leg_id;
         const isBrowserRingLeg =
           hangupBridgeState?.gd_inbound_bridge === true
           || (
@@ -541,35 +568,23 @@ export async function POST(request: NextRequest) {
             && pstnControlId !== callControlId
           )
           || (
+            webrtcLegId === callControlId
+            && pstnControlId
+            && pstnControlId !== callControlId
+          )
+          || (
             callRow.telnyx_session_id === callControlId
             && pstnControlId
             && pstnControlId !== callControlId
+            && webrtcLegId == null
           );
 
         if (isBrowserRingLeg) {
-          const pstnId = String(hangupBridgeState?.pstn_call_control_id ?? callRow.telnyx_call_id);
-          const userId = String(hangupBridgeState?.user_id ?? callRow.user_id);
-          const ownedDid = callRow.to_number ?? '';
-          const callerAni = callRow.from_number ?? '';
-
-          console.log('[INBOUND] WebRTC ring leg ended — re-ringing browser | PSTN:', pstnId);
-
+          console.log('[INBOUND] WebRTC ring leg ended before answer — no auto re-dial | PSTN:', callRow.telnyx_call_id);
           await supabase
             .from('calls')
-            .update({ telnyx_session_id: null })
+            .update({ telnyx_webrtc_leg_id: null })
             .eq('id', callRow.id);
-
-          if (pstnId && ownedDid && userId) {
-            await ringBrowserForInbound(
-              supabase,
-              userId,
-              pstnId,
-              ownedDid,
-              callerAni,
-              callRow.id,
-            );
-          }
-
           return NextResponse.json({ received: true });
         }
       }

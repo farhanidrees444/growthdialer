@@ -96,10 +96,19 @@ export async function ringBrowserForInbound(
   const webrtcLegId = dialed.call_control_id;
 
   if (dbCallId) {
-    await supabase
+    const { error: legErr } = await supabase
       .from('calls')
-      .update({ telnyx_session_id: webrtcLegId })
+      .update({
+        telnyx_webrtc_leg_id: webrtcLegId,
+        telnyx_session_id: webrtcLegId,
+      })
       .eq('id', dbCallId);
+    if (legErr) {
+      await supabase
+        .from('calls')
+        .update({ telnyx_session_id: webrtcLegId })
+        .eq('id', dbCallId);
+    }
   }
 
   console.log('[INBOUND] Browser ring leg created:', webrtcLegId, '| PSTN still ringing:', pstnCallControlId);
