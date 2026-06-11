@@ -6,6 +6,7 @@ interface CacheEntry<T> {
 }
 
 const tokenOkCache = new Map<string, CacheEntry<boolean>>();
+const tokenValueCache = new Map<string, CacheEntry<string>>();
 const sipUsernameCache = new Map<string, CacheEntry<string | null>>();
 
 function readCache<T>(map: Map<string, CacheEntry<T>>, key: string): T | undefined {
@@ -28,6 +29,14 @@ export function cachedCredentialTokenOk(credentialId: string): boolean | undefin
 
 export function setCachedCredentialTokenOk(credentialId: string, ok: boolean): void {
   writeCache(tokenOkCache, credentialId, ok);
+}
+
+export function cachedCredentialToken(credentialId: string): string | undefined {
+  return readCache(tokenValueCache, credentialId);
+}
+
+export function setCachedCredentialToken(credentialId: string, token: string): void {
+  writeCache(tokenValueCache, credentialId, token);
 }
 
 export function cachedSipUsername(credentialId: string): string | null | undefined {

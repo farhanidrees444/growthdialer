@@ -42,12 +42,20 @@ export async function POST(
       .eq('id', id)
       .in('status', ['ringing', 'in_progress']);
 
-    let bridged = false;
+    let bridged = call.status === 'in_progress' && Boolean(call.answered_at);
     const webrtcLegId =
       (call as { telnyx_webrtc_leg_id?: string | null }).telnyx_webrtc_leg_id
-      ?? call.telnyx_session_id;
+      ?? (
+        call.telnyx_session_id
+        && call.telnyx_call_id
+        && call.telnyx_session_id !== call.telnyx_call_id
+          ? call.telnyx_session_id
+          : null
+      );
     if (
-      call.direction === 'inbound'
+      !bridged
+      && call.direction === 'inbound'
+      && call.status === 'ringing'
       && call.telnyx_call_id
       && webrtcLegId
     ) {

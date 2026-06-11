@@ -31,23 +31,33 @@ export async function POST(request: NextRequest, { params }: Ctx) {
 
   const controlId = call.telnyx_call_id ?? callControlId;
 
+  let skipHangup = false;
   try {
-    const res = await fetch(
-      `https://api.telnyx.com/v2/calls/${encodeURIComponent(controlId)}/actions/hangup`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.TELNYX_API_KEY}`,
-          'Content-Type': 'application/json',
+    const body = await request.json() as { skip_hangup?: boolean };
+    skipHangup = Boolean(body?.skip_hangup);
+  } catch {
+    /* empty body */
+  }
+
+  try {
+    if (!skipHangup) {
+      const res = await fetch(
+        `https://api.telnyx.com/v2/calls/${encodeURIComponent(controlId)}/actions/hangup`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${process.env.TELNYX_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
         },
-        body: JSON.stringify({}),
-      },
-    );
-    if (!res.ok && res.status !== 404) {
-      const err = await res.json().catch(() => ({}));
-      const detail = (err as { errors?: { detail?: string }[] }).errors?.[0]?.detail ?? 'Hangup failed';
-      console.error('[CALL-END] Telnyx error:', detail);
-      return NextResponse.json({ error: detail }, { status: 500 });
+      );
+      if (!res.ok && res.status !== 404) {
+        const err = await res.json().catch(() => ({}));
+        const detail = (err as { errors?: { detail?: string }[] }).errors?.[0]?.detail ?? 'Hangup failed';
+        console.error('[CALL-END] Telnyx error:', detail);
+        return NextResponse.json({ error: detail }, { status: 500 });
+      }
     }
 
     const isInboundDecline =

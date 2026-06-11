@@ -447,14 +447,23 @@ export default function ActiveCallOverlay() {
 
   // ── Look up DB call ID from Telnyx call ID ─────────────────────────────────
   useEffect(() => {
+    const onInboundAnswered = (e: Event) => {
+      const id = (e as CustomEvent<{ callId?: string }>).detail?.callId;
+      if (id) setDbCallId(id);
+    };
+    window.addEventListener('gd-inbound-answered', onInboundAnswered);
+    return () => window.removeEventListener('gd-inbound-answered', onInboundAnswered);
+  }, []);
+
+  useEffect(() => {
     if (!telnyxCallId || dbCallId) return;
     const supabase = createClient();
     void (async () => {
       const { data } = await supabase
         .from('calls')
         .select('id')
-        .eq('telnyx_call_id', telnyxCallId)
-        .single();
+        .or(`telnyx_call_id.eq.${telnyxCallId},telnyx_webrtc_leg_id.eq.${telnyxCallId}`)
+        .maybeSingle();
       if (data?.id) setDbCallId(data.id as string);
     })();
   }, [telnyxCallId, dbCallId]);

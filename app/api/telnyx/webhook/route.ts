@@ -460,18 +460,49 @@ export async function POST(request: NextRequest) {
         && callControlId
       ) {
         const pstnId = String(answeredBridgeState.pstn_call_control_id);
-        const bridged = await completeInboundBridge(pstnId, callControlId);
         const dbCallId = answeredBridgeState.db_call_id as string | null | undefined;
-        if (bridged && dbCallId) {
-          await supabase
+
+        let alreadyAnswered = false;
+        if (dbCallId) {
+          const { data: row } = await supabase
             .from('calls')
-            .update({
-              status: 'in_progress',
-              answered_at: new Date().toISOString(),
-            })
-            .eq('id', dbCallId);
+            .select('status, answered_at')
+            .eq('id', dbCallId)
+            .maybeSingle();
+          alreadyAnswered = row?.status === 'in_progress' && Boolean(row?.answered_at);
         }
-        console.log('[INBOUND] WebRTC leg answered — bridge:', bridged ? 'ok' : 'failed');
+
+        let bridged = alreadyAnswered;
+        if (!alreadyAnswered) {
+          bridged = await completeInboundBridge(pstnId, callControlId);
+          if (bridged && dbCallId) {
+            await supabase
+              .from('calls')
+              .update({
+                status: 'in_progress',
+                answered_at: new Date().toISOString(),
+              })
+              .eq('id', dbCallId);
+
+            const userId = answeredBridgeState.user_id as string | undefined;
+            if (userId) {
+              const { data: settings } = await supabase
+                .from('user_settings')
+                .select('recording_mode')
+                .eq('user_id', userId)
+                .maybeSingle();
+              const recordingMode = settings?.recording_mode ?? 'always';
+              if (recordingMode !== 'never') {
+                const started = await startProgrammaticRecording(pstnId);
+                if (started) {
+                  await supabase.from('calls').update({ was_recorded: true }).eq('id', dbCallId);
+                }
+              }
+            }
+          }
+        }
+
+        console.log('[INBOUND] WebRTC leg answered — bridge:', bridged ? 'ok' : 'failed', alreadyAnswered ? '(skipped duplicate)' : '');
         return NextResponse.json({ received: true });
       }
 

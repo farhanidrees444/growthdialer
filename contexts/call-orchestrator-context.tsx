@@ -73,6 +73,7 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
   const durationRef = useRef(0);
   const dispositionLeadRef = useRef<LeadRecord | null>(null);
   const hadActiveCallRef = useRef(false);
+  const inboundCallActiveRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   callDbIdRef.current = callDbId;
@@ -116,6 +117,23 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [callStatus]);
+
+  useEffect(() => {
+    const onAnswered = (e: Event) => {
+      const detail = (e as CustomEvent<{ callId?: string }>).detail;
+      inboundCallActiveRef.current = true;
+      if (detail?.callId) setCallDbId(detail.callId);
+    };
+    const onEnded = () => {
+      inboundCallActiveRef.current = false;
+    };
+    window.addEventListener('gd-inbound-answered', onAnswered);
+    window.addEventListener('gd-call-ended', onEnded);
+    return () => {
+      window.removeEventListener('gd-inbound-answered', onAnswered);
+      window.removeEventListener('gd-call-ended', onEnded);
+    };
+  }, []);
 
   // Pick up outbound calls started outside the dialer (e.g. leads page)
   useEffect(() => {
@@ -171,6 +189,14 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
 
     bridge?.onCallEnd();
 
+    if (inboundCallActiveRef.current) {
+      inboundCallActiveRef.current = false;
+      hadActiveCallRef.current = false;
+      setCallDbId(null);
+      resetTimer();
+      return;
+    }
+
     if (seconds >= DISPOSITION_THRESHOLD_SEC || hadActiveCallRef.current) {
       setDispositionLead(lead);
       setDispositionOpen(true);
@@ -197,10 +223,13 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
     prevCallStatusRef.current = callStatus;
 
     if ((prev === 'connecting' || prev === 'ringing') && callStatus === 'active') {
-      hadActiveCallRef.current = true;
-      if (activeLead) {
-        setDispositionLead(activeLead);
-        dispositionLeadRef.current = activeLead;
+      const isInboundSession = !hasOutboundSession && isInboundRinging;
+      if (!isInboundSession && !inboundCallActiveRef.current) {
+        hadActiveCallRef.current = true;
+        if (activeLead) {
+          setDispositionLead(activeLead);
+          dispositionLeadRef.current = activeLead;
+        }
       }
       powerBridgeRef.current?.onCallStarted();
     }
@@ -211,7 +240,7 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
     ) {
       handleCallEnded();
     }
-  }, [callStatus, activeLead, handleCallEnded]);
+  }, [callStatus, activeLead, handleCallEnded, hasOutboundSession, isInboundRinging]);
 
   const saveDisposition = useCallback(async (
     disposition: string,

@@ -1,6 +1,8 @@
 import { readVoiceApiKey } from '@/lib/voice/read-env';
 import {
+  cachedCredentialToken,
   cachedCredentialTokenOk,
+  setCachedCredentialToken,
   setCachedCredentialTokenOk,
 } from '@/lib/voice/credential-cache';
 
@@ -58,6 +60,9 @@ export async function listTelephonyCredentialsForConnection(
 }
 
 export async function fetchCredentialToken(credentialId: string): Promise<string | null> {
+  const cachedToken = cachedCredentialToken(credentialId);
+  if (cachedToken) return cachedToken;
+
   const cached = cachedCredentialTokenOk(credentialId);
   if (cached === false) return null;
 
@@ -71,8 +76,7 @@ export async function fetchCredentialToken(credentialId: string): Promise<string
 
   if (res.status === 429) {
     console.warn('[VOICE] credential token rate limited — using cache if available');
-    if (cached === true) return '__cached_valid__';
-    return null;
+    return cachedCredentialToken(credentialId) ?? null;
   }
 
   if (!res.ok) {
@@ -81,7 +85,10 @@ export async function fetchCredentialToken(credentialId: string): Promise<string
   }
 
   const token = (await res.text()).trim();
-  if (token) setCachedCredentialTokenOk(credentialId, true);
+  if (token) {
+    setCachedCredentialTokenOk(credentialId, true);
+    setCachedCredentialToken(credentialId, token);
+  }
   return token || null;
 }
 

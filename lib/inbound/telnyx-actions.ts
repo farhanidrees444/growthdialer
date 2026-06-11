@@ -58,6 +58,9 @@ export async function dialVoiceLeg(params: {
 }): Promise<TelnyxActionResult> {
   const webhookUrl = resolveVoiceWebhookUrl();
   if (!webhookUrl) {
+    console.error(
+      '[INBOUND] Cannot dial browser leg — set APP_URL or NEXT_PUBLIC_APP_URL to your live app origin',
+    );
     return { ok: false, detail: 'webhook_url_missing' };
   }
 

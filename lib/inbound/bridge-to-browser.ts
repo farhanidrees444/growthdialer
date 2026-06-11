@@ -9,6 +9,7 @@ import {
   ensureVoiceConnectionConfigured,
   getActiveCallControlAppId,
 } from '@/lib/voice/configure-connection';
+import { readVoiceApiKey } from '@/lib/voice/read-env';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -49,6 +50,11 @@ export async function ringBrowserForInbound(
   callerAni: string,
   dbCallId?: string,
 ): Promise<BridgeResult> {
+  if (!readVoiceApiKey()) {
+    console.error('[INBOUND] TELNYX_API_KEY is not configured — cannot dial browser');
+    return { ok: false, strategy: 'none' };
+  }
+
   const configured = await ensureVoiceConnectionConfigured();
   const dialAppId = await getActiveCallControlAppId();
 
@@ -96,16 +102,10 @@ export async function ringBrowserForInbound(
   if (dbCallId) {
     const { error: legErr } = await supabase
       .from('calls')
-      .update({
-        telnyx_webrtc_leg_id: webrtcLegId,
-        telnyx_session_id: webrtcLegId,
-      })
+      .update({ telnyx_webrtc_leg_id: webrtcLegId })
       .eq('id', dbCallId);
     if (legErr) {
-      await supabase
-        .from('calls')
-        .update({ telnyx_session_id: webrtcLegId })
-        .eq('id', dbCallId);
+      console.warn('[INBOUND] telnyx_webrtc_leg_id update failed — apply migration 051:', legErr.message);
     }
   }
 

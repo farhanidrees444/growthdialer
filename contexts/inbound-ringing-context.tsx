@@ -166,8 +166,11 @@ export function InboundRingingProvider({
           const status = row.status as string;
 
           if (status === 'in_progress') {
-            clearCall(true);
-            window.dispatchEvent(new CustomEvent('gd-call-ended'));
+            stopInboundRingtone();
+            if (!acceptingRef.current) {
+              stickyRingRef.current = false;
+              clearCall(false);
+            }
             return;
           }
 
@@ -330,6 +333,9 @@ export function InboundRingingProvider({
     if (answerOk && (callStatusRef.current === 'active' || callStatusRef.current === 'connecting')) {
       stickyRingRef.current = false;
       clearCall(true);
+      window.dispatchEvent(
+        new CustomEvent('gd-inbound-answered', { detail: { callId } }),
+      );
     }
   }, [call, accepting, registerCallMeta, requestMicPermission, answerIncomingCall, apiFetch, clearCall, hangup]);
 
@@ -337,10 +343,14 @@ export function InboundRingingProvider({
     if (!call || accepting) return;
     const callId = call.id;
     clearCall(true);
-    try {
-      await apiFetch(`/api/calls/${callId}/end`, { method: 'POST' });
-    } catch { /* non-fatal */ }
     hangup();
+    try {
+      await apiFetch(`/api/calls/${callId}/end`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skip_hangup: true }),
+      });
+    } catch { /* non-fatal */ }
     window.dispatchEvent(new CustomEvent('gd-call-ended'));
   }, [call, accepting, clearCall, apiFetch, hangup]);
 
