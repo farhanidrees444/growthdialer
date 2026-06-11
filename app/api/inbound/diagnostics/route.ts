@@ -16,6 +16,7 @@ import {
 import { resolveVoiceWebhookUrl } from '@/lib/voice/webhook-url';
 import { listInboundBlockers } from '@/lib/voice/inbound-readiness';
 import { resolveActiveCredentialId, fetchCredentialSipUsername } from '@/lib/telnyx/active-credential';
+import { resolveInboundBrowserCredential } from '@/lib/inbound/browser-credential';
 import { discoverWorkingCredentialId } from '@/lib/voice/credential-discovery';
 import { readTelephonyCredentialId } from '@/lib/voice/read-env';
 
@@ -60,8 +61,10 @@ export async function GET(request: NextRequest) {
     providerIndex,
   );
 
-  const credentialId = await resolveActiveCredentialId(supabase, user.id);
-  const sipUsername = credentialId ? await fetchCredentialSipUsername(credentialId) : null;
+  const inboundBrowserCred = await resolveInboundBrowserCredential(supabase, user.id);
+  const credentialId = inboundBrowserCred?.credentialId ?? await resolveActiveCredentialId(supabase, user.id);
+  const sipUsername = inboundBrowserCred?.sipUsername
+    ?? (credentialId ? await fetchCredentialSipUsername(credentialId) : null);
   const credentialDiscovery = await discoverWorkingCredentialId(
     readTelephonyCredentialId(),
     resolvedConnectionId,
@@ -73,6 +76,14 @@ export async function GET(request: NextRequest) {
     .eq('user_id', user.id)
     .eq('direction', 'inbound')
     .gte('started_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+
+  const { data: lastInboundCalls } = await supabase
+    .from('calls')
+    .select('id, from_number, to_number, status, started_at, ended_at, telnyx_webrtc_leg_id, answered_at')
+    .eq('user_id', user.id)
+    .eq('direction', 'inbound')
+    .order('started_at', { ascending: false })
+    .limit(3);
 
   const blockers = listInboundBlockers({
     connection,
@@ -110,6 +121,17 @@ export async function GET(request: NextRequest) {
     numbers_routed: routing.routed,
     unrouted_numbers: routing.unrouted_phones,
     inbound_calls_7d: recentInbound ?? 0,
+    last_inbound_calls: (lastInboundCalls ?? []).map((c) => ({
+      id: c.id,
+      from: c.from_number,
+      to: c.to_number,
+      status: c.status,
+      started_at: c.started_at,
+      ended_at: c.ended_at,
+      answered_at: c.answered_at,
+      browser_leg: Boolean(c.telnyx_webrtc_leg_id),
+    })),
+    inbound_browser_credential_ready: Boolean(inboundBrowserCred),
     checks: [
       { label: 'Voice connection', ok: connection.ok },
       { label: 'Call events', ok: eventsVerified },

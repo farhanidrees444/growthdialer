@@ -28,13 +28,25 @@ export async function processInboundRingTimeout(
 
   const { data: call } = await supabase
     .from('calls')
-    .select('id, status, answered_at, direction')
+    .select('id, status, answered_at, direction, telnyx_webrtc_leg_id, telnyx_session_id, telnyx_call_id')
     .eq('id', callId)
     .maybeSingle();
 
   if (!call || call.direction !== 'inbound') return;
   if (call.answered_at) return;
   if (call.status !== 'ringing') return;
+
+  const hasBrowserLeg = Boolean(
+    call.telnyx_webrtc_leg_id
+    || (
+      call.telnyx_session_id
+      && call.telnyx_call_id
+      && call.telnyx_session_id !== call.telnyx_call_id
+    ),
+  );
+  if (inboundMode === 'browser' && hasBrowserLeg && ringSeconds < 55) {
+    return;
+  }
 
   console.log('[INBOUND] Ring timeout — cascading to voicemail:', callId);
 

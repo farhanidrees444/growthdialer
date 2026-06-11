@@ -12,7 +12,6 @@ import { findNumberOwnerWithMeta } from '@/lib/inbound/lookup-number';
 import {
   bridgeInboundToBrowser,
   completeInboundBridge,
-  ringBrowserForInbound,
 } from '@/lib/inbound/bridge-to-browser';
 import { decodeClientState } from '@/lib/inbound/telnyx-actions';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
@@ -308,7 +307,9 @@ export async function POST(request: NextRequest) {
           .maybeSingle();
 
         const mode = (inboundSettings?.inbound_mode as string | null) ?? 'browser';
-        const ringSeconds = (inboundSettings?.inbound_ring_seconds as number | null) ?? 25;
+        const configuredRing = (inboundSettings?.inbound_ring_seconds as number | null) ?? 25;
+        // Browser dial leg uses 60s timeout — voicemail must not fire earlier.
+        const ringSeconds = mode === 'browser' ? Math.max(configuredRing, 55) : configuredRing;
 
         if (mode === 'off') {
           await telnyxCallAction(callControlId, 'reject', { cause: 'CALL_REJECTED' });

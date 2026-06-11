@@ -1,9 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import {
-  fetchCredentialToken,
-  resolveActiveCredentialId,
-  resolvePerUserCredentialId,
-} from '@/lib/telnyx/active-credential';
+import { resolveInboundBrowserCredential } from '@/lib/inbound/browser-credential';
 
 export type VoiceTokenResult =
   | { ok: true; kind: 'jwt'; login_token: string }
@@ -18,27 +14,15 @@ export async function issueVoiceLoginToken(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<VoiceTokenResult> {
-  const activeCredentialId = await resolveActiveCredentialId(supabase, userId);
-  if (activeCredentialId) {
-    const token = await fetchCredentialToken(activeCredentialId);
-    if (token) return { ok: true, kind: 'jwt', login_token: token };
+  const inboundCred = await resolveInboundBrowserCredential(supabase, userId);
+  if (inboundCred?.token) {
+    return { ok: true, kind: 'jwt', login_token: inboundCred.token };
   }
 
-  // Per-user path when shared credential token fetch failed but connection exists
-  if (process.env.TELNYX_CONNECTION_ID?.trim()) {
-    const credentialId = await resolvePerUserCredentialId(supabase, userId);
-    if (credentialId) {
-      const token = await fetchCredentialToken(credentialId);
-      if (token) return { ok: true, kind: 'jwt', login_token: token };
-    }
-  }
-
-  const login =
-    process.env.NEXT_PUBLIC_TELNYX_SIP_USERNAME?.trim()
-    ?? process.env.TELNYX_SIP_USERNAME?.trim();
+  const login = process.env.TELNYX_SIP_USERNAME?.trim();
   const password = process.env.TELNYX_SIP_PASSWORD?.trim();
   if (login && password) {
-    console.warn('[voice/token] using SIP credential fallback');
+    console.warn('[voice/token] using server SIP fallback — inbound may not ring the browser');
     return { ok: true, kind: 'sip', login, password };
   }
 

@@ -4,10 +4,7 @@ import {
   telnyxCallAction,
   telnyxCallActionDetailed,
 } from '@/lib/inbound/telnyx-actions';
-import {
-  fetchCredentialSipUsername,
-  resolveActiveCredentialId,
-} from '@/lib/telnyx/active-credential';
+import { resolveInboundBrowserCredential } from '@/lib/inbound/browser-credential';
 import {
   ensureVoiceConnectionConfigured,
   getActiveCallControlAppId,
@@ -29,14 +26,15 @@ async function resolveBrowserSipUri(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<{ sipUri: string | null; username: string | null; credentialId: string | null }> {
-  const credentialId = await resolveActiveCredentialId(supabase, userId);
-  const sipUsername = credentialId ? await fetchCredentialSipUsername(credentialId) : null;
-  const envUsername =
-    process.env.NEXT_PUBLIC_TELNYX_SIP_USERNAME?.trim()
-    ?? process.env.TELNYX_SIP_USERNAME?.trim();
-  const username = sipUsername ?? envUsername ?? null;
-  const sipUri = username ? sipUriFromUsername(username) : null;
-  return { sipUri, username, credentialId };
+  const cred = await resolveInboundBrowserCredential(supabase, userId);
+  if (!cred) {
+    return { sipUri: null, username: null, credentialId: null };
+  }
+  return {
+    sipUri: sipUriFromUsername(cred.sipUsername),
+    username: cred.sipUsername,
+    credentialId: cred.credentialId,
+  };
 }
 
 /**

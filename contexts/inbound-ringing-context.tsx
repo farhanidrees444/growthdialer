@@ -307,18 +307,31 @@ export function InboundRingingProvider({
       await new Promise((r) => setTimeout(r, 200));
     }
 
+    let answerOk = false;
     try {
-      await apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' });
+      const res = await apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' });
+      answerOk = res.ok;
+      if (!res.ok) {
+        console.error('[INBOUND] REST answer failed:', res.status);
+        hangup();
+        clearCall(true);
+        setAccepting(false);
+        return;
+      }
     } catch {
       console.error('[INBOUND] REST answer failed');
+      hangup();
+      clearCall(true);
+      setAccepting(false);
+      return;
     }
 
     setAccepting(false);
-    if (callStatusRef.current === 'active' || callStatusRef.current === 'connecting') {
+    if (answerOk && (callStatusRef.current === 'active' || callStatusRef.current === 'connecting')) {
       stickyRingRef.current = false;
       clearCall(true);
     }
-  }, [call, accepting, registerCallMeta, requestMicPermission, answerIncomingCall, apiFetch, clearCall]);
+  }, [call, accepting, registerCallMeta, requestMicPermission, answerIncomingCall, apiFetch, clearCall, hangup]);
 
   const decline = useCallback(async () => {
     if (!call || accepting) return;
