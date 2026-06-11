@@ -1,4 +1,4 @@
-const TTL_MS = 5 * 60 * 1000;
+const TTL_MS = 25 * 60 * 1000;
 
 interface CacheEntry<T> {
   value: T;

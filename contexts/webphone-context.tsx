@@ -47,6 +47,13 @@ export function useWebPhone(): WebPhoneContextValue {
   return ctx;
 }
 
+function isIncomingTelnyxCall(call: Call, outboundDialActive: boolean): boolean {
+  const dir = (call as { direction?: string }).direction?.toLowerCase();
+  if (dir === 'inbound' || dir === 'incoming') return true;
+  // Server-side inbound bridge dials the browser — never treat as outbound.
+  return !outboundDialActive;
+}
+
 function mapCallState(state: string): WebRTCCallStatus {
   switch (state) {
     case 'new':
@@ -95,6 +102,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const mountedRef = useRef(true);
   const initAttemptsRef = useRef(0);
   const initClientRef = useRef<() => Promise<void>>(async () => {});
+  const inboundRingStartedRef = useRef<number | null>(null);
 
   const safeSet = useCallback(<T,>(setter: (v: T) => void, value: T) => {
     if (mountedRef.current) setter(value);
@@ -195,17 +203,29 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
         const call = notification.call as unknown as Call;
         const mapped = mapCallState(call.state);
+        const incoming = isIncomingTelnyxCall(call, outboundDialRef.current);
+
+        if (incoming) {
+          outboundDialRef.current = false;
+          safeSet(setHasOutboundSession, false);
+        }
 
         activeCallRef.current = call;
         safeSet(setActiveCallId, call.id ?? null);
         safeSet(setCallStatus, mapped);
 
-        if (!outboundDialRef.current && (mapped === 'ringing' || mapped === 'connecting')) {
+        if (incoming && (mapped === 'ringing' || mapped === 'connecting')) {
+          if (!inboundRingStartedRef.current) {
+            inboundRingStartedRef.current = Date.now();
+          }
           safeSet(setIsInboundRinging, true);
           if (mapped === 'ringing') {
             window.dispatchEvent(new CustomEvent('gd-webrtc-inbound-ring'));
           }
+        } else if (incoming && mapped === 'active') {
+          safeSet(setIsInboundRinging, false);
         } else if (!outboundDialRef.current && (mapped === 'ended' || mapped === 'idle')) {
+          inboundRingStartedRef.current = null;
           safeSet(setIsInboundRinging, false);
         } else if (outboundDialRef.current) {
           safeSet(setIsInboundRinging, false);
@@ -227,6 +247,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         if (mapped === 'ended') {
           activeCallRef.current = null;
           outboundDialRef.current = false;
+          inboundRingStartedRef.current = null;
           safeSet(setIsInboundRinging, false);
           safeSet(setHasOutboundSession, false);
           safeSet(setActiveCallId, null);
@@ -247,6 +268,27 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   }, [safeSet, scheduleReconnect]);
 
   initClientRef.current = initClient;
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const st = callStatusRef.current;
+      if (st !== 'connecting' && st !== 'ringing') return;
+      const started = inboundRingStartedRef.current;
+      if (!started || Date.now() - started < 75_000) return;
+      console.warn('[WebPhone] clearing stale pre-answer leg');
+      if (activeCallRef.current) {
+        try { activeCallRef.current.hangup(); } catch { /* ignore */ }
+      }
+      activeCallRef.current = null;
+      outboundDialRef.current = false;
+      inboundRingStartedRef.current = null;
+      safeSet(setIsInboundRinging, false);
+      safeSet(setHasOutboundSession, false);
+      safeSet(setActiveCallId, null);
+      safeSet(setCallStatus, 'idle');
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [safeSet]);
 
   useEffect(() => {
     mountedRef.current = true;

@@ -25,6 +25,8 @@ interface HeaderStripProps {
   stats: TodayStats;
   callStatus: string;
   phoneStatus?: PhoneStatus;
+  /** Inbound PSTN ringing the browser — not an active outbound call. */
+  inboundPreAnswer?: boolean;
   callTimer?: string;
   activeLeadName?: string;
   todayCalls: CallDot[];
@@ -37,6 +39,7 @@ export function HeaderStrip({
   stats,
   callStatus,
   phoneStatus = 'idle',
+  inboundPreAnswer = false,
   callTimer,
   activeLeadName,
   todayCalls,
@@ -45,7 +48,10 @@ export function HeaderStrip({
   onDotClick,
 }: HeaderStripProps) {
   const [statsExpanded, setStatsExpanded] = useState(false);
-  const isLive = callStatus === 'active' || callStatus === 'connecting' || callStatus === 'ringing' || callStatus === 'held';
+  const isLive =
+    !inboundPreAnswer
+    && (callStatus === 'active' || callStatus === 'connecting' || callStatus === 'ringing' || callStatus === 'held');
+  const isIncoming = inboundPreAnswer;
 
   return (
     <header
@@ -97,7 +103,20 @@ export function HeaderStrip({
       {/* Right group */}
       <div className="flex items-center gap-2 flex-shrink-0">
         {/* Status pill */}
-        {isLive ? (
+        {isIncoming ? (
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/35 text-cyan-300 text-xs font-medium"
+          >
+            <motion.div
+              className="w-1.5 h-1.5 rounded-full bg-cyan-400"
+              animate={{ opacity: [1, 0.3, 1] }}
+              transition={{ duration: 1.2, repeat: Infinity }}
+            />
+            Incoming call
+          </motion.div>
+        ) : isLive ? (
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}

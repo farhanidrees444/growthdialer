@@ -10,6 +10,7 @@ import {
   getActiveCallControlAppId,
 } from '@/lib/voice/configure-connection';
 import { readVoiceApiKey } from '@/lib/voice/read-env';
+import { getCachedConnectionConfig } from '@/lib/voice/voice-api-cache';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -55,7 +56,23 @@ export async function ringBrowserForInbound(
     return { ok: false, strategy: 'none' };
   }
 
-  const configured = await ensureVoiceConnectionConfigured();
+  if (dbCallId) {
+    const { data: existing } = await supabase
+      .from('calls')
+      .select('telnyx_webrtc_leg_id')
+      .eq('id', dbCallId)
+      .maybeSingle();
+    if (existing?.telnyx_webrtc_leg_id) {
+      console.log('[INBOUND] Browser leg already queued:', existing.telnyx_webrtc_leg_id);
+      return {
+        ok: true,
+        strategy: 'dial_bridge',
+        webrtc_leg_id: existing.telnyx_webrtc_leg_id,
+      };
+    }
+  }
+
+  const configured = getCachedConnectionConfig() ?? await ensureVoiceConnectionConfigured();
   const dialAppId = await getActiveCallControlAppId();
 
   const { sipUri, username, credentialId } = await resolveBrowserSipUri(supabase, userId);

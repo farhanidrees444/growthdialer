@@ -275,26 +275,38 @@ export async function POST(request: NextRequest) {
 
         const lead = await findLeadByCallerPhone(supabase, userId, fromNumber);
 
-        // Create inbound call record (realtime subscription in browser will pick this up)
-        const { data: newCall, error: insertErr } = await supabase
+        const { data: existingInbound } = await supabase
           .from('calls')
-          .insert({
-            user_id: userId,
-            workspace_id: workspaceId,
-            lead_id: lead?.id ?? null,
-            direction: 'inbound',
-            telnyx_call_id: callControlId,
-            telnyx_session_id: callSessionId ?? null,
-            from_number: fromNumber,
-            to_number: toNumber,
-            status: 'ringing',
-            started_at: new Date().toISOString(),
-          })
-          .select('id')
-          .single();
+          .select('id, telnyx_webrtc_leg_id, status')
+          .eq('telnyx_call_id', callControlId)
+          .maybeSingle();
 
-        if (insertErr) {
-          console.error('[INBOUND] Call insert failed:', insertErr.message);
+        let newCall: { id: string } | null = existingInbound;
+        if (!existingInbound) {
+          const { data: inserted, error: insertErr } = await supabase
+            .from('calls')
+            .insert({
+              user_id: userId,
+              workspace_id: workspaceId,
+              lead_id: lead?.id ?? null,
+              direction: 'inbound',
+              telnyx_call_id: callControlId,
+              telnyx_session_id: callSessionId ?? null,
+              from_number: fromNumber,
+              to_number: toNumber,
+              status: 'ringing',
+              started_at: new Date().toISOString(),
+            })
+            .select('id')
+            .single();
+
+          if (insertErr) {
+            console.error('[INBOUND] Call insert failed:', insertErr.message);
+          } else {
+            newCall = inserted;
+          }
+        } else {
+          console.log('[INBOUND] Reusing existing call record:', existingInbound.id);
         }
 
         console.log('[INBOUND] Call record created:', newCall?.id, '| lead:', lead?.id ?? 'unknown', '| workspace:', workspaceId ?? 'none');
@@ -350,15 +362,18 @@ export async function POST(request: NextRequest) {
           }
           console.log('[INBOUND] Voicemail: answered + recording started for user:', userId);
         } else {
-          // browser mode (default): answer + bridge to user's WebRTC SIP endpoint.
-          const bridged = await bridgeInboundToBrowser(
-            supabase,
-            userId,
-            callControlId,
-            fromNumber,
-            toNumber,
-            newCall?.id,
-          );
+          // browser mode (default): ring user's WebRTC client (skip if leg already queued).
+          const alreadyQueued = Boolean(existingInbound?.telnyx_webrtc_leg_id);
+          const bridged = alreadyQueued
+            ? { ok: true, strategy: 'dial_bridge' as const }
+            : await bridgeInboundToBrowser(
+              supabase,
+              userId,
+              callControlId,
+              fromNumber,
+              toNumber,
+              newCall?.id,
+            );
           console.log('[INBOUND] Browser bridge:', bridged.ok ? bridged.strategy : 'failed', '| user:', userId);
           if (!bridged.ok) {
             await telnyxCallAction(callControlId, 'hangup');

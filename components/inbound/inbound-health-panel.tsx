@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { CheckCircle2, Loader2, RefreshCw, Sparkles, Zap } from 'lucide-react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/lib/utils';
@@ -38,8 +38,6 @@ export function InboundHealthPanel({ phoneReady, onActivated }: Props) {
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState(false);
   const [activateMsg, setActivateMsg] = useState<string | null>(null);
-  const autoSetupTried = useRef(false);
-
   const load = useCallback(() => {
     setLoading(true);
     void apiFetch('/api/inbound/health')
@@ -85,20 +83,6 @@ export function InboundHealthPanel({ phoneReady, onActivated }: Props) {
   }, [apiFetch, load, onActivated]);
 
   useEffect(() => { load(); }, [load]);
-
-  useEffect(() => {
-    if (autoSetupTried.current || activating) return;
-    autoSetupTried.current = true;
-
-    void (async () => {
-      await runPrepare();
-      const refreshed = await apiFetch('/api/inbound/health').then((r) => r.json()) as HealthData;
-      setHealth(refreshed);
-      if (refreshed.needs_activation) {
-        await handleActivate();
-      }
-    })();
-  }, [activating, runPrepare, handleActivate, apiFetch]);
 
   if (loading && !health) {
     return (

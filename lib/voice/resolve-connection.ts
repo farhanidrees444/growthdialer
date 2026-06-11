@@ -6,9 +6,12 @@ import {
 import {
   credentialConnectionExists,
   fetchCredentialConnectionId,
-  fetchCredentialToken,
   telephonyCredentialExists,
 } from '@/lib/voice/credential-discovery';
+import {
+  getCachedResolvedConnection,
+  setCachedResolvedConnection,
+} from '@/lib/voice/voice-api-cache';
 
 const VOICE_API = 'https://api.telnyx.com/v2';
 
@@ -39,28 +42,47 @@ export async function fetchConnectionIdFromCredential(
  * Resolve the SIP credential connection used for inbound routing, webhooks, and browser voice.
  */
 export async function resolveVoiceConnectionId(): Promise<ResolvedVoiceConnection> {
+  const cached = getCachedResolvedConnection();
+  if (cached?.connectionId) return cached;
+
   const apiKey = readVoiceApiKey();
   const fromEnv = readConfiguredConnectionId();
   const envTelephonySlot = readTelephonyCredentialId();
 
   if (!apiKey) {
-    return { connectionId: fromEnv, source: fromEnv ? 'env' : 'none', envMismatch: false };
+    const result = { connectionId: fromEnv, source: fromEnv ? 'env' as const : 'none' as const, envMismatch: false };
+    if (result.connectionId) setCachedResolvedConnection(result);
+    return result;
+  }
+
+  if (fromEnv && !envTelephonySlot) {
+    const result: ResolvedVoiceConnection = { connectionId: fromEnv, source: 'env', envMismatch: false };
+    setCachedResolvedConnection(result);
+    return result;
   }
 
   // Common mistake: connection ID pasted into TELNYX_TELEPHONY_CREDENTIAL_ID
   if (envTelephonySlot && await credentialConnectionExists(apiKey, envTelephonySlot)) {
     const envMismatch = Boolean(fromEnv && fromEnv !== envTelephonySlot);
-    return { connectionId: envTelephonySlot, source: 'credential', envMismatch };
+    const result: ResolvedVoiceConnection = {
+      connectionId: envTelephonySlot,
+      source: 'credential',
+      envMismatch,
+    };
+    setCachedResolvedConnection(result);
+    return result;
   }
 
   if (envTelephonySlot && await telephonyCredentialExists(apiKey, envTelephonySlot)) {
     const parent = await fetchConnectionIdFromCredential(apiKey, envTelephonySlot);
     if (parent) {
-      return {
+      const result: ResolvedVoiceConnection = {
         connectionId: parent,
         source: 'credential',
         envMismatch: Boolean(fromEnv && fromEnv !== parent),
       };
+      setCachedResolvedConnection(result);
+      return result;
     }
   }
 
@@ -68,16 +90,26 @@ export async function resolveVoiceConnectionId(): Promise<ResolvedVoiceConnectio
     const resolved = envTelephonySlot
       ? await fetchConnectionIdFromCredential(apiKey, envTelephonySlot)
       : null;
-    return {
+    const result: ResolvedVoiceConnection = {
       connectionId: resolved,
       source: resolved ? 'credential' : 'none',
       envMismatch: true,
     };
+    if (result.connectionId) setCachedResolvedConnection(result);
+    return result;
   }
 
   if (fromEnv && await credentialConnectionExists(apiKey, fromEnv)) {
-    return { connectionId: fromEnv, source: 'env', envMismatch: false };
+    const result: ResolvedVoiceConnection = { connectionId: fromEnv, source: 'env', envMismatch: false };
+    setCachedResolvedConnection(result);
+    return result;
   }
 
-  return { connectionId: fromEnv, source: fromEnv ? 'env' : 'none', envMismatch: false };
+  const result: ResolvedVoiceConnection = {
+    connectionId: fromEnv,
+    source: fromEnv ? 'env' : 'none',
+    envMismatch: false,
+  };
+  if (result.connectionId) setCachedResolvedConnection(result);
+  return result;
 }

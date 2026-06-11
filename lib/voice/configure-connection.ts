@@ -5,6 +5,10 @@ import {
 } from '@/lib/voice/read-env';
 import { resolveVoiceConnectionId } from '@/lib/voice/resolve-connection';
 import { resolveVoiceWebhookUrl } from '@/lib/voice/webhook-url';
+import {
+  getCachedConnectionConfig,
+  setCachedConnectionConfig,
+} from '@/lib/voice/voice-api-cache';
 
 const VOICE_API = 'https://api.telnyx.com/v2';
 
@@ -28,6 +32,14 @@ export interface ConnectionConfigureResult {
   failure_reason?: ConnectionFailureReason;
   /** Owner-only diagnostics — never shown in user-facing UI verbatim. */
   detail?: string;
+}
+
+function successConnectionResult(
+  partial: Omit<ConnectionConfigureResult, 'ok'>,
+): ConnectionConfigureResult {
+  const result: ConnectionConfigureResult = { ok: true, ...partial };
+  setCachedConnectionConfig(result);
+  return result;
 }
 
 interface CredentialConnectionData {
@@ -70,6 +82,9 @@ function mapGetFailure(status: number): ConnectionFailureReason {
  * Safe to call repeatedly (idempotent PATCH).
  */
 export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfigureResult> {
+  const cached = getCachedConnectionConfig();
+  if (cached?.ok) return cached;
+
   const apiKey = readVoiceApiKey();
   const webhookUrl = resolveVoiceWebhookUrl();
   const resolved = await resolveVoiceConnectionId();
@@ -119,6 +134,21 @@ export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfi
     if (!getRes.ok) {
       const detail = (await getRes.text()).slice(0, 300);
       const reason = mapGetFailure(getRes.status);
+
+      if (getRes.status === 429 && connectionId && webhookUrl) {
+        console.warn('[VOICE] connection GET rate limited — assuming env connection is valid');
+        const fallback: ConnectionConfigureResult = {
+          ok: true,
+          connection_id: connectionId,
+          webhook_url: webhookUrl,
+          message: 'Voice connection assumed valid (rate limited).',
+          resolved_from: resolved.source === 'none' ? undefined : resolved.source,
+          env_mismatch: resolved.envMismatch,
+        };
+        setCachedConnectionConfig(fallback);
+        return fallback;
+      }
+
       console.error('[VOICE] connection GET failed:', getRes.status, detail);
 
       return {
@@ -142,14 +172,13 @@ export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfi
     const current = getJson.data ?? {};
 
     if (connectionAlreadyConfigured(current, webhookUrl)) {
-      return {
-        ok: true,
+      return successConnectionResult({
         connection_id: connectionId,
         webhook_url: webhookUrl,
         message: 'Voice connection configured for inbound browser routing.',
         resolved_from: resolved.source === 'none' ? undefined : resolved.source,
         env_mismatch: resolved.envMismatch,
-      };
+      });
     }
 
     const patchBody: Record<string, unknown> = {};
@@ -172,14 +201,13 @@ export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfi
     }
 
     if (Object.keys(patchBody).length === 0) {
-      return {
-        ok: true,
+      return successConnectionResult({
         connection_id: connectionId,
         webhook_url: webhookUrl,
         message: 'Voice connection configured for inbound browser routing.',
         resolved_from: resolved.source === 'none' ? undefined : resolved.source,
         env_mismatch: resolved.envMismatch,
-      };
+      });
     }
 
     const patchRes = await fetch(`${VOICE_API}/credential_connections/${connectionId}`, {
@@ -192,14 +220,13 @@ export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfi
     });
 
     if (patchRes.ok) {
-      return {
-        ok: true,
+      return successConnectionResult({
         connection_id: connectionId,
         webhook_url: webhookUrl,
         message: 'Voice connection configured for inbound browser routing.',
         resolved_from: resolved.source === 'none' ? undefined : resolved.source,
         env_mismatch: resolved.envMismatch,
-      };
+      });
     }
 
     const patchDetail = (await patchRes.text()).slice(0, 300);
@@ -222,14 +249,13 @@ export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfi
     });
 
     if (retryRes.ok) {
-      return {
-        ok: true,
+      return successConnectionResult({
         connection_id: connectionId,
         webhook_url: webhookUrl,
         message: 'Voice connection configured for inbound browser routing.',
         resolved_from: resolved.source === 'none' ? undefined : resolved.source,
         env_mismatch: resolved.envMismatch,
-      };
+      });
     }
 
     const retryDetail = (await retryRes.text()).slice(0, 300);
@@ -241,14 +267,13 @@ export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfi
       && current.sip_uri_calling_preference === 'internal';
 
     if (webhookReachable) {
-      return {
-        ok: true,
+      return successConnectionResult({
         connection_id: connectionId,
         webhook_url: current.webhook_event_url ?? webhookUrl,
         message: 'Voice connection is active (using existing portal settings).',
         resolved_from: resolved.source === 'none' ? undefined : resolved.source,
         env_mismatch: resolved.envMismatch,
-      };
+      });
     }
 
     return {

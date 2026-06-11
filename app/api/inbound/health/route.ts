@@ -16,8 +16,8 @@ import {
   resolveInboundAppUrl,
 } from '@/lib/voice/inbound-readiness';
 import { resolveActiveCredentialId } from '@/lib/telnyx/active-credential';
-import { readVoiceApiKey, readTelephonyCredentialId } from '@/lib/voice/read-env';
-import { discoverWorkingCredentialId, fetchCredentialToken } from '@/lib/voice/credential-discovery';
+import { resolveInboundBrowserCredential } from '@/lib/inbound/browser-credential';
+import { readVoiceApiKey } from '@/lib/voice/read-env';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const [settingsRes, numbersRes, recentInboundRes, providerIndex, connectionConfig, credentialId, connectionId] = await Promise.all([
+  const [settingsRes, numbersRes, recentInboundRes, providerIndex, connectionConfig, inboundBrowserCred, connectionId] = await Promise.all([
     supabase
       .from('user_settings')
       .select('inbound_mode')
@@ -53,9 +53,12 @@ export async function GET(request: NextRequest) {
       .maybeSingle(),
     fetchProviderPhoneIndex(),
     ensureVoiceConnectionConfigured(),
-    resolveActiveCredentialId(supabase, user.id),
+    resolveInboundBrowserCredential(supabase, user.id),
     getActiveVoiceConnectionId(),
   ]);
+
+  const credentialId = inboundBrowserCred?.credentialId
+    ?? await resolveActiveCredentialId(supabase, user.id);
 
   const mode = (settingsRes.data?.inbound_mode as string | null) ?? 'browser';
   const numbers = (numbersRes.data ?? []).map((n) => ({
@@ -74,15 +77,7 @@ export async function GET(request: NextRequest) {
   const voiceApiPresent = Boolean(readVoiceApiKey());
   const providerReachable = providerIndex.size > 0;
   const hasRecentInbound = Boolean(recentInboundRes.data);
-  const credentialDiscovery = await discoverWorkingCredentialId(
-    readTelephonyCredentialId(),
-    connectionId,
-  );
-  const activeCredentialId = credentialDiscovery.credentialId ?? credentialId;
-  const credentialTokenOk = activeCredentialId
-    ? Boolean(await fetchCredentialToken(activeCredentialId))
-    : false;
-  const credentialReady = Boolean(activeCredentialId) && credentialTokenOk;
+  const credentialReady = Boolean(inboundBrowserCred?.token && inboundBrowserCred?.sipUsername);
   const voiceOperational =
     connectionConfig.ok
     || (providerReachable && voiceApiPresent && Boolean(connectionId) && credentialReady)
@@ -102,7 +97,7 @@ export async function GET(request: NextRequest) {
     credentialReady,
     providerReachable,
     hasRecentInbound,
-    credentialEnvSwap: credentialDiscovery.envWasConnectionId,
+    credentialEnvSwap: false,
   });
 
   let status: 'live' | 'almost_ready' | 'needs_setup' | 'offline' = 'needs_setup';

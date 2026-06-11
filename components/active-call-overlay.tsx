@@ -601,8 +601,8 @@ export default function ActiveCallOverlay() {
   const isVisible = ['connecting', 'ringing', 'active', 'held'].includes(callStatus);
   // Inbound pre-answer: full-screen InboundCallOverlay owns the UX (Accept/Decline).
   const inboundPreAnswer =
-    !hasOutboundSession
-    && (inboundUiRinging || isInboundRinging)
+    (inboundUiRinging || isInboundRinging)
+    && !hasOutboundSession
     && (callStatus === 'ringing' || callStatus === 'connecting');
   // Hide on /dialer when a lead is selected (dialer page has its own LiveCallStage).
   // For manual calls from dialer (no activeLead), show the floating overlay.

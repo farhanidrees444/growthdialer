@@ -202,6 +202,18 @@ export function InboundRingingProvider({
   }, [userId, blocksNewInboundNow, beginRing, clearCall, shouldDismissStatus]);
 
   useEffect(() => {
+    if (!userId || !isInboundRinging || hasOutboundSession) return;
+    void apiFetchRef.current('/api/inbound/ringing')
+      .then((r) => r.json())
+      .then((data: { call?: InboundRingingCall | null }) => {
+        if (data.call?.status === 'ringing' && !blocksNewInboundNow()) {
+          beginRing(data.call);
+        }
+      })
+      .catch(() => { /* non-fatal */ });
+  }, [isInboundRinging, hasOutboundSession, userId, beginRing, blocksNewInboundNow]);
+
+  useEffect(() => {
     if (!userId) return;
 
     const poll = async () => {

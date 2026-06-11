@@ -39,6 +39,7 @@ import { DialerFloatingActions } from '@/components/dialer/dialer-floating-actio
 import { DialerStageAmbient } from '@/components/dialer/dialer-stage-ambient';
 
 import type { LeadRecord, DispositionType } from '@/lib/dialer/state-machine';
+import { isInboundPreAnswer } from '@/lib/inbound/pre-answer';
 
 // ── DTMF keypad overlay ────────────────────────────────────────────────────────
 const DTMF_KEYS = ['1','2','3','4','5','6','7','8','9','*','0','#'];
@@ -122,6 +123,7 @@ export default function DialerPage() {
   const router = useRouter();
   const {
     callStatus, isMuted, isOnHold, phoneStatus, activeCallId,
+    isInboundRinging, hasOutboundSession,
     makeCall, hangup, toggleMute, toggleHold, sendDTMF, waitForPhoneReady, reconnect,
   } = useWebPhone();
 
@@ -316,7 +318,7 @@ export default function DialerPage() {
     prevCallStatus.current = callStatus;
 
     if ((prev === 'connecting' || prev === 'ringing') && callStatus === 'active') {
-      if (selectedLead) {
+      if (selectedLead && hasOutboundSession) {
         startCall(callDbId ?? '', callDbId ?? '');
       }
     }
@@ -489,8 +491,9 @@ export default function DialerPage() {
     onClose: () => { setDialpadOpen(false); setShortcutsOpen(false); setDtmfOpen(false); },
   });
 
-  const isLive = mode === 'live';
-  const showAiPanel = mode === 'preview' || mode === 'live';
+  const inboundPreAnswer = isInboundPreAnswer(isInboundRinging, hasOutboundSession, callStatus);
+  const isLive = mode === 'live' && !inboundPreAnswer;
+  const showAiPanel = (mode === 'preview' || mode === 'live') && !inboundPreAnswer;
 
   return (
     <div className="flex flex-col h-full bg-zinc-950 overflow-hidden" aria-label="AI Dialer">
@@ -500,6 +503,7 @@ export default function DialerPage() {
         stats={stats}
         callStatus={callStatus}
         phoneStatus={phoneStatus}
+        inboundPreAnswer={inboundPreAnswer}
         callTimer={callStatus === 'active' ? callTimer.formatted : undefined}
         activeLeadName={selectedLead?.name}
         todayCalls={todayCalls}

@@ -18,6 +18,21 @@ export async function GET(request: NextRequest) {
   const select =
     'id, from_number, to_number, lead_id, status, direction, started_at, answered_at, ended_at';
 
+  const staleBefore = new Date(Date.now() - 180_000).toISOString();
+  await supabase
+    .from('calls')
+    .update({
+      status: 'missed',
+      disposition: 'missed',
+      ended_at: new Date().toISOString(),
+    })
+    .eq('user_id', user.id)
+    .eq('direction', 'inbound')
+    .eq('status', 'ringing')
+    .is('ended_at', null)
+    .is('answered_at', null)
+    .lt('started_at', staleBefore);
+
   const { data: call } = await supabase
     .from('calls')
     .select(select)

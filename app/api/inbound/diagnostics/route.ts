@@ -17,8 +17,6 @@ import { resolveVoiceWebhookUrl } from '@/lib/voice/webhook-url';
 import { listInboundBlockers } from '@/lib/voice/inbound-readiness';
 import { resolveActiveCredentialId, fetchCredentialSipUsername } from '@/lib/telnyx/active-credential';
 import { resolveInboundBrowserCredential } from '@/lib/inbound/browser-credential';
-import { discoverWorkingCredentialId } from '@/lib/voice/credential-discovery';
-import { readTelephonyCredentialId } from '@/lib/voice/read-env';
 
 /** Owner-facing inbound diagnostics (no vendor names in response). */
 export async function GET(request: NextRequest) {
@@ -65,11 +63,6 @@ export async function GET(request: NextRequest) {
   const credentialId = inboundBrowserCred?.credentialId ?? await resolveActiveCredentialId(supabase, user.id);
   const sipUsername = inboundBrowserCred?.sipUsername
     ?? (credentialId ? await fetchCredentialSipUsername(credentialId) : null);
-  const credentialDiscovery = await discoverWorkingCredentialId(
-    readTelephonyCredentialId(),
-    resolvedConnectionId,
-  );
-
   const { count: recentInbound } = await supabase
     .from('calls')
     .select('id', { count: 'exact', head: true })
@@ -110,8 +103,8 @@ export async function GET(request: NextRequest) {
     connection_resolved_from: connection.resolved_from ?? null,
     event_verification: eventsVerified,
     browser_credential: Boolean(credentialId),
-    credential_env_swap_detected: credentialDiscovery.envWasConnectionId,
-    discovered_credential: Boolean(credentialDiscovery.credentialId),
+    credential_env_swap_detected: false,
+    discovered_credential: Boolean(inboundBrowserCred?.credentialId),
     sip_endpoint_ready: Boolean(sipUsername),
     resolved_connection_id: resolvedConnectionId,
     call_control_app_id: callControlAppId,
