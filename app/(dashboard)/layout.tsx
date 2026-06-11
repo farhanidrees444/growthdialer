@@ -13,7 +13,8 @@ import ActiveCallOverlay from "@/components/active-call-overlay";
 import SaveAsLeadModal from "@/components/save-as-lead-modal";
 import { WorkspaceProvider } from "@/contexts/workspace-context";
 import { WorkspaceGate } from "@/components/workspace/workspace-gate";
-import { IncomingCallPopup } from "@/components/call/incoming-call-popup";
+import { InboundRingingProvider } from "@/contexts/inbound-ringing-context";
+import { InboundCallOverlay } from "@/components/inbound/inbound-call-overlay";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { PremiumOverlays } from "@/components/premium/premium-overlays";
 import { FloatingEdgeProvider } from "@/components/layout/floating-edge-provider";
@@ -24,14 +25,12 @@ import { PageEnter } from "@/components/layout/page-enter";
 import { resolveRouteAccent } from "@/lib/ui/route-accents";
 import { PostHogIdentify } from "@/components/PostHogIdentify";
 
-function DashboardOverlays() {
+function DashboardOverlays({ userId }: { userId: string | undefined }) {
   const { showSaveAsLead, activePhone, dismissSaveAsLead } = useCallContext();
-  const session = useSupabaseSession();
-  const userId = session?.user?.id;
   return (
     <>
       <ActiveCallOverlay />
-      {userId && <IncomingCallPopup userId={userId} />}
+      {userId && <InboundCallOverlay />}
       {showSaveAsLead && activePhone && (
         <SaveAsLeadModal phone={activePhone} onClose={dismissSaveAsLead} />
       )}
@@ -47,12 +46,15 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const isOnboarding = pathname.startsWith("/workspace/setup");
   const routeAccent = resolveRouteAccent(pathname);
+  const session = useSupabaseSession();
+  const userId = session?.user?.id;
 
   return (
     <WorkspaceProvider>
       <PostHogIdentify />
       <WebPhoneProvider>
         <CallProvider>
+          <InboundRingingProvider userId={userId}>
           <FloatingEdgeProvider>
           <CallOrchestratorProvider>
           <LeadsProvider>
@@ -80,12 +82,13 @@ export default function DashboardLayout({
               </div>
             </div>
             {!isOnboarding && <MobileBottomNav />}
-            <DashboardOverlays />
+            <DashboardOverlays userId={userId} />
             <PremiumOverlays />
             </MobileNavProvider>
           </LeadsProvider>
           </CallOrchestratorProvider>
           </FloatingEdgeProvider>
+          </InboundRingingProvider>
         </CallProvider>
       </WebPhoneProvider>
     </WorkspaceProvider>

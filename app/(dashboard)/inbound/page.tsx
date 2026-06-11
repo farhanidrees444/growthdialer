@@ -20,13 +20,11 @@ import {
 } from 'lucide-react';
 import { useWebPhone } from '@/contexts/webphone-context';
 import { useWorkspace } from '@/contexts/workspace-context';
-import { useSupabaseSession } from '@/lib/supabase/hooks';
 import { PageHeader } from '@/components/ui/page-header';
 import { SurfaceCard } from '@/components/ui/surface-card';
 import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
 import { InboundHistoryPanel } from '@/components/calls/inbound-history-panel';
 import { InboundHealthPanel } from '@/components/inbound/inbound-health-panel';
-import { InboundRingingHero } from '@/components/inbound/inbound-ringing-hero';
 import { useInboundRinging } from '@/hooks/use-inbound-ringing';
 import { cn } from '@/lib/utils';
 
@@ -79,11 +77,9 @@ function phoneStatusLabel(status: string): { label: string; color: string; pulse
 }
 
 export default function InboundPage() {
-  const session = useSupabaseSession();
-  const userId = session?.user?.id;
   const { apiFetch } = useWorkspace();
   const { phoneStatus, reconnect } = useWebPhone();
-  const { call: ringingCall, accept, decline, accepting, isRinging } = useInboundRinging(userId);
+  const { isRinging } = useInboundRinging();
 
   const [stats, setStats] = useState<InboundStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -208,13 +204,20 @@ export default function InboundPage() {
           </div>
         </PageHeader>
 
-        {isRinging && ringingCall && (
-          <InboundRingingHero
-            call={ringingCall}
-            onAccept={() => void accept()}
-            onDecline={() => void decline()}
-            accepting={accepting}
-          />
+        {isRinging && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 rounded-2xl border border-cyan-500/25 bg-cyan-500/[0.06] px-4 py-3"
+          >
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-60" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-cyan-400" />
+            </span>
+            <p className="text-sm font-medium text-cyan-100/90">
+              Incoming call — use the overlay to accept or decline
+            </p>
+          </motion.div>
         )}
 
         <InboundHealthPanel

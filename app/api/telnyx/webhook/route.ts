@@ -12,6 +12,7 @@ import { findNumberOwnerWithMeta } from '@/lib/inbound/lookup-number';
 import {
   bridgeInboundToBrowser,
   completeInboundBridge,
+  ringBrowserForInbound,
 } from '@/lib/inbound/bridge-to-browser';
 import { decodeClientState } from '@/lib/inbound/telnyx-actions';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
@@ -84,6 +85,7 @@ interface CallRow {
   recording_supabase_path: string | null;
   analytics_id: string | null;
   telnyx_session_id: string | null;
+  telnyx_call_id?: string | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -513,10 +515,56 @@ export async function POST(request: NextRequest) {
         await handleParallelLegHangup(supabase, callControlId, payload.hangup_cause ?? null);
       }
 
+      const hangupBridgeState = decodeClientState(payload.client_state);
+
       const callRow = await findCall(
         supabase, callSessionId, callControlId,
-        'id, user_id, lead_id, answered_at, to_number, from_number, direction, duration_seconds, was_recorded, disposition, status',
+        'id, user_id, lead_id, answered_at, to_number, from_number, direction, duration_seconds, was_recorded, disposition, status, telnyx_call_id, telnyx_session_id',
       );
+
+      // WebRTC ring leg dropped before agent answered — do not mark inbound as missed.
+      if (
+        callRow
+        && callRow.direction === 'inbound'
+        && !callRow.answered_at
+        && callControlId
+        && (callRow.status === 'ringing' || callRow.status === null)
+      ) {
+        const isWebRtcLeg =
+          hangupBridgeState?.gd_inbound_bridge === true
+          || (
+            callRow.telnyx_session_id === callControlId
+            && callRow.telnyx_call_id
+            && callRow.telnyx_call_id !== callControlId
+          );
+
+        if (isWebRtcLeg) {
+          const pstnId = String(hangupBridgeState?.pstn_call_control_id ?? callRow.telnyx_call_id);
+          const userId = String(hangupBridgeState?.user_id ?? callRow.user_id);
+          const ownedDid = callRow.to_number ?? '';
+          const callerAni = callRow.from_number ?? '';
+
+          console.log('[INBOUND] WebRTC ring leg ended — re-ringing browser | PSTN:', pstnId);
+
+          await supabase
+            .from('calls')
+            .update({ telnyx_session_id: null })
+            .eq('id', callRow.id);
+
+          if (pstnId && ownedDid && userId) {
+            await ringBrowserForInbound(
+              supabase,
+              userId,
+              pstnId,
+              ownedDid,
+              callerAni,
+              callRow.id,
+            );
+          }
+
+          return NextResponse.json({ received: true });
+        }
+      }
 
       const endedAt = new Date().toISOString();
       const hangupCause = payload.hangup_cause ?? null;
