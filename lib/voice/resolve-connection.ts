@@ -5,6 +5,7 @@ import {
 } from '@/lib/voice/read-env';
 import {
   credentialConnectionExists,
+  fetchCredentialConnectionId,
   fetchCredentialToken,
   telephonyCredentialExists,
 } from '@/lib/voice/credential-discovery';
@@ -30,12 +31,8 @@ export async function fetchConnectionIdFromCredential(
   apiKey: string,
   credentialId: string,
 ): Promise<string | null> {
-  const res = await voiceGet(`telephony_credentials/${credentialId}`, apiKey);
-  if (!res.ok) return null;
-
-  const json = await res.json() as { data?: { connection_id?: string | number | null } };
-  const id = json.data?.connection_id;
-  return id == null ? null : String(id).trim();
+  void apiKey;
+  return fetchCredentialConnectionId(credentialId);
 }
 
 /**

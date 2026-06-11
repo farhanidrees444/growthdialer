@@ -17,7 +17,7 @@ import {
 } from '@/lib/voice/inbound-readiness';
 import { resolveActiveCredentialId } from '@/lib/telnyx/active-credential';
 import { readVoiceApiKey, readTelephonyCredentialId } from '@/lib/voice/read-env';
-import { discoverWorkingCredentialId } from '@/lib/voice/credential-discovery';
+import { discoverWorkingCredentialId, fetchCredentialToken } from '@/lib/voice/credential-discovery';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -78,7 +78,11 @@ export async function GET(request: NextRequest) {
     readTelephonyCredentialId(),
     connectionId,
   );
-  const credentialReady = Boolean(credentialDiscovery.credentialId ?? credentialId);
+  const activeCredentialId = credentialDiscovery.credentialId ?? credentialId;
+  const credentialTokenOk = activeCredentialId
+    ? Boolean(await fetchCredentialToken(activeCredentialId))
+    : false;
+  const credentialReady = Boolean(activeCredentialId) && credentialTokenOk;
   const voiceOperational =
     connectionConfig.ok
     || (providerReachable && voiceApiPresent && Boolean(connectionId) && credentialReady)

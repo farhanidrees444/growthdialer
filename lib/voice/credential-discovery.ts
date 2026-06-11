@@ -66,6 +66,34 @@ export async function fetchCredentialToken(credentialId: string): Promise<string
   return token || null;
 }
 
+export function parseCredentialConnectionId(data: {
+  connection_id?: string | number | null;
+  resource_id?: string | null;
+} | null | undefined): string | null {
+  if (!data) return null;
+  if (data.connection_id != null && String(data.connection_id).trim()) {
+    return String(data.connection_id).trim();
+  }
+  const resource = data.resource_id?.trim() ?? '';
+  if (resource.startsWith('connection:')) {
+    return resource.slice('connection:'.length);
+  }
+  return null;
+}
+
+export async function fetchCredentialConnectionId(credentialId: string): Promise<string | null> {
+  const apiKey = readVoiceApiKey();
+  if (!apiKey) return null;
+
+  const res = await voiceGet(`telephony_credentials/${credentialId}`, apiKey);
+  if (!res.ok) return null;
+
+  const json = await res.json() as {
+    data?: { connection_id?: string | number | null; resource_id?: string | null };
+  };
+  return parseCredentialConnectionId(json.data);
+}
+
 export async function fetchCredentialSipUsername(credentialId: string): Promise<string | null> {
   const apiKey = readVoiceApiKey();
   if (!apiKey) return null;

@@ -15,6 +15,7 @@ import {
 } from '@/lib/inbound/bridge-to-browser';
 import { decodeClientState } from '@/lib/inbound/telnyx-actions';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
+import { voiceApiBearerToken } from '@/lib/voice/read-env';
 
 function directionSaysInbound(direction: string | undefined): boolean | null {
   const d = (direction ?? '').toLowerCase();
@@ -141,7 +142,7 @@ async function telnyxCallAction(
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${process.env.TELNYX_API_KEY ?? ''}`,
+          Authorization: `Bearer ${voiceApiBearerToken()}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(body),
@@ -164,7 +165,7 @@ async function startProgrammaticRecording(callControlId: string): Promise<boolea
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${process.env.TELNYX_API_KEY ?? ''}`,
+          Authorization: `Bearer ${voiceApiBearerToken()}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ format: 'mp3', channels: 'dual', play_beep: false }),
