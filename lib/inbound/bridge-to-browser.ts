@@ -8,6 +8,7 @@ import {
   fetchCredentialSipUsername,
   resolveActiveCredentialId,
 } from '@/lib/telnyx/active-credential';
+import { getActiveVoiceConnectionId } from '@/lib/voice/configure-connection';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -33,7 +34,7 @@ export async function bridgeInboundToBrowser(
   fromDid: string,
   dbCallId?: string,
 ): Promise<BridgeResult> {
-  const connectionId = process.env.TELNYX_CONNECTION_ID?.trim();
+  const connectionId = await getActiveVoiceConnectionId();
   const credentialId = await resolveActiveCredentialId(supabase, userId);
   const sipUsername = credentialId ? await fetchCredentialSipUsername(credentialId) : null;
 

@@ -8,6 +8,7 @@ import {
   backfillProviderIds,
   fetchProviderPhoneIndex,
 } from '@/lib/voice/provider-numbers';
+import { getActiveVoiceConnectionId } from '@/lib/voice/configure-connection';
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const connectionId = process.env.TELNYX_CONNECTION_ID?.trim();
+  const connectionId = await getActiveVoiceConnectionId();
   if (!connectionId) {
     return NextResponse.json({
       error: 'Voice routing is not configured on the server.',

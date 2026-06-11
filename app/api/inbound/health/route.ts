@@ -7,7 +7,10 @@ import {
   backfillProviderIds,
   fetchProviderPhoneIndex,
 } from '@/lib/voice/provider-numbers';
-import { ensureVoiceConnectionConfigured } from '@/lib/voice/configure-connection';
+import {
+  ensureVoiceConnectionConfigured,
+  getActiveVoiceConnectionId,
+} from '@/lib/voice/configure-connection';
 import {
   listInboundBlockers,
   resolveInboundAppUrl,
@@ -26,9 +29,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const connectionId = process.env.TELNYX_CONNECTION_ID?.trim() ?? null;
-
-  const [settingsRes, numbersRes, recentInboundRes, providerIndex, connectionConfig, credentialId] = await Promise.all([
+  const [settingsRes, numbersRes, recentInboundRes, providerIndex, connectionConfig, credentialId, connectionId] = await Promise.all([
     supabase
       .from('user_settings')
       .select('inbound_mode')
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest) {
     fetchProviderPhoneIndex(),
     ensureVoiceConnectionConfigured(),
     resolveActiveCredentialId(supabase, user.id),
+    getActiveVoiceConnectionId(),
   ]);
 
   const mode = (settingsRes.data?.inbound_mode as string | null) ?? 'browser';

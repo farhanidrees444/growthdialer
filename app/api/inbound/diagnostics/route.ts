@@ -8,7 +8,10 @@ import {
   fetchProviderPhoneIndex,
   lookupProviderPhone,
 } from '@/lib/voice/provider-numbers';
-import { ensureVoiceConnectionConfigured } from '@/lib/voice/configure-connection';
+import {
+  ensureVoiceConnectionConfigured,
+  getActiveVoiceConnectionId,
+} from '@/lib/voice/configure-connection';
 import { resolveVoiceWebhookUrl } from '@/lib/voice/webhook-url';
 import { listInboundBlockers } from '@/lib/voice/inbound-readiness';
 import { resolveActiveCredentialId, fetchCredentialSipUsername } from '@/lib/telnyx/active-credential';
@@ -26,7 +29,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const connection = await ensureVoiceConnectionConfigured();
+  const [connection, resolvedConnectionId] = await Promise.all([
+    ensureVoiceConnectionConfigured(),
+    getActiveVoiceConnectionId(),
+  ]);
   const webhookUrl = resolveVoiceWebhookUrl();
   const eventsVerified = Boolean(process.env.TELNYX_PUBLIC_KEY?.trim());
 
@@ -46,7 +52,7 @@ export async function GET(request: NextRequest) {
 
   const routing = await auditNumberRouting(
     dbNumbers,
-    process.env.TELNYX_CONNECTION_ID?.trim() ?? null,
+    resolvedConnectionId,
     providerIndex,
   );
 
@@ -80,6 +86,9 @@ export async function GET(request: NextRequest) {
       && Boolean(webhookUrl)
       && blockers.length === 0,
     connection_configured: connection.ok,
+    connection_resolved: Boolean(resolvedConnectionId),
+    connection_env_mismatch: connection.env_mismatch ?? false,
+    connection_resolved_from: connection.resolved_from ?? null,
     event_verification: eventsVerified,
     browser_credential: Boolean(credentialId),
     sip_endpoint_ready: Boolean(sipUsername),

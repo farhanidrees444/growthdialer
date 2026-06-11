@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { buildPhoneVariants, normalizeE164 } from '@/lib/inbound/phone';
 import { assignNumberToVoiceConnection } from '@/lib/voice/assign-number-connection';
+import { readVoiceApiKey } from '@/lib/voice/read-env';
 
 const VOICE_API = 'https://api.telnyx.com/v2';
 
@@ -27,7 +28,7 @@ export function connectionsMatch(
 
 /** Fetch all account phone numbers once (paginated). */
 export async function fetchProviderPhoneIndex(): Promise<Map<string, ProviderPhoneRecord>> {
-  const apiKey = process.env.TELNYX_API_KEY?.trim();
+  const apiKey = readVoiceApiKey();
   const index = new Map<string, ProviderPhoneRecord>();
   if (!apiKey) return index;
 

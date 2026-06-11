@@ -1,8 +1,11 @@
+import { getActiveVoiceConnectionId } from '@/lib/voice/configure-connection';
+import { readVoiceApiKey } from '@/lib/voice/read-env';
+
 const VOICE_API = 'https://api.telnyx.com/v2';
 
 export async function assignNumberToVoiceConnection(telnyxNumberId: string): Promise<boolean> {
-  const apiKey = process.env.TELNYX_API_KEY?.trim();
-  const connectionId = process.env.TELNYX_CONNECTION_ID?.trim();
+  const apiKey = readVoiceApiKey();
+  const connectionId = await getActiveVoiceConnectionId();
   if (!apiKey || !connectionId || !telnyxNumberId) return false;
 
   try {
@@ -26,7 +29,7 @@ export async function assignNumberToVoiceConnection(telnyxNumberId: string): Pro
 }
 
 export async function getNumberConnectionId(telnyxNumberId: string): Promise<string | null> {
-  const apiKey = process.env.TELNYX_API_KEY?.trim();
+  const apiKey = readVoiceApiKey();
   if (!apiKey || !telnyxNumberId) return null;
 
   try {

@@ -1,12 +1,27 @@
+import { readVoiceApiKey } from '@/lib/voice/read-env';
+import { resolveVoiceConnectionId } from '@/lib/voice/resolve-connection';
 import { resolveVoiceWebhookUrl } from '@/lib/voice/webhook-url';
 
 const VOICE_API = 'https://api.telnyx.com/v2';
+
+export type ConnectionFailureReason =
+  | 'missing_api_key'
+  | 'missing_connection_id'
+  | 'missing_app_url'
+  | 'env_id_is_credential'
+  | 'auth_failed'
+  | 'not_found'
+  | 'patch_failed'
+  | 'network';
 
 export interface ConnectionConfigureResult {
   ok: boolean;
   connection_id: string | null;
   webhook_url: string | null;
   message: string;
+  resolved_from?: 'env' | 'credential';
+  env_mismatch?: boolean;
+  failure_reason?: ConnectionFailureReason;
   /** Owner-only diagnostics — never shown in user-facing UI verbatim. */
   detail?: string;
 }
@@ -28,19 +43,6 @@ async function voiceGet(path: string, apiKey: string): Promise<Response> {
   });
 }
 
-async function detectSwappedConnectionId(
-  apiKey: string,
-  connectionId: string,
-): Promise<boolean> {
-  const asConnection = await voiceGet(`credential_connections/${connectionId}`, apiKey);
-  if (asConnection.ok) return false;
-
-  if (asConnection.status !== 404) return false;
-
-  const asCredential = await voiceGet(`telephony_credentials/${connectionId}`, apiKey);
-  return asCredential.ok;
-}
-
 function connectionAlreadyConfigured(
   data: CredentialConnectionData,
   webhookUrl: string,
@@ -53,21 +55,40 @@ function connectionAlreadyConfigured(
   return webhookOk && sipOk && parkingOk;
 }
 
+function mapGetFailure(status: number): ConnectionFailureReason {
+  if (status === 401 || status === 403) return 'auth_failed';
+  if (status === 404) return 'not_found';
+  return 'network';
+}
+
 /**
  * Align credential connection with GrowthDialer inbound/outbound requirements.
  * Safe to call repeatedly (idempotent PATCH).
  */
 export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfigureResult> {
-  const apiKey = process.env.TELNYX_API_KEY?.trim();
-  const connectionId = process.env.TELNYX_CONNECTION_ID?.trim();
+  const apiKey = readVoiceApiKey();
   const webhookUrl = resolveVoiceWebhookUrl();
+  const resolved = await resolveVoiceConnectionId();
+  const connectionId = resolved.connectionId;
 
-  if (!apiKey || !connectionId) {
+  if (!apiKey) {
     return {
       ok: false,
-      connection_id: connectionId ?? null,
+      connection_id: connectionId,
       webhook_url: webhookUrl || null,
-      message: 'Voice connection credentials are not configured on the server.',
+      message: 'Voice API key is not configured on the server.',
+      failure_reason: 'missing_api_key',
+    };
+  }
+
+  if (!connectionId) {
+    return {
+      ok: false,
+      connection_id: null,
+      webhook_url: webhookUrl || null,
+      message: 'Voice connection ID is not configured on the server.',
+      failure_reason: 'missing_connection_id',
+      env_mismatch: resolved.envMismatch,
     };
   }
 
@@ -77,32 +98,38 @@ export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfi
       connection_id: connectionId,
       webhook_url: null,
       message: 'Application URL is not configured for call events.',
-      detail: 'Set APP_URL or NEXT_PUBLIC_APP_URL to your live app origin (e.g. https://app.growthdialer.com).',
+      failure_reason: 'missing_app_url',
+      detail: 'Set APP_URL or NEXT_PUBLIC_APP_URL to your live app origin.',
     };
   }
 
-  try {
-    const swapped = await detectSwappedConnectionId(apiKey, connectionId);
-    if (swapped) {
-      return {
-        ok: false,
-        connection_id: connectionId,
-        webhook_url: webhookUrl,
-        message: 'Voice connection ID looks incorrect on the server.',
-        detail:
-          'TELNYX_CONNECTION_ID appears to be a browser credential ID. Use your SIP Connection ID instead, and keep the credential in TELNYX_TELEPHONY_CREDENTIAL_ID.',
-      };
-    }
+  if (resolved.envMismatch && resolved.source === 'credential') {
+    console.warn(
+      '[VOICE] TELNYX_CONNECTION_ID does not match browser credential parent — using resolved connection',
+      connectionId,
+    );
+  }
 
+  try {
     const getRes = await voiceGet(`credential_connections/${connectionId}`, apiKey);
     if (!getRes.ok) {
       const detail = (await getRes.text()).slice(0, 300);
+      const reason = mapGetFailure(getRes.status);
       console.error('[VOICE] connection GET failed:', getRes.status, detail);
+
       return {
         ok: false,
         connection_id: connectionId,
         webhook_url: webhookUrl,
-        message: 'Voice connection could not be loaded.',
+        message:
+          reason === 'auth_failed'
+            ? 'Voice API key was rejected by the provider.'
+            : reason === 'not_found'
+              ? 'Voice connection could not be found for this account.'
+              : 'Voice connection could not be loaded.',
+        failure_reason: reason,
+        resolved_from: resolved.source === 'none' ? undefined : resolved.source,
+        env_mismatch: resolved.envMismatch,
         detail: `GET credential_connections/${connectionId} → ${getRes.status}`,
       };
     }
@@ -116,6 +143,8 @@ export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfi
         connection_id: connectionId,
         webhook_url: webhookUrl,
         message: 'Voice connection configured for inbound browser routing.',
+        resolved_from: resolved.source === 'none' ? undefined : resolved.source,
+        env_mismatch: resolved.envMismatch,
       };
     }
 
@@ -144,6 +173,8 @@ export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfi
         connection_id: connectionId,
         webhook_url: webhookUrl,
         message: 'Voice connection configured for inbound browser routing.',
+        resolved_from: resolved.source === 'none' ? undefined : resolved.source,
+        env_mismatch: resolved.envMismatch,
       };
     }
 
@@ -162,13 +193,14 @@ export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfi
         connection_id: connectionId,
         webhook_url: webhookUrl,
         message: 'Voice connection configured for inbound browser routing.',
+        resolved_from: resolved.source === 'none' ? undefined : resolved.source,
+        env_mismatch: resolved.envMismatch,
       };
     }
 
     const patchDetail = (await patchRes.text()).slice(0, 300);
     console.error('[VOICE] connection configure failed:', patchRes.status, patchDetail);
 
-    // Retry with webhook + SIP only (avoids outbound profile validation issues).
     const minimalBody = {
       webhook_event_url: webhookUrl,
       webhook_api_version: '2',
@@ -191,17 +223,38 @@ export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfi
         connection_id: connectionId,
         webhook_url: webhookUrl,
         message: 'Voice connection configured for inbound browser routing.',
+        resolved_from: resolved.source === 'none' ? undefined : resolved.source,
+        env_mismatch: resolved.envMismatch,
       };
     }
 
     const retryDetail = (await retryRes.text()).slice(0, 300);
     console.error('[VOICE] connection minimal configure failed:', retryRes.status, retryDetail);
 
+    // Connection exists and is readable — don't block inbound if portal already has webhooks.
+    const webhookReachable =
+      Boolean(current.webhook_event_url)
+      && current.sip_uri_calling_preference === 'internal';
+
+    if (webhookReachable) {
+      return {
+        ok: true,
+        connection_id: connectionId,
+        webhook_url: current.webhook_event_url ?? webhookUrl,
+        message: 'Voice connection is active (using existing portal settings).',
+        resolved_from: resolved.source === 'none' ? undefined : resolved.source,
+        env_mismatch: resolved.envMismatch,
+      };
+    }
+
     return {
       ok: false,
       connection_id: connectionId,
       webhook_url: webhookUrl,
       message: 'Could not update voice connection settings.',
+      failure_reason: 'patch_failed',
+      resolved_from: resolved.source === 'none' ? undefined : resolved.source,
+      env_mismatch: resolved.envMismatch,
       detail: `PATCH failed (${patchRes.status}); minimal retry (${retryRes.status})`,
     };
   } catch (err) {
@@ -211,6 +264,13 @@ export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfi
       connection_id: connectionId,
       webhook_url: webhookUrl,
       message: 'Voice connection update failed.',
+      failure_reason: 'network',
     };
   }
+}
+
+/** Connection ID for routing/bridge — always resolved with credential fallback. */
+export async function getActiveVoiceConnectionId(): Promise<string | null> {
+  const resolved = await resolveVoiceConnectionId();
+  return resolved.connectionId;
 }

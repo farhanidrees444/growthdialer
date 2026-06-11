@@ -12,7 +12,11 @@ import {
   type DbNumberRow,
 } from '@/lib/voice/provider-numbers';
 import { assignNumberToVoiceConnection } from '@/lib/voice/assign-number-connection';
-import { ensureVoiceConnectionConfigured } from '@/lib/voice/configure-connection';
+import { readVoiceApiKey } from '@/lib/voice/read-env';
+import {
+  ensureVoiceConnectionConfigured,
+  getActiveVoiceConnectionId,
+} from '@/lib/voice/configure-connection';
 
 const VOICE_API = 'https://api.telnyx.com/v2';
 
@@ -21,7 +25,7 @@ async function tagProviderNumber(
   userId: string,
   email: string,
 ): Promise<void> {
-  const apiKey = process.env.TELNYX_API_KEY?.trim();
+  const apiKey = readVoiceApiKey();
   if (!apiKey) return;
 
   try {
@@ -61,8 +65,10 @@ export async function prepareInboundAccount(
   userId: string,
   userEmail: string,
 ): Promise<PrepareInboundResult> {
-  const connectionId = process.env.TELNYX_CONNECTION_ID?.trim() ?? null;
-  const connectionConfig = await ensureVoiceConnectionConfigured();
+  const [connectionId, connectionConfig] = await Promise.all([
+    getActiveVoiceConnectionId(),
+    ensureVoiceConnectionConfigured(),
+  ]);
   const workspaceId = await resolveUserWorkspaceId(supabase, userId);
 
   const { data: rows } = await supabase
@@ -168,8 +174,8 @@ export async function prepareInboundAccount(
     connection_configured: connectionConfig.ok,
     message: connectionConfig.ok
       ? message
-      : connectionConfig.message.includes('incorrect')
-        ? 'Server voice connection ID needs to be corrected in deployment settings, then refresh this page.'
+      : connectionConfig.env_mismatch
+        ? 'Voice connection ID mismatch detected — latest deploy auto-resolves from your browser credential. Refresh after deploy completes.'
         : connectionConfig.message,
   };
 }

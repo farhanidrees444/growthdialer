@@ -1,9 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  readConfiguredConnectionId,
+  readTelephonyCredentialId,
+  readVoiceApiKey,
+} from '@/lib/voice/read-env';
 
 const TELNYX_API = 'https://api.telnyx.com/v2';
 
 export async function fetchCredentialToken(credentialId: string): Promise<string | null> {
-  const apiKey = process.env.TELNYX_API_KEY?.trim();
+  const apiKey = readVoiceApiKey();
   if (!apiKey) return null;
 
   const res = await fetch(`${TELNYX_API}/telephony_credentials/${credentialId}/token`, {
@@ -16,7 +21,7 @@ export async function fetchCredentialToken(credentialId: string): Promise<string
 }
 
 export async function fetchCredentialSipUsername(credentialId: string): Promise<string | null> {
-  const apiKey = process.env.TELNYX_API_KEY?.trim();
+  const apiKey = readVoiceApiKey();
   if (!apiKey) return null;
 
   const res = await fetch(`${TELNYX_API}/telephony_credentials/${credentialId}`, {
@@ -29,13 +34,14 @@ export async function fetchCredentialSipUsername(credentialId: string): Promise<
 }
 
 async function createUserCredential(userId: string): Promise<string | null> {
-  const connectionId = process.env.TELNYX_CONNECTION_ID?.trim();
-  if (!connectionId) return null;
+  const connectionId = readConfiguredConnectionId();
+  const apiKey = readVoiceApiKey();
+  if (!connectionId || !apiKey) return null;
 
   const res = await fetch(`${TELNYX_API}/telephony_credentials`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${process.env.TELNYX_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -91,16 +97,14 @@ export async function resolveActiveCredentialId(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<string | null> {
-  const sharedCredentialId =
-    process.env.TELNYX_TELEPHONY_CREDENTIAL_ID?.trim()
-    ?? process.env.TELNYX_CREDENTIAL_ID?.trim();
+  const sharedCredentialId = readTelephonyCredentialId();
 
   if (sharedCredentialId) {
     const token = await fetchCredentialToken(sharedCredentialId);
     if (token) return sharedCredentialId;
   }
 
-  if (process.env.TELNYX_CONNECTION_ID?.trim()) {
+  if (readConfiguredConnectionId()) {
     return resolvePerUserCredentialId(supabase, userId);
   }
 

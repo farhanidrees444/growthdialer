@@ -40,24 +40,48 @@ export function listInboundBlockers(input: {
     blockers.push({
       code: 'app_url',
       label: 'App URL not set on server',
-      fix: 'In Vercel → Settings → Environment Variables, set APP_URL to https://app.growthdialer.com (your live dashboard URL), then redeploy.',
+      fix: 'Set APP_URL to your live dashboard URL (e.g. https://app.growthdialer.com), then redeploy.',
     });
   }
 
   if (!input.connection.ok) {
-    if (input.connection.message.includes('incorrect')) {
+    if (input.connection.env_mismatch) {
       blockers.push({
-        code: 'connection_id_swap',
+        code: 'connection_env_mismatch',
         label: 'Connection ID mismatch on server',
         fix:
-          'In Vercel, set TELNYX_CONNECTION_ID to your SIP Connection ID (not the browser credential ID). Keep the browser credential in TELNYX_TELEPHONY_CREDENTIAL_ID. Redeploy after saving.',
+          'TELNYX_CONNECTION_ID must be your SIP Connection ID — not the browser telephony credential ID (those are two different values). Update in deployment settings and redeploy; latest code also auto-resolves from your credential.',
+      });
+    } else if (input.connection.failure_reason === 'auth_failed') {
+      blockers.push({
+        code: 'voice_api_auth',
+        label: 'Voice API key rejected',
+        fix: 'Regenerate your voice API key in the provider portal and update TELNYX_API_KEY in Vercel, then redeploy.',
+      });
+    } else if (input.connection.failure_reason === 'missing_api_key') {
+      blockers.push({
+        code: 'missing_api_key',
+        label: 'Voice API key missing on server',
+        fix: 'Add TELNYX_API_KEY to your deployment environment and redeploy.',
+      });
+    } else if (input.connection.failure_reason === 'missing_connection_id') {
+      blockers.push({
+        code: 'missing_connection_id',
+        label: 'Voice connection ID missing',
+        fix: 'Add TELNYX_CONNECTION_ID (SIP Connection ID) and TELNYX_TELEPHONY_CREDENTIAL_ID (browser credential) to your deployment environment.',
+      });
+    } else if (input.connection.failure_reason === 'not_found') {
+      blockers.push({
+        code: 'connection_not_found',
+        label: 'Voice connection not found',
+        fix:
+          'TELNYX_CONNECTION_ID must be the SIP Connection ID from your voice portal (Credential Connection), not the telephony credential or phone number ID.',
       });
     } else {
       blockers.push({
         code: 'connection_config',
-        label: 'Voice connection not configured',
-        fix:
-          'Confirm TELNYX_API_KEY and TELNYX_CONNECTION_ID in Vercel match your voice portal, then open this page again to auto-configure.',
+        label: 'Voice line setup incomplete',
+        fix: 'Refresh this page — we auto-configure on load. If this persists, check deployment logs for [VOICE].',
       });
     }
   }
@@ -67,7 +91,7 @@ export function listInboundBlockers(input: {
       code: 'webhook_verify',
       label: 'Call event verification not enabled',
       fix:
-        'In Vercel, add TELNYX_PUBLIC_KEY (from your voice provider portal → API Keys → Public Key). Redeploy — without it inbound webhooks are rejected in production.',
+        'Add TELNYX_PUBLIC_KEY (Public Key from your voice portal → API Keys) to your deployment environment and redeploy.',
     });
   }
 
@@ -84,7 +108,7 @@ export function listInboundBlockers(input: {
       code: 'browser_credential',
       label: 'Browser voice endpoint not ready',
       fix:
-        'Set TELNYX_TELEPHONY_CREDENTIAL_ID in Vercel, keep this tab open, and allow microphone access.',
+        'Add TELNYX_TELEPHONY_CREDENTIAL_ID to your deployment environment, keep this tab open, and allow microphone access.',
     });
   }
 
