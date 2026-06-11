@@ -3,15 +3,13 @@ import { normalizeE164 } from '@/lib/inbound/phone';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
 import { resolveActiveCredentialId } from '@/lib/telnyx/active-credential';
 import {
-  activateRoutingForNumbers,
+  forceAssignAllNumbersToConnection,
   auditNumberRouting,
   backfillProviderIds,
-  connectionsMatch,
   fetchProviderPhoneIndex,
   lookupProviderPhone,
   type DbNumberRow,
 } from '@/lib/voice/provider-numbers';
-import { assignNumberToVoiceConnection } from '@/lib/voice/assign-number-connection';
 import { readVoiceApiKey } from '@/lib/voice/read-env';
 import {
   ensureVoiceConnectionConfigured,
@@ -128,22 +126,9 @@ export async function prepareInboundAccount(
   await backfillProviderIds(supabase, numbers, providerIndex);
 
   let routingActivated = 0;
-  if (connectionId) {
-    const audit = await auditNumberRouting(numbers, connectionId, providerIndex);
-    if (audit.needs_activation) {
-      const result = await activateRoutingForNumbers(numbers, connectionId, providerIndex);
-      routingActivated = result.activated;
-    }
-
-    const primary = numbers.find((n) => n.is_default) ?? numbers[0];
-    if (primary) {
-      const provider = lookupProviderPhone(providerIndex, primary.phone_number);
-      const providerId = primary.telnyx_number_id ?? provider?.id;
-      if (providerId && provider && !connectionsMatch(provider.connection_id, connectionId)) {
-        const ok = await assignNumberToVoiceConnection(providerId);
-        if (ok) routingActivated++;
-      }
-    }
+  if (connectionId && numbers.length > 0) {
+    const result = await forceAssignAllNumbersToConnection(numbers, connectionId, providerIndex);
+    routingActivated = result.activated;
   }
 
   const credentialId = connectionId

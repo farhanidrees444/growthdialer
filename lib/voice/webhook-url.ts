@@ -5,7 +5,13 @@ export function resolveVoiceAppBaseUrl(): string {
     ?? process.env.NEXT_PUBLIC_APP_URL?.trim()
     ?? '';
 
-  if (explicit) return explicit.replace(/\/$/, '');
+  if (explicit) {
+    const normalized = explicit.replace(/\/$/, '');
+    if (/^https?:\/\/(www\.)?growthdialer\.com$/i.test(normalized)) {
+      return 'https://app.growthdialer.com';
+    }
+    return normalized;
+  }
 
   const vercel = process.env.VERCEL_URL?.trim();
   if (vercel) return `https://${vercel.replace(/\/$/, '')}`;

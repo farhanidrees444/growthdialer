@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getActiveVoiceConnectionId } from '@/lib/voice/configure-connection';
+import { voiceApiBearerToken } from '@/lib/voice/read-env';
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,14 +33,15 @@ export async function POST(request: NextRequest) {
       phone_numbers: [{ phone_number: phoneNumber }],
       customer_reference: userId,
     };
-    if (process.env.TELNYX_CONNECTION_ID) {
-      orderBody.connection_id = process.env.TELNYX_CONNECTION_ID;
+    const connectionId = await getActiveVoiceConnectionId();
+    if (connectionId) {
+      orderBody.connection_id = connectionId;
     }
 
     const res = await fetch('https://api.telnyx.com/v2/number_orders', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.TELNYX_API_KEY}`,
+        Authorization: `Bearer ${voiceApiBearerToken()}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(orderBody),
@@ -58,11 +61,10 @@ export async function POST(request: NextRequest) {
 
     // Tag the number with owner's user_id so sync can recover it later
     if (telnyxNumberId) {
-      const connectionId = process.env.TELNYX_CONNECTION_ID?.trim();
       fetch(`https://api.telnyx.com/v2/phone_numbers/${telnyxNumberId}`, {
         method: 'PATCH',
         headers: {
-          Authorization: `Bearer ${process.env.TELNYX_API_KEY}`,
+          Authorization: `Bearer ${voiceApiBearerToken()}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

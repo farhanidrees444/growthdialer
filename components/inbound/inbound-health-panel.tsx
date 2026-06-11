@@ -38,7 +38,7 @@ export function InboundHealthPanel({ phoneReady, onActivated }: Props) {
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState(false);
   const [activateMsg, setActivateMsg] = useState<string | null>(null);
-  const autoActivateTried = useRef(false);
+  const autoSetupTried = useRef(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -54,11 +54,31 @@ export function InboundHealthPanel({ phoneReady, onActivated }: Props) {
     try {
       const res = await apiFetch('/api/inbound/activate-routing', { method: 'POST' });
       const data = await res.json() as { message?: string; activated?: number; primary_routed?: boolean };
-      setActivateMsg(data.message ?? 'Inbound routing updated.');
+      setActivateMsg(data.message ?? 'Numbers linked to your voice line.');
       load();
       if ((data.activated ?? 0) > 0 || data.primary_routed) onActivated?.();
+      return data;
     } catch {
       setActivateMsg('Could not link your numbers. Try again in a moment.');
+      return null;
+    } finally {
+      setActivating(false);
+    }
+  }, [apiFetch, load, onActivated]);
+
+  const runPrepare = useCallback(async () => {
+    setActivating(true);
+    setActivateMsg(null);
+    try {
+      const res = await apiFetch('/api/inbound/prepare', { method: 'POST' });
+      const data = await res.json() as { message?: string; primary_routed?: boolean; routing_activated?: number };
+      setActivateMsg(data.message ?? 'Line setup refreshed.');
+      load();
+      if (data.primary_routed) onActivated?.();
+      return data;
+    } catch {
+      setActivateMsg('Could not refresh your line setup. Try again.');
+      return null;
     } finally {
       setActivating(false);
     }
@@ -66,33 +86,25 @@ export function InboundHealthPanel({ phoneReady, onActivated }: Props) {
 
   useEffect(() => { load(); }, [load]);
 
-  const runPrepare = useCallback(async () => {
-    setActivating(true);
-    setActivateMsg(null);
-    try {
-      const res = await apiFetch('/api/inbound/prepare', { method: 'POST' });
-      const data = await res.json() as { message?: string; primary_routed?: boolean };
-      setActivateMsg(data.message ?? 'Line setup refreshed.');
-      load();
-      if (data.primary_routed) onActivated?.();
-    } catch {
-      setActivateMsg('Could not refresh your line setup. Try again.');
-    } finally {
-      setActivating(false);
-    }
-  }, [apiFetch, load, onActivated]);
-
   useEffect(() => {
-    if (autoActivateTried.current || activating) return;
-    autoActivateTried.current = true;
-    void runPrepare();
-  }, [activating, runPrepare]);
+    if (autoSetupTried.current || activating) return;
+    autoSetupTried.current = true;
+
+    void (async () => {
+      await runPrepare();
+      const refreshed = await apiFetch('/api/inbound/health').then((r) => r.json()) as HealthData;
+      setHealth(refreshed);
+      if (refreshed.needs_activation) {
+        await handleActivate();
+      }
+    })();
+  }, [activating, runPrepare, handleActivate, apiFetch]);
 
   if (loading && !health) {
     return (
       <div className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-gradient-to-r from-white/[0.03] to-transparent px-5 py-4">
         <Loader2 className="h-4 w-4 animate-spin text-cyan-400/70" />
-        <p className="text-sm text-muted-foreground">Checking your inbound line…</p>
+        <p className="text-sm text-muted-foreground">Preparing your inbound line…</p>
       </div>
     );
   }
@@ -102,44 +114,56 @@ export function InboundHealthPanel({ phoneReady, onActivated }: Props) {
   const isLive = health.ready && phoneReady && health.status === 'live';
   const showAction = health.action?.type === 'activate_routing' && (health.needs_activation || activating);
 
+  if (isLive) {
+    return (
+      <div className="relative overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-r from-emerald-500/[0.1] via-emerald-500/[0.04] to-transparent px-5 py-3.5">
+        <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-400/10 blur-2xl" />
+        <div className="relative flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/20">
+              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-emerald-100">Inbound line is live</p>
+              <p className="text-xs text-emerald-200/60 truncate">
+                {health.primary_number ? `Receiving on ${health.primary_number}` : 'Ready for calls in the browser'}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={load}
+            disabled={loading}
+            className="shrink-0 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-300/80 hover:text-emerald-200 transition disabled:opacity-50"
+            aria-label="Refresh status"
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
         'relative overflow-hidden rounded-2xl border px-5 py-4 sm:py-5',
-        isLive
-          ? 'border-emerald-500/30 bg-gradient-to-br from-emerald-500/[0.12] via-emerald-500/[0.04] to-transparent'
-          : health.status === 'offline'
-            ? 'border-red-500/20 bg-gradient-to-br from-red-500/[0.08] to-transparent'
-            : 'border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.08] via-violet-500/[0.04] to-transparent',
+        health.status === 'offline'
+          ? 'border-red-500/20 bg-gradient-to-br from-red-500/[0.08] to-transparent'
+          : 'border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.08] via-violet-500/[0.04] to-transparent',
       )}
     >
-      {isLive && (
-        <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-emerald-400/10 blur-2xl" />
-      )}
-
       <div className="relative flex items-start justify-between gap-4">
         <div className="flex gap-3 min-w-0">
-          <div
-            className={cn(
-              'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
-              isLive ? 'bg-emerald-500/20' : 'bg-white/[0.06]',
-            )}
-          >
-            {isLive ? (
-              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-            ) : activating ? (
+          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06]">
+            {activating ? (
               <Loader2 className="h-5 w-5 animate-spin text-cyan-400" />
             ) : (
               <Sparkles className="h-5 w-5 text-cyan-400" />
             )}
           </div>
           <div className="min-w-0">
-            <p className={cn(
-              'text-sm font-semibold sm:text-base',
-              isLive ? 'text-emerald-200' : 'text-white',
-            )}>
-              {isLive ? 'Inbound line is live — ready to receive calls' : health.headline}
-            </p>
+            <p className="text-sm font-semibold sm:text-base text-white">{health.headline}</p>
             <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
               {health.subline}
               {health.last_inbound_at && (
@@ -191,7 +215,7 @@ export function InboundHealthPanel({ phoneReady, onActivated }: Props) {
         </p>
       )}
 
-      {!isLive && (health.blockers?.length ?? 0) > 0 && (
+      {(health.blockers?.length ?? 0) > 0 && (
         <ul className="relative mt-3 space-y-2 rounded-xl border border-white/[0.06] bg-black/25 px-4 py-3">
           {health.blockers!.slice(0, 3).map((b) => (
             <li key={b.code} className="text-xs leading-relaxed">

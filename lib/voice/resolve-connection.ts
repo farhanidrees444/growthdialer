@@ -42,8 +42,8 @@ async function credentialConnectionExists(
 }
 
 /**
- * Resolve the SIP credential connection ID used for inbound routing and webhooks.
- * Falls back to the parent connection on the browser telephony credential when env is wrong.
+ * Resolve the SIP credential connection used for inbound routing, webhooks, and browser voice.
+ * The browser telephony credential's parent connection (growthdialer-sip) wins over a stale env ID.
  */
 export async function resolveVoiceConnectionId(): Promise<ResolvedVoiceConnection> {
   const apiKey = readVoiceApiKey();
@@ -63,16 +63,16 @@ export async function resolveVoiceConnectionId(): Promise<ResolvedVoiceConnectio
     };
   }
 
-  if (fromEnv && await credentialConnectionExists(apiKey, fromEnv)) {
-    return { connectionId: fromEnv, source: 'env', envMismatch: false };
-  }
-
   if (credentialId) {
     const resolved = await fetchConnectionIdFromCredential(apiKey, credentialId);
-    const envMismatch = Boolean(fromEnv && resolved && fromEnv !== resolved);
     if (resolved) {
+      const envMismatch = Boolean(fromEnv && fromEnv !== resolved);
       return { connectionId: resolved, source: 'credential', envMismatch };
     }
+  }
+
+  if (fromEnv && await credentialConnectionExists(apiKey, fromEnv)) {
+    return { connectionId: fromEnv, source: 'env', envMismatch: false };
   }
 
   return { connectionId: fromEnv, source: fromEnv ? 'env' : 'none', envMismatch: false };

@@ -170,6 +170,48 @@ export interface ActivateRoutingResult {
   results: { phone: string; status: 'activated' | 'already' | 'failed' | 'skipped' }[];
 }
 
+/** Assign every purchased number to the active voice connection (growthdialer-sip). */
+export async function forceAssignAllNumbersToConnection(
+  numbers: DbNumberRow[],
+  connectionId: string,
+  providerIndex: Map<string, ProviderPhoneRecord>,
+): Promise<ActivateRoutingResult> {
+  const target = normalizeConnectionId(connectionId)!;
+  let activated = 0;
+  let already_routed = 0;
+  let failed = 0;
+  const results: ActivateRoutingResult['results'] = [];
+
+  for (const num of numbers) {
+    const provider = lookupProviderPhone(providerIndex, num.phone_number);
+    const providerId = num.telnyx_number_id ?? provider?.id ?? null;
+
+    if (!providerId) {
+      failed++;
+      results.push({ phone: num.phone_number, status: 'skipped' });
+      continue;
+    }
+
+    if (provider && connectionsMatch(provider.connection_id, target)) {
+      already_routed++;
+      results.push({ phone: num.phone_number, status: 'already' });
+      continue;
+    }
+
+    const ok = await assignNumberToVoiceConnection(providerId);
+    if (ok) {
+      activated++;
+      results.push({ phone: num.phone_number, status: 'activated' });
+      if (provider) provider.connection_id = target;
+    } else {
+      failed++;
+      results.push({ phone: num.phone_number, status: 'failed' });
+    }
+  }
+
+  return { activated, already_routed, failed, results };
+}
+
 export async function activateRoutingForNumbers(
   numbers: DbNumberRow[],
   connectionId: string,

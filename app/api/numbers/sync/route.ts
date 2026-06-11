@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { calculateRetailPrice } from '@/lib/pricing/calculate-price';
 import { assignNumberToVoiceConnection } from '@/lib/voice/assign-number-connection';
+import { voiceApiBearerToken } from '@/lib/voice/read-env';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,7 @@ export async function POST(_request: NextRequest) {
     console.log('[NUMBERS-SYNC] Starting for user:', userId);
 
     const res = await fetch('https://api.telnyx.com/v2/phone_numbers?page[size]=250', {
-      headers: { Authorization: `Bearer ${process.env.TELNYX_API_KEY}` },
+      headers: { Authorization: `Bearer ${voiceApiBearerToken()}` },
     });
 
     if (!res.ok) {
@@ -70,7 +71,7 @@ export async function POST(_request: NextRequest) {
             .eq('id', existing.id);
           if (!error) {
             synced++;
-            void assignNumberToVoiceConnection(telnyxNumberId);
+            await assignNumberToVoiceConnection(telnyxNumberId);
           } else console.error('[NUMBERS-SYNC] Update error for', phoneNumber, ':', error);
         } else if (tagUserId === userId) {
           // Tagged to me but DB has wrong owner — correct it

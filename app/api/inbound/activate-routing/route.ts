@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { hasPermission } from '@/lib/auth/permissions';
 import {
-  activateRoutingForNumbers,
+  forceAssignAllNumbersToConnection,
   auditNumberRouting,
   backfillProviderIds,
   fetchProviderPhoneIndex,
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const result = await activateRoutingForNumbers(numbers, connectionId, providerIndex);
+  const result = await forceAssignAllNumbersToConnection(numbers, connectionId, providerIndex);
   const after = await auditNumberRouting(numbers, connectionId, providerIndex);
 
   const message =
