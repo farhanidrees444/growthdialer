@@ -90,6 +90,17 @@ export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfi
   const resolved = await resolveVoiceConnectionId();
   const connectionId = resolved.connectionId;
 
+  // Serverless: avoid Telnyx GET on every health/prepare (429 storms). Portal env is source of truth.
+  if (connectionId && webhookUrl && apiKey && process.env.VOICE_TRUST_ENV_CONNECTION !== '0') {
+    return successConnectionResult({
+      connection_id: connectionId,
+      webhook_url: webhookUrl,
+      message: 'Voice connection from environment.',
+      resolved_from: resolved.source === 'none' ? undefined : resolved.source,
+      env_mismatch: resolved.envMismatch,
+    });
+  }
+
   if (!apiKey) {
     return {
       ok: false,

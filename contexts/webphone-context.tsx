@@ -224,6 +224,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           }
         } else if (incoming && mapped === 'active') {
           safeSet(setIsInboundRinging, false);
+          inboundRingStartedRef.current = null;
+          window.dispatchEvent(new CustomEvent('gd-webrtc-inbound-active'));
         } else if (!outboundDialRef.current && (mapped === 'ended' || mapped === 'idle')) {
           inboundRingStartedRef.current = null;
           safeSet(setIsInboundRinging, false);

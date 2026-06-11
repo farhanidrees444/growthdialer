@@ -5,12 +5,8 @@ import {
   telnyxCallActionDetailed,
 } from '@/lib/inbound/telnyx-actions';
 import { resolveInboundBrowserCredential } from '@/lib/inbound/browser-credential';
-import {
-  ensureVoiceConnectionConfigured,
-  getActiveCallControlAppId,
-} from '@/lib/voice/configure-connection';
+import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
 import { readVoiceApiKey } from '@/lib/voice/read-env';
-import { getCachedConnectionConfig } from '@/lib/voice/voice-api-cache';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -72,7 +68,6 @@ export async function ringBrowserForInbound(
     }
   }
 
-  const configured = getCachedConnectionConfig() ?? await ensureVoiceConnectionConfigured();
   const dialAppId = await getActiveCallControlAppId();
 
   const { sipUri, username, credentialId } = await resolveBrowserSipUri(supabase, userId);
@@ -81,15 +76,8 @@ export async function ringBrowserForInbound(
     console.error(
       '[INBOUND] No browser SIP destination or call control app for user:',
       userId,
-      '| sip_connection_configured:',
-      configured.ok,
-      configured.failure_reason,
     );
     return { ok: false, strategy: 'none' };
-  }
-
-  if (!configured.ok) {
-    console.warn('[INBOUND] SIP connection not fully configured:', configured.message, configured.detail);
   }
 
   console.log('[INBOUND] Ringing browser | call_control_app:', dialAppId, '| credential:', credentialId ?? 'env', '| sip:', username);
@@ -131,22 +119,43 @@ export async function ringBrowserForInbound(
 }
 
 /**
- * After the browser answers the WebRTC leg, answer PSTN and bridge both legs.
+ * Fallback bridge when auto bridge_on_answer did not connect both legs.
+ * PSTN = inbound leg; WebRTC dial leg = outbound (cannot call answer on outbound).
  */
 export async function completeInboundBridge(
   pstnCallControlId: string,
   webrtcCallControlId: string,
 ): Promise<boolean> {
-  await telnyxCallAction(pstnCallControlId, 'answer');
-  await sleep(400);
+  const tryBridge = async (fromId: string, toId: string) =>
+    telnyxCallActionDetailed(fromId, 'bridge', {
+      call_control_id_to_bridge_with: toId,
+    });
 
-  const bridged = await telnyxCallActionDetailed(pstnCallControlId, 'bridge', {
-    call_control_id: webrtcCallControlId,
-  });
-
+  let bridged = await tryBridge(pstnCallControlId, webrtcCallControlId);
   if (bridged.ok) {
     console.log('[INBOUND] Bridge complete | PSTN:', pstnCallControlId, '| WebRTC:', webrtcCallControlId);
     return true;
+  }
+
+  const answerRes = await telnyxCallActionDetailed(pstnCallControlId, 'answer');
+  const answerRejectedOutbound =
+    answerRes.status === 422
+    && (answerRes.detail?.includes('outbound') ?? false);
+
+  if (answerRejectedOutbound) {
+    // IDs may be swapped in legacy rows — bridge from the leg that accepts commands.
+    bridged = await tryBridge(webrtcCallControlId, pstnCallControlId);
+    if (bridged.ok) {
+      console.log('[INBOUND] Bridge complete (leg swap) | A:', webrtcCallControlId, '| B:', pstnCallControlId);
+      return true;
+    }
+  } else if (answerRes.ok) {
+    await sleep(400);
+    bridged = await tryBridge(pstnCallControlId, webrtcCallControlId);
+    if (bridged.ok) {
+      console.log('[INBOUND] Bridge complete after PSTN answer | PSTN:', pstnCallControlId);
+      return true;
+    }
   }
 
   console.error('[INBOUND] Bridge failed:', bridged.detail?.slice(0, 200));

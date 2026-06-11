@@ -111,9 +111,24 @@ export function InboundRingingProvider({
     ringStartedRef.current = null;
     stickyRingRef.current = false;
     setAccepting(false);
+    acceptingRef.current = false;
     setCall(null);
     setRingElapsedSec(0);
     if (stopAudio) stopInboundRingtone();
+  }, []);
+
+  const finishAccept = useCallback((callId: string) => {
+    stopInboundRingtone();
+    acceptingRef.current = false;
+    setAccepting(false);
+    stickyRingRef.current = false;
+    callIdRef.current = null;
+    ringStartedRef.current = null;
+    setRingElapsedSec(0);
+    setCall(null);
+    window.dispatchEvent(
+      new CustomEvent('gd-inbound-answered', { detail: { callId } }),
+    );
   }, []);
 
   const shouldDismissStatus = useCallback((status: string) => {
@@ -166,8 +181,11 @@ export function InboundRingingProvider({
           const status = row.status as string;
 
           if (status === 'in_progress') {
-            stopInboundRingtone();
-            if (!acceptingRef.current) {
+            const id = row.id as string;
+            if (acceptingRef.current && callIdRef.current === id) {
+              finishAccept(id);
+            } else {
+              stopInboundRingtone();
               stickyRingRef.current = false;
               clearCall(false);
             }
@@ -199,7 +217,7 @@ export function InboundRingingProvider({
       supabase.removeChannel(channel);
       stopInboundRingtone();
     };
-  }, [userId, blocksNewInboundNow, beginRing, clearCall, shouldDismissStatus]);
+  }, [userId, blocksNewInboundNow, beginRing, clearCall, shouldDismissStatus, finishAccept]);
 
   useEffect(() => {
     if (!userId || !isInboundRinging || hasOutboundSession) return;
@@ -275,24 +293,31 @@ export function InboundRingingProvider({
     return () => clearInterval(tick);
   }, [call]);
 
+  // WebRTC went live while accept is in flight — close overlay immediately.
+  useEffect(() => {
+    if (!accepting || !callIdRef.current) return;
+    if (callStatus === 'active') {
+      finishAccept(callIdRef.current);
+    }
+  }, [accepting, callStatus, finishAccept]);
+
+  useEffect(() => {
+    const onWebrtcActive = () => {
+      if (acceptingRef.current && callIdRef.current) {
+        finishAccept(callIdRef.current);
+      }
+    };
+    window.addEventListener('gd-webrtc-inbound-active', onWebrtcActive);
+    return () => window.removeEventListener('gd-webrtc-inbound-active', onWebrtcActive);
+  }, [finishAccept]);
+
   const accept = useCallback(async () => {
     if (!call || accepting) return;
+    const callId = call.id;
     setAccepting(true);
+    acceptingRef.current = true;
     stopInboundRingtone();
 
-    const callId = call.id;
-
-    try {
-      const check = await apiFetch('/api/inbound/ringing');
-      if (check.ok) {
-        const body = await check.json() as { call?: { id: string } | null };
-        if (!body.call || body.call.id !== callId) {
-          setAccepting(false);
-          clearCall(true);
-          return;
-        }
-      }
-    } catch { /* proceed if check fails */ }
     const leadName = call.lead
       ? [call.lead.first_name, call.lead.last_name].filter(Boolean).join(' ')
       : 'Unknown Caller';
@@ -314,42 +339,35 @@ export function InboundRingingProvider({
       console.warn('[INBOUND] Microphone permission denied — audio may not work');
     }
 
+    // Browser leg first — Telnyx bridge_on_answer links PSTN when this answers.
     answerIncomingCall();
 
-    for (let i = 0; i < 25; i++) {
-      const st = callStatusRef.current;
-      if (st === 'active' || st === 'connecting') break;
-      await new Promise((r) => setTimeout(r, 200));
-    }
+    const answerRequest = apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
+      console.error('[INBOUND] REST answer failed:', err);
+      return null;
+    });
 
-    let answerOk = false;
-    try {
-      const res = await apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' });
-      answerOk = res.ok;
-      if (!res.ok) {
-        console.error('[INBOUND] REST answer failed:', res.status);
-        hangup();
-        clearCall(true);
-        setAccepting(false);
+    const deadline = Date.now() + 20_000;
+    while (Date.now() < deadline) {
+      if (callStatusRef.current === 'active') {
+        finishAccept(callId);
+        void answerRequest;
         return;
       }
-    } catch {
-      console.error('[INBOUND] REST answer failed');
-      hangup();
-      clearCall(true);
-      setAccepting(false);
+      if (!acceptingRef.current) return;
+      await new Promise((r) => setTimeout(r, 150));
+    }
+
+    const res = await answerRequest;
+    if (res?.ok || callStatusRef.current === 'active') {
+      finishAccept(callId);
       return;
     }
 
-    setAccepting(false);
-    if (answerOk && (callStatusRef.current === 'active' || callStatusRef.current === 'connecting')) {
-      stickyRingRef.current = false;
-      clearCall(true);
-      window.dispatchEvent(
-        new CustomEvent('gd-inbound-answered', { detail: { callId } }),
-      );
-    }
-  }, [call, accepting, registerCallMeta, requestMicPermission, answerIncomingCall, apiFetch, clearCall, hangup]);
+    console.error('[INBOUND] Accept timed out — WebRTC did not connect');
+    hangup();
+    clearCall(true);
+  }, [call, accepting, registerCallMeta, requestMicPermission, answerIncomingCall, apiFetch, clearCall, hangup, finishAccept]);
 
   const decline = useCallback(async () => {
     if (!call || accepting) return;

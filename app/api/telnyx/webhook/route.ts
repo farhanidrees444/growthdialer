@@ -9,10 +9,7 @@ import { normalizeE164 } from '@/lib/inbound/phone';
 import { findLeadByCallerPhone } from '@/lib/inbound/match-lead';
 import { triggerInboundRingTimeoutAsync } from '@/lib/inbound/trigger-ring-timeout';
 import { findNumberOwnerWithMeta } from '@/lib/inbound/lookup-number';
-import {
-  bridgeInboundToBrowser,
-  completeInboundBridge,
-} from '@/lib/inbound/bridge-to-browser';
+import { bridgeInboundToBrowser } from '@/lib/inbound/bridge-to-browser';
 import { decodeClientState } from '@/lib/inbound/telnyx-actions';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
 import { voiceApiBearerToken } from '@/lib/voice/read-env';
@@ -487,37 +484,34 @@ export async function POST(request: NextRequest) {
           alreadyAnswered = row?.status === 'in_progress' && Boolean(row?.answered_at);
         }
 
-        let bridged = alreadyAnswered;
-        if (!alreadyAnswered) {
-          bridged = await completeInboundBridge(pstnId, callControlId);
-          if (bridged && dbCallId) {
-            await supabase
-              .from('calls')
-              .update({
-                status: 'in_progress',
-                answered_at: new Date().toISOString(),
-              })
-              .eq('id', dbCallId);
+        // dial uses bridge_on_answer — Telnyx bridges when the browser leg is answered.
+        if (dbCallId && !alreadyAnswered) {
+          await supabase
+            .from('calls')
+            .update({
+              status: 'in_progress',
+              answered_at: new Date().toISOString(),
+            })
+            .eq('id', dbCallId);
 
-            const userId = answeredBridgeState.user_id as string | undefined;
-            if (userId) {
-              const { data: settings } = await supabase
-                .from('user_settings')
-                .select('recording_mode')
-                .eq('user_id', userId)
-                .maybeSingle();
-              const recordingMode = settings?.recording_mode ?? 'always';
-              if (recordingMode !== 'never') {
-                const started = await startProgrammaticRecording(pstnId);
-                if (started) {
-                  await supabase.from('calls').update({ was_recorded: true }).eq('id', dbCallId);
-                }
+          const userId = answeredBridgeState.user_id as string | undefined;
+          if (userId) {
+            const { data: settings } = await supabase
+              .from('user_settings')
+              .select('recording_mode')
+              .eq('user_id', userId)
+              .maybeSingle();
+            const recordingMode = settings?.recording_mode ?? 'always';
+            if (recordingMode !== 'never') {
+              const started = await startProgrammaticRecording(pstnId);
+              if (started) {
+                await supabase.from('calls').update({ was_recorded: true }).eq('id', dbCallId);
               }
             }
           }
         }
 
-        console.log('[INBOUND] WebRTC leg answered — bridge:', bridged ? 'ok' : 'failed', alreadyAnswered ? '(skipped duplicate)' : '');
+        console.log('[INBOUND] WebRTC leg answered — auto-bridge via link_to', alreadyAnswered ? '(duplicate event)' : '');
         return NextResponse.json({ received: true });
       }
 
