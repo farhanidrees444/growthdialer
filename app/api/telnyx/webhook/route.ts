@@ -344,6 +344,7 @@ export async function POST(request: NextRequest) {
             userId,
             callControlId,
             fromNumber,
+            toNumber,
             newCall?.id,
           );
           console.log('[INBOUND] Browser bridge:', bridged.ok ? bridged.strategy : 'failed', '| user:', userId);

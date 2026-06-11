@@ -16,7 +16,8 @@ import {
   resolveInboundAppUrl,
 } from '@/lib/voice/inbound-readiness';
 import { resolveActiveCredentialId } from '@/lib/telnyx/active-credential';
-import { readVoiceApiKey } from '@/lib/voice/read-env';
+import { readVoiceApiKey, readTelephonyCredentialId } from '@/lib/voice/read-env';
+import { discoverWorkingCredentialId } from '@/lib/voice/credential-discovery';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -73,7 +74,11 @@ export async function GET(request: NextRequest) {
   const voiceApiPresent = Boolean(readVoiceApiKey());
   const providerReachable = providerIndex.size > 0;
   const hasRecentInbound = Boolean(recentInboundRes.data);
-  const credentialReady = Boolean(credentialId);
+  const credentialDiscovery = await discoverWorkingCredentialId(
+    readTelephonyCredentialId(),
+    connectionId,
+  );
+  const credentialReady = Boolean(credentialDiscovery.credentialId ?? credentialId);
   const voiceOperational =
     connectionConfig.ok
     || (providerReachable && voiceApiPresent && Boolean(connectionId) && credentialReady)
@@ -93,6 +98,7 @@ export async function GET(request: NextRequest) {
     credentialReady,
     providerReachable,
     hasRecentInbound,
+    credentialEnvSwap: credentialDiscovery.envWasConnectionId,
   });
 
   let status: 'live' | 'almost_ready' | 'needs_setup' | 'offline' = 'needs_setup';

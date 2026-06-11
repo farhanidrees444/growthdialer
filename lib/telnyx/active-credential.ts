@@ -1,40 +1,21 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
+  discoverWorkingCredentialId,
+  fetchCredentialSipUsername,
+  fetchCredentialToken,
+} from '@/lib/voice/credential-discovery';
+import {
   readConfiguredConnectionId,
   readTelephonyCredentialId,
   readVoiceApiKey,
 } from '@/lib/voice/read-env';
+import { getActiveVoiceConnectionId } from '@/lib/voice/configure-connection';
 
 const TELNYX_API = 'https://api.telnyx.com/v2';
 
-export async function fetchCredentialToken(credentialId: string): Promise<string | null> {
-  const apiKey = readVoiceApiKey();
-  if (!apiKey) return null;
+export { fetchCredentialToken, fetchCredentialSipUsername };
 
-  const res = await fetch(`${TELNYX_API}/telephony_credentials/${credentialId}/token`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}` },
-  });
-  if (!res.ok) return null;
-  const token = (await res.text()).trim();
-  return token || null;
-}
-
-export async function fetchCredentialSipUsername(credentialId: string): Promise<string | null> {
-  const apiKey = readVoiceApiKey();
-  if (!apiKey) return null;
-
-  const res = await fetch(`${TELNYX_API}/telephony_credentials/${credentialId}`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
-  });
-  if (!res.ok) return null;
-
-  const json = await res.json() as { data?: { sip_username?: string } };
-  return json.data?.sip_username?.trim() ?? null;
-}
-
-async function createUserCredential(userId: string): Promise<string | null> {
-  const connectionId = readConfiguredConnectionId();
+async function createUserCredential(userId: string, connectionId: string): Promise<string | null> {
   const apiKey = readVoiceApiKey();
   if (!connectionId || !apiKey) return null;
 
@@ -50,7 +31,10 @@ async function createUserCredential(userId: string): Promise<string | null> {
     }),
   });
 
-  if (!res.ok) return null;
+  if (!res.ok) {
+    console.error('[VOICE] create credential failed:', res.status, (await res.text()).slice(0, 200));
+    return null;
+  }
   const json = await res.json() as { data?: { id?: string } };
   return json.data?.id ?? null;
 }
@@ -72,6 +56,9 @@ export async function resolvePerUserCredentialId(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<string | null> {
+  const connectionId = await getActiveVoiceConnectionId();
+  if (!connectionId) return null;
+
   const { data: settings } = await supabase
     .from('user_settings')
     .select('telnyx_telephony_credential_id')
@@ -85,26 +72,37 @@ export async function resolvePerUserCredentialId(
     await saveUserCredentialId(supabase, userId, null);
   }
 
-  const created = await createUserCredential(userId);
+  const created = await createUserCredential(userId, connectionId);
   if (!created) return null;
 
   await saveUserCredentialId(supabase, userId, created);
   return created;
 }
 
-/** Same credential the browser WebRTC client registers with (shared JWT first, then per-user). */
+/** Credential the browser WebRTC client and inbound SIP dial leg must share. */
 export async function resolveActiveCredentialId(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<string | null> {
-  const sharedCredentialId = readTelephonyCredentialId();
+  const connectionId = await getActiveVoiceConnectionId();
+  const discovered = await discoverWorkingCredentialId(
+    readTelephonyCredentialId(),
+    connectionId,
+  );
 
-  if (sharedCredentialId) {
-    const token = await fetchCredentialToken(sharedCredentialId);
-    if (token) return sharedCredentialId;
+  if (discovered.credentialId) {
+    if (discovered.envWasConnectionId) {
+      console.warn(
+        '[VOICE] TELNYX_TELEPHONY_CREDENTIAL_ID holds a connection ID — using credential',
+        discovered.credentialId,
+        'on connection',
+        connectionId,
+      );
+    }
+    return discovered.credentialId;
   }
 
-  if (readConfiguredConnectionId()) {
+  if (connectionId || readConfiguredConnectionId()) {
     return resolvePerUserCredentialId(supabase, userId);
   }
 

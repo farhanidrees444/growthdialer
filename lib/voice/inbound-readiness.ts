@@ -19,6 +19,7 @@ export function listInboundBlockers(input: {
   credentialReady: boolean;
   providerReachable?: boolean;
   hasRecentInbound?: boolean;
+  credentialEnvSwap?: boolean;
 }): InboundBlocker[] {
   const blockers: InboundBlocker[] = [];
 
@@ -115,7 +116,16 @@ export function listInboundBlockers(input: {
       code: 'browser_credential',
       label: 'Browser voice endpoint not ready',
       fix:
-        'Add your browser telephony credential to deployment settings, keep this tab open, and allow microphone access.',
+        'In deployment settings, set TELNYX_TELEPHONY_CREDENTIAL_ID to the Credential ID from your SIP connection (not the connection ID). Keep this tab open and allow microphone access.',
+    });
+  }
+
+  if (input.credentialEnvSwap) {
+    blockers.push({
+      code: 'credential_env_swap',
+      label: 'Browser credential ID looks like a connection ID',
+      fix:
+        'TELNYX_TELEPHONY_CREDENTIAL_ID should be the Credential ID under your SIP connection — not the connection ID itself. We auto-discover when possible; fix env vars and redeploy for reliability.',
     });
   }
 

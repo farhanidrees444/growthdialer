@@ -37,20 +37,24 @@ export async function POST(
       .update({ status: 'in_progress', answered_at: new Date().toISOString() })
       .eq('id', id);
 
+    let bridged = false;
     if (
       call.direction === 'inbound'
       && call.telnyx_call_id
       && call.telnyx_session_id
     ) {
-      await new Promise((r) => setTimeout(r, 700));
-      const bridged = await completeInboundBridge(call.telnyx_call_id, call.telnyx_session_id);
+      for (let attempt = 0; attempt < 5; attempt++) {
+        await new Promise((r) => setTimeout(r, attempt === 0 ? 400 : 700));
+        bridged = await completeInboundBridge(call.telnyx_call_id, call.telnyx_session_id);
+        if (bridged) break;
+      }
       if (!bridged) {
-        console.warn('[ANSWER] Bridge backup did not complete — webhook may still bridge');
+        console.warn('[ANSWER] Bridge backup did not complete after retries — check voice API key and connection');
       }
     }
 
-    console.log('[ANSWER] Inbound call answered:', id);
-    return NextResponse.json({ success: true });
+    console.log('[ANSWER] Inbound call answered:', id, '| bridged:', bridged);
+    return NextResponse.json({ success: true, bridged });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed';
     console.error('[ANSWER] Error:', msg);

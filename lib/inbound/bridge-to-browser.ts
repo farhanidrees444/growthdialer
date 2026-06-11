@@ -44,7 +44,8 @@ export async function ringBrowserForInbound(
   supabase: SupabaseClient,
   userId: string,
   pstnCallControlId: string,
-  fromDid: string,
+  ownedDid: string,
+  callerAni: string,
   dbCallId?: string,
 ): Promise<BridgeResult> {
   const connectionId = await getActiveVoiceConnectionId();
@@ -60,13 +61,14 @@ export async function ringBrowserForInbound(
   const dialed = await dialVoiceLeg({
     connectionId,
     to: sipUri,
-    from: fromDid,
+    from: ownedDid,
     timeoutSecs: 45,
     clientState: {
       gd_inbound_bridge: true,
       pstn_call_control_id: pstnCallControlId,
       user_id: userId,
       db_call_id: dbCallId ?? null,
+      caller_ani: callerAni,
     },
   });
 
@@ -143,10 +145,18 @@ export async function bridgeInboundToBrowser(
   supabase: SupabaseClient,
   userId: string,
   callControlId: string,
-  fromDid: string,
+  callerAni: string,
+  ownedDid: string,
   dbCallId?: string,
 ): Promise<BridgeResult> {
-  const ring = await ringBrowserForInbound(supabase, userId, callControlId, fromDid, dbCallId);
+  const ring = await ringBrowserForInbound(
+    supabase,
+    userId,
+    callControlId,
+    ownedDid,
+    callerAni,
+    dbCallId,
+  );
   if (ring.ok) return ring;
 
   const { sipUri, username } = await resolveBrowserSipUri(supabase, userId);
@@ -155,7 +165,7 @@ export async function bridgeInboundToBrowser(
   }
 
   console.log('[INBOUND] Falling back to SIP transfer for user:', userId);
-  const transferred = await bridgeViaTransfer(callControlId, sipUri, username, fromDid);
+  const transferred = await bridgeViaTransfer(callControlId, sipUri, username, ownedDid);
   return transferred
     ? { ok: true, strategy: 'transfer' }
     : { ok: false, strategy: 'none' };
