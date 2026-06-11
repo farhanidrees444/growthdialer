@@ -1,4 +1,5 @@
 import { resolveVoiceWebhookUrl } from '@/lib/voice/webhook-url';
+import { voiceApiBearerToken } from '@/lib/voice/read-env';
 
 export interface TelnyxActionResult {
   ok: boolean;
@@ -27,7 +28,7 @@ export async function telnyxCallActionDetailed(
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${process.env.TELNYX_API_KEY ?? ''}`,
+          Authorization: `Bearer ${voiceApiBearerToken()}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(body),
@@ -76,7 +77,7 @@ export async function dialVoiceLeg(params: {
     const res = await fetch('https://api.telnyx.com/v2/calls', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.TELNYX_API_KEY ?? ''}`,
+        Authorization: `Bearer ${voiceApiBearerToken()}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),

@@ -11,6 +11,11 @@ export function readVoiceApiKey(): string | null {
   return readEnv('TELNYX_API_KEY');
 }
 
+/** Bearer token for voice REST calls (answer, bridge, dial). */
+export function voiceApiBearerToken(): string {
+  return readVoiceApiKey() ?? '';
+}
+
 export function readTelephonyCredentialId(): string | null {
   return readEnv('TELNYX_TELEPHONY_CREDENTIAL_ID') ?? readEnv('TELNYX_CREDENTIAL_ID');
 }

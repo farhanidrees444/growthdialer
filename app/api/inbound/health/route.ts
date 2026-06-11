@@ -16,6 +16,7 @@ import {
   resolveInboundAppUrl,
 } from '@/lib/voice/inbound-readiness';
 import { resolveActiveCredentialId } from '@/lib/telnyx/active-credential';
+import { readVoiceApiKey } from '@/lib/voice/read-env';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
   const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
   const appUrl = resolveInboundAppUrl(host);
   const eventsVerified = Boolean(process.env.TELNYX_PUBLIC_KEY?.trim());
-  const voiceApiPresent = Boolean(process.env.TELNYX_API_KEY?.trim());
+  const voiceApiPresent = Boolean(readVoiceApiKey());
   const providerReachable = providerIndex.size > 0;
   const hasRecentInbound = Boolean(recentInboundRes.data);
   const credentialReady = Boolean(credentialId);
