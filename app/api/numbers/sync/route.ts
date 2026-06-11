@@ -1,19 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { calculateRetailPrice } from '@/lib/pricing/calculate-price';
 import { assignNumberToVoiceConnection } from '@/lib/voice/assign-number-connection';
+import { getActiveVoiceConnectionId } from '@/lib/voice/configure-connection';
 import { voiceApiBearerToken } from '@/lib/voice/read-env';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(_request: NextRequest) {
+async function tagNumberForUser(
+  telnyxNumberId: string,
+  userId: string,
+  userEmail: string,
+  connectionId: string | null,
+): Promise<void> {
+  const tags = [`user:${userId}`];
+  if (userEmail) tags.push(`email:${userEmail}`);
+
+  const res = await fetch(`https://api.telnyx.com/v2/phone_numbers/${telnyxNumberId}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${voiceApiBearerToken()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      tags,
+      ...(connectionId ? { connection_id: connectionId } : {}),
+    }),
+  });
+
+  if (!res.ok) {
+    console.error('[NUMBERS-SYNC] Tag failed:', telnyxNumberId, res.status, (await res.text()).slice(0, 200));
+  }
+}
+
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user: authUser } } = await supabase.auth.getUser();
     const userId = authUser?.id;
+    const userEmail = authUser?.email ?? '';
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    console.log('[NUMBERS-SYNC] Starting for user:', userId);
+    const body = (await request.json().catch(() => ({}))) as { claim_untagged?: boolean };
+    const access = await requireWorkspaceFromRequest(request, supabase, userId, { body });
+    if (isWorkspaceError(access)) return access;
+
+    const isOwner = access.role === 'owner' || access.role === 'admin';
+    const { count: ownedCount } = await supabase
+      .from('purchased_numbers')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .neq('status', 'released');
+
+    const canClaimOrphans =
+      isOwner
+      && (body.claim_untagged === true || (ownedCount ?? 0) === 0);
+
+    const connectionId = await getActiveVoiceConnectionId();
+
+    console.log('[NUMBERS-SYNC] Starting for user:', userId, '| claim_orphans:', canClaimOrphans);
 
     const res = await fetch('https://api.telnyx.com/v2/phone_numbers?page[size]=250', {
       headers: { Authorization: `Bearer ${voiceApiBearerToken()}` },
@@ -108,8 +154,33 @@ export async function POST(_request: NextRequest) {
           synced++;
           void assignNumberToVoiceConnection(telnyxNumberId);
         } else console.error('[NUMBERS-SYNC] Recovery insert error for', phoneNumber, ':', error);
+      } else if (canClaimOrphans) {
+        // Untagged orphan — workspace owner may claim when setting up inbound
+        console.log('[NUMBERS-SYNC] Claiming untagged orphan:', phoneNumber);
+        const { error } = await supabase
+          .from('purchased_numbers')
+          .insert({
+            user_id: userId,
+            telnyx_number_id: telnyxNumberId,
+            phone_number: phoneNumber,
+            country: (num.country_code as string | null) ?? 'US',
+            number_type: (num.phone_number_type as string | null) ?? 'local',
+            status: (num.status as string) === 'active' ? 'active' : 'inactive',
+            monthly_cost: wholesale,
+            billing_status: 'active',
+            auto_renew: true,
+            purchased_at: purchasedAt,
+            next_billing_date: nextBillingDate,
+          });
+        if (!error) {
+          synced++;
+          await tagNumberForUser(telnyxNumberId, userId, userEmail, connectionId);
+          await assignNumberToVoiceConnection(telnyxNumberId);
+        } else {
+          console.error('[NUMBERS-SYNC] Orphan claim insert error for', phoneNumber, ':', error);
+          skipped++;
+        }
       } else {
-        // Untagged number not in DB — do not auto-claim
         skipped++;
       }
     }
@@ -141,9 +212,15 @@ export async function POST(_request: NextRequest) {
       }
     }
 
-    const message = synced > 0
-      ? `Recovered ${synced} number${synced !== 1 ? 's' : ''} tagged to your account`
-      : 'No numbers to recover. Buy new numbers through the app.';
+    let message: string;
+    if (synced > 0) {
+      message = `Linked ${synced} number${synced !== 1 ? 's' : ''} to your account`;
+    } else if (skipped > 0 && (telnyxNumbers?.length ?? 0) > 0) {
+      message =
+        `${skipped} line${skipped !== 1 ? 's' : ''} in your voice account could not be linked — they may belong to another user. Buy a new number or contact support.`;
+    } else {
+      message = 'No numbers found in your voice account. Buy a number to get started.';
+    }
 
     console.log('[NUMBERS-SYNC] Done. Synced:', synced, 'Skipped:', skipped);
     return NextResponse.json({ synced, skipped, total: telnyxNumbers?.length ?? 0, message });

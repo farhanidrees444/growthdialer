@@ -27,6 +27,7 @@ import { InboundHistoryPanel } from '@/components/calls/inbound-history-panel';
 import { InboundHealthPanel } from '@/components/inbound/inbound-health-panel';
 import { useInboundRinging } from '@/hooks/use-inbound-ringing';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface PurchasedNumber {
   id: string;
@@ -109,8 +110,24 @@ export default function InboundPage() {
   const handleSyncNumbers = async () => {
     setSyncing(true);
     try {
-      await apiFetch('/api/numbers/sync', { method: 'POST' });
+      const res = await apiFetch('/api/numbers/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ claim_untagged: true }),
+      });
+      const data = (await res.json()) as { synced?: number; skipped?: number; message?: string; error?: string };
+      if (!res.ok) {
+        toast.error(data.error ?? 'Could not sync numbers');
+        return;
+      }
+      if ((data.synced ?? 0) > 0) {
+        toast.success(data.message ?? `Linked ${data.synced} number(s)`);
+      } else {
+        toast.info(data.message ?? 'No numbers were linked');
+      }
       loadStats();
+    } catch {
+      toast.error('Could not sync numbers — try again');
     } finally {
       setSyncing(false);
     }

@@ -129,6 +129,11 @@ export function listInboundBlockers(input: {
     });
   }
 
+  // When no numbers exist, surface only the actionable setup step first.
+  if (!input.hasNumbers) {
+    return blockers.filter((b) => b.code === 'no_numbers' || b.code === 'inbound_off');
+  }
+
   return blockers;
 }
 
