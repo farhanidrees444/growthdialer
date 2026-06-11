@@ -141,7 +141,7 @@ export function IncomingCallPopup({ userId }: Props) {
   const [declining, setDeclining] = useState(false);
   const callIdRef = useRef<string | null>(null);
 
-  const { answerIncomingCall, hasOutboundSession, callStatus, phoneStatus } = useWebPhone();
+  const { answerIncomingCall, hasOutboundSession, callStatus, phoneStatus, requestMicPermission } = useWebPhone();
   const { registerCallMeta, callInitiatedAt } = useCallContext();
   const { apiFetch } = useWorkspace();
 
@@ -295,12 +295,11 @@ export function IncomingCallPopup({ userId }: Props) {
     ? leadName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
     : null;
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     stopRingtone();
     const callId = call.id;
     setCall(null);
 
-    // Register with CallContext so ActiveCallOverlay shows caller info
     registerCallMeta(
       call.lead
         ? {
@@ -313,13 +312,17 @@ export function IncomingCallPopup({ userId }: Props) {
       call.from_number,
     );
 
-    // Update DB + signal Telnyx (non-fatal if REST answer fails for WebRTC calls)
+    const micOk = await requestMicPermission();
+    if (!micOk) {
+      console.warn('[POPUP] Microphone permission denied — inbound audio may not work');
+    }
+
+    // Answer WebRTC leg first so audio path is live, then bridge PSTN on server
+    answerIncomingCall();
+
     void apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch(
       (err) => console.error('[POPUP] REST answer failed:', err),
     );
-
-    // Answer via WebRTC SDK so browser audio connects
-    answerIncomingCall();
   };
 
   const handleDecline = async () => {
@@ -423,7 +426,7 @@ export function IncomingCallPopup({ userId }: Props) {
             </button>
             <button
               type="button"
-              onClick={handleAccept}
+              onClick={() => void handleAccept()}
               aria-label="Accept call"
               className="flex flex-1 items-center justify-center gap-2 rounded-2xl
                          bg-gradient-to-r from-green-600 to-green-500 py-3.5 text-sm font-medium

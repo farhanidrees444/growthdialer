@@ -9,7 +9,10 @@ import { normalizeE164 } from '@/lib/inbound/phone';
 import { findLeadByCallerPhone } from '@/lib/inbound/match-lead';
 import { triggerInboundRingTimeoutAsync } from '@/lib/inbound/trigger-ring-timeout';
 import { findNumberOwnerWithMeta } from '@/lib/inbound/lookup-number';
-import { bridgeInboundToBrowser } from '@/lib/inbound/bridge-to-browser';
+import {
+  bridgeInboundToBrowser,
+  completeInboundBridge,
+} from '@/lib/inbound/bridge-to-browser';
 import { decodeClientState } from '@/lib/inbound/telnyx-actions';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
 
@@ -414,6 +417,30 @@ export async function POST(request: NextRequest) {
 
     // ── call.answered ───────────────────────────────────────────────────────
     else if (event_type === 'call.answered') {
+      const answeredBridgeState = decodeClientState(
+        (payload as TelnyxEventPayload & { client_state?: string }).client_state,
+      );
+      if (
+        answeredBridgeState?.gd_inbound_bridge
+        && answeredBridgeState.pstn_call_control_id
+        && callControlId
+      ) {
+        const pstnId = String(answeredBridgeState.pstn_call_control_id);
+        const bridged = await completeInboundBridge(pstnId, callControlId);
+        const dbCallId = answeredBridgeState.db_call_id as string | null | undefined;
+        if (bridged && dbCallId) {
+          await supabase
+            .from('calls')
+            .update({
+              status: 'in_progress',
+              answered_at: new Date().toISOString(),
+            })
+            .eq('id', dbCallId);
+        }
+        console.log('[INBOUND] WebRTC leg answered — bridge:', bridged ? 'ok' : 'failed');
+        return NextResponse.json({ received: true });
+      }
+
       if (callControlId) {
         const { handleParallelLegAnswered } = await import('@/lib/parallel-dial/handle-answered');
         const parallel = await handleParallelLegAnswered(

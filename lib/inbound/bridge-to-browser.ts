@@ -22,10 +22,122 @@ export interface BridgeResult {
   webrtc_leg_id?: string;
 }
 
+async function resolveBrowserSipUri(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<{ sipUri: string | null; username: string | null; credentialId: string | null }> {
+  const credentialId = await resolveActiveCredentialId(supabase, userId);
+  const sipUsername = credentialId ? await fetchCredentialSipUsername(credentialId) : null;
+  const envUsername =
+    process.env.NEXT_PUBLIC_TELNYX_SIP_USERNAME?.trim()
+    ?? process.env.TELNYX_SIP_USERNAME?.trim();
+  const username = sipUsername ?? envUsername ?? null;
+  const sipUri = username ? sipUriFromUsername(username) : null;
+  return { sipUri, username, credentialId };
+}
+
 /**
- * Connect inbound PSTN to the browser WebRTC session the user registered.
- * Primary: dial WebRTC SIP leg + bridge (contact-center pattern).
- * Fallback: answer + SIP transfer.
+ * Ring the browser WebRTC client — do NOT answer PSTN or bridge yet.
+ * Caller keeps hearing ring until the agent accepts in the browser.
+ */
+export async function ringBrowserForInbound(
+  supabase: SupabaseClient,
+  userId: string,
+  pstnCallControlId: string,
+  fromDid: string,
+  dbCallId?: string,
+): Promise<BridgeResult> {
+  const connectionId = await getActiveVoiceConnectionId();
+  const { sipUri, username, credentialId } = await resolveBrowserSipUri(supabase, userId);
+
+  if (!sipUri || !connectionId) {
+    console.error('[INBOUND] No browser SIP destination or connection for user:', userId);
+    return { ok: false, strategy: 'none' };
+  }
+
+  console.log('[INBOUND] Ringing browser | credential:', credentialId ?? 'env', '| sip:', username);
+
+  const dialed = await dialVoiceLeg({
+    connectionId,
+    to: sipUri,
+    from: fromDid,
+    timeoutSecs: 45,
+    clientState: {
+      gd_inbound_bridge: true,
+      pstn_call_control_id: pstnCallControlId,
+      user_id: userId,
+      db_call_id: dbCallId ?? null,
+    },
+  });
+
+  if (!dialed.ok || !dialed.call_control_id) {
+    console.warn('[INBOUND] dial WebRTC leg failed:', dialed.detail?.slice(0, 200));
+    return { ok: false, strategy: 'none' };
+  }
+
+  const webrtcLegId = dialed.call_control_id;
+
+  if (dbCallId) {
+    await supabase
+      .from('calls')
+      .update({ telnyx_session_id: webrtcLegId })
+      .eq('id', dbCallId);
+  }
+
+  console.log('[INBOUND] Browser ring leg created:', webrtcLegId, '| PSTN still ringing:', pstnCallControlId);
+  return { ok: true, strategy: 'dial_bridge', webrtc_leg_id: webrtcLegId };
+}
+
+/**
+ * After the browser answers the WebRTC leg, answer PSTN and bridge both legs.
+ */
+export async function completeInboundBridge(
+  pstnCallControlId: string,
+  webrtcCallControlId: string,
+): Promise<boolean> {
+  await telnyxCallAction(pstnCallControlId, 'answer');
+  await sleep(400);
+
+  const bridged = await telnyxCallActionDetailed(pstnCallControlId, 'bridge', {
+    call_control_id: webrtcCallControlId,
+  });
+
+  if (bridged.ok) {
+    console.log('[INBOUND] Bridge complete | PSTN:', pstnCallControlId, '| WebRTC:', webrtcCallControlId);
+    return true;
+  }
+
+  console.error('[INBOUND] Bridge failed:', bridged.detail?.slice(0, 200));
+  return false;
+}
+
+/**
+ * Legacy fallback when browser dial leg cannot be created.
+ */
+async function bridgeViaTransfer(
+  callControlId: string,
+  sipUri: string,
+  username: string | null,
+  fromDid: string,
+): Promise<boolean> {
+  const answered = await telnyxCallAction(callControlId, 'answer');
+  if (!answered) return false;
+
+  await sleep(400);
+
+  if (await telnyxCallAction(callControlId, 'transfer', { to: sipUri, from: fromDid })) {
+    return true;
+  }
+
+  if (username) {
+    return telnyxCallAction(callControlId, 'transfer', { to: username, from: fromDid });
+  }
+
+  return false;
+}
+
+/**
+ * Connect inbound PSTN to browser — ring first; bridge completes on WebRTC answer.
  */
 export async function bridgeInboundToBrowser(
   supabase: SupabaseClient,
@@ -34,95 +146,17 @@ export async function bridgeInboundToBrowser(
   fromDid: string,
   dbCallId?: string,
 ): Promise<BridgeResult> {
-  const connectionId = await getActiveVoiceConnectionId();
-  const credentialId = await resolveActiveCredentialId(supabase, userId);
-  const sipUsername = credentialId ? await fetchCredentialSipUsername(credentialId) : null;
+  const ring = await ringBrowserForInbound(supabase, userId, callControlId, fromDid, dbCallId);
+  if (ring.ok) return ring;
 
-  const envUsername =
-    process.env.NEXT_PUBLIC_TELNYX_SIP_USERNAME?.trim()
-    ?? process.env.TELNYX_SIP_USERNAME?.trim();
-
-  const username = sipUsername ?? envUsername ?? null;
-  const sipUri = username ? sipUriFromUsername(username) : null;
-
-  if (!sipUri || !connectionId) {
-    console.error('[INBOUND] No browser SIP destination or connection for user:', userId);
+  const { sipUri, username } = await resolveBrowserSipUri(supabase, userId);
+  if (!sipUri) {
     return { ok: false, strategy: 'none' };
   }
 
-  console.log('[INBOUND] Bridging PSTN → browser | credential:', credentialId ?? 'env', '| sip:', username);
-
-  // ── Strategy 1: Dial registered WebRTC endpoint, then bridge legs ──────────
-  const dialed = await dialVoiceLeg({
-    connectionId,
-    to: sipUri,
-    from: fromDid,
-    timeoutSecs: 45,
-    clientState: {
-      gd_inbound_bridge: true,
-      pstn_call_control_id: callControlId,
-      user_id: userId,
-      db_call_id: dbCallId ?? null,
-    },
-  });
-
-  if (dialed.ok && dialed.call_control_id) {
-    const webrtcLegId = dialed.call_control_id;
-
-    if (dbCallId) {
-      await supabase
-        .from('calls')
-        .update({ telnyx_session_id: webrtcLegId })
-        .eq('id', dbCallId);
-    }
-
-    await telnyxCallAction(callControlId, 'answer');
-    await sleep(350);
-
-    const bridged = await telnyxCallActionDetailed(callControlId, 'bridge', {
-      call_control_id: webrtcLegId,
-    });
-
-    if (bridged.ok) {
-      console.log('[INBOUND] Browser bridge via dial+bridge OK | webrtc leg:', webrtcLegId);
-      return { ok: true, strategy: 'dial_bridge', webrtc_leg_id: webrtcLegId };
-    }
-
-    console.warn('[INBOUND] dial+bridge failed — hanging up orphan WebRTC leg, trying transfer');
-    await telnyxCallAction(webrtcLegId, 'hangup');
-  } else {
-    console.warn('[INBOUND] dial WebRTC leg failed:', dialed.detail?.slice(0, 200));
-  }
-
-  // ── Strategy 2: Answer + SIP transfer (legacy fallback) ────────────────────
-  const answered = await telnyxCallAction(callControlId, 'answer');
-  if (!answered) {
-    console.error('[INBOUND] answer failed before transfer fallback');
-    return { ok: false, strategy: 'none' };
-  }
-
-  await sleep(400);
-
-  const transferred = await telnyxCallAction(callControlId, 'transfer', {
-    to: sipUri,
-    from: fromDid,
-  });
-  if (transferred) {
-    console.log('[INBOUND] Browser bridge via SIP transfer OK');
-    return { ok: true, strategy: 'transfer' };
-  }
-
-  if (username) {
-    const transferredBare = await telnyxCallAction(callControlId, 'transfer', {
-      to: username,
-      from: fromDid,
-    });
-    if (transferredBare) {
-      console.log('[INBOUND] Browser bridge via username transfer OK');
-      return { ok: true, strategy: 'transfer' };
-    }
-  }
-
-  console.error('[INBOUND] All browser bridge strategies failed for user:', userId);
-  return { ok: false, strategy: 'none' };
+  console.log('[INBOUND] Falling back to SIP transfer for user:', userId);
+  const transferred = await bridgeViaTransfer(callControlId, sipUri, username, fromDid);
+  return transferred
+    ? { ok: true, strategy: 'transfer' }
+    : { ok: false, strategy: 'none' };
 }

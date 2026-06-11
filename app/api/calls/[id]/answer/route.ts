@@ -36,23 +36,7 @@ export async function POST(
       .update({ status: 'in_progress', answered_at: new Date().toISOString() })
       .eq('id', id);
 
-    if (call.telnyx_call_id) {
-      const res = await fetch(
-        `https://api.telnyx.com/v2/calls/${call.telnyx_call_id}/actions/answer`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${process.env.TELNYX_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: '{}',
-        },
-      );
-      if (!res.ok) {
-        const errText = await res.text();
-        console.warn('[ANSWER] Telnyx REST answer returned', res.status, errText.slice(0, 200), '— browser WebRTC answer is primary');
-      }
-    }
+    // PSTN ↔ browser bridge runs on call.answered for the WebRTC leg (after SDK answer()).
 
     console.log('[ANSWER] Inbound call answered:', id);
     return NextResponse.json({ success: true });
