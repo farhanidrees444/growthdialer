@@ -8,6 +8,7 @@ import {
   Minimize2, Maximize2, X, Wifi, Voicemail, Headset, ExternalLink,
 } from 'lucide-react';
 import { useWebPhone } from '@/contexts/webphone-context';
+import { useInboundRinging } from '@/contexts/inbound-ringing-context';
 import { useCallContext } from '@/lib/call-context';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -356,7 +357,19 @@ function PopoutBadge({ onReturn }: { onReturn: () => void }) {
 
 export default function ActiveCallOverlay() {
   const pathname = usePathname();
-  const { callStatus, activeCallId: telnyxCallId, isMuted, isOnHold, toggleMute, toggleHold, sendDTMF, hangup } = useWebPhone();
+  const {
+    callStatus,
+    activeCallId: telnyxCallId,
+    isMuted,
+    isOnHold,
+    toggleMute,
+    toggleHold,
+    sendDTMF,
+    hangup,
+    isInboundRinging,
+    hasOutboundSession,
+  } = useWebPhone();
+  const { isRinging: inboundUiRinging } = useInboundRinging();
   const { activeLead, activePhone, callAnsweredAt } = useCallContext();
   const { apiFetch } = useWorkspace();
   const quality = useConnectionQuality();
@@ -577,9 +590,15 @@ export default function ActiveCallOverlay() {
 
   // ── Guard ──────────────────────────────────────────────────────────────────
   const isVisible = ['connecting', 'ringing', 'active', 'held'].includes(callStatus);
+  // Inbound pre-answer: full-screen InboundCallOverlay owns the UX (Accept/Decline).
+  const inboundPreAnswer =
+    !hasOutboundSession
+    && (inboundUiRinging || isInboundRinging)
+    && (callStatus === 'ringing' || callStatus === 'connecting');
   // Hide on /dialer when a lead is selected (dialer page has its own LiveCallStage).
   // For manual calls from dialer (no activeLead), show the floating overlay.
   if (pathname?.startsWith('/dialer') && activeLead) return null;
+  if (inboundPreAnswer) return null;
   if (!isVisible) return null;
 
   const displayName = activeLead?.name || activePhone || 'Manual Dial';

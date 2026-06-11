@@ -73,15 +73,18 @@ export function InboundRingingProvider({
     callStatus,
     hangup,
     requestMicPermission,
+    isInboundRinging,
   } = useWebPhone();
   const { registerCallMeta } = useCallContext();
   const { apiFetch } = useWorkspace();
 
   const hasOutboundSessionRef = useRef(hasOutboundSession);
   const callStatusRef = useRef(callStatus);
+  const isInboundRingingRef = useRef(isInboundRinging);
   const apiFetchRef = useRef(apiFetch);
   hasOutboundSessionRef.current = hasOutboundSession;
   callStatusRef.current = callStatus;
+  isInboundRingingRef.current = isInboundRinging;
   apiFetchRef.current = apiFetch;
   acceptingRef.current = accepting;
 
@@ -162,13 +165,21 @@ export function InboundRingingProvider({
           if (row.id !== callIdRef.current) return;
           const status = row.status as string;
 
-          if (status === 'in_progress' && acceptingRef.current) {
+          if (status === 'in_progress') {
             clearCall(true);
             window.dispatchEvent(new CustomEvent('gd-call-ended'));
             return;
           }
 
           if (shouldDismissStatus(status)) {
+            // WebRTC may still be ringing after a premature server failed/missed update.
+            if (
+              isInboundRingingRef.current
+              && !hasOutboundSessionRef.current
+              && (status === 'failed' || status === 'missed')
+            ) {
+              return;
+            }
             clearCall(true);
             window.dispatchEvent(new CustomEvent('gd-call-ended'));
           }
@@ -204,17 +215,20 @@ export function InboundRingingProvider({
         }
 
         if (stickyRingRef.current && callIdRef.current && !data.call) {
+          if (isInboundRingingRef.current && !hasOutboundSessionRef.current) {
+            return;
+          }
           const graceMs = Date.now() - (ringStartedRef.current ?? Date.now());
-          if (graceMs < 4000) return;
+          if (graceMs < 15000) return;
           clearCall(true);
         }
       } catch { /* non-fatal */ }
     };
 
     const onWebrtcRing = () => {
-      if (stickyRingRef.current && callIdRef.current) {
+      stickyRingRef.current = true;
+      if (callIdRef.current) {
         playInboundRingtone();
-        return;
       }
       void poll();
     };
@@ -281,8 +295,8 @@ export function InboundRingingProvider({
     }
 
     setAccepting(false);
-    stickyRingRef.current = false;
     if (callStatusRef.current === 'active' || callStatusRef.current === 'connecting') {
+      stickyRingRef.current = false;
       clearCall(true);
     }
   }, [call, accepting, registerCallMeta, requestMicPermission, answerIncomingCall, apiFetch, clearCall]);

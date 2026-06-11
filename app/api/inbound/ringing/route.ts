@@ -15,15 +15,37 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const { data: call } = await supabase
+  const select =
+    'id, from_number, to_number, lead_id, status, direction, started_at, answered_at';
+
+  let { data: call } = await supabase
     .from('calls')
-    .select('id, from_number, to_number, lead_id, status, direction, started_at')
+    .select(select)
     .eq('user_id', user.id)
     .eq('direction', 'inbound')
     .eq('status', 'ringing')
     .order('started_at', { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  // Recover UI when bridge marked failed but WebRTC may still be ringing (race).
+  if (!call) {
+    const recentCutoff = new Date(Date.now() - 45_000).toISOString();
+    const { data: recent } = await supabase
+      .from('calls')
+      .select(select)
+      .eq('user_id', user.id)
+      .eq('direction', 'inbound')
+      .is('answered_at', null)
+      .gte('started_at', recentCutoff)
+      .in('status', ['ringing', 'failed'])
+      .order('started_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (recent) {
+      call = { ...recent, status: 'ringing' };
+    }
+  }
 
   if (!call) {
     return NextResponse.json({ call: null });

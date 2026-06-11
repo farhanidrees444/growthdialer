@@ -57,7 +57,7 @@ export function useCallOrchestrator(): CallOrchestratorValue {
 }
 
 export function CallOrchestratorProvider({ children }: { children: ReactNode }) {
-  const { callStatus, activeCallId } = useWebPhone();
+  const { callStatus, activeCallId, isInboundRinging, hasOutboundSession } = useWebPhone();
   const { activeLead, activePhone } = useCallContext();
   const { apiFetch } = useWorkspace();
 
@@ -119,6 +119,7 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
 
   // Pick up outbound calls started outside the dialer (e.g. leads page)
   useEffect(() => {
+    if (isInboundRinging && !hasOutboundSession) return;
     if (!activePhone || callStatus === 'idle' || callStatus === 'ended') return;
     if (!pendingRegRef.current && (callStatus === 'connecting' || callStatus === 'ringing')) {
       pendingRegRef.current = {
@@ -130,10 +131,11 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
       setDispositionLead(activeLead);
       dispositionLeadRef.current = activeLead;
     }
-  }, [callStatus, activePhone, activeLead]);
+  }, [callStatus, activePhone, activeLead, isInboundRinging, hasOutboundSession]);
 
   // Register DB call once Telnyx assigns call_control_id
   useEffect(() => {
+    if (isInboundRinging && !hasOutboundSession) return;
     if (!activeCallId || !pendingRegRef.current) return;
     const { e164, leadId } = pendingRegRef.current;
     pendingRegRef.current = null;
@@ -149,7 +151,7 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
         if (id) setCallDbId(id);
       })
       .catch(() => { /* non-fatal */ });
-  }, [activeCallId, apiFetch]);
+  }, [activeCallId, apiFetch, isInboundRinging, hasOutboundSession]);
 
   const autoSaveVoicemail = useCallback(async (dbId: string) => {
     try {

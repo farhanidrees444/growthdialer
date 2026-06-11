@@ -351,11 +351,14 @@ export async function POST(request: NextRequest) {
             newCall?.id,
           );
           console.log('[INBOUND] Browser bridge:', bridged.ok ? bridged.strategy : 'failed', '| user:', userId);
-          if (!bridged.ok && newCall?.id) {
-            await supabase
-              .from('calls')
-              .update({ status: 'failed', disposition: 'missed', ended_at: new Date().toISOString() })
-              .eq('id', newCall.id);
+          if (!bridged.ok) {
+            await telnyxCallAction(callControlId, 'hangup');
+            if (newCall?.id) {
+              await supabase
+                .from('calls')
+                .update({ status: 'failed', disposition: 'missed', ended_at: new Date().toISOString() })
+                .eq('id', newCall.id);
+            }
           }
           if (newCall?.id) {
             triggerInboundRingTimeoutAsync(newCall.id, callControlId, userId, ringSeconds, mode);
