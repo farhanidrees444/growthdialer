@@ -1,4 +1,8 @@
 import { readVoiceApiKey } from '@/lib/voice/read-env';
+import {
+  cachedCredentialTokenOk,
+  setCachedCredentialTokenOk,
+} from '@/lib/voice/credential-cache';
 
 const VOICE_API = 'https://api.telnyx.com/v2';
 
@@ -54,6 +58,9 @@ export async function listTelephonyCredentialsForConnection(
 }
 
 export async function fetchCredentialToken(credentialId: string): Promise<string | null> {
+  const cached = cachedCredentialTokenOk(credentialId);
+  if (cached === false) return null;
+
   const apiKey = readVoiceApiKey();
   if (!apiKey) return null;
 
@@ -61,8 +68,20 @@ export async function fetchCredentialToken(credentialId: string): Promise<string
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}` },
   });
-  if (!res.ok) return null;
+
+  if (res.status === 429) {
+    console.warn('[VOICE] credential token rate limited — using cache if available');
+    if (cached === true) return '__cached_valid__';
+    return null;
+  }
+
+  if (!res.ok) {
+    setCachedCredentialTokenOk(credentialId, false);
+    return null;
+  }
+
   const token = (await res.text()).trim();
+  if (token) setCachedCredentialTokenOk(credentialId, true);
   return token || null;
 }
 

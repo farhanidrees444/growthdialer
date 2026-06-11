@@ -8,7 +8,11 @@ import {
   fetchCredentialSipUsername,
   resolveActiveCredentialId,
 } from '@/lib/telnyx/active-credential';
-import { getActiveVoiceConnectionId } from '@/lib/voice/configure-connection';
+import {
+  ensureVoiceConnectionConfigured,
+  getActiveVoiceConnectionId,
+} from '@/lib/voice/configure-connection';
+import { readConfiguredConnectionId } from '@/lib/voice/read-env';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -48,21 +52,31 @@ export async function ringBrowserForInbound(
   callerAni: string,
   dbCallId?: string,
 ): Promise<BridgeResult> {
-  const connectionId = await getActiveVoiceConnectionId();
+  const configured = await ensureVoiceConnectionConfigured();
+  const connectionId =
+    configured.connection_id
+    ?? (await getActiveVoiceConnectionId())
+    ?? readConfiguredConnectionId();
+
   const { sipUri, username, credentialId } = await resolveBrowserSipUri(supabase, userId);
 
   if (!sipUri || !connectionId) {
-    console.error('[INBOUND] No browser SIP destination or connection for user:', userId);
+    console.error('[INBOUND] No browser SIP destination or connection for user:', userId, '| configured:', configured.ok, configured.failure_reason);
     return { ok: false, strategy: 'none' };
   }
 
-  console.log('[INBOUND] Ringing browser | credential:', credentialId ?? 'env', '| sip:', username);
+  if (!configured.ok) {
+    console.warn('[INBOUND] Voice connection not fully configured:', configured.message, configured.detail);
+  }
+
+  console.log('[INBOUND] Ringing browser | connection:', connectionId, '| credential:', credentialId ?? 'env', '| sip:', username);
 
   const dialed = await dialVoiceLeg({
     connectionId,
     to: sipUri,
     from: ownedDid,
     timeoutSecs: 60,
+    linkTo: pstnCallControlId,
     clientState: {
       gd_inbound_bridge: true,
       pstn_call_control_id: pstnCallControlId,
@@ -122,10 +136,14 @@ async function bridgeViaTransfer(
   username: string | null,
   fromDid: string,
 ): Promise<boolean> {
+  if (await telnyxCallAction(callControlId, 'transfer', { to: sipUri, from: fromDid })) {
+    return true;
+  }
+
   const answered = await telnyxCallAction(callControlId, 'answer');
   if (!answered) return false;
 
-  await sleep(400);
+  await sleep(300);
 
   if (await telnyxCallAction(callControlId, 'transfer', { to: sipUri, from: fromDid })) {
     return true;

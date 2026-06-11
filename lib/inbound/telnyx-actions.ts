@@ -53,6 +53,8 @@ export async function dialVoiceLeg(params: {
   from: string;
   clientState?: Record<string, unknown>;
   timeoutSecs?: number;
+  /** Link outbound leg to an existing inbound call_control_id */
+  linkTo?: string;
 }): Promise<TelnyxActionResult> {
   const webhookUrl = resolveVoiceWebhookUrl();
   if (!webhookUrl) {
@@ -73,6 +75,11 @@ export async function dialVoiceLeg(params: {
     if (params.clientState) {
       body.client_state = Buffer.from(JSON.stringify(params.clientState)).toString('base64');
     }
+    if (params.linkTo) {
+      body.link_to = params.linkTo;
+    }
+
+    console.log('[INBOUND] dial leg | connection:', params.connectionId, '| to:', params.to, '| link_to:', params.linkTo ?? 'none');
 
     const res = await fetch('https://api.telnyx.com/v2/calls', {
       method: 'POST',

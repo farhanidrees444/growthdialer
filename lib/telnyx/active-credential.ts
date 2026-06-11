@@ -72,6 +72,9 @@ export async function resolvePerUserCredentialId(
     await saveUserCredentialId(supabase, userId, null);
   }
 
+  const envCredentialId = readTelephonyCredentialId();
+  if (envCredentialId) return envCredentialId;
+
   const created = await createUserCredential(userId, connectionId);
   if (!created) return null;
 
@@ -84,9 +87,16 @@ export async function resolveActiveCredentialId(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<string | null> {
+  const envCredentialId = readTelephonyCredentialId();
   const connectionId = await getActiveVoiceConnectionId();
+
+  if (envCredentialId) {
+    const token = await fetchCredentialToken(envCredentialId);
+    if (token) return envCredentialId;
+  }
+
   const discovered = await discoverWorkingCredentialId(
-    readTelephonyCredentialId(),
+    envCredentialId,
     connectionId,
   );
 
@@ -100,6 +110,11 @@ export async function resolveActiveCredentialId(
       );
     }
     return discovered.credentialId;
+  }
+
+  if (envCredentialId) {
+    console.warn('[VOICE] Using configured credential ID without token verification');
+    return envCredentialId;
   }
 
   if (connectionId || readConfiguredConnectionId()) {
