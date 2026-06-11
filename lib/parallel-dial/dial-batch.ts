@@ -5,6 +5,7 @@ import type { DialerQueueConfig } from '@/lib/dialer/queue-query';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
 import { resolveCallerIdForLead } from '@/lib/dialer/resolve-caller-id';
 import type { ParallelDialLeg, ParallelDialSession } from './types';
+import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
 
 export async function dialParallelBatch(
   supabase: SupabaseClient,
@@ -34,6 +35,10 @@ export async function dialParallelBatch(
   const batchNumber = session.total_batches + 1;
   const { resolveVoiceWebhookUrl } = await import('@/lib/voice/webhook-url');
   const webhookUrl = resolveVoiceWebhookUrl();
+  const callControlAppId = await getActiveCallControlAppId();
+  if (!callControlAppId) {
+    throw new Error('Voice dial application is not configured');
+  }
   const amd = session.amd_enabled ? 'detect' : undefined;
 
   const legs: ParallelDialLeg[] = [];
@@ -64,7 +69,7 @@ export async function dialParallelBatch(
 
     try {
       const result = await telnyxClient.calls.dial({
-        connection_id: process.env.TELNYX_CONNECTION_ID!,
+        connection_id: callControlAppId,
         to: e164,
         from: fromNumber,
         webhook_url: webhookUrl,

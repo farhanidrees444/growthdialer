@@ -1,4 +1,8 @@
-import { readVoiceApiKey } from '@/lib/voice/read-env';
+import {
+  readCallControlAppId,
+  readConfiguredConnectionId,
+  readVoiceApiKey,
+} from '@/lib/voice/read-env';
 import { resolveVoiceConnectionId } from '@/lib/voice/resolve-connection';
 import { resolveVoiceWebhookUrl } from '@/lib/voice/webhook-url';
 
@@ -269,8 +273,25 @@ export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfi
   }
 }
 
-/** Connection ID for routing/bridge — always resolved with credential fallback. */
+/** SIP credential connection — inbound numbers, WebRTC credentials, webhooks. */
 export async function getActiveVoiceConnectionId(): Promise<string | null> {
   const resolved = await resolveVoiceConnectionId();
   return resolved.connectionId;
+}
+
+/**
+ * Call Control / Voice API application ID — POST /v2/calls (outbound + inbound browser dial leg).
+ * Separate from the SIP credential connection in most Telnyx accounts.
+ */
+export async function getActiveCallControlAppId(): Promise<string | null> {
+  const dialAppId = readCallControlAppId();
+  if (dialAppId) return dialAppId;
+
+  const sipConnection = readConfiguredConnectionId();
+  if (sipConnection) {
+    console.warn(
+      '[VOICE] TELNYX_CALL_CONTROL_APP_ID not set — falling back to TELNYX_CONNECTION_ID for dial',
+    );
+  }
+  return sipConnection;
 }

@@ -10,9 +10,8 @@ import {
 } from '@/lib/telnyx/active-credential';
 import {
   ensureVoiceConnectionConfigured,
-  getActiveVoiceConnectionId,
+  getActiveCallControlAppId,
 } from '@/lib/voice/configure-connection';
-import { readConfiguredConnectionId } from '@/lib/voice/read-env';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -53,26 +52,29 @@ export async function ringBrowserForInbound(
   dbCallId?: string,
 ): Promise<BridgeResult> {
   const configured = await ensureVoiceConnectionConfigured();
-  const connectionId =
-    configured.connection_id
-    ?? (await getActiveVoiceConnectionId())
-    ?? readConfiguredConnectionId();
+  const dialAppId = await getActiveCallControlAppId();
 
   const { sipUri, username, credentialId } = await resolveBrowserSipUri(supabase, userId);
 
-  if (!sipUri || !connectionId) {
-    console.error('[INBOUND] No browser SIP destination or connection for user:', userId, '| configured:', configured.ok, configured.failure_reason);
+  if (!sipUri || !dialAppId) {
+    console.error(
+      '[INBOUND] No browser SIP destination or call control app for user:',
+      userId,
+      '| sip_connection_configured:',
+      configured.ok,
+      configured.failure_reason,
+    );
     return { ok: false, strategy: 'none' };
   }
 
   if (!configured.ok) {
-    console.warn('[INBOUND] Voice connection not fully configured:', configured.message, configured.detail);
+    console.warn('[INBOUND] SIP connection not fully configured:', configured.message, configured.detail);
   }
 
-  console.log('[INBOUND] Ringing browser | connection:', connectionId, '| credential:', credentialId ?? 'env', '| sip:', username);
+  console.log('[INBOUND] Ringing browser | call_control_app:', dialAppId, '| credential:', credentialId ?? 'env', '| sip:', username);
 
   const dialed = await dialVoiceLeg({
-    connectionId,
+    connectionId: dialAppId,
     to: sipUri,
     from: ownedDid,
     timeoutSecs: 60,

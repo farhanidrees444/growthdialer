@@ -8,6 +8,7 @@ import { assertWorkspaceCanPlaceCalls } from '@/lib/billing/workspace-billing-ga
 import { apiUnauthorized, parseJsonBody } from '@/lib/api/errors';
 import { dialRequestSchema } from '@/lib/validations';
 import { resolveCallerIdForLead } from '@/lib/dialer/resolve-caller-id';
+import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
 
 export async function POST(request: NextRequest) {
   try {
@@ -87,10 +88,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
     }
 
+    const callControlAppId = await getActiveCallControlAppId();
+    if (!callControlAppId) {
+      return NextResponse.json({ error: 'Voice dial application is not configured' }, { status: 503 });
+    }
+
     console.log(`[dial] server-side: to=${e164} from=${fromNumber}`);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await (telnyxClient.calls.dial as any)({
-      connection_id: process.env.TELNYX_CONNECTION_ID!,
+      connection_id: callControlAppId,
       to: e164,
       from: fromNumber,
       webhook_url: webhookUrl,

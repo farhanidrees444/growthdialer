@@ -20,9 +20,19 @@ export function readTelephonyCredentialId(): string | null {
   return readEnv('TELNYX_TELEPHONY_CREDENTIAL_ID') ?? readEnv('TELNYX_CREDENTIAL_ID');
 }
 
+/** SIP / WebRTC credential connection (growthdialer-sip) — numbers, inbound, credentials. */
 export function readConfiguredConnectionId(): string | null {
   return (
     readEnv('TELNYX_CONNECTION_ID')
     ?? readEnv('TELNYX_CREDENTIAL_CONNECTION_ID')
+  );
+}
+
+/** Voice API / Call Control application (growthdialer) — server-side POST /v2/calls dial. */
+export function readCallControlAppId(): string | null {
+  return (
+    readEnv('TELNYX_CALL_CONTROL_APP_ID')
+    ?? readEnv('TELNYX_VOICE_APP_ID')
+    ?? readEnv('TELNYX_CALL_CONTROL_CONNECTION_ID')
   );
 }

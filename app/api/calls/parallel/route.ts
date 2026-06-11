@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import telnyxClient, { toE164 } from '@/lib/telnyx';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { hasPermission } from '@/lib/auth/permissions';
+import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
 
 interface DialTarget {
   phone: string;
@@ -45,6 +46,10 @@ export async function POST(request: NextRequest) {
     }
 
     const webhookUrl = `${process.env.APP_URL}/api/telnyx/webhook`;
+    const callControlAppId = await getActiveCallControlAppId();
+    if (!callControlAppId) {
+      return NextResponse.json({ error: 'Voice dial application is not configured' }, { status: 503 });
+    }
 
     const results: DialResult[] = await Promise.all(
       leads.map(async (target): Promise<DialResult> => {
@@ -55,7 +60,7 @@ export async function POST(request: NextRequest) {
 
         try {
           const result = await telnyxClient.calls.dial({
-            connection_id: process.env.TELNYX_CONNECTION_ID!,
+            connection_id: callControlAppId,
             to: e164,
             from: process.env.TELNYX_FROM_NUMBER!,
             webhook_url: webhookUrl,
