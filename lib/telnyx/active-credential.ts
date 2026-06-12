@@ -88,17 +88,19 @@ export async function resolvePerUserCredentialId(
     }
   }
 
+  const created = await createUserCredential(userId, connectionId);
+  if (created) {
+    await saveUserCredentialId(supabase, userId, created);
+    return created;
+  }
+
   const envCredentialId = readTelephonyCredentialId();
   if (envCredentialId) {
     const envToken = await fetchCredentialToken(envCredentialId, { bypassNegativeCache: true });
     if (envToken) return envCredentialId;
   }
 
-  const created = await createUserCredential(userId, connectionId);
-  if (!created) return null;
-
-  await saveUserCredentialId(supabase, userId, created);
-  return created;
+  return null;
 }
 
 /** Credential the browser WebRTC client and inbound SIP dial leg must share. */

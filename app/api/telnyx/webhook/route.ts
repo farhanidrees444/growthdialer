@@ -9,7 +9,7 @@ import { normalizeE164 } from '@/lib/inbound/phone';
 import { findLeadByCallerPhone } from '@/lib/inbound/match-lead';
 import { triggerInboundRingTimeoutAsync } from '@/lib/inbound/trigger-ring-timeout';
 import { findNumberOwnerWithMeta } from '@/lib/inbound/lookup-number';
-import { bridgeInboundToBrowser } from '@/lib/inbound/bridge-to-browser';
+import { bridgeInboundToBrowser, completeInboundBridge } from '@/lib/inbound/bridge-to-browser';
 import { decodeClientState } from '@/lib/inbound/telnyx-actions';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
 import { voiceApiBearerToken } from '@/lib/voice/read-env';
@@ -359,7 +359,7 @@ export async function POST(request: NextRequest) {
           }
           console.log('[INBOUND] Voicemail: answered + recording started for user:', userId);
         } else {
-          // browser mode (default): ring user's WebRTC client (skip if leg already queued).
+          // browser mode: dial agent WebRTC leg (link_to PSTN + bridge_on_answer).
           const alreadyQueued = Boolean(existingInbound?.telnyx_webrtc_leg_id);
           const bridged = alreadyQueued
             ? { ok: true, strategy: 'dial_bridge' as const }
@@ -371,7 +371,14 @@ export async function POST(request: NextRequest) {
               toNumber,
               newCall?.id,
             );
-          console.log('[INBOUND] Browser bridge:', bridged.ok ? bridged.strategy : 'failed', '| user:', userId);
+          console.log(
+            '[INBOUND] Route to agent WebRTC:',
+            bridged.ok ? bridged.strategy : 'failed',
+            '| user:',
+            userId,
+            '| webrtc_leg:',
+            bridged.webrtc_leg_id ?? 'none',
+          );
           if (!bridged.ok) {
             await telnyxCallAction(callControlId, 'hangup');
             if (newCall?.id) {
@@ -511,7 +518,12 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        console.log('[INBOUND] WebRTC leg answered — auto-bridge via link_to', alreadyAnswered ? '(duplicate event)' : '');
+        const bridged = await completeInboundBridge(pstnId, callControlId);
+        console.log(
+          '[INBOUND] WebRTC leg answered — bridge:',
+          bridged ? 'ok' : 'fallback failed',
+          alreadyAnswered ? '(duplicate event)' : '',
+        );
         return NextResponse.json({ received: true });
       }
 

@@ -78,6 +78,43 @@ function mapCallState(state: string): WebRTCCallStatus {
 }
 
 const AUDIO_EL_ID = 'telnyx-remote-audio';
+const TOKEN_URL = '/api/telnyx/token';
+
+async function fetchAssignedCallerNumber(): Promise<string | null> {
+  try {
+    const res = await fetch('/api/numbers/list', { credentials: 'same-origin' });
+    if (!res.ok) return null;
+    const data = await res.json() as {
+      numbers?: Array<{ phone_number?: string; is_default?: boolean; status?: string }>;
+    };
+    const active = (data.numbers ?? []).filter((n) => n.status !== 'released' && n.phone_number);
+    const preferred = active.find((n) => n.is_default) ?? active[0];
+    return preferred?.phone_number?.trim() ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function bindRemoteMediaToAudio(call: Call): void {
+  if (typeof document === 'undefined') return;
+  const el = document.getElementById(AUDIO_EL_ID) as HTMLAudioElement | null;
+  if (!el) return;
+
+  const callWithMedia = call as Call & {
+    remoteStream?: MediaStream;
+    peer?: { instance?: { getRemoteStreams?: () => MediaStream[] } };
+  };
+
+  const stream =
+    callWithMedia.remoteStream
+    ?? callWithMedia.peer?.instance?.getRemoteStreams?.()?.[0]
+    ?? null;
+
+  if (stream) {
+    el.srcObject = stream;
+    void el.play().catch(() => { /* autoplay policy */ });
+  }
+}
 
 export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const [phoneStatus, setPhoneStatus] = useState<PhoneStatus>('idle');
@@ -103,6 +140,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const initAttemptsRef = useRef(0);
   const initClientRef = useRef<() => Promise<void>>(async () => {});
   const inboundRingStartedRef = useRef<number | null>(null);
+  const defaultCallerIdRef = useRef<string | null>(null);
 
   const safeSet = useCallback(<T,>(setter: (v: T) => void, value: T) => {
     if (mountedRef.current) setter(value);
@@ -127,7 +165,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       // Dynamic import prevents SSR from pulling in browser-only code
       const { TelnyxRTC } = await import('@telnyx/webrtc');
 
-      const res = await fetch('/api/voice/token', {
+      const res = await fetch(TOKEN_URL, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
@@ -139,20 +177,11 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       }
       const creds = await res.json() as {
         login_token?: string;
-        login?: string;
-        password?: string;
         error?: string;
       };
-      if (creds.error) {
-        console.error('[WebPhone] token error:', creds.error);
+      if (creds.error || !creds.login_token) {
+        console.error('[WebPhone] token error:', creds.error ?? 'missing login_token');
         scheduleReconnect('token error');
-        return;
-      }
-      const hasJwt = Boolean(creds.login_token);
-      const hasSip = Boolean(creds.login && creds.password);
-      if (!hasJwt && !hasSip) {
-        console.error('[WebPhone] token response missing credentials');
-        scheduleReconnect('empty credentials');
         return;
       }
 
@@ -162,13 +191,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         clientRef.current = null;
       }
 
-      const opts: IClientOptions = {};
-      if (creds.login_token) {
-        opts.login_token = creds.login_token;
-      } else {
-        opts.login = creds.login;
-        opts.password = creds.password;
-      }
+      const opts: IClientOptions = { login_token: creds.login_token };
 
       const client = new TelnyxRTC(opts);
       clientRef.current = client;
@@ -180,6 +203,9 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         console.log('[WebPhone] ready');
         initAttemptsRef.current = 0;
         safeSet(setPhoneStatus, 'ready');
+        void fetchAssignedCallerNumber().then((num) => {
+          if (num) defaultCallerIdRef.current = num;
+        });
       });
 
       client.on('telnyx.error', (err: unknown) => {
@@ -199,8 +225,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       });
 
       client.on('telnyx.notification', (notification: INotification) => {
-        if (notification.type !== 'callUpdate' || !notification.call) return;
-
+        if (notification.type === 'callUpdate' && notification.call) {
         const call = notification.call as unknown as Call;
         const mapped = mapCallState(call.state);
         const incoming = isIncomingTelnyxCall(call, outboundDialRef.current);
@@ -223,6 +248,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
             window.dispatchEvent(new CustomEvent('gd-webrtc-inbound-ring'));
           }
         } else if (incoming && mapped === 'active') {
+          bindRemoteMediaToAudio(call);
           safeSet(setIsInboundRinging, false);
           inboundRingStartedRef.current = null;
           window.dispatchEvent(new CustomEvent('gd-webrtc-inbound-active'));
@@ -231,6 +257,10 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           safeSet(setIsInboundRinging, false);
         } else if (outboundDialRef.current) {
           safeSet(setIsInboundRinging, false);
+        }
+
+        if (mapped === 'active') {
+          bindRemoteMediaToAudio(call);
         }
 
         if (mapped === 'ringing' && outboundDialRef.current) {
@@ -259,6 +289,13 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           setTimeout(() => {
             if (mountedRef.current) setCallStatus('idle');
           }, 800);
+        }
+        return;
+        }
+
+        if (notification.type === 'telnyx_rtc.attach') {
+          const attachCall = (notification as INotification & { call?: Call }).call;
+          if (attachCall) bindRemoteMediaToAudio(attachCall as unknown as Call);
         }
       });
 
@@ -367,6 +404,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     setIsMuted(false);
     setIsOnHold(false);
     try {
+      const callerId = callerNumber ?? defaultCallerIdRef.current ?? undefined;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const callParams: Record<string, any> = {
         destinationNumber: destination,
@@ -385,13 +423,13 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           { name: 'X-Recording-Format', value: 'mp3' },
         ],
       };
-      if (callerNumber) {
-        callParams.callerNumber = callerNumber;
+      if (callerId) {
+        callParams.callerNumber = callerId;
         callParams.callerName = 'GrowthDialer';
       }
       console.log('[WebPhone] initiating call:', {
         destinationNumber: destination,
-        callerNumber: callerNumber ?? '(none)',
+        callerNumber: callerId ?? '(none)',
       });
       const call = clientRef.current.newCall(callParams);
       activeCallRef.current = call;
@@ -409,6 +447,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (activeCallRef.current as any).answer?.();
+          bindRemoteMediaToAudio(activeCallRef.current);
           console.log('[WebPhone] answered inbound call');
         } catch (err) {
           console.error('[WebPhone] answerIncomingCall error:', err);

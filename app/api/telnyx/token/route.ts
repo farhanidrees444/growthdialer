@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { issueUserWebRtcToken } from '@/lib/telnyx/webrtc-token-engine';
 
-/** Legacy alias — delegates to the Telnyx token engine (JWT only). */
+/**
+ * POST /api/telnyx/token
+ * Issues a short-lived On-Demand WebRTC JWT for the authenticated user.
+ */
 export async function POST(_request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -22,9 +25,10 @@ export async function POST(_request: NextRequest) {
     return NextResponse.json({
       login_token: result.login_token,
       credential_id: result.credential_id,
+      sip_username: result.sip_username,
     });
   } catch (error) {
-    console.error('[voice/token] error:', error);
+    console.error('[telnyx/token] error:', error);
     return NextResponse.json({ error: 'Could not issue credentials' }, { status: 500 });
   }
 }

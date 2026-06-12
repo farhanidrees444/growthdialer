@@ -7,7 +7,7 @@ function sipUriFromUsername(username: string): string {
 
 /**
  * SIP URI for bridging an inbound PSTN leg to this user's browser WebRTC session.
- * Uses the same credential order as /api/voice/token.
+ * Uses the same per-user credential as POST /api/telnyx/token.
  */
 export async function resolveUserSipUri(
   supabase: SupabaseClient,
