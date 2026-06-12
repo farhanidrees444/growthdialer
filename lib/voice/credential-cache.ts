@@ -1,4 +1,6 @@
 const TTL_MS = 25 * 60 * 1000;
+/** Browser JWTs should not be served stale for long. */
+const TOKEN_TTL_MS = 8 * 60 * 1000;
 
 interface CacheEntry<T> {
   value: T;
@@ -36,7 +38,13 @@ export function cachedCredentialToken(credentialId: string): string | undefined 
 }
 
 export function setCachedCredentialToken(credentialId: string, token: string): void {
-  writeCache(tokenValueCache, credentialId, token);
+  tokenValueCache.set(credentialId, { value: token, expiresAt: Date.now() + TOKEN_TTL_MS });
+}
+
+export function invalidateCredentialCache(credentialId: string): void {
+  tokenOkCache.delete(credentialId);
+  tokenValueCache.delete(credentialId);
+  sipUsernameCache.delete(credentialId);
 }
 
 export function cachedSipUsername(credentialId: string): string | null | undefined {

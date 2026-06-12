@@ -59,12 +59,26 @@ export async function listTelephonyCredentialsForConnection(
   }
 }
 
-export async function fetchCredentialToken(credentialId: string): Promise<string | null> {
-  const cachedToken = cachedCredentialToken(credentialId);
-  if (cachedToken) return cachedToken;
+export interface FetchCredentialTokenOptions {
+  /** Skip cached JWT — use when issuing browser login tokens. */
+  fresh?: boolean;
+  /** Retry after a prior transient failure was negative-cached. */
+  bypassNegativeCache?: boolean;
+}
 
-  const cached = cachedCredentialTokenOk(credentialId);
-  if (cached === false) return null;
+export async function fetchCredentialToken(
+  credentialId: string,
+  options: FetchCredentialTokenOptions = {},
+): Promise<string | null> {
+  if (!options.fresh) {
+    const cachedToken = cachedCredentialToken(credentialId);
+    if (cachedToken) return cachedToken;
+  }
+
+  if (!options.bypassNegativeCache) {
+    const cached = cachedCredentialTokenOk(credentialId);
+    if (cached === false) return null;
+  }
 
   const apiKey = readVoiceApiKey();
   if (!apiKey) return null;
@@ -80,7 +94,11 @@ export async function fetchCredentialToken(credentialId: string): Promise<string
   }
 
   if (!res.ok) {
-    setCachedCredentialTokenOk(credentialId, false);
+    if (res.status === 404) {
+      setCachedCredentialTokenOk(credentialId, false);
+    } else {
+      console.error('[VOICE] credential token failed:', credentialId, res.status);
+    }
     return null;
   }
 
@@ -143,7 +161,9 @@ export async function discoverWorkingCredentialId(
   if (!apiKey) return { credentialId: null, envWasConnectionId: false };
 
   if (envCredentialOrConnectionId) {
-    const token = await fetchCredentialToken(envCredentialOrConnectionId);
+    const token = await fetchCredentialToken(envCredentialOrConnectionId, {
+      bypassNegativeCache: true,
+    });
     if (token) {
       return { credentialId: envCredentialOrConnectionId, envWasConnectionId: false };
     }
@@ -161,8 +181,16 @@ export async function discoverWorkingCredentialId(
 
   if (connectionId) {
     const listed = await listTelephonyCredentialsForConnection(connectionId);
+    const envCred = envCredentialOrConnectionId;
+    if (envCred) {
+      const preferred = listed.find((row) => row.id === envCred);
+      if (preferred) {
+        const rowToken = await fetchCredentialToken(preferred.id, { bypassNegativeCache: true });
+        if (rowToken) return { credentialId: preferred.id, envWasConnectionId: false };
+      }
+    }
     for (const row of listed) {
-      const rowToken = await fetchCredentialToken(row.id);
+      const rowToken = await fetchCredentialToken(row.id, { bypassNegativeCache: true });
       if (rowToken) {
         return { credentialId: row.id, envWasConnectionId: false };
       }

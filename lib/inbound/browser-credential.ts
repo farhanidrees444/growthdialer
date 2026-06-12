@@ -23,7 +23,7 @@ export async function resolveInboundBrowserCredential(
   const perUserId = await resolvePerUserCredentialId(supabase, userId);
   if (perUserId) {
     const [token, sipUsername] = await Promise.all([
-      fetchCredentialToken(perUserId),
+      fetchCredentialToken(perUserId, { bypassNegativeCache: true }),
       fetchCredentialSipUsername(perUserId),
     ]);
     if (token && sipUsername) {
@@ -35,7 +35,7 @@ export async function resolveInboundBrowserCredential(
   if (!sharedId) return null;
 
   const [token, sipUsername] = await Promise.all([
-    fetchCredentialToken(sharedId),
+    fetchCredentialToken(sharedId, { bypassNegativeCache: true }),
     fetchCredentialSipUsername(sharedId),
   ]);
   if (!token || !sipUsername) {

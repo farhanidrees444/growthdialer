@@ -3,7 +3,9 @@ import {
   discoverWorkingCredentialId,
   fetchCredentialSipUsername,
   fetchCredentialToken,
+  telephonyCredentialExists,
 } from '@/lib/voice/credential-discovery';
+import { invalidateCredentialCache } from '@/lib/voice/credential-cache';
 import {
   readConfiguredConnectionId,
   readTelephonyCredentialId,
@@ -67,13 +69,30 @@ export async function resolvePerUserCredentialId(
 
   const stored = settings?.telnyx_telephony_credential_id as string | undefined;
   if (stored) {
-    const token = await fetchCredentialToken(stored);
+    const token = await fetchCredentialToken(stored, { bypassNegativeCache: true });
     if (token) return stored;
-    await saveUserCredentialId(supabase, userId, null);
+
+    const apiKey = readVoiceApiKey();
+    if (apiKey) {
+      const exists = await telephonyCredentialExists(apiKey, stored);
+      if (!exists) {
+        await saveUserCredentialId(supabase, userId, null);
+      } else {
+        invalidateCredentialCache(stored);
+        const retryToken = await fetchCredentialToken(stored, {
+          fresh: true,
+          bypassNegativeCache: true,
+        });
+        if (retryToken) return stored;
+      }
+    }
   }
 
   const envCredentialId = readTelephonyCredentialId();
-  if (envCredentialId) return envCredentialId;
+  if (envCredentialId) {
+    const envToken = await fetchCredentialToken(envCredentialId, { bypassNegativeCache: true });
+    if (envToken) return envCredentialId;
+  }
 
   const created = await createUserCredential(userId, connectionId);
   if (!created) return null;
@@ -91,7 +110,7 @@ export async function resolveActiveCredentialId(
   const connectionId = await getActiveVoiceConnectionId();
 
   if (envCredentialId) {
-    const token = await fetchCredentialToken(envCredentialId);
+    const token = await fetchCredentialToken(envCredentialId, { bypassNegativeCache: true });
     if (token) return envCredentialId;
   }
 
