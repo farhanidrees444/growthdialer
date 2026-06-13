@@ -48,17 +48,17 @@ console.log('PRESENCE', presErr?.message ?? presence);
 
 const { data: settings } = await supabase
   .from('user_settings')
-  .select('telnyx_telephony_credential_id, recording_mode')
+  .select('telnyx_telephony_credential_id, recording_mode, inbound_mode, inbound_forward_number, inbound_ring_seconds')
   .eq('user_id', user.id)
   .maybeSingle();
 console.log('USER_SETTINGS', settings);
 
-const { data: numbers } = await supabase
+const { data: numbers, error: numErr } = await supabase
   .from('purchased_numbers')
-  .select('id, phone_number, status, is_default')
-  .eq('user_id', user.id)
+  .select('id, phone_number, status, is_default, user_id, workspace_id')
+  .or(`user_id.eq.${user.id},phone_number.eq.+15304792128`)
   .order('created_at', { ascending: false });
-console.log('NUMBERS', numbers);
+console.log('NUMBERS', numErr?.message ?? numbers);
 
 const { data: calls } = await supabase
   .from('calls')

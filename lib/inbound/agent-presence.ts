@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-const PRESENCE_STALE_MS = 90_000;
+const PRESENCE_STALE_MS = 180_000;
 
 export type AgentPhoneStatus = 'idle' | 'initializing' | 'ready' | 'error' | 'offline';
 

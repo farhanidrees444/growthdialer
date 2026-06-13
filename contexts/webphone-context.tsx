@@ -446,7 +446,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     if (phoneStatus !== 'ready') return;
     const beat = setInterval(() => {
       void reportVoicePresence('ready');
-    }, 30_000);
+    }, 15_000);
     return () => clearInterval(beat);
   }, [phoneStatus]);
 

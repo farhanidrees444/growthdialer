@@ -174,16 +174,8 @@ export async function executeInboundRouting(
     return;
   }
 
-  // browser mode — ring agent WebRTC when presence is fresh; else DB fallback
+  // browser mode — always ring WebRTC first; presence only informs fallback reason
   const agentOnline = await isAgentVoiceReady(supabase, ctx.userId);
-  if (!agentOnline) {
-    voiceLog.warn(
-      { ...logCtx, event: 'agent_offline' },
-      'Agent WebRTC not ready — using DB fallback route',
-    );
-    await applyBrowserFallback(supabase, ctx, routing, 'agent_offline');
-    return;
-  }
 
   const bridged = await bridgeInboundToBrowser(
     supabase,
@@ -196,17 +188,36 @@ export async function executeInboundRouting(
 
   if (!bridged.ok) {
     voiceLog.warn(
-      { ...logCtx, event: 'bridge_failed', strategy: bridged.strategy },
-      'Browser bridge failed — using DB fallback route',
+      {
+        ...logCtx,
+        event: 'bridge_failed',
+        agent_online: agentOnline,
+        strategy: bridged.strategy,
+      },
+      agentOnline
+        ? 'Browser bridge failed — using DB fallback route'
+        : 'Browser bridge failed while agent presence stale — using DB fallback route',
     );
-    await applyBrowserFallback(supabase, ctx, routing, 'bridge_failed');
+    await applyBrowserFallback(
+      supabase,
+      ctx,
+      routing,
+      agentOnline ? 'bridge_failed' : 'agent_offline',
+    );
     return;
   }
 
-  voiceLog.info(
-    { ...logCtx, event: 'browser_ring', webrtc_leg: bridged.webrtc_leg_id },
-    'Inbound ringing browser',
-  );
+  if (!agentOnline) {
+    voiceLog.info(
+      { ...logCtx, event: 'browser_ring_stale_presence', webrtc_leg: bridged.webrtc_leg_id },
+      'Inbound ringing browser despite stale presence heartbeat',
+    );
+  } else {
+    voiceLog.info(
+      { ...logCtx, event: 'browser_ring', webrtc_leg: bridged.webrtc_leg_id },
+      'Inbound ringing browser',
+    );
+  }
 
   if (ctx.dbCallId) {
     triggerInboundRingTimeoutAsync(
