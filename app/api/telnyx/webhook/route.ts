@@ -15,6 +15,8 @@ import { voiceApiBearerToken } from '@/lib/voice/read-env';
 import { executeInboundRouting, shouldRecordInboundAnswer } from '@/lib/inbound/routing-matrix';
 import { voiceLog } from '@/lib/voice/structured-log';
 import { voiceServerLog } from '@/lib/debug/voice-server-log';
+import type { FastAnswerResult } from '@/lib/telnyx/fast-answer';
+import { logCallEvent } from '@/lib/webhooks/log-call-event';
 
 function directionSaysInbound(direction: string | undefined): boolean | null {
   const d = (direction ?? '').toLowerCase();
@@ -213,10 +215,22 @@ async function startProgrammaticRecording(callControlId: string): Promise<boolea
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
+function scheduleWebhookBackground(
+  body: TelnyxWebhookBody,
+  receivedAt: string,
+  answerMeta: FastAnswerResult | null,
+): void {
+  void processTelnyxWebhookBackground(body, receivedAt, answerMeta).catch((err) => {
+    console.error('[WEBHOOK] background processing failed:', err);
+  });
+}
+
 export async function POST(request: NextRequest) {
+  const handlerStartMs = Date.now();
+  const receivedAt = new Date().toISOString();
+  console.log(`[WEBHOOK] START ${receivedAt}`);
+
   try {
-    // Read raw body FIRST so we can verify the signature over the exact bytes
-    // Telnyx signed. Re-parse JSON from the string.
     const rawBody = await request.text();
     const signature = request.headers.get('telnyx-signature-ed25519');
     const timestamp = request.headers.get('telnyx-timestamp');
@@ -236,9 +250,45 @@ export async function POST(request: NextRequest) {
 
     const { event_type, payload } = event;
     const callControlId = payload.call_control_id;
+
+    if (event_type === 'call.initiated' && callControlId) {
+      const { isBridgeLegClientState, sendTelnyxAnswerFast, skippedAnswerResult } = await import(
+        '@/lib/telnyx/fast-answer'
+      );
+      if (isBridgeLegClientState(payload.client_state)) {
+        console.log(`[WEBHOOK] ANSWER_SKIP bridge_leg +${Date.now() - handlerStartMs}ms`);
+        scheduleWebhookBackground(body, receivedAt, skippedAnswerResult('bridge_leg'));
+        return NextResponse.json({ received: true });
+      }
+
+      const answerResult = await sendTelnyxAnswerFast(callControlId);
+      console.log(
+        `[WEBHOOK] ANSWER_SENT ${new Date().toISOString()} +${Date.now() - handlerStartMs}ms ok=${answerResult.ok} rt=${answerResult.responseTimeMs}ms`,
+      );
+      scheduleWebhookBackground(body, receivedAt, answerResult);
+      return NextResponse.json({ received: true });
+    }
+
+    scheduleWebhookBackground(body, receivedAt, null);
+    return NextResponse.json({ received: true });
+  } catch (error) {
+    console.error('[WEBHOOK] top-level error:', error);
+    return NextResponse.json({ received: true, error: String(error) });
+  }
+}
+
+async function processTelnyxWebhookBackground(
+  body: TelnyxWebhookBody,
+  receivedAt: string,
+  answerMeta: FastAnswerResult | null,
+): Promise<void> {
+  try {
+    const event = body.data;
+    const { event_type, payload } = event;
+    const callControlId = payload.call_control_id;
     const callSessionId = payload.call_session_id;
 
-    console.log(`[WEBHOOK] ${event_type} | session=${callSessionId} | control=${callControlId} | from=${payload.from} | to=${payload.to}`);
+    console.log(`[WEBHOOK] bg ${event_type} | session=${callSessionId} | control=${callControlId} | from=${payload.from} | to=${payload.to}`);
     voiceLog.info(
       {
         service: 'telnyx-webhook',
@@ -246,19 +296,29 @@ export async function POST(request: NextRequest) {
         call_control_id: callControlId,
         session_id: callSessionId,
       },
-      'Webhook received',
+      'Webhook received (background)',
     );
 
     const supabase = createServiceClient();
     if (!supabase) {
       console.warn('[WEBHOOK] Service client unavailable');
-      return NextResponse.json({ received: true });
+      return;
     }
+
+    await logCallEvent(supabase, {
+      call_control_id: callControlId ?? 'unknown',
+      event_type,
+      received_at: receivedAt,
+      answer_sent_at: answerMeta?.answerSentAt ?? null,
+      answer_response_time_ms: answerMeta?.responseTimeMs ?? null,
+      telnyx_status: answerMeta?.telnyxStatus ?? null,
+      error_message: answerMeta?.errorMessage ?? null,
+    });
 
     if (event.id) {
       const claimed = await claimWebhookEvent(supabase, event.id, 'telnyx', event_type);
       if (!claimed) {
-        return NextResponse.json({ received: true, duplicate: true });
+        return;
       }
     }
 
@@ -272,7 +332,7 @@ export async function POST(request: NextRequest) {
         );
         if (bridgeState?.gd_inbound_bridge || bridgeState?.gd_parallel_bridge) {
           console.log('[WEBHOOK] Browser bridge leg initiated:', callControlId);
-          return NextResponse.json({ received: true });
+          return;
         }
 
         const toNumber = normalizeE164(payload.to ?? '');
@@ -292,7 +352,7 @@ export async function POST(request: NextRequest) {
         if (!ownedNumber) {
           console.log('[INBOUND] No active owner for number — rejecting:', toNumber);
           await telnyxCallAction(callControlId, 'reject', { cause: 'CALL_REJECTED' });
-          return NextResponse.json({ received: true });
+          return;
         }
 
         const userId = ownedNumber.user_id as string;
@@ -563,7 +623,7 @@ export async function POST(request: NextRequest) {
         const prospectId = String(answeredBridgeState.prospect_call_control_id);
         const bridged = await completeInboundBridge(prospectId, callControlId);
         console.log('[PARALLEL] WebRTC leg answered — bridge:', bridged ? 'ok' : 'failed');
-        return NextResponse.json({ received: true });
+        return;
       }
 
       if (
@@ -621,7 +681,7 @@ export async function POST(request: NextRequest) {
           '[INBOUND] WebRTC leg answered — PSTN bridge via bridge_on_answer',
           alreadyAnswered ? '(duplicate event)' : '',
         );
-        return NextResponse.json({ received: true, bridged });
+        return;
       }
 
       if (callControlId) {
@@ -644,7 +704,7 @@ export async function POST(request: NextRequest) {
           '| control:',
           callControlId,
         );
-        return NextResponse.json({ received: true });
+        return;
       }
 
       console.log('[WEBHOOK] call.answered — call id:', callRow.id);
@@ -740,7 +800,7 @@ export async function POST(request: NextRequest) {
             .from('calls')
             .update({ telnyx_webrtc_leg_id: null })
             .eq('id', callRow.id);
-          return NextResponse.json({ received: true });
+          return;
         }
       }
 
@@ -906,13 +966,13 @@ export async function POST(request: NextRequest) {
 
       if (!recordingUrl) {
         console.error('[REC-B] NO recording URL in payload — both recording_urls and public_recording_urls are empty. Full payload:', JSON.stringify(payload));
-        return NextResponse.json({ received: true });
+        return;
       }
 
       const callRow = await findCall(supabase, callSessionId, callControlId);
       if (!callRow) {
         console.error('[REC-B] Call not found. session:', callSessionId, '| control:', callControlId);
-        return NextResponse.json({ received: true });
+        return;
       }
 
       console.log('[REC-B] Call:', callRow.id, '| ai_processing_status:', callRow.ai_processing_status);
@@ -923,7 +983,7 @@ export async function POST(request: NextRequest) {
         if (!callRow.recording_url) {
           await supabase.from('calls').update({ recording_url: recordingUrl, was_recorded: true }).eq('id', callRow.id);
         }
-        return NextResponse.json({ received: true });
+        return;
       }
 
       // Fetch user settings
@@ -936,7 +996,7 @@ export async function POST(request: NextRequest) {
       const recordingMode = settings?.recording_mode ?? 'always';
       if (recordingMode === 'never') {
         console.log('[REC-B] recording_mode=never — skipping');
-        return NextResponse.json({ received: true });
+        return;
       }
 
       // 30-second minimum rule.
@@ -959,7 +1019,7 @@ export async function POST(request: NextRequest) {
           .from('calls')
           .update({ ai_processing_status: 'skipped_short' })
           .eq('id', callRow.id);
-        return NextResponse.json({ received: true, skipped: 'short_call' });
+        return;
       }
 
       // Save recording URL + duration + mark as processing
@@ -979,7 +1039,7 @@ export async function POST(request: NextRequest) {
 
       if (updateErr) {
         console.error('[REC-B] Failed to save recording_url:', updateErr);
-        return NextResponse.json({ received: true, error: 'recording_save_failed' });
+        return;
       }
       console.log('[REC-C] recording_url saved to DB for call:', callRow.id);
 
@@ -1030,17 +1090,13 @@ export async function POST(request: NextRequest) {
     else {
       console.log('[WEBHOOK] Unhandled event:', event_type);
     }
-
-    return NextResponse.json({ received: true, event_type });
   } catch (error) {
     voiceLog.error(
       {
         service: 'telnyx-webhook',
         error: error instanceof Error ? error.message : String(error),
       },
-      'Webhook top-level error',
+      'Webhook background error',
     );
-    // Always 200 — never let Telnyx retry due to our own errors
-    return NextResponse.json({ received: true, error: String(error) });
   }
 }
