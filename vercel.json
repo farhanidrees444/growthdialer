@@ -1,4 +1,6 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "fluid": true,
   "installCommand": "yarn install --ignore-engines",
   "crons": [
     { "path": "/api/cron/cleanup-trash", "schedule": "0 3 * * *" },
