@@ -90,6 +90,25 @@ interface CallRow {
 
 type SupabaseClient = ReturnType<typeof createServiceClient>;
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * WebRTC outbound often sends call.answered before /api/calls/dial registers the row.
+ */
+async function findCallWithRetry(
+  supabase: NonNullable<SupabaseClient>,
+  sessionId: string | undefined,
+  callControlId: string | undefined,
+  select?: string,
+): Promise<CallRow | null> {
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const row = await findCall(supabase, sessionId, callControlId, select);
+    if (row) return row;
+    if (attempt < 7) await sleep(250);
+  }
+  return null;
+}
+
 /**
  * Look up a call by telnyx_session_id first (preferred), fall back to
  * telnyx_call_id (call_control_id). Returns null if not found.
@@ -429,7 +448,47 @@ export async function POST(request: NextRequest) {
           if (error) console.error('[WEBHOOK] call.initiated outbound update error:', error);
           else console.log('[WEBHOOK] call.initiated — updated outbound row:', existingOutbound.id);
         } else {
-          console.log('[WEBHOOK] call.initiated — outbound row pending (awaiting /api/calls/dial):', callControlId);
+          const fromNumber = normalizeE164(payload.from ?? '');
+          const toNumber = normalizeE164(payload.to ?? '');
+          const ownedFrom = fromNumber
+            ? await getCachedNumberOwner(supabase, fromNumber)
+            : null;
+
+          if (ownedFrom?.user_id) {
+            const userId = ownedFrom.user_id as string;
+            const workspaceId =
+              (ownedFrom.workspace_id as string | null | undefined)
+              ?? await resolveUserWorkspaceId(supabase, userId);
+            const { data: bootstrapped, error: bootstrapErr } = await supabase
+              .from('calls')
+              .insert({
+                user_id: userId,
+                workspace_id: workspaceId,
+                direction: 'outbound',
+                telnyx_call_id: callControlId,
+                telnyx_session_id: callSessionId ?? null,
+                from_number: fromNumber,
+                to_number: toNumber,
+                status: 'ringing',
+                started_at: new Date().toISOString(),
+              })
+              .select('id')
+              .single();
+
+            if (bootstrapErr) {
+              console.log(
+                '[WEBHOOK] call.initiated — outbound bootstrap race (dial may own insert):',
+                bootstrapErr.message,
+              );
+            } else {
+              console.log('[WEBHOOK] call.initiated — outbound row bootstrapped:', bootstrapped?.id);
+            }
+          } else {
+            console.log(
+              '[WEBHOOK] call.initiated — outbound row pending (unknown caller ID):',
+              callControlId,
+            );
+          }
         }
         }
       }
@@ -577,9 +636,14 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      const callRow = await findCall(supabase, callSessionId, callControlId);
+      const callRow = await findCallWithRetry(supabase, callSessionId, callControlId);
       if (!callRow) {
-        console.error('[WEBHOOK] call.answered — call not found. session:', callSessionId, '| control:', callControlId);
+        console.warn(
+          '[WEBHOOK] call.answered — call not found after retry. session:',
+          callSessionId,
+          '| control:',
+          callControlId,
+        );
         return NextResponse.json({ received: true });
       }
 
