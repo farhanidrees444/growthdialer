@@ -7,13 +7,13 @@ import { shouldSkipRecordingAiQueue } from '@/lib/ai/pipeline-status';
 import { triggerMirrorRecordingAsync } from '@/lib/recordings/trigger-mirror';
 import { normalizeE164, normalizeInboundCallerId } from '@/lib/inbound/phone';
 import { findLeadByCallerPhone } from '@/lib/inbound/match-lead';
-import { triggerInboundRingTimeoutAsync } from '@/lib/inbound/trigger-ring-timeout';
-import { findNumberOwnerWithMeta } from '@/lib/inbound/lookup-number';
 import { getCachedNumberOwner } from '@/lib/inbound/number-owner-cache';
-import { bridgeInboundToBrowser, completeInboundBridge } from '@/lib/inbound/bridge-to-browser';
+import { completeInboundBridge } from '@/lib/inbound/bridge-to-browser';
 import { decodeClientState } from '@/lib/inbound/telnyx-actions';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
 import { voiceApiBearerToken } from '@/lib/voice/read-env';
+import { executeInboundRouting, shouldRecordInboundAnswer } from '@/lib/inbound/routing-matrix';
+import { voiceLog } from '@/lib/voice/structured-log';
 
 function directionSaysInbound(direction: string | undefined): boolean | null {
   const d = (direction ?? '').toLowerCase();
@@ -219,6 +219,15 @@ export async function POST(request: NextRequest) {
     const callSessionId = payload.call_session_id;
 
     console.log(`[WEBHOOK] ${event_type} | session=${callSessionId} | control=${callControlId} | from=${payload.from} | to=${payload.to}`);
+    voiceLog.info(
+      {
+        service: 'telnyx-webhook',
+        event: event_type,
+        call_control_id: callControlId,
+        session_id: callSessionId,
+      },
+      'Webhook received',
+    );
 
     const supabase = createServiceClient();
     if (!supabase) {
@@ -267,8 +276,9 @@ export async function POST(request: NextRequest) {
         }
 
         const userId = ownedNumber.user_id as string;
+        const purchasedNumberId = ownedNumber.id as string | undefined;
 
-        const [workspaceId, ownedRows, inboundSettingsRes, existingInbound] = await Promise.all([
+        const [workspaceId, ownedRows, existingInbound] = await Promise.all([
           (ownedNumber.workspace_id as string | null | undefined)
             ?? resolveUserWorkspaceId(supabase, userId),
           supabase
@@ -276,11 +286,6 @@ export async function POST(request: NextRequest) {
             .select('phone_number')
             .eq('user_id', userId)
             .neq('status', 'released'),
-          supabase
-            .from('user_settings')
-            .select('inbound_mode, inbound_forward_number, inbound_ring_seconds')
-            .eq('user_id', userId)
-            .maybeSingle(),
           supabase
             .from('calls')
             .select('id, telnyx_webrtc_leg_id, status')
@@ -314,93 +319,53 @@ export async function POST(request: NextRequest) {
             .single();
 
           if (insertErr) {
-            console.error('[INBOUND] Call insert failed:', insertErr.message);
+            voiceLog.error(
+              {
+                service: 'telnyx-webhook',
+                event: 'call.initiated',
+                user_id: userId,
+                did: toNumber,
+                error: insertErr.message,
+              },
+              'Inbound call insert failed',
+            );
           } else {
             newCall = inserted;
           }
         } else {
-          console.log('[INBOUND] Reusing existing call record:', existingInbound.data.id);
+          voiceLog.debug(
+            {
+              service: 'telnyx-webhook',
+              event: 'call.initiated',
+              call_id: existingInbound.data.id,
+            },
+            'Reusing existing inbound call record',
+          );
         }
 
-        console.log('[INBOUND] Call record created:', newCall?.id, '| lead:', lead?.id ?? 'unknown', '| workspace:', workspaceId ?? 'none');
-
-        const inboundSettings = inboundSettingsRes.data;
-        const mode = (inboundSettings?.inbound_mode as string | null) ?? 'browser';
-        const configuredRing = (inboundSettings?.inbound_ring_seconds as number | null) ?? 25;
-        // Browser dial leg uses 60s timeout — voicemail must not fire earlier.
-        const ringSeconds = mode === 'browser' ? Math.max(configuredRing, 55) : configuredRing;
-
-        if (mode === 'off') {
-          await telnyxCallAction(callControlId, 'reject', { cause: 'CALL_REJECTED' });
-          if (newCall?.id) {
-            await supabase
-              .from('calls')
-              .update({ status: 'rejected', disposition: 'missed', ended_at: new Date().toISOString() })
-              .eq('id', newCall.id);
-          }
-          console.log('[INBOUND] Rejected (off mode)');
-        } else if (mode === 'forward' && inboundSettings?.inbound_forward_number) {
-          const forwardTo = normalizeE164(inboundSettings.inbound_forward_number as string);
-          await telnyxCallAction(callControlId, 'answer');
-          await new Promise((r) => setTimeout(r, 600));
-          await telnyxCallAction(callControlId, 'transfer', {
-            to: forwardTo || (inboundSettings.inbound_forward_number as string),
-            from: toNumber,
-          });
-          console.log('[INBOUND] Forwarded to:', inboundSettings.inbound_forward_number);
-          if (newCall?.id) {
-            triggerInboundRingTimeoutAsync(newCall.id, callControlId, userId, ringSeconds, mode);
-          }
-        } else if (mode === 'voicemail') {
-          // Answer + immediately start recording with a beep — caller hears
-          // the beep and knows to leave a message. Recording saved via
-          // call.recording.saved → existing AI pipeline processes it.
-          await telnyxCallAction(callControlId, 'answer');
-          await telnyxCallAction(callControlId, 'record_start', {
-            format: 'mp3',
-            channels: 'single',
-            play_beep: true,
-          });
-          if (newCall?.id) {
-            await supabase
-              .from('calls')
-              .update({ status: 'voicemail', disposition: 'voicemail' })
-              .eq('id', newCall.id);
-          }
-          console.log('[INBOUND] Voicemail: answered + recording started for user:', userId);
-        } else {
-          // browser mode: dial agent WebRTC leg (link_to PSTN + bridge_on_answer).
-          const alreadyQueued = Boolean(existingInbound.data?.telnyx_webrtc_leg_id);
-          const bridged = alreadyQueued
-            ? { ok: true, strategy: 'dial_bridge' as const }
-            : await bridgeInboundToBrowser(
-              supabase,
-              userId,
-              callControlId,
-              fromNumber ?? '',
-              toNumber,
-              newCall?.id,
-            );
-          console.log(
-            '[INBOUND] Route to agent WebRTC:',
-            bridged.ok ? bridged.strategy : 'failed',
-            '| user:',
+        try {
+          await executeInboundRouting(supabase, {
+            callControlId,
+            callSessionId,
+            fromNumber,
+            toNumber,
             userId,
-            '| webrtc_leg:',
-            bridged.webrtc_leg_id ?? 'none',
+            workspaceId: workspaceId ?? null,
+            purchasedNumberId,
+            dbCallId: newCall?.id,
+          });
+        } catch (routeErr) {
+          voiceLog.error(
+            {
+              service: 'telnyx-webhook',
+              event: 'call.initiated',
+              user_id: userId,
+              call_id: newCall?.id,
+              did: toNumber,
+              error: routeErr instanceof Error ? routeErr.message : String(routeErr),
+            },
+            'Inbound routing matrix failed',
           );
-          if (!bridged.ok) {
-            await telnyxCallAction(callControlId, 'hangup');
-            if (newCall?.id) {
-              await supabase
-                .from('calls')
-                .update({ status: 'failed', disposition: 'missed', ended_at: new Date().toISOString() })
-                .eq('id', newCall.id);
-            }
-          }
-          if (newCall?.id) {
-            triggerInboundRingTimeoutAsync(newCall.id, callControlId, userId, ringSeconds, mode);
-          }
         }
         } else {
         // ── OUTBOUND CALL (existing upsert logic) ────────────────────────────
@@ -523,14 +488,19 @@ export async function POST(request: NextRequest) {
             .eq('id', dbCallId);
 
           const userId = answeredBridgeState.user_id as string | undefined;
-          if (userId) {
-            const { data: settings } = await supabase
-              .from('user_settings')
-              .select('recording_mode')
-              .eq('user_id', userId)
+          if (userId && dbCallId) {
+            const { data: callRow } = await supabase
+              .from('calls')
+              .select('to_number')
+              .eq('id', dbCallId)
               .maybeSingle();
-            const recordingMode = settings?.recording_mode ?? 'always';
-            if (recordingMode !== 'never') {
+            const recordEnabled = await shouldRecordInboundAnswer(
+              supabase,
+              userId,
+              undefined,
+              callRow?.to_number as string | undefined,
+            );
+            if (recordEnabled) {
               const started = await startProgrammaticRecording(pstnId);
               if (started) {
                 await supabase.from('calls').update({ was_recorded: true }).eq('id', dbCallId);
@@ -952,7 +922,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true, event_type });
   } catch (error) {
-    console.error('[WEBHOOK] Top-level error:', error);
+    voiceLog.error(
+      {
+        service: 'telnyx-webhook',
+        error: error instanceof Error ? error.message : String(error),
+      },
+      'Webhook top-level error',
+    );
     // Always 200 — never let Telnyx retry due to our own errors
     return NextResponse.json({ received: true, error: String(error) });
   }

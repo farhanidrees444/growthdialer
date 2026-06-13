@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { LayoutGrid, List, Loader2, Plus, Search, Shield, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useWorkspace } from '@/contexts/workspace-context';
 import { NumberInventoryRow } from '@/components/numbers/number-inventory-row';
 import { NumbersPortfolioSummary } from '@/components/numbers/numbers-portfolio-summary';
 import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
@@ -32,6 +33,7 @@ export function MyNumbersPanel({
   refreshSignal: number;
   onBuyNew: () => void;
 }) {
+  const { apiFetch } = useWorkspace();
   const [numbers, setNumbers] = useState<PurchasedNumberRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -42,7 +44,7 @@ export function MyNumbersPanel({
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/numbers/list');
+      const res = await apiFetch('/api/numbers/list');
       const data = await res.json() as { numbers?: PurchasedNumberRecord[]; error?: string };
       if (data.error) {
         toast.error(data.error);
@@ -56,7 +58,7 @@ export function MyNumbersPanel({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [apiFetch]);
 
   useEffect(() => {
     void load();
@@ -87,6 +89,23 @@ export function MyNumbersPanel({
   }, [active, filter, search]);
 
   const unchecked = active.filter((n) => !n.has_reputation_check);
+
+  async function handleSettingsPatch(
+    id: string,
+    patch: Record<string, unknown>,
+  ) {
+    const res = await apiFetch(`/api/numbers/${id}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    });
+    const data = await res.json() as { error?: string };
+    if (data.error) toast.error(data.error);
+    else {
+      toast.success('Line settings updated');
+      await load();
+    }
+  }
 
   async function handleSetDefault(id: string) {
     await fetch(`/api/numbers/${id}`, {
@@ -315,6 +334,7 @@ export function MyNumbersPanel({
                 onRelease={() => handleRelease(num.id)}
                 onSpamCheck={() => handleSpamCheck(num.id)}
                 onLabelSave={(label) => handleLabelSave(num.id, label)}
+                onSettingsPatch={(patch) => handleSettingsPatch(num.id, patch)}
               />
             </motion.div>
           ))}

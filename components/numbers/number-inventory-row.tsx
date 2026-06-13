@@ -52,6 +52,7 @@ export function NumberInventoryRow({
   onRelease,
   onSpamCheck,
   onLabelSave,
+  onSettingsPatch,
 }: {
   num: PurchasedNumberRecord;
   retailPrice: number;
@@ -60,6 +61,7 @@ export function NumberInventoryRow({
   onRelease: () => Promise<void>;
   onSpamCheck: () => Promise<void>;
   onLabelSave: (label: string) => Promise<void>;
+  onSettingsPatch: (patch: Record<string, unknown>) => Promise<void>;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -293,6 +295,51 @@ export function NumberInventoryRow({
                   value={label}
                   valueClass={styles.text}
                 />
+              </div>
+
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Line settings</p>
+                <label className="flex items-center justify-between gap-3 text-sm text-slate-300">
+                  <span>Enable recording</span>
+                  <input
+                    type="checkbox"
+                    checked={num.settings?.recording_enabled !== false}
+                    onChange={(e) => void onSettingsPatch({ recording_enabled: e.target.checked })}
+                    className="h-4 w-4 rounded border-white/20 bg-transparent accent-cyan-400"
+                  />
+                </label>
+                <label className="flex flex-col gap-1.5 text-sm text-slate-300">
+                  <span>Inbound routing override</span>
+                  <select
+                    value={num.settings?.inbound_mode ?? ''}
+                    onChange={(e) => void onSettingsPatch({
+                      inbound_mode: e.target.value || null,
+                    })}
+                    className="rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 text-xs text-white"
+                  >
+                    <option value="">Use account default</option>
+                    <option value="browser">Ring in browser</option>
+                    <option value="forward">Forward to phone</option>
+                    <option value="voicemail">Voicemail only</option>
+                    <option value="off">Reject calls</option>
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1.5 text-sm text-slate-300">
+                  <span>Caller ID name (CNAM)</span>
+                  <input
+                    type="text"
+                    maxLength={15}
+                    placeholder="Workspace default"
+                    defaultValue={num.settings?.cnam_presentation ?? ''}
+                    onBlur={(e) => {
+                      const v = e.target.value.trim();
+                      if (v !== (num.settings?.cnam_presentation ?? '')) {
+                        void onSettingsPatch({ cnam_presentation: v || null });
+                      }
+                    }}
+                    className="rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 text-xs text-white placeholder:text-slate-600"
+                  />
+                </label>
               </div>
 
               {confirmRelease && (

@@ -96,6 +96,25 @@ function mapCallState(state: string): WebRTCCallStatus {
 const AUDIO_EL_ID = 'telnyx-remote-audio';
 const TOKEN_URL = '/api/telnyx/token';
 const PREPARE_URL = '/api/voice/prepare';
+const PRESENCE_URL = '/api/voice/presence';
+
+async function reportVoicePresence(
+  phoneStatus: PhoneStatus,
+  meta?: { sip_username?: string; credential_id?: string },
+): Promise<void> {
+  try {
+    await fetch(PRESENCE_URL, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone_status: phoneStatus,
+        sip_username: meta?.sip_username ?? null,
+        credential_id: meta?.credential_id ?? null,
+      }),
+    });
+  } catch { /* non-fatal */ }
+}
 
 async function fetchAssignedCallerNumber(): Promise<string | null> {
   try {
@@ -241,6 +260,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       }
       const creds = await res.json() as {
         login_token?: string;
+        sip_username?: string;
+        credential_id?: string;
         error?: string;
       };
       if (creds.error || !creds.login_token) {
@@ -268,6 +289,10 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         initAttemptsRef.current = 0;
         safeSet(setPhoneStatus, 'ready');
         safeSet(setIsReconnecting, false);
+        void reportVoicePresence('ready', {
+          sip_username: creds.sip_username,
+          credential_id: creds.credential_id,
+        });
         void fetchAssignedCallerNumber().then((num) => {
           if (num) defaultCallerIdRef.current = num;
         });
@@ -281,6 +306,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           return;
         }
         safeSet(setPhoneStatus, 'error');
+        void reportVoicePresence('error');
       });
 
       client.on('telnyx.socket.close', () => {
@@ -390,6 +416,14 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     }
   }, [safeSet, scheduleReconnect]);
 
+  useEffect(() => {
+    if (phoneStatus !== 'ready') return;
+    const beat = setInterval(() => {
+      void reportVoicePresence('ready');
+    }, 30_000);
+    return () => clearInterval(beat);
+  }, [phoneStatus]);
+
   initClientRef.current = initClient;
 
   useEffect(() => {
@@ -428,6 +462,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mountedRef.current = false;
+      void reportVoicePresence('offline');
       clearInterval(tokenRefresh);
       if (clientRef.current) {
         try { clientRef.current.disconnect(); } catch { /* ignore */ }

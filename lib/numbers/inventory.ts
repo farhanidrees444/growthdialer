@@ -19,6 +19,13 @@ export type PurchasedNumberRecord = {
   next_billing_date: string | null;
   stripe_subscription_id: string | null;
   spam_status: string | null;
+  settings?: {
+    recording_enabled: boolean;
+    inbound_mode: string | null;
+    inbound_forward_number: string | null;
+    inbound_ring_seconds: number | null;
+    cnam_presentation: string | null;
+  };
   stats?: {
     total_calls: number;
     connected: number;

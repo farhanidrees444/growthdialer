@@ -1,24 +1,34 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { computeNumberHealth } from '@/lib/numbers/health';
+import { getPhoneNumberSettings } from '@/lib/voice/phone-number-settings';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized', numbers: [] }, { status: 401 });
 
-    const { data: numbers, error } = await supabase
+    const access = await requireWorkspaceFromRequest(request, supabase, user.id);
+    if (isWorkspaceError(access)) return access;
+
+    let query = supabase
       .from('purchased_numbers')
       .select(`
         id, phone_number, telnyx_number_id, country, number_type,
-        monthly_cost, is_default, status, purchased_at,
+        monthly_cost, is_default, status, purchased_at, workspace_id,
         billing_status, next_billing_date, auto_renew, stripe_subscription_id,
         spam_score, last_spam_check,
         label, health_score, spam_status
       `)
       .eq('user_id', user.id)
-      .neq('status', 'released')
+      .neq('status', 'released');
+
+    // Scope to active workspace when numbers are workspace-linked
+    query = query.or(`workspace_id.eq.${access.workspaceId},workspace_id.is.null`);
+
+    const { data: numbers, error } = await query
       .order('is_default', { ascending: false })
       .order('purchased_at', { ascending: false });
 
@@ -31,7 +41,7 @@ export async function GET() {
 
     const withStats = await Promise.all(
       (numbers || []).map(async (num) => {
-        const [totalRes, connectedRes, lastRes] = await Promise.all([
+        const [totalRes, connectedRes, lastRes, settings] = await Promise.all([
           supabase
             .from('calls')
             .select('*', { count: 'exact', head: true })
@@ -53,6 +63,7 @@ export async function GET() {
             .order('started_at', { ascending: false })
             .limit(1)
             .maybeSingle(),
+          getPhoneNumberSettings(supabase, num.id as string),
         ]);
 
         const total = totalRes.count ?? 0;
@@ -68,6 +79,13 @@ export async function GET() {
 
         return {
           ...num,
+          settings: settings ?? {
+            recording_enabled: true,
+            inbound_mode: null,
+            inbound_forward_number: null,
+            inbound_ring_seconds: null,
+            cnam_presentation: null,
+          },
           stats: {
             total_calls: total,
             connected,
@@ -79,8 +97,8 @@ export async function GET() {
       }),
     );
 
-    console.log('[NUMBERS-LIST]', user.email, 'count:', withStats.length);
-    return NextResponse.json({ numbers: withStats });
+    console.log('[NUMBERS-LIST]', user.email, 'workspace:', access.workspaceId, 'count:', withStats.length);
+    return NextResponse.json({ numbers: withStats, workspace_id: access.workspaceId });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     console.error('[NUMBERS-LIST] Crash:', msg);
