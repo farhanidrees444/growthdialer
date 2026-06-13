@@ -3,9 +3,12 @@ import telnyxClient, { toE164 } from '@/lib/telnyx';
 import { fetchDialerQueueLeads } from '@/lib/dialer/queue-query';
 import type { DialerQueueConfig } from '@/lib/dialer/queue-query';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
-import { resolveCallerIdForLead } from '@/lib/dialer/resolve-caller-id';
+import { prefetchUserCallerNumbers, resolveCallerIdFromCache } from '@/lib/dialer/resolve-caller-id';
 import type { ParallelDialLeg, ParallelDialSession } from './types';
 import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
+import { resolveWorkspaceOutboundTrust } from '@/lib/compliance/workspace-trust';
+import { buildOutboundDialPayload } from '@/lib/voice/outbound-dial-payload';
+import { triggerParallelLegTrackingAsync } from './leg-tracking';
 
 export async function dialParallelBatch(
   supabase: SupabaseClient,
@@ -39,7 +42,19 @@ export async function dialParallelBatch(
   if (!callControlAppId) {
     throw new Error('Voice dial application is not configured');
   }
-  const amd = session.amd_enabled ? 'detect' : undefined;
+  const amd = session.amd_enabled ? 'detect' : 'disabled';
+  const numberCache = await prefetchUserCallerNumbers(supabase, userId);
+  const workspaceId = session.workspace_id ?? '';
+  const trust = workspaceId
+    ? await resolveWorkspaceOutboundTrust(supabase, workspaceId, numberCache.numbers[0]?.phone_number ?? '')
+    : {
+      workspace_id: workspaceId,
+      from_display_name: 'GrowthDialer',
+      stir_attestation: 'none' as const,
+      ten_dlc_campaign_id: null,
+      cnam_registered: false,
+      trust_tier: 'unverified' as const,
+    };
 
   const legs: ParallelDialLeg[] = [];
 
@@ -47,7 +62,7 @@ export async function dialParallelBatch(
     const e164 = toE164(lead.phone);
     if (!e164) continue;
 
-    const { fromNumber } = await resolveCallerIdForLead(supabase, userId, lead.phone);
+    const { fromNumber } = resolveCallerIdFromCache(numberCache, lead.phone);
 
     const { data: legRow, error: legErr } = await supabase
       .from('parallel_dial_legs')
@@ -68,17 +83,23 @@ export async function dialParallelBatch(
     }
 
     try {
-      const result = await telnyxClient.calls.dial({
-        connection_id: callControlAppId,
+      const dialBody = buildOutboundDialPayload({
+        connectionId: callControlAppId,
         to: e164,
         from: fromNumber,
-        webhook_url: webhookUrl,
-        webhook_url_method: 'POST',
-        ...(amd ? { answering_machine_detection: amd } : {}),
-        client_state: Buffer.from(
-          JSON.stringify({ parallel_session_id: session.id, parallel_leg_id: legRow.id }),
-        ).toString('base64'),
+        webhookUrl,
+        trust,
+        amd,
+        timeoutSecs: 30,
+        clientState: {
+          parallel_session_id: session.id,
+          parallel_leg_id: legRow.id,
+        },
       });
+
+      const result = await telnyxClient.calls.dial(
+        dialBody as Parameters<typeof telnyxClient.calls.dial>[0],
+      );
 
       const callControlId = result.data?.call_control_id;
       const nowIso = new Date().toISOString();
@@ -119,6 +140,18 @@ export async function dialParallelBatch(
         .single();
 
       if (updatedLeg) legs.push(updatedLeg as ParallelDialLeg);
+
+      triggerParallelLegTrackingAsync({
+        event: 'batch_started',
+        session_id: session.id,
+        leg_id: legRow.id,
+        user_id: userId,
+        workspace_id: session.workspace_id,
+        telnyx_call_id: callControlId ?? null,
+        phone: e164,
+        lead_id: lead.id,
+        at: new Date().toISOString(),
+      });
     } catch (err) {
       console.error(`[PARALLEL] dial failed for ${e164}:`, err);
       await supabase

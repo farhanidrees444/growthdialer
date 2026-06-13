@@ -4,6 +4,32 @@ export function normalizeE164(raw: string): string {
   return digits ? `+${digits}` : raw.trim();
 }
 
+/** True when the value looks like a dialable PSTN caller ID (not SIP/anonymous). */
+export function isValidCallerPhone(raw: string): boolean {
+  const trimmed = raw.trim();
+  if (!trimmed) return false;
+  const lower = trimmed.toLowerCase();
+  if (lower.includes('anonymous') || trimmed.includes('@') || lower.startsWith('sip:')) {
+    return false;
+  }
+  const digits = phoneDigits(trimmed);
+  return digits.length >= 10;
+}
+
+/** Inbound PSTN caller ID — null when blocked, private, or non-numeric. */
+export function normalizeInboundCallerId(raw: string): string | null {
+  if (!isValidCallerPhone(raw)) return null;
+  return normalizeE164(raw);
+}
+
+/** Human label for inbound overlay when caller ID is missing or blocked. */
+export function formatInboundCallerDisplay(raw: string | null | undefined): string {
+  if (!raw || !isValidCallerPhone(raw)) return 'Unknown / Blocked';
+  const m = normalizeE164(raw).match(/^\+1(\d{3})(\d{3})(\d{4})$/);
+  if (m) return `+1 (${m[1]}) ${m[2]}-${m[3]}`;
+  return normalizeE164(raw);
+}
+
 /** Strip to digits for fuzzy comparison. */
 export function phoneDigits(raw: string): string {
   return raw.replace(/\D/g, '');

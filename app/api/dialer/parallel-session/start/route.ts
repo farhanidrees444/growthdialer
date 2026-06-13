@@ -6,7 +6,7 @@ import { assertWorkspaceCanPlaceCalls } from '@/lib/billing/workspace-billing-ga
 import { apiUnauthorized } from '@/lib/api/errors';
 import type { DialerQueueConfig } from '@/lib/dialer/queue-query';
 import { dialParallelBatch } from '@/lib/parallel-dial/dial-batch';
-import type { ParallelDialSession } from '@/lib/parallel-dial/types';
+import { clampParallelLines } from '@/lib/parallel-dial/architecture';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       auto_dial?: boolean;
     };
 
-    const lines_count = Math.min(10, Math.max(2, body.lines_count ?? 3));
+    const lines_count = clampParallelLines(body.lines_count);
 
     const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body });
     if (isWorkspaceError(access)) return access;

@@ -22,7 +22,9 @@ interface ParallelDialConfigModalProps {
   onStart: (config: { lines_count: number; amd_enabled: boolean; vm_drop_enabled: boolean }) => void;
 }
 
-const LINE_PRESETS = [2, 3, 4, 5, 6, 8, 10] as const;
+import { MAX_PARALLEL_LINES } from '@/lib/parallel-dial/architecture';
+
+const LINE_PRESETS = [2, 3] as const;
 
 export function ParallelDialConfigModal({
   open,
@@ -30,7 +32,7 @@ export function ParallelDialConfigModal({
   onClose,
   onStart,
 }: ParallelDialConfigModalProps) {
-  const [lines, setLines] = useState(4);
+  const [lines, setLines] = useState(3);
   const [amd, setAmd] = useState(true);
   const [vmDrop, setVmDrop] = useState(true);
 
@@ -46,7 +48,7 @@ export function ParallelDialConfigModal({
               <DialogTitle className="text-lg font-semibold text-white flex items-center gap-2">
                 Parallel Dial
                 <Badge variant="secondary" className="text-[10px] bg-cyan-500/15 text-cyan-300 border-cyan-500/20">
-                  10× lines
+                  {MAX_PARALLEL_LINES}× max
                 </Badge>
               </DialogTitle>
               <DialogDescription>
@@ -105,7 +107,7 @@ export function ParallelDialConfigModal({
           <ul className="space-y-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-xs text-muted-foreground">
             <li className="flex gap-2"><Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-400" /> AI brief + disposition same as power dial</li>
             <li className="flex gap-2"><Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-400" /> Realtime line grid — see every leg live</li>
-            <li className="flex gap-2"><Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-400" /> Up to 10 lines vs typical 4-line competitors</li>
+            <li className="flex gap-2"><Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-400" /> First live answer bridges to your headset instantly</li>
           </ul>
         </div>
 

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, Clock, Loader2, Phone, PhoneOff, User } from 'lucide-react';
 import { useInboundRinging } from '@/contexts/inbound-ringing-context';
 import { useWebPhone } from '@/contexts/webphone-context';
+import { formatInboundCallerDisplay } from '@/lib/inbound/phone';
 
 function formatPhone(e164: string): string {
   const m = e164.match(/^\+1(\d{3})(\d{3})(\d{4})$/);
@@ -55,7 +56,10 @@ export function InboundCallOverlay() {
   const leadName = call?.lead
     ? [call.lead.first_name, call.lead.last_name].filter(Boolean).join(' ')
     : null;
-  const displayName = leadName ?? 'Unknown Caller';
+  const callerBlocked = !call?.from_number;
+  const displayName = callerBlocked
+    ? 'Unknown / Blocked'
+    : (leadName ?? 'Unknown Caller');
   const initials = leadName
     ? leadName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
     : null;
@@ -150,7 +154,7 @@ export function InboundCallOverlay() {
                 )}
 
                 <p className="mt-3 font-mono text-base text-white/50">
-                  {formatPhone(call.from_number)}
+                  {formatInboundCallerDisplay(call.from_number)}
                 </p>
                 <p className="mt-1 text-xs text-white/30">
                   To your line {formatPhone(call.to_number)}

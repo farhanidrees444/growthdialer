@@ -5,10 +5,11 @@ import { claimWebhookEvent } from '@/lib/webhooks/dedup';
 import { triggerProcessCallAsync } from '@/lib/ai/trigger-process-call';
 import { shouldSkipRecordingAiQueue } from '@/lib/ai/pipeline-status';
 import { triggerMirrorRecordingAsync } from '@/lib/recordings/trigger-mirror';
-import { normalizeE164 } from '@/lib/inbound/phone';
+import { normalizeE164, normalizeInboundCallerId } from '@/lib/inbound/phone';
 import { findLeadByCallerPhone } from '@/lib/inbound/match-lead';
 import { triggerInboundRingTimeoutAsync } from '@/lib/inbound/trigger-ring-timeout';
 import { findNumberOwnerWithMeta } from '@/lib/inbound/lookup-number';
+import { getCachedNumberOwner } from '@/lib/inbound/number-owner-cache';
 import { bridgeInboundToBrowser, completeInboundBridge } from '@/lib/inbound/bridge-to-browser';
 import { decodeClientState } from '@/lib/inbound/telnyx-actions';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
@@ -240,20 +241,20 @@ export async function POST(request: NextRequest) {
         const bridgeState = decodeClientState(
           (payload as TelnyxEventPayload & { client_state?: string }).client_state,
         );
-        if (bridgeState?.gd_inbound_bridge) {
-          console.log('[WEBHOOK] Inbound browser bridge leg initiated:', callControlId);
+        if (bridgeState?.gd_inbound_bridge || bridgeState?.gd_parallel_bridge) {
+          console.log('[WEBHOOK] Browser bridge leg initiated:', callControlId);
           return NextResponse.json({ received: true });
         }
 
         const toNumber = normalizeE164(payload.to ?? '');
-        const fromNumber = normalizeE164(payload.from ?? '');
-        const ownedTo = await findNumberOwnerWithMeta(supabase, toNumber);
+        const fromNumber = normalizeInboundCallerId(payload.from ?? '');
+        const ownedTo = await getCachedNumberOwner(supabase, toNumber);
         const dirInbound = directionSaysInbound(payload.direction);
         const treatAsInbound = dirInbound === true || (dirInbound === null && Boolean(ownedTo));
 
         if (treatAsInbound) {
         // ── INBOUND CALL ────────────────────────────────────────────────────
-        console.log('[INBOUND] Incoming call:', fromNumber, '→', toNumber, '| raw_to:', payload.to, '| raw_from:', payload.from, '| direction:', payload.direction);
+        console.log('[INBOUND] Incoming call:', fromNumber ?? '(blocked)', '→', toNumber, '| raw_to:', payload.to, '| raw_from:', payload.from, '| direction:', payload.direction);
 
         const ownedNumber = ownedTo;
 
@@ -266,20 +267,35 @@ export async function POST(request: NextRequest) {
         }
 
         const userId = ownedNumber.user_id as string;
-        const workspaceId =
+
+        const [workspaceId, ownedRows, inboundSettingsRes, existingInbound] = await Promise.all([
           (ownedNumber.workspace_id as string | null | undefined)
-          ?? await resolveUserWorkspaceId(supabase, userId);
+            ?? resolveUserWorkspaceId(supabase, userId),
+          supabase
+            .from('purchased_numbers')
+            .select('phone_number')
+            .eq('user_id', userId)
+            .neq('status', 'released'),
+          supabase
+            .from('user_settings')
+            .select('inbound_mode, inbound_forward_number, inbound_ring_seconds')
+            .eq('user_id', userId)
+            .maybeSingle(),
+          supabase
+            .from('calls')
+            .select('id, telnyx_webrtc_leg_id, status')
+            .eq('telnyx_call_id', callControlId)
+            .maybeSingle(),
+        ]);
 
-        const lead = await findLeadByCallerPhone(supabase, userId, fromNumber);
+        const lead = fromNumber
+          ? await findLeadByCallerPhone(supabase, userId, fromNumber, {
+            excludeNumbers: (ownedRows.data ?? []).map((r) => r.phone_number as string),
+          })
+          : null;
 
-        const { data: existingInbound } = await supabase
-          .from('calls')
-          .select('id, telnyx_webrtc_leg_id, status')
-          .eq('telnyx_call_id', callControlId)
-          .maybeSingle();
-
-        let newCall: { id: string } | null = existingInbound;
-        if (!existingInbound) {
+        let newCall: { id: string } | null = existingInbound.data;
+        if (!existingInbound.data) {
           const { data: inserted, error: insertErr } = await supabase
             .from('calls')
             .insert({
@@ -303,18 +319,12 @@ export async function POST(request: NextRequest) {
             newCall = inserted;
           }
         } else {
-          console.log('[INBOUND] Reusing existing call record:', existingInbound.id);
+          console.log('[INBOUND] Reusing existing call record:', existingInbound.data.id);
         }
 
         console.log('[INBOUND] Call record created:', newCall?.id, '| lead:', lead?.id ?? 'unknown', '| workspace:', workspaceId ?? 'none');
 
-        // Get user routing settings
-        const { data: inboundSettings } = await supabase
-          .from('user_settings')
-          .select('inbound_mode, inbound_forward_number, inbound_ring_seconds')
-          .eq('user_id', userId)
-          .maybeSingle();
-
+        const inboundSettings = inboundSettingsResult.data;
         const mode = (inboundSettings?.inbound_mode as string | null) ?? 'browser';
         const configuredRing = (inboundSettings?.inbound_ring_seconds as number | null) ?? 25;
         // Browser dial leg uses 60s timeout — voicemail must not fire earlier.
@@ -360,14 +370,14 @@ export async function POST(request: NextRequest) {
           console.log('[INBOUND] Voicemail: answered + recording started for user:', userId);
         } else {
           // browser mode: dial agent WebRTC leg (link_to PSTN + bridge_on_answer).
-          const alreadyQueued = Boolean(existingInbound?.telnyx_webrtc_leg_id);
+          const alreadyQueued = Boolean(existingInbound.data?.telnyx_webrtc_leg_id);
           const bridged = alreadyQueued
             ? { ok: true, strategy: 'dial_bridge' as const }
             : await bridgeInboundToBrowser(
               supabase,
               userId,
               callControlId,
-              fromNumber,
+              fromNumber ?? '',
               toNumber,
               newCall?.id,
             );
@@ -473,6 +483,17 @@ export async function POST(request: NextRequest) {
       const answeredBridgeState = decodeClientState(
         (payload as TelnyxEventPayload & { client_state?: string }).client_state,
       );
+      if (
+        answeredBridgeState?.gd_parallel_bridge
+        && answeredBridgeState.prospect_call_control_id
+        && callControlId
+      ) {
+        const prospectId = String(answeredBridgeState.prospect_call_control_id);
+        const bridged = await completeInboundBridge(prospectId, callControlId);
+        console.log('[PARALLEL] WebRTC leg answered — bridge:', bridged ? 'ok' : 'failed');
+        return NextResponse.json({ received: true });
+      }
+
       if (
         answeredBridgeState?.gd_inbound_bridge
         && answeredBridgeState.pstn_call_control_id

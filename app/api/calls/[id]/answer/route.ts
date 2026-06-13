@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
+import { completeInboundBridge } from '@/lib/inbound/bridge-to-browser';
 
 export async function POST(
   request: NextRequest,
@@ -41,9 +42,20 @@ export async function POST(
       .eq('id', id)
       .in('status', ['ringing', 'in_progress']);
 
-    // Media bridge is handled by Telnyx bridge_on_answer when the browser leg answers.
-    console.log('[ANSWER] Inbound call answered:', id);
-    return NextResponse.json({ success: true, bridged: true });
+    let bridged = true;
+    if (
+      call.direction === 'inbound'
+      && call.telnyx_call_id
+      && call.telnyx_webrtc_leg_id
+    ) {
+      bridged = await completeInboundBridge(
+        call.telnyx_call_id,
+        call.telnyx_webrtc_leg_id,
+      );
+    }
+
+    console.log('[ANSWER] Inbound call answered:', id, '| bridged:', bridged);
+    return NextResponse.json({ success: true, bridged });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed';
     console.error('[ANSWER] Error:', msg);

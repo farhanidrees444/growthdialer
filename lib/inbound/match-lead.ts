@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { buildPhoneVariants, phoneDigits } from '@/lib/inbound/phone';
+import { buildPhoneVariants, isValidCallerPhone, normalizeE164, phoneDigits } from '@/lib/inbound/phone';
 
 export interface MatchedLead {
   id: string;
@@ -15,8 +15,20 @@ export async function findLeadByCallerPhone(
   supabase: SupabaseClient,
   userId: string,
   callerE164: string,
+  options?: { excludeNumbers?: string[] },
 ): Promise<MatchedLead | null> {
-  const variants = buildPhoneVariants(callerE164);
+  if (!isValidCallerPhone(callerE164)) return null;
+
+  const normalizedCaller = normalizeE164(callerE164);
+  const exclude = new Set(
+    (options?.excludeNumbers ?? []).flatMap((n) => buildPhoneVariants(normalizeE164(n))),
+  );
+  const callerVariants = buildPhoneVariants(normalizedCaller);
+  if (callerVariants.some((v) => exclude.has(v))) {
+    return null;
+  }
+
+  const variants = callerVariants;
   if (variants.length === 0) return null;
 
   const { data: exact } = await supabase
@@ -37,7 +49,7 @@ export async function findLeadByCallerPhone(
     };
   }
 
-  const callerDigits = phoneDigits(callerE164);
+  const callerDigits = phoneDigits(normalizedCaller);
   const last10 = callerDigits.length >= 10 ? callerDigits.slice(-10) : null;
   if (!last10) return null;
 

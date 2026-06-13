@@ -23,7 +23,7 @@ export interface InboundLead {
 
 export interface InboundRingingCall {
   id: string;
-  from_number: string;
+  from_number: string | null;
   to_number: string;
   lead_id: string | null;
   status: string;
@@ -74,6 +74,8 @@ export function InboundRingingProvider({
     hangup,
     requestMicPermission,
     isInboundRinging,
+    waitForPhoneReady,
+    waitForInboundWebRtcLeg,
   } = useWebPhone();
   const { registerCallMeta } = useCallContext();
   const { apiFetch } = useWorkspace();
@@ -164,7 +166,7 @@ export function InboundRingingProvider({
 
           beginRing({
             id: row.id as string,
-            from_number: row.from_number as string,
+            from_number: (row.from_number as string | null) ?? null,
             to_number: row.to_number as string,
             lead_id: row.lead_id as string | null,
             status: row.status as string,
@@ -323,7 +325,7 @@ export function InboundRingingProvider({
       : 'Unknown Caller';
 
     registerCallMeta(
-      call.lead
+      call.lead && call.from_number
         ? {
             id: call.lead_id ?? '',
             name: leadName,
@@ -331,7 +333,7 @@ export function InboundRingingProvider({
             phone: call.from_number,
           } as Parameters<typeof registerCallMeta>[0]
         : null,
-      call.from_number,
+      call.from_number ?? '',
     );
 
     const micOk = await requestMicPermission();
@@ -339,13 +341,45 @@ export function InboundRingingProvider({
       console.warn('[INBOUND] Microphone permission denied — audio may not work');
     }
 
-    // Browser leg first — Telnyx bridge_on_answer links PSTN when this answers.
-    answerIncomingCall();
+    await waitForPhoneReady(8000);
 
+    try {
+      const ensureRes = await apiFetch(`/api/calls/${callId}/ensure-browser-leg`, { method: 'POST' });
+      if (!ensureRes.ok) {
+        console.warn('[INBOUND] ensure-browser-leg failed:', ensureRes.status);
+      }
+    } catch (err) {
+      console.warn('[INBOUND] ensure-browser-leg error:', err);
+    }
+
+    let legReady = await waitForInboundWebRtcLeg(18_000);
+    if (!legReady) {
+      try {
+        await apiFetch(`/api/calls/${callId}/ensure-browser-leg`, { method: 'POST' });
+      } catch { /* retry once */ }
+      legReady = await waitForInboundWebRtcLeg(10_000);
+    }
+
+    if (!legReady) {
+      console.error('[INBOUND] No WebRTC leg in browser — cannot answer');
+      hangup();
+      clearCall(true);
+      return;
+    }
+
+    const answered = await answerIncomingCall();
     const answerRequest = apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
       console.error('[INBOUND] REST answer failed:', err);
       return null;
     });
+
+    if (!answered) {
+      console.error('[INBOUND] WebRTC answer() failed');
+      hangup();
+      clearCall(true);
+      void answerRequest;
+      return;
+    }
 
     const deadline = Date.now() + 20_000;
     while (Date.now() < deadline) {
@@ -367,7 +401,7 @@ export function InboundRingingProvider({
     console.error('[INBOUND] Accept timed out — WebRTC did not connect');
     hangup();
     clearCall(true);
-  }, [call, accepting, registerCallMeta, requestMicPermission, answerIncomingCall, apiFetch, clearCall, hangup, finishAccept]);
+  }, [call, accepting, registerCallMeta, requestMicPermission, answerIncomingCall, apiFetch, clearCall, hangup, finishAccept, waitForPhoneReady, waitForInboundWebRtcLeg]);
 
   const decline = useCallback(async () => {
     if (!call || accepting) return;

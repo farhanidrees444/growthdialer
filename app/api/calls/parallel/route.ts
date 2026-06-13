@@ -4,6 +4,7 @@ import telnyxClient, { toE164 } from '@/lib/telnyx';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { hasPermission } from '@/lib/auth/permissions';
 import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
+import { MAX_PARALLEL_LINES } from '@/lib/parallel-dial/architecture';
 
 interface DialTarget {
   phone: string;
@@ -34,8 +35,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing "leads" array' }, { status: 400 });
     }
 
-    if (leads.length > 10) {
-      return NextResponse.json({ error: 'Maximum 10 parallel calls allowed' }, { status: 400 });
+    if (leads.length > MAX_PARALLEL_LINES) {
+      return NextResponse.json({ error: `Maximum ${MAX_PARALLEL_LINES} parallel calls allowed` }, { status: 400 });
     }
 
     const access = await requireWorkspaceFromRequest(request, supabase, userId, { body });

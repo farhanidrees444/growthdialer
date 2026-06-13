@@ -11,10 +11,15 @@ import {
 } from 'react';
 import type { IClientOptions, INotification } from '@telnyx/webrtc';
 import type Call from '@telnyx/webrtc/lib/src/Modules/Verto/webrtc/Call';
+import {
+  attachPeerConnectionMonitor,
+  type IceConnectionQuality,
+} from '@/lib/voice/peer-monitor';
 
 export type PhoneStatus = 'idle' | 'initializing' | 'ready' | 'error';
 export type WebRTCCallStatus = 'idle' | 'connecting' | 'ringing' | 'active' | 'held' | 'ended';
 export type MicPermission = 'unknown' | 'granted' | 'denied';
+export type VoiceConnectionQuality = 'excellent' | 'good' | 'degraded' | 'disconnected' | 'unknown';
 
 export interface WebPhoneContextValue {
   phoneStatus: PhoneStatus;
@@ -27,9 +32,13 @@ export interface WebPhoneContextValue {
   isMuted: boolean;
   isOnHold: boolean;
   micPermission: MicPermission;
+  voiceQuality: VoiceConnectionQuality;
+  isReconnecting: boolean;
+  audioDeviceLabel: string | null;
+  iceConnectionState: string | null;
   makeCall: (destination: string, callerNumber?: string) => void;
   hangup: () => void;
-  answerIncomingCall: () => void;
+  answerIncomingCall: () => Promise<boolean>;
   toggleMute: () => void;
   toggleHold: () => void;
   sendDTMF: (digit: string) => void;
@@ -37,6 +46,8 @@ export interface WebPhoneContextValue {
   requestMicPermission: () => Promise<boolean>;
   /** Poll until WebRTC client is ready or timeout (ms). */
   waitForPhoneReady: (timeoutMs?: number) => Promise<boolean>;
+  /** Wait until an inbound WebRTC leg is ringing in the browser. */
+  waitForInboundWebRtcLeg: (timeoutMs?: number) => Promise<boolean>;
 }
 
 const WebPhoneContext = createContext<WebPhoneContextValue | null>(null);
@@ -48,10 +59,15 @@ export function useWebPhone(): WebPhoneContextValue {
 }
 
 function isIncomingTelnyxCall(call: Call, outboundDialActive: boolean): boolean {
+  if (outboundDialActive) return false;
   const dir = (call as { direction?: string }).direction?.toLowerCase();
   if (dir === 'inbound' || dir === 'incoming') return true;
-  // Server-side inbound bridge dials the browser — never treat as outbound.
-  return !outboundDialActive;
+  if (dir === 'outbound' || dir === 'outgoing') {
+    const state = (call as { state?: string }).state?.toLowerCase();
+    // Server-side inbound bridge dials the browser — SDK may label the leg outbound while ringing.
+    return ['ringing', 'early', 'new', 'trying', 'requesting'].includes(state ?? '');
+  }
+  return true;
 }
 
 function mapCallState(state: string): WebRTCCallStatus {
@@ -123,11 +139,16 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const [isMuted, setIsMuted] = useState(false);
   const [isOnHold, setIsOnHold] = useState(false);
   const [micPermission, setMicPermission] = useState<MicPermission>('unknown');
+  const [voiceQuality, setVoiceQuality] = useState<VoiceConnectionQuality>('unknown');
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const [audioDeviceLabel, setAudioDeviceLabel] = useState<string | null>(null);
+  const [iceConnectionState, setIceConnectionState] = useState<string | null>(null);
 
   // Refs hold live objects that should NOT trigger re-renders
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const clientRef = useRef<any>(null);
   const activeCallRef = useRef<Call | null>(null);
+  const incomingCallRef = useRef<Call | null>(null);
   const callStatusRef = useRef<WebRTCCallStatus>('idle');
   const outboundDialRef = useRef(false);
   const [hasOutboundSession, setHasOutboundSession] = useState(false);
@@ -141,6 +162,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const initClientRef = useRef<() => Promise<void>>(async () => {});
   const inboundRingStartedRef = useRef<number | null>(null);
   const defaultCallerIdRef = useRef<string | null>(null);
+  const peerCleanupRef = useRef<(() => void) | null>(null);
+  const reconnectDuringCallRef = useRef(false);
 
   const safeSet = useCallback(<T,>(setter: (v: T) => void, value: T) => {
     if (mountedRef.current) setter(value);
@@ -158,6 +181,31 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       if (mountedRef.current) void initClientRef.current();
     }, delay);
   }, [safeSet]);
+
+  const bindPeerMonitor = useCallback((call: Call) => {
+    peerCleanupRef.current?.();
+    peerCleanupRef.current = attachPeerConnectionMonitor(call, {
+      onIceState: (state, quality) => {
+        safeSet(setIceConnectionState, state);
+        safeSet(setVoiceQuality, quality);
+        if (quality === 'disconnected' && callStatusRef.current === 'active') {
+          safeSet(setIsReconnecting, true);
+        } else if (quality === 'excellent' || quality === 'good') {
+          safeSet(setIsReconnecting, false);
+        }
+      },
+      onConnectionState: (state) => {
+        if (state === 'failed' && callStatusRef.current === 'active') {
+          safeSet(setIsReconnecting, true);
+          if (!reconnectDuringCallRef.current) {
+            reconnectDuringCallRef.current = true;
+            scheduleReconnect('peer connection failed');
+            setTimeout(() => { reconnectDuringCallRef.current = false; }, 5000);
+          }
+        }
+      },
+    });
+  }, [safeSet, scheduleReconnect]);
 
   const initClient = useCallback(async () => {
     safeSet(setPhoneStatus, 'initializing');
@@ -203,6 +251,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         console.log('[WebPhone] ready');
         initAttemptsRef.current = 0;
         safeSet(setPhoneStatus, 'ready');
+        safeSet(setIsReconnecting, false);
         void fetchAssignedCallerNumber().then((num) => {
           if (num) defaultCallerIdRef.current = num;
         });
@@ -219,6 +268,16 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       });
 
       client.on('telnyx.socket.close', () => {
+        const live = callStatusRef.current;
+        if (live === 'connecting' || live === 'ringing' || live === 'active' || live === 'held') {
+          safeSet(setIsReconnecting, true);
+          if (!reconnectDuringCallRef.current) {
+            reconnectDuringCallRef.current = true;
+            scheduleReconnect('socket closed during call');
+            setTimeout(() => { reconnectDuringCallRef.current = false; }, 4000);
+          }
+          return;
+        }
         if (phoneStatusRef.current === 'ready') {
           safeSet(setPhoneStatus, 'initializing');
         }
@@ -233,6 +292,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         if (incoming) {
           outboundDialRef.current = false;
           safeSet(setHasOutboundSession, false);
+          incomingCallRef.current = call;
         }
 
         activeCallRef.current = call;
@@ -249,6 +309,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           }
         } else if (incoming && mapped === 'active') {
           bindRemoteMediaToAudio(call);
+          bindPeerMonitor(call);
           safeSet(setIsInboundRinging, false);
           inboundRingStartedRef.current = null;
           window.dispatchEvent(new CustomEvent('gd-webrtc-inbound-active'));
@@ -261,6 +322,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
         if (mapped === 'active') {
           bindRemoteMediaToAudio(call);
+          bindPeerMonitor(call);
         }
 
         if (mapped === 'ringing' && outboundDialRef.current) {
@@ -277,7 +339,13 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         }
 
         if (mapped === 'ended') {
+          peerCleanupRef.current?.();
+          peerCleanupRef.current = null;
+          safeSet(setVoiceQuality, 'unknown');
+          safeSet(setIceConnectionState, null);
+          safeSet(setIsReconnecting, false);
           activeCallRef.current = null;
+          incomingCallRef.current = null;
           outboundDialRef.current = false;
           inboundRingStartedRef.current = null;
           safeSet(setIsInboundRinging, false);
@@ -319,6 +387,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         try { activeCallRef.current.hangup(); } catch { /* ignore */ }
       }
       activeCallRef.current = null;
+      incomingCallRef.current = null;
       outboundDialRef.current = false;
       inboundRingStartedRef.current = null;
       safeSet(setIsInboundRinging, false);
@@ -352,7 +421,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Mic permission ───────────────────────────────────────────────────────────
+  // ── Mic permission + audio device resilience ───────────────────────────────
   useEffect(() => {
     if (typeof navigator === 'undefined' || !navigator.permissions) return;
     navigator.permissions.query({ name: 'microphone' as PermissionName }).then((result) => {
@@ -361,6 +430,30 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       safeSet(setMicPermission, map(result.state));
       result.addEventListener('change', () => safeSet(setMicPermission, map(result.state)));
     }).catch(() => { /* permissions API not available */ });
+  }, [safeSet]);
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.addEventListener) return;
+
+    const refreshDevices = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const input = devices.find((d) => d.kind === 'audioinput' && d.deviceId);
+        safeSet(setAudioDeviceLabel, input?.label || null);
+
+        const live = callStatusRef.current;
+        if ((live === 'active' || live === 'held') && activeCallRef.current) {
+          try {
+            activeCallRef.current.unmuteAudio();
+            bindRemoteMediaToAudio(activeCallRef.current);
+          } catch { /* device swap in progress */ }
+        }
+      } catch { /* enumerate not available */ }
+    };
+
+    navigator.mediaDevices.addEventListener('devicechange', refreshDevices);
+    void refreshDevices();
+    return () => navigator.mediaDevices.removeEventListener('devicechange', refreshDevices);
   }, [safeSet]);
 
   const requestMicPermission = useCallback(async (): Promise<boolean> => {
@@ -451,26 +544,45 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const answerIncomingCall = useCallback(() => {
-    const tryAnswer = (attempt: number) => {
-      if (activeCallRef.current) {
+  const waitForInboundWebRtcLeg = useCallback((timeoutMs = 15000): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const deadline = Date.now() + timeoutMs;
+      const check = () => {
+        const target = incomingCallRef.current ?? activeCallRef.current;
+        if (target && isIncomingTelnyxCall(target, outboundDialRef.current)) {
+          resolve(true);
+          return;
+        }
+        if (Date.now() >= deadline) {
+          resolve(false);
+          return;
+        }
+        setTimeout(check, 200);
+      };
+      check();
+    });
+  }, []);
+
+  const answerIncomingCall = useCallback(async (): Promise<boolean> => {
+    const deadline = Date.now() + 15_000;
+    while (Date.now() < deadline) {
+      const target = incomingCallRef.current ?? activeCallRef.current;
+      if (target) {
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (activeCallRef.current as any).answer?.();
-          bindRemoteMediaToAudio(activeCallRef.current);
+          (target as any).answer?.();
+          bindRemoteMediaToAudio(target);
           console.log('[WebPhone] answered inbound call');
+          return true;
         } catch (err) {
           console.error('[WebPhone] answerIncomingCall error:', err);
+          return false;
         }
-        return;
       }
-      if (attempt < 20) {
-        setTimeout(() => tryAnswer(attempt + 1), 200);
-      } else {
-        console.warn('[WebPhone] answerIncomingCall: no incoming WebRTC leg after wait');
-      }
-    };
-    tryAnswer(0);
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    console.warn('[WebPhone] answerIncomingCall: no incoming WebRTC leg after wait');
+    return false;
   }, []);
 
   const hangup = useCallback(() => {
@@ -478,6 +590,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       try { activeCallRef.current.hangup(); } catch { /* ignore */ }
     }
     activeCallRef.current = null;
+    incomingCallRef.current = null;
     outboundDialRef.current = false;
     setHasOutboundSession(false);
     setIsInboundRinging(false);
@@ -536,6 +649,10 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         isMuted,
         isOnHold,
         micPermission,
+        voiceQuality,
+        isReconnecting,
+        audioDeviceLabel,
+        iceConnectionState,
         makeCall,
         hangup,
         answerIncomingCall,
@@ -545,6 +662,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         reconnect,
         requestMicPermission,
         waitForPhoneReady,
+        waitForInboundWebRtcLeg,
       }}
     >
       {/* Hidden audio element — Telnyx WebRTC plays remote audio through this */}

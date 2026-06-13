@@ -15,6 +15,7 @@ import { WorkspaceProvider } from "@/contexts/workspace-context";
 import { WorkspaceGate } from "@/components/workspace/workspace-gate";
 import { InboundRingingProvider } from "@/contexts/inbound-ringing-context";
 import { InboundCallOverlay } from "@/components/inbound/inbound-call-overlay";
+import { VoiceConnectionHud } from "@/components/voice/voice-connection-hud";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { PremiumOverlays } from "@/components/premium/premium-overlays";
 import { FloatingEdgeProvider } from "@/components/layout/floating-edge-provider";
@@ -30,6 +31,7 @@ function DashboardOverlays({ userId }: { userId: string | undefined }) {
   return (
     <>
       <ActiveCallOverlay />
+      <VoiceConnectionHud />
       {userId && <InboundCallOverlay />}
       {showSaveAsLead && activePhone && (
         <SaveAsLeadModal phone={activePhone} onClose={dismissSaveAsLead} />

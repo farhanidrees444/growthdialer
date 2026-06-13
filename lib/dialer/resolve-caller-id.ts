@@ -6,14 +6,15 @@ interface PurchasedNumberRow {
   is_default: boolean;
 }
 
-/**
- * Resolve outbound caller ID for a lead — local presence when numbers exist.
- */
-export async function resolveCallerIdForLead(
+export interface CallerNumberCache {
+  numbers: PurchasedNumberRow[];
+  fallback: string;
+}
+
+export async function prefetchUserCallerNumbers(
   supabase: SupabaseClient,
   userId: string,
-  leadPhone?: string | null,
-): Promise<{ fromNumber: string; matchLabel: string }> {
+): Promise<CallerNumberCache> {
   const { data: numbers } = await supabase
     .from('purchased_numbers')
     .select('phone_number, is_default')
@@ -22,7 +23,17 @@ export async function resolveCallerIdForLead(
     .order('is_default', { ascending: false })
     .order('purchased_at', { ascending: false });
 
-  const active = (numbers ?? []) as PurchasedNumberRow[];
+  return {
+    numbers: (numbers ?? []) as PurchasedNumberRow[],
+    fallback: process.env.TELNYX_FROM_NUMBER ?? '',
+  };
+}
+
+export function resolveCallerIdFromCache(
+  cache: CallerNumberCache,
+  leadPhone?: string | null,
+): { fromNumber: string; matchLabel: string } {
+  const active = cache.numbers;
 
   if (leadPhone && active.length > 1) {
     const presence = getBestCallerNumber(
@@ -38,8 +49,17 @@ export async function resolveCallerIdForLead(
     return { fromNumber: active[0].phone_number, matchLabel: active[0].is_default ? 'Default' : 'Active number' };
   }
 
-  return {
-    fromNumber: process.env.TELNYX_FROM_NUMBER ?? '',
-    matchLabel: 'System',
-  };
+  return { fromNumber: cache.fallback, matchLabel: 'System' };
+}
+
+/**
+ * Resolve outbound caller ID for a lead — local presence when numbers exist.
+ */
+export async function resolveCallerIdForLead(
+  supabase: SupabaseClient,
+  userId: string,
+  leadPhone?: string | null,
+): Promise<{ fromNumber: string; matchLabel: string }> {
+  const cache = await prefetchUserCallerNumbers(supabase, userId);
+  return resolveCallerIdFromCache(cache, leadPhone);
 }

@@ -1,17 +1,19 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { bridgeProspectToAgent, hangupCallControl } from './agent-bridge';
 import { dropVoicemailAndHangup } from '@/lib/voicemail/drop-on-call';
+import { triggerParallelLegTrackingAsync } from './leg-tracking';
 
 async function cancelOtherLegs(
   supabase: SupabaseClient,
   sessionId: string,
   winnerLegId: string,
   userId: string,
+  workspaceId: string | null,
   vmDrop: boolean,
 ): Promise<void> {
   const { data: otherLegs } = await supabase
     .from('parallel_dial_legs')
-    .select('id, telnyx_call_id, call_id, status')
+    .select('id, telnyx_call_id, call_id, status, phone, lead_id')
     .eq('session_id', sessionId)
     .neq('id', winnerLegId)
     .in('status', ['dialing', 'ringing', 'answered']);
@@ -23,6 +25,18 @@ async function cancelOtherLegs(
           .from('parallel_dial_legs')
           .update({ status: 'canceled', updated_at: new Date().toISOString() })
           .eq('id', other.id);
+        triggerParallelLegTrackingAsync({
+          event: 'leg_canceled',
+          session_id: sessionId,
+          leg_id: other.id,
+          user_id: userId,
+          workspace_id: workspaceId,
+          telnyx_call_id: null,
+          phone: other.phone,
+          lead_id: other.lead_id,
+          reason: 'no_call_control_id',
+          at: new Date().toISOString(),
+        });
         return;
       }
       if (vmDrop && other.status === 'answered') {
@@ -31,12 +45,36 @@ async function cancelOtherLegs(
           .from('parallel_dial_legs')
           .update({ status: 'voicemail', updated_at: new Date().toISOString() })
           .eq('id', other.id);
+        triggerParallelLegTrackingAsync({
+          event: 'leg_voicemail',
+          session_id: sessionId,
+          leg_id: other.id,
+          user_id: userId,
+          workspace_id: workspaceId,
+          telnyx_call_id: other.telnyx_call_id,
+          phone: other.phone,
+          lead_id: other.lead_id,
+          reason: 'vm_drop',
+          at: new Date().toISOString(),
+        });
       } else {
         await hangupCallControl(other.telnyx_call_id);
         await supabase
           .from('parallel_dial_legs')
           .update({ status: 'canceled', updated_at: new Date().toISOString() })
           .eq('id', other.id);
+        triggerParallelLegTrackingAsync({
+          event: 'leg_canceled',
+          session_id: sessionId,
+          leg_id: other.id,
+          user_id: userId,
+          workspace_id: workspaceId,
+          telnyx_call_id: other.telnyx_call_id,
+          phone: other.phone,
+          lead_id: other.lead_id,
+          reason: 'winner_claimed',
+          at: new Date().toISOString(),
+        });
       }
     }),
   );
@@ -72,6 +110,7 @@ export async function bridgeParallelWinner(
   legId: string,
   callControlId: string,
   fromNumber: string | null,
+  userId: string,
 ): Promise<boolean> {
   const { data: leg } = await supabase
     .from('parallel_dial_legs')
@@ -82,8 +121,12 @@ export async function bridgeParallelWinner(
   if (!leg?.is_winner || leg.status === 'connected') return false;
 
   const bridged = await bridgeProspectToAgent(
+    supabase,
+    userId,
     callControlId,
     fromNumber ?? process.env.TELNYX_FROM_NUMBER ?? '',
+    leg.session_id,
+    legId,
   );
 
   await supabase
@@ -114,7 +157,7 @@ export async function handleParallelLegAnswered(
 
   const { data: sessionRow } = await supabase
     .from('parallel_dial_sessions')
-    .select('user_id, vm_drop_enabled, amd_enabled')
+    .select('user_id, workspace_id, vm_drop_enabled, amd_enabled')
     .eq('id', leg.session_id)
     .single();
 
@@ -147,10 +190,21 @@ export async function handleParallelLegAnswered(
     claimed.session_id,
     claimed.id,
     sessionRow?.user_id ?? '',
+    (sessionRow?.workspace_id as string | null) ?? null,
     sessionRow?.vm_drop_enabled ?? false,
   );
 
   if (sessionRow?.amd_enabled) {
+    triggerParallelLegTrackingAsync({
+      event: 'leg_winner',
+      session_id: claimed.session_id,
+      leg_id: claimed.id,
+      user_id: sessionRow.user_id,
+      workspace_id: sessionRow.workspace_id,
+      telnyx_call_id: callControlId,
+      reason: 'pending_amd',
+      at: new Date().toISOString(),
+    });
     return {
       bridged: false,
       pendingAmd: true,
@@ -160,9 +214,25 @@ export async function handleParallelLegAnswered(
   }
 
   const bridged = await bridgeProspectToAgent(
+    supabase,
+    sessionRow?.user_id ?? '',
     callControlId,
     fromNumber ?? process.env.TELNYX_FROM_NUMBER ?? '',
+    claimed.session_id,
+    claimed.id,
   );
+
+  if (bridged) {
+    triggerParallelLegTrackingAsync({
+      event: 'leg_winner',
+      session_id: claimed.session_id,
+      leg_id: claimed.id,
+      user_id: sessionRow?.user_id ?? '',
+      workspace_id: sessionRow?.workspace_id ?? null,
+      telnyx_call_id: callControlId,
+      at: new Date().toISOString(),
+    });
+  }
 
   await markSessionConnected(supabase, claimed.session_id);
 

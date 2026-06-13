@@ -65,6 +65,6 @@ export async function handleParallelLegAmd(
   }
 
   if (isHuman && leg.status === 'answered') {
-    await bridgeParallelWinner(supabase, leg.id, callControlId, fromNumber);
+    await bridgeParallelWinner(supabase, leg.id, callControlId, fromNumber, session.user_id);
   }
 }
