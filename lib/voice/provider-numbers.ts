@@ -178,7 +178,7 @@ export interface ActivateRoutingResult {
   results: { phone: string; status: 'activated' | 'already' | 'failed' | 'skipped' }[];
 }
 
-/** Assign every purchased number to the active voice connection (growthdialer-sip). */
+/** Assign every purchased number to the programmable voice application. */
 export async function forceAssignAllNumbersToConnection(
   numbers: DbNumberRow[],
   connectionId: string,

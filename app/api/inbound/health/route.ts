@@ -9,6 +9,8 @@ import {
 } from '@/lib/voice/provider-numbers';
 import {
   ensureVoiceConnectionConfigured,
+  ensureCallControlAppConfigured,
+  getActiveCallControlAppId,
   getActiveVoiceConnectionId,
 } from '@/lib/voice/configure-connection';
 import {
@@ -31,7 +33,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const [settingsRes, numbersRes, recentInboundRes, providerIndex, connectionConfig, inboundBrowserCred, connectionId] = await Promise.all([
+  const [settingsRes, numbersRes, recentInboundRes, providerIndex, connectionConfig, callControlConfig, inboundBrowserCred, sipConnectionId, callControlAppId] = await Promise.all([
     supabase
       .from('user_settings')
       .select('inbound_mode')
@@ -53,8 +55,10 @@ export async function GET(request: NextRequest) {
       .maybeSingle(),
     fetchProviderPhoneIndex(),
     ensureVoiceConnectionConfigured(),
+    ensureCallControlAppConfigured(),
     resolveInboundBrowserCredential(supabase, user.id),
     getActiveVoiceConnectionId(),
+    getActiveCallControlAppId(),
   ]);
 
   const credentialId = inboundBrowserCred?.credentialId
@@ -70,7 +74,8 @@ export async function GET(request: NextRequest) {
 
   await backfillProviderIds(supabase, numbers, providerIndex);
 
-  const routing = await auditNumberRouting(numbers, connectionId, providerIndex);
+  const numberRoutingId = callControlAppId ?? sipConnectionId;
+  const routing = await auditNumberRouting(numbers, numberRoutingId, providerIndex);
   const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
   const appUrl = resolveInboundAppUrl(host);
   const eventsVerified = Boolean(process.env.TELNYX_PUBLIC_KEY?.trim());
@@ -79,8 +84,8 @@ export async function GET(request: NextRequest) {
   const hasRecentInbound = Boolean(recentInboundRes.data);
   const credentialReady = Boolean(inboundBrowserCred?.token && inboundBrowserCred?.sipUsername);
   const voiceOperational =
-    connectionConfig.ok
-    || (providerReachable && voiceApiPresent && Boolean(connectionId) && credentialReady)
+    (connectionConfig.ok && callControlConfig.ok)
+    || (providerReachable && voiceApiPresent && Boolean(sipConnectionId) && credentialReady)
     || (hasRecentInbound && credentialReady && voiceApiPresent);
   const voiceConfigured = voiceOperational && voiceApiPresent;
   const inboundEnabled = mode !== 'off';
@@ -98,6 +103,7 @@ export async function GET(request: NextRequest) {
     providerReachable,
     hasRecentInbound,
     credentialEnvSwap: false,
+    callControlReady: callControlConfig.ok,
   });
 
   let status: 'live' | 'almost_ready' | 'needs_setup' | 'offline' = 'needs_setup';

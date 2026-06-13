@@ -332,8 +332,18 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     mountedRef.current = true;
     initClient();
+
+    // Refresh JWT before Telnyx token expiry (~24h) for long dashboard sessions
+    const tokenRefresh = setInterval(() => {
+      if (phoneStatusRef.current === 'ready' && callStatusRef.current === 'idle') {
+        console.log('[WebPhone] refreshing voice token');
+        void initClientRef.current();
+      }
+    }, 6 * 60 * 60 * 1000);
+
     return () => {
       mountedRef.current = false;
+      clearInterval(tokenRefresh);
       if (clientRef.current) {
         try { clientRef.current.disconnect(); } catch { /* ignore */ }
       }

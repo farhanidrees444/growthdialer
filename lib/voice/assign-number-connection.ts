@@ -1,11 +1,12 @@
-import { getActiveVoiceConnectionId } from '@/lib/voice/configure-connection';
+import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
 import { readVoiceApiKey } from '@/lib/voice/read-env';
 
 const VOICE_API = 'https://api.telnyx.com/v2';
 
+/** Assign a purchased number to the programmable voice (Call Control) application. */
 export async function assignNumberToVoiceConnection(telnyxNumberId: string): Promise<boolean> {
   const apiKey = readVoiceApiKey();
-  const connectionId = await getActiveVoiceConnectionId();
+  const connectionId = await getActiveCallControlAppId();
   if (!apiKey || !connectionId || !telnyxNumberId) return false;
 
   try {
@@ -18,12 +19,12 @@ export async function assignNumberToVoiceConnection(telnyxNumberId: string): Pro
       body: JSON.stringify({ connection_id: connectionId }),
     });
     if (!res.ok) {
-      console.error('[VOICE] assign connection failed:', telnyxNumberId, res.status, (await res.text()).slice(0, 200));
+      console.error('[VOICE] assign number failed:', telnyxNumberId, res.status, (await res.text()).slice(0, 200));
       return false;
     }
     return true;
   } catch (err) {
-    console.error('[VOICE] assign connection exception:', err);
+    console.error('[VOICE] assign number exception:', err);
     return false;
   }
 }

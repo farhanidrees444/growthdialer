@@ -4,6 +4,7 @@ import {
   fetchCredentialSipUsername,
   fetchCredentialToken,
   telephonyCredentialExists,
+  fetchCredentialConnectionId,
 } from '@/lib/voice/credential-discovery';
 import { invalidateCredentialCache } from '@/lib/voice/credential-cache';
 import {
@@ -69,21 +70,27 @@ export async function resolvePerUserCredentialId(
 
   const stored = settings?.telnyx_telephony_credential_id as string | undefined;
   if (stored) {
-    const token = await fetchCredentialToken(stored, { bypassNegativeCache: true });
-    if (token) return stored;
+    const parent = await fetchCredentialConnectionId(stored);
+    if (parent && parent !== connectionId) {
+      console.warn('[VOICE] recreating credential — stored on wrong SIP connection | user:', userId);
+      await saveUserCredentialId(supabase, userId, null);
+    } else {
+      const token = await fetchCredentialToken(stored, { bypassNegativeCache: true });
+      if (token) return stored;
 
-    const apiKey = readVoiceApiKey();
-    if (apiKey) {
-      const exists = await telephonyCredentialExists(apiKey, stored);
-      if (!exists) {
-        await saveUserCredentialId(supabase, userId, null);
-      } else {
-        invalidateCredentialCache(stored);
-        const retryToken = await fetchCredentialToken(stored, {
-          fresh: true,
-          bypassNegativeCache: true,
-        });
-        if (retryToken) return stored;
+      const apiKey = readVoiceApiKey();
+      if (apiKey) {
+        const exists = await telephonyCredentialExists(apiKey, stored);
+        if (!exists) {
+          await saveUserCredentialId(supabase, userId, null);
+        } else {
+          invalidateCredentialCache(stored);
+          const retryToken = await fetchCredentialToken(stored, {
+            fresh: true,
+            bypassNegativeCache: true,
+          });
+          if (retryToken) return stored;
+        }
       }
     }
   }

@@ -20,6 +20,7 @@ export function listInboundBlockers(input: {
   providerReachable?: boolean;
   hasRecentInbound?: boolean;
   credentialEnvSwap?: boolean;
+  callControlReady?: boolean;
 }): InboundBlocker[] {
   const blockers: InboundBlocker[] = [];
 
@@ -92,6 +93,15 @@ export function listInboundBlockers(input: {
         fix: 'Refresh this page — we auto-configure on load. If this persists, check deployment logs.',
       });
     }
+  }
+
+  if (input.callControlReady === false) {
+    blockers.push({
+      code: 'call_control_app',
+      label: 'Programmable voice application not configured',
+      fix:
+        'Set TELNYX_CALL_CONTROL_APP_ID to your programmable voice application ID in deployment settings, then redeploy.',
+    });
   }
 
   if (!input.eventsVerified && !input.hasRecentInbound) {

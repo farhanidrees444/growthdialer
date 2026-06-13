@@ -10,6 +10,7 @@ import {
 } from '@/lib/voice/provider-numbers';
 import {
   ensureVoiceConnectionConfigured,
+  ensureCallControlAppConfigured,
   getActiveCallControlAppId,
   getActiveVoiceConnectionId,
 } from '@/lib/voice/configure-connection';
@@ -31,10 +32,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const [connection, resolvedConnectionId, callControlAppId] = await Promise.all([
+  const [connection, sipConnectionId, callControlAppId, callControlConfig] = await Promise.all([
     ensureVoiceConnectionConfigured(),
     getActiveVoiceConnectionId(),
     getActiveCallControlAppId(),
+    ensureCallControlAppConfigured(),
   ]);
   const webhookUrl = resolveVoiceWebhookUrl();
   const eventsVerified = Boolean(process.env.TELNYX_PUBLIC_KEY?.trim());
@@ -53,9 +55,10 @@ export async function GET(request: NextRequest) {
     is_default: Boolean(n.is_default),
   }));
 
+  const numberRoutingId = callControlAppId ?? sipConnectionId;
   const routing = await auditNumberRouting(
     dbNumbers,
-    resolvedConnectionId,
+    numberRoutingId,
     providerIndex,
   );
 
@@ -87,18 +90,20 @@ export async function GET(request: NextRequest) {
     inboundEnabled: true,
     browserAnswering: true,
     credentialReady: Boolean(credentialId),
+    callControlReady: callControlConfig.ok,
   });
 
   return NextResponse.json({
     line_ready:
       connection.ok
+      && callControlConfig.ok
       && routing.primary_routed
       && eventsVerified
       && Boolean(credentialId)
       && Boolean(webhookUrl)
       && blockers.length === 0,
     connection_configured: connection.ok,
-    connection_resolved: Boolean(resolvedConnectionId),
+    connection_resolved: Boolean(sipConnectionId),
     connection_env_mismatch: connection.env_mismatch ?? false,
     connection_resolved_from: connection.resolved_from ?? null,
     event_verification: eventsVerified,
@@ -106,9 +111,10 @@ export async function GET(request: NextRequest) {
     credential_env_swap_detected: false,
     discovered_credential: Boolean(inboundBrowserCred?.credentialId),
     sip_endpoint_ready: Boolean(sipUsername),
-    resolved_connection_id: resolvedConnectionId,
+    resolved_connection_id: sipConnectionId,
     call_control_app_id: callControlAppId,
-    call_control_app_configured: Boolean(callControlAppId),
+    call_control_app_configured: callControlConfig.ok,
+    number_routing_target: numberRoutingId,
     primary_routed: routing.primary_routed,
     numbers_total: routing.total,
     numbers_routed: routing.routed,
@@ -126,7 +132,8 @@ export async function GET(request: NextRequest) {
     })),
     inbound_browser_credential_ready: Boolean(inboundBrowserCred),
     checks: [
-      { label: 'Voice connection', ok: connection.ok },
+      { label: 'SIP connection (browser login)', ok: connection.ok },
+      { label: 'Programmable voice app', ok: callControlConfig.ok },
       { label: 'Call events', ok: eventsVerified },
       { label: 'Primary number routing', ok: routing.primary_routed },
       { label: 'Browser voice endpoint', ok: Boolean(sipUsername) },

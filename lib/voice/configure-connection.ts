@@ -316,18 +316,135 @@ export async function getActiveVoiceConnectionId(): Promise<string | null> {
 }
 
 /**
- * Call Control / Voice API application ID — POST /v2/calls (outbound + inbound browser dial leg).
- * Separate from the SIP credential connection in most Telnyx accounts.
+ * Programmable Voice application ID — inbound PSTN webhooks, number assignment, POST /v2/calls.
+ * Separate from the SIP credential connection used for browser WebRTC login.
  */
 export async function getActiveCallControlAppId(): Promise<string | null> {
   const dialAppId = readCallControlAppId();
   if (dialAppId) return dialAppId;
 
-  const sipConnection = readConfiguredConnectionId();
-  if (sipConnection) {
-    console.warn(
-      '[VOICE] TELNYX_CALL_CONTROL_APP_ID not set — falling back to TELNYX_CONNECTION_ID for dial',
-    );
+  console.error(
+    '[VOICE] TELNYX_CALL_CONTROL_APP_ID is required for inbound/outbound dial legs and number routing',
+  );
+  return null;
+}
+
+export interface CallControlAppConfigureResult {
+  ok: boolean;
+  app_id: string | null;
+  webhook_url: string | null;
+  message: string;
+}
+
+/** Ensure the Call Control application webhook points at our handler. */
+export async function ensureCallControlAppConfigured(): Promise<CallControlAppConfigureResult> {
+  const apiKey = readVoiceApiKey();
+  const appId = readCallControlAppId();
+  const webhookUrl = resolveVoiceWebhookUrl();
+
+  if (!appId) {
+    return {
+      ok: false,
+      app_id: null,
+      webhook_url: webhookUrl || null,
+      message: 'Programmable voice application ID is not configured.',
+    };
   }
-  return sipConnection;
+
+  if (!webhookUrl) {
+    return {
+      ok: false,
+      app_id: appId,
+      webhook_url: null,
+      message: 'Application URL is not configured for call events.',
+    };
+  }
+
+  if (!apiKey) {
+    return {
+      ok: false,
+      app_id: appId,
+      webhook_url: webhookUrl,
+      message: 'Voice API key is not configured on the server.',
+    };
+  }
+
+  if (process.env.VOICE_TRUST_ENV_CONNECTION !== '0') {
+    return {
+      ok: true,
+      app_id: appId,
+      webhook_url: webhookUrl,
+      message: 'Programmable voice application from environment.',
+    };
+  }
+
+  try {
+    const getRes = await voiceGet(`call_control_applications/${appId}`, apiKey);
+    if (!getRes.ok) {
+      const detail = (await getRes.text()).slice(0, 300);
+      console.error('[VOICE] call control app GET failed:', getRes.status, detail);
+      return {
+        ok: getRes.status === 429,
+        app_id: appId,
+        webhook_url: webhookUrl,
+        message: getRes.status === 429
+          ? 'Programmable voice application assumed valid (rate limited).'
+          : 'Programmable voice application could not be loaded.',
+      };
+    }
+
+    const getJson = await getRes.json() as {
+      data?: { webhook_event_url?: string | null; webhook_api_version?: string | null };
+    };
+    const current = getJson.data ?? {};
+    const webhookOk =
+      (current.webhook_event_url ?? '').replace(/\/$/, '') === webhookUrl.replace(/\/$/, '')
+      && current.webhook_api_version === '2';
+
+    if (webhookOk) {
+      return {
+        ok: true,
+        app_id: appId,
+        webhook_url: webhookUrl,
+        message: 'Programmable voice application configured for inbound routing.',
+      };
+    }
+
+    const patchRes = await fetch(`${VOICE_API}/call_control_applications/${appId}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        webhook_event_url: webhookUrl,
+        webhook_api_version: '2',
+      }),
+    });
+
+    if (!patchRes.ok) {
+      console.error('[VOICE] call control app PATCH failed:', patchRes.status, (await patchRes.text()).slice(0, 200));
+      return {
+        ok: false,
+        app_id: appId,
+        webhook_url: webhookUrl,
+        message: 'Could not update programmable voice webhook URL.',
+      };
+    }
+
+    return {
+      ok: true,
+      app_id: appId,
+      webhook_url: webhookUrl,
+      message: 'Programmable voice application webhook updated.',
+    };
+  } catch (err) {
+    console.error('[VOICE] call control app configure exception:', err);
+    return {
+      ok: false,
+      app_id: appId,
+      webhook_url: webhookUrl,
+      message: 'Programmable voice application update failed.',
+    };
+  }
 }

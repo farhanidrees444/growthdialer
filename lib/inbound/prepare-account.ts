@@ -13,6 +13,8 @@ import {
 import { readVoiceApiKey } from '@/lib/voice/read-env';
 import {
   ensureVoiceConnectionConfigured,
+  ensureCallControlAppConfigured,
+  getActiveCallControlAppId,
   getActiveVoiceConnectionId,
 } from '@/lib/voice/configure-connection';
 
@@ -63,10 +65,13 @@ export async function prepareInboundAccount(
   userId: string,
   userEmail: string,
 ): Promise<PrepareInboundResult> {
-  const [connectionId, connectionConfig] = await Promise.all([
+  const [sipConnectionId, callControlAppId, connectionConfig, callControlConfig] = await Promise.all([
     getActiveVoiceConnectionId(),
+    getActiveCallControlAppId(),
     ensureVoiceConnectionConfigured(),
+    ensureCallControlAppConfigured(),
   ]);
+  const numberRoutingId = callControlAppId ?? sipConnectionId;
   const workspaceId = await resolveUserWorkspaceId(supabase, userId);
 
   const { data: rows } = await supabase
@@ -126,17 +131,17 @@ export async function prepareInboundAccount(
   await backfillProviderIds(supabase, numbers, providerIndex);
 
   let routingActivated = 0;
-  if (connectionId && numbers.length > 0) {
-    const result = await forceAssignAllNumbersToConnection(numbers, connectionId, providerIndex);
+  if (numberRoutingId && numbers.length > 0) {
+    const result = await forceAssignAllNumbersToConnection(numbers, numberRoutingId, providerIndex);
     routingActivated = result.activated;
   }
 
-  const credentialId = connectionId
+  const credentialId = sipConnectionId
     ? await resolveActiveCredentialId(supabase, userId)
     : null;
 
-  const afterAudit = connectionId
-    ? await auditNumberRouting(numbers, connectionId, providerIndex)
+  const afterAudit = numberRoutingId
+    ? await auditNumberRouting(numbers, numberRoutingId, providerIndex)
     : { primary_routed: false, needs_activation: numbers.length > 0 };
 
   const message =
@@ -156,11 +161,11 @@ export async function prepareInboundAccount(
     workspace_linked: workspaceLinked,
     credential_ready: Boolean(credentialId),
     primary_routed: afterAudit.primary_routed,
-    connection_configured: connectionConfig.ok,
-    message: connectionConfig.ok
+    connection_configured: connectionConfig.ok && callControlConfig.ok,
+    message: connectionConfig.ok && callControlConfig.ok
       ? message
       : connectionConfig.env_mismatch
         ? 'Voice connection ID mismatch detected — latest deploy auto-resolves from your browser credential. Refresh after deploy completes.'
-        : connectionConfig.message,
+        : callControlConfig.message || connectionConfig.message,
   };
 }
