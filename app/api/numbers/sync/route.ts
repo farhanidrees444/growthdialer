@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { calculateRetailPrice } from '@/lib/pricing/calculate-price';
 import { assignNumberToVoiceConnection } from '@/lib/voice/assign-number-connection';
-import { getActiveVoiceConnectionId } from '@/lib/voice/configure-connection';
+import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
 import { voiceApiBearerToken } from '@/lib/voice/read-env';
 
 export const dynamic = 'force-dynamic';
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       isOwner
       && (body.claim_untagged === true || (ownedCount ?? 0) === 0);
 
-    const connectionId = await getActiveVoiceConnectionId();
+    const connectionId = await getActiveCallControlAppId();
 
     console.log('[NUMBERS-SYNC] Starting for user:', userId, '| claim_orphans:', canClaimOrphans);
 

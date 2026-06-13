@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { issueUserWebRtcToken } from '@/lib/telnyx/webrtc-token-engine';
+import { prepareVoiceAccount } from '@/lib/voice/prepare-voice-account';
 
 /**
  * POST /api/telnyx/token
@@ -14,7 +15,11 @@ export async function POST(_request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const result = await issueUserWebRtcToken(supabase, authUser.id);
+    let result = await issueUserWebRtcToken(supabase, authUser.id);
+    if (!result.ok && result.status === 503) {
+      await prepareVoiceAccount(supabase, authUser.id, authUser.email ?? '');
+      result = await issueUserWebRtcToken(supabase, authUser.id);
+    }
     if (!result.ok) {
       return NextResponse.json(
         { error: result.error, detail: result.detail },

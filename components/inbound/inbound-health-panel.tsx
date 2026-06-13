@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Loader2, RefreshCw, Sparkles, Zap } from 'lucide-react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/lib/utils';
@@ -38,6 +38,7 @@ export function InboundHealthPanel({ phoneReady, onActivated }: Props) {
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState(false);
   const [activateMsg, setActivateMsg] = useState<string | null>(null);
+  const autoPreparedRef = useRef(false);
   const load = useCallback(() => {
     setLoading(true);
     void apiFetch('/api/inbound/health')
@@ -83,6 +84,18 @@ export function InboundHealthPanel({ phoneReady, onActivated }: Props) {
   }, [apiFetch, load, onActivated]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    const onPrepared = () => { load(); };
+    window.addEventListener('gd-voice-account-prepared', onPrepared);
+    return () => window.removeEventListener('gd-voice-account-prepared', onPrepared);
+  }, [load]);
+
+  useEffect(() => {
+    if (!health?.needs_activation || autoPreparedRef.current || activating) return;
+    autoPreparedRef.current = true;
+    void runPrepare();
+  }, [health?.needs_activation, activating, runPrepare]);
 
   if (loading && !health) {
     return (

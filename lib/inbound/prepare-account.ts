@@ -1,7 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
-import { resolveActiveCredentialId } from '@/lib/telnyx/active-credential';
+import {
+  resolvePerUserCredentialId,
+} from '@/lib/telnyx/active-credential';
 import {
   forceAssignAllNumbersToConnection,
   auditNumberRouting,
@@ -10,6 +12,7 @@ import {
   lookupProviderPhone,
   type DbNumberRow,
 } from '@/lib/voice/provider-numbers';
+import { invalidatePhoneIndexCache } from '@/lib/voice/voice-api-cache';
 import { readVoiceApiKey } from '@/lib/voice/read-env';
 import {
   ensureVoiceConnectionConfigured,
@@ -134,10 +137,11 @@ export async function prepareInboundAccount(
   if (numberRoutingId && numbers.length > 0) {
     const result = await forceAssignAllNumbersToConnection(numbers, numberRoutingId, providerIndex);
     routingActivated = result.activated;
+    if (routingActivated > 0) invalidatePhoneIndexCache();
   }
 
   const credentialId = sipConnectionId
-    ? await resolveActiveCredentialId(supabase, userId)
+    ? await resolvePerUserCredentialId(supabase, userId)
     : null;
 
   const afterAudit = numberRoutingId

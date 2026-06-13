@@ -95,6 +95,7 @@ function mapCallState(state: string): WebRTCCallStatus {
 
 const AUDIO_EL_ID = 'telnyx-remote-audio';
 const TOKEN_URL = '/api/telnyx/token';
+const PREPARE_URL = '/api/voice/prepare';
 
 async function fetchAssignedCallerNumber(): Promise<string | null> {
   try {
@@ -164,6 +165,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const defaultCallerIdRef = useRef<string | null>(null);
   const peerCleanupRef = useRef<(() => void) | null>(null);
   const reconnectDuringCallRef = useRef(false);
+  const voicePrepareAttemptedRef = useRef(false);
 
   const safeSet = useCallback(<T,>(setter: (v: T) => void, value: T) => {
     if (mountedRef.current) setter(value);
@@ -213,11 +215,25 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       // Dynamic import prevents SSR from pulling in browser-only code
       const { TelnyxRTC } = await import('@telnyx/webrtc');
 
-      const res = await fetch(TOKEN_URL, {
+      let res = await fetch(TOKEN_URL, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
       });
+      if (!res.ok && res.status === 503 && !voicePrepareAttemptedRef.current) {
+        voicePrepareAttemptedRef.current = true;
+        console.warn('[WebPhone] token unavailable — repairing voice account');
+        await fetch(PREPARE_URL, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+        }).catch(() => null);
+        res = await fetch(TOKEN_URL, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
       if (!res.ok) {
         console.error('[WebPhone] token fetch failed:', res.status);
         scheduleReconnect(`token HTTP ${res.status}`);

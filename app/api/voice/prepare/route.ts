@@ -4,6 +4,10 @@ import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/worksp
 import { hasPermission } from '@/lib/auth/permissions';
 import { prepareVoiceAccount } from '@/lib/voice/prepare-voice-account';
 
+/**
+ * Repair voice for the logged-in account — inbound routing + outbound credential.
+ * Safe to call on every dashboard session (idempotent).
+ */
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

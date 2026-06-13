@@ -38,6 +38,10 @@ export function setCachedPhoneIndex(value: Map<string, ProviderPhoneRecord>): vo
   phoneIndexCache = { value, expiresAt: Date.now() + PHONE_INDEX_TTL_MS };
 }
 
+export function invalidatePhoneIndexCache(): void {
+  phoneIndexCache = null;
+}
+
 export function getCachedResolvedConnection(): ResolvedVoiceConnection | null {
   if (!resolvedConnectionCache) return null;
   if (Date.now() > resolvedConnectionCache.expiresAt) {

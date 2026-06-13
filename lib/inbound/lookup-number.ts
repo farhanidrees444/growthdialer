@@ -31,13 +31,22 @@ export async function findNumberOwner(
 
   const { data: exact } = await supabase
     .from('purchased_numbers')
-    .select('user_id, phone_number, status, workspace_id')
+    .select('user_id, phone_number, status, workspace_id, is_default')
     .in('phone_number', variants)
     .neq('status', 'released')
-    .limit(1)
-    .maybeSingle();
+    .order('is_default', { ascending: false })
+    .limit(2);
 
-  if (exact) return exact as OwnedNumberRow;
+  if (exact && exact.length > 1) {
+    console.error(
+      '[INBOUND] duplicate DID ownership — using primary owner | did:',
+      normalized,
+      '| users:',
+      exact.map((r) => r.user_id).join(','),
+    );
+  }
+
+  if (exact?.[0]) return exact[0] as OwnedNumberRow;
 
   const targetDigits = phoneDigits(normalized);
   const last10 = targetDigits.length >= 10 ? targetDigits.slice(-10) : null;
@@ -45,7 +54,7 @@ export async function findNumberOwner(
   if (last10) {
     const { data: candidates } = await supabase
       .from('purchased_numbers')
-      .select('user_id, phone_number, status, workspace_id')
+      .select('user_id, phone_number, status, workspace_id, is_default')
       .neq('status', 'released')
       .or(`phone_number.ilike.%${last10}%,phone_number.ilike.%${targetDigits}%`)
       .limit(30);
@@ -70,13 +79,22 @@ export async function findNumberOwnerWithMeta(
 
   const { data: exact } = await supabase
     .from('purchased_numbers')
-    .select('id, user_id, phone_number, status, workspace_id, telnyx_number_id')
+    .select('id, user_id, phone_number, status, workspace_id, telnyx_number_id, is_default')
     .in('phone_number', variants)
     .neq('status', 'released')
-    .limit(1)
-    .maybeSingle();
+    .order('is_default', { ascending: false })
+    .limit(2);
 
-  if (exact) return exact as OwnedNumberRow & { id?: string; telnyx_number_id?: string | null };
+  if (exact && exact.length > 1) {
+    console.error(
+      '[INBOUND] duplicate DID ownership — using primary owner | did:',
+      normalized,
+      '| users:',
+      exact.map((r) => r.user_id).join(','),
+    );
+  }
+
+  if (exact?.[0]) return exact[0] as OwnedNumberRow & { id?: string; telnyx_number_id?: string | null };
 
   const targetDigits = phoneDigits(normalized);
   const last10 = targetDigits.length >= 10 ? targetDigits.slice(-10) : null;
