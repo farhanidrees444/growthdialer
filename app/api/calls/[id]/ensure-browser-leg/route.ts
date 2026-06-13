@@ -4,7 +4,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
-import { ringBrowserForInbound } from '@/lib/inbound/bridge-to-browser';
+import { ringBrowserForInbound, DIAL_PENDING } from '@/lib/inbound/bridge-to-browser';
 import { voiceServerLog } from '@/lib/debug/voice-server-log';
 
 /**
@@ -49,7 +49,7 @@ export async function POST(
     const body = (await request.json().catch(() => ({}))) as { force_redial?: boolean };
     const forceRedial = body.force_redial === true;
 
-    if (call.telnyx_webrtc_leg_id && !forceRedial) {
+    if (call.telnyx_webrtc_leg_id && call.telnyx_webrtc_leg_id !== DIAL_PENDING && !forceRedial) {
       voiceServerLog({
         location: 'ensure-browser-leg:existing',
         message: 'leg already exists',

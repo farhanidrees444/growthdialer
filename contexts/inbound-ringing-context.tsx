@@ -81,6 +81,8 @@ export function InboundRingingProvider({
     isInboundRinging,
     waitForPhoneReady,
     waitForInboundWebRtcLeg,
+    setInboundAcceptInFlight,
+    isInboundRingingLive,
   } = useWebPhone();
   const { registerCallMeta } = useCallContext();
   const { apiFetch } = useWorkspace();
@@ -110,12 +112,7 @@ export function InboundRingingProvider({
     setAccepting(false);
     setCall(incoming);
     playInboundRingtone();
-    // Pre-warm browser WebRTC leg while overlay is visible (cuts accept latency).
-    void apiFetchRef.current(`/api/calls/${incoming.id}/ensure-browser-leg`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    }).catch(() => {});
+    // Webhook routing already dials the browser leg — avoid duplicate dials that kill the active invite.
     return true;
   }, [blocksNewInboundNow]);
 
@@ -143,6 +140,7 @@ export function InboundRingingProvider({
     stopInboundRingtone();
     acceptingRef.current = false;
     setAccepting(false);
+    setInboundAcceptInFlight(false);
     stickyRingRef.current = false;
     callIdRef.current = null;
     ringStartedRef.current = null;
@@ -151,7 +149,7 @@ export function InboundRingingProvider({
     window.dispatchEvent(
       new CustomEvent('gd-inbound-answered', { detail: { callId } }),
     );
-  }, []);
+  }, [setInboundAcceptInFlight]);
 
   const shouldDismissStatus = useCallback((status: string) => {
     return DISMISS_STATUSES.has(status);
@@ -336,18 +334,30 @@ export function InboundRingingProvider({
   const accept = useCallback(async () => {
     if (!call || accepting) return;
     const callId = call.id;
-    const webrtcAlreadyRinging = isInboundRingingRef.current;
+    let webrtcAlreadyRinging = isInboundRingingLive();
+    if (!webrtcAlreadyRinging) {
+      webrtcAlreadyRinging = await waitForInboundWebRtcLeg(800);
+    }
     setAccepting(true);
     acceptingRef.current = true;
+    setInboundAcceptInFlight(true);
     stopInboundRingtone();
 
     // #region agent log
     voiceSessionLog({
       location: 'inbound-ringing-context.tsx:accept:start',
       message: 'accept started',
-      data: { callId, phoneStatus, callStatus, isInboundRinging, hasOutboundSession, webrtcAlreadyRinging },
-      hypothesisId: 'H-A,H-D,H-F',
-      runId: 'run2',
+      data: {
+        callId,
+        phoneStatus,
+        callStatus,
+        isInboundRinging,
+        hasOutboundSession,
+        webrtcAlreadyRinging,
+        incomingCallId: (window as unknown as { __gdIncomingCallId?: string }).__gdIncomingCallId ?? null,
+      },
+      hypothesisId: 'H-A,H-D,H-F,H-I',
+      runId: 'run7',
     });
     // #endregion
 
@@ -374,6 +384,50 @@ export function InboundRingingProvider({
     // Parallel: mic, short phone-ready check, ensure leg (often pre-warmed on ring).
     void requestMicPermission();
 
+    let answerRequest: Promise<Response | null> | null = null;
+    const startRestAnswer = () => {
+      if (!answerRequest) {
+        answerRequest = apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
+          console.error('[INBOUND] REST answer failed:', err);
+          return null;
+        });
+      }
+    };
+
+    // Fast path — SDK already ringing; skip ensure/force-redial that would kill the live invite.
+    if (webrtcAlreadyRinging) {
+      // #region agent log
+      voiceSessionLog({
+        location: 'inbound-ringing-context.tsx:accept:fastPath',
+        message: 'fast accept — WebRTC already ringing',
+        data: { callId, callStatus: callStatusRef.current },
+        hypothesisId: 'H-H',
+        runId: 'run5',
+      });
+      // #endregion
+      const fastAnswerRequest = apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
+        console.error('[INBOUND] REST answer failed:', err);
+        return null;
+      });
+      answerRequest = fastAnswerRequest;
+      const answered = await answerIncomingCall();
+      const fastRest: Response | null = await fastAnswerRequest;
+      const restOk = fastRest !== null && fastRest.ok;
+      // #region agent log
+      voiceSessionLog({
+        location: 'inbound-ringing-context.tsx:accept:fastPathDone',
+        message: 'fast accept finished',
+        data: { callId, answered, restOk, callStatus: callStatusRef.current },
+        hypothesisId: 'H-H',
+        runId: 'run5',
+      });
+      // #endregion
+      if (restOk || answered || callStatusRef.current === 'active') {
+        finishAccept(callId);
+        return;
+      }
+    }
+
     const ensureBrowserLeg = async (forceRedial = false) => {
       const res = await apiFetch(`/api/calls/${callId}/ensure-browser-leg`, {
         method: 'POST',
@@ -397,7 +451,7 @@ export function InboundRingingProvider({
 
     const [, ensureResult] = await Promise.all([
       waitForPhoneReady(3000),
-      ensureBrowserLeg(false),
+      webrtcAlreadyRinging ? Promise.resolve({ ok: true as const, webrtcLegId: null as string | null, created: false, status: 200 }) : ensureBrowserLeg(false),
     ]);
 
     // #region agent log
@@ -417,16 +471,6 @@ export function InboundRingingProvider({
     // #endregion
 
     let webrtcLegId = ensureResult.webrtcLegId;
-    let answerRequest: Promise<Response | null> | null = null;
-    const startRestAnswer = () => {
-      if (!answerRequest) {
-        answerRequest = apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
-          console.error('[INBOUND] REST answer failed:', err);
-          return null;
-        });
-      }
-    };
-
     if (webrtcLegId) startRestAnswer();
 
     // Brief wait for SDK invite — overlay often appears before WebRTC rings.
@@ -448,7 +492,12 @@ export function InboundRingingProvider({
     });
     // #endregion
 
-    // No SDK invite — force re-dial (stale/missing Telnyx leg is the top failure mode).
+    // No SDK invite — force re-dial only when still not ringing (never kill a live invite).
+    if (!legReady && !isInboundRingingRef.current) {
+      if (webrtcAlreadyRinging) {
+        legReady = await waitForInboundWebRtcLeg(2000);
+      }
+    }
     if (!legReady && !isInboundRingingRef.current) {
       const forceResult = await ensureBrowserLeg(true);
       webrtcLegId = forceResult.webrtcLegId ?? webrtcLegId;
@@ -528,9 +577,10 @@ export function InboundRingingProvider({
     });
     // #endregion
     console.error('[INBOUND] Accept timed out — WebRTC did not connect');
+    setInboundAcceptInFlight(false);
     hangup();
     clearCall(true);
-  }, [call, accepting, registerCallMeta, answerIncomingCall, apiFetch, clearCall, hangup, finishAccept, waitForPhoneReady, waitForInboundWebRtcLeg, phoneStatus, callStatus, iceConnectionState, isInboundRinging, hasOutboundSession]);
+  }, [call, accepting, registerCallMeta, answerIncomingCall, apiFetch, clearCall, hangup, finishAccept, waitForPhoneReady, waitForInboundWebRtcLeg, setInboundAcceptInFlight, isInboundRingingLive, phoneStatus, callStatus, iceConnectionState, isInboundRinging, hasOutboundSession]);
 
   const decline = useCallback(async () => {
     if (!call || accepting) return;

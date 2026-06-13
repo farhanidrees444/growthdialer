@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { normalizeE164 } from '@/lib/inbound/phone';
-import { bridgeInboundToBrowser } from '@/lib/inbound/bridge-to-browser';
+import { bridgeInboundToBrowser, DIAL_PENDING } from '@/lib/inbound/bridge-to-browser';
 import { telnyxCallAction } from '@/lib/inbound/telnyx-actions';
 import { triggerInboundRingTimeoutAsync } from '@/lib/inbound/trigger-ring-timeout';
 import { isAgentVoiceReady } from '@/lib/inbound/agent-presence';
@@ -9,6 +9,7 @@ import {
   type ResolvedNumberRouting,
 } from '@/lib/voice/phone-number-settings';
 import { voiceLog } from '@/lib/voice/structured-log';
+import { voiceServerLog } from '@/lib/debug/voice-server-log';
 
 export interface InboundInitiatedContext {
   callControlId: string;
@@ -176,6 +177,38 @@ export async function executeInboundRouting(
 
   // browser mode — always ring WebRTC first; presence only informs fallback reason
   const agentOnline = await isAgentVoiceReady(supabase, ctx.userId);
+
+  if (ctx.dbCallId) {
+    const { data: existingRow } = await supabase
+      .from('calls')
+      .select('telnyx_webrtc_leg_id')
+      .eq('id', ctx.dbCallId)
+      .maybeSingle();
+    const existingLeg = existingRow?.telnyx_webrtc_leg_id ?? null;
+    if (existingLeg && existingLeg !== DIAL_PENDING) {
+      // #region agent log
+      voiceServerLog({
+        location: 'routing-matrix:skipDuplicateRoute',
+        message: 'browser leg already queued — skip duplicate routing dial',
+        data: { callId: ctx.dbCallId, existingLeg, isPending: existingLeg === DIAL_PENDING },
+        hypothesisId: 'H-H',
+        runId: 'run6',
+      });
+      // #endregion
+      voiceLog.info(
+        { ...logCtx, event: 'browser_ring_skipped', webrtc_leg: existingLeg },
+        'Inbound browser leg already queued — skipping duplicate dial',
+      );
+      triggerInboundRingTimeoutAsync(
+        ctx.dbCallId,
+        ctx.callControlId,
+        ctx.userId,
+        routing.inbound_ring_seconds,
+        'browser',
+      );
+      return;
+    }
+  }
 
   const bridged = await bridgeInboundToBrowser(
     supabase,

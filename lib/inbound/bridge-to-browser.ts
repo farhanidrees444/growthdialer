@@ -8,7 +8,31 @@ import { resolveInboundBrowserCredential } from '@/lib/inbound/browser-credentia
 import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
 import { readVoiceApiKey } from '@/lib/voice/read-env';
 
+import { voiceServerLog } from '@/lib/debug/voice-server-log';
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** DB sentinel while a browser-leg dial is in flight (prevents duplicate Telnyx dials). */
+export const DIAL_PENDING = 'dial_pending';
+
+async function waitForBrowserLegId(
+  supabase: SupabaseClient,
+  dbCallId: string,
+  maxMs = 4000,
+): Promise<string | null> {
+  const deadline = Date.now() + maxMs;
+  while (Date.now() < deadline) {
+    const { data } = await supabase
+      .from('calls')
+      .select('telnyx_webrtc_leg_id')
+      .eq('id', dbCallId)
+      .maybeSingle();
+    const leg = data?.telnyx_webrtc_leg_id ?? null;
+    if (leg && leg !== DIAL_PENDING) return leg;
+    await sleep(200);
+  }
+  return null;
+}
 
 function sipUriFromUsername(username: string): string {
   return `sip:${username}@sip.telnyx.com`;
@@ -59,21 +83,83 @@ export async function ringBrowserForInbound(
       .select('telnyx_webrtc_leg_id')
       .eq('id', dbCallId)
       .maybeSingle();
-    if (existing?.telnyx_webrtc_leg_id) {
-      if (!options?.forceRedial) {
-        console.log('[INBOUND] Browser leg already queued:', existing.telnyx_webrtc_leg_id);
+    const leg = existing?.telnyx_webrtc_leg_id ?? null;
+    if (leg && !options?.forceRedial) {
+      if (leg === DIAL_PENDING) {
+        const waited = await waitForBrowserLegId(supabase, dbCallId, 8000);
+        if (waited) {
+          console.log('[INBOUND] Browser leg dial completed (waited):', waited);
+          return { ok: true, strategy: 'dial_bridge', webrtc_leg_id: waited };
+        }
+        // Stale in-flight claim — allow this request to take over the dial.
+        await supabase
+          .from('calls')
+          .update({ telnyx_webrtc_leg_id: null })
+          .eq('id', dbCallId)
+          .eq('telnyx_webrtc_leg_id', DIAL_PENDING);
+        // #region agent log
+        voiceServerLog({
+          location: 'bridge-to-browser:stalePendingCleared',
+          message: 'cleared stale dial_pending — retrying dial',
+          data: { dbCallId },
+          hypothesisId: 'H-J',
+          runId: 'run7',
+        });
+        // #endregion
+      } else {
+        console.log('[INBOUND] Browser leg already queued:', leg);
         return {
           ok: true,
           strategy: 'dial_bridge',
-          webrtc_leg_id: existing.telnyx_webrtc_leg_id,
+          webrtc_leg_id: leg,
         };
       }
-      console.log('[INBOUND] Force re-dial — hanging up stale browser leg:', existing.telnyx_webrtc_leg_id);
-      await telnyxCallAction(existing.telnyx_webrtc_leg_id, 'hangup').catch(() => false);
+    }
+    if (leg && options?.forceRedial) {
+      console.log('[INBOUND] Force re-dial — hanging up stale browser leg:', leg);
+      if (leg !== DIAL_PENDING) {
+        await telnyxCallAction(leg, 'hangup').catch(() => false);
+      }
       await supabase
         .from('calls')
         .update({ telnyx_webrtc_leg_id: null })
         .eq('id', dbCallId);
+    }
+
+    // Claim dial — only one concurrent request dials per call row.
+    const { data: claimed } = await supabase
+      .from('calls')
+      .update({ telnyx_webrtc_leg_id: DIAL_PENDING })
+      .eq('id', dbCallId)
+      .is('telnyx_webrtc_leg_id', null)
+      .select('id')
+      .maybeSingle();
+
+    if (!claimed && !options?.forceRedial) {
+      const waited = await waitForBrowserLegId(supabase, dbCallId, 8000);
+      if (waited) {
+        console.log('[INBOUND] Browser leg claimed by peer (waited):', waited);
+        return { ok: true, strategy: 'dial_bridge', webrtc_leg_id: waited };
+      }
+      const { data: pendingRow } = await supabase
+        .from('calls')
+        .select('telnyx_webrtc_leg_id')
+        .eq('id', dbCallId)
+        .maybeSingle();
+      if (pendingRow?.telnyx_webrtc_leg_id === DIAL_PENDING) {
+        // #region agent log
+        voiceServerLog({
+          location: 'bridge-to-browser:skipDuplicateDial',
+          message: 'peer dial in flight — skipping duplicate',
+          data: { dbCallId },
+          hypothesisId: 'H-H',
+          runId: 'run6',
+        });
+        // #endregion
+        return { ok: true, strategy: 'dial_bridge' };
+      }
+      console.warn('[INBOUND] Browser leg dial in progress but no leg id yet — skipping duplicate dial');
+      return { ok: false, strategy: 'none' };
     }
   }
 
@@ -90,6 +176,16 @@ export async function ringBrowserForInbound(
   }
 
   console.log('[INBOUND] Ringing browser | call_control_app:', dialAppId, '| credential:', credentialId ?? 'env', '| sip:', username);
+
+  // #region agent log
+  voiceServerLog({
+    location: 'bridge-to-browser:dialStart',
+    message: 'originating browser leg',
+    data: { dbCallId, pstnCallControlId },
+    hypothesisId: 'H-H',
+    runId: 'run6',
+  });
+  // #endregion
 
   const dialParams = {
     connectionId: dialAppId,
@@ -115,6 +211,13 @@ export async function ringBrowserForInbound(
 
   if (!dialed.ok || !dialed.call_control_id) {
     console.warn('[INBOUND] dial WebRTC leg failed (attempt 2):', dialed.detail?.slice(0, 200));
+    if (dbCallId) {
+      await supabase
+        .from('calls')
+        .update({ telnyx_webrtc_leg_id: null })
+        .eq('id', dbCallId)
+        .eq('telnyx_webrtc_leg_id', DIAL_PENDING);
+    }
     return { ok: false, strategy: 'none' };
   }
 
@@ -124,13 +227,23 @@ export async function ringBrowserForInbound(
     const { error: legErr } = await supabase
       .from('calls')
       .update({ telnyx_webrtc_leg_id: webrtcLegId })
-      .eq('id', dbCallId);
+      .eq('id', dbCallId)
+      .eq('telnyx_webrtc_leg_id', DIAL_PENDING);
     if (legErr) {
       console.warn('[INBOUND] telnyx_webrtc_leg_id update failed — apply migration 051:', legErr.message);
     }
   }
 
   console.log('[INBOUND] Browser ring leg created:', webrtcLegId, '| PSTN still ringing:', pstnCallControlId);
+  // #region agent log
+  voiceServerLog({
+    location: 'bridge-to-browser:dialDone',
+    message: 'browser leg created',
+    data: { dbCallId, webrtcLegId },
+    hypothesisId: 'H-H',
+    runId: 'run6',
+  });
+  // #endregion
   return { ok: true, strategy: 'dial_bridge', webrtc_leg_id: webrtcLegId };
 }
 

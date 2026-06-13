@@ -57,6 +57,10 @@ export interface WebPhoneContextValue {
   waitForPhoneReady: (timeoutMs?: number) => Promise<boolean>;
   /** Wait until an inbound WebRTC leg is ringing in the browser. */
   waitForInboundWebRtcLeg: (timeoutMs?: number) => Promise<boolean>;
+  /** Suppress stale-leg teardown while inbound accept is in flight. */
+  setInboundAcceptInFlight: (active: boolean) => void;
+  /** Synchronous inbound ring flag (not one React frame behind). */
+  isInboundRingingLive: () => boolean;
 }
 
 const WebPhoneContext = createContext<WebPhoneContextValue | null>(null);
@@ -77,6 +81,12 @@ function isIncomingTelnyxCall(call: Call, outboundDialActive: boolean): boolean 
     return ['ringing', 'early', 'new', 'trying', 'requesting'].includes(state ?? '');
   }
   return true;
+}
+
+function isLiveIncomingTelnyxCall(call: Call, outboundDialActive: boolean): boolean {
+  if (!isIncomingTelnyxCall(call, outboundDialActive)) return false;
+  const state = (call as { state?: string }).state?.toLowerCase();
+  return ['ringing', 'early', 'new', 'trying', 'requesting', 'active'].includes(state ?? '');
 }
 
 function mapCallState(state: string): WebRTCCallStatus {
@@ -190,6 +200,17 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const reconnectDuringCallRef = useRef(false);
   const voicePrepareAttemptedRef = useRef(false);
   const presenceMetaRef = useRef<{ sip_username?: string; credential_id?: string }>({});
+  const acceptingInboundRef = useRef(false);
+  const isInboundRingingLiveRef = useRef(false);
+
+  const setInboundAcceptInFlight = useCallback((active: boolean) => {
+    acceptingInboundRef.current = active;
+  }, []);
+
+  const isInboundRingingLive = useCallback(() => {
+    const target = incomingCallRef.current ?? activeCallRef.current;
+    return Boolean(target && isLiveIncomingTelnyxCall(target, outboundDialRef.current));
+  }, []);
 
   const safeSet = useCallback(<T,>(setter: (v: T) => void, value: T) => {
     if (mountedRef.current) setter(value);
@@ -347,12 +368,46 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         if (incoming) {
           outboundDialRef.current = false;
           safeSet(setHasOutboundSession, false);
-          incomingCallRef.current = call;
+          const terminal = mapped === 'ended' || mapped === 'idle';
+          const tracked = incomingCallRef.current;
+          if (!terminal) {
+            incomingCallRef.current = call;
+            if (typeof window !== 'undefined') {
+              (window as unknown as { __gdIncomingCallId?: string }).__gdIncomingCallId = call.id ?? undefined;
+            }
+          } else if (!tracked || tracked.id === call.id) {
+            incomingCallRef.current = null;
+            if (typeof window !== 'undefined') {
+              (window as unknown as { __gdIncomingCallId?: string }).__gdIncomingCallId = undefined;
+            }
+          }
+          // #region agent log
+          if (terminal && tracked && tracked.id !== call.id) {
+            voiceSessionLog({
+              location: 'webphone-context.tsx:staleLegEnded',
+              message: 'ignored stale inbound leg end — keeping live invite',
+              data: { endedCallId: call.id, liveCallId: tracked.id, mapped },
+              hypothesisId: 'H-I',
+              runId: 'run6',
+            });
+          }
+          // #endregion
         }
 
-        activeCallRef.current = call;
-        safeSet(setActiveCallId, call.id ?? null);
-        safeSet(setCallStatus, mapped);
+        if (mapped !== 'ended') {
+          activeCallRef.current = call;
+        } else if (activeCallRef.current?.id === call.id) {
+          activeCallRef.current = incomingCallRef.current;
+        }
+        const liveTarget = incomingCallRef.current ?? activeCallRef.current;
+        const liveMapped = liveTarget && isLiveIncomingTelnyxCall(liveTarget, outboundDialRef.current)
+          ? mapCallState((liveTarget as { state?: string }).state ?? 'idle')
+          : mapped;
+        const statusToSet = (mapped === 'ended' && liveTarget && liveTarget.id !== call.id)
+          ? liveMapped
+          : mapped;
+        safeSet(setActiveCallId, liveTarget?.id ?? null);
+        safeSet(setCallStatus, statusToSet);
 
         // #region agent log
         if (incoming) {
@@ -375,6 +430,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           if (!inboundRingStartedRef.current) {
             inboundRingStartedRef.current = Date.now();
           }
+          isInboundRingingLiveRef.current = true;
           safeSet(setIsInboundRinging, true);
           bindPeerMonitor(call);
           if (mapped === 'ringing') {
@@ -383,13 +439,21 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         } else if (incoming && mapped === 'active') {
           bindRemoteMediaToAudio(call);
           bindPeerMonitor(call);
+          isInboundRingingLiveRef.current = false;
           safeSet(setIsInboundRinging, false);
           inboundRingStartedRef.current = null;
           window.dispatchEvent(new CustomEvent('gd-webrtc-inbound-active'));
-        } else if (!outboundDialRef.current && (mapped === 'ended' || mapped === 'idle')) {
-          inboundRingStartedRef.current = null;
-          safeSet(setIsInboundRinging, false);
+        } else if (incoming && !outboundDialRef.current && (mapped === 'ended' || mapped === 'idle')) {
+          if (incomingCallRef.current?.id === call.id) {
+            incomingCallRef.current = null;
+          }
+          if (!acceptingInboundRef.current && !incomingCallRef.current) {
+            inboundRingStartedRef.current = null;
+            isInboundRingingLiveRef.current = false;
+            safeSet(setIsInboundRinging, false);
+          }
         } else if (outboundDialRef.current) {
+          isInboundRingingLiveRef.current = false;
           safeSet(setIsInboundRinging, false);
         }
 
@@ -412,24 +476,41 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         }
 
         if (mapped === 'ended') {
+          const endedId = call.id;
           peerCleanupRef.current?.();
           peerCleanupRef.current = null;
           safeSet(setVoiceQuality, 'unknown');
           safeSet(setIceConnectionState, null);
           safeSet(setIsReconnecting, false);
-          activeCallRef.current = null;
-          incomingCallRef.current = null;
+          if (activeCallRef.current?.id === endedId) {
+            activeCallRef.current = incomingCallRef.current;
+          }
+          if (incomingCallRef.current?.id === endedId) {
+            incomingCallRef.current = null;
+          }
           outboundDialRef.current = false;
-          inboundRingStartedRef.current = null;
-          safeSet(setIsInboundRinging, false);
-          safeSet(setHasOutboundSession, false);
-          safeSet(setActiveCallId, null);
-          safeSet(setIsMuted, false);
-          safeSet(setIsOnHold, false);
-          // Brief delay so consumers see 'ended' before we flip to 'idle'
-          setTimeout(() => {
-            if (mountedRef.current) setCallStatus('idle');
-          }, 800);
+          const stillLive = Boolean(
+            incomingCallRef.current
+            && isLiveIncomingTelnyxCall(incomingCallRef.current, outboundDialRef.current),
+          );
+          if (!acceptingInboundRef.current && !stillLive) {
+            inboundRingStartedRef.current = null;
+            isInboundRingingLiveRef.current = false;
+            safeSet(setIsInboundRinging, false);
+            safeSet(setHasOutboundSession, false);
+            safeSet(setActiveCallId, null);
+            safeSet(setIsMuted, false);
+            safeSet(setIsOnHold, false);
+            setTimeout(() => {
+              if (mountedRef.current && !activeCallRef.current && !incomingCallRef.current) {
+                setCallStatus('idle');
+              }
+            }, 800);
+          } else if (stillLive) {
+            isInboundRingingLiveRef.current = true;
+            safeSet(setIsInboundRinging, true);
+            safeSet(setActiveCallId, incomingCallRef.current?.id ?? null);
+          }
         }
         return;
         }
@@ -645,7 +726,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       const deadline = Date.now() + timeoutMs;
       const check = () => {
         const target = incomingCallRef.current ?? activeCallRef.current;
-        if (target && isIncomingTelnyxCall(target, outboundDialRef.current)) {
+        if (target && isLiveIncomingTelnyxCall(target, outboundDialRef.current)) {
           resolve(true);
           return;
         }
@@ -661,7 +742,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
   const resolveInboundTarget = useCallback((): Call | null => {
     const target = incomingCallRef.current ?? activeCallRef.current;
-    if (target && isIncomingTelnyxCall(target, outboundDialRef.current)) {
+    if (target && isLiveIncomingTelnyxCall(target, outboundDialRef.current)) {
       return target;
     }
     return null;
@@ -796,6 +877,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         requestMicPermission,
         waitForPhoneReady,
         waitForInboundWebRtcLeg,
+        setInboundAcceptInFlight,
+        isInboundRingingLive,
       }}
     >
       {/* Hidden audio — Telnyx WebRTC plays remote caller audio through this element */}
