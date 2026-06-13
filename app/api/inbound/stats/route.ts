@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       .from('purchased_numbers')
       .select('id, phone_number, is_default, status, label')
       .eq('user_id', user.id)
-      .neq('status', 'released')
+      .eq('status', 'active')
       .order('is_default', { ascending: false }),
     supabase
       .from('calls')

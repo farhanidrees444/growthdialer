@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       .from('purchased_numbers')
       .select('id, phone_number, status, telnyx_number_id, is_default')
       .eq('user_id', user.id)
-      .neq('status', 'released')
+      .eq('status', 'active')
       .order('is_default', { ascending: false }),
     supabase
       .from('calls')
