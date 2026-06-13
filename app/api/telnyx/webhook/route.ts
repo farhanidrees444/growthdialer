@@ -409,21 +409,28 @@ export async function POST(request: NextRequest) {
           }
         }
         } else {
-        // ── OUTBOUND CALL (existing upsert logic) ────────────────────────────
-        const { error } = await supabase
+        // ── OUTBOUND CALL — update existing row only (WebRTC dial route owns insert) ──
+        const { data: existingOutbound } = await supabase
           .from('calls')
-          .upsert(
-            {
-              telnyx_call_id: callControlId,
+          .select('id')
+          .eq('telnyx_call_id', callControlId)
+          .maybeSingle();
+
+        if (existingOutbound) {
+          const { error } = await supabase
+            .from('calls')
+            .update({
               telnyx_session_id: callSessionId ?? null,
               status: 'ringing',
               from_number: payload.from ?? null,
               to_number: payload.to ?? null,
-            },
-            { onConflict: 'telnyx_call_id', ignoreDuplicates: false },
-          );
-        if (error) console.error('[WEBHOOK] call.initiated upsert error:', error);
-        else console.log('[WEBHOOK] call.initiated — upserted, session_id:', callSessionId);
+            })
+            .eq('id', existingOutbound.id);
+          if (error) console.error('[WEBHOOK] call.initiated outbound update error:', error);
+          else console.log('[WEBHOOK] call.initiated — updated outbound row:', existingOutbound.id);
+        } else {
+          console.log('[WEBHOOK] call.initiated — outbound row pending (awaiting /api/calls/dial):', callControlId);
+        }
         }
       }
     }

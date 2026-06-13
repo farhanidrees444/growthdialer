@@ -217,7 +217,7 @@ export default function DialerPage() {
       const res = await apiFetch('/api/numbers/list');
       if (!res.ok) return;
       const data = await res.json() as { numbers?: Array<{ phone_number: string; is_default: boolean; status: string }> };
-      const nums = (data.numbers ?? []).filter((n) => n.status !== 'released');
+      const nums = (data.numbers ?? []).filter((n) => n.status === 'active');
       const defaultNum = nums.find((n) => n.is_default) ?? nums[0];
       if (defaultNum?.phone_number) setFromNumber(defaultNum.phone_number);
     } catch { /* non-fatal */ }
@@ -359,7 +359,7 @@ export default function DialerPage() {
         const res = await apiFetch('/api/numbers/list');
         if (res.ok) {
           const data = await res.json() as { numbers?: Array<{ phone_number: string; is_default: boolean; status: string }> };
-          const nums = (data.numbers ?? []).filter((n) => n.status !== 'released');
+          const nums = (data.numbers ?? []).filter((n) => n.status === 'active');
           const defaultNum = nums.find((n) => n.is_default) ?? nums[0];
           callerId = defaultNum?.phone_number ?? '';
           if (callerId) setFromNumber(callerId);

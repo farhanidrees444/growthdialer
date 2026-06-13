@@ -54,32 +54,69 @@ export async function POST(request: NextRequest) {
     }
 
     const { fromNumber } = await resolveCallerIdForLead(supabase, userId, leadPhone ?? to);
+    if (!fromNumber) {
+      return NextResponse.json(
+        { error: 'No active caller ID — purchase a number and set it as default.' },
+        { status: 422 },
+      );
+    }
 
     // ── WebRTC mode: browser already dialed via SDK ──────────────────────────
     // call_control_id comes from the TelnyxRTC newCall() return value.
     // We just persist the DB record here; Telnyx webhooks update status.
     // Returns db_id (UUID) so the client can use it for notes/disposition APIs.
     if (call_control_id) {
-      let dbId: string | null = null;
       const nowIso = new Date().toISOString();
+      const row = {
+        user_id: userId,
+        workspace_id: access.workspaceId,
+        lead_id: lead_id ?? null,
+        direction: 'outbound' as const,
+        to_number: e164,
+        from_number: fromNumber,
+        telnyx_call_id: call_control_id,
+        status: 'initiated',
+        started_at: nowIso,
+        created_at: nowIso,
+      };
+
       const { data: insertedRow, error: insertError } = await supabase
         .from('calls')
-        .insert({
-          user_id: userId,
-          workspace_id: access.workspaceId,
-          lead_id: lead_id ?? null,
-          direction: 'outbound',
-          to_number: e164,
-          from_number: fromNumber,
-          telnyx_call_id: call_control_id,
-          status: 'initiated',
-          started_at: nowIso,
-          created_at: nowIso,
-        })
+        .insert(row)
         .select('id')
         .single();
-      if (insertError) console.error('[dial] insert error:', insertError);
-      dbId = insertedRow?.id ?? null;
+
+      let dbId: string | null = insertedRow?.id ?? null;
+
+      if (insertError) {
+        const { data: existing } = await supabase
+          .from('calls')
+          .select('id, user_id, workspace_id')
+          .eq('telnyx_call_id', call_control_id)
+          .maybeSingle();
+
+        if (existing?.id) {
+          const { data: repaired } = await supabase
+            .from('calls')
+            .update({
+              user_id: existing.user_id ?? userId,
+              workspace_id: existing.workspace_id ?? access.workspaceId,
+              lead_id: lead_id ?? null,
+              direction: 'outbound',
+              to_number: e164,
+              from_number: fromNumber,
+              status: 'initiated',
+              started_at: nowIso,
+            })
+            .eq('id', existing.id)
+            .select('id')
+            .single();
+          dbId = repaired?.id ?? existing.id;
+        } else {
+          console.error('[dial] insert error:', insertError);
+        }
+      }
+
       return NextResponse.json({ call_control_id, db_id: dbId, to: e164, status: 'initiated' });
     }
 

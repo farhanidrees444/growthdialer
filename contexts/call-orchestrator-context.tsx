@@ -151,24 +151,41 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
     }
   }, [callStatus, activePhone, activeLead, isInboundRinging, hasOutboundSession]);
 
-  // Register DB call once Telnyx assigns call_control_id
+  // Register DB call once Telnyx assigns call_control_id (retry — webhook race can precede insert)
   useEffect(() => {
     if (isInboundRinging && !hasOutboundSession) return;
     if (!activeCallId || !pendingRegRef.current) return;
     const { e164, leadId } = pendingRegRef.current;
-    pendingRegRef.current = null;
 
-    void apiFetch('/api/calls/dial', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: e164, lead_id: leadId, call_control_id: activeCallId }),
-    })
-      .then((r) => r.json())
-      .then((data: { db_id?: string; call_control_id?: string }) => {
-        const id = data.db_id ?? data.call_control_id ?? null;
-        if (id) setCallDbId(id);
-      })
-      .catch(() => { /* non-fatal */ });
+    const register = async (attempt = 0): Promise<void> => {
+      try {
+        const r = await apiFetch('/api/calls/dial', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: e164, lead_id: leadId, call_control_id: activeCallId }),
+        });
+        const data = await r.json() as { db_id?: string; error?: string };
+        if (data.db_id) {
+          pendingRegRef.current = null;
+          setCallDbId(data.db_id);
+          return;
+        }
+        if (attempt < 4) {
+          await new Promise((resolve) => setTimeout(resolve, 200 * (attempt + 1) ** 2));
+          return register(attempt + 1);
+        }
+        console.error('[CallOrchestrator] call registration failed after retries:', data.error);
+        toast.error('Call connected but logging failed — disposition may not save.');
+      } catch (err) {
+        if (attempt < 4) {
+          await new Promise((resolve) => setTimeout(resolve, 200 * (attempt + 1) ** 2));
+          return register(attempt + 1);
+        }
+        console.error('[CallOrchestrator] call registration error:', err);
+      }
+    };
+
+    void register();
   }, [activeCallId, apiFetch, isInboundRinging, hasOutboundSession]);
 
   const autoSaveVoicemail = useCallback(async (dbId: string) => {
