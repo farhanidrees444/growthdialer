@@ -99,7 +99,7 @@ const PREPARE_URL = '/api/voice/prepare';
 const PRESENCE_URL = '/api/voice/presence';
 
 async function reportVoicePresence(
-  phoneStatus: PhoneStatus,
+  phoneStatus: PhoneStatus | 'offline',
   meta?: { sip_username?: string; credential_id?: string },
 ): Promise<void> {
   try {
