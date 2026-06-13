@@ -7,6 +7,7 @@ import { apiUnauthorized } from '@/lib/api/errors';
 import type { DialerQueueConfig } from '@/lib/dialer/queue-query';
 import { dialParallelBatch } from '@/lib/parallel-dial/dial-batch';
 import { clampParallelLines } from '@/lib/parallel-dial/architecture';
+import type { ParallelDialSession } from '@/lib/parallel-dial/types';
 
 export async function POST(request: NextRequest) {
   try {

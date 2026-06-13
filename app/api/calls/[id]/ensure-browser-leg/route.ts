@@ -58,6 +58,10 @@ export async function POST(
     }
 
     const service = createServiceClient();
+    if (!service) {
+      return NextResponse.json({ error: 'Service unavailable' }, { status: 503 });
+    }
+
     const result = await ringBrowserForInbound(
       service,
       user.id,

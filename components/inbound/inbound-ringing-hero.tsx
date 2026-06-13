@@ -3,12 +3,7 @@
 import { motion } from 'framer-motion';
 import { Loader2, Phone, PhoneOff, User } from 'lucide-react';
 import type { InboundRingingCall } from '@/hooks/use-inbound-ringing';
-
-function formatPhone(e164: string): string {
-  const m = e164.match(/^\+1(\d{3})(\d{3})(\d{4})$/);
-  if (m) return `+1 (${m[1]}) ${m[2]}-${m[3]}`;
-  return e164;
-}
+import { formatInboundCallerDisplay } from '@/lib/inbound/phone';
 
 interface Props {
   call: InboundRingingCall;
@@ -104,7 +99,7 @@ export function InboundRingingHero({ call, onAccept, onDecline, accepting = fals
             {call.lead?.company && (
               <p className="mt-0.5 text-sm text-white/55">{call.lead.company}</p>
             )}
-            <p className="mt-2 font-mono text-sm text-white/40">{formatPhone(call.from_number)}</p>
+            <p className="mt-2 font-mono text-sm text-white/40">{formatInboundCallerDisplay(call.from_number)}</p>
             {accepting && (
               <div className="mt-4">
                 <WaveformBars />

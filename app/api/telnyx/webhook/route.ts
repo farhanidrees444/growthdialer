@@ -324,7 +324,7 @@ export async function POST(request: NextRequest) {
 
         console.log('[INBOUND] Call record created:', newCall?.id, '| lead:', lead?.id ?? 'unknown', '| workspace:', workspaceId ?? 'none');
 
-        const inboundSettings = inboundSettingsResult.data;
+        const inboundSettings = inboundSettingsRes.data;
         const mode = (inboundSettings?.inbound_mode as string | null) ?? 'browser';
         const configuredRing = (inboundSettings?.inbound_ring_seconds as number | null) ?? 25;
         // Browser dial leg uses 60s timeout — voicemail must not fire earlier.

@@ -98,7 +98,7 @@ export async function dialParallelBatch(
       });
 
       const result = await telnyxClient.calls.dial(
-        dialBody as Parameters<typeof telnyxClient.calls.dial>[0],
+        dialBody as unknown as Parameters<typeof telnyxClient.calls.dial>[0],
       );
 
       const callControlId = result.data?.call_control_id;
