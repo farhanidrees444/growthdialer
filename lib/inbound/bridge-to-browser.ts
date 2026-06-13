@@ -15,7 +15,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** DB sentinel while a browser-leg dial is in flight (prevents duplicate Telnyx dials). */
 export const DIAL_PENDING = 'dial_pending';
 
-async function waitForBrowserLegId(
+export async function waitForBrowserLegId(
   supabase: SupabaseClient,
   dbCallId: string,
   maxMs = 4000,
@@ -77,16 +77,30 @@ export async function ringBrowserForInbound(
     return { ok: false, strategy: 'none' };
   }
 
-  if (dbCallId) {
+  // Webhook insert races may call without dbCallId — resolve row by PSTN leg for dedup.
+  let resolvedDbCallId = dbCallId;
+  if (!resolvedDbCallId) {
+    const { data: byPstn } = await supabase
+      .from('calls')
+      .select('id')
+      .eq('telnyx_call_id', pstnCallControlId)
+      .eq('direction', 'inbound')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (byPstn?.id) resolvedDbCallId = byPstn.id;
+  }
+
+  if (resolvedDbCallId) {
     const { data: existing } = await supabase
       .from('calls')
       .select('telnyx_webrtc_leg_id')
-      .eq('id', dbCallId)
+      .eq('id', resolvedDbCallId)
       .maybeSingle();
     const leg = existing?.telnyx_webrtc_leg_id ?? null;
     if (leg && !options?.forceRedial) {
       if (leg === DIAL_PENDING) {
-        const waited = await waitForBrowserLegId(supabase, dbCallId, 8000);
+        const waited = await waitForBrowserLegId(supabase, resolvedDbCallId, 8000);
         if (waited) {
           console.log('[INBOUND] Browser leg dial completed (waited):', waited);
           return { ok: true, strategy: 'dial_bridge', webrtc_leg_id: waited };
@@ -95,15 +109,15 @@ export async function ringBrowserForInbound(
         await supabase
           .from('calls')
           .update({ telnyx_webrtc_leg_id: null })
-          .eq('id', dbCallId)
+          .eq('id', resolvedDbCallId)
           .eq('telnyx_webrtc_leg_id', DIAL_PENDING);
         // #region agent log
         voiceServerLog({
           location: 'bridge-to-browser:stalePendingCleared',
           message: 'cleared stale dial_pending — retrying dial',
-          data: { dbCallId },
+          data: { dbCallId: resolvedDbCallId },
           hypothesisId: 'H-J',
-          runId: 'run7',
+          runId: 'run9',
         });
         // #endregion
       } else {
@@ -123,20 +137,20 @@ export async function ringBrowserForInbound(
       await supabase
         .from('calls')
         .update({ telnyx_webrtc_leg_id: null })
-        .eq('id', dbCallId);
+        .eq('id', resolvedDbCallId);
     }
 
     // Claim dial — only one concurrent request dials per call row.
     const { data: claimed } = await supabase
       .from('calls')
       .update({ telnyx_webrtc_leg_id: DIAL_PENDING })
-      .eq('id', dbCallId)
+      .eq('id', resolvedDbCallId)
       .is('telnyx_webrtc_leg_id', null)
       .select('id')
       .maybeSingle();
 
     if (!claimed && !options?.forceRedial) {
-      const waited = await waitForBrowserLegId(supabase, dbCallId, 8000);
+      const waited = await waitForBrowserLegId(supabase, resolvedDbCallId, 8000);
       if (waited) {
         console.log('[INBOUND] Browser leg claimed by peer (waited):', waited);
         return { ok: true, strategy: 'dial_bridge', webrtc_leg_id: waited };
@@ -144,16 +158,16 @@ export async function ringBrowserForInbound(
       const { data: pendingRow } = await supabase
         .from('calls')
         .select('telnyx_webrtc_leg_id')
-        .eq('id', dbCallId)
+        .eq('id', resolvedDbCallId)
         .maybeSingle();
       if (pendingRow?.telnyx_webrtc_leg_id === DIAL_PENDING) {
         // #region agent log
         voiceServerLog({
           location: 'bridge-to-browser:skipDuplicateDial',
           message: 'peer dial in flight — skipping duplicate',
-          data: { dbCallId },
+          data: { dbCallId: resolvedDbCallId },
           hypothesisId: 'H-H',
-          runId: 'run6',
+          runId: 'run9',
         });
         // #endregion
         return { ok: true, strategy: 'dial_bridge' };
@@ -181,9 +195,9 @@ export async function ringBrowserForInbound(
   voiceServerLog({
     location: 'bridge-to-browser:dialStart',
     message: 'originating browser leg',
-    data: { dbCallId, pstnCallControlId },
+    data: { dbCallId: resolvedDbCallId ?? dbCallId, pstnCallControlId },
     hypothesisId: 'H-H',
-    runId: 'run6',
+    runId: 'run9',
   });
   // #endregion
 
@@ -197,25 +211,29 @@ export async function ringBrowserForInbound(
       gd_inbound_bridge: true,
       pstn_call_control_id: pstnCallControlId,
       user_id: userId,
-      db_call_id: dbCallId ?? null,
+      db_call_id: resolvedDbCallId ?? dbCallId ?? null,
       caller_ani: callerAni,
     },
   };
 
-  let dialed = await dialVoiceLeg(dialParams);
+  const dialed = await dialVoiceLeg(dialParams);
   if (!dialed.ok || !dialed.call_control_id) {
-    console.warn('[INBOUND] dial WebRTC leg failed (attempt 1):', dialed.detail?.slice(0, 200));
-    await sleep(500);
-    dialed = await dialVoiceLeg(dialParams);
-  }
-
-  if (!dialed.ok || !dialed.call_control_id) {
-    console.warn('[INBOUND] dial WebRTC leg failed (attempt 2):', dialed.detail?.slice(0, 200));
-    if (dbCallId) {
+    console.warn('[INBOUND] dial WebRTC leg failed:', dialed.detail?.slice(0, 200));
+    // #region agent log
+    voiceServerLog({
+      location: 'bridge-to-browser:dialFailed',
+      message: 'browser leg dial failed — no automatic retry (prevents duplicate invites)',
+      data: { dbCallId: resolvedDbCallId ?? dbCallId, pstnCallControlId, detail: dialed.detail?.slice(0, 120) },
+      hypothesisId: 'H-O',
+      runId: 'run9',
+    });
+    // #endregion
+    const callRowId = resolvedDbCallId ?? dbCallId;
+    if (callRowId) {
       await supabase
         .from('calls')
         .update({ telnyx_webrtc_leg_id: null })
-        .eq('id', dbCallId)
+        .eq('id', callRowId)
         .eq('telnyx_webrtc_leg_id', DIAL_PENDING);
     }
     return { ok: false, strategy: 'none' };
@@ -223,11 +241,12 @@ export async function ringBrowserForInbound(
 
   const webrtcLegId = dialed.call_control_id;
 
-  if (dbCallId) {
+  const callRowId = resolvedDbCallId ?? dbCallId;
+  if (callRowId) {
     const { error: legErr } = await supabase
       .from('calls')
       .update({ telnyx_webrtc_leg_id: webrtcLegId })
-      .eq('id', dbCallId)
+      .eq('id', callRowId)
       .eq('telnyx_webrtc_leg_id', DIAL_PENDING);
     if (legErr) {
       console.warn('[INBOUND] telnyx_webrtc_leg_id update failed — apply migration 051:', legErr.message);
@@ -239,9 +258,9 @@ export async function ringBrowserForInbound(
   voiceServerLog({
     location: 'bridge-to-browser:dialDone',
     message: 'browser leg created',
-    data: { dbCallId, webrtcLegId },
+    data: { dbCallId: callRowId, webrtcLegId },
     hypothesisId: 'H-H',
-    runId: 'run6',
+    runId: 'run9',
   });
   // #endregion
   return { ok: true, strategy: 'dial_bridge', webrtc_leg_id: webrtcLegId };

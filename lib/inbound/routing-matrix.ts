@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { normalizeE164 } from '@/lib/inbound/phone';
-import { bridgeInboundToBrowser, DIAL_PENDING } from '@/lib/inbound/bridge-to-browser';
+import { bridgeInboundToBrowser, DIAL_PENDING, waitForBrowserLegId } from '@/lib/inbound/bridge-to-browser';
 import { telnyxCallAction } from '@/lib/inbound/telnyx-actions';
 import { triggerInboundRingTimeoutAsync } from '@/lib/inbound/trigger-ring-timeout';
 import { isAgentVoiceReady } from '@/lib/inbound/agent-presence';
@@ -213,6 +213,26 @@ export async function executeInboundRouting(
         { ...logCtx, event: 'browser_ring_pending', webrtc_leg: existingLeg },
         'Inbound browser leg dial in flight — waiting for peer',
       );
+      const waited = await waitForBrowserLegId(supabase, ctx.dbCallId, 8000);
+      if (waited) {
+        // #region agent log
+        voiceServerLog({
+          location: 'routing-matrix:waitedPendingDial',
+          message: 'browser leg dial completed while waiting on dial_pending',
+          data: { callId: ctx.dbCallId, webrtcLegId: waited },
+          hypothesisId: 'H-L',
+          runId: 'run9',
+        });
+        // #endregion
+        triggerInboundRingTimeoutAsync(
+          ctx.dbCallId,
+          ctx.callControlId,
+          ctx.userId,
+          routing.inbound_ring_seconds,
+          'browser',
+        );
+        return;
+      }
     }
   }
 

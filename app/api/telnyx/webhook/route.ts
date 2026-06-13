@@ -14,6 +14,7 @@ import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
 import { voiceApiBearerToken } from '@/lib/voice/read-env';
 import { executeInboundRouting, shouldRecordInboundAnswer } from '@/lib/inbound/routing-matrix';
 import { voiceLog } from '@/lib/voice/structured-log';
+import { voiceServerLog } from '@/lib/debug/voice-server-log';
 
 function directionSaysInbound(direction: string | undefined): boolean | null {
   const d = (direction ?? '').toLowerCase();
@@ -299,7 +300,11 @@ export async function POST(request: NextRequest) {
           })
           : null;
 
-        let newCall: { id: string } | null = existingInbound.data;
+        let newCall: { id: string } | null = existingInbound.data
+          ? { id: existingInbound.data.id }
+          : null;
+        let shouldExecuteRouting = false;
+
         if (!existingInbound.data) {
           const { data: inserted, error: insertErr } = await supabase
             .from('calls')
@@ -318,19 +323,42 @@ export async function POST(request: NextRequest) {
             .select('id')
             .single();
 
-          if (insertErr) {
-            voiceLog.error(
-              {
-                service: 'telnyx-webhook',
-                event: 'call.initiated',
-                user_id: userId,
-                did: toNumber,
-                error: insertErr.message,
-              },
-              'Inbound call insert failed',
-            );
-          } else {
+          if (inserted) {
             newCall = inserted;
+            shouldExecuteRouting = true;
+          } else if (insertErr) {
+            // Concurrent webhooks can race on insert — peer won; never dial twice.
+            const { data: raced } = await supabase
+              .from('calls')
+              .select('id, telnyx_webrtc_leg_id, status')
+              .eq('telnyx_call_id', callControlId)
+              .maybeSingle();
+            if (raced) {
+              newCall = { id: raced.id };
+              voiceServerLog({
+                location: 'webhook:call.initiated:insertRace',
+                message: 'insert race lost — skip routing (peer webhook owns dial)',
+                data: {
+                  callId: raced.id,
+                  leg: raced.telnyx_webrtc_leg_id ?? null,
+                  status: raced.status,
+                  error: insertErr.message,
+                },
+                hypothesisId: 'H-L',
+                runId: 'run9',
+              });
+            } else {
+              voiceLog.error(
+                {
+                  service: 'telnyx-webhook',
+                  event: 'call.initiated',
+                  user_id: userId,
+                  did: toNumber,
+                  error: insertErr.message,
+                },
+                'Inbound call insert failed',
+              );
+            }
           }
         } else {
           voiceLog.debug(
@@ -341,31 +369,44 @@ export async function POST(request: NextRequest) {
             },
             'Reusing existing inbound call record',
           );
+          voiceServerLog({
+            location: 'webhook:call.initiated:skipRouting',
+            message: 'duplicate call.initiated — skip routing (first webhook owns dial)',
+            data: {
+              callId: existingInbound.data.id,
+              leg: existingInbound.data.telnyx_webrtc_leg_id ?? null,
+              status: existingInbound.data.status,
+            },
+            hypothesisId: 'H-L',
+            runId: 'run9',
+          });
         }
 
-        try {
-          await executeInboundRouting(supabase, {
-            callControlId,
-            callSessionId,
-            fromNumber,
-            toNumber,
-            userId,
-            workspaceId: workspaceId ?? null,
-            purchasedNumberId,
-            dbCallId: newCall?.id,
-          });
-        } catch (routeErr) {
-          voiceLog.error(
-            {
-              service: 'telnyx-webhook',
-              event: 'call.initiated',
-              user_id: userId,
-              call_id: newCall?.id,
-              did: toNumber,
-              error: routeErr instanceof Error ? routeErr.message : String(routeErr),
-            },
-            'Inbound routing matrix failed',
-          );
+        if (shouldExecuteRouting && newCall?.id) {
+          try {
+            await executeInboundRouting(supabase, {
+              callControlId,
+              callSessionId,
+              fromNumber,
+              toNumber,
+              userId,
+              workspaceId: workspaceId ?? null,
+              purchasedNumberId,
+              dbCallId: newCall.id,
+            });
+          } catch (routeErr) {
+            voiceLog.error(
+              {
+                service: 'telnyx-webhook',
+                event: 'call.initiated',
+                user_id: userId,
+                call_id: newCall.id,
+                did: toNumber,
+                error: routeErr instanceof Error ? routeErr.message : String(routeErr),
+              },
+              'Inbound routing matrix failed',
+            );
+          }
         }
         } else {
         // ── OUTBOUND CALL (existing upsert logic) ────────────────────────────

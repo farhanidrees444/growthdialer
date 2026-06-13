@@ -332,14 +332,10 @@ export function InboundRingingProvider({
   }, [finishAccept]);
 
   const accept = useCallback(async () => {
-    if (!call || accepting) return;
+    if (!call || acceptingRef.current) return;
     const callId = call.id;
-    let webrtcAlreadyRinging = isInboundRingingLive();
-    if (!webrtcAlreadyRinging) {
-      webrtcAlreadyRinging = await waitForInboundWebRtcLeg(800);
-    }
-    setAccepting(true);
     acceptingRef.current = true;
+    setAccepting(true);
     setInboundAcceptInFlight(true);
     stopInboundRingtone();
 
@@ -353,17 +349,41 @@ export function InboundRingingProvider({
         callStatus,
         isInboundRinging,
         hasOutboundSession,
-        webrtcAlreadyRinging,
+        webrtcAlreadyRinging: isInboundRingingLive(),
         incomingCallId: (window as unknown as { __gdIncomingCallId?: string }).__gdIncomingCallId ?? null,
       },
       hypothesisId: 'H-A,H-D,H-F,H-I',
-      runId: 'run7',
+      runId: 'run9',
     });
     // #endregion
+
+    let webrtcAlreadyRinging = isInboundRingingLive();
+    if (!webrtcAlreadyRinging) {
+      webrtcAlreadyRinging = await waitForInboundWebRtcLeg(1200);
+    }
 
     // User gesture — unlock Web Audio + remote element before WebRTC answer.
     await resumeVoiceAudioContext();
     await unlockRemoteAudioElement();
+
+    if (!webrtcAlreadyRinging) {
+      webrtcAlreadyRinging =
+        isInboundRingingLive() || (await waitForInboundWebRtcLeg(800));
+    }
+
+    // #region agent log
+    voiceSessionLog({
+      location: 'inbound-ringing-context.tsx:accept:afterAudioUnlock',
+      message: 'audio unlocked — proceeding to answer',
+      data: {
+        callId,
+        webrtcAlreadyRinging,
+        incomingCallId: (window as unknown as { __gdIncomingCallId?: string }).__gdIncomingCallId ?? null,
+      },
+      hypothesisId: 'H-M',
+      runId: 'run9',
+    });
+    // #endregion
 
     const leadName = call.lead
       ? [call.lead.first_name, call.lead.last_name].filter(Boolean).join(' ')
@@ -381,7 +401,7 @@ export function InboundRingingProvider({
       call.from_number ?? '',
     );
 
-    // Parallel: mic, short phone-ready check, ensure leg (often pre-warmed on ring).
+    // Parallel: mic, short phone-ready check (webhook already dialed browser — no parallel ensure-leg).
     void requestMicPermission();
 
     // Fast path — SDK already ringing; WebRTC answer MUST happen before REST (REST must not bridge early).
@@ -392,7 +412,7 @@ export function InboundRingingProvider({
         message: 'fast accept — WebRTC already ringing',
         data: { callId, callStatus: callStatusRef.current },
         hypothesisId: 'H-H',
-        runId: 'run8',
+        runId: 'run9',
       });
       // #endregion
       const answered = await answerIncomingCall();
@@ -407,7 +427,7 @@ export function InboundRingingProvider({
         message: 'fast accept finished',
         data: { callId, answered, restOk, callStatus: callStatusRef.current },
         hypothesisId: 'H-H,H-K',
-        runId: 'run8',
+        runId: 'run9',
       });
       // #endregion
       if (restOk || answered || callStatusRef.current === 'active') {
@@ -439,7 +459,12 @@ export function InboundRingingProvider({
 
     const [, ensureResult] = await Promise.all([
       waitForPhoneReady(3000),
-      webrtcAlreadyRinging ? Promise.resolve({ ok: true as const, webrtcLegId: null as string | null, created: false, status: 200 }) : ensureBrowserLeg(false),
+      Promise.resolve({
+        ok: true as const,
+        webrtcLegId: null as string | null,
+        created: false,
+        status: 200,
+      }),
     ]);
 
     // #region agent log
@@ -460,8 +485,8 @@ export function InboundRingingProvider({
 
     let webrtcLegId = ensureResult.webrtcLegId;
 
-    // Brief wait for SDK invite — overlay often appears before WebRTC rings.
-    let legReady = await waitForInboundWebRtcLeg(webrtcAlreadyRinging ? 1500 : 4000);
+    // Brief wait for SDK invite — webhook already dialed the browser leg.
+    let legReady = await waitForInboundWebRtcLeg(webrtcAlreadyRinging ? 2000 : 6000);
 
     // #region agent log
     voiceSessionLog({
