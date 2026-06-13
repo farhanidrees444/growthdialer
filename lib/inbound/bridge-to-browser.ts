@@ -60,8 +60,7 @@ async function resolveBrowserSipUri(
 }
 
 /**
- * Ring the browser WebRTC client — do NOT answer PSTN or bridge yet.
- * Caller keeps hearing ring until the agent accepts in the browser.
+ * Dial the agent's WebRTC leg (Leg B) on accept — PSTN (Leg A) stays on hold until bridge.
  */
 export async function ringBrowserForInbound(
   supabase: SupabaseClient,

@@ -1,15 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { normalizeE164 } from '@/lib/inbound/phone';
-import { bridgeInboundToBrowser, DIAL_PENDING, waitForBrowserLegId } from '@/lib/inbound/bridge-to-browser';
 import { telnyxCallAction } from '@/lib/inbound/telnyx-actions';
 import { triggerInboundRingTimeoutAsync } from '@/lib/inbound/trigger-ring-timeout';
 import { isAgentVoiceReady } from '@/lib/inbound/agent-presence';
+import { startInboundHoldPlayback } from '@/lib/inbound/hold-playback';
+import { logInboundCallStep } from '@/lib/inbound/call-step-log';
 import {
   resolveNumberRouting,
   type ResolvedNumberRouting,
 } from '@/lib/voice/phone-number-settings';
 import { voiceLog } from '@/lib/voice/structured-log';
-import { voiceServerLog } from '@/lib/debug/voice-server-log';
 
 export interface InboundInitiatedContext {
   callControlId: string;
@@ -175,106 +175,27 @@ export async function executeInboundRouting(
     return;
   }
 
-  // browser mode — always ring WebRTC first; presence only informs fallback reason
+  // browser mode — notify agent via DB/realtime; Leg B dialed only on accept
   const agentOnline = await isAgentVoiceReady(supabase, ctx.userId);
 
-  if (ctx.dbCallId) {
-    const { data: existingRow } = await supabase
-      .from('calls')
-      .select('telnyx_webrtc_leg_id')
-      .eq('id', ctx.dbCallId)
-      .maybeSingle();
-    const existingLeg = existingRow?.telnyx_webrtc_leg_id ?? null;
-    if (existingLeg && existingLeg !== DIAL_PENDING) {
-      // #region agent log
-      voiceServerLog({
-        location: 'routing-matrix:skipDuplicateRoute',
-        message: 'browser leg already queued — skip duplicate routing dial',
-        data: { callId: ctx.dbCallId, existingLeg },
-        hypothesisId: 'H-H',
-        runId: 'run6',
-      });
-      // #endregion
-      voiceLog.info(
-        { ...logCtx, event: 'browser_ring_skipped', webrtc_leg: existingLeg },
-        'Inbound browser leg already queued — skipping duplicate dial',
-      );
-      triggerInboundRingTimeoutAsync(
-        ctx.dbCallId,
-        ctx.callControlId,
-        ctx.userId,
-        routing.inbound_ring_seconds,
-        'browser',
-      );
-      return;
-    }
-    if (existingLeg === DIAL_PENDING) {
-      voiceLog.info(
-        { ...logCtx, event: 'browser_ring_pending', webrtc_leg: existingLeg },
-        'Inbound browser leg dial in flight — waiting for peer',
-      );
-      const waited = await waitForBrowserLegId(supabase, ctx.dbCallId, 8000);
-      if (waited) {
-        // #region agent log
-        voiceServerLog({
-          location: 'routing-matrix:waitedPendingDial',
-          message: 'browser leg dial completed while waiting on dial_pending',
-          data: { callId: ctx.dbCallId, webrtcLegId: waited },
-          hypothesisId: 'H-L',
-          runId: 'run9',
-        });
-        // #endregion
-        triggerInboundRingTimeoutAsync(
-          ctx.dbCallId,
-          ctx.callControlId,
-          ctx.userId,
-          routing.inbound_ring_seconds,
-          'browser',
-        );
-        return;
-      }
-    }
-  }
-
-  const bridged = await bridgeInboundToBrowser(
+  const playbackOk = await startInboundHoldPlayback(ctx.callControlId);
+  await logInboundCallStep(
     supabase,
-    ctx.userId,
     ctx.callControlId,
-    ctx.fromNumber ?? '',
-    ctx.toNumber,
-    ctx.dbCallId,
+    playbackOk ? 'leg_a_playback_started' : 'leg_a_playback_started',
+    playbackOk ? { telnyx_status: 'ok' } : { telnyx_status: 'error', error_message: 'playback_start failed' },
   );
-
-  if (!bridged.ok) {
-    voiceLog.warn(
-      {
-        ...logCtx,
-        event: 'bridge_failed',
-        agent_online: agentOnline,
-        strategy: bridged.strategy,
-      },
-      agentOnline
-        ? 'Browser bridge failed — using DB fallback route'
-        : 'Browser bridge failed while agent presence stale — using DB fallback route',
-    );
-    await applyBrowserFallback(
-      supabase,
-      ctx,
-      routing,
-      agentOnline ? 'bridge_failed' : 'agent_offline',
-    );
-    return;
-  }
+  await logInboundCallStep(supabase, ctx.callControlId, 'agent_notified');
 
   if (!agentOnline) {
     voiceLog.info(
-      { ...logCtx, event: 'browser_ring_stale_presence', webrtc_leg: bridged.webrtc_leg_id },
-      'Inbound ringing browser despite stale presence heartbeat',
+      { ...logCtx, event: 'browser_notify_stale_presence' },
+      'Inbound notified agent (stale presence heartbeat)',
     );
   } else {
     voiceLog.info(
-      { ...logCtx, event: 'browser_ring', webrtc_leg: bridged.webrtc_leg_id },
-      'Inbound ringing browser',
+      { ...logCtx, event: 'browser_notify' },
+      'Inbound agent notified — awaiting accept',
     );
   }
 

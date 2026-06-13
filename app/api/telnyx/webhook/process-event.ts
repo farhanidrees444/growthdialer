@@ -15,6 +15,8 @@ import { voiceLog } from '@/lib/voice/structured-log';
 import { voiceServerLog } from '@/lib/debug/voice-server-log';
 import type { FastAnswerResult } from '@/lib/telnyx/fast-answer';
 import { logCallEvent } from '@/lib/webhooks/log-call-event';
+import { startInboundHoldPlayback } from '@/lib/inbound/hold-playback';
+import { logInboundCallStep } from '@/lib/inbound/call-step-log';
 
 function directionSaysInbound(direction: string | undefined): boolean | null {
   const d = (direction ?? '').toLowerCase();
@@ -590,6 +592,9 @@ export async function processTelnyxWebhookBackground(
             })
             .eq('id', dbCallId);
 
+          await logInboundCallStep(supabase, pstnId, 'call_bridged');
+          await logInboundCallStep(supabase, callControlId, 'leg_b_answered');
+
           const userId = answeredBridgeState.user_id as string | undefined;
           if (userId && dbCallId) {
             const { data: callRow } = await supabase
@@ -644,6 +649,25 @@ export async function processTelnyxWebhookBackground(
       }
 
       console.log('[WEBHOOK] call.answered — call id:', callRow.id);
+
+      // Inbound Leg A: PSTN answered + hold only — stay ringing until agent accepts and Leg B bridges.
+      if (
+        callRow.direction === 'inbound'
+        && (callRow.status === 'ringing' || callRow.status === null)
+        && !callRow.answered_at
+        && callControlId
+        && callRow.telnyx_call_id === callControlId
+      ) {
+        const playbackOk = await startInboundHoldPlayback(callControlId);
+        await logInboundCallStep(
+          supabase,
+          callControlId,
+          playbackOk ? 'leg_a_playback_started' : 'leg_a_answered',
+          playbackOk ? { telnyx_status: 'ok' } : { telnyx_status: 'error', error_message: 'playback_start failed' },
+        );
+        await logInboundCallStep(supabase, callControlId, 'leg_a_answered');
+        return;
+      }
 
       // Update status (also save session ID here as a safety net)
       const nextStatus = callRow.direction === 'inbound' ? 'in_progress' : 'answered';

@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { telnyxCallAction } from '@/lib/inbound/telnyx-actions';
+import { stopInboundHoldPlayback } from '@/lib/inbound/hold-playback';
+import { logInboundCallStep } from '@/lib/inbound/call-step-log';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -50,7 +52,10 @@ export async function processInboundRingTimeout(
 
   console.log('[INBOUND] Ring timeout — cascading to voicemail:', callId);
 
-  await telnyxCallAction(callControlId, 'answer');
+  await stopInboundHoldPlayback(callControlId);
+  await logInboundCallStep(supabase, callControlId, 'leg_a_playback_stopped');
+  await logInboundCallStep(supabase, callControlId, 'ring_timeout');
+
   await telnyxCallAction(callControlId, 'record_start', {
     format: 'mp3',
     channels: 'single',

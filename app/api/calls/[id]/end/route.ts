@@ -4,6 +4,11 @@ import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/worksp
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
 import { emitCallWebhooks } from '@/lib/webhooks/outgoing';
+import { stopInboundHoldPlayback } from '@/lib/inbound/hold-playback';
+import { telnyxCallAction } from '@/lib/inbound/telnyx-actions';
+import { createServiceClient } from '@/lib/supabase/service';
+import { logInboundCallStep } from '@/lib/inbound/call-step-log';
+import { DIAL_PENDING } from '@/lib/inbound/bridge-to-browser';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -32,14 +37,34 @@ export async function POST(request: NextRequest, { params }: Ctx) {
   const controlId = call.telnyx_call_id ?? callControlId;
 
   let skipHangup = false;
+  let declined = false;
   try {
-    const body = await request.json() as { skip_hangup?: boolean };
+    const body = await request.json() as { skip_hangup?: boolean; declined?: boolean };
     skipHangup = Boolean(body?.skip_hangup);
+    declined = Boolean(body?.declined);
   } catch {
     /* empty body */
   }
 
   try {
+    const isInboundDecline =
+      call.direction === 'inbound'
+      && !call.answered_at
+      && ['ringing', 'in_progress'].includes(call.status ?? 'ringing');
+
+    if (isInboundDecline) {
+      const service = createServiceClient();
+      if (service && controlId) {
+        await stopInboundHoldPlayback(controlId);
+        await logInboundCallStep(service, controlId, 'leg_a_playback_stopped');
+        await logInboundCallStep(service, controlId, 'agent_declined');
+      }
+      if (call.telnyx_webrtc_leg_id && call.telnyx_webrtc_leg_id !== DIAL_PENDING) {
+        await telnyxCallAction(call.telnyx_webrtc_leg_id, 'hangup');
+      }
+      skipHangup = false;
+    }
+
     if (!skipHangup) {
       const res = await fetch(
         `https://api.telnyx.com/v2/calls/${encodeURIComponent(controlId)}/actions/hangup`,
@@ -60,16 +85,16 @@ export async function POST(request: NextRequest, { params }: Ctx) {
       }
     }
 
-    const isInboundDecline =
+    const isInboundDeclineFinal =
       call.direction === 'inbound'
       && !call.answered_at
-      && ['ringing', 'in_progress'].includes(call.status ?? 'ringing');
+      && (declined || ['ringing', 'in_progress'].includes(call.status ?? 'ringing'));
 
     await supabase
       .from('calls')
       .update({
-        status: isInboundDecline ? 'missed' : 'completed',
-        disposition: isInboundDecline ? 'missed' : call.disposition,
+        status: isInboundDeclineFinal ? 'missed' : 'completed',
+        disposition: isInboundDeclineFinal ? 'missed' : call.disposition,
         ended_at: new Date().toISOString(),
       })
       .eq('id', call.id);
