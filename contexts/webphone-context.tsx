@@ -23,6 +23,7 @@ import {
   getRemoteAudioElement,
   unlockRemoteAudioElement,
 } from '@/lib/voice/remote-audio';
+import { voiceSessionLog } from '@/lib/debug/voice-session-log';
 
 export type PhoneStatus = 'idle' | 'initializing' | 'ready' | 'error';
 export type WebRTCCallStatus = 'idle' | 'connecting' | 'ringing' | 'active' | 'held' | 'ended';
@@ -348,6 +349,23 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         safeSet(setActiveCallId, call.id ?? null);
         safeSet(setCallStatus, mapped);
 
+        // #region agent log
+        if (incoming) {
+          voiceSessionLog({
+            location: 'webphone-context.tsx:callUpdate',
+            message: 'incoming call state',
+            data: {
+              callId: call.id,
+              rawState: call.state,
+              mapped,
+              direction: (call as { direction?: string }).direction,
+            },
+            hypothesisId: 'H-C',
+            runId: 'run1',
+          });
+        }
+        // #endregion
+
         if (incoming && (mapped === 'ringing' || mapped === 'connecting')) {
           if (!inboundRingStartedRef.current) {
             inboundRingStartedRef.current = Date.now();
@@ -547,6 +565,20 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
   // ── Call actions ─────────────────────────────────────────────────────────────
   const makeCall = useCallback((destination: string, callerNumber?: string) => {
+    // #region agent log
+    voiceSessionLog({
+      location: 'webphone-context.tsx:makeCall',
+      message: 'makeCall invoked',
+      data: {
+        hasClient: Boolean(clientRef.current),
+        phoneStatus: phoneStatusRef.current,
+        callStatus: callStatusRef.current,
+        destLen: destination?.length ?? 0,
+      },
+      hypothesisId: 'H-E',
+      runId: 'run1',
+    });
+    // #endregion
     if (!clientRef.current) {
       console.warn('[WebPhone] makeCall: client not initialized');
       return;
@@ -622,14 +654,22 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const resolveInboundTarget = useCallback((): Call | null => {
+    const target = incomingCallRef.current ?? activeCallRef.current;
+    if (target && isIncomingTelnyxCall(target, outboundDialRef.current)) {
+      return target;
+    }
+    return null;
+  }, []);
+
   const answerIncomingCall = useCallback(async (): Promise<boolean> => {
     await resumeVoiceAudioContext();
     await unlockRemoteAudioElement();
 
     const deadline = Date.now() + 15_000;
     while (Date.now() < deadline) {
-      const target = incomingCallRef.current;
-      if (target && isIncomingTelnyxCall(target, outboundDialRef.current)) {
+      const target = resolveInboundTarget();
+      if (target) {
         bindPeerMonitor(target);
         bindRemoteMediaToAudio(target);
 
@@ -639,32 +679,39 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           };
           const answerResult = callSession.answer?.({ audio: true, video: false });
           if (answerResult && typeof (answerResult as Promise<void>).then === 'function') {
-            await answerResult;
+            await Promise.race([
+              answerResult,
+              new Promise<void>((_, reject) => {
+                setTimeout(() => reject(new Error('answer_timeout')), 10_000);
+              }),
+            ]);
           }
           console.log('[WebPhone] answered inbound WebRTC session:', target.id);
         } catch (err) {
           console.error('[WebPhone] answerIncomingCall error:', err);
+          // #region agent log
+          voiceSessionLog({
+            location: 'webphone-context.tsx:answerIncomingCall:error',
+            message: 'answer() threw or timed out',
+            data: { callId: target.id, err: String(err) },
+            hypothesisId: 'H-C',
+            runId: 'run1',
+          });
+          // #endregion
           return false;
         }
 
-        const activeDeadline = Date.now() + 12_000;
-        while (Date.now() < activeDeadline) {
-          if (callStatusRef.current === 'active') {
-            const live = activeCallRef.current ?? target;
-            bindRemoteMediaToAudio(live);
-            bindPeerMonitor(live);
-            return true;
-          }
-          await new Promise((r) => setTimeout(r, 120));
-        }
-
-        return callStatusRef.current === 'active';
+        // answer() accepted — PSTN bridge completes via bridge_on_answer / REST fallback.
+        const live = activeCallRef.current ?? target;
+        bindRemoteMediaToAudio(live);
+        bindPeerMonitor(live);
+        return true;
       }
       await new Promise((r) => setTimeout(r, 200));
     }
     console.warn('[WebPhone] answerIncomingCall: no incoming WebRTC leg after wait');
     return false;
-  }, [bindPeerMonitor]);
+  }, [bindPeerMonitor, resolveInboundTarget]);
 
   const hangup = useCallback(() => {
     if (activeCallRef.current) {

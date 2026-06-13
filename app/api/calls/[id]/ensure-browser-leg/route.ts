@@ -5,6 +5,19 @@ import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/worksp
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
 import { ringBrowserForInbound } from '@/lib/inbound/bridge-to-browser';
+import { appendFileSync } from 'fs';
+import { join } from 'path';
+
+function debugVoiceServerLog(payload: Record<string, unknown>) {
+  if (process.env.NODE_ENV === 'production') return;
+  try {
+    appendFileSync(
+      join(process.cwd(), 'debug-30998c.log'),
+      `${JSON.stringify({ sessionId: '30998c', timestamp: Date.now(), ...payload })}\n`,
+      { encoding: 'utf8' },
+    );
+  } catch { /* non-fatal */ }
+}
 
 /**
  * Re-dial the agent's WebRTC leg when the DB ring row exists but the browser
@@ -46,6 +59,12 @@ export async function POST(
     }
 
     if (call.telnyx_webrtc_leg_id) {
+      debugVoiceServerLog({
+        location: 'ensure-browser-leg:existing',
+        message: 'leg already exists',
+        data: { callId: call.id, webrtcLegId: call.telnyx_webrtc_leg_id },
+        hypothesisId: 'H-B',
+      });
       return NextResponse.json({
         ok: true,
         created: false,
@@ -73,10 +92,22 @@ export async function POST(
 
     if (!result.ok) {
       console.error('[ENSURE-BROWSER-LEG] dial failed for call:', call.id);
+      debugVoiceServerLog({
+        location: 'ensure-browser-leg:failed',
+        message: 'browser leg dial failed',
+        data: { callId: call.id },
+        hypothesisId: 'H-B',
+      });
       return NextResponse.json({ ok: false, error: 'Browser leg dial failed' }, { status: 503 });
     }
 
     console.log('[ENSURE-BROWSER-LEG] Browser leg (re)dialed:', result.webrtc_leg_id, '| call:', call.id);
+    debugVoiceServerLog({
+      location: 'ensure-browser-leg:created',
+      message: 'browser leg dialed',
+      data: { callId: call.id, webrtcLegId: result.webrtc_leg_id ?? null },
+      hypothesisId: 'H-B',
+    });
     return NextResponse.json({
       ok: true,
       created: true,

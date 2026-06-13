@@ -4,6 +4,19 @@ import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/worksp
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
 import { completeInboundBridge } from '@/lib/inbound/bridge-to-browser';
+import { appendFileSync } from 'fs';
+import { join } from 'path';
+
+function debugVoiceServerLog(payload: Record<string, unknown>) {
+  if (process.env.NODE_ENV === 'production') return;
+  try {
+    appendFileSync(
+      join(process.cwd(), 'debug-30998c.log'),
+      `${JSON.stringify({ sessionId: '30998c', timestamp: Date.now(), ...payload })}\n`,
+      { encoding: 'utf8' },
+    );
+  } catch { /* non-fatal */ }
+}
 
 export async function POST(
   request: NextRequest,
@@ -48,8 +61,7 @@ export async function POST(
       && call.telnyx_call_id
       && call.telnyx_webrtc_leg_id
     ) {
-      // Browser dial uses bridge_on_answer — wait for WebRTC ICE before REST fallback bridge.
-      await new Promise((r) => setTimeout(r, 1500));
+      // Browser dial uses bridge_on_answer — REST fallback bridge if needed.
       bridged = await completeInboundBridge(
         call.telnyx_call_id,
         call.telnyx_webrtc_leg_id,
@@ -57,6 +69,12 @@ export async function POST(
     }
 
     console.log('[ANSWER] Inbound call answered:', id, '| bridged:', bridged);
+    debugVoiceServerLog({
+      location: 'answer:complete',
+      message: 'REST answer handled',
+      data: { callId: id, bridged, direction: call.direction, webrtcLegId: call.telnyx_webrtc_leg_id },
+      hypothesisId: 'H-C,H-D',
+    });
     return NextResponse.json({ success: true, bridged });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed';
