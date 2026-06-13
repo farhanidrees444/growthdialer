@@ -190,7 +190,7 @@ export async function executeInboundRouting(
       voiceServerLog({
         location: 'routing-matrix:skipDuplicateRoute',
         message: 'browser leg already queued — skip duplicate routing dial',
-        data: { callId: ctx.dbCallId, existingLeg, isPending: existingLeg === DIAL_PENDING },
+        data: { callId: ctx.dbCallId, existingLeg },
         hypothesisId: 'H-H',
         runId: 'run6',
       });
@@ -207,6 +207,12 @@ export async function executeInboundRouting(
         'browser',
       );
       return;
+    }
+    if (existingLeg === DIAL_PENDING) {
+      voiceLog.info(
+        { ...logCtx, event: 'browser_ring_pending', webrtc_leg: existingLeg },
+        'Inbound browser leg dial in flight — waiting for peer',
+      );
     }
   }
 

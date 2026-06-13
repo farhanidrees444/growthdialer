@@ -384,17 +384,7 @@ export function InboundRingingProvider({
     // Parallel: mic, short phone-ready check, ensure leg (often pre-warmed on ring).
     void requestMicPermission();
 
-    let answerRequest: Promise<Response | null> | null = null;
-    const startRestAnswer = () => {
-      if (!answerRequest) {
-        answerRequest = apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
-          console.error('[INBOUND] REST answer failed:', err);
-          return null;
-        });
-      }
-    };
-
-    // Fast path — SDK already ringing; skip ensure/force-redial that would kill the live invite.
+    // Fast path — SDK already ringing; WebRTC answer MUST happen before REST (REST must not bridge early).
     if (webrtcAlreadyRinging) {
       // #region agent log
       voiceSessionLog({
@@ -402,24 +392,22 @@ export function InboundRingingProvider({
         message: 'fast accept — WebRTC already ringing',
         data: { callId, callStatus: callStatusRef.current },
         hypothesisId: 'H-H',
-        runId: 'run5',
+        runId: 'run8',
       });
       // #endregion
-      const fastAnswerRequest = apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
+      const answered = await answerIncomingCall();
+      const fastRest = await apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
         console.error('[INBOUND] REST answer failed:', err);
         return null;
       });
-      answerRequest = fastAnswerRequest;
-      const answered = await answerIncomingCall();
-      const fastRest: Response | null = await fastAnswerRequest;
       const restOk = fastRest !== null && fastRest.ok;
       // #region agent log
       voiceSessionLog({
         location: 'inbound-ringing-context.tsx:accept:fastPathDone',
         message: 'fast accept finished',
         data: { callId, answered, restOk, callStatus: callStatusRef.current },
-        hypothesisId: 'H-H',
-        runId: 'run5',
+        hypothesisId: 'H-H,H-K',
+        runId: 'run8',
       });
       // #endregion
       if (restOk || answered || callStatusRef.current === 'active') {
@@ -471,7 +459,6 @@ export function InboundRingingProvider({
     // #endregion
 
     let webrtcLegId = ensureResult.webrtcLegId;
-    if (webrtcLegId) startRestAnswer();
 
     // Brief wait for SDK invite — overlay often appears before WebRTC rings.
     let legReady = await waitForInboundWebRtcLeg(webrtcAlreadyRinging ? 1500 : 4000);
@@ -517,13 +504,11 @@ export function InboundRingingProvider({
       });
       // #endregion
 
-      if (forceResult.webrtcLegId) startRestAnswer();
+      if (forceResult.webrtcLegId) webrtcLegId = forceResult.webrtcLegId;
       legReady = await waitForInboundWebRtcLeg(6000);
     }
 
-    if (!answerRequest && webrtcLegId) startRestAnswer();
-
-    // WebRTC + REST answer in parallel — bridge completes server-side via bridge_on_answer.
+    // WebRTC answer first — REST only after SDK accepts (never bridge before WebRTC answer).
     const answered = await answerIncomingCall();
 
     // #region agent log
@@ -543,13 +528,10 @@ export function InboundRingingProvider({
     });
     // #endregion
 
-    if (!answerRequest) {
-      answerRequest = apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
-        console.error('[INBOUND] REST answer failed:', err);
-        return null;
-      });
-    }
-    const restResponse = await answerRequest;
+    const restResponse = await apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
+      console.error('[INBOUND] REST answer failed:', err);
+      return null;
+    });
     const restOk = restResponse !== null && restResponse.ok;
     if (restOk || answered || callStatusRef.current === 'active') {
       finishAccept(callId);

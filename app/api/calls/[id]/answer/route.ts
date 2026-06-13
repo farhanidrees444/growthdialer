@@ -43,13 +43,22 @@ export async function POST(
       .eq('id', id)
       .in('status', ['ringing', 'in_progress']);
 
+    // Inbound browser legs use bridge_on_answer — Telnyx bridges when the SDK answers.
+    // Do NOT call completeInboundBridge on inbound accept; premature PSTN bridge kills the ringing invite.
     let bridged = true;
     if (
       call.direction === 'inbound'
       && call.telnyx_call_id
       && call.telnyx_webrtc_leg_id
     ) {
-      // Browser dial uses bridge_on_answer — REST fallback bridge if needed.
+      voiceServerLog({
+        location: 'answer:deferredBridge',
+        message: 'REST answer recorded — bridge deferred to WebRTC answer (bridge_on_answer)',
+        data: { callId: id, webrtcLegId: call.telnyx_webrtc_leg_id },
+        hypothesisId: 'H-K',
+        runId: 'run8',
+      });
+    } else if (call.telnyx_call_id && call.telnyx_webrtc_leg_id) {
       bridged = await completeInboundBridge(
         call.telnyx_call_id,
         call.telnyx_webrtc_leg_id,
