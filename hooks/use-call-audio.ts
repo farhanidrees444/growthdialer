@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { resumeVoiceAudioContext } from '@/lib/voice/audio-unlock';
+import { REMOTE_AUDIO_ELEMENT_ID } from '@/lib/voice/remote-audio';
 
 const BAR_COUNT = 32;
 
@@ -38,8 +40,10 @@ export function useCallAudio(active: boolean) {
       return;
     }
 
-    const audioEl = document.getElementById('telnyx-remote-audio') as HTMLAudioElement | null;
+    const audioEl = document.getElementById(REMOTE_AUDIO_ELEMENT_ID) as HTMLAudioElement | null;
     if (!audioEl) { startIdleWave(); return; }
+
+    void resumeVoiceAudioContext();
 
     try {
       if (!ctxRef.current) {

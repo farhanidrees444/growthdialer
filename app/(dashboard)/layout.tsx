@@ -26,6 +26,7 @@ import { PageEnter } from "@/components/layout/page-enter";
 import { resolveRouteAccent } from "@/lib/ui/route-accents";
 import { PostHogIdentify } from "@/components/PostHogIdentify";
 import { VoiceAccountBootstrap } from "@/components/voice/voice-account-bootstrap";
+import { VoiceAudioUnlock } from "@/components/voice/voice-audio-unlock";
 
 function DashboardOverlays({ userId }: { userId: string | undefined }) {
   const { showSaveAsLead, activePhone, dismissSaveAsLead } = useCallContext();
@@ -56,6 +57,7 @@ export default function DashboardLayout({
     <WorkspaceProvider>
       <PostHogIdentify />
       <VoiceAccountBootstrap />
+      <VoiceAudioUnlock />
       <WebPhoneProvider>
         <CallProvider>
           <InboundRingingProvider userId={userId}>

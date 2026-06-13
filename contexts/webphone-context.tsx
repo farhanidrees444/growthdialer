@@ -15,6 +15,14 @@ import {
   attachPeerConnectionMonitor,
   type IceConnectionQuality,
 } from '@/lib/voice/peer-monitor';
+import { resumeVoiceAudioContext } from '@/lib/voice/audio-unlock';
+import {
+  REMOTE_AUDIO_ELEMENT_ID,
+  REMOTE_AUDIO_LEGACY_ID,
+  bindRemoteStreamToAudio,
+  getRemoteAudioElement,
+  unlockRemoteAudioElement,
+} from '@/lib/voice/remote-audio';
 
 export type PhoneStatus = 'idle' | 'initializing' | 'ready' | 'error';
 export type WebRTCCallStatus = 'idle' | 'connecting' | 'ringing' | 'active' | 'held' | 'ended';
@@ -93,7 +101,7 @@ function mapCallState(state: string): WebRTCCallStatus {
   }
 }
 
-const AUDIO_EL_ID = 'telnyx-remote-audio';
+const AUDIO_EL_ID = REMOTE_AUDIO_ELEMENT_ID;
 const TOKEN_URL = '/api/telnyx/token';
 const PREPARE_URL = '/api/voice/prepare';
 const PRESENCE_URL = '/api/voice/presence';
@@ -132,10 +140,6 @@ async function fetchAssignedCallerNumber(): Promise<string | null> {
 }
 
 function bindRemoteMediaToAudio(call: Call): void {
-  if (typeof document === 'undefined') return;
-  const el = document.getElementById(AUDIO_EL_ID) as HTMLAudioElement | null;
-  if (!el) return;
-
   const callWithMedia = call as Call & {
     remoteStream?: MediaStream;
     peer?: { instance?: { getRemoteStreams?: () => MediaStream[] } };
@@ -147,8 +151,7 @@ function bindRemoteMediaToAudio(call: Call): void {
     ?? null;
 
   if (stream) {
-    el.srcObject = stream;
-    void el.play().catch(() => { /* autoplay policy */ });
+    void bindRemoteStreamToAudio(stream);
   }
 }
 
@@ -225,6 +228,9 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           }
         }
       },
+      onRemoteTrack: (stream) => {
+        void bindRemoteStreamToAudio(stream);
+      },
     });
   }, [safeSet, scheduleReconnect]);
 
@@ -281,8 +287,9 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       const client = new TelnyxRTC(opts);
       clientRef.current = client;
 
-      // Point remote audio at the hidden <audio> element
-      client.remoteElement = AUDIO_EL_ID;
+      // Bind SDK remote playback to our hidden <audio> element (DOM ref + id fallback).
+      const remoteAudioEl = getRemoteAudioElement();
+      client.remoteElement = remoteAudioEl ?? AUDIO_EL_ID;
 
       client.on('telnyx.ready', () => {
         console.log('[WebPhone] ready');
@@ -346,6 +353,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
             inboundRingStartedRef.current = Date.now();
           }
           safeSet(setIsInboundRinging, true);
+          bindPeerMonitor(call);
           if (mapped === 'ringing') {
             window.dispatchEvent(new CustomEvent('gd-webrtc-inbound-ring'));
           }
@@ -414,7 +422,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       console.error('[WebPhone] init error:', err);
       scheduleReconnect('init exception');
     }
-  }, [safeSet, scheduleReconnect]);
+  }, [safeSet, scheduleReconnect, bindPeerMonitor]);
 
   useEffect(() => {
     if (phoneStatus !== 'ready') return;
@@ -615,26 +623,48 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const answerIncomingCall = useCallback(async (): Promise<boolean> => {
+    await resumeVoiceAudioContext();
+    await unlockRemoteAudioElement();
+
     const deadline = Date.now() + 15_000;
     while (Date.now() < deadline) {
-      const target = incomingCallRef.current ?? activeCallRef.current;
-      if (target) {
+      const target = incomingCallRef.current;
+      if (target && isIncomingTelnyxCall(target, outboundDialRef.current)) {
+        bindPeerMonitor(target);
+        bindRemoteMediaToAudio(target);
+
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (target as any).answer?.();
-          bindRemoteMediaToAudio(target);
-          console.log('[WebPhone] answered inbound call');
-          return true;
+          const callSession = target as Call & {
+            answer?: (opts?: { audio?: boolean; video?: boolean }) => void | Promise<void>;
+          };
+          const answerResult = callSession.answer?.({ audio: true, video: false });
+          if (answerResult && typeof (answerResult as Promise<void>).then === 'function') {
+            await answerResult;
+          }
+          console.log('[WebPhone] answered inbound WebRTC session:', target.id);
         } catch (err) {
           console.error('[WebPhone] answerIncomingCall error:', err);
           return false;
         }
+
+        const activeDeadline = Date.now() + 12_000;
+        while (Date.now() < activeDeadline) {
+          if (callStatusRef.current === 'active') {
+            const live = activeCallRef.current ?? target;
+            bindRemoteMediaToAudio(live);
+            bindPeerMonitor(live);
+            return true;
+          }
+          await new Promise((r) => setTimeout(r, 120));
+        }
+
+        return callStatusRef.current === 'active';
       }
       await new Promise((r) => setTimeout(r, 200));
     }
     console.warn('[WebPhone] answerIncomingCall: no incoming WebRTC leg after wait');
     return false;
-  }, []);
+  }, [bindPeerMonitor]);
 
   const hangup = useCallback(() => {
     if (activeCallRef.current) {
@@ -716,8 +746,14 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         waitForInboundWebRtcLeg,
       }}
     >
-      {/* Hidden audio element — Telnyx WebRTC plays remote audio through this */}
-      <audio id={AUDIO_EL_ID} autoPlay playsInline style={{ display: 'none' }} />
+      {/* Hidden audio — Telnyx WebRTC plays remote caller audio through this element */}
+      <audio
+        id={REMOTE_AUDIO_ELEMENT_ID}
+        data-remote-audio={REMOTE_AUDIO_LEGACY_ID}
+        autoPlay
+        playsInline
+        style={{ display: 'none' }}
+      />
       {children}
     </WebPhoneContext.Provider>
   );

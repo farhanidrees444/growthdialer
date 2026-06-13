@@ -14,6 +14,8 @@ import { useWebPhone } from '@/contexts/webphone-context';
 import { useCallContext } from '@/lib/call-context';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { playInboundRingtone, stopInboundRingtone } from '@/lib/inbound/ringtone';
+import { resumeVoiceAudioContext } from '@/lib/voice/audio-unlock';
+import { unlockRemoteAudioElement } from '@/lib/voice/remote-audio';
 
 export interface InboundLead {
   first_name: string | null;
@@ -320,6 +322,10 @@ export function InboundRingingProvider({
     acceptingRef.current = true;
     stopInboundRingtone();
 
+    // User gesture — unlock Web Audio + remote element before WebRTC answer.
+    await resumeVoiceAudioContext();
+    await unlockRemoteAudioElement();
+
     const leadName = call.lead
       ? [call.lead.first_name, call.lead.last_name].filter(Boolean).join(' ')
       : 'Unknown Caller';
@@ -368,18 +374,24 @@ export function InboundRingingProvider({
     }
 
     const answered = await answerIncomingCall();
-    const answerRequest = apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
-      console.error('[INBOUND] REST answer failed:', err);
-      return null;
-    });
-
     if (!answered) {
       console.error('[INBOUND] WebRTC answer() failed');
       hangup();
       clearCall(true);
-      void answerRequest;
       return;
     }
+
+    // Wait until media path is live before REST bridge fallback (avoids ICE race).
+    const mediaDeadline = Date.now() + 12_000;
+    while (Date.now() < mediaDeadline) {
+      if (callStatusRef.current === 'active') break;
+      await new Promise((r) => setTimeout(r, 120));
+    }
+
+    const answerRequest = apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
+      console.error('[INBOUND] REST answer failed:', err);
+      return null;
+    });
 
     const deadline = Date.now() + 20_000;
     while (Date.now() < deadline) {

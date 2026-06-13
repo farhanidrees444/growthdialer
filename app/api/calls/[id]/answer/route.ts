@@ -48,6 +48,8 @@ export async function POST(
       && call.telnyx_call_id
       && call.telnyx_webrtc_leg_id
     ) {
+      // Browser dial uses bridge_on_answer — wait for WebRTC ICE before REST fallback bridge.
+      await new Promise((r) => setTimeout(r, 1500));
       bridged = await completeInboundBridge(
         call.telnyx_call_id,
         call.telnyx_webrtc_leg_id,

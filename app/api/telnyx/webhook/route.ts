@@ -509,13 +509,12 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        const bridged = await completeInboundBridge(pstnId, callControlId);
+        const bridged = true;
         console.log(
-          '[INBOUND] WebRTC leg answered — bridge:',
-          bridged ? 'ok' : 'fallback failed',
+          '[INBOUND] WebRTC leg answered — PSTN bridge via bridge_on_answer',
           alreadyAnswered ? '(duplicate event)' : '',
         );
-        return NextResponse.json({ received: true });
+        return NextResponse.json({ received: true, bridged });
       }
 
       if (callControlId) {
