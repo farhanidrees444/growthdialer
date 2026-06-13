@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useWebPhone } from '@/contexts/webphone-context';
+import { useWebPhone, type WebRTCCallStatus } from '@/contexts/webphone-context';
 import { useCallContext } from '@/lib/call-context';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { playInboundRingtone, stopInboundRingtone } from '@/lib/inbound/ringtone';
@@ -111,7 +111,11 @@ export function InboundRingingProvider({
     setCall(incoming);
     playInboundRingtone();
     // Pre-warm browser WebRTC leg while overlay is visible (cuts accept latency).
-    void apiFetchRef.current(`/api/calls/${incoming.id}/ensure-browser-leg`, { method: 'POST' }).catch(() => {});
+    void apiFetchRef.current(`/api/calls/${incoming.id}/ensure-browser-leg`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    }).catch(() => {});
     return true;
   }, [blocksNewInboundNow]);
 
@@ -369,65 +373,136 @@ export function InboundRingingProvider({
 
     // Parallel: mic, short phone-ready check, ensure leg (often pre-warmed on ring).
     void requestMicPermission();
-    const [, ensureRes] = await Promise.all([
-      waitForPhoneReady(2000),
-      apiFetch(`/api/calls/${callId}/ensure-browser-leg`, { method: 'POST' }).catch(() => null),
+
+    const ensureBrowserLeg = async (forceRedial = false) => {
+      const res = await apiFetch(`/api/calls/${callId}/ensure-browser-leg`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force_redial: forceRedial }),
+      }).catch(() => null);
+      if (!res?.ok) {
+        return { ok: false as const, webrtcLegId: null as string | null, status: res?.status ?? 0 };
+      }
+      const body = await res.json().catch(() => ({})) as {
+        webrtc_leg_id?: string | null;
+        created?: boolean;
+      };
+      return {
+        ok: true as const,
+        webrtcLegId: body.webrtc_leg_id ?? null,
+        created: body.created ?? false,
+        status: res.status,
+      };
+    };
+
+    const [, ensureResult] = await Promise.all([
+      waitForPhoneReady(3000),
+      ensureBrowserLeg(false),
     ]);
 
     // #region agent log
     voiceSessionLog({
       location: 'inbound-ringing-context.tsx:accept:phoneReady',
       message: 'pre-answer prep done',
-      data: { callId, callStatus: callStatusRef.current, webrtcAlreadyRinging },
-      hypothesisId: 'H-A',
-      runId: 'run3',
+      data: {
+        callId,
+        callStatus: callStatusRef.current,
+        webrtcAlreadyRinging,
+        ensureOk: ensureResult.ok,
+        ensureLegId: ensureResult.webrtcLegId,
+      },
+      hypothesisId: 'H-A,H-B',
+      runId: 'run4',
     });
     // #endregion
 
-    let ensureStatus = ensureRes?.status ?? 0;
-    if (ensureRes?.ok) {
-      const body = await ensureRes.json().catch(() => ({})) as { created?: boolean };
-      voiceSessionLog({
-        location: 'inbound-ringing-context.tsx:accept:ensureLeg',
-        message: 'ensure-browser-leg done',
-        data: { callId, ensureStatus, ensureCreated: body.created ?? null },
-        hypothesisId: 'H-B',
-        runId: 'run3',
-      });
-    }
+    let webrtcLegId = ensureResult.webrtcLegId;
+    let answerRequest: Promise<Response | null> | null = null;
+    const startRestAnswer = () => {
+      if (!answerRequest) {
+        answerRequest = apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
+          console.error('[INBOUND] REST answer failed:', err);
+          return null;
+        });
+      }
+    };
+
+    if (webrtcLegId) startRestAnswer();
 
     // Brief wait for SDK invite — overlay often appears before WebRTC rings.
-    await waitForInboundWebRtcLeg(webrtcAlreadyRinging ? 1500 : 3500);
+    let legReady = await waitForInboundWebRtcLeg(webrtcAlreadyRinging ? 1500 : 4000);
 
     // #region agent log
     voiceSessionLog({
       location: 'inbound-ringing-context.tsx:accept:legReady',
       message: 'leg wait complete',
-      data: { callId, callStatus: callStatusRef.current, isInboundRinging: isInboundRingingRef.current },
+      data: {
+        callId,
+        legReady,
+        callStatus: callStatusRef.current,
+        isInboundRinging: isInboundRingingRef.current,
+        webrtcLegId,
+      },
       hypothesisId: 'H-B',
-      runId: 'run3',
+      runId: 'run4',
     });
     // #endregion
 
+    // No SDK invite — force re-dial (stale/missing Telnyx leg is the top failure mode).
+    if (!legReady && !isInboundRingingRef.current) {
+      const forceResult = await ensureBrowserLeg(true);
+      webrtcLegId = forceResult.webrtcLegId ?? webrtcLegId;
+
+      // #region agent log
+      voiceSessionLog({
+        location: 'inbound-ringing-context.tsx:accept:forceRedial',
+        message: 'force redial after missing invite',
+        data: {
+          callId,
+          forceOk: forceResult.ok,
+          forceLegId: forceResult.webrtcLegId,
+          forceStatus: forceResult.status,
+        },
+        hypothesisId: 'H-B,H-F',
+        runId: 'run4',
+      });
+      // #endregion
+
+      if (forceResult.webrtcLegId) startRestAnswer();
+      legReady = await waitForInboundWebRtcLeg(6000);
+    }
+
+    if (!answerRequest && webrtcLegId) startRestAnswer();
+
     // WebRTC + REST answer in parallel — bridge completes server-side via bridge_on_answer.
-    const answerRequest = apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
-      console.error('[INBOUND] REST answer failed:', err);
-      return null;
-    });
     const answered = await answerIncomingCall();
 
     // #region agent log
     voiceSessionLog({
       location: 'inbound-ringing-context.tsx:accept:answered',
       message: 'parallel answer done',
-      data: { callId, answered, callStatus: callStatusRef.current, iceConnectionState },
+      data: {
+        callId,
+        answered,
+        legReady,
+        webrtcLegId,
+        callStatus: callStatusRef.current,
+        iceConnectionState,
+      },
       hypothesisId: 'H-C',
-      runId: 'run3',
+      runId: 'run4',
     });
     // #endregion
 
-    const res = await answerRequest;
-    if (res?.ok || answered || callStatusRef.current === 'active') {
+    if (!answerRequest) {
+      answerRequest = apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
+        console.error('[INBOUND] REST answer failed:', err);
+        return null;
+      });
+    }
+    const restResponse = await answerRequest;
+    const restOk = restResponse !== null && restResponse.ok;
+    if (restOk || answered || callStatusRef.current === 'active') {
       finishAccept(callId);
       return;
     }
@@ -435,8 +510,9 @@ export function InboundRingingProvider({
     // Brief wait for WebRTC active after REST marked in_progress.
     const deadline = Date.now() + 8000;
     while (Date.now() < deadline) {
-      if (callStatusRef.current === 'active' || !acceptingRef.current) {
-        if (callStatusRef.current === 'active') finishAccept(callId);
+      const status = callStatusRef.current as WebRTCCallStatus;
+      if (status === 'active' || !acceptingRef.current) {
+        if (status === 'active') finishAccept(callId);
         return;
       }
       await new Promise((r) => setTimeout(r, 120));

@@ -189,6 +189,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const peerCleanupRef = useRef<(() => void) | null>(null);
   const reconnectDuringCallRef = useRef(false);
   const voicePrepareAttemptedRef = useRef(false);
+  const presenceMetaRef = useRef<{ sip_username?: string; credential_id?: string }>({});
 
   const safeSet = useCallback(<T,>(setter: (v: T) => void, value: T) => {
     if (mountedRef.current) setter(value);
@@ -297,6 +298,10 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         initAttemptsRef.current = 0;
         safeSet(setPhoneStatus, 'ready');
         safeSet(setIsReconnecting, false);
+        presenceMetaRef.current = {
+          sip_username: creds.sip_username,
+          credential_id: creds.credential_id,
+        };
         void reportVoicePresence('ready', {
           sip_username: creds.sip_username,
           credential_id: creds.credential_id,
@@ -445,7 +450,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (phoneStatus !== 'ready') return;
     const beat = setInterval(() => {
-      void reportVoicePresence('ready');
+      void reportVoicePresence('ready', presenceMetaRef.current);
     }, 15_000);
     return () => clearInterval(beat);
   }, [phoneStatus]);

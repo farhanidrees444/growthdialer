@@ -46,6 +46,7 @@ export async function ringBrowserForInbound(
   ownedDid: string,
   callerAni: string,
   dbCallId?: string,
+  options?: { forceRedial?: boolean },
 ): Promise<BridgeResult> {
   if (!readVoiceApiKey()) {
     console.error('[INBOUND] TELNYX_API_KEY is not configured — cannot dial browser');
@@ -59,12 +60,20 @@ export async function ringBrowserForInbound(
       .eq('id', dbCallId)
       .maybeSingle();
     if (existing?.telnyx_webrtc_leg_id) {
-      console.log('[INBOUND] Browser leg already queued:', existing.telnyx_webrtc_leg_id);
-      return {
-        ok: true,
-        strategy: 'dial_bridge',
-        webrtc_leg_id: existing.telnyx_webrtc_leg_id,
-      };
+      if (!options?.forceRedial) {
+        console.log('[INBOUND] Browser leg already queued:', existing.telnyx_webrtc_leg_id);
+        return {
+          ok: true,
+          strategy: 'dial_bridge',
+          webrtc_leg_id: existing.telnyx_webrtc_leg_id,
+        };
+      }
+      console.log('[INBOUND] Force re-dial — hanging up stale browser leg:', existing.telnyx_webrtc_leg_id);
+      await telnyxCallAction(existing.telnyx_webrtc_leg_id, 'hangup').catch(() => false);
+      await supabase
+        .from('calls')
+        .update({ telnyx_webrtc_leg_id: null })
+        .eq('id', dbCallId);
     }
   }
 
@@ -82,7 +91,7 @@ export async function ringBrowserForInbound(
 
   console.log('[INBOUND] Ringing browser | call_control_app:', dialAppId, '| credential:', credentialId ?? 'env', '| sip:', username);
 
-  const dialed = await dialVoiceLeg({
+  const dialParams = {
     connectionId: dialAppId,
     to: sipUri,
     from: ownedDid,
@@ -95,10 +104,17 @@ export async function ringBrowserForInbound(
       db_call_id: dbCallId ?? null,
       caller_ani: callerAni,
     },
-  });
+  };
+
+  let dialed = await dialVoiceLeg(dialParams);
+  if (!dialed.ok || !dialed.call_control_id) {
+    console.warn('[INBOUND] dial WebRTC leg failed (attempt 1):', dialed.detail?.slice(0, 200));
+    await sleep(500);
+    dialed = await dialVoiceLeg(dialParams);
+  }
 
   if (!dialed.ok || !dialed.call_control_id) {
-    console.warn('[INBOUND] dial WebRTC leg failed:', dialed.detail?.slice(0, 200));
+    console.warn('[INBOUND] dial WebRTC leg failed (attempt 2):', dialed.detail?.slice(0, 200));
     return { ok: false, strategy: 'none' };
   }
 

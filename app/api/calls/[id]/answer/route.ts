@@ -4,19 +4,7 @@ import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/worksp
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
 import { completeInboundBridge } from '@/lib/inbound/bridge-to-browser';
-import { appendFileSync } from 'fs';
-import { join } from 'path';
-
-function debugVoiceServerLog(payload: Record<string, unknown>) {
-  if (process.env.NODE_ENV === 'production') return;
-  try {
-    appendFileSync(
-      join(process.cwd(), 'debug-30998c.log'),
-      `${JSON.stringify({ sessionId: '30998c', timestamp: Date.now(), ...payload })}\n`,
-      { encoding: 'utf8' },
-    );
-  } catch { /* non-fatal */ }
-}
+import { voiceServerLog } from '@/lib/debug/voice-server-log';
 
 export async function POST(
   request: NextRequest,
@@ -69,7 +57,7 @@ export async function POST(
     }
 
     console.log('[ANSWER] Inbound call answered:', id, '| bridged:', bridged);
-    debugVoiceServerLog({
+    voiceServerLog({
       location: 'answer:complete',
       message: 'REST answer handled',
       data: { callId: id, bridged, direction: call.direction, webrtcLegId: call.telnyx_webrtc_leg_id },
