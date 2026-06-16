@@ -808,6 +808,54 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         bindRemoteMediaToAudio(target);
         bindPeerMonitor(target);
 
+        // ── Step 2b: Direct PeerConnection state fallback ──────────────────
+        // The Telnyx SDK fires callUpdate(active) only after ICE completes.
+        // If ICE candidates are delayed or the signaling channel is slow,
+        // the UI stays stuck on "Connecting...".  We listen directly on the
+        // RTCPeerConnection so the moment ICE connects we transition to active.
+        const pc = getCallPeerConnection(target);
+        if (pc) {
+          let connectedFired = false;
+          const onConnected = () => {
+            if (connectedFired) return;
+            connectedFired = true;
+            console.log('[WebPhone] inbound PeerConnection connected — forcing active');
+            safeSet(setCallStatus, 'active');
+            safeSet(setIsInboundRinging, false);
+            isInboundRingingLiveRef.current = false;
+            inboundRingStartedRef.current = null;
+            window.dispatchEvent(new CustomEvent('gd-webrtc-inbound-active'));
+          };
+
+          const onConnChange = () => {
+            if (pc.connectionState === 'connected') onConnected();
+          };
+          const onIceChange = () => {
+            const s = pc.iceConnectionState;
+            if (s === 'connected' || s === 'completed') onConnected();
+          };
+
+          pc.addEventListener('connectionstatechange', onConnChange);
+          pc.addEventListener('iceconnectionstatechange', onIceChange);
+
+          // Chain cleanup so the ended-handler tears these down too
+          const prevCleanup = peerCleanupRef.current;
+          peerCleanupRef.current = () => {
+            pc.removeEventListener('connectionstatechange', onConnChange);
+            pc.removeEventListener('iceconnectionstatechange', onIceChange);
+            prevCleanup?.();
+          };
+
+          // Rare race: ICE already completed before we attached listeners
+          if (
+            pc.connectionState === 'connected' ||
+            pc.iceConnectionState === 'connected' ||
+            pc.iceConnectionState === 'completed'
+          ) {
+            onConnected();
+          }
+        }
+
         // ── Step 3: Confirm remote audio track arrived ────────────────────────
         // Poll for up to 3 seconds for a live remote audio track on the PeerConnection.
         const audioConfirmed = await new Promise<boolean>((resolve) => {
