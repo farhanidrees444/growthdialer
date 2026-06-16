@@ -13,9 +13,10 @@ import type { IClientOptions, INotification } from '@telnyx/webrtc';
 import type Call from '@telnyx/webrtc/lib/src/Modules/Verto/webrtc/Call';
 import {
   attachPeerConnectionMonitor,
+  getCallPeerConnection,
   type IceConnectionQuality,
 } from '@/lib/voice/peer-monitor';
-import { resumeVoiceAudioContext } from '@/lib/voice/audio-unlock';
+import { resumeVoiceAudioContext, primeVoiceAudioOnUserGesture } from '@/lib/voice/audio-unlock';
 import {
   REMOTE_AUDIO_ELEMENT_ID,
   REMOTE_AUDIO_LEGACY_ID,
@@ -156,10 +157,26 @@ function bindRemoteMediaToAudio(call: Call): void {
     peer?: { instance?: { getRemoteStreams?: () => MediaStream[] } };
   };
 
-  const stream =
+  let stream =
     callWithMedia.remoteStream
     ?? callWithMedia.peer?.instance?.getRemoteStreams?.()?.[0]
     ?? null;
+
+  // Fallback: inspect PeerConnection receivers directly.
+  // The SDK may expose the stream differently for inbound vs. outbound legs,
+  // but the raw RTCPeerConnection always has the live audio receiver.
+  if (!stream) {
+    const pc = getCallPeerConnection(call);
+    if (pc) {
+      const receivers = pc.getReceivers();
+      for (const receiver of receivers) {
+        if (receiver.track?.kind === 'audio' && receiver.track.readyState === 'live') {
+          stream = new MediaStream([receiver.track]);
+          break;
+        }
+      }
+    }
+  }
 
   if (stream) {
     void bindRemoteStreamToAudio(stream);
@@ -562,6 +579,9 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     mountedRef.current = true;
+    // Prime Web Audio context on first user gesture so inbound
+    // call playback is not blocked by autoplay policy when Accept is clicked.
+    primeVoiceAudioOnUserGesture();
     initClient();
 
     // Refresh JWT before Telnyx token expiry (~24h) for long dashboard sessions
@@ -756,9 +776,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     while (Date.now() < deadline) {
       const target = resolveInboundTarget();
       if (target) {
-        bindPeerMonitor(target);
-        bindRemoteMediaToAudio(target);
-
+        // ── Step 1: Answer the WebRTC session first ──────────────────────────
         try {
           const callSession = target as Call & {
             answer?: (opts?: { audio?: boolean; video?: boolean }) => void | Promise<void>;
@@ -775,7 +793,6 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           console.log('[WebPhone] answered inbound WebRTC session:', target.id);
         } catch (err) {
           console.error('[WebPhone] answerIncomingCall error:', err);
-          // #region agent log
           voiceSessionLog({
             location: 'webphone-context.tsx:answerIncomingCall:error',
             message: 'answer() threw or timed out',
@@ -783,11 +800,54 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
             hypothesisId: 'H-C',
             runId: 'run1',
           });
-          // #endregion
           return false;
         }
 
-        // answer() accepted — PSTN bridge completes via bridge_on_answer / REST fallback.
+        // ── Step 2: After answer, bind remote media + peer monitor ───────────
+        // The SDP exchange has completed; remote tracks should now be available.
+        bindRemoteMediaToAudio(target);
+        bindPeerMonitor(target);
+
+        // ── Step 3: Confirm remote audio track arrived ────────────────────────
+        // Poll for up to 3 seconds for a live remote audio track on the PeerConnection.
+        const audioConfirmed = await new Promise<boolean>((resolve) => {
+          const confirmDeadline = Date.now() + 3000;
+          const check = () => {
+            const pc = getCallPeerConnection(target);
+            if (pc) {
+              const receivers = pc.getReceivers();
+              for (const receiver of receivers) {
+                if (receiver.track?.kind === 'audio' && receiver.track.readyState === 'live') {
+                  // Bind the confirmed track to the audio element
+                  const stream = new MediaStream([receiver.track]);
+                  void bindRemoteStreamToAudio(stream);
+                  resolve(true);
+                  return;
+                }
+              }
+            }
+            // Also check SDK-level remoteStream
+            const sdkStream = (target as Call & { remoteStream?: MediaStream }).remoteStream;
+            if (sdkStream && sdkStream.active) {
+              void bindRemoteStreamToAudio(sdkStream);
+              resolve(true);
+              return;
+            }
+            if (Date.now() >= confirmDeadline) {
+              resolve(false);
+              return;
+            }
+            setTimeout(check, 150);
+          };
+          check();
+        });
+
+        if (!audioConfirmed) {
+          console.warn('[WebPhone] answerIncomingCall: no remote audio track confirmed after answer');
+          // Still return true — the bridge may complete asynchronously via callUpdate
+        }
+
+        // ── Step 4: Return success — bridge completes via callUpdate / REST ──
         const live = activeCallRef.current ?? target;
         bindRemoteMediaToAudio(live);
         bindPeerMonitor(live);
