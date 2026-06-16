@@ -22,6 +22,20 @@ interface TelnyxWebhookBody {
   meta?: Record<string, unknown>;
 }
 
+/**
+ * Return true only when the call.initiated direction EXPLICITLY marks an
+ * inbound leg.  Missing, null, or ambiguous direction values are NOT treated
+ * as outbound — they must fall through to the background processor which can
+ * resolve ownership via the `to` number.
+ *
+ * This prevents accidental fast-answer on inbound calls where Telnyx omits
+ * the direction field (toll-free, ported numbers, certain carrier routes).
+ */
+function isExplicitlyOutbound(payload: TelnyxWebhookBody['data']['payload']): boolean {
+  const d = String(payload.direction ?? '').toLowerCase();
+  return d === 'outgoing' || d === 'outbound';
+}
+
 function scheduleWebhookBackground(
   body: TelnyxWebhookBody,
   receivedAt: string,
@@ -71,6 +85,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true });
       }
 
+      if (!isExplicitlyOutbound(payload)) {
+        // Missing or ambiguous direction → assume inbound.
+        // The background processor resolves true inbound vs. outbound via
+        // number ownership lookup; we must NOT answer a PSTN leg we own.
+        const reason = isExplicitlyOutbound(payload) ? 'outbound' : 'inbound_or_ambiguous';
+        console.log(`[WEBHOOK] NO_ANSWER ${reason} +${Date.now() - handlerStartMs}ms`);
+        scheduleWebhookBackground(body, receivedAt, skippedAnswerResult(reason));
+        return NextResponse.json({ received: true });
+      }
+
+      // Only reach here when direction explicitly says outbound/outgoing
       const answerResult = await sendTelnyxAnswerFast(callControlId);
       console.log(
         `[WEBHOOK] ANSWER_SENT ${new Date().toISOString()} +${Date.now() - handlerStartMs}ms ok=${answerResult.ok} rt=${answerResult.responseTimeMs}ms`,

@@ -3,8 +3,8 @@ import { normalizeE164 } from '@/lib/inbound/phone';
 import { telnyxCallAction } from '@/lib/inbound/telnyx-actions';
 import { triggerInboundRingTimeoutAsync } from '@/lib/inbound/trigger-ring-timeout';
 import { isAgentVoiceReady } from '@/lib/inbound/agent-presence';
-import { startInboundHoldPlayback } from '@/lib/inbound/hold-playback';
 import { logInboundCallStep } from '@/lib/inbound/call-step-log';
+import { broadcastIncomingCallEvent } from '@/lib/inbound/incoming-calls-broadcast';
 import {
   resolveNumberRouting,
   type ResolvedNumberRouting,
@@ -175,17 +175,18 @@ export async function executeInboundRouting(
     return;
   }
 
-  // browser mode — notify agent via DB/realtime; Leg B dialed only on accept
+  // browser mode — PSTN rings until agent accepts; notify dashboard via Realtime
   const agentOnline = await isAgentVoiceReady(supabase, ctx.userId);
 
-  const playbackOk = await startInboundHoldPlayback(ctx.callControlId);
-  await logInboundCallStep(
-    supabase,
-    ctx.callControlId,
-    playbackOk ? 'leg_a_playback_started' : 'leg_a_playback_started',
-    playbackOk ? { telnyx_status: 'ok' } : { telnyx_status: 'error', error_message: 'playback_start failed' },
-  );
   await logInboundCallStep(supabase, ctx.callControlId, 'agent_notified');
+  await broadcastIncomingCallEvent(supabase, ctx.userId, 'incoming_call', {
+    call_control_id: ctx.callControlId,
+    caller_number: ctx.fromNumber,
+    call_id: ctx.dbCallId,
+    to_number: ctx.toNumber,
+    status: 'ringing',
+    timestamp: new Date().toISOString(),
+  });
 
   if (!agentOnline) {
     voiceLog.info(
