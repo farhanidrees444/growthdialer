@@ -1,15 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { normalizeE164 } from '@/lib/inbound/phone';
-import { telnyxCallAction } from '@/lib/inbound/telnyx-actions';
-import { triggerInboundRingTimeoutAsync } from '@/lib/inbound/trigger-ring-timeout';
-import { isAgentVoiceReady } from '@/lib/inbound/agent-presence';
-import { logInboundCallStep } from '@/lib/inbound/call-step-log';
-import { broadcastIncomingCallEvent } from '@/lib/inbound/incoming-calls-broadcast';
+import { normalizeE164 } from './phone';
+import { telnyxCallAction } from './telnyx-actions';
+import { triggerInboundRingTimeoutAsync } from './trigger-ring-timeout';
+import { isAgentVoiceReady } from './agent-presence';
+import { logInboundCallStep } from './call-step-log';
+import { broadcastIncomingCallEvent } from './incoming-calls-broadcast';
 import {
   resolveNumberRouting,
   type ResolvedNumberRouting,
-} from '@/lib/voice/phone-number-settings';
-import { voiceLog } from '@/lib/voice/structured-log';
+} from '../voice/phone-number-settings';
+import { voiceLog } from '../voice/structured-log';
 
 export interface InboundInitiatedContext {
   callControlId: string;
