@@ -15,8 +15,11 @@ import { voiceLog } from '@/lib/voice/structured-log';
 import { voiceServerLog } from '@/lib/debug/voice-server-log';
 import type { FastAnswerResult } from '@/lib/telnyx/fast-answer';
 import { logCallEvent } from '@/lib/webhooks/log-call-event';
-import { startInboundHoldPlayback } from '@/lib/inbound/hold-playback';
 import { logInboundCallStep } from '@/lib/inbound/call-step-log';
+import {
+  broadcastIncomingCallEvent,
+  type IncomingCallBroadcastPayload,
+} from '@/lib/inbound/incoming-calls-broadcast';
 
 function directionSaysInbound(direction: string | undefined): boolean | null {
   const d = (direction ?? '').toLowerCase();
@@ -401,6 +404,7 @@ export async function processTelnyxWebhookBackground(
 
         if (shouldExecuteRouting && newCall?.id) {
           try {
+            await logInboundCallStep(supabase, callControlId, 'ringing');
             await executeInboundRouting(supabase, {
               callControlId,
               callSessionId,
@@ -576,32 +580,66 @@ export async function processTelnyxWebhookBackground(
         if (dbCallId) {
           const { data: row } = await supabase
             .from('calls')
-            .select('status, answered_at')
+            .select('status, answered_at, user_id, from_number, to_number')
             .eq('id', dbCallId)
             .maybeSingle();
-          alreadyAnswered = row?.status === 'in_progress' && Boolean(row?.answered_at);
+          alreadyAnswered = Boolean(row?.answered_at)
+            || row?.status === 'active'
+            || row?.status === 'in_progress';
         }
 
-        // dial uses bridge_on_answer — Telnyx bridges when the browser leg is answered.
+        await logInboundCallStep(supabase, callControlId, 'leg_b_answered');
+
+        const bridged = await completeInboundBridge(pstnId, callControlId);
+        if (!bridged) {
+          await logInboundCallStep(supabase, pstnId, 'call_bridged', {
+            telnyx_status: 'error',
+            error_message: 'manual bridge failed after Leg B answered',
+          });
+          await telnyxCallAction(pstnId, 'hangup').catch(() => false);
+          if (dbCallId) {
+            await supabase
+              .from('calls')
+              .update({ status: 'failed', ended_at: new Date().toISOString() })
+              .eq('id', dbCallId);
+          }
+          console.error('[INBOUND] Manual bridge failed — hung up PSTN leg');
+          return;
+        }
+
+        await logInboundCallStep(supabase, pstnId, 'call_bridged');
+        await logInboundCallStep(supabase, pstnId, 'active');
+
         if (dbCallId && !alreadyAnswered) {
+          const { data: callRow } = await supabase
+            .from('calls')
+            .select('to_number, user_id, from_number')
+            .eq('id', dbCallId)
+            .maybeSingle();
+
           await supabase
             .from('calls')
             .update({
-              status: 'in_progress',
+              status: 'active',
               answered_at: new Date().toISOString(),
             })
             .eq('id', dbCallId);
 
-          await logInboundCallStep(supabase, pstnId, 'call_bridged');
-          await logInboundCallStep(supabase, callControlId, 'leg_b_answered');
+          const userId = (callRow?.user_id as string | undefined)
+            ?? (answeredBridgeState.user_id as string | undefined);
+          if (userId) {
+            const payload: IncomingCallBroadcastPayload = {
+              call_control_id: pstnId,
+              caller_number: (callRow?.from_number as string | null) ?? null,
+              call_id: dbCallId,
+              to_number: callRow?.to_number as string | null,
+              status: 'active',
+              timestamp: new Date().toISOString(),
+            };
+            await broadcastIncomingCallEvent(supabase, userId, 'call_active', payload);
+          }
 
-          const userId = answeredBridgeState.user_id as string | undefined;
           if (userId && dbCallId) {
-            const { data: callRow } = await supabase
-              .from('calls')
-              .select('to_number')
-              .eq('id', dbCallId)
-              .maybeSingle();
             const recordEnabled = await shouldRecordInboundAnswer(
               supabase,
               userId,
@@ -617,9 +655,8 @@ export async function processTelnyxWebhookBackground(
           }
         }
 
-        const bridged = true;
         console.log(
-          '[INBOUND] WebRTC leg answered — PSTN bridge via bridge_on_answer',
+          '[INBOUND] WebRTC leg answered — manual bridge complete',
           alreadyAnswered ? '(duplicate event)' : '',
         );
         return;
@@ -650,7 +687,7 @@ export async function processTelnyxWebhookBackground(
 
       console.log('[WEBHOOK] call.answered — call id:', callRow.id);
 
-      // Inbound Leg A: PSTN answered + hold only — stay ringing until agent accepts and Leg B bridges.
+      // Inbound Leg A answered before agent accept — no hold; status stays ringing until accept.
       if (
         callRow.direction === 'inbound'
         && (callRow.status === 'ringing' || callRow.status === null)
@@ -658,19 +695,12 @@ export async function processTelnyxWebhookBackground(
         && callControlId
         && callRow.telnyx_call_id === callControlId
       ) {
-        const playbackOk = await startInboundHoldPlayback(callControlId);
-        await logInboundCallStep(
-          supabase,
-          callControlId,
-          playbackOk ? 'leg_a_playback_started' : 'leg_a_answered',
-          playbackOk ? { telnyx_status: 'ok' } : { telnyx_status: 'error', error_message: 'playback_start failed' },
-        );
         await logInboundCallStep(supabase, callControlId, 'leg_a_answered');
         return;
       }
 
       // Update status (also save session ID here as a safety net)
-      const nextStatus = callRow.direction === 'inbound' ? 'in_progress' : 'answered';
+      const nextStatus = callRow.direction === 'inbound' ? 'active' : 'answered';
       await supabase
         .from('calls')
         .update({
@@ -827,6 +857,30 @@ export async function processTelnyxWebhookBackground(
         }).maybeSingle();
 
         if (inboundStillRinging) {
+          const pstnControlId = callRow.telnyx_call_id as string | null;
+          if (pstnControlId && callControlId === pstnControlId) {
+            await logInboundCallStep(supabase, pstnControlId, 'missed');
+            const missedPayload: IncomingCallBroadcastPayload = {
+              call_control_id: pstnControlId,
+              caller_number: callRow.from_number,
+              call_id: callRow.id,
+              to_number: callRow.to_number,
+              status: 'missed',
+              timestamp: new Date().toISOString(),
+            };
+            await broadcastIncomingCallEvent(
+              supabase,
+              callRow.user_id,
+              'call_missed',
+              missedPayload,
+            );
+            await broadcastIncomingCallEvent(
+              supabase,
+              callRow.user_id,
+              'call_cleared',
+              missedPayload,
+            );
+          }
 
           const { data: notifSettings } = await supabase
             .from('user_settings')

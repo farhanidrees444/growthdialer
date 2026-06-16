@@ -26,6 +26,7 @@ export interface InboundLead {
 
 export interface InboundRingingCall {
   id: string;
+  call_control_id: string;
   from_number: string | null;
   to_number: string;
   lead_id: string | null;
@@ -45,7 +46,7 @@ interface InboundRingingContextValue {
 const InboundRingingContext = createContext<InboundRingingContextValue | null>(null);
 
 /** Only statuses that mean the agent can no longer answer. */
-const DISMISS_STATUSES = new Set(['missed', 'rejected', 'voicemail', 'failed']);
+const DISMISS_STATUSES = new Set(['missed', 'rejected', 'voicemail', 'failed', 'declined']);
 
 function blocksNewInbound(
   hasOutboundSession: boolean,
@@ -158,6 +159,76 @@ export function InboundRingingProvider({
     if (!userId) return;
     const supabase = createClient();
 
+    const broadcastChannel = supabase
+      .channel(`incoming-calls:${userId}`)
+      .on(
+        'broadcast',
+        { event: 'incoming_call' },
+        (msg) => {
+          const p = msg.payload as {
+            call_id?: string;
+            call_control_id?: string;
+            caller_number?: string | null;
+            to_number?: string | null;
+          };
+          if (!p.call_id || !p.call_control_id) return;
+          if (blocksNewInboundNow()) {
+            void apiFetchRef.current('/api/calls/decline', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ call_control_id: p.call_control_id }),
+            }).catch(() => {});
+            return;
+          }
+          beginRing({
+            id: p.call_id,
+            call_control_id: p.call_control_id,
+            from_number: p.caller_number ?? null,
+            to_number: p.to_number ?? '',
+            lead_id: null,
+            status: 'ringing',
+          });
+        },
+      )
+      .on(
+        'broadcast',
+        { event: 'call_missed' },
+        () => {
+          if (stickyRingRef.current && !acceptingRef.current) {
+            clearCall(true);
+          }
+        },
+      )
+      .on(
+        'broadcast',
+        { event: 'call_declined' },
+        () => {
+          if (stickyRingRef.current && !acceptingRef.current) {
+            clearCall(true);
+          }
+        },
+      )
+      .on(
+        'broadcast',
+        { event: 'call_cleared' },
+        () => {
+          if (stickyRingRef.current && !acceptingRef.current) {
+            clearCall(true);
+          }
+        },
+      )
+      .on(
+        'broadcast',
+        { event: 'call_active' },
+        (msg) => {
+          const p = msg.payload as { call_id?: string };
+          if (p.call_id && acceptingRef.current && callIdRef.current === p.call_id) {
+            finishAccept(p.call_id);
+          }
+        },
+      )
+      .subscribe();
+
     const channel = supabase
       .channel(`inbound-ring-${userId}`)
       .on(
@@ -183,6 +254,7 @@ export function InboundRingingProvider({
 
           beginRing({
             id: row.id as string,
+            call_control_id: (row.telnyx_call_id as string) ?? '',
             from_number: (row.from_number as string | null) ?? null,
             to_number: row.to_number as string,
             lead_id: row.lead_id as string | null,
@@ -199,9 +271,8 @@ export function InboundRingingProvider({
           if (row.id !== callIdRef.current) return;
           const status = row.status as string;
 
-          if (status === 'in_progress') {
+          if (status === 'active' || status === 'in_progress' || status === 'connecting') {
             const id = row.id as string;
-            // Only dismiss incoming UI when agent accepted and bridge completed (WebRTC active).
             if (acceptingRef.current && callIdRef.current === id && callStatusRef.current === 'active') {
               finishAccept(id);
             }
@@ -230,6 +301,7 @@ export function InboundRingingProvider({
       .subscribe();
 
     return () => {
+      supabase.removeChannel(broadcastChannel);
       supabase.removeChannel(channel);
       stopInboundRingtone();
     };
@@ -363,7 +435,11 @@ export function InboundRingingProvider({
       call.from_number ?? '',
     );
 
-    const acceptRes = await apiFetch(`/api/calls/${callId}/answer`, { method: 'POST' }).catch((err) => {
+    const acceptRes = await apiFetch('/api/calls/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ call_control_id: call.call_control_id }),
+    }).catch((err) => {
       console.error('[INBOUND] accept dial failed:', err);
       return null;
     });
@@ -375,6 +451,9 @@ export function InboundRingingProvider({
       playInboundRingtone();
       return;
     }
+
+    setCall(null);
+    stickyRingRef.current = false;
 
     await waitForPhoneReady(5000);
 
@@ -430,14 +509,14 @@ export function InboundRingingProvider({
 
   const decline = useCallback(async () => {
     if (!call || accepting) return;
-    const callId = call.id;
+    const callControlId = call.call_control_id;
     clearCall(true);
     hangup();
     try {
-      await apiFetch(`/api/calls/${callId}/end`, {
+      await apiFetch('/api/calls/decline', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ declined: true }),
+        body: JSON.stringify({ call_control_id: callControlId }),
       });
     } catch { /* non-fatal */ }
     window.dispatchEvent(new CustomEvent('gd-call-ended'));

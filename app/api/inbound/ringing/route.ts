@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   }
 
   const select =
-    'id, from_number, to_number, lead_id, status, direction, started_at, answered_at, ended_at';
+    'id, telnyx_call_id, from_number, to_number, lead_id, status, direction, started_at, answered_at, ended_at';
 
   const staleBefore = new Date(Date.now() - 180_000).toISOString();
   await supabase
@@ -63,6 +63,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     call: {
       id: call.id,
+      call_control_id: call.telnyx_call_id,
       from_number: call.from_number,
       to_number: call.to_number,
       lead_id: call.lead_id,

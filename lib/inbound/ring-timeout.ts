@@ -1,7 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { telnyxCallAction } from '@/lib/inbound/telnyx-actions';
-import { stopInboundHoldPlayback } from '@/lib/inbound/hold-playback';
-import { logInboundCallStep } from '@/lib/inbound/call-step-log';
+import { declineInboundCall } from '@/lib/inbound/inbound-decline-call';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -14,9 +12,7 @@ export interface RingTimeoutParams {
 }
 
 /**
- * After ringSeconds, if the inbound call is still ringing:
- * - browser / forward → cascade to voicemail (answer + record)
- * - voicemail / off → no-op (handled at initiation)
+ * After ringSeconds, if inbound is still ringing, run decline logic (voicemail or hangup).
  */
 export async function processInboundRingTimeout(
   supabase: SupabaseClient,
@@ -30,7 +26,7 @@ export async function processInboundRingTimeout(
 
   const { data: call } = await supabase
     .from('calls')
-    .select('id, status, answered_at, direction, telnyx_webrtc_leg_id, telnyx_session_id, telnyx_call_id')
+    .select('id, status, answered_at, direction')
     .eq('id', callId)
     .maybeSingle();
 
@@ -38,37 +34,14 @@ export async function processInboundRingTimeout(
   if (call.answered_at) return;
   if (call.status !== 'ringing') return;
 
-  const hasBrowserLeg = Boolean(
-    call.telnyx_webrtc_leg_id
-    || (
-      call.telnyx_session_id
-      && call.telnyx_call_id
-      && call.telnyx_session_id !== call.telnyx_call_id
-    ),
-  );
-  if (inboundMode === 'browser' && hasBrowserLeg && ringSeconds < 55) {
-    return;
-  }
+  console.log('[INBOUND] Ring timeout — declining unanswered call:', callId);
 
-  console.log('[INBOUND] Ring timeout — cascading to voicemail:', callId);
-
-  await stopInboundHoldPlayback(callControlId);
-  await logInboundCallStep(supabase, callControlId, 'leg_a_playback_stopped');
-  await logInboundCallStep(supabase, callControlId, 'ring_timeout');
-
-  await telnyxCallAction(callControlId, 'record_start', {
-    format: 'mp3',
-    channels: 'single',
-    play_beep: true,
+  await declineInboundCall(supabase, {
+    callId,
+    callControlId,
+    userId,
+    reason: 'ring_timeout',
   });
-
-  await supabase
-    .from('calls')
-    .update({
-      status: 'voicemail',
-      disposition: 'voicemail',
-    })
-    .eq('id', callId);
 
   const { data: notifSettings } = await supabase
     .from('user_settings')
@@ -80,8 +53,8 @@ export async function processInboundRingTimeout(
     await supabase.from('notifications').insert({
       user_id: userId,
       type: 'call',
-      title: 'Voicemail',
-      body: 'An inbound caller was sent to voicemail after no answer',
+      title: 'Missed call',
+      body: 'An inbound caller hung up or was not answered in time',
       metadata: { call_id: callId, event: 'inbound_ring_timeout' },
     }).maybeSingle();
   }

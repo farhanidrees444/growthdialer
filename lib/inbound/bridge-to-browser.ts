@@ -69,7 +69,7 @@ export async function ringBrowserForInbound(
   ownedDid: string,
   callerAni: string,
   dbCallId?: string,
-  options?: { forceRedial?: boolean },
+  options?: { forceRedial?: boolean; bridgeOnAnswer?: boolean },
 ): Promise<BridgeResult> {
   if (!readVoiceApiKey()) {
     console.error('[INBOUND] TELNYX_API_KEY is not configured — cannot dial browser');
@@ -215,7 +215,10 @@ export async function ringBrowserForInbound(
     },
   };
 
-  const dialed = await dialVoiceLeg(dialParams);
+  const dialed = await dialVoiceLeg({
+    ...dialParams,
+    bridgeOnAnswer: options?.bridgeOnAnswer,
+  });
   if (!dialed.ok || !dialed.call_control_id) {
     console.warn('[INBOUND] dial WebRTC leg failed:', dialed.detail?.slice(0, 200));
     // #region agent log

@@ -2,6 +2,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { logCallEvent } from '@/lib/webhooks/log-call-event';
 
 export type InboundCallStep =
+  | 'ringing'
+  | 'connecting'
+  | 'active'
+  | 'ended'
+  | 'missed'
+  | 'declined'
   | 'leg_a_answered'
   | 'leg_a_playback_started'
   | 'leg_a_playback_stopped'

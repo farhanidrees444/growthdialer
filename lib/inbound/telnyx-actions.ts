@@ -55,6 +55,8 @@ export async function dialVoiceLeg(params: {
   timeoutSecs?: number;
   /** Link outbound leg to an existing inbound call_control_id */
   linkTo?: string;
+  /** When false, bridge manually on Leg B answered (inbound accept flow). Default true. */
+  bridgeOnAnswer?: boolean;
 }): Promise<TelnyxActionResult> {
   const webhookUrl = resolveVoiceWebhookUrl();
   if (!webhookUrl) {
@@ -80,8 +82,9 @@ export async function dialVoiceLeg(params: {
     }
     if (params.linkTo) {
       body.link_to = params.linkTo;
-      // Auto-bridge to the inbound PSTN leg when the agent answers in the browser.
-      body.bridge_on_answer = true;
+      if (params.bridgeOnAnswer !== false) {
+        body.bridge_on_answer = true;
+      }
     }
 
     console.log('[INBOUND] dial leg | connection:', params.connectionId, '| to:', params.to, '| link_to:', params.linkTo ?? 'none');
