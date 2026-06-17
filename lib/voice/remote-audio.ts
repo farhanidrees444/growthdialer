@@ -1,10 +1,10 @@
 /**
- * Hidden remote-audio element used by Telnyx WebRTC for caller audio playback.
+ * Hidden remote-audio element used by Twilio WebRTC for caller audio playback.
  * Both IDs are supported for SDK + legacy references.
  */
 import { resumeVoiceAudioContext } from '@/lib/voice/audio-unlock';
 
-export const REMOTE_AUDIO_ELEMENT_ID = 'telnyx-remote-audio';
+export const REMOTE_AUDIO_ELEMENT_ID = 'twilio-remote-audio';
 export const REMOTE_AUDIO_LEGACY_ID = 'remote-audio-element';
 
 export function getRemoteAudioElement(): HTMLAudioElement | null {

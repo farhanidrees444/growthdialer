@@ -1,4 +1,4 @@
-import type Call from '@telnyx/webrtc/lib/src/Modules/Verto/webrtc/Call';
+import type { Call } from '@twilio/voice-sdk';
 
 export type IceConnectionQuality =
   | 'excellent'
@@ -26,12 +26,30 @@ export function mapIceStateToQuality(state: string): IceConnectionQuality {
 
 type PeerConnectionLike = RTCPeerConnection & { connectionState?: string };
 
+/**
+ * Extract the underlying RTCPeerConnection from a Twilio Call object.
+ * Twilio's Call stores the MediaHandler internally; we access it via
+ * the private `_mediaHandler` property which exposes the peer connection.
+ */
 export function getCallPeerConnection(call: Call): PeerConnectionLike | null {
-  const c = call as Call & {
-    peer?: { instance?: { pc?: PeerConnectionLike; peer?: PeerConnectionLike } };
-    peerConnection?: PeerConnectionLike;
-  };
-  return c.peerConnection ?? c.peer?.instance?.pc ?? c.peer?.instance?.peer ?? null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const c = call as any;
+
+  // Twilio SDK internal paths to the RTCPeerConnection
+  const mediaHandler = c._mediaHandler;
+  if (mediaHandler) {
+    // The MediaHandler stores the peer connection in various possible locations
+    return (
+      mediaHandler._peerConnection
+      ?? mediaHandler.peerConnection
+      ?? mediaHandler._pc
+      ?? mediaHandler.pc
+      ?? null
+    );
+  }
+
+  // Fallback: check direct properties
+  return c._peerConnection ?? c.peerConnection ?? c._pc ?? c.pc ?? null;
 }
 
 export function attachPeerConnectionMonitor(
