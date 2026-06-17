@@ -8,7 +8,7 @@ export function readEnv(name: string): string | null {
 }
 
 export function readVoiceApiKey(): string | null {
-  return readEnv('TELNYX_API_KEY');
+  return readEnv('TWILIO_AUTH_TOKEN') ?? readEnv('TELNYX_API_KEY');
 }
 
 /** Bearer token for voice REST calls (answer, bridge, dial). */
@@ -30,6 +30,8 @@ export function readConfiguredConnectionId(): string | null {
 
 /** Voice API / Call Control application (growthdialer) — server-side POST /v2/calls dial. */
 export function readCallControlAppId(): string | null {
+  const twiml = readEnv('TWILIO_TWIML_APP_SID');
+  if (twiml) return twiml;
   return (
     readEnv('TELNYX_CALL_CONTROL_APP_ID')
     ?? readEnv('TELNYX_VOICE_APP_ID')

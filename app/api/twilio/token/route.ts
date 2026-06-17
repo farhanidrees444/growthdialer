@@ -1,7 +1,11 @@
-'use server';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { TWILIO_CLIENT_IDENTITY } from '@/lib/twilio/client-identity';
+import {
+  readTwilioAccountSid,
+  readTwilioAuthToken,
+  readTwilioTwimlAppSid,
+} from '@/lib/twilio/voice-config';
 import twilio from 'twilio';
 
 const { AccessToken } = twilio.jwt;
@@ -9,12 +13,9 @@ const { VoiceGrant } = AccessToken;
 
 /**
  * GET /api/twilio/token
- * Issues a short-lived Twilio AccessToken with a VoiceGrant for the
- * authenticated user so the browser can register a Twilio Device.
+ * Issues a short-lived Twilio AccessToken with VoiceGrant for browser Device registration.
  */
-export async function GET(request: NextRequest) {
-  const started = Date.now();
-
+export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient();
     const {
@@ -25,50 +26,41 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const apiKey = process.env.TWILIO_API_KEY;
-    const apiSecret = process.env.TWILIO_AUTH_TOKEN;
-    const twimlAppSid = process.env.TWILIO_TWIML_APP_SID;
+    const accountSid = readTwilioAccountSid();
+    const authToken = readTwilioAuthToken();
+    const twimlAppSid = readTwilioTwimlAppSid();
 
-    if (!accountSid || !apiKey || !apiSecret || !twimlAppSid) {
-      console.error('[TwilioToken] Missing Twilio environment variables');
+    if (!accountSid || !authToken || !twimlAppSid) {
+      console.error('[TwilioToken] Missing TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_TWIML_APP_SID');
       return NextResponse.json(
         { error: 'Voice service configuration incomplete' },
         { status: 500 },
       );
     }
 
-    // Use the user's ID as the client identity so Twilio can route
-    // inbound calls to this specific agent.
-    const identity = authUser.id;
-
     const voiceGrant = new VoiceGrant({
       outgoingApplicationSid: twimlAppSid,
       incomingAllow: true,
     });
 
-    const token = new AccessToken(accountSid, apiKey, apiSecret, {
-      identity,
-      ttl: 3600, // 1 hour — browser will refresh before expiry
-    });
+    const token = new AccessToken(
+      accountSid,
+      accountSid,
+      authToken,
+      {
+        identity: TWILIO_CLIENT_IDENTITY,
+        ttl: 3600,
+      },
+    );
 
     token.addGrant(voiceGrant);
 
-    const jwt = token.toJwt();
-
-    console.log(
-      `[TwilioToken] Issued token for identity=${identity} in ${Date.now() - started}ms`,
-    );
-
     return NextResponse.json({
-      token: jwt,
-      identity,
+      token: token.toJwt(),
+      identity: TWILIO_CLIENT_IDENTITY,
     });
   } catch (error) {
-    console.error(
-      '[TwilioToken] Exception:',
-      error instanceof Error ? error.message : String(error),
-    );
+    console.error('[TwilioToken] Exception:', error instanceof Error ? error.message : String(error));
     return NextResponse.json(
       { error: 'Could not issue voice credentials' },
       { status: 500 },

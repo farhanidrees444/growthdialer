@@ -356,7 +356,9 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
       const device = new Device(data.token, {
         codecPreferences: ['pcmu', 'opus'] as Call.Codec[],
-      });
+        closeProtection: true,
+        logLevel: process.env.NODE_ENV === 'development' ? 1 : 0,
+      } as ConstructorParameters<typeof Device>[1]);
 
       deviceRef.current = device;
 
@@ -394,7 +396,11 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
       device.on('incoming', (call: Call) => {
         const callId = getCallStableId(call);
-        console.log('[WebPhone] incoming call:', callId);
+        const fromNumber =
+          call.parameters?.From
+          ?? call.customParameters?.get?.('From')
+          ?? null;
+        console.log('[WebPhone] incoming call:', callId, fromNumber ?? '');
 
         // Ignore incoming if we're already on an outbound call
         if (outboundDialRef.current) {
@@ -423,9 +429,15 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           safeSet(setIsInboundRinging, true);
           bindPeerMonitor(call);
 
-          if (mapped === 'ringing') {
-            window.dispatchEvent(new CustomEvent('gd-webrtc-inbound-ring'));
-          }
+          window.dispatchEvent(
+            new CustomEvent('gd-webrtc-inbound-ring', {
+              detail: {
+                call_id: callId,
+                from_number: fromNumber,
+                provider: 'twilio',
+              },
+            }),
+          );
         }
 
         setupCallEventHandlers(call, true);
@@ -437,13 +449,14 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
             callId,
             status,
             mapped,
+            fromNumber,
           },
           hypothesisId: 'H-C',
           runId: 'run1',
         });
       });
 
-      // Device registers automatically when token is provided in constructor
+      await device.register();
     } catch (err) {
       console.error('[WebPhone] init error:', err);
       scheduleReconnect('init exception');
@@ -808,8 +821,16 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   }, [bindPeerMonitor, resolveInboundTarget, safeSet]);
 
   const hangup = useCallback(() => {
-    if (activeCallRef.current) {
-      try { activeCallRef.current.disconnect(); } catch { /* ignore */ }
+    const target = incomingCallRef.current ?? activeCallRef.current;
+    if (target) {
+      try {
+        const status = target.status();
+        if (status === 'pending' || status === 'ringing') {
+          target.reject();
+        } else {
+          target.disconnect();
+        }
+      } catch { /* ignore */ }
     }
     activeCallRef.current = null;
     incomingCallRef.current = null;

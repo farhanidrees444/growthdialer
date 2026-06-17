@@ -11,6 +11,19 @@ import {
 import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
 
 export async function POST(request: NextRequest) {
+  const { isTwilioVoiceConfigured } = await import('@/lib/twilio/voice-config');
+  if (isTwilioVoiceConfigured()) {
+    return NextResponse.json({
+      success: true,
+      activated: 0,
+      already_routed: 0,
+      failed: 0,
+      total: 0,
+      primary_routed: true,
+      message: 'Voice line is active — no number linking required.',
+    });
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -20,6 +20,12 @@ import {
 import { resolveActiveCredentialId } from '@/lib/telnyx/active-credential';
 import { resolveInboundBrowserCredential } from '@/lib/inbound/browser-credential';
 import { readVoiceApiKey } from '@/lib/voice/read-env';
+import {
+  isTwilioInboundReady,
+  listTwilioInboundBlockers,
+} from '@/lib/twilio/twilio-readiness';
+import { isTwilioVoiceConfigured, readTwilioNumber } from '@/lib/twilio/voice-config';
+import { normalizeE164 } from '@/lib/inbound/phone';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -32,6 +38,9 @@ export async function GET(request: NextRequest) {
   if (!hasPermission(access.role, 'MAKE_CALLS')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
+
+  const twilioMode = isTwilioVoiceConfigured();
+  const twilioNumber = readTwilioNumber();
 
   const [settingsRes, numbersRes, recentInboundRes, providerIndex, connectionConfig, callControlConfig, inboundBrowserCred, sipConnectionId, callControlAppId] = await Promise.all([
     supabase
@@ -53,16 +62,17 @@ export async function GET(request: NextRequest) {
       .order('started_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
-    fetchProviderPhoneIndex(),
+    twilioMode ? Promise.resolve(new Map()) : fetchProviderPhoneIndex(),
     ensureVoiceConnectionConfigured(),
     ensureCallControlAppConfigured(),
-    resolveInboundBrowserCredential(supabase, user.id),
+    twilioMode ? Promise.resolve(null) : resolveInboundBrowserCredential(supabase, user.id),
     getActiveVoiceConnectionId(),
     getActiveCallControlAppId(),
   ]);
 
-  const credentialId = inboundBrowserCred?.credentialId
-    ?? await resolveActiveCredentialId(supabase, user.id);
+  const credentialId = twilioMode
+    ? 'twilio-client'
+    : (inboundBrowserCred?.credentialId ?? await resolveActiveCredentialId(supabase, user.id));
 
   const mode = (settingsRes.data?.inbound_mode as string | null) ?? 'browser';
   const numbers = (numbersRes.data ?? []).map((n) => ({
@@ -72,17 +82,31 @@ export async function GET(request: NextRequest) {
     is_default: Boolean(n.is_default),
   }));
 
-  await backfillProviderIds(supabase, numbers, providerIndex);
+  if (!twilioMode) {
+    await backfillProviderIds(supabase, numbers, providerIndex);
+  }
 
   const numberRoutingId = callControlAppId ?? sipConnectionId;
-  const routing = await auditNumberRouting(numbers, numberRoutingId, providerIndex);
+  const routing = twilioMode
+    ? {
+        primary_routed: true,
+        routed: numbers.length,
+        unrouted: 0,
+        total: numbers.length,
+        needs_activation: false,
+        unrouted_phones: [] as string[],
+      }
+    : await auditNumberRouting(numbers, numberRoutingId, providerIndex);
+
   const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
   const appUrl = resolveInboundAppUrl(host);
-  const eventsVerified = Boolean(process.env.TELNYX_PUBLIC_KEY?.trim());
+  const eventsVerified = twilioMode
+    ? Boolean(process.env.TWILIO_AUTH_TOKEN?.trim())
+    : Boolean(process.env.TELNYX_PUBLIC_KEY?.trim());
   const voiceApiPresent = Boolean(readVoiceApiKey());
-  const providerReachable = providerIndex.size > 0;
+  const providerReachable = twilioMode || providerIndex.size > 0;
   const hasRecentInbound = Boolean(recentInboundRes.data);
-  const credentialReady = Boolean(inboundBrowserCred?.token && inboundBrowserCred?.sipUsername);
+  const credentialReady = twilioMode || Boolean(inboundBrowserCred?.token && inboundBrowserCred?.sipUsername);
   const voiceOperational =
     (connectionConfig.ok && callControlConfig.ok)
     || (providerReachable && voiceApiPresent && Boolean(sipConnectionId) && credentialReady)
@@ -91,20 +115,32 @@ export async function GET(request: NextRequest) {
   const inboundEnabled = mode !== 'off';
   const browserAnswering = mode === 'browser' || mode === 'forward';
 
-  const blockers = listInboundBlockers({
-    connection: connectionConfig,
-    eventsVerified,
-    appUrl,
-    primaryRouted: routing.primary_routed,
-    hasNumbers: numbers.length > 0,
-    inboundEnabled,
-    browserAnswering,
-    credentialReady,
-    providerReachable,
-    hasRecentInbound,
-    credentialEnvSwap: false,
-    callControlReady: callControlConfig.ok,
-  });
+  const twilioNumberLinked = twilioNumber
+    ? numbers.some((n) => normalizeE164(n.phone_number) === twilioNumber)
+    : undefined;
+
+  const blockers = twilioMode
+    ? listTwilioInboundBlockers({
+        hasNumbers: numbers.length > 0,
+        inboundEnabled,
+        browserAnswering,
+        appUrl,
+        twilioNumberLinked: numbers.length === 0 ? undefined : twilioNumberLinked,
+      })
+    : listInboundBlockers({
+        connection: connectionConfig,
+        eventsVerified,
+        appUrl,
+        primaryRouted: routing.primary_routed,
+        hasNumbers: numbers.length > 0,
+        inboundEnabled,
+        browserAnswering,
+        credentialReady,
+        providerReachable,
+        hasRecentInbound,
+        credentialEnvSwap: false,
+        callControlReady: callControlConfig.ok,
+      });
 
   let status: 'live' | 'almost_ready' | 'needs_setup' | 'offline' = 'needs_setup';
   let headline = 'Setting up your inbound line';
@@ -117,7 +153,7 @@ export async function GET(request: NextRequest) {
     status = 'offline';
     headline = 'Inbound is turned off';
     subline = 'Change routing to accept calls again.';
-  } else if (routing.needs_activation) {
+  } else if (!twilioMode && routing.needs_activation) {
     status = 'almost_ready';
     headline = 'One step left — link your numbers';
     subline =
@@ -139,6 +175,14 @@ export async function GET(request: NextRequest) {
     subline = 'Ready to receive calls — keep this page open to answer in the browser.';
   }
 
+  const twilioReady = twilioMode && isTwilioInboundReady({
+    hasNumbers: numbers.length > 0,
+    inboundEnabled,
+    browserAnswering,
+    appUrl,
+    twilioNumberLinked: numbers.length === 0 ? undefined : twilioNumberLinked,
+  });
+
   const ready =
     status === 'live'
     && routing.primary_routed
@@ -148,7 +192,8 @@ export async function GET(request: NextRequest) {
     && voiceConfigured
     && Boolean(appUrl)
     && Boolean(credentialId)
-    && blockers.length === 0;
+    && blockers.length === 0
+    && (twilioMode ? twilioReady : true);
 
   return NextResponse.json({
     status,
@@ -161,9 +206,13 @@ export async function GET(request: NextRequest) {
     routed_count: routing.routed,
     unrouted_count: routing.unrouted,
     primary_routed: routing.primary_routed,
-    needs_activation: routing.needs_activation,
-    primary_number: numbers.find((n) => n.is_default)?.phone_number ?? numbers[0]?.phone_number ?? null,
+    needs_activation: twilioMode ? false : routing.needs_activation,
+    primary_number: twilioNumber
+      ?? numbers.find((n) => n.is_default)?.phone_number
+      ?? numbers[0]?.phone_number
+      ?? null,
     last_inbound_at: recentInboundRes.data?.started_at ?? null,
     blockers,
+    voice_provider: twilioMode ? 'twilio' : 'legacy',
   });
 }

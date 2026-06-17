@@ -32,6 +32,7 @@ export interface InboundRingingCall {
   lead_id: string | null;
   status: string;
   lead?: InboundLead | null;
+  provider?: 'twilio' | 'legacy';
 }
 
 interface InboundRingingContextValue {
@@ -353,7 +354,24 @@ export function InboundRingingProvider({
       } catch { /* non-fatal */ }
     };
 
-    const onWebrtcRing = () => {
+    const onWebrtcRing = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ call_id?: string; from_number?: string | null; provider?: string }>).detail;
+      if (detail?.provider === 'twilio' || detail?.from_number != null) {
+        if (blocksNewInboundNow()) {
+          hangup();
+          return;
+        }
+        beginRing({
+          id: detail.call_id ?? `twilio-${Date.now()}`,
+          call_control_id: detail.call_id ?? '',
+          from_number: detail.from_number ?? null,
+          to_number: '',
+          lead_id: null,
+          status: 'ringing',
+          provider: 'twilio',
+        });
+        return;
+      }
       if (callIdRef.current) {
         stickyRingRef.current = true;
         playInboundRingtone();
@@ -435,6 +453,32 @@ export function InboundRingingProvider({
       call.from_number ?? '',
     );
 
+    if (call.provider === 'twilio') {
+      setCall(null);
+      stickyRingRef.current = false;
+      await waitForPhoneReady(5000);
+      const legReady = await waitForInboundWebRtcLeg(8000);
+      if (!legReady) {
+        setInboundAcceptInFlight(false);
+        acceptingRef.current = false;
+        setAccepting(false);
+        hangup();
+        clearCall(true);
+        return;
+      }
+      const answered = await answerIncomingCall();
+      if (!answered) {
+        setInboundAcceptInFlight(false);
+        acceptingRef.current = false;
+        setAccepting(false);
+        hangup();
+        clearCall(true);
+        return;
+      }
+      finishAccept(callId);
+      return;
+    }
+
     const acceptRes = await apiFetch('/api/calls/accept', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -509,14 +553,17 @@ export function InboundRingingProvider({
 
   const decline = useCallback(async () => {
     if (!call || accepting) return;
-    const callControlId = call.call_control_id;
     clearCall(true);
     hangup();
+    if (call.provider === 'twilio') {
+      window.dispatchEvent(new CustomEvent('gd-call-ended'));
+      return;
+    }
     try {
       await apiFetch('/api/calls/decline', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ call_control_id: callControlId }),
+        body: JSON.stringify({ call_control_id: call.call_control_id }),
       });
     } catch { /* non-fatal */ }
     window.dispatchEvent(new CustomEvent('gd-call-ended'));

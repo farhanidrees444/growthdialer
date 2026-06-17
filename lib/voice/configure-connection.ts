@@ -3,6 +3,7 @@ import {
   readConfiguredConnectionId,
   readVoiceApiKey,
 } from '@/lib/voice/read-env';
+import { isTwilioVoiceConfigured, readTwilioTwimlAppSid } from '@/lib/twilio/voice-config';
 import { resolveVoiceConnectionId } from '@/lib/voice/resolve-connection';
 import { resolveVoiceWebhookUrl } from '@/lib/voice/webhook-url';
 import {
@@ -82,11 +83,20 @@ function mapGetFailure(status: number): ConnectionFailureReason {
  * Safe to call repeatedly (idempotent PATCH).
  */
 export async function ensureVoiceConnectionConfigured(): Promise<ConnectionConfigureResult> {
+  const webhookUrl = resolveVoiceWebhookUrl();
+
+  if (isTwilioVoiceConfigured()) {
+    return successConnectionResult({
+      connection_id: readTwilioTwimlAppSid(),
+      webhook_url: webhookUrl,
+      message: 'Voice line configured (Twilio).',
+    });
+  }
+
   const cached = getCachedConnectionConfig();
   if (cached?.ok) return cached;
 
   const apiKey = readVoiceApiKey();
-  const webhookUrl = resolveVoiceWebhookUrl();
   const resolved = await resolveVoiceConnectionId();
   const connectionId = resolved.connectionId;
 
@@ -341,6 +351,15 @@ export async function ensureCallControlAppConfigured(): Promise<CallControlAppCo
   const apiKey = readVoiceApiKey();
   const appId = readCallControlAppId();
   const webhookUrl = resolveVoiceWebhookUrl();
+
+  if (isTwilioVoiceConfigured() && appId && webhookUrl && apiKey) {
+    return {
+      ok: true,
+      app_id: appId,
+      webhook_url: webhookUrl,
+      message: 'Programmable voice application configured (Twilio).',
+    };
+  }
 
   if (!appId) {
     return {

@@ -1,44 +1,56 @@
-'use server';
-
 import { NextRequest, NextResponse } from 'next/server';
+import { TWILIO_CLIENT_IDENTITY } from '@/lib/twilio/client-identity';
+import { validateTwilioWebhookRequest } from '@/lib/twilio/validate-webhook';
 import twilio from 'twilio';
 
 const { VoiceResponse } = twilio.twiml;
 
+function formDataToParams(formData: FormData): Record<string, string> {
+  const params: Record<string, string> = {};
+  formData.forEach((value, key) => {
+    params[key] = String(value);
+  });
+  return params;
+}
+
 /**
  * POST /api/twilio/webhook
  *
- * Handles Twilio's incoming voice webhook requests.
- * Twilio calls this URL (configured in the TwiML App) whenever:
- *   - An inbound call arrives at our Twilio number
- *   - An outbound call is initiated from the browser via Device.connect()
- *
- * INBOUND:  To === TWILIO_NUMBER → route the call to our client identity
- * OUTBOUND: To is a PSTN number → dial out to that number with our callerId
+ * Handles Twilio voice webhook requests (TwiML App voice URL):
+ *   - Inbound PSTN → route to browser Client
+ *   - Outbound browser connect → dial PSTN with callerId
  */
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const to = (formData.get('To') as string) ?? '';
-    const from = (formData.get('From') as string) ?? '';
+    const params = formDataToParams(formData);
+    const to = params.To ?? '';
+    const from = params.From ?? '';
+
+    const webhookUrl = request.nextUrl.origin + request.nextUrl.pathname;
+    const signature = request.headers.get('x-twilio-signature');
+    const verification = validateTwilioWebhookRequest(signature, webhookUrl, params);
+
+    if (!verification.ok) {
+      console.error('[TwilioWebhook] Signature validation failed:', verification.reason);
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
+    }
 
     console.log(`[TwilioWebhook] To=${to} From=${from}`);
 
-    const twilioNumber = process.env.TWILIO_NUMBER;
+    const twilioNumber = process.env.TWILIO_NUMBER?.trim();
 
     const response = new VoiceResponse();
 
-    // INBOUND: The call is coming to our Twilio number.
-    // Route it to the client identity registered in the browser.
+    // INBOUND: call arrived at our Twilio number → ring browser client
     if (twilioNumber && to === twilioNumber) {
-      console.log('[TwilioWebhook] INBOUND — routing to client identity');
+      console.log(`[TwilioWebhook] INBOUND — routing to client ${TWILIO_CLIENT_IDENTITY}`);
       const dial = response.dial({
-        callerId: from, // pass the original caller's number
+        callerId: from,
       });
-      dial.client('agent_farhan');
+      dial.client(TWILIO_CLIENT_IDENTITY);
     } else {
-      // OUTBOUND: The browser initiated a call to a PSTN number.
-      // Dial out to that number with our Twilio number as the callerId.
+      // OUTBOUND: browser initiated call → dial PSTN
       console.log('[TwilioWebhook] OUTBOUND — dialing PSTN number');
       const dial = response.dial({
         callerId: twilioNumber ?? undefined,
@@ -60,7 +72,6 @@ export async function POST(request: NextRequest) {
       error instanceof Error ? error.message : String(error),
     );
 
-    // Return a safe TwiML response even on error so Twilio doesn't retry endlessly
     const fallback = new VoiceResponse();
     fallback.say('Sorry, an error occurred. Please try again later.');
 

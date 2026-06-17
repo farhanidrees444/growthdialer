@@ -100,7 +100,7 @@ export function listInboundBlockers(input: {
       code: 'call_control_app',
       label: 'Programmable voice application not configured',
       fix:
-        'Set TELNYX_CALL_CONTROL_APP_ID to your programmable voice application ID in deployment settings, then redeploy.',
+        'Set TWILIO_TWIML_APP_SID (or legacy voice application ID) in deployment settings, then redeploy.',
     });
   }
 
