@@ -9,7 +9,7 @@ export async function resolveUserWorkspaceId(
     .select('workspace_id')
     .eq('user_id', userId)
     .eq('status', 'active')
-    .order('created_at', { ascending: true })
+    .order('joined_at', { ascending: true })
     .limit(1)
     .maybeSingle();
 

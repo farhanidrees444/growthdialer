@@ -19,7 +19,7 @@ BEGIN
   SELECT workspace_id INTO master_ws
   FROM public.workspace_members
   WHERE user_id = master_id AND status = 'active'
-  ORDER BY created_at ASC
+  ORDER BY joined_at ASC NULLS LAST
   LIMIT 1;
 
   -- Coaching
@@ -37,7 +37,11 @@ BEGIN
 
   -- Operational data for non-master accounts
   DELETE FROM public.notifications WHERE user_id IS DISTINCT FROM master_id;
-  DELETE FROM public.activities WHERE user_id IS DISTINCT FROM master_id;
+
+  IF to_regclass('public.activities') IS NOT NULL THEN
+    DELETE FROM public.activities WHERE user_id IS DISTINCT FROM master_id;
+  END IF;
+
   DELETE FROM public.voicemails WHERE user_id IS DISTINCT FROM master_id;
   DELETE FROM public.calls WHERE user_id IS DISTINCT FROM master_id;
   DELETE FROM public.leads WHERE user_id IS DISTINCT FROM master_id;
