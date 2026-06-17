@@ -24,8 +24,5 @@ export function resolveVoiceAppBaseUrl(): string {
 export function resolveVoiceWebhookUrl(): string {
   const base = resolveVoiceAppBaseUrl();
   if (!base) return '';
-  if (readEnv('TWILIO_ACCOUNT_SID') && readEnv('TWILIO_AUTH_TOKEN')) {
-    return `${base}/api/twilio/webhook`;
-  }
-  return `${base}/api/telnyx/webhook`;
+  return `${base}/api/twilio/webhook`;
 }

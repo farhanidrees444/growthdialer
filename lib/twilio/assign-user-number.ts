@@ -81,17 +81,13 @@ export async function assignUserNumber(
       .neq('status', 'released');
   }
 
-  const row = {
+  const row: Record<string, unknown> = {
     user_id: input.userId,
     workspace_id: workspaceId,
     phone_number: e164,
-    status: 'active' as const,
+    status: 'active',
     is_default: isDefault,
     country: input.country ?? 'US',
-    country_name: input.countryName ?? null,
-    number_type: input.numberType ?? 'local',
-    telnyx_number_id: null,
-    telnyx_order_id: null,
   };
 
   let purchasedNumberId: string;

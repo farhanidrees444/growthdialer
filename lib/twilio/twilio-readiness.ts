@@ -3,11 +3,9 @@ import {
   isTwilioVoiceConfigured,
   readTwilioAccountSid,
   readTwilioAuthToken,
-  readTwilioNumber,
   readTwilioTwimlAppSid,
-  resolveTwilioWebhookUrl,
 } from '@/lib/twilio/voice-config';
-import { resolveVoiceAppBaseUrl } from '@/lib/voice/webhook-url';
+import { resolveVoiceAppBaseUrl, resolveVoiceWebhookUrl } from '@/lib/voice/webhook-url';
 
 export interface TwilioReadinessInput {
   hasNumbers: boolean;
@@ -63,18 +61,6 @@ export function listTwilioInboundBlockers(input: TwilioReadinessInput): InboundB
     });
   }
 
-  if (!readTwilioNumber()) {
-    blockers.push({
-      code: 'voice_number',
-      label: 'Voice line number not configured',
-      fix: 'Set TWILIO_NUMBER to your active inbound phone number in deployment settings, then redeploy.',
-    });
-  }
-
-  if (input.twilioNumberLinked === false && readTwilioNumber()) {
-    // Soft warning only — Twilio line can work before DB number sync completes.
-  }
-
   return blockers;
 }
 
@@ -88,5 +74,5 @@ export function isTwilioInboundReady(input: TwilioReadinessInput): boolean {
 }
 
 export function twilioWebhookUrl(): string {
-  return resolveTwilioWebhookUrl(resolveVoiceAppBaseUrl());
+  return resolveVoiceWebhookUrl();
 }

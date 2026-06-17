@@ -1,7 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { prepareInboundAccount, type PrepareInboundResult } from '@/lib/inbound/prepare-account';
 import { invalidateNumberOwnerCache } from '@/lib/inbound/number-owner-cache';
-import { resolvePerUserCredentialId } from '@/lib/telnyx/active-credential';
 import { normalizeE164 } from '@/lib/inbound/phone';
 
 export interface PrepareVoiceAccountResult extends PrepareInboundResult {
@@ -10,10 +9,7 @@ export interface PrepareVoiceAccountResult extends PrepareInboundResult {
   user_id: string;
 }
 
-/**
- * One-shot per-account repair: numbers → Call Control app, workspace link,
- * per-user WebRTC credential, default outbound caller ID.
- */
+/** Per-account voice setup: numbers, workspace link, default outbound caller ID. */
 export async function prepareVoiceAccount(
   supabase: SupabaseClient,
   userId: string,
@@ -50,12 +46,9 @@ export async function prepareVoiceAccount(
     }
   }
 
-  const credentialId = await resolvePerUserCredentialId(supabase, userId);
-  const outboundReady = Boolean(credentialId && defaultCallerId);
-
   return {
     ...inbound,
-    outbound_ready: outboundReady,
+    outbound_ready: Boolean(defaultCallerId),
     default_caller_id: defaultCallerId,
     user_id: userId,
   };

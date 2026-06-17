@@ -8,33 +8,24 @@ export function readEnv(name: string): string | null {
 }
 
 export function readVoiceApiKey(): string | null {
-  return readEnv('TWILIO_AUTH_TOKEN') ?? readEnv('TELNYX_API_KEY');
+  return readEnv('TWILIO_AUTH_TOKEN');
 }
 
-/** Bearer token for voice REST calls (answer, bridge, dial). */
 export function voiceApiBearerToken(): string {
   return readVoiceApiKey() ?? '';
 }
 
-export function readTelephonyCredentialId(): string | null {
-  return readEnv('TELNYX_TELEPHONY_CREDENTIAL_ID') ?? readEnv('TELNYX_CREDENTIAL_ID');
-}
-
-/** SIP / WebRTC credential connection (growthdialer-sip) — numbers, inbound, credentials. */
-export function readConfiguredConnectionId(): string | null {
-  return (
-    readEnv('TELNYX_CONNECTION_ID')
-    ?? readEnv('TELNYX_CREDENTIAL_CONNECTION_ID')
-  );
-}
-
-/** Voice API / Call Control application (growthdialer) — server-side POST /v2/calls dial. */
+/** Programmable voice application SID (TwiML App). */
 export function readCallControlAppId(): string | null {
-  const twiml = readEnv('TWILIO_TWIML_APP_SID');
-  if (twiml) return twiml;
-  return (
-    readEnv('TELNYX_CALL_CONTROL_APP_ID')
-    ?? readEnv('TELNYX_VOICE_APP_ID')
-    ?? readEnv('TELNYX_CALL_CONTROL_CONNECTION_ID')
-  );
+  return readEnv('TWILIO_TWIML_APP_SID');
+}
+
+/** @deprecated Legacy alias — use readCallControlAppId */
+export function readConfiguredConnectionId(): string | null {
+  return readCallControlAppId();
+}
+
+/** @deprecated Legacy alias */
+export function readTelephonyCredentialId(): string | null {
+  return null;
 }

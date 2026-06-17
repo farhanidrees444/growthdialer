@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { hangupCall } from '@/lib/telnyx';
+import { hangupVoiceCall } from '@/lib/twilio/hangup-call';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
@@ -36,7 +36,11 @@ export async function POST(request: NextRequest) {
     );
     if (isCallAccessError(callRow)) return callRow;
 
-    await hangupCall(call_control_id);
+    try {
+      await hangupVoiceCall(call_control_id);
+    } catch (hangupError) {
+      console.warn('[hangup] Voice API hangup skipped:', hangupError);
+    }
 
     const endedAt = new Date().toISOString();
     try {

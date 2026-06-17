@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import telnyxClient, { toE164 } from '@/lib/telnyx';
 import { normalizePhone } from '@/lib/phone';
+import { normalizeE164 } from '@/lib/inbound/phone';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { hasPermission } from '@/lib/auth/permissions';
 import { assertWorkspaceCanPlaceCalls } from '@/lib/billing/workspace-billing-gate';
 import { apiUnauthorized, parseJsonBody } from '@/lib/api/errors';
 import { dialRequestSchema } from '@/lib/validations';
 import { resolveCallerIdForLead } from '@/lib/dialer/resolve-caller-id';
-import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
-import { resolveWorkspaceOutboundTrust } from '@/lib/compliance/workspace-trust';
-import { buildOutboundDialPayload } from '@/lib/voice/outbound-dial-payload';
 import { isTwilioVoiceConfigured } from '@/lib/twilio/voice-config';
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isTwilioVoiceConfigured()) {
+      return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
+    }
+
     const supabase = await createClient();
     const { data: { user: authUser } } = await supabase.auth.getUser();
     const userId = authUser?.id;
@@ -27,10 +28,16 @@ export async function POST(request: NextRequest) {
     if (!parsed.ok) return parsed.response;
     const { to, lead_id, call_control_id } = parsed.data;
 
-    const e164 = normalizePhone(to) ?? toE164(to);
-    console.log(`[dial] original="${to}" normalized="${e164}" webrtc=${!!call_control_id}`);
+    const e164 = normalizePhone(to) ?? normalizeE164(to);
     if (!e164) {
       return NextResponse.json({ error: 'Phone number format is invalid' }, { status: 400 });
+    }
+
+    if (!call_control_id) {
+      return NextResponse.json(
+        { error: 'Place calls from the browser dialer — voice session id is required.' },
+        { status: 422 },
+      );
     }
 
     const access = await requireWorkspaceFromRequest(request, supabase, userId, { body: rawBody });
@@ -57,131 +64,63 @@ export async function POST(request: NextRequest) {
     const { fromNumber } = await resolveCallerIdForLead(supabase, userId, leadPhone ?? to);
     if (!fromNumber) {
       return NextResponse.json(
-        { error: 'No active caller ID — purchase a number and set it as default.' },
+        { error: 'No active caller ID — contact support to assign a voice line.' },
         { status: 422 },
       );
     }
 
-    // ── WebRTC mode: browser already dialed via SDK ──────────────────────────
-    // call_control_id comes from the TelnyxRTC newCall() return value.
-    // We just persist the DB record here; Telnyx webhooks update status.
-    // Returns db_id (UUID) so the client can use it for notes/disposition APIs.
-    if (call_control_id) {
-      const nowIso = new Date().toISOString();
-      const row = {
-        user_id: userId,
-        workspace_id: access.workspaceId,
-        lead_id: lead_id ?? null,
-        direction: 'outbound' as const,
-        to_number: e164,
-        from_number: fromNumber,
-        telnyx_call_id: call_control_id,
-        status: 'initiated',
-        started_at: nowIso,
-        created_at: nowIso,
-      };
-
-      const { data: insertedRow, error: insertError } = await supabase
-        .from('calls')
-        .insert(row)
-        .select('id')
-        .single();
-
-      let dbId: string | null = insertedRow?.id ?? null;
-
-      if (insertError) {
-        const { data: existing } = await supabase
-          .from('calls')
-          .select('id, user_id, workspace_id')
-          .eq('telnyx_call_id', call_control_id)
-          .maybeSingle();
-
-        if (existing?.id) {
-          const { data: repaired } = await supabase
-            .from('calls')
-            .update({
-              user_id: existing.user_id ?? userId,
-              workspace_id: existing.workspace_id ?? access.workspaceId,
-              lead_id: lead_id ?? null,
-              direction: 'outbound',
-              to_number: e164,
-              from_number: fromNumber,
-              status: 'initiated',
-              started_at: nowIso,
-            })
-            .eq('id', existing.id)
-            .select('id')
-            .single();
-          dbId = repaired?.id ?? existing.id;
-        } else {
-          console.error('[dial] insert error:', insertError);
-        }
-      }
-
-      return NextResponse.json({ call_control_id, db_id: dbId, to: e164, status: 'initiated' });
-    }
-
-    // ── Server-side dial (legacy Telnyx — disabled when Twilio WebRTC is active) ─
-    if (isTwilioVoiceConfigured()) {
-      return NextResponse.json(
-        {
-          error:
-            'Place outbound calls from the dialer in your browser. Server-side dialing is not available.',
-        },
-        { status: 422 },
-      );
-    }
-
-    const { resolveVoiceWebhookUrl } = await import('@/lib/voice/webhook-url');
-    const webhookUrl = resolveVoiceWebhookUrl();
-    if (!webhookUrl) {
-      return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
-    }
-
-    const callControlAppId = await getActiveCallControlAppId();
-    if (!callControlAppId) {
-      return NextResponse.json({ error: 'Voice dial application is not configured' }, { status: 503 });
-    }
-
-    console.log(`[dial] server-side: to=${e164} from=${fromNumber}`);
-    const trust = await resolveWorkspaceOutboundTrust(supabase, access.workspaceId, fromNumber);
-    const dialBody = buildOutboundDialPayload({
-      connectionId: callControlAppId,
-      to: e164,
-      from: fromNumber,
-      webhookUrl,
-      trust,
-      amd: 'disabled',
-      timeoutSecs: 30,
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await (telnyxClient.calls.dial as any)(dialBody);
-
-    const newCallControlId = result.data?.call_control_id;
-
-    if (newCallControlId) {
-      const nowIso = new Date().toISOString();
-      const { error: insertError } = await supabase.from('calls').insert({
-        user_id: userId,
-        workspace_id: access.workspaceId,
-        lead_id: lead_id ?? null,
-        direction: 'outbound',
-        to_number: e164,
-        from_number: fromNumber,
-        telnyx_call_id: newCallControlId,
-        status: 'initiated',
-        started_at: nowIso,
-        created_at: nowIso,
-      });
-      if (insertError) console.error('[dial] insert error:', insertError);
-    }
-
-    return NextResponse.json({
-      call_control_id: newCallControlId,
-      to: e164,
+    const nowIso = new Date().toISOString();
+    const row = {
+      user_id: userId,
+      workspace_id: access.workspaceId,
+      lead_id: lead_id ?? null,
+      direction: 'outbound' as const,
+      to_number: e164,
+      from_number: fromNumber,
+      telnyx_call_id: call_control_id,
       status: 'initiated',
-    });
+      started_at: nowIso,
+      created_at: nowIso,
+    };
+
+    const { data: insertedRow, error: insertError } = await supabase
+      .from('calls')
+      .insert(row)
+      .select('id')
+      .single();
+
+    let dbId: string | null = insertedRow?.id ?? null;
+
+    if (insertError) {
+      const { data: existing } = await supabase
+        .from('calls')
+        .select('id, user_id, workspace_id')
+        .eq('telnyx_call_id', call_control_id)
+        .maybeSingle();
+
+      if (existing?.id) {
+        const { data: repaired } = await supabase
+          .from('calls')
+          .update({
+            user_id: existing.user_id ?? userId,
+            workspace_id: existing.workspace_id ?? access.workspaceId,
+            lead_id: lead_id ?? null,
+            direction: 'outbound',
+            to_number: e164,
+            from_number: fromNumber,
+            status: 'initiated',
+            started_at: nowIso,
+          })
+          .eq('id', existing.id)
+          .select('id')
+          .single();
+        dbId = repaired?.id ?? existing.id;
+      } else {
+        console.error('[dial] insert error:', insertError);
+      }
+    }
+
+    return NextResponse.json({ call_control_id, db_id: dbId, to: e164, status: 'initiated' });
   } catch (error) {
     console.error('[dial] error:', error);
     return NextResponse.json(

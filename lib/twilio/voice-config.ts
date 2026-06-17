@@ -23,8 +23,7 @@ export function isTwilioVoiceConfigured(): boolean {
   return Boolean(
     readTwilioAccountSid()
     && readTwilioAuthToken()
-    && readTwilioTwimlAppSid()
-    && readTwilioNumber(),
+    && readTwilioTwimlAppSid(),
   );
 }
 
