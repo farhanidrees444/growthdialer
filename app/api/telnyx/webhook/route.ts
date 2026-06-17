@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { waitUntil } from '@vercel/functions';
 import { verifyTelnyxSignature } from '@/lib/telnyx-signature';
+import { voiceServerLog } from '@/lib/debug/voice-server-log';
 import {
   isBridgeLegClientState,
   sendTelnyxAnswerFast,
@@ -41,13 +42,47 @@ function scheduleWebhookBackground(
   receivedAt: string,
   answerMeta: FastAnswerResult | null,
 ): void {
+  const eventType = body.data?.event_type;
+  const callControlId = body.data?.payload?.call_control_id;
+
+  console.log(
+    `[WEBHOOK] Scheduling background: ${eventType} | control=${callControlId} | answerSkipped=${answerMeta?.skipped ?? false}`,
+  );
+
+  // #region agent log
+  voiceServerLog({
+    location: 'webhook:route:scheduleBackground',
+    message: 'waitUntil scheduled for background processing',
+    data: {
+      eventType,
+      callControlId: callControlId ?? null,
+      answerSkipped: answerMeta?.skipped ?? null,
+      skipReason: answerMeta?.skipReason ?? null,
+    },
+    hypothesisId: 'H-L',
+    runId: 'run11',
+  });
+  // #endregion
+
   waitUntil(
     import('./process-event')
       .then(({ processTelnyxWebhookBackground }) =>
         processTelnyxWebhookBackground(body, receivedAt, answerMeta),
       )
       .catch((err) => {
-        console.error('[WEBHOOK] background processing failed:', err);
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('[WEBHOOK] background processing failed:', msg);
+        voiceServerLog({
+          location: 'webhook:route:backgroundFailed',
+          message: 'waitUntil background processor rejected',
+          data: {
+            eventType,
+            callControlId: callControlId ?? null,
+            error: msg,
+          },
+          hypothesisId: 'H-L',
+          runId: 'run11',
+        });
       }),
   );
 }

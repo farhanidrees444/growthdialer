@@ -10,6 +10,7 @@ import {
   type ResolvedNumberRouting,
 } from '@/lib/voice/phone-number-settings';
 import { voiceLog } from '@/lib/voice/structured-log';
+import { voiceServerLog } from '@/lib/debug/voice-server-log';
 
 export interface InboundInitiatedContext {
   callControlId: string;
@@ -187,6 +188,22 @@ export async function executeInboundRouting(
     status: 'ringing',
     timestamp: new Date().toISOString(),
   });
+
+  // #region agent log
+  voiceServerLog({
+    location: 'routing-matrix:broadcastDispatched',
+    message: 'broadcastIncomingCallEvent dispatched',
+    data: {
+      userId: ctx.userId,
+      callControlId: ctx.callControlId,
+      dbCallId: ctx.dbCallId ?? null,
+      callerNumber: ctx.fromNumber ?? null,
+      agentOnline,
+    },
+    hypothesisId: 'H-M',
+    runId: 'run11',
+  });
+  // #endregion
 
   if (!agentOnline) {
     voiceLog.info(
