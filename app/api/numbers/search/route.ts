@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { blockLegacyTelnyxNumberApi } from '@/lib/twilio/telnyx-guard';
 
 export async function POST(request: NextRequest) {
+  const blocked = blockLegacyTelnyxNumberApi();
+  if (blocked) return blocked;
+
   try {
     const supabase = await createClient();
     const { data: { user: authUser } } = await supabase.auth.getUser();

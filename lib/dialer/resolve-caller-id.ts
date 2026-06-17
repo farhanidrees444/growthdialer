@@ -25,7 +25,7 @@ export async function prefetchUserCallerNumbers(
 
   return {
     numbers: (numbers ?? []) as PurchasedNumberRow[],
-    fallback: process.env.TELNYX_FROM_NUMBER ?? '',
+    fallback: '',
   };
 }
 

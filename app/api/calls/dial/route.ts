@@ -11,6 +11,7 @@ import { resolveCallerIdForLead } from '@/lib/dialer/resolve-caller-id';
 import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
 import { resolveWorkspaceOutboundTrust } from '@/lib/compliance/workspace-trust';
 import { buildOutboundDialPayload } from '@/lib/voice/outbound-dial-payload';
+import { isTwilioVoiceConfigured } from '@/lib/twilio/voice-config';
 
 export async function POST(request: NextRequest) {
   try {
@@ -120,7 +121,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ call_control_id, db_id: dbId, to: e164, status: 'initiated' });
     }
 
-    // ── Server-side dial (legacy / fallback when WebRTC unavailable) ─────────
+    // ── Server-side dial (legacy Telnyx — disabled when Twilio WebRTC is active) ─
+    if (isTwilioVoiceConfigured()) {
+      return NextResponse.json(
+        {
+          error:
+            'Place outbound calls from the dialer in your browser. Server-side dialing is not available.',
+        },
+        { status: 422 },
+      );
+    }
+
     const { resolveVoiceWebhookUrl } = await import('@/lib/voice/webhook-url');
     const webhookUrl = resolveVoiceWebhookUrl();
     if (!webhookUrl) {

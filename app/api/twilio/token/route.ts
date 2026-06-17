@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { TWILIO_CLIENT_IDENTITY } from '@/lib/twilio/client-identity';
-import {
-  readTwilioAccountSid,
-  readTwilioAuthToken,
-  readTwilioTwimlAppSid,
-} from '@/lib/twilio/voice-config';
+import { toTwilioClientIdentity } from '@/lib/twilio/client-identity';
+import { resolveTwilioAccessTokenCredentials } from '@/lib/twilio/access-token-credentials';
+import { readTwilioTwimlAppSid } from '@/lib/twilio/voice-config';
 import twilio from 'twilio';
 
 const { AccessToken } = twilio.jwt;
@@ -26,17 +23,18 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const accountSid = readTwilioAccountSid();
-    const authToken = readTwilioAuthToken();
+    const creds = resolveTwilioAccessTokenCredentials();
     const twimlAppSid = readTwilioTwimlAppSid();
 
-    if (!accountSid || !authToken || !twimlAppSid) {
-      console.error('[TwilioToken] Missing TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_TWIML_APP_SID');
+    if (!creds || !twimlAppSid) {
+      console.error('[TwilioToken] Missing Twilio voice credentials or TWILIO_TWIML_APP_SID');
       return NextResponse.json(
         { error: 'Voice service configuration incomplete' },
         { status: 500 },
       );
     }
+
+    const identity = toTwilioClientIdentity(authUser.id);
 
     const voiceGrant = new VoiceGrant({
       outgoingApplicationSid: twimlAppSid,
@@ -44,11 +42,11 @@ export async function GET(_request: NextRequest) {
     });
 
     const token = new AccessToken(
-      accountSid,
-      accountSid,
-      authToken,
+      creds.accountSid,
+      creds.signingKeySid,
+      creds.secret,
       {
-        identity: TWILIO_CLIENT_IDENTITY,
+        identity,
         ttl: 3600,
       },
     );
@@ -57,7 +55,7 @@ export async function GET(_request: NextRequest) {
 
     return NextResponse.json({
       token: token.toJwt(),
-      identity: TWILIO_CLIENT_IDENTITY,
+      identity,
     });
   } catch (error) {
     console.error('[TwilioToken] Exception:', error instanceof Error ? error.message : String(error));
