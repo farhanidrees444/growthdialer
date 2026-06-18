@@ -23,7 +23,6 @@ import {
   getRemoteAudioElement,
   unlockRemoteAudioElement,
 } from '@/lib/voice/remote-audio';
-import { voiceSessionLog } from '@/lib/debug/voice-session-log';
 import { extractCallSidFromSdkCall, isTwilioCallSid } from '@/lib/twilio/extract-call-sid';
 import { useTwilioDevice } from '@/hooks/use-twilio-device';
 
@@ -57,12 +56,6 @@ export interface WebPhoneContextValue {
   requestMicPermission: () => Promise<boolean>;
   /** Poll until WebRTC client is ready or timeout (ms). */
   waitForPhoneReady: (timeoutMs?: number) => Promise<boolean>;
-  /** Wait until an inbound WebRTC leg is ringing in the browser. */
-  waitForInboundWebRtcLeg: (timeoutMs?: number) => Promise<boolean>;
-  /** Suppress stale-leg teardown while inbound accept is in flight. */
-  setInboundAcceptInFlight: (active: boolean) => void;
-  /** Synchronous inbound ring flag (not one React frame behind). */
-  isInboundRingingLive: () => boolean;
   /** Human-readable reason when phoneStatus is error (server config, token, device). */
   voiceError: string | null;
 }
@@ -214,15 +207,6 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const setInboundAcceptInFlight = useCallback((active: boolean) => {
-    acceptingInboundRef.current = active;
-  }, []);
-
-  const isInboundRingingLive = useCallback(() => {
-    const target = incomingCallRef.current ?? activeCallRef.current;
-    return Boolean(target && isLiveIncomingTwilioCall(target, outboundDialRef.current));
-  }, []);
-
   const safeSet = useCallback(<T,>(setter: (v: T) => void, value: T) => {
     if (mountedRef.current) setter(value);
   }, []);
@@ -304,6 +288,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         outboundDialRef.current = false;
         safeSet(setHasOutboundSession, false);
         isInboundRingingLiveRef.current = false;
+        acceptingInboundRef.current = false;
         safeSet(setIsInboundRinging, false);
         inboundRingStartedRef.current = null;
         window.dispatchEvent(new CustomEvent('gd-webrtc-inbound-active'));
@@ -387,6 +372,10 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       call.parameters?.From
       ?? call.customParameters?.get?.('From')
       ?? null;
+    const toNumber =
+      call.parameters?.To
+      ?? call.customParameters?.get?.('To')
+      ?? null;
     console.log('[WebPhone] incoming call:', callId, fromNumber ?? '');
 
     outboundDialRef.current = false;
@@ -415,37 +404,24 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           detail: {
             call_id: callId,
             from_number: fromNumber,
+            to_number: toNumber,
             provider: 'twilio',
           },
         }),
       );
     }
 
-    setupCallEventHandlers(call, true, { from: fromNumber });
+    setupCallEventHandlers(call, true, { from: fromNumber, to: toNumber });
 
-    {
-      const sid = extractCallSidFromSdkCall(call);
-      if (sid) {
-        void pushCallLegSync({
-          call_sid: sid,
-          direction: 'inbound',
-          from_number: fromNumber,
-        });
-      }
+    const sid = extractCallSidFromSdkCall(call);
+    if (sid) {
+      void pushCallLegSync({
+        call_sid: sid,
+        direction: 'inbound',
+        from_number: fromNumber,
+        to_number: toNumber,
+      });
     }
-
-    voiceSessionLog({
-      location: 'webphone-context.tsx:incoming',
-      message: 'incoming call received',
-      data: {
-        callId,
-        status,
-        mapped,
-        fromNumber,
-      },
-      hypothesisId: 'H-C',
-      runId: 'run1',
-    });
   };
 
   const initClient = useCallback(async () => {
@@ -589,19 +565,6 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
   // ── Call actions ─────────────────────────────────────────────────────────────
   const makeCall = useCallback(async (destination: string, _callerNumber?: string) => {
-    voiceSessionLog({
-      location: 'webphone-context.tsx:makeCall',
-      message: 'makeCall invoked',
-      data: {
-        hasDevice: Boolean(twilioDevice.device),
-        phoneStatus: phoneStatusRef.current,
-        callStatus: callStatusRef.current,
-        destLen: destination?.length ?? 0,
-      },
-      hypothesisId: 'H-E',
-      runId: 'run1',
-    });
-
     if (!twilioDevice.device || !twilioDevice.isReady) {
       console.warn('[WebPhone] makeCall: device not ready');
       return;
@@ -646,169 +609,31 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     });
   }, [safeSet, setupCallEventHandlers, twilioDevice]);
 
-  const waitForInboundWebRtcLeg = useCallback((timeoutMs = 15000): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const deadline = Date.now() + timeoutMs;
-      const check = () => {
-        const target = incomingCallRef.current ?? activeCallRef.current;
-        if (target && isLiveIncomingTwilioCall(target, outboundDialRef.current)) {
-          resolve(true);
-          return;
-        }
-        if (Date.now() >= deadline) {
-          resolve(false);
-          return;
-        }
-        setTimeout(check, 200);
-      };
-      check();
-    });
-  }, []);
-
-  const resolveInboundTarget = useCallback((): Call | null => {
-    const target = incomingCallRef.current ?? activeCallRef.current;
-    if (target && isLiveIncomingTwilioCall(target, outboundDialRef.current)) {
-      return target;
-    }
-    return null;
-  }, []);
-
   const answerIncomingCall = useCallback(async (): Promise<boolean> => {
+    const target = incomingCallRef.current;
+    if (!target) {
+      console.warn('[WebPhone] answerIncomingCall: no incoming call');
+      return false;
+    }
+
     await resumeVoiceAudioContext();
     await unlockRemoteAudioElement();
 
-    const deadline = Date.now() + 15_000;
-    while (Date.now() < deadline) {
-      const target = resolveInboundTarget();
-      if (target) {
-        const callId = getCallStableId(target);
+    acceptingInboundRef.current = true;
 
-        try {
-          console.log('[WebPhone] accepting incoming call:', callId);
-          target.accept();
-
-          // Wait for the accept event or open status
-          await new Promise<void>((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('accept_timeout')), 10_000);
-
-            const onAccept = () => {
-              clearTimeout(timeout);
-              target.off('accept', onAccept);
-              resolve();
-            };
-
-            target.on('accept', onAccept);
-
-            if (target.status() === 'open') {
-              clearTimeout(timeout);
-              target.off('accept', onAccept);
-              resolve();
-            }
-          });
-
-          console.log('[WebPhone] answered inbound WebRTC session:', callId);
-        } catch (err) {
-          console.error('[WebPhone] answerIncomingCall error:', err);
-          voiceSessionLog({
-            location: 'webphone-context.tsx:answerIncomingCall:error',
-            message: 'accept() threw or timed out',
-            data: { callId, err: String(err) },
-            hypothesisId: 'H-C',
-            runId: 'run1',
-          });
-          return false;
-        }
-
-        bindRemoteMediaToTwilioCall(target);
-        bindPeerMonitor(target);
-
-        // Direct PeerConnection state fallback
-        const pc = getCallPeerConnection(target);
-        if (pc) {
-          let connectedFired = false;
-          const onConnected = () => {
-            if (connectedFired) return;
-            connectedFired = true;
-            console.log('[WebPhone] inbound PeerConnection connected — forcing active');
-            safeSet(setCallStatus, 'active');
-            safeSet(setIsInboundRinging, false);
-            isInboundRingingLiveRef.current = false;
-            inboundRingStartedRef.current = null;
-            window.dispatchEvent(new CustomEvent('gd-webrtc-inbound-active'));
-          };
-
-          const onConnChange = () => {
-            if (pc.connectionState === 'connected') onConnected();
-          };
-          const onIceChange = () => {
-            const s = pc.iceConnectionState;
-            if (s === 'connected' || s === 'completed') onConnected();
-          };
-
-          pc.addEventListener('connectionstatechange', onConnChange);
-          pc.addEventListener('iceconnectionstatechange', onIceChange);
-
-          const prevCleanup = peerCleanupRef.current;
-          peerCleanupRef.current = () => {
-            pc.removeEventListener('connectionstatechange', onConnChange);
-            pc.removeEventListener('iceconnectionstatechange', onIceChange);
-            prevCleanup?.();
-          };
-
-          if (
-            pc.connectionState === 'connected' ||
-            pc.iceConnectionState === 'connected' ||
-            pc.iceConnectionState === 'completed'
-          ) {
-            onConnected();
-          }
-        }
-
-        // Confirm remote audio track arrived
-        const audioConfirmed = await new Promise<boolean>((resolve) => {
-          const confirmDeadline = Date.now() + 3000;
-          const check = () => {
-            const pc = getCallPeerConnection(target);
-            if (pc) {
-              const receivers = pc.getReceivers();
-              for (const receiver of receivers) {
-                if (receiver.track?.kind === 'audio' && receiver.track.readyState === 'live') {
-                  const stream = new MediaStream([receiver.track]);
-                  void bindRemoteStreamToAudio(stream);
-                  resolve(true);
-                  return;
-                }
-              }
-            }
-            const sdkStream = target.getRemoteStream();
-            if (sdkStream && sdkStream.active) {
-              void bindRemoteStreamToAudio(sdkStream);
-              resolve(true);
-              return;
-            }
-            if (Date.now() >= confirmDeadline) {
-              resolve(false);
-              return;
-            }
-            setTimeout(check, 150);
-          };
-          check();
-        });
-
-        if (!audioConfirmed) {
-          console.warn('[WebPhone] answerIncomingCall: no remote audio track confirmed after accept');
-        }
-
-        const live = activeCallRef.current ?? target;
-        bindRemoteMediaToTwilioCall(live);
-        bindPeerMonitor(live);
-        return true;
-      }
-      await new Promise((r) => setTimeout(r, 200));
+    try {
+      console.log('[WebPhone] accepting incoming call:', getCallStableId(target));
+      target.accept();
+      return true;
+    } catch (err) {
+      acceptingInboundRef.current = false;
+      console.error('[WebPhone] accept failed:', err, {
+        status: target.status(),
+        parameters: target.parameters,
+      });
+      return false;
     }
-    console.warn('[WebPhone] answerIncomingCall: no incoming WebRTC leg after wait');
-    return false;
-  }, [bindPeerMonitor, resolveInboundTarget, safeSet]);
+  }, []);
 
   const hangup = useCallback(() => {
     const target = incomingCallRef.current ?? activeCallRef.current;
@@ -892,9 +717,6 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         reconnect,
         requestMicPermission,
         waitForPhoneReady,
-        waitForInboundWebRtcLeg,
-        setInboundAcceptInFlight,
-        isInboundRingingLive,
         voiceError: voiceError ?? twilioDevice.voiceError,
       }}
     >

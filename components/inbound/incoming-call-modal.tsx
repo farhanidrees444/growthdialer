@@ -1,7 +1,6 @@
 'use client';
 
 /**
- * Incoming-call modal — subscribes to Supabase Realtime `incoming-calls:{userId}` broadcasts
- * and delegates accept/decline to InboundRingingProvider.
+ * Incoming-call modal — driven by Twilio Device `incoming` events via InboundRingingProvider.
  */
 export { InboundCallOverlay as IncomingCallModal } from '@/components/inbound/inbound-call-overlay';

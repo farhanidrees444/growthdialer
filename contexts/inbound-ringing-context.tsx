@@ -9,15 +9,11 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { useWebPhone } from '@/contexts/webphone-context';
 import { useCallContext } from '@/lib/call-context';
-import { useWorkspace } from '@/contexts/workspace-context';
 import { playInboundRingtone, stopInboundRingtone } from '@/lib/inbound/ringtone';
 import { resumeVoiceAudioContext } from '@/lib/voice/audio-unlock';
 import { unlockRemoteAudioElement } from '@/lib/voice/remote-audio';
-import { voiceSessionLog } from '@/lib/debug/voice-session-log';
-import { isTwilioCallSid } from '@/lib/twilio/extract-call-sid';
 
 export interface InboundLead {
   first_name: string | null;
@@ -47,375 +43,141 @@ interface InboundRingingContextValue {
 
 const InboundRingingContext = createContext<InboundRingingContextValue | null>(null);
 
-/** Only statuses that mean the agent can no longer answer. */
-const DISMISS_STATUSES = new Set(['missed', 'rejected', 'voicemail', 'failed', 'declined']);
+const ACCEPT_EVENT_TIMEOUT_MS = 12_000;
 
-function blocksNewInbound(
-  hasOutboundSession: boolean,
-  callStatus: string,
-): boolean {
+function blocksNewInbound(hasOutboundSession: boolean, callStatus: string): boolean {
   if (hasOutboundSession) return true;
   return callStatus === 'active' || callStatus === 'held';
 }
 
 export function InboundRingingProvider({
-  userId,
   children,
 }: {
-  userId: string | undefined;
+  userId?: string | undefined;
   children: ReactNode;
 }) {
   const [call, setCall] = useState<InboundRingingCall | null>(null);
   const [accepting, setAccepting] = useState(false);
   const [ringElapsedSec, setRingElapsedSec] = useState(0);
-  const callIdRef = useRef<string | null>(null);
+
   const ringStartedRef = useRef<number | null>(null);
   const acceptingRef = useRef(false);
-  const stickyRingRef = useRef(false);
+  const acceptWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const callMetaRef = useRef<InboundRingingCall | null>(null);
 
   const {
     answerIncomingCall,
-    hasOutboundSession,
-    callStatus,
-    phoneStatus,
-    iceConnectionState,
     hangup,
-    requestMicPermission,
+    callStatus,
+    hasOutboundSession,
     isInboundRinging,
-    waitForPhoneReady,
-    waitForInboundWebRtcLeg,
-    setInboundAcceptInFlight,
+    requestMicPermission,
   } = useWebPhone();
   const { registerCallMeta } = useCallContext();
-  const { apiFetch } = useWorkspace();
 
-  const hasOutboundSessionRef = useRef(hasOutboundSession);
   const callStatusRef = useRef(callStatus);
-  const isInboundRingingRef = useRef(isInboundRinging);
-  const apiFetchRef = useRef(apiFetch);
-  hasOutboundSessionRef.current = hasOutboundSession;
   callStatusRef.current = callStatus;
-  isInboundRingingRef.current = isInboundRinging;
-  apiFetchRef.current = apiFetch;
-  acceptingRef.current = accepting;
+  callMetaRef.current = call;
 
-  const blocksNewInboundNow = useCallback(() => {
-    return blocksNewInbound(hasOutboundSessionRef.current, callStatusRef.current);
-  }, []);
-
-  const beginRing = useCallback((incoming: InboundRingingCall) => {
-    if (blocksNewInboundNow()) return false;
-    callIdRef.current = incoming.id;
-    stickyRingRef.current = true;
-    if (!ringStartedRef.current) {
-      ringStartedRef.current = Date.now();
-      setRingElapsedSec(0);
+  const clearAcceptWatchdog = useCallback(() => {
+    if (acceptWatchdogRef.current) {
+      clearTimeout(acceptWatchdogRef.current);
+      acceptWatchdogRef.current = null;
     }
-    setAccepting(false);
-    setCall(incoming);
-    playInboundRingtone();
-    // Leg B is dialed on accept — overlay is driven by DB/realtime only until then.
-    return true;
-  }, [blocksNewInboundNow]);
+  }, []);
 
   const clearCall = useCallback((stopAudio = true) => {
-    callIdRef.current = null;
-    ringStartedRef.current = null;
-    stickyRingRef.current = false;
-    setAccepting(false);
+    clearAcceptWatchdog();
     acceptingRef.current = false;
+    setAccepting(false);
     setCall(null);
+    ringStartedRef.current = null;
     setRingElapsedSec(0);
     if (stopAudio) stopInboundRingtone();
-  }, []);
+  }, [clearAcceptWatchdog]);
 
-  const finishAccept = useCallback(async (callId: string, callSid?: string) => {
-    let dbId = callId;
-    const sid =
-      callSid && isTwilioCallSid(callSid)
-        ? callSid
-        : isTwilioCallSid(callId)
-          ? callId
-          : null;
-
-    if (sid) {
-      try {
-        const res = await apiFetchRef.current('/api/calls/sync-leg', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            call_sid: sid,
-            provisional_id: callId !== sid ? callId : undefined,
-            direction: 'inbound',
-          }),
-        });
-        const data = await res.json() as { db_id?: string };
-        if (data.db_id) dbId = data.db_id;
-      } catch {
-        /* non-fatal */
-      }
-    }
-
-    // #region agent log
-    voiceSessionLog({
-      location: 'inbound-ringing-context.tsx:finishAccept',
-      message: 'accept completed',
-      data: { callId: dbId, callStatus: callStatusRef.current },
-      hypothesisId: 'H-D',
-      runId: 'run1',
-    });
-    // #endregion
+  const finishActive = useCallback((callId: string) => {
+    clearAcceptWatchdog();
     stopInboundRingtone();
     acceptingRef.current = false;
     setAccepting(false);
-    setInboundAcceptInFlight(false);
-    stickyRingRef.current = false;
-    callIdRef.current = null;
+    setCall(null);
     ringStartedRef.current = null;
     setRingElapsedSec(0);
-    setCall(null);
     window.dispatchEvent(
-      new CustomEvent('gd-inbound-answered', { detail: { callId: dbId } }),
+      new CustomEvent('gd-inbound-answered', { detail: { callId } }),
     );
-  }, [setInboundAcceptInFlight]);
-
-  const shouldDismissStatus = useCallback((status: string) => {
-    return DISMISS_STATUSES.has(status);
-  }, []);
+  }, [clearAcceptWatchdog]);
 
   useEffect(() => {
-    if (!userId) return;
-    const supabase = createClient();
+    const onRing = (ev: Event) => {
+      const detail = (ev as CustomEvent<{
+        call_id?: string;
+        from_number?: string | null;
+        to_number?: string | null;
+      }>).detail;
 
-    const broadcastChannel = supabase
-      .channel(`incoming-calls:${userId}`)
-      .on(
-        'broadcast',
-        { event: 'incoming_call' },
-        (msg) => {
-          const p = msg.payload as {
-            call_id?: string;
-            call_control_id?: string;
-            caller_number?: string | null;
-            to_number?: string | null;
-          };
-          if (!p.call_id || !p.call_control_id) return;
-          if (blocksNewInboundNow()) {
-            void apiFetchRef.current('/api/calls/decline', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ call_sid: p.call_control_id }),
-            }).catch(() => {});
-            return;
-          }
-          beginRing({
-            id: p.call_id,
-            call_control_id: p.call_control_id,
-            from_number: p.caller_number ?? null,
-            to_number: p.to_number ?? '',
-            lead_id: null,
-            status: 'ringing',
-          });
-        },
-      )
-      .on(
-        'broadcast',
-        { event: 'call_missed' },
-        () => {
-          if (stickyRingRef.current && !acceptingRef.current) {
-            clearCall(true);
-          }
-        },
-      )
-      .on(
-        'broadcast',
-        { event: 'call_declined' },
-        () => {
-          if (stickyRingRef.current && !acceptingRef.current) {
-            clearCall(true);
-          }
-        },
-      )
-      .on(
-        'broadcast',
-        { event: 'call_cleared' },
-        () => {
-          if (stickyRingRef.current && !acceptingRef.current) {
-            clearCall(true);
-          }
-        },
-      )
-      .on(
-        'broadcast',
-        { event: 'call_active' },
-        (msg) => {
-          const p = msg.payload as { call_id?: string };
-          if (p.call_id && acceptingRef.current && callIdRef.current === p.call_id) {
-            finishAccept(p.call_id);
-          }
-        },
-      )
-      .subscribe();
-
-    const channel = supabase
-      .channel(`inbound-ring-${userId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'calls', filter: `user_id=eq.${userId}` },
-        async (payload) => {
-          const row = payload.new as Record<string, unknown>;
-          if (row.direction !== 'inbound' || row.status !== 'ringing') return;
-          if (blocksNewInboundNow()) {
-            void apiFetchRef.current(`/api/calls/${row.id as string}/end`, { method: 'POST' }).catch(() => {});
-            return;
-          }
-
-          let lead: InboundLead | null = null;
-          if (row.lead_id) {
-            const { data } = await supabase
-              .from('leads')
-              .select('first_name, last_name, company')
-              .eq('id', row.lead_id as string)
-              .maybeSingle();
-            lead = data ?? null;
-          }
-
-          beginRing({
-            id: row.id as string,
-            call_control_id: (row.telnyx_call_id as string) ?? '',
-            from_number: (row.from_number as string | null) ?? null,
-            to_number: row.to_number as string,
-            lead_id: row.lead_id as string | null,
-            status: row.status as string,
-            lead,
-          });
-        },
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'calls', filter: `user_id=eq.${userId}` },
-        (payload) => {
-          const row = payload.new as Record<string, unknown>;
-          if (row.id !== callIdRef.current) return;
-          const status = row.status as string;
-
-          if (status === 'active' || status === 'in_progress' || status === 'connecting') {
-            const id = row.id as string;
-            if (acceptingRef.current && callIdRef.current === id && callStatusRef.current === 'active') {
-              finishAccept(id);
-            }
-            return;
-          }
-
-          if (row.ended_at || shouldDismissStatus(status)) {
-            const ringAgeMs = ringStartedRef.current
-              ? Date.now() - ringStartedRef.current
-              : Infinity;
-            // Brief grace only for bridge race — not for finished test calls.
-            if (
-              !row.ended_at
-              && isInboundRingingRef.current
-              && !hasOutboundSessionRef.current
-              && (status === 'failed' || status === 'missed')
-              && ringAgeMs < 8000
-            ) {
-              return;
-            }
-            clearCall(true);
-            window.dispatchEvent(new CustomEvent('gd-call-ended'));
-          }
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(broadcastChannel);
-      supabase.removeChannel(channel);
-      stopInboundRingtone();
-    };
-  }, [userId, blocksNewInboundNow, beginRing, clearCall, shouldDismissStatus, finishAccept]);
-
-  useEffect(() => {
-    if (!userId || !isInboundRinging || hasOutboundSession) return;
-    void apiFetchRef.current('/api/inbound/ringing')
-      .then((r) => r.json())
-      .then((data: { call?: InboundRingingCall | null }) => {
-        if (data.call?.status === 'ringing' && !blocksNewInboundNow()) {
-          beginRing(data.call);
-        }
-      })
-      .catch(() => { /* non-fatal */ });
-  }, [isInboundRinging, hasOutboundSession, userId, beginRing, blocksNewInboundNow]);
-
-  useEffect(() => {
-    if (!userId) return;
-
-    const poll = async () => {
-      if (blocksNewInboundNow() && !stickyRingRef.current) return;
-
-      try {
-        const res = await apiFetchRef.current('/api/inbound/ringing');
-        if (!res.ok) return;
-        const data = await res.json() as { call?: InboundRingingCall | null };
-
-        if (data.call?.status === 'ringing') {
-          if (!callIdRef.current) {
-            beginRing(data.call);
-          } else if (data.call.id !== callIdRef.current) {
-            // Newer live ring supersedes a stale overlay (e.g. prior test call).
-            beginRing(data.call);
-          } else {
-            setCall((prev) => (prev ? { ...prev, ...data.call } : data.call!));
-            stickyRingRef.current = true;
-          }
-          return;
-        }
-
-        if (stickyRingRef.current && callIdRef.current && !data.call) {
-          if (isInboundRingingRef.current && !hasOutboundSessionRef.current) {
-            const graceMs = Date.now() - (ringStartedRef.current ?? Date.now());
-            if (graceMs < 10000) return;
-          }
-          clearCall(true);
-        }
-      } catch { /* non-fatal */ }
-    };
-
-    const onWebrtcRing = (ev: Event) => {
-      const detail = (ev as CustomEvent<{ call_id?: string; from_number?: string | null; provider?: string }>).detail;
-      if (detail?.provider === 'twilio' || detail?.from_number != null) {
-        if (!detail?.call_id) return;
-        if (blocksNewInboundNow()) {
-          hangup();
-          return;
-        }
-        beginRing({
-          id: detail.call_id,
-          call_control_id: detail.call_id,
-          from_number: detail.from_number ?? null,
-          to_number: '',
-          lead_id: null,
-          status: 'ringing',
-          provider: 'twilio',
-        });
+      if (!detail?.call_id) return;
+      if (blocksNewInbound(hasOutboundSession, callStatusRef.current)) {
+        hangup();
         return;
       }
-      if (callIdRef.current) {
-        stickyRingRef.current = true;
-        playInboundRingtone();
+
+      ringStartedRef.current = Date.now();
+      setRingElapsedSec(0);
+      setAccepting(false);
+      acceptingRef.current = false;
+
+      setCall({
+        id: detail.call_id,
+        call_control_id: detail.call_id,
+        from_number: detail.from_number ?? null,
+        to_number: detail.to_number ?? '',
+        lead_id: null,
+        status: 'ringing',
+        provider: 'twilio',
+      });
+      playInboundRingtone();
+    };
+
+    const onCallEnded = () => clearCall(true);
+
+    const onWebrtcActive = () => {
+      const meta = callMetaRef.current;
+      if (acceptingRef.current && meta) {
+        finishActive(meta.id);
       }
-      void poll();
     };
 
-    window.addEventListener('gd-webrtc-inbound-ring', onWebrtcRing);
+    window.addEventListener('gd-webrtc-inbound-ring', onRing);
+    window.addEventListener('gd-call-ended', onCallEnded);
+    window.addEventListener('gd-webrtc-inbound-active', onWebrtcActive);
 
-    void poll();
-    const interval = setInterval(() => void poll(), 1500);
     return () => {
-      clearInterval(interval);
-      window.removeEventListener('gd-webrtc-inbound-ring', onWebrtcRing);
+      window.removeEventListener('gd-webrtc-inbound-ring', onRing);
+      window.removeEventListener('gd-call-ended', onCallEnded);
+      window.removeEventListener('gd-webrtc-inbound-active', onWebrtcActive);
+      stopInboundRingtone();
     };
-  }, [userId, blocksNewInboundNow, beginRing, clearCall]);
+  }, [hasOutboundSession, hangup, clearCall, finishActive]);
+
+  useEffect(() => {
+    if (!call || accepting) return;
+    if (!isInboundRinging && callStatus === 'idle') {
+      const t = setTimeout(() => {
+        if (!acceptingRef.current && callStatusRef.current === 'idle') {
+          clearCall(true);
+        }
+      }, 600);
+      return () => clearTimeout(t);
+    }
+  }, [call, accepting, isInboundRinging, callStatus, clearCall]);
+
+  useEffect(() => {
+    if (accepting && callStatus === 'active' && call) {
+      finishActive(call.id);
+    }
+  }, [accepting, callStatus, call, finishActive]);
 
   useEffect(() => {
     if (!call) return;
@@ -427,186 +189,46 @@ export function InboundRingingProvider({
     return () => clearInterval(tick);
   }, [call]);
 
-  // WebRTC went live while accept is in flight — close overlay immediately.
-  useEffect(() => {
-    if (!accepting || !callIdRef.current) return;
-    if (callStatus === 'active') {
-      finishAccept(callIdRef.current);
-    }
-  }, [accepting, callStatus, finishAccept]);
-
-  useEffect(() => {
-    const onWebrtcActive = () => {
-      if (acceptingRef.current && callIdRef.current) {
-        finishAccept(callIdRef.current);
-      }
-    };
-    window.addEventListener('gd-webrtc-inbound-active', onWebrtcActive);
-    return () => window.removeEventListener('gd-webrtc-inbound-active', onWebrtcActive);
-  }, [finishAccept]);
-
   const accept = useCallback(async () => {
     if (!call || acceptingRef.current) return;
-    const callId = call.id;
+
     acceptingRef.current = true;
     setAccepting(true);
-    setInboundAcceptInFlight(true);
     stopInboundRingtone();
-
-    voiceSessionLog({
-      location: 'inbound-ringing-context.tsx:accept:start',
-      message: '2-leg accept started',
-      data: { callId, phoneStatus, callStatus, hasOutboundSession },
-      hypothesisId: 'H-2LEG',
-      runId: 'run10',
-    });
 
     void requestMicPermission();
     await resumeVoiceAudioContext();
     await unlockRemoteAudioElement();
 
-    const leadName = call.lead
-      ? [call.lead.first_name, call.lead.last_name].filter(Boolean).join(' ')
-      : 'Unknown Caller';
+    registerCallMeta(null, call.from_number ?? '');
 
-    registerCallMeta(
-      call.lead && call.from_number
-        ? {
-            id: call.lead_id ?? '',
-            name: leadName,
-            company: call.lead.company ?? '',
-            phone: call.from_number,
-          } as Parameters<typeof registerCallMeta>[0]
-        : null,
-      call.from_number ?? '',
-    );
-
-    if (call.provider === 'twilio') {
-      setCall(null);
-      stickyRingRef.current = false;
-      await waitForPhoneReady(5000);
-      const legReady = await waitForInboundWebRtcLeg(8000);
-      if (!legReady) {
-        setInboundAcceptInFlight(false);
-        acceptingRef.current = false;
-        setAccepting(false);
-        hangup();
-        clearCall(true);
-        return;
-      }
-      const answered = await answerIncomingCall();
-      if (!answered) {
-        setInboundAcceptInFlight(false);
-        acceptingRef.current = false;
-        setAccepting(false);
-        hangup();
-        clearCall(true);
-        return;
-      }
-      finishAccept(callId, call.call_control_id || call.id);
-      return;
-    }
-
-    const acceptRes = await apiFetch('/api/calls/accept', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ call_control_id: call.call_control_id }),
-    }).catch((err) => {
-      console.error('[INBOUND] accept dial failed:', err);
-      return null;
-    });
-    if (!acceptRes?.ok) {
-      console.error('[INBOUND] Leg B dial failed:', acceptRes?.status);
-      setInboundAcceptInFlight(false);
+    const ok = await answerIncomingCall();
+    if (!ok) {
       acceptingRef.current = false;
       setAccepting(false);
       playInboundRingtone();
       return;
     }
 
-    setCall(null);
-    stickyRingRef.current = false;
-
-    await waitForPhoneReady(5000);
-
-    let legReady = await waitForInboundWebRtcLeg(12000);
-    if (!legReady) {
-      const redial = await apiFetch(`/api/calls/${callId}/ensure-browser-leg`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ force_redial: true }),
-      }).catch(() => null);
-      if (redial?.ok) {
-        legReady = await waitForInboundWebRtcLeg(10000);
+    clearAcceptWatchdog();
+    acceptWatchdogRef.current = setTimeout(() => {
+      if (callStatusRef.current !== 'active') {
+        console.error('[Inbound] Twilio accept event did not fire within 12s', {
+          callId: call.id,
+          callStatus: callStatusRef.current,
+        });
+        acceptingRef.current = false;
+        setAccepting(false);
       }
-    }
-
-    if (!legReady) {
-      console.error('[INBOUND] No WebRTC invite after Leg B dial');
-      setInboundAcceptInFlight(false);
-      acceptingRef.current = false;
-      setAccepting(false);
-      hangup();
-      clearCall(true);
-      return;
-    }
-
-    const answered = await answerIncomingCall();
-    if (!answered) {
-      console.error('[INBOUND] WebRTC answer failed');
-      setInboundAcceptInFlight(false);
-      acceptingRef.current = false;
-      setAccepting(false);
-      hangup();
-      clearCall(true);
-      return;
-    }
-
-    const deadline = Date.now() + 15000;
-    while (Date.now() < deadline && acceptingRef.current) {
-      if (callStatusRef.current === 'active') {
-        finishAccept(callId);
-        return;
-      }
-      await new Promise((r) => setTimeout(r, 120));
-    }
-
-    console.error('[INBOUND] Accept timed out — bridge did not complete');
-    setInboundAcceptInFlight(false);
-    acceptingRef.current = false;
-    setAccepting(false);
-    hangup();
-    clearCall(true);
-  }, [call, registerCallMeta, answerIncomingCall, apiFetch, clearCall, hangup, finishAccept, waitForPhoneReady, waitForInboundWebRtcLeg, setInboundAcceptInFlight, requestMicPermission, phoneStatus, callStatus, hasOutboundSession]);
+    }, ACCEPT_EVENT_TIMEOUT_MS);
+  }, [call, answerIncomingCall, clearAcceptWatchdog, registerCallMeta, requestMicPermission]);
 
   const decline = useCallback(async () => {
-    if (!call || accepting) return;
-    const snapshot = call;
+    if (!call || acceptingRef.current) return;
     clearCall(true);
     hangup();
-    if (snapshot.provider === 'twilio') {
-      const sid = snapshot.call_control_id || snapshot.id;
-      if (isTwilioCallSid(sid)) {
-        try {
-          await apiFetch('/api/calls/decline', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ call_sid: sid }),
-          });
-        } catch { /* non-fatal */ }
-      }
-      window.dispatchEvent(new CustomEvent('gd-call-ended'));
-      return;
-    }
-    try {
-      await apiFetch('/api/calls/decline', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ call_control_id: call.call_control_id }),
-      });
-    } catch { /* non-fatal */ }
     window.dispatchEvent(new CustomEvent('gd-call-ended'));
-  }, [call, accepting, clearCall, apiFetch, hangup]);
+  }, [call, clearCall, hangup]);
 
   return (
     <InboundRingingContext.Provider
