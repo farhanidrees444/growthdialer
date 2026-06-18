@@ -9,11 +9,13 @@
 
 ## Status legend
 
-| Symbol | Meaning |
-|--------|---------|
-| ⬜ | Not started / not moat-ready |
-| 🟡 | Partially built — needs polish or real-world test |
-| ✅ | Done — advanced, modern, verified |
+
+| Symbol | Meaning                                           |
+| ------ | ------------------------------------------------- |
+| ⬜      | Not started / not moat-ready                      |
+| 🟡     | Partially built — needs polish or real-world test |
+| ✅      | Done — advanced, modern, verified                 |
+
 
 ---
 
@@ -38,15 +40,17 @@ Copy the same vars to **Vercel** (production) as `.env.local` where applicable.
 
 ### Missing in `.env.local` — add for full product ⚠️
 
-| Variable | Needed for |
-|----------|------------|
-| `TELNYX_PUBLIC_KEY` | **Production webhook signature verify** (recordings fail silently without valid webhooks) |
-| `NEXT_PUBLIC_APP_URL` | Client URLs + AI pipeline callback (`https://app.growthdialer.com`) |
-| `HUBSPOT_CLIENT_ID` + `HUBSPOT_CLIENT_SECRET` | HubSpot OAuth connect |
-| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Billing |
-| `STRIPE_PRO_PRICE_ID`, `STRIPE_TEAM_PRICE_ID` | Workspace checkout ($49 / $99) |
-| `CRON_SECRET` | Scheduled jobs (number release, cleanup) |
-| `EMAIL_FROM` | Team invite emails (e.g. `GrowthDialer <noreply@growthdialer.com>`) |
+
+| Variable                                                                           | Needed for                                                                                |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `TELNYX_PUBLIC_KEY`                                                                | **Production webhook signature verify** (recordings fail silently without valid webhooks) |
+| `NEXT_PUBLIC_APP_URL`                                                              | Client URLs + AI pipeline callback (`https://app.growthdialer.com`)                       |
+| `HUBSPOT_CLIENT_ID` + `HUBSPOT_CLIENT_SECRET`                                      | HubSpot OAuth connect                                                                     |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Billing                                                                                   |
+| `STRIPE_PRO_PRICE_ID`, `STRIPE_TEAM_PRICE_ID`                                      | Workspace checkout ($49 / $99)                                                            |
+| `CRON_SECRET`                                                                      | Scheduled jobs (number release, cleanup)                                                  |
+| `EMAIL_FROM`                                                                       | Team invite emails (e.g. `GrowthDialer <noreply@growthdialer.com>`)                       |
+
 
 ### Portal / Supabase (manual)
 
@@ -54,9 +58,9 @@ Copy the same vars to **Vercel** (production) as `.env.local` where applicable.
 - [ ] Telnyx webhook → `https://app.growthdialer.com/api/telnyx/webhook` (API v2, include `call.recording.saved`)
 - [ ] Run Supabase migrations **037 → 046** in SQL Editor (incl. `046_protect_webhook_secret_column.sql`)
 - [x] Storage bucket `call-recordings` (private) — exists in dashboard
-- [ ] Run migration **047** for storage RLS policies + index
-- [ ] Run migration **048** to backfill `ended_at` on completed calls
-- [ ] Supabase Realtime on `calls` ✅
+- [x] Run migration **047** for storage RLS policies + index
+- [x] Run migration **048** to backfill `ended_at` on completed calls
+- [x] Supabase Realtime on `calls` ✅
 - [ ] HubSpot app redirect → `https://app.growthdialer.com/api/integrations/hubspot/callback`
 - [ ] Test call **>30s** → open `/api/recordings/diagnostics` while logged in
 
@@ -66,121 +70,141 @@ Copy the same vars to **Vercel** (production) as `.env.local` where applicable.
 
 Features that **beat** PhoneBurner, CallHippo, CloudTalk, Nooks when fully working:
 
-| Moat | Steps | vs competitors |
-|------|-------|----------------|
-| **AI pipeline** (record → transcribe → summary/sentiment/intent in &lt;4s) | 5–8, 7 | Nooks has intel; you need it **automatic** on every call |
-| **Parallel dialer** (10-line + disposition flow) | 32 | Core Nooks parity — polish VM drop + realtime UI |
-| **AI Call Brief** pre-dial | 7 (data), 2 (honest claim) | Ahead of dated dialers if brief is fast + accurate |
-| **Modern UI** (matte black, command palette, call bar waveform) | 10, 16–18 | Already ahead — finish Call Logs + floating bar |
-| **HubSpot live** (zero-entry logging) | 4, 24 | Orum/Nooks strength — you have code, need env |
-| **Live coaching** (listen/whisper/barge) | 21 | Manager floor — **whisper/barge** is true moat when audio works |
-| **Number health + local presence** | 13, 23 | CloudTalk enterprise feature — you have rotation logic |
-| **Honest marketing + SEO compare pages** | 1–3, 33–37 | Trust converts better than fake "0 stats" |
-| **Workspace + leaderboard** | 11, 38 | Team floor narrative vs solo tools |
+
+| Moat                                                                    | Steps                      | vs competitors                                                  |
+| ----------------------------------------------------------------------- | -------------------------- | --------------------------------------------------------------- |
+| **AI pipeline** (record → transcribe → summary/sentiment/intent in <4s) | 5–8, 7                     | Nooks has intel; you need it **automatic** on every call        |
+| **Parallel dialer** (10-line + disposition flow)                        | 32                         | Core Nooks parity — polish VM drop + realtime UI                |
+| **AI Call Brief** pre-dial                                              | 7 (data), 2 (honest claim) | Ahead of dated dialers if brief is fast + accurate              |
+| **Modern UI** (matte black, command palette, call bar waveform)         | 10, 16–18                  | Already ahead — finish Call Logs + floating bar                 |
+| **HubSpot live** (zero-entry logging)                                   | 4, 24                      | Orum/Nooks strength — you have code, need env                   |
+| **Live coaching** (listen/whisper/barge)                                | 21                         | Manager floor — **whisper/barge** is true moat when audio works |
+| **Number health + local presence**                                      | 13, 23                     | CloudTalk enterprise feature — you have rotation logic          |
+| **Honest marketing + SEO compare pages**                                | 1–3, 33–37                 | Trust converts better than fake "0 stats"                       |
+| **Workspace + leaderboard**                                             | 11, 38                     | Team floor narrative vs solo tools                              |
+
 
 ---
 
 ## Phase A — Honesty & trust (marketing)
 
-| Step | Title | Status | Moat? | Notes |
-|------|-------|--------|-------|-------|
-| **1** | Homepage stats show "0" | ✅ | SEO/trust | `CountUp` initializes to final value; animation runs once in-view |
-| **2** | Marketing claims audit | ✅ | Trust | `honest-copy.ts` canonical; live/beta/roadmap labels sitewide |
-| **3** | Footer & legal honesty | ⬜ | SEO/trust | `/customers` fictional; privacy/terms templates |
-| **4** | HubSpot claim consistency | 🟡 | Moat | Code is live; need `HUBSPOT_*` env + UI "Available" badge |
+
+| Step  | Title                     | Status | Moat?     | Notes                                                             |
+| ----- | ------------------------- | ------ | --------- | ----------------------------------------------------------------- |
+| **1** | Homepage stats show "0"   | ✅      | SEO/trust | `CountUp` initializes to final value; animation runs once in-view |
+| **2** | Marketing claims audit    | ✅      | Trust     | `honest-copy.ts` canonical; live/beta/roadmap labels sitewide     |
+| **3** | Footer & legal honesty    | ⬜      | SEO/trust | `/customers` fictional; privacy/terms templates                   |
+| **4** | HubSpot claim consistency | 🟡     | Moat      | Code is live; need `HUBSPOT_`* env + UI "Available" badge         |
+
 
 ---
 
 ## Phase B — Core product (recordings + AI)
 
-| Step | Title | Status | Moat? | Notes |
-|------|-------|--------|-------|-------|
-| **5** | Recordings diagnostics pass | 🟡 | **Moat** | Enhanced `/api/recordings/diagnostics` — run after test call in prod |
-| **6** | Recordings save pipeline | 🟡 | **Moat** | Fixed `ai_processing_status` bug blocking `recording_url` saves |
-| **7** | AI pipeline end-to-end | 🟡 | **Moat** | Shared trigger, backfill, cron retry; Gemini 2.5 Flash — verify live call |
-| **8** | Supabase recording storage | 🟡 | Ops | Auto-mirror on webhook + signed playback; run migration 047 |
+
+| Step  | Title                       | Status | Moat?    | Notes                                                                     |
+| ----- | --------------------------- | ------ | -------- | ------------------------------------------------------------------------- |
+| **5** | Recordings diagnostics pass | 🟡     | **Moat** | Enhanced `/api/recordings/diagnostics` — run after test call in prod      |
+| **6** | Recordings save pipeline    | 🟡     | **Moat** | Fixed `ai_processing_status` bug blocking `recording_url` saves           |
+| **7** | AI pipeline end-to-end      | 🟡     | **Moat** | Shared trigger, backfill, cron retry; Gemini 2.5 Flash — verify live call |
+| **8** | Supabase recording storage  | 🟡     | Ops      | Auto-mirror on webhook + signed playback; run migration 047               |
+
 
 ---
 
 ## Phase C — UX polish
 
-| Step | Title | Status | Moat? | Notes |
-|------|-------|--------|-------|-------|
-| **9** | Dashboard Recent Calls empty bug | 🟡 | UX | Recent-calls API + ended_at backfill; verify after test call |
-| **10** | Call Logs visual polish | 🟡 | **Moat** | Date groups, premium cards, sticky filters — verify in prod |
-| **11** | Leaderboard solo state | 🟡 | UX | Solo floor hero + invite CTA; podium placeholders for 2-member teams |
-| **12** | Floating right-edge icons bug | 🟡 | UX | Unified FAB dock + call-bar reserve; verify dialer + active call |
-| **13** | Number Health contradiction | ✅ | **Moat** | Calm presentation tiers (Ready/Monitoring/Needs check/Active/Flagged/Blocked); escalate only on confirmed carrier flags; bento KPIs + premium inventory UI |
-| **14** | Sequences demo cleanup | ✅ | Demo | Junk name guard on create; archive API + UI remove; migration 049 archives test rows |
+
+| Step   | Title                            | Status | Moat?    | Notes                                                                                                                                                      |
+| ------ | -------------------------------- | ------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **9**  | Dashboard Recent Calls empty bug | 🟡     | UX       | Recent-calls API + ended_at backfill; verify after test call                                                                                               |
+| **10** | Call Logs visual polish          | 🟡     | **Moat** | Date groups, premium cards, sticky filters — verify in prod                                                                                                |
+| **11** | Leaderboard solo state           | 🟡     | UX       | Solo floor hero + invite CTA; podium placeholders for 2-member teams                                                                                       |
+| **12** | Floating right-edge icons bug    | 🟡     | UX       | Unified FAB dock + call-bar reserve; verify dialer + active call                                                                                           |
+| **13** | Number Health contradiction      | ✅      | **Moat** | Calm presentation tiers (Ready/Monitoring/Needs check/Active/Flagged/Blocked); escalate only on confirmed carrier flags; bento KPIs + premium inventory UI |
+| **14** | Sequences demo cleanup           | ✅      | Demo     | Junk name guard on create; archive API + UI remove; migration 049 archives test rows                                                                       |
+
 
 ---
 
 ## Phase D — Advanced UX
 
-| Step | Title | Status | Moat? | Notes |
-|------|-------|--------|-------|-------|
-| **15** | Sidebar polish | 🟡 | UX | ENGAGE/INTELLIGENCE/TEAM/SETUP exists; tune motion/collapse |
-| **16** | Floating call bar + waveform | ✅ | **Moat** | Live Web Audio waveform (AnalyserNode + synthetic fallback) in full overlay, desktop pill, and mobile bar; sentiment ambient, quality dot, drag-snap, pop-out |
-| **17** | Command palette expansion | ✅ | **Moat** | Cmd+K adds live "On this call" actions (mute/hold/end), workspace switching, Buy a number, Invite teammate, lead search + call |
-| **18** | Page transitions + spotlight | ⬜ | UX | `layoutId` on more routes |
-| **19** | Milestones + sound design | 🟡 | Delight | `MilestoneCelebration` exists; wire meeting_booked |
+
+| Step   | Title                        | Status | Moat?    | Notes                                                                                                                                                         |
+| ------ | ---------------------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **15** | Sidebar polish               | 🟡     | UX       | ENGAGE/INTELLIGENCE/TEAM/SETUP exists; tune motion/collapse                                                                                                   |
+| **16** | Floating call bar + waveform | ✅      | **Moat** | Live Web Audio waveform (AnalyserNode + synthetic fallback) in full overlay, desktop pill, and mobile bar; sentiment ambient, quality dot, drag-snap, pop-out |
+| **17** | Command palette expansion    | ✅      | **Moat** | Cmd+K adds live "On this call" actions (mute/hold/end), workspace switching, Buy a number, Invite teammate, lead search + call                                |
+| **18** | Page transitions + spotlight | ⬜      | UX       | `layoutId` on more routes                                                                                                                                     |
+| **19** | Milestones + sound design    | 🟡     | Delight  | `MilestoneCelebration` exists; wire meeting_booked                                                                                                            |
+
 
 ---
 
 ## Phase E — Inbound + coaching
 
-| Step | Title | Status | Moat? | Notes |
-|------|-------|--------|-------|-------|
-| **20** | Inbound calling | ✅ | Product | `/inbound` hub, ring timeout→voicemail, lead screen-pop, missed handling; prod WebRTC test still manual |
-| **21** | Live coaching audio | 🟡 | **Moat** | UI ✅; Telnyx conference for whisper/barge = TODO in code |
-| **22** | Voicemail drop polish | 🟡 | Product | Library exists; parallel/power reliability |
-| **23** | Local presence | 🟡 | **Moat** | `resolve-caller-id.ts` ✅; settings UI + number buying |
+
+| Step   | Title                 | Status | Moat?    | Notes                                                                                                   |
+| ------ | --------------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------- |
+| **20** | Inbound calling       | ✅      | Product  | `/inbound` hub, ring timeout→voicemail, lead screen-pop, missed handling; prod WebRTC test still manual |
+| **21** | Live coaching audio   | 🟡     | **Moat** | UI ✅; Telnyx conference for whisper/barge = TODO in code                                                |
+| **22** | Voicemail drop polish | 🟡     | Product  | Library exists; parallel/power reliability                                                              |
+| **23** | Local presence        | 🟡     | **Moat** | `resolve-caller-id.ts` ✅; settings UI + number buying                                                   |
+
 
 ---
 
 ## Phase F — Monetization & ops
 
-| Step | Title | Status | Moat? | Notes |
-|------|-------|--------|-------|-------|
-| **24** | Billing live | ⬜ | Revenue | Stripe in repo (not Lemon Squeezy); env missing |
-| **25** | Pricing vs product alignment | ⬜ | Trust | Remove/ship AMD, coaching bullets on pricing |
-| **26** | PostHog + Clarity | 🟡 | Ops | PostHog keys set; provider **not wired** in layout |
-| **27** | Email & notifications | 🟡 | Ops | Resend ✅; missed-call notify, billing emails |
-| **28** | Cron jobs | ⬜ | Ops | Needs `CRON_SECRET` |
+
+| Step   | Title                        | Status | Moat?   | Notes                                              |
+| ------ | ---------------------------- | ------ | ------- | -------------------------------------------------- |
+| **24** | Billing live                 | ⬜      | Revenue | Stripe in repo (not Lemon Squeezy); env missing    |
+| **25** | Pricing vs product alignment | ⬜      | Trust   | Remove/ship AMD, coaching bullets on pricing       |
+| **26** | PostHog + Clarity            | 🟡     | Ops     | PostHog keys set; provider **not wired** in layout |
+| **27** | Email & notifications        | 🟡     | Ops     | Resend ✅; missed-call notify, billing emails       |
+| **28** | Cron jobs                    | ⬜      | Ops     | Needs `CRON_SECRET`                                |
+
 
 ---
 
 ## Phase G — Backend quality
 
-| Step | Title | Status | Moat? | Notes |
-|------|-------|--------|-------|-------|
-| **29** | Call orchestrator consolidation | 🟡 | Reliability | `CallOrchestratorProvider` started |
-| **30** | Data model cleanup | ⬜ | Reliability | Lead status enums, tags, soft-delete |
-| **31** | Security remaining | ⬜ | Security | Per-user Telnyx creds, health route lockdown |
-| **32** | Parallel dial hardening | 🟡 | **Moat** | VM drop losers, realtime session UI |
+
+| Step   | Title                           | Status | Moat?       | Notes                                        |
+| ------ | ------------------------------- | ------ | ----------- | -------------------------------------------- |
+| **29** | Call orchestrator consolidation | 🟡     | Reliability | `CallOrchestratorProvider` started           |
+| **30** | Data model cleanup              | ⬜      | Reliability | Lead status enums, tags, soft-delete         |
+| **31** | Security remaining              | ⬜      | Security    | Per-user Telnyx creds, health route lockdown |
+| **32** | Parallel dial hardening         | 🟡     | **Moat**    | VM drop losers, realtime session UI          |
+
 
 ---
 
 ## Phase H — Marketing depth (SEO)
 
-| Step | Title | Status | Moat? | Notes |
-|------|-------|--------|-------|-------|
-| **33** | Compare pages quality | 🟡 | SEO | 10 pages exist; need unique tables + honest matrix |
-| **34** | Solutions + features depth | 🟡 | SEO | 5 solution slugs; add real screenshots post-Step 7 |
-| **35** | Docs + API reference | 🟡 | SEO | Shell exists; webhook/HubSpot/recording guides |
-| **36** | Hero product video | ⬜ | SEO | After UI + AI work |
-| **37** | Changelog / Roadmap sync | 🟡 | SEO | Pages exist; keep `changelog-data.ts` current |
+
+| Step   | Title                      | Status | Moat? | Notes                                              |
+| ------ | -------------------------- | ------ | ----- | -------------------------------------------------- |
+| **33** | Compare pages quality      | 🟡     | SEO   | 10 pages exist; need unique tables + honest matrix |
+| **34** | Solutions + features depth | 🟡     | SEO   | 5 solution slugs; add real screenshots post-Step 7 |
+| **35** | Docs + API reference       | 🟡     | SEO   | Shell exists; webhook/HubSpot/recording guides     |
+| **36** | Hero product video         | ⬜      | SEO   | After UI + AI work                                 |
+| **37** | Changelog / Roadmap sync   | 🟡     | SEO   | Pages exist; keep `changelog-data.ts` current      |
+
 
 ---
 
 ## Phase I — Future moat
 
-| Step | Title | Status | Moat? | Notes |
-|------|-------|--------|-------|-------|
-| **38** | Team workspaces billing | ⬜ | **Moat** | Seats, metering, manager gates |
-| **39** | Salesforce + Zapier live | ⬜ | **Moat** | Second integration beyond HubSpot |
-| **40** | AI Voice Agent (receptionist) | ⬜ | **Moat** | Roadmap pillar |
-| **41** | Public API + mobile | ⬜ | Enterprise | API docs stub exists |
+
+| Step   | Title                         | Status | Moat?      | Notes                             |
+| ------ | ----------------------------- | ------ | ---------- | --------------------------------- |
+| **38** | Team workspaces billing       | ⬜      | **Moat**   | Seats, metering, manager gates    |
+| **39** | Salesforce + Zapier live      | ⬜      | **Moat**   | Second integration beyond HubSpot |
+| **40** | AI Voice Agent (receptionist) | ⬜      | **Moat**   | Roadmap pillar                    |
+| **41** | Public API + mobile           | ⬜      | Enterprise | API docs stub exists              |
+
 
 ---
 
@@ -192,21 +216,23 @@ These are **working** today — outbound dialer, leads, power/parallel dialer, w
 
 ## Session log
 
-| Date | Step(s) | Result |
-|------|---------|--------|
-| 2026-06-08 | Plan created | 41 steps + manual + env audit documented |
-| 2026-06-08 | Step 1 | Fixed `CountUp` + `StatsBand` — stats show 50+/3/100%/&lt;4s on first paint; build passes |
-| 2026-06-08 | Step 2 | Marketing claims audit — honest-copy.ts, pillars, FAQ, roadmap, pricing; build + push |
-| 2026-06-08 | Steps 5–7 | Fixed webhook `ai_analysis_status`→`ai_processing_status`; trigger/backfill/cron; diagnostics |
-| 2026-06-08 | Step 8 | Mirror Telnyx recordings → `call-recordings`; signed playback URLs; backfill + cron |
-| 2026-06-08 | Step 10 | Call Logs polish — date grouping, stat cards, row cards, recording links |
-| 2026-06-08 | Step 9 | Dashboard Recent Calls — API, ended_at backfill, realtime refresh |
-| 2026-06-08 | Steps 11–13 | Solo leaderboard, unified floating dock, number health honesty |
-| 2026-06-09 | Step 13 | Caller IDs rebuild — list-first inventory, then calm presentation tiers + premium UI (no false "Critical"/at-risk) |
-| 2026-06-09 | Responsive | Hardened 7 dashboard pages for phone/tablet (dialer banner, coaching panel, recordings player, leads toolbar, settings save bar, analytics pills, dashboard KPIs) |
-| 2026-06-09 | Steps 16–17 | Verified live-waveform call bar; expanded Cmd+K with on-call actions, workspace switch, buy-number, invite |
-| 2026-06-09 | Step 14 | Sequences demo cleanup — junk name validation, archive/delete API, remove UI, migration 049 |
-| 2026-06-11 | Step 20 | Inbound hub page, ring timeout→voicemail, E.164 lead screen-pop, missed/decline handling, sidebar→`/inbound`; build passes |
+
+| Date       | Step(s)      | Result                                                                                                                                                            |
+| ---------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-08 | Plan created | 41 steps + manual + env audit documented                                                                                                                          |
+| 2026-06-08 | Step 1       | Fixed `CountUp` + `StatsBand` — stats show 50+/3/100%/<4s on first paint; build passes                                                                            |
+| 2026-06-08 | Step 2       | Marketing claims audit — honest-copy.ts, pillars, FAQ, roadmap, pricing; build + push                                                                             |
+| 2026-06-08 | Steps 5–7    | Fixed webhook `ai_analysis_status`→`ai_processing_status`; trigger/backfill/cron; diagnostics                                                                     |
+| 2026-06-08 | Step 8       | Mirror Telnyx recordings → `call-recordings`; signed playback URLs; backfill + cron                                                                               |
+| 2026-06-08 | Step 10      | Call Logs polish — date grouping, stat cards, row cards, recording links                                                                                          |
+| 2026-06-08 | Step 9       | Dashboard Recent Calls — API, ended_at backfill, realtime refresh                                                                                                 |
+| 2026-06-08 | Steps 11–13  | Solo leaderboard, unified floating dock, number health honesty                                                                                                    |
+| 2026-06-09 | Step 13      | Caller IDs rebuild — list-first inventory, then calm presentation tiers + premium UI (no false "Critical"/at-risk)                                                |
+| 2026-06-09 | Responsive   | Hardened 7 dashboard pages for phone/tablet (dialer banner, coaching panel, recordings player, leads toolbar, settings save bar, analytics pills, dashboard KPIs) |
+| 2026-06-09 | Steps 16–17  | Verified live-waveform call bar; expanded Cmd+K with on-call actions, workspace switch, buy-number, invite                                                        |
+| 2026-06-09 | Step 14      | Sequences demo cleanup — junk name validation, archive/delete API, remove UI, migration 049                                                                       |
+| 2026-06-11 | Step 20      | Inbound hub page, ring timeout→voicemail, E.164 lead screen-pop, missed/decline handling, sidebar→`/inbound`; build passes                                        |
+
 
 ---
 

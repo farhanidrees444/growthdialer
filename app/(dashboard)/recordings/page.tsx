@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Pause, Clock, Mic, Sparkles, FileText, Search, Phone,
   TrendingUp, TrendingDown, Minus, RefreshCw, ChevronDown,
-  ChevronRight, Volume2, X,
+  ChevronRight, Volume2, X, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -44,6 +44,24 @@ interface Recording {
   ai_next_steps_raw: unknown;
   ai_keywords: string[] | null;
   ai_objections: string[] | null;
+}
+
+interface RecordingDiagnostics {
+  ok: boolean;
+  summary: {
+    total_calls: number;
+    calls_with_recording_url: number;
+    calls_marked_was_recorded: number;
+    calls_over_30s: number;
+    ai_completed: number;
+    ai_pending_or_processing: number;
+    ai_failed: number;
+    ai_stuck_processing: number;
+    mirrored_to_storage: number;
+    pending_storage_mirror: number;
+  };
+  issues: string[];
+  next_step: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -399,6 +417,119 @@ function EmptyState() {
   );
 }
 
+function sanitizePipelineIssue(issue: string): string {
+  return issue
+    .replace(/Telnyx/gi, 'Voice service')
+    .replace(/GROQ\/GEMINI keys/gi, 'AI service keys')
+    .replace(/GROQ/gi, 'AI transcription')
+    .replace(/GEMINI/gi, 'AI analysis')
+    .replace(/INTERNAL_API_SECRET/g, 'internal pipeline secret')
+    .replace(/APP_URL \/ NEXT_PUBLIC_APP_URL/g, 'application URL');
+}
+
+function RecordingPipelinePanel({
+  diagnostics,
+  loading,
+  busyAction,
+  onRefresh,
+  onBackfillAi,
+  onBackfillStorage,
+}: {
+  diagnostics: RecordingDiagnostics | null;
+  loading: boolean;
+  busyAction: 'ai' | 'storage' | null;
+  onRefresh: () => void;
+  onBackfillAi: () => void;
+  onBackfillStorage: () => void;
+}) {
+  const summary = diagnostics?.summary;
+  const hasIssues = Boolean(diagnostics && !diagnostics.ok);
+  const pendingAi = (summary?.ai_pending_or_processing ?? 0) + (summary?.ai_failed ?? 0) + (summary?.ai_stuck_processing ?? 0);
+  const pendingStorage = summary?.pending_storage_mirror ?? 0;
+
+  return (
+    <div className="mb-5 overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-emerald-500/[0.06] via-zinc-950/60 to-cyan-500/[0.04] p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            {diagnostics?.ok ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            ) : (
+              <AlertTriangle className="h-4 w-4 text-amber-400" />
+            )}
+            <p className="text-sm font-semibold text-white">Recording + AI pipeline</p>
+          </div>
+          <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-400">
+            {loading
+              ? 'Checking recording capture, secure playback, and AI analysis status...'
+              : diagnostics?.ok
+                ? 'Pipeline looks ready. Make a real call over 30 seconds, then refresh here to confirm recording, transcript, and summary.'
+                : 'A few checks need attention before recordings and AI can be considered production-ready.'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-[11px] font-semibold text-slate-400 transition hover:text-white"
+        >
+          <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
+          Recheck
+        </button>
+      </div>
+
+      {summary && (
+        <div className="mt-4 grid gap-2 sm:grid-cols-4">
+          {[
+            { label: 'Saved audio', value: summary.calls_with_recording_url },
+            { label: 'AI complete', value: summary.ai_completed },
+            { label: 'AI pending', value: pendingAi },
+            { label: 'Storage pending', value: pendingStorage },
+          ].map((item) => (
+            <div key={item.label} className="rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2">
+              <p className="font-display text-xl font-semibold text-white">{item.value}</p>
+              <p className="text-[10px] uppercase tracking-wider text-slate-500">{item.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {hasIssues && diagnostics && (
+        <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] p-3">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-amber-300">Needs attention</p>
+          <ul className="mt-2 space-y-1.5">
+            {diagnostics.issues.slice(0, 4).map((issue) => (
+              <li key={issue} className="text-xs leading-relaxed text-amber-100/75">
+                {sanitizePipelineIssue(issue)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={onBackfillAi}
+          disabled={busyAction !== null}
+          className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.08] px-3.5 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/15 disabled:opacity-50"
+        >
+          <Sparkles className={cn('h-3.5 w-3.5', busyAction === 'ai' && 'animate-pulse')} />
+          Retry AI queue
+        </button>
+        <button
+          type="button"
+          onClick={onBackfillStorage}
+          disabled={busyAction !== null}
+          className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/[0.08] px-3.5 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-500/15 disabled:opacity-50"
+        >
+          <FileText className={cn('h-3.5 w-3.5', busyAction === 'storage' && 'animate-pulse')} />
+          Secure saved audio
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const SENTIMENT_FILTERS = [
@@ -412,6 +543,9 @@ export default function RecordingsPage() {
   const { currentWorkspace, apiFetch } = useWorkspace();
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(true);
+  const [diagnostics, setDiagnostics] = useState<RecordingDiagnostics | null>(null);
+  const [diagnosticsLoading, setDiagnosticsLoading] = useState(false);
+  const [pipelineAction, setPipelineAction] = useState<'ai' | 'storage' | null>(null);
   const [search, setSearch] = useState('');
   const [sentimentFilter, setSentimentFilter] = useState('');
   const [activePlayId, setActivePlayId] = useState<string | null>(null);
@@ -447,8 +581,22 @@ export default function RecordingsPage() {
     }
   }, [search, sentimentFilter, currentWorkspace?.id, apiFetch]);
 
+  const fetchDiagnostics = useCallback(async () => {
+    setDiagnosticsLoading(true);
+    try {
+      const res = await apiFetch('/api/recordings/diagnostics');
+      const data = await res.json() as RecordingDiagnostics;
+      if (res.ok) setDiagnostics(data);
+    } catch (err) {
+      console.warn('Recording diagnostics failed:', err);
+    } finally {
+      setDiagnosticsLoading(false);
+    }
+  }, [apiFetch]);
+
   useEffect(() => {
     void fetchRecordings('', '');
+    void fetchDiagnostics();
     // Get userId for realtime
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
@@ -502,9 +650,42 @@ export default function RecordingsPage() {
     }
   };
 
+  const runPipelineAction = async (kind: 'ai' | 'storage') => {
+    setPipelineAction(kind);
+    const toastId = `pipeline-${kind}`;
+    toast.loading(kind === 'ai' ? 'Retrying AI queue...' : 'Securing saved audio...', { id: toastId });
+    try {
+      const res = await apiFetch(
+        kind === 'ai' ? '/api/recordings/backfill-ai' : '/api/recordings/backfill-storage',
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ limit: 10 }) },
+      );
+      const data = await res.json().catch(() => ({})) as { error?: string; queued?: number; mirrored?: number; failed?: number };
+      if (!res.ok || data.error) {
+        toast.error(data.error ?? 'Pipeline action failed', { id: toastId });
+        return;
+      }
+      const count = kind === 'ai' ? data.queued ?? 0 : data.mirrored ?? 0;
+      toast.success(count > 0 ? `Started ${count} item${count === 1 ? '' : 's'}` : 'Nothing needed retry', { id: toastId });
+      await Promise.all([fetchRecordings(), fetchDiagnostics()]);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Pipeline action failed', { id: toastId });
+    } finally {
+      setPipelineAction(null);
+    }
+  };
+
   return (
     <main className="flex-1 overflow-y-auto px-3 py-4 lg:px-6 lg:py-5">
         <div className="mx-auto max-w-4xl">
+
+          <RecordingPipelinePanel
+            diagnostics={diagnostics}
+            loading={diagnosticsLoading}
+            busyAction={pipelineAction}
+            onRefresh={() => { void fetchDiagnostics(); }}
+            onBackfillAi={() => { void runPipelineAction('ai'); }}
+            onBackfillStorage={() => { void runPipelineAction('storage'); }}
+          />
 
           {/* Controls */}
           {!loading && recordings.length > 0 && (

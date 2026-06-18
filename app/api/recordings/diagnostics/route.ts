@@ -113,7 +113,7 @@ export async function GET(_req: NextRequest) {
   if (!env.voice_provider) issues.push('Voice provider is not configured — recordings cannot be started.');
   if (!env.webhook_signature) {
     issues.push(
-      'Webhook signature key is not configured — production Telnyx webhooks may be rejected (set TELNYX_PUBLIC_KEY).',
+      'Webhook signature key is not configured — production voice webhooks may be rejected.',
     );
   }
   if (!env.app_url) {
@@ -148,7 +148,7 @@ export async function GET(_req: NextRequest) {
 
   if ((withUrl ?? 0) > 0 && (aiCompleted ?? 0) === 0 && (aiPending ?? 0) === 0) {
     issues.push(
-      'Recordings exist but none completed AI analysis. POST /api/recordings/backfill-ai to retry, or check GROQ/GEMINI keys.',
+      'Recordings exist but none completed AI analysis. Retry the AI queue or check AI service keys.',
     );
   }
 

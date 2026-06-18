@@ -213,6 +213,7 @@ export function IncomingPageClient() {
   const [copied, setCopied] = useState(false);
   const [historyKey, setHistoryKey] = useState(0);
   const [logs, setLogs] = useState<FloorLogEntry[]>([]);
+  const [lastWrapUpAt, setLastWrapUpAt] = useState<string | null>(null);
   const logIdRef = useRef(0);
 
   const pushLog = useCallback((label: string, tone: FloorLogEntry['tone'] = 'cyan') => {
@@ -269,6 +270,7 @@ export function IncomingPageClient() {
     const onEnd = () => {
       loadStats();
       setHistoryKey((k) => k + 1);
+      setLastWrapUpAt(new Date().toISOString());
       pushLog('Call session ended', 'violet');
     };
     window.addEventListener('gd-call-ended', onEnd);
@@ -361,6 +363,46 @@ export function IncomingPageClient() {
             <p className="text-sm font-medium text-cyan-100/90">
               Incoming call - accept in the persistent overlay
             </p>
+          </motion.div>
+        )}
+
+        {lastWrapUpAt && !isRinging && !hasInboundActiveSession && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/[0.08] to-cyan-500/[0.05] p-4"
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-white">Inbound call wrapped</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Review the latest call, add notes or disposition, and confirm recording/AI status after calls over 30 seconds.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href="/call-logs?filter=inbound"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-500/10"
+                >
+                  <PhoneIncoming className="h-3.5 w-3.5" />
+                  Open call log
+                </Link>
+                <Link
+                  href="/recordings"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/10"
+                >
+                  <Radio className="h-3.5 w-3.5" />
+                  Check recording
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setLastWrapUpAt(null)}
+                  className="inline-flex items-center rounded-xl border border-white/[0.08] px-3.5 py-2 text-xs font-semibold text-muted-foreground transition hover:text-white"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
           </motion.div>
         )}
 
