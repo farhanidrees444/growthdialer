@@ -124,7 +124,7 @@ export default function DialerPage() {
   const {
     callStatus, isMuted, isOnHold, phoneStatus, activeCallId,
     isInboundRinging, hasOutboundSession,
-    makeCall, hangup, toggleMute, toggleHold, sendDTMF, waitForPhoneReady, reconnect,
+    makeCall, hangup, toggleMute, toggleHold, sendDTMF, waitForPhoneReady, reconnect, voiceError,
   } = useWebPhone();
 
   const { mode, selectedLead, activeCallDbId, selectLead, startCall, endCall } = useDialerMode();
@@ -503,6 +503,7 @@ export default function DialerPage() {
         stats={stats}
         callStatus={callStatus}
         phoneStatus={phoneStatus}
+        voiceError={voiceError}
         inboundPreAnswer={inboundPreAnswer}
         callTimer={callStatus === 'active' ? callTimer.formatted : undefined}
         activeLeadName={selectedLead?.name}

@@ -12,8 +12,14 @@ export function resolveTwilioAccessTokenCredentials(): {
 
   const apiKey = process.env.TWILIO_API_KEY?.trim();
   const apiSecret = process.env.TWILIO_API_SECRET?.trim();
-  if (apiKey && apiSecret) {
+  // API keys must be SK… — Account SID (AC…) is a common misconfiguration.
+  if (apiKey && apiSecret && /^SK/i.test(apiKey)) {
     return { accountSid, signingKeySid: apiKey, secret: apiSecret };
+  }
+  if (apiKey && apiSecret && !/^SK/i.test(apiKey)) {
+    console.warn(
+      '[Twilio] TWILIO_API_KEY must start with SK — ignoring and falling back to auth token',
+    );
   }
 
   const authToken = process.env.TWILIO_AUTH_TOKEN?.trim();

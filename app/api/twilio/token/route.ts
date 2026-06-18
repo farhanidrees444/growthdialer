@@ -26,11 +26,18 @@ export async function GET(_request: NextRequest) {
     const creds = resolveTwilioAccessTokenCredentials();
     const twimlAppSid = readTwilioTwimlAppSid();
 
-    if (!creds || !twimlAppSid) {
-      console.error('[TwilioToken] Missing Twilio voice credentials or TWILIO_TWIML_APP_SID');
+    if (!creds) {
+      console.error('[TwilioToken] Missing TWILIO_ACCOUNT_SID or signing credentials');
       return NextResponse.json(
-        { error: 'Voice service configuration incomplete' },
-        { status: 500 },
+        { error: 'Voice credentials not configured on server', code: 'missing_credentials' },
+        { status: 503 },
+      );
+    }
+    if (!twimlAppSid) {
+      console.error('[TwilioToken] Missing TWILIO_TWIML_APP_SID');
+      return NextResponse.json(
+        { error: 'Voice application not configured on server', code: 'missing_twiml_app' },
+        { status: 503 },
       );
     }
 

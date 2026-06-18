@@ -25,6 +25,7 @@ interface HeaderStripProps {
   stats: TodayStats;
   callStatus: string;
   phoneStatus?: PhoneStatus;
+  voiceError?: string | null;
   /** Inbound PSTN ringing the browser — not an active outbound call. */
   inboundPreAnswer?: boolean;
   callTimer?: string;
@@ -39,6 +40,7 @@ export function HeaderStrip({
   stats,
   callStatus,
   phoneStatus = 'idle',
+  voiceError = null,
   inboundPreAnswer = false,
   callTimer,
   activeLeadName,
@@ -134,11 +136,16 @@ export function HeaderStrip({
           <button
             type="button"
             onClick={onReconnect}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/15 transition-colors"
-            title="Reconnect voice service"
+            className="flex max-w-[min(18rem,40vw)] flex-col items-start gap-0.5 rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-1 text-left text-red-400 hover:bg-red-500/15 transition-colors"
+            title={voiceError ?? 'Reconnect voice service'}
           >
-            <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
-            Offline — tap to reconnect
+            <span className="flex items-center gap-1.5 text-xs font-medium">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+              Offline — tap to reconnect
+            </span>
+            {voiceError && (
+              <span className="truncate text-[10px] leading-tight text-red-300/80">{voiceError}</span>
+            )}
           </button>
         ) : phoneStatus === 'initializing' || phoneStatus === 'idle' ? (
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium">

@@ -62,6 +62,8 @@ export interface WebPhoneContextValue {
   setInboundAcceptInFlight: (active: boolean) => void;
   /** Synchronous inbound ring flag (not one React frame behind). */
   isInboundRingingLive: () => boolean;
+  /** Human-readable reason when phoneStatus is error (server config, token, device). */
+  voiceError: string | null;
 }
 
 const WebPhoneContext = createContext<WebPhoneContextValue | null>(null);
@@ -125,6 +127,14 @@ function mapCallStatus(status: string): WebRTCCallStatus {
 }
 
 const TOKEN_URL = '/api/twilio/token';
+const REGISTER_TIMEOUT_MS = 20_000;
+
+const TOKEN_ERROR_MESSAGES: Record<string, string> = {
+  missing_credentials:
+    'Voice credentials are missing on the server. Add TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN in Vercel, then redeploy.',
+  missing_twiml_app:
+    'TWILIO_TWIML_APP_SID is not set on the server. Add it in Vercel environment variables, then redeploy.',
+};
 
 function bindRemoteMediaToTwilioCall(call: Call): void {
   try {
@@ -162,6 +172,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [audioDeviceLabel, setAudioDeviceLabel] = useState<string | null>(null);
   const [iceConnectionState, setIceConnectionState] = useState<string | null>(null);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
 
   // Refs hold live objects that should NOT trigger re-renders
   const deviceRef = useRef<Device | null>(null);
@@ -221,6 +232,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const scheduleReconnect = useCallback((reason: string) => {
     if (initAttemptsRef.current >= 3) {
       safeSet(setPhoneStatus, 'error');
+      safeSet(setVoiceError, (prev) => prev ?? `Voice could not connect (${reason}). Tap reconnect or check server Twilio settings.`);
       return;
     }
     initAttemptsRef.current += 1;
@@ -381,23 +393,32 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
       });
 
+      const data = await res.json().catch(() => ({})) as {
+        token?: string;
+        identity?: string;
+        error?: string;
+        code?: string;
+      };
+
       if (!res.ok) {
-        console.error('[WebPhone] token fetch failed:', res.status);
+        const msg =
+          (data.code && TOKEN_ERROR_MESSAGES[data.code])
+          ?? data.error
+          ?? `Voice token request failed (${res.status})`;
+        console.error('[WebPhone] token fetch failed:', res.status, data.code ?? data.error);
+        safeSet(setVoiceError, msg);
         scheduleReconnect(`token HTTP ${res.status}`);
         return;
       }
 
-      const data = await res.json() as {
-        token?: string;
-        identity?: string;
-        error?: string;
-      };
-
       if (data.error || !data.token) {
         console.error('[WebPhone] token error:', data.error ?? 'missing token');
+        safeSet(setVoiceError, data.error ?? 'Voice token missing from server response');
         scheduleReconnect('token error');
         return;
       }
+
+      safeSet(setVoiceError, null);
 
       // Tear down existing device if reconnecting
       if (deviceRef.current) {
@@ -417,6 +438,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         console.log('[WebPhone] device registered');
         initAttemptsRef.current = 0;
         safeSet(setPhoneStatus, 'ready');
+        safeSet(setVoiceError, null);
         safeSet(setIsReconnecting, false);
       });
 
@@ -424,6 +446,11 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         console.error('[WebPhone] device error:', err.message);
         const live = callStatusRef.current;
         if (live === 'connecting' || live === 'ringing' || live === 'active' || live === 'held') {
+          return;
+        }
+        safeSet(setVoiceError, err.message || 'Voice device error');
+        if (phoneStatusRef.current === 'initializing') {
+          scheduleReconnect(`device error: ${err.message}`);
           return;
         }
         safeSet(setPhoneStatus, 'error');
@@ -518,7 +545,20 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         });
       });
 
-      await device.register();
+      const registerTimeout = window.setTimeout(() => {
+        if (phoneStatusRef.current !== 'initializing') return;
+        console.warn('[WebPhone] device registration timed out');
+        safeSet(setVoiceError, 'Voice registration timed out — check Twilio TwiML App and network.');
+        try { device.destroy(); } catch { /* ignore */ }
+        if (deviceRef.current === device) deviceRef.current = null;
+        scheduleReconnect('register timeout');
+      }, REGISTER_TIMEOUT_MS);
+
+      try {
+        await device.register();
+      } finally {
+        window.clearTimeout(registerTimeout);
+      }
     } catch (err) {
       console.error('[WebPhone] init error:', err);
       scheduleReconnect('init exception');
@@ -930,6 +970,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
   const reconnect = useCallback(() => {
     initAttemptsRef.current = 0;
+    safeSet(setVoiceError, null);
     void initClient();
   }, [initClient]);
 
@@ -960,6 +1001,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         waitForInboundWebRtcLeg,
         setInboundAcceptInFlight,
         isInboundRingingLive,
+        voiceError,
       }}
     >
       {/* Hidden audio — Twilio WebRTC plays remote caller audio through this element */}

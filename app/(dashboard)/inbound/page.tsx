@@ -79,7 +79,7 @@ function phoneStatusLabel(status: string): { label: string; color: string; pulse
 
 export default function InboundPage() {
   const { apiFetch } = useWorkspace();
-  const { phoneStatus, reconnect } = useWebPhone();
+  const { phoneStatus, reconnect, voiceError } = useWebPhone();
   const { isRinging } = useInboundRinging();
 
   const [stats, setStats] = useState<InboundStats | null>(null);
@@ -354,6 +354,9 @@ export default function InboundPage() {
                   <p className="mt-1 text-xs text-amber-400/80">
                     Stay on this page with mic allowed so calls can ring.
                   </p>
+                )}
+                {phoneStatus === 'error' && voiceError && (
+                  <p className="mt-2 text-xs leading-relaxed text-red-300/90">{voiceError}</p>
                 )}
               </div>
               <span
