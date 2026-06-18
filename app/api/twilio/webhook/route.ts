@@ -9,6 +9,7 @@ import {
   twilioStatusCallbackUrl,
 } from '@/lib/twilio/webhook-routing';
 import { validateTwilioWebhookRequest } from '@/lib/twilio/validate-webhook';
+import { resolveTwilioSignedWebhookUrl } from '@/lib/twilio/signed-webhook-url';
 import { createServiceClient } from '@/lib/supabase/service';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import twilio from 'twilio';
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
     const direction = (params.Direction ?? '').toLowerCase();
     const callerIdParam = params.CallerId?.trim() || null;
 
-    const webhookUrl = request.nextUrl.origin + request.nextUrl.pathname;
+    const webhookUrl = resolveTwilioSignedWebhookUrl('/api/twilio/webhook', request.nextUrl.origin);
     const signature = request.headers.get('x-twilio-signature');
     const verification = validateTwilioWebhookRequest(signature, webhookUrl, params);
 

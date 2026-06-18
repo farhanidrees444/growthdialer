@@ -1,12 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
-import {
-  readTwilioAccountSid,
-  readTwilioAuthToken,
-  readTwilioTwimlAppSid,
-} from '@/lib/twilio/voice-config';
-import twilio from 'twilio';
+import { configureTwilioNumberVoiceApp } from '@/lib/twilio/configure-phone-number';
 
 export interface AssignUserNumberInput {
   userId: string;
@@ -22,28 +17,6 @@ export interface AssignUserNumberResult {
   phone_number: string;
   user_id: string;
   twilio_configured: boolean;
-}
-
-async function configureTwilioNumberVoiceApp(e164: string): Promise<boolean> {
-  const accountSid = readTwilioAccountSid();
-  const authToken = readTwilioAuthToken();
-  const twimlAppSid = readTwilioTwimlAppSid();
-  if (!accountSid || !authToken || !twimlAppSid) return false;
-
-  try {
-    const client = twilio(accountSid, authToken);
-    const matches = await client.incomingPhoneNumbers.list({ phoneNumber: e164, limit: 1 });
-    const incoming = matches[0];
-    if (!incoming?.sid) return false;
-
-    await client.incomingPhoneNumbers(incoming.sid).update({
-      voiceApplicationSid: twimlAppSid,
-    });
-    return true;
-  } catch (err) {
-    console.error('[assign-number] Twilio voice app update failed:', err);
-    return false;
-  }
 }
 
 /**
@@ -115,7 +88,7 @@ export async function assignUserNumber(
     purchasedNumberId = inserted.id as string;
   }
 
-  const twilioConfigured = await configureTwilioNumberVoiceApp(e164);
+  const twilioConfigured = await configureTwilioNumberVoiceApp(e164, input.userId);
 
   return {
     purchased_number_id: purchasedNumberId,

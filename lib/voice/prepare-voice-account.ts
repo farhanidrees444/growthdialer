@@ -2,6 +2,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { prepareInboundAccount, type PrepareInboundResult } from '@/lib/inbound/prepare-account';
 import { invalidateNumberOwnerCache } from '@/lib/inbound/number-owner-cache';
 import { normalizeE164 } from '@/lib/inbound/phone';
+import { ensureTwilioVoiceAppConfigured } from '@/lib/twilio/provision-voice-app';
+import { configureTwilioNumberVoiceApp } from '@/lib/twilio/configure-phone-number';
+import { isTwilioVoiceConfigured } from '@/lib/twilio/voice-config';
 
 export interface PrepareVoiceAccountResult extends PrepareInboundResult {
   outbound_ready: boolean;
@@ -16,6 +19,10 @@ export async function prepareVoiceAccount(
   userEmail: string,
 ): Promise<PrepareVoiceAccountResult> {
   const inbound = await prepareInboundAccount(supabase, userId, userEmail);
+
+  if (isTwilioVoiceConfigured()) {
+    await ensureTwilioVoiceAppConfigured();
+  }
 
   const { data: numbers } = await supabase
     .from('purchased_numbers')
@@ -43,6 +50,9 @@ export async function prepareVoiceAccount(
 
     for (const row of rows) {
       invalidateNumberOwnerCache(row.phone_number as string);
+      if (isTwilioVoiceConfigured()) {
+        void configureTwilioNumberVoiceApp(row.phone_number as string, userId);
+      }
     }
   }
 

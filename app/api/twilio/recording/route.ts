@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { findCallByTwilioLegs } from '@/lib/twilio/find-call-row';
 import { validateTwilioWebhookRequest } from '@/lib/twilio/validate-webhook';
+import { resolveTwilioSignedWebhookUrl } from '@/lib/twilio/signed-webhook-url';
 import { createServiceClient } from '@/lib/supabase/service';
 
 function formDataToParams(formData: FormData): Record<string, string> {
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const params = formDataToParams(formData);
 
-    const webhookUrl = request.nextUrl.origin + request.nextUrl.pathname;
+    const webhookUrl = resolveTwilioSignedWebhookUrl('/api/twilio/recording', request.nextUrl.origin);
     const signature = request.headers.get('x-twilio-signature');
     const verification = validateTwilioWebhookRequest(signature, webhookUrl, params);
 

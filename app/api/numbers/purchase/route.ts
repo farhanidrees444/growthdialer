@@ -1,102 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { blockLegacyTelnyxNumberApi } from '@/lib/twilio/telnyx-guard';
-import { getActiveVoiceConnectionId } from '@/lib/voice/configure-connection';
-import { voiceApiBearerToken } from '@/lib/voice/read-env';
+import { isTwilioVoiceConfigured } from '@/lib/twilio/voice-config';
+import { purchaseTwilioNumber } from '@/lib/twilio/number-inventory';
+import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
+import { calculateRetailPrice } from '@/lib/pricing/calculate-price';
+import { normalizeE164 } from '@/lib/inbound/phone';
 
 export async function POST(request: NextRequest) {
-  const blocked = blockLegacyTelnyxNumberApi();
-  if (blocked) return blocked;
+  if (!isTwilioVoiceConfigured()) {
+    return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
+  }
 
   try {
     const supabase = await createClient();
     const { data: { user: authUser } } = await supabase.auth.getUser();
     const userId = authUser?.id;
-    const userEmail = authUser?.email ?? '';
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    const { phoneNumber, monthlyCost, country, countryName, numberType, locality, region } = body as {
+    const { phoneNumber, monthlyCost, country, numberType } = body as {
       phoneNumber: string;
       monthlyCost?: number;
       country?: string;
-      countryName?: string;
       numberType?: string;
-      locality?: string;
-      region?: string;
     };
 
-    if (!phoneNumber) {
+    const e164 = normalizeE164(phoneNumber);
+    if (!e164) {
       return NextResponse.json({ error: 'Phone number is required' }, { status: 400 });
     }
 
-    // Build order — include customer_reference so the order is tagged to this user
-    const orderBody: Record<string, unknown> = {
-      phone_numbers: [{ phone_number: phoneNumber }],
-      customer_reference: userId,
-    };
-    const connectionId = await getActiveVoiceConnectionId();
-    if (connectionId) {
-      orderBody.connection_id = connectionId;
-    }
-
-    const res = await fetch('https://api.telnyx.com/v2/number_orders', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${voiceApiBearerToken()}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(orderBody),
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error('[NUMBERS-PURCHASE] Order failed:', errText);
+    const purchased = await purchaseTwilioNumber({ phoneNumber: e164, userId });
+    if (!purchased) {
       return NextResponse.json({ error: 'Could not purchase number' }, { status: 500 });
     }
 
-    const orderData = await res.json() as {
-      data?: { id?: string; phone_numbers?: { id?: string }[] };
-    };
-    const orderId = orderData.data?.id;
-    const telnyxNumberId = orderData.data?.phone_numbers?.[0]?.id;
+    const workspaceId = await resolveUserWorkspaceId(supabase, userId);
 
-    // Tag the number with owner's user_id so sync can recover it later
-    if (telnyxNumberId) {
-      fetch(`https://api.telnyx.com/v2/phone_numbers/${telnyxNumberId}`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${voiceApiBearerToken()}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tags: [`user:${userId}`, `email:${userEmail}`],
-          ...(connectionId ? { connection_id: connectionId } : {}),
-        }),
-      }).catch((err) => console.error('[NUMBERS-PURCHASE] Tag failed (non-critical):', err));
-    }
-
-    // First number for this user becomes default automatically
     const { count: existingCount } = await supabase
       .from('purchased_numbers')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
-      .eq('status', 'active');
+      .neq('status', 'released');
 
     const isDefault = !existingCount || existingCount === 0;
     const purchasedAt = new Date().toISOString();
     const nextBillingDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const retailCost = monthlyCost ?? calculateRetailPrice(numberType === 'toll_free' ? 2.0 : 1.15);
 
     const { error: insertError } = await supabase.from('purchased_numbers').insert({
       user_id: userId,
-      phone_number: phoneNumber,
-      telnyx_number_id: telnyxNumberId ?? null,
-      telnyx_order_id: orderId ?? null,
+      workspace_id: workspaceId,
+      phone_number: purchased.phoneNumber,
+      telnyx_number_id: purchased.sid,
       country: country ?? 'US',
       number_type: numberType ?? 'local',
-      monthly_cost: monthlyCost ?? 1.00,
+      monthly_cost: retailCost,
       is_default: isDefault,
       status: 'active',
       billing_status: 'active',
@@ -106,20 +67,25 @@ export async function POST(request: NextRequest) {
     });
 
     if (insertError) {
-      console.error('[NUMBERS-PURCHASE] DB INSERT FAILED:', insertError);
-      console.error('[NUMBERS-PURCHASE] Provider number was purchased:', phoneNumber);
+      console.error('[NUMBERS-PURCHASE] DB insert failed:', insertError);
       return NextResponse.json({
         success: true,
-        phoneNumber,
+        phoneNumber: purchased.phoneNumber,
         isDefault,
-        warning: 'Number purchased but may not show immediately. Try the Sync button.',
+        warning: 'Number purchased but may not show immediately. Try Sync numbers.',
       });
     }
 
-    console.log('[NUMBERS-PURCHASE] Success:', phoneNumber, 'for user:', userId);
-    return NextResponse.json({ success: true, phoneNumber, isDefault });
+    if (isDefault) {
+      await supabase
+        .from('profiles')
+        .update({ default_number: purchased.phoneNumber })
+        .eq('user_id', userId);
+    }
+
+    return NextResponse.json({ success: true, phoneNumber: purchased.phoneNumber, isDefault });
   } catch (error) {
-    console.error('[NUMBERS-PURCHASE] Error:', error);
+    console.error('[NUMBERS-PURCHASE]', error);
     return NextResponse.json({ error: 'Could not purchase number' }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { syncCallFromTwilioStatus } from '@/lib/twilio/sync-call-from-status';
 import { findCallByTwilioLegs } from '@/lib/twilio/find-call-row';
 import { validateTwilioWebhookRequest } from '@/lib/twilio/validate-webhook';
+import { resolveTwilioSignedWebhookUrl } from '@/lib/twilio/signed-webhook-url';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getCachedNumberOwner } from '@/lib/inbound/number-owner-cache';
 import { normalizeE164 } from '@/lib/inbound/phone';
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const params = formDataToParams(formData);
 
-    const webhookUrl = request.nextUrl.origin + request.nextUrl.pathname;
+    const webhookUrl = resolveTwilioSignedWebhookUrl('/api/twilio/inbound-dial-status', request.nextUrl.origin);
     const signature = request.headers.get('x-twilio-signature');
     const verification = validateTwilioWebhookRequest(signature, webhookUrl, params);
     if (!verification.ok) {

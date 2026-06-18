@@ -9,21 +9,14 @@ import {
   fetchProviderPhoneIndex,
 } from '@/lib/voice/provider-numbers';
 import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
+import { isTwilioVoiceConfigured } from '@/lib/twilio/voice-config';
+import { ensureTwilioVoiceAppConfigured } from '@/lib/twilio/provision-voice-app';
+import {
+  configureAllTwilioNumbersForUser,
+  configureTwilioNumberVoiceApp,
+} from '@/lib/twilio/configure-phone-number';
 
 export async function POST(request: NextRequest) {
-  const { isTwilioVoiceConfigured } = await import('@/lib/twilio/voice-config');
-  if (isTwilioVoiceConfigured()) {
-    return NextResponse.json({
-      success: true,
-      activated: 0,
-      already_routed: 0,
-      failed: 0,
-      total: 0,
-      primary_routed: true,
-      message: 'Voice line is active — no number linking required.',
-    });
-  }
-
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -33,6 +26,38 @@ export async function POST(request: NextRequest) {
 
   if (!hasPermission(access.role, 'MAKE_CALLS')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  if (isTwilioVoiceConfigured()) {
+    await ensureTwilioVoiceAppConfigured();
+
+    const { data: rows } = await supabase
+      .from('purchased_numbers')
+      .select('id, phone_number, is_default')
+      .eq('user_id', user.id)
+      .neq('status', 'released');
+
+    const numbers = rows ?? [];
+    const linkResult = await configureAllTwilioNumbersForUser(user.id);
+
+    for (const row of numbers) {
+      await configureTwilioNumberVoiceApp(row.phone_number as string, user.id);
+    }
+
+    return NextResponse.json({
+      success: true,
+      activated: linkResult.configured,
+      already_routed: numbers.length,
+      failed: linkResult.failed,
+      total: numbers.length,
+      primary_routed: numbers.some((n) => n.is_default) || numbers.length > 0,
+      message:
+        linkResult.configured > 0
+          ? `${linkResult.configured} number(s) linked for inbound and outbound.`
+          : numbers.length > 0
+            ? 'Your numbers are linked for voice calling.'
+            : 'Buy or sync a number to enable calling.',
+    });
   }
 
   const connectionId = await getActiveCallControlAppId();
