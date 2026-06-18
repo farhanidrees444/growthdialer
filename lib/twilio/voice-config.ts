@@ -29,5 +29,5 @@ export function isTwilioVoiceConfigured(): boolean {
 
 export function resolveTwilioWebhookUrl(baseUrl?: string): string {
   const base = baseUrl?.replace(/\/$/, '') ?? '';
-  return base ? `${base}/api/twilio/webhook` : '';
+  return base ? `${base}/api/twilio/voice` : '';
 }

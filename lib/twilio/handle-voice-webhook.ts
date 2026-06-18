@@ -96,7 +96,8 @@ export async function handleTwilioVoiceWebhook(
     const bridgeIdentity = params.gd_client_identity?.trim();
     if (bridgeUserId && bridgeIdentity) {
       const dial = response.dial();
-      dial.client(bridgeIdentity);
+      const client = dial.client(bridgeIdentity);
+      client.parameter({ name: 'gd_bridge_auto_answer', value: '1' });
       return twimlResponse(response);
     }
 
@@ -122,6 +123,8 @@ export async function handleTwilioVoiceWebhook(
       callSid: params.CallSid ?? null,
       fromNumber: inbound.fromNumber,
       toNumber: inbound.toNumber,
+      workspaceId: inboundWorkspaceId,
+      ownerAgentId: inbound.userId,
       routedAgentId: inbound.userId,
     });
 

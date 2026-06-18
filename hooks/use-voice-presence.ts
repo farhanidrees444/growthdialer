@@ -97,14 +97,13 @@ export function useVoicePresence({
     void sendHeartbeat('online');
 
     const interval = setInterval(() => {
-      const away = typeof document !== 'undefined' && document.visibilityState === 'hidden';
       const offline = typeof navigator !== 'undefined' && !navigator.onLine;
-      void sendHeartbeat(offline ? 'offline' : away ? 'away' : 'online');
+      void sendHeartbeat(offline ? 'offline' : 'online');
     }, HEARTBEAT_MS);
 
     const onVisibility = () => {
-      const away = document.visibilityState === 'hidden';
-      void sendHeartbeat(away ? 'away' : 'online');
+      const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+      void sendHeartbeat(offline ? 'offline' : 'online');
     };
 
     const onOnline = () => { void sendHeartbeat('online'); };

@@ -25,13 +25,13 @@ import {
   extractCallSidFromSdkCall,
   extractInboundFromNumber,
   extractInboundToNumber,
-  isTwilioCallOpen,
   isTwilioCallSid,
 } from '@/lib/twilio/extract-call-sid';
 import { useTwilioDevice } from '@/hooks/use-twilio-device';
 import { useVoicePresence } from '@/hooks/use-voice-presence';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { playInboundRingtone, stopInboundRingtone } from '@/lib/inbound/ringtone';
+import { callOrchestrator } from '@/src/calls';
 
 export type PhoneStatus = 'idle' | 'initializing' | 'ready' | 'error';
 export type WebRTCCallStatus = 'idle' | 'connecting' | 'ringing' | 'active' | 'held' | 'ended';
@@ -140,7 +140,7 @@ function hasVerifiedRemoteAudio(call: Call): boolean {
   try {
     const stream = call.getRemoteStream();
     const tracks = stream?.getAudioTracks?.() ?? [];
-    if (tracks.some((track) => track.readyState === 'live' && track.enabled && !track.muted)) {
+    if (tracks.some((track) => track.readyState === 'live' && track.enabled)) {
       return true;
     }
   } catch {
@@ -151,7 +151,7 @@ function hasVerifiedRemoteAudio(call: Call): boolean {
   const receivers = pc?.getReceivers?.() ?? [];
   return receivers.some((receiver) => {
     const track = receiver.track;
-    return track?.kind === 'audio' && track.readyState === 'live' && track.enabled && !track.muted;
+    return track?.kind === 'audio' && track.readyState === 'live' && track.enabled;
   });
 }
 
@@ -839,18 +839,18 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   }, [safeSet, setupCallEventHandlers, twilioDevice]);
 
   const answerIncomingCall = useCallback(async (): Promise<boolean> => {
-    const target = incomingCallRef.current ?? activeCallRef.current;
+    const pendingTarget = incomingCallRef.current ?? activeCallRef.current;
     console.log('[WebPhone] ACCEPT CLICKED', {
-      exists: Boolean(target),
+      exists: Boolean(pendingTarget),
       incomingSid: incomingCallRef.current?.parameters?.CallSid ?? null,
       activeSid: activeCallRef.current?.parameters?.CallSid ?? null,
-      chosenSid: target?.parameters?.CallSid ?? null,
-      status: target?.status?.() ?? null,
-      direction: target?.direction ?? null,
+      chosenSid: pendingTarget?.parameters?.CallSid ?? null,
+      status: pendingTarget?.status?.() ?? null,
+      direction: pendingTarget?.direction ?? null,
       phoneStatus: phoneStatusRef.current,
     });
 
-    if (!target) {
+    if (!pendingTarget) {
       console.warn('[WebPhone] answerIncomingCall: no incoming call');
       return false;
     }
@@ -860,6 +860,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
     acceptingInboundRef.current = true;
 
+    const target = await callOrchestrator.acceptIncoming({ rtcConstraints: { audio: true } })
+      ?? pendingTarget;
     const callId = getCallStableId(target);
     const meta = {
       from: extractInboundFromNumber(target),
@@ -868,9 +870,6 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
     try {
       console.log('[WebPhone] accepting incoming call:', callId, 'status:', target.status());
-      if (!isTwilioCallOpen(target)) {
-        target.accept({ rtcConstraints: { audio: true } });
-      }
       return await verifyInboundAudioAndPromote(target, callId, meta);
     } catch (err) {
       acceptingInboundRef.current = false;

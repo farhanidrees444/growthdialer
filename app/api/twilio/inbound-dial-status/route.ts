@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { syncCallFromTwilioStatus } from '@/lib/twilio/sync-call-from-status';
-import { findCallByTwilioLegs } from '@/lib/twilio/find-call-row';
 import { validateTwilioWebhookRequest } from '@/lib/twilio/validate-webhook';
 import { resolveTwilioSignedWebhookUrl } from '@/lib/twilio/signed-webhook-url';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -38,28 +36,17 @@ export async function POST(request: NextRequest) {
     }
 
     const dialStatus = (params.DialCallStatus ?? '').toLowerCase();
-    const callSid = params.CallSid ?? '';
     const response = new VoiceResponse();
 
     const supabase = createServiceClient();
     if (supabase) {
-      await syncCallFromTwilioStatus(supabase, params);
       await syncInboundCallFromTwilioStatus(supabase, params);
 
       if (dialStatus === 'no-answer' || dialStatus === 'busy' || dialStatus === 'failed') {
-        const row = await findCallByTwilioLegs(supabase, [callSid, params.DialCallSid]);
-        const toNumber = row?.to_number ?? params.To ?? '';
+        const toNumber = params.To ?? '';
         const owner = toNumber ? await getCachedNumberOwner(supabase, normalizeE164(toNumber)) : null;
 
-        if (owner?.user_id && row?.id) {
-          await supabase
-            .from('calls')
-            .update({
-              status: dialStatus === 'no-answer' ? 'missed' : 'failed',
-              ended_at: new Date().toISOString(),
-            })
-            .eq('id', row.id);
-
+        if (owner?.user_id) {
           const { data: numRow } = await supabase
             .from('purchased_numbers')
             .select('id')

@@ -21,7 +21,7 @@ function isAgentRingable(row: PresenceRow, nowMs: number): boolean {
   const heartbeatAt = row.last_heartbeat_at ?? row.updated_at;
   const age = nowMs - new Date(heartbeatAt).getTime();
   if (age > PRESENCE_HEARTBEAT_FRESH_MS) return false;
-  if (row.status !== 'online') return false;
+  if (row.status === 'offline') return false;
   return row.device_state === 'registered';
 }
 

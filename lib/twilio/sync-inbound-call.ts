@@ -43,6 +43,8 @@ export async function recordInboundCallStarted(
     callSid: string | null;
     fromNumber: string;
     toNumber: string;
+    workspaceId?: string | null;
+    ownerAgentId?: string | null;
     routedAgentId?: string | null;
   },
 ): Promise<void> {
@@ -50,6 +52,8 @@ export async function recordInboundCallStarted(
 
   await writeInboundCall(supabase, {
     twilio_call_sid: params.callSid,
+    workspace_id: params.workspaceId ?? null,
+    owner_agent_id: params.ownerAgentId ?? params.routedAgentId ?? null,
     routed_agent_id: params.routedAgentId ?? null,
     from_number: normalizeE164(params.fromNumber) ?? params.fromNumber,
     to_number: normalizeE164(params.toNumber) ?? params.toNumber,

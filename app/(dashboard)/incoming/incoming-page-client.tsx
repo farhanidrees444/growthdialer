@@ -70,13 +70,13 @@ function fmtPhone(phone: string | null | undefined): string {
 function phoneStatusLabel(status: string): { label: string; color: string; pulse: boolean } {
   switch (status) {
     case 'ready':
-      return { label: 'Ready — line live', color: 'text-emerald-400', pulse: true };
+      return { label: 'Ready - line live', color: 'text-emerald-400', pulse: true };
     case 'initializing':
-      return { label: 'Connecting voice node…', color: 'text-amber-400', pulse: true };
+      return { label: 'Connecting voice node...', color: 'text-amber-400', pulse: true };
     case 'error':
       return { label: 'Offline', color: 'text-red-400', pulse: false };
     default:
-      return { label: 'Starting…', color: 'text-muted-foreground', pulse: true };
+      return { label: 'Starting...', color: 'text-muted-foreground', pulse: true };
   }
 }
 
@@ -169,12 +169,12 @@ function TrafficFeed({ logs }: { logs: FloorLogEntry[] }) {
     <SurfaceCard className="overflow-hidden p-0">
       <div className="border-b border-white/[0.06] px-5 py-4">
         <p className="text-sm font-semibold text-white">Real-time traffic feed</p>
-        <p className="text-xs text-muted-foreground">Live workspace events & call signals</p>
+        <p className="text-xs text-muted-foreground">Live workspace events and call signals</p>
       </div>
       <ul className="max-h-72 overflow-y-auto divide-y divide-white/[0.04]">
         <AnimatePresence initial={false}>
           {logs.length === 0 ? (
-            <li className="px-5 py-8 text-center text-xs text-muted-foreground">Listening for traffic…</li>
+            <li className="px-5 py-8 text-center text-xs text-muted-foreground">Listening for traffic...</li>
           ) : (
             logs.map((row) => (
               <motion.li
@@ -203,7 +203,7 @@ function TrafficFeed({ logs }: { logs: FloorLogEntry[] }) {
   );
 }
 
-export default function CallsPage() {
+export function IncomingPageClient() {
   const { apiFetch } = useWorkspace();
   const { isRinging } = useCalls();
   const { phoneStatus, reconnect, voiceError, callStatus, voiceQuality, hasInboundActiveSession } = useWebPhone();
@@ -231,10 +231,10 @@ export default function CallsPage() {
   useEffect(() => { loadStats(); }, [loadStats]);
 
   useEffect(() => {
-    pushLog('Calls channel subscribed', 'violet');
+    pushLog('Incoming channel subscribed', 'violet');
     const supabase = createClient();
     const channel = supabase
-      .channel('calls-page-stream')
+      .channel('incoming-page-stream')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'inbound_calls' },
@@ -252,7 +252,7 @@ export default function CallsPage() {
   }, [loadStats, pushLog]);
 
   useEffect(() => {
-    if (isRinging) pushLog('Inbound ring — overlay active', 'amber');
+    if (isRinging) pushLog('Inbound ring - overlay active', 'amber');
   }, [isRinging, pushLog]);
 
   useEffect(() => {
@@ -291,7 +291,7 @@ export default function CallsPage() {
       <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-3 py-24">
           <Loader2 className="h-8 w-8 animate-spin text-cyan-400/50" />
-          <p className="text-sm text-muted-foreground">Initializing Incoming…</p>
+          <p className="text-sm text-muted-foreground">Initializing Incoming...</p>
         </div>
       </main>
     );
@@ -311,7 +311,7 @@ export default function CallsPage() {
             icon={Phone}
             scene="numbers"
             title="Provision a line to start receiving calls"
-            description="Buy or sync a number — inbound calls will stream here with live metrics and traffic feeds."
+            description="Buy or sync a number - inbound calls will stream here with live metrics and traffic feeds."
             primaryAction={{ label: 'My Numbers', href: '/numbers' }}
             accent="cyan"
           />
@@ -325,7 +325,7 @@ export default function CallsPage() {
       <div className="mx-auto max-w-6xl space-y-5">
         <PageHeader
           title="Incoming"
-          description="Real-time inbound command center — keep this page open to receive browser-routed calls."
+          description="Real-time inbound command center - keep this page open to receive browser-routed calls."
           icon={Radio}
           badge={phoneStatus === 'ready' ? 'Live' : 'Setup'}
         >
@@ -359,7 +359,7 @@ export default function CallsPage() {
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-cyan-400" />
             </span>
             <p className="text-sm font-medium text-cyan-100/90">
-              Incoming call — accept in the persistent overlay
+              Incoming call - accept in the persistent overlay
             </p>
           </motion.div>
         )}
@@ -429,7 +429,7 @@ export default function CallsPage() {
                 <p className="text-sm font-semibold text-white">Network posture</p>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                ICE restart & edge routing active on voice sessions. Quality: <span className="text-emerald-400">{voiceQuality}</span>
+                Connection recovery and edge routing are active on voice sessions. Quality: <span className="text-emerald-400">{voiceQuality}</span>
               </p>
               <p className="mt-2 flex items-center gap-1.5 text-[11px] text-violet-300/80">
                 <Zap className="h-3 w-3" />
