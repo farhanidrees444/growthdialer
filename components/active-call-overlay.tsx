@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import {
   PhoneOff, Mic, MicOff, Pause, Play, Hash, FileText,
   Minimize2, Maximize2, X, Wifi, Voicemail, Headset, ExternalLink,
+  Phone, Loader2, Clock, User, Building2,
 } from 'lucide-react';
 import { useWebPhone } from '@/contexts/webphone-context';
 import { useInboundRinging } from '@/contexts/inbound-ringing-context';
@@ -15,6 +16,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { PersistentCallBar } from '@/components/premium/persistent-call-bar';
 import { SentimentAmbient } from '@/components/premium/sentiment-ambient';
+import { formatInboundCallerDisplay } from '@/lib/inbound/phone';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -227,7 +229,28 @@ function QualityDot({ level }: { level: QualityLevel }) {
   );
 }
 
-// ─── Pulse rings ─────────────────────────────────────────────────────────────
+function InboundWaveformBars() {
+  return (
+    <div className="flex h-10 items-end justify-center gap-1.5">
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <motion.div
+          key={i}
+          className="w-1.5 rounded-full bg-gradient-to-t from-cyan-500 to-emerald-400"
+          animate={{ height: ['14px', '36px', '18px', '40px', '14px'] }}
+          transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.1, ease: 'easeInOut' }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function fmtInboundPhone(e164: string | null | undefined): string {
+  if (!e164) return 'Unknown line';
+  const m = e164.match(/^\+1(\d{3})(\d{3})(\d{4})$/);
+  if (m) return `+1 (${m[1]}) ${m[2]}-${m[3]}`;
+  return e164;
+}
+
 
 function PulseRings() {
   return (
@@ -367,10 +390,18 @@ export default function ActiveCallOverlay() {
     toggleHold,
     sendDTMF,
     hangup,
-    isInboundRinging,
     hasOutboundSession,
+    phoneStatus,
   } = useWebPhone();
-  const { isRinging: inboundUiRinging } = useInboundRinging();
+  const {
+    call: inboundCall,
+    sessionPhase,
+    accept: acceptInbound,
+    decline: declineInbound,
+    accepting: inboundAccepting,
+    ringElapsedSec,
+    isInboundSession,
+  } = useInboundRinging();
   const { activeLead, activePhone, callAnsweredAt } = useCallContext();
   const { apiFetch } = useWorkspace();
   const quality = useConnectionQuality();
@@ -599,17 +630,199 @@ export default function ActiveCallOverlay() {
   }, [dragX, dragY]);
 
   // ── Guard ──────────────────────────────────────────────────────────────────
-  const isVisible = ['connecting', 'ringing', 'active', 'held'].includes(callStatus);
-  // Inbound pre-answer: full-screen InboundCallOverlay owns the UX (Accept/Decline).
-  const inboundPreAnswer =
-    (inboundUiRinging || isInboundRinging)
-    && !hasOutboundSession
-    && (callStatus === 'ringing' || callStatus === 'connecting');
-  // Hide on /dialer when a lead is selected (dialer page has its own LiveCallStage).
-  // For manual calls from dialer (no activeLead), show the floating overlay.
-  if (pathname?.startsWith('/dialer') && activeLead) return null;
-  if (inboundPreAnswer) return null;
-  if (!isVisible) return null;
+  const isOutboundVisible = ['connecting', 'ringing', 'active', 'held'].includes(callStatus) && hasOutboundSession;
+  const inboundOverlayVisible = isInboundSession && !hasOutboundSession;
+
+  if (pathname?.startsWith('/dialer') && activeLead && !inboundOverlayVisible) return null;
+  if (!inboundOverlayVisible && !isOutboundVisible) return null;
+
+  // ── Persistent inbound session (ringing → connecting → connected) ─────────
+  if (inboundOverlayVisible && inboundCall) {
+    const leadName = inboundCall.lead
+      ? [inboundCall.lead.first_name, inboundCall.lead.last_name].filter(Boolean).join(' ')
+      : null;
+    const displayName = inboundCall.from_number ? (leadName ?? 'Unknown Caller') : 'Unknown / Blocked';
+    const initials = leadName
+      ? leadName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+      : null;
+    const isConnected = sessionPhase === 'connected' && (callStatus === 'active' || callStatus === 'held');
+    const isConnecting = sessionPhase === 'connecting' || inboundAccepting;
+    const headerLabel = isConnected ? 'Connected' : isConnecting ? 'Connecting' : 'Incoming call';
+
+    return (
+      <motion.div
+        layoutId="gd-call-session-root"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Live call session"
+      >
+        <div className="absolute inset-0 bg-black/75 backdrop-blur-md" />
+        <motion.div
+          layout
+          className="relative w-full max-w-lg overflow-hidden rounded-[28px] border border-white/[0.08] shadow-[0_0_120px_rgba(6,182,212,0.25)]"
+          style={{ background: 'linear-gradient(165deg, rgba(10,14,24,0.98) 0%, rgba(6,10,18,0.99) 100%)' }}
+        >
+          {!isConnected && !isConnecting && (
+            <>
+              <motion.div
+                animate={{ scale: [1, 1.4, 1], opacity: [0.2, 0, 0.2] }}
+                transition={{ duration: 2.2, repeat: Infinity }}
+                className="pointer-events-none absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-400/20"
+              />
+              <motion.div
+                animate={{ scale: [1, 1.55, 1], opacity: [0.12, 0, 0.12] }}
+                transition={{ duration: 2.2, repeat: Infinity, delay: 0.35 }}
+                className="pointer-events-none absolute left-1/2 top-1/3 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full border border-violet-400/15"
+              />
+            </>
+          )}
+
+          <div className="relative px-6 py-8 sm:px-8 sm:py-10">
+            <div className="mb-6 flex items-center justify-between">
+              <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400">
+                <motion.span
+                  animate={{ opacity: isConnecting ? 1 : [1, 0.35, 1] }}
+                  transition={{ duration: 1.2, repeat: isConnecting ? 0 : Infinity }}
+                  className={`inline-block h-2 w-2 rounded-full ${isConnected ? 'bg-emerald-400' : 'bg-cyan-400'}`}
+                />
+                {headerLabel}
+              </p>
+              {!isConnected && (
+                <span className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] text-white/45">
+                  <Clock className="h-3 w-3" />
+                  {fmtTime(ringElapsedSec)}
+                </span>
+              )}
+              {isConnected && (
+                <span className="font-mono text-lg font-bold tabular-nums text-white">{fmtTime(elapsed)}</span>
+              )}
+            </div>
+
+            <div className="mb-8 flex flex-col items-center text-center">
+              <div className="relative mb-5">
+                {!isConnected && !isConnecting && (
+                  <motion.div
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.35, 0, 0.35] }}
+                    transition={{ duration: 1.8, repeat: Infinity }}
+                    className="absolute inset-[-12px] rounded-3xl bg-cyan-400/20"
+                  />
+                )}
+                <div
+                  className="relative flex h-28 w-28 items-center justify-center rounded-3xl text-3xl font-bold text-white shadow-xl shadow-cyan-500/25"
+                  style={{ background: 'linear-gradient(135deg, #06B6D4 0%, #8B5CF6 100%)' }}
+                >
+                  {initials ?? <User className="h-12 w-12" />}
+                </div>
+              </div>
+              <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">{displayName}</h2>
+              {inboundCall.lead?.company && (
+                <p className="mt-1.5 flex items-center justify-center gap-1.5 text-sm text-white/55">
+                  <Building2 className="h-3.5 w-3.5" />
+                  {inboundCall.lead.company}
+                </p>
+              )}
+              <p className="mt-3 font-mono text-base text-white/50">
+                {formatInboundCallerDisplay(inboundCall.from_number)}
+              </p>
+              <p className="mt-1 text-xs text-white/30">To your line {fmtInboundPhone(inboundCall.to_number)}</p>
+
+              {isConnecting && (
+                <div className="mt-6 w-full">
+                  <InboundWaveformBars />
+                  <p className="mt-3 flex items-center justify-center gap-2 text-sm text-cyan-200/75">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Securing voice link…
+                  </p>
+                </div>
+              )}
+              {isConnected && (
+                <div className="mt-6 w-full">
+                  <LiveWaveform active={callStatus === 'active' && !isOnHold} />
+                </div>
+              )}
+              {!isConnected && !isConnecting && phoneStatus !== 'ready' && (
+                <p className="mt-4 text-xs text-amber-400/85">Voice connection warming up…</p>
+              )}
+            </div>
+
+            {isConnected ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { icon: isMuted ? MicOff : Mic, label: isMuted ? 'Unmute' : 'Mute', onClick: toggleMute, active: isMuted },
+                    { icon: isOnHold ? Play : Pause, label: isOnHold ? 'Resume' : 'Hold', onClick: toggleHold, active: isOnHold },
+                    { icon: Hash, label: 'Keypad', onClick: () => setShowDTMF((v) => !v), active: showDTMF },
+                  ].map(({ icon: Icon, label, onClick, active }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={onClick}
+                      className={`flex flex-col items-center gap-1 rounded-xl border py-3 text-[10px] font-semibold transition ${
+                        active
+                          ? 'border-cyan-500/30 bg-cyan-500/15 text-cyan-300'
+                          : 'border-white/[0.08] bg-white/[0.04] text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <AnimatePresence>
+                  {showDTMF && (
+                    <DtmfPad onDigit={sendDTMF} onClose={() => setShowDTMF(false)} />
+                  )}
+                </AnimatePresence>
+                <button
+                  type="button"
+                  onClick={hangup}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 py-4 text-sm font-semibold text-white shadow-lg shadow-red-900/25 transition hover:brightness-110 active:scale-[0.98]"
+                >
+                  <PhoneOff className="h-5 w-5" />
+                  End Call
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => void declineInbound()}
+                  disabled={isConnecting}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-red-500/35 bg-red-500/12 py-4 text-sm font-semibold text-red-300 transition hover:bg-red-500/22 active:scale-[0.98] disabled:opacity-40"
+                >
+                  <PhoneOff className="h-5 w-5" />
+                  Decline
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void acceptInbound()}
+                  disabled={isConnecting}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-cyan-500 py-4 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:brightness-110 active:scale-[0.98] disabled:opacity-70"
+                >
+                  {isConnecting ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Connecting…
+                    </>
+                  ) : (
+                    <>
+                      <Phone className="h-5 w-5" />
+                      Accept
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  const isVisible = isOutboundVisible;
 
   const displayName = activeLead?.name || activePhone || 'Manual Dial';
   const displayCompany = activeLead?.company || '';

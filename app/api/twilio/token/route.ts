@@ -10,7 +10,7 @@ const { VoiceGrant } = AccessToken;
 
 const TOKEN_TTL = 3600;
 
-async function issueTwilioToken(): Promise<NextResponse> {
+async function issueTwilioToken(request: NextRequest): Promise<NextResponse> {
   const supabase = await createClient();
   const {
     data: { user: authUser },
@@ -39,6 +39,8 @@ async function issueTwilioToken(): Promise<NextResponse> {
   }
 
   const identity = toTwilioClientIdentity(authUser.id);
+  const edge = process.env.NEXT_PUBLIC_TWILIO_EDGE?.trim() || 'roaming';
+  const acceptLanguage = request.headers.get('accept-language')?.split(',')[0]?.trim() || 'en';
 
   const voiceGrant = new VoiceGrant({
     outgoingApplicationSid: twimlAppSid,
@@ -61,6 +63,13 @@ async function issueTwilioToken(): Promise<NextResponse> {
     token: token.toJwt(),
     identity,
     ttl: TOKEN_TTL,
+    session_meta: {
+      user_id: authUser.id,
+      identity,
+      edge,
+      locale: acceptLanguage,
+      routing_profile: 'global_agent',
+    },
   });
 }
 
@@ -68,9 +77,9 @@ async function issueTwilioToken(): Promise<NextResponse> {
  * GET /api/twilio/token
  * Issues a short-lived voice AccessToken with VoiceGrant for browser Device registration.
  */
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    return await issueTwilioToken();
+    return await issueTwilioToken(request);
   } catch (error) {
     console.error('[TwilioToken] Exception:', error instanceof Error ? error.message : String(error));
     return NextResponse.json(
@@ -84,9 +93,9 @@ export async function GET(_request: NextRequest) {
  * POST /api/twilio/token
  * Same as GET — preferred for new clients.
  */
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    return await issueTwilioToken();
+    return await issueTwilioToken(request);
   } catch (error) {
     console.error('[TwilioToken] Exception:', error instanceof Error ? error.message : String(error));
     return NextResponse.json(

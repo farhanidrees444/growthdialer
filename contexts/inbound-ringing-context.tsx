@@ -32,12 +32,16 @@ export interface InboundRingingCall {
   provider?: 'twilio' | 'legacy';
 }
 
+export type InboundSessionPhase = 'idle' | 'ringing' | 'connecting' | 'connected';
+
 interface InboundRingingContextValue {
   call: InboundRingingCall | null;
+  sessionPhase: InboundSessionPhase;
   accept: () => Promise<void>;
   decline: () => Promise<void>;
   accepting: boolean;
   isRinging: boolean;
+  isInboundSession: boolean;
   ringElapsedSec: number;
 }
 
@@ -57,6 +61,7 @@ export function InboundRingingProvider({
   children: ReactNode;
 }) {
   const [call, setCall] = useState<InboundRingingCall | null>(null);
+  const [sessionPhase, setSessionPhase] = useState<InboundSessionPhase>('idle');
   const [accepting, setAccepting] = useState(false);
   const [ringElapsedSec, setRingElapsedSec] = useState(0);
 
@@ -91,19 +96,18 @@ export function InboundRingingProvider({
     acceptingRef.current = false;
     setAccepting(false);
     setCall(null);
+    setSessionPhase('idle');
     ringStartedRef.current = null;
     setRingElapsedSec(0);
     if (stopAudio) stopInboundRingtone();
   }, [clearAcceptWatchdog]);
 
-  const finishActive = useCallback((callId: string) => {
+  const markConnected = useCallback((callId: string) => {
     clearAcceptWatchdog();
     stopInboundRingtone();
     acceptingRef.current = false;
     setAccepting(false);
-    setCall(null);
-    ringStartedRef.current = null;
-    setRingElapsedSec(0);
+    setSessionPhase('connected');
     window.dispatchEvent(
       new CustomEvent('gd-inbound-answered', { detail: { callId } }),
     );
@@ -127,6 +131,7 @@ export function InboundRingingProvider({
       setRingElapsedSec(0);
       setAccepting(false);
       acceptingRef.current = false;
+      setSessionPhase('ringing');
 
       setCall({
         id: detail.call_id,
@@ -144,8 +149,8 @@ export function InboundRingingProvider({
 
     const onWebrtcActive = () => {
       const meta = callMetaRef.current;
-      if (acceptingRef.current && meta) {
-        finishActive(meta.id);
+      if (meta && acceptingRef.current) {
+        markConnected(meta.id);
       }
     };
 
@@ -159,41 +164,47 @@ export function InboundRingingProvider({
       window.removeEventListener('gd-webrtc-inbound-active', onWebrtcActive);
       stopInboundRingtone();
     };
-  }, [hasOutboundSession, hangup, clearCall, finishActive]);
+  }, [hasOutboundSession, hangup, clearCall, markConnected]);
 
   useEffect(() => {
-    if (!call || accepting) return;
-    if (!isInboundRinging && callStatus === 'idle') {
+    if (sessionPhase === 'ringing' && !isInboundRinging && callStatus === 'idle') {
       const t = setTimeout(() => {
-        if (!acceptingRef.current && callStatusRef.current === 'idle') {
+        if (callStatusRef.current === 'idle' && !acceptingRef.current) {
           clearCall(true);
         }
       }, 600);
       return () => clearTimeout(t);
     }
-  }, [call, accepting, isInboundRinging, callStatus, clearCall]);
+  }, [sessionPhase, isInboundRinging, callStatus, clearCall]);
 
   useEffect(() => {
-    if (accepting && callStatus === 'active' && call) {
-      finishActive(call.id);
+    if ((accepting || sessionPhase === 'connecting') && callStatus === 'active' && call) {
+      markConnected(call.id);
     }
-  }, [accepting, callStatus, call, finishActive]);
+  }, [accepting, sessionPhase, callStatus, call, markConnected]);
 
   useEffect(() => {
-    if (!call) return;
+    if (sessionPhase === 'idle') return;
     const tick = setInterval(() => {
       if (ringStartedRef.current) {
         setRingElapsedSec(Math.floor((Date.now() - ringStartedRef.current) / 1000));
       }
     }, 1000);
     return () => clearInterval(tick);
-  }, [call]);
+  }, [sessionPhase]);
+
+  useEffect(() => {
+    if (callStatus === 'idle' && sessionPhase === 'connected') {
+      clearCall(false);
+    }
+  }, [callStatus, sessionPhase, clearCall]);
 
   const accept = useCallback(async () => {
     if (!call || acceptingRef.current) return;
 
     acceptingRef.current = true;
     setAccepting(true);
+    setSessionPhase('connecting');
     stopInboundRingtone();
 
     void requestMicPermission();
@@ -206,6 +217,7 @@ export function InboundRingingProvider({
     if (!ok) {
       acceptingRef.current = false;
       setAccepting(false);
+      setSessionPhase('ringing');
       playInboundRingtone();
       return;
     }
@@ -219,6 +231,7 @@ export function InboundRingingProvider({
         });
         acceptingRef.current = false;
         setAccepting(false);
+        setSessionPhase('connecting');
       }
     }, ACCEPT_EVENT_TIMEOUT_MS);
   }, [call, answerIncomingCall, clearAcceptWatchdog, registerCallMeta, requestMicPermission]);
@@ -234,10 +247,12 @@ export function InboundRingingProvider({
     <InboundRingingContext.Provider
       value={{
         call,
+        sessionPhase,
         accept,
         decline,
         accepting,
-        isRinging: Boolean(call),
+        isRinging: sessionPhase === 'ringing',
+        isInboundSession: sessionPhase !== 'idle',
         ringElapsedSec,
       }}
     >

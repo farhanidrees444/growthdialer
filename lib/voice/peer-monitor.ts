@@ -28,17 +28,13 @@ type PeerConnectionLike = RTCPeerConnection & { connectionState?: string };
 
 /**
  * Extract the underlying RTCPeerConnection from a Twilio Call object.
- * Twilio's Call stores the MediaHandler internally; we access it via
- * the private `_mediaHandler` property which exposes the peer connection.
  */
 export function getCallPeerConnection(call: Call): PeerConnectionLike | null {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const c = call as any;
 
-  // Twilio SDK internal paths to the RTCPeerConnection
   const mediaHandler = c._mediaHandler;
   if (mediaHandler) {
-    // The MediaHandler stores the peer connection in various possible locations
     return (
       mediaHandler._peerConnection
       ?? mediaHandler.peerConnection
@@ -48,8 +44,17 @@ export function getCallPeerConnection(call: Call): PeerConnectionLike | null {
     );
   }
 
-  // Fallback: check direct properties
   return c._peerConnection ?? c.peerConnection ?? c._pc ?? c.pc ?? null;
+}
+
+function tryIceRestart(pc: RTCPeerConnection): void {
+  if (typeof pc.restartIce !== 'function') return;
+  try {
+    pc.restartIce();
+    console.warn('[PeerMonitor] ICE restart requested');
+  } catch (err) {
+    console.warn('[PeerMonitor] ICE restart failed:', err);
+  }
 }
 
 export function attachPeerConnectionMonitor(
@@ -57,20 +62,54 @@ export function attachPeerConnectionMonitor(
   handlers: {
     onIceState?: (state: string, quality: IceConnectionQuality) => void;
     onConnectionState?: (state: string) => void;
-    /** Fired when remote audio track arrives — bind to hidden <audio> here. */
     onRemoteTrack?: (stream: MediaStream) => void;
   },
 ): () => void {
   const pc = getCallPeerConnection(call);
   if (!pc) return () => {};
 
+  let iceRestartTimer: ReturnType<typeof setTimeout> | null = null;
+  let lastRestartAt = 0;
+  const ICE_RESTART_DEBOUNCE_MS = 900;
+  const ICE_DISCONNECTED_GRACE_MS = 750;
+
+  const scheduleIceRestart = () => {
+    if (iceRestartTimer) clearTimeout(iceRestartTimer);
+    iceRestartTimer = setTimeout(() => {
+      const state = pc.iceConnectionState;
+      if (state !== 'disconnected' && state !== 'failed') return;
+      const now = Date.now();
+      if (now - lastRestartAt < ICE_RESTART_DEBOUNCE_MS) return;
+      lastRestartAt = now;
+      tryIceRestart(pc);
+    }, ICE_DISCONNECTED_GRACE_MS);
+  };
+
   const onIce = () => {
     const state = pc.iceConnectionState ?? 'unknown';
     handlers.onIceState?.(state, mapIceStateToQuality(state));
+
+    if (state === 'connected' || state === 'completed') {
+      if (iceRestartTimer) {
+        clearTimeout(iceRestartTimer);
+        iceRestartTimer = null;
+      }
+      return;
+    }
+
+    if (state === 'disconnected' || state === 'failed') {
+      scheduleIceRestart();
+    }
   };
+
   const onConn = () => {
-    handlers.onConnectionState?.(pc.connectionState ?? 'unknown');
+    const state = pc.connectionState ?? 'unknown';
+    handlers.onConnectionState?.(state);
+    if (state === 'failed') {
+      scheduleIceRestart();
+    }
   };
+
   const onTrack = (ev: RTCTrackEvent) => {
     if (ev.track.kind !== 'audio') return;
     const stream = ev.streams[0] ?? new MediaStream([ev.track]);
@@ -83,7 +122,6 @@ export function attachPeerConnectionMonitor(
   onIce();
   onConn();
 
-  // Tracks may already exist before listeners attach (fast answer path).
   for (const receiver of pc.getReceivers()) {
     if (receiver.track?.kind === 'audio' && receiver.track.readyState === 'live') {
       handlers.onRemoteTrack?.(new MediaStream([receiver.track]));
@@ -91,6 +129,7 @@ export function attachPeerConnectionMonitor(
   }
 
   return () => {
+    if (iceRestartTimer) clearTimeout(iceRestartTimer);
     pc.removeEventListener('iceconnectionstatechange', onIce);
     pc.removeEventListener('connectionstatechange', onConn);
     pc.removeEventListener('track', onTrack);

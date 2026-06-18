@@ -14,7 +14,6 @@ import SaveAsLeadModal from "@/components/save-as-lead-modal";
 import { WorkspaceProvider } from "@/contexts/workspace-context";
 import { WorkspaceGate } from "@/components/workspace/workspace-gate";
 import { InboundRingingProvider } from "@/contexts/inbound-ringing-context";
-import { IncomingCallModal } from "@/components/inbound/incoming-call-modal";
 import { VoiceConnectionHud } from "@/components/voice/voice-connection-hud";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { PremiumOverlays } from "@/components/premium/premium-overlays";
@@ -34,7 +33,6 @@ function DashboardOverlays({ userId }: { userId: string | undefined }) {
     <>
       <ActiveCallOverlay />
       <VoiceConnectionHud />
-      {userId && <IncomingCallModal />}
       {showSaveAsLead && activePhone && (
         <SaveAsLeadModal phone={activePhone} onClose={dismissSaveAsLead} />
       )}

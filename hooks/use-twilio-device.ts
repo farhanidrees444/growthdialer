@@ -134,6 +134,7 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
     const data = await res.json().catch(() => ({})) as {
       token?: string;
       identity?: string;
+      session_meta?: Record<string, string>;
       error?: string;
       code?: string;
     };
@@ -156,6 +157,11 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
     }
 
     setVoiceError(null);
+    if (data.session_meta) {
+      try {
+        sessionStorage.setItem('gd_voice_session_meta', JSON.stringify(data.session_meta));
+      } catch { /* ignore */ }
+    }
     return { token: data.token, identity: data.identity };
   }, []);
 
