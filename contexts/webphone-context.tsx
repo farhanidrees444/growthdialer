@@ -349,6 +349,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
     const resolvedId = sid ?? callId;
     console.log('[WebPhone] call active:', resolvedId, isIncoming ? 'inbound' : 'outbound');
+    if (isIncoming) console.log('[Inbound] ACTIVE CALL', resolvedId);
 
     if (isIncoming) {
       outboundDialRef.current = false;
@@ -590,6 +591,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     const toNumber = extractInboundToNumber(call);
     const status = call.status();
 
+    console.log('[Inbound] INCOMING', call.parameters?.CallSid ?? callId, 'status=', status);
     console.log('[WebPhone] incoming call:', {
       callId,
       sid: call.parameters?.CallSid ?? null,
@@ -663,6 +665,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (phoneStatus !== 'ready') return;
+    console.log('[Device] DEVICE READY');
     const beat = setInterval(() => {
       console.log('[WebPhone] device heartbeat — status:', phoneStatusRef.current);
     }, 15_000);
@@ -860,8 +863,39 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
     acceptingInboundRef.current = true;
 
-    const target = await callOrchestrator.acceptIncoming({ rtcConstraints: { audio: true } })
-      ?? pendingTarget;
+    // Single source of truth for accept(): prefer the orchestrator (which calls
+    // call.accept() on its tracked session). If the orchestrator never received
+    // this inbound call (no session → returns null), fall back to accepting the
+    // live ringing Call directly so the click is never a silent no-op.
+    let target: Call | null = null;
+    try {
+      target = await callOrchestrator.acceptIncoming({ rtcConstraints: { audio: true } });
+      if (target) {
+        console.log('[Inbound] accept() called', getCallStableId(target), 'via orchestrator');
+      }
+    } catch (err) {
+      console.error('[Inbound] orchestrator accept() threw', err);
+    }
+
+    if (!target) {
+      target = pendingTarget;
+      try {
+        if (target.status() !== 'open') {
+          target.accept({ rtcConstraints: { audio: true } });
+          console.log('[Inbound] accept() called', getCallStableId(target), 'direct fallback');
+        } else {
+          console.log('[Inbound] accept() skipped — call already open', getCallStableId(target));
+        }
+      } catch (err) {
+        acceptingInboundRef.current = false;
+        console.error('[Inbound] direct accept() threw', err, {
+          status: target.status?.() ?? null,
+          parameters: target.parameters,
+        });
+        return false;
+      }
+    }
+
     const callId = getCallStableId(target);
     const meta = {
       from: extractInboundFromNumber(target),

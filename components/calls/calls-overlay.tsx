@@ -43,6 +43,7 @@ export default function CallsOverlay() {
     phase,
     fromNumber,
     toNumber,
+    callId,
     ringElapsedSec,
     connectError,
     callerContext,
@@ -60,7 +61,6 @@ export default function CallsOverlay() {
 
   return (
     <motion.div
-      layoutId="gd-call-session-root"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="fixed inset-0 z-[70] flex items-center justify-center p-4"
@@ -68,10 +68,10 @@ export default function CallsOverlay() {
       aria-modal="true"
       aria-label="Incoming call"
     >
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-md" />
+      {/* Backdrop is purely visual — it must never intercept clicks meant for the card. */}
+      <div className="pointer-events-none absolute inset-0 bg-black/75 backdrop-blur-md" />
       <motion.div
-        layout
-        className="relative w-full max-w-lg overflow-hidden rounded-[28px] border border-white/[0.08] shadow-[0_0_120px_rgba(6,182,212,0.25)]"
+        className="pointer-events-auto relative isolate w-full max-w-lg overflow-hidden rounded-[28px] border border-white/[0.08] shadow-[0_0_120px_rgba(6,182,212,0.25)]"
         style={{ background: 'linear-gradient(165deg, rgba(10,14,24,0.98) 0%, rgba(6,10,18,0.99) 100%)' }}
       >
         {isIncoming && (
@@ -172,10 +172,13 @@ export default function CallsOverlay() {
             </motion.div>
           )}
 
-          <div className="flex gap-3">
+          <div className="relative z-10 flex gap-3">
             <button
               type="button"
-              onClick={() => decline()}
+              onClick={() => {
+                console.log('[Inbound] DECLINE CLICKED', { phase, callId });
+                decline();
+              }}
               disabled={isEnded}
               className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-red-500/35 bg-red-500/12 py-4 text-sm font-semibold text-red-300 transition hover:bg-red-500/22 active:scale-[0.98] disabled:opacity-40"
             >
@@ -184,7 +187,10 @@ export default function CallsOverlay() {
             </button>
             <button
               type="button"
-              onClick={() => void accept()}
+              onClick={() => {
+                console.log('[Inbound] ACCEPT CLICKED', { phase, callId });
+                void accept();
+              }}
               disabled={isConnecting || isEnded}
               className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-cyan-500 py-4 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:brightness-110 active:scale-[0.98] disabled:opacity-70"
             >
