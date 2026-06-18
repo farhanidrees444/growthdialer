@@ -30,6 +30,7 @@ export async function handleTwilioStatusCallback(
       const callSid = params.CallSid?.trim() ?? '';
       const callStatus = params.CallStatus?.trim() ?? params.AnsweredBy?.trim() ?? '';
       const now = new Date().toISOString();
+      const isInbound = (params.Direction ?? '').toLowerCase().includes('inbound');
 
       void logCallEvent(supabase, {
         call_control_id: callSid,
@@ -38,17 +39,17 @@ export async function handleTwilioStatusCallback(
         telnyx_status: callStatus || null,
       });
 
-      void processTwilioDialerStatusCallback(supabase, params).catch((err) => {
-        console.error('[TwilioStatusCallback] dialer processing:', err);
-      });
-
-      void syncCallFromTwilioStatus(supabase, params).catch((err) => {
-        console.error('[TwilioStatusCallback] sync:', err);
-      });
-
-      if ((params.Direction ?? '').toLowerCase().includes('inbound')) {
+      if (isInbound) {
         void syncInboundCallFromTwilioStatus(supabase, params).catch((err) => {
           console.error('[TwilioStatusCallback] inbound sync:', err);
+        });
+      } else {
+        void processTwilioDialerStatusCallback(supabase, params).catch((err) => {
+          console.error('[TwilioStatusCallback] dialer processing:', err);
+        });
+
+        void syncCallFromTwilioStatus(supabase, params).catch((err) => {
+          console.error('[TwilioStatusCallback] sync:', err);
         });
       }
     }

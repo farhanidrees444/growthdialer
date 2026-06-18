@@ -173,6 +173,7 @@ export async function handleTwilioVoiceWebhook(
     }
 
     const dial = response.dial({
+      answerOnBridge: true,
       callerId: inbound.fromNumber,
       timeout: Math.min(Math.max(routing.inbound_ring_seconds, 15), 60),
       action: dialActionUrl,

@@ -1,20 +1,28 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { normalizeE164 } from '@/lib/inbound/phone';
 
-const INBOUND_STATUS_MAP: Record<string, string> = {
-  queued: 'ringing',
-  ringing: 'ringing',
-  'in-progress': 'active',
-  completed: 'completed',
-  busy: 'missed',
-  failed: 'failed',
-  'no-answer': 'missed',
-  canceled: 'missed',
-};
+function mapInboundStatus(params: Record<string, string>): string {
+  const dialStatus = params.DialCallStatus?.trim().toLowerCase();
+  if (dialStatus === 'answered') return 'active';
+  if (dialStatus === 'completed') return 'completed';
+  if (dialStatus === 'busy' || dialStatus === 'failed' || dialStatus === 'no-answer') return 'missed';
 
-function mapInboundStatus(raw: string | null | undefined): string {
-  if (!raw) return 'ringing';
-  return INBOUND_STATUS_MAP[raw.toLowerCase()] ?? raw.toLowerCase();
+  const callStatus = params.CallStatus?.trim().toLowerCase();
+  switch (callStatus) {
+    case 'queued':
+    case 'ringing':
+    case 'in-progress':
+      return 'ringing';
+    case 'completed':
+      return 'completed';
+    case 'busy':
+    case 'failed':
+    case 'no-answer':
+    case 'canceled':
+      return 'missed';
+    default:
+      return callStatus || 'ringing';
+  }
 }
 
 async function writeInboundCall(
@@ -61,7 +69,7 @@ export async function syncInboundCallFromTwilioStatus(
   const direction = (params.Direction ?? '').toLowerCase();
   const from = params.From ?? '';
   const to = params.To ?? '';
-  const status = mapInboundStatus(params.CallStatus ?? params.DialCallStatus);
+  const status = mapInboundStatus(params);
   const duration = params.CallDuration ? Number.parseInt(params.CallDuration, 10) : null;
   const now = new Date().toISOString();
 

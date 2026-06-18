@@ -179,22 +179,6 @@ function isLiveIncomingTwilioCall(call: Call, outboundDialActive: boolean): bool
   return ['pending', 'ringing', 'open'].includes(status);
 }
 
-function mapCallStatus(status: string): WebRTCCallStatus {
-  switch (status) {
-    case 'pending':
-    case 'connecting':
-      return 'connecting';
-    case 'ringing':
-      return 'ringing';
-    case 'open':
-      return 'active';
-    case 'closed':
-      return 'ended';
-    default:
-      return 'idle';
-  }
-}
-
 function bindRemoteMediaToTwilioCall(call: Call): void {
   try {
     const stream = call.getRemoteStream();
@@ -476,6 +460,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     call.on('ringing', syncIfNeeded);
 
     call.on('accept', () => {
+      console.log('[WebPhone] call connected:', getCallStableId(call));
       syncIfNeeded();
       if (isIncoming) {
         void verifyInboundAudioAndPromote(call, callId, meta);
@@ -486,7 +471,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
     call.on('disconnect', () => {
       const resolvedId = extractCallSidFromSdkCall(call) ?? callId;
-      console.log('[WebPhone] call disconnected:', resolvedId);
+      console.log('[WebPhone] call ended:', resolvedId);
       stopInboundRingtone();
       peerCleanupRef.current?.();
       peerCleanupRef.current = null;
@@ -540,6 +525,36 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       }
     });
 
+    call.on('error', (error: unknown) => {
+      const resolvedId = extractCallSidFromSdkCall(call) ?? callId;
+      console.error('[WebPhone] call error:', error);
+      stopInboundRingtone();
+      acceptingInboundRef.current = false;
+      peerCleanupRef.current?.();
+      peerCleanupRef.current = null;
+      safeSet(setVoiceQuality, 'unknown');
+      safeSet(setIceConnectionState, null);
+      safeSet(setIsReconnecting, false);
+
+      if (isIncoming) {
+        inboundRingStartedRef.current = null;
+        isInboundRingingLiveRef.current = false;
+        safeSet(setIsInboundRinging, false);
+        safeSet(setHasInboundActiveSession, false);
+        safeSet(setActiveCallId, null);
+        safeSet(setCallStatus, 'ended');
+        safeSet(setIncomingCall, {
+          phase: 'failed',
+          fromNumber: meta?.from ?? extractInboundFromNumber(call),
+          toNumber: meta?.to ?? extractInboundToNumber(call),
+          callId: resolvedId,
+          ringStartedAt: null,
+          liveStartedAt: null,
+          error: error instanceof Error ? error.message : 'Voice call failed.',
+        });
+      }
+    });
+
     call.on('cancel', () => {
       const resolvedId = extractCallSidFromSdkCall(call) ?? callId;
       console.log('[WebPhone] call cancelled:', resolvedId);
@@ -574,7 +589,6 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     const fromNumber = extractInboundFromNumber(call);
     const toNumber = extractInboundToNumber(call);
     const status = call.status();
-    const mapped = mapCallStatus(status);
 
     console.log('[WebPhone] incoming call:', callId, fromNumber ?? '');
 
@@ -586,42 +600,39 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     deviceRef.current = twilioDevice.device;
     safeSet(setActiveCallId, callId);
 
-    safeSet(setCallStatus, mapped);
-
-    if (mapped === 'ringing' || mapped === 'connecting') {
-      if (!inboundRingStartedRef.current) {
-        inboundRingStartedRef.current = Date.now();
-      }
-      isInboundRingingLiveRef.current = true;
-      safeSet(setIsInboundRinging, true);
-      safeSet(setIncomingCall, {
-        phase: 'incoming',
-        fromNumber,
-        toNumber,
-        callId,
-        ringStartedAt: inboundRingStartedRef.current,
-        liveStartedAt: null,
-        error: null,
-      });
-      playInboundRingtone();
-
-      window.dispatchEvent(
-        new CustomEvent('gd-webrtc-inbound-ring', {
-          detail: {
-            call_id: callId,
-            from_number: fromNumber,
-            to_number: toNumber,
-            provider: 'twilio',
-          },
-        }),
-      );
-    }
-
     setupCallEventHandlers(call, true, { from: fromNumber, to: toNumber });
 
-    if (isTwilioCallOpen(call)) {
-      void verifyInboundAudioAndPromote(call, callId, { from: fromNumber, to: toNumber });
+    // Inbound SDK delivery means "ring the agent", not "the agent accepted".
+    // Even if a carrier/parent leg reports open, only the Accept click may
+    // transition this browser leg to connecting/active.
+    safeSet(setCallStatus, status === 'closed' ? 'ended' : 'ringing');
+
+    if (!inboundRingStartedRef.current) {
+      inboundRingStartedRef.current = Date.now();
     }
+    isInboundRingingLiveRef.current = true;
+    safeSet(setIsInboundRinging, true);
+    safeSet(setIncomingCall, {
+      phase: 'incoming',
+      fromNumber,
+      toNumber,
+      callId,
+      ringStartedAt: inboundRingStartedRef.current,
+      liveStartedAt: null,
+      error: null,
+    });
+    playInboundRingtone();
+
+    window.dispatchEvent(
+      new CustomEvent('gd-webrtc-inbound-ring', {
+        detail: {
+          call_id: callId,
+          from_number: fromNumber,
+          to_number: toNumber,
+          provider: 'twilio',
+        },
+      }),
+    );
   };
 
   const initClient = useCallback(async () => {
