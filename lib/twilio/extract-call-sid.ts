@@ -1,4 +1,5 @@
 import type { Call } from '@twilio/voice-sdk';
+import { isValidCallerPhone, normalizeE164 } from '@/lib/inbound/phone';
 
 const TWILIO_SID_RE = /^CA[a-f0-9]{32}$/i;
 
@@ -16,4 +17,42 @@ export function extractCallSidFromSdkCall(call: Call): string | null {
   if (isTwilioCallSid(internal)) return internal;
 
   return null;
+}
+
+function readCallParam(call: Call, ...keys: string[]): string | null {
+  const params = call.parameters ?? {};
+  for (const key of keys) {
+    const value = params[key]?.trim();
+    if (value) return value;
+  }
+  try {
+    const custom = call.customParameters;
+    if (custom?.get) {
+      for (const key of keys) {
+        const value = custom.get(key)?.trim();
+        if (value) return value;
+      }
+    }
+  } catch {
+    /* customParameters may be unavailable */
+  }
+  return null;
+}
+
+/** PSTN caller ID from an inbound Twilio Client call, when present. */
+export function extractInboundFromNumber(call: Call): string | null {
+  const raw = readCallParam(call, 'From', 'from', 'Caller', 'caller');
+  if (!raw || !isValidCallerPhone(raw)) return null;
+  return normalizeE164(raw);
+}
+
+/** Called line (agent DID) from an inbound Twilio Client call. */
+export function extractInboundToNumber(call: Call): string | null {
+  const raw = readCallParam(call, 'To', 'to', 'Called', 'called');
+  if (!raw) return null;
+  return normalizeE164(raw);
+}
+
+export function isTwilioCallOpen(call: Call): boolean {
+  return call.status() === 'open';
 }

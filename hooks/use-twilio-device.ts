@@ -268,6 +268,8 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
           bindCallRefs(call, call);
           outboundDialRef.current = false;
 
+          onIncomingRef.current?.(call);
+
           if (shouldBridgeAutoAnswer()) {
             try {
               call.accept();
@@ -275,8 +277,6 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
               console.warn('[TwilioDevice] bridge auto-answer failed:', err);
             }
           }
-
-          onIncomingRef.current?.(call);
         });
 
         registerTimeoutRef.current = setTimeout(() => {

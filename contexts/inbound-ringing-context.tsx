@@ -81,7 +81,9 @@ export function InboundRingingProvider({
   const { registerCallMeta } = useCallContext();
 
   const callStatusRef = useRef(callStatus);
+  const sessionPhaseRef = useRef(sessionPhase);
   callStatusRef.current = callStatus;
+  sessionPhaseRef.current = sessionPhase;
   callMetaRef.current = call;
 
   const clearAcceptWatchdog = useCallback(() => {
@@ -149,7 +151,9 @@ export function InboundRingingProvider({
 
     const onWebrtcActive = () => {
       const meta = callMetaRef.current;
-      if (meta && acceptingRef.current) {
+      if (!meta) return;
+      const phase = sessionPhaseRef.current;
+      if (acceptingRef.current || phase === 'connecting' || phase === 'ringing') {
         markConnected(meta.id);
       }
     };
@@ -178,10 +182,10 @@ export function InboundRingingProvider({
   }, [sessionPhase, isInboundRinging, callStatus, clearCall]);
 
   useEffect(() => {
-    if ((accepting || sessionPhase === 'connecting') && callStatus === 'active' && call) {
+    if (sessionPhase === 'connecting' && callStatus === 'active' && call) {
       markConnected(call.id);
     }
-  }, [accepting, sessionPhase, callStatus, call, markConnected]);
+  }, [sessionPhase, callStatus, call, markConnected]);
 
   useEffect(() => {
     if (sessionPhase === 'idle') return;
@@ -224,17 +228,16 @@ export function InboundRingingProvider({
 
     clearAcceptWatchdog();
     acceptWatchdogRef.current = setTimeout(() => {
-      if (callStatusRef.current !== 'active') {
+      if (callStatusRef.current !== 'active' && sessionPhase !== 'connected') {
         console.error('[Inbound] Twilio accept event did not fire within 12s', {
           callId: call.id,
           callStatus: callStatusRef.current,
         });
         acceptingRef.current = false;
         setAccepting(false);
-        setSessionPhase('connecting');
       }
     }, ACCEPT_EVENT_TIMEOUT_MS);
-  }, [call, answerIncomingCall, clearAcceptWatchdog, registerCallMeta, requestMicPermission]);
+  }, [call, answerIncomingCall, clearAcceptWatchdog, registerCallMeta, requestMicPermission, sessionPhase]);
 
   const decline = useCallback(async () => {
     if (!call || acceptingRef.current) return;

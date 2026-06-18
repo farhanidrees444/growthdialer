@@ -463,9 +463,14 @@ export default function ActiveCallOverlay() {
 
   // ── Reset on new call session only ────────────────────────────────────────
   useEffect(() => {
-    if (callStatus !== 'connecting' || !telnyxCallId) return;
-    if (telnyxCallId === lastResetCallIdRef.current) return;
-    lastResetCallIdRef.current = telnyxCallId;
+    const inboundConnectedNow = isInboundSession
+      && sessionPhase === 'connected'
+      && (callStatus === 'active' || callStatus === 'held');
+    const sessionKey = telnyxCallId ?? (inboundConnectedNow ? inboundCall?.id : null);
+    if (!sessionKey) return;
+    if (callStatus !== 'connecting' && !inboundConnectedNow) return;
+    if (sessionKey === lastResetCallIdRef.current) return;
+    lastResetCallIdRef.current = sessionKey;
     setNotes('');
     setMode('full');
     setShowDTMF(false);
@@ -475,7 +480,7 @@ export default function ActiveCallOverlay() {
     setVmDropped(false);
     setVmDropping(false);
     setCoachRequested(false);
-  }, [callStatus, telnyxCallId]);
+  }, [callStatus, telnyxCallId, isInboundSession, sessionPhase, inboundCall?.id]);
 
   // ── Look up DB call ID from Telnyx call ID ─────────────────────────────────
   useEffect(() => {
@@ -630,10 +635,14 @@ export default function ActiveCallOverlay() {
   }, [dragX, dragY]);
 
   // ── Guard ──────────────────────────────────────────────────────────────────
-  const isOutboundVisible = ['connecting', 'ringing', 'active', 'held'].includes(callStatus) && hasOutboundSession;
-  const inboundOverlayVisible = isInboundSession && !hasOutboundSession;
+  const inboundConnected = isInboundSession
+    && sessionPhase === 'connected'
+    && (callStatus === 'active' || callStatus === 'held');
+  const isOutboundVisible = ['connecting', 'ringing', 'active', 'held'].includes(callStatus)
+    && (hasOutboundSession || inboundConnected);
+  const inboundOverlayVisible = isInboundSession && !hasOutboundSession && !inboundConnected;
 
-  if (pathname?.startsWith('/dialer') && activeLead && !inboundOverlayVisible) return null;
+  if (pathname?.startsWith('/dialer') && activeLead && !inboundOverlayVisible && !inboundConnected) return null;
   if (!inboundOverlayVisible && !isOutboundVisible) return null;
 
   // ── Persistent inbound session (ringing → connecting → connected) ─────────
@@ -641,7 +650,9 @@ export default function ActiveCallOverlay() {
     const leadName = inboundCall.lead
       ? [inboundCall.lead.first_name, inboundCall.lead.last_name].filter(Boolean).join(' ')
       : null;
-    const displayName = inboundCall.from_number ? (leadName ?? 'Unknown Caller') : 'Unknown / Blocked';
+    const displayName = inboundCall.from_number
+      ? (leadName ?? formatInboundCallerDisplay(inboundCall.from_number))
+      : 'Unknown / Blocked';
     const initials = leadName
       ? leadName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
       : null;
@@ -824,9 +835,19 @@ export default function ActiveCallOverlay() {
 
   const isVisible = isOutboundVisible;
 
-  const displayName = activeLead?.name || activePhone || 'Manual Dial';
-  const displayCompany = activeLead?.company || '';
-  const displayPhone = activePhone || activeLead?.phone || '';
+  const inboundLeadName = inboundCall?.lead
+    ? [inboundCall.lead.first_name, inboundCall.lead.last_name].filter(Boolean).join(' ')
+    : null;
+  const displayName = activeLead?.name
+    || inboundLeadName
+    || (activePhone ? formatInboundCallerDisplay(activePhone) : null)
+    || (inboundCall?.from_number ? formatInboundCallerDisplay(inboundCall.from_number) : null)
+    || 'Unknown Caller';
+  const displayCompany = activeLead?.company || inboundCall?.lead?.company || '';
+  const displayPhone = activePhone
+    || inboundCall?.from_number
+    || activeLead?.phone
+    || '';
   const isCallActive = callStatus === 'active' || callStatus === 'held';
 
   const statusLabel =

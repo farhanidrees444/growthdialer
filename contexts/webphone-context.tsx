@@ -23,7 +23,13 @@ import {
   getRemoteAudioElement,
   unlockRemoteAudioElement,
 } from '@/lib/voice/remote-audio';
-import { extractCallSidFromSdkCall, isTwilioCallSid } from '@/lib/twilio/extract-call-sid';
+import {
+  extractCallSidFromSdkCall,
+  extractInboundFromNumber,
+  extractInboundToNumber,
+  isTwilioCallOpen,
+  isTwilioCallSid,
+} from '@/lib/twilio/extract-call-sid';
 import { useTwilioDevice } from '@/hooks/use-twilio-device';
 
 export type PhoneStatus = 'idle' | 'initializing' | 'ready' | 'error';
@@ -181,6 +187,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const acceptingInboundRef = useRef(false);
   const isInboundRingingLiveRef = useRef(false);
   const provisionalCallIdRef = useRef<string | null>(null);
+  const promotedActiveCallsRef = useRef(new WeakSet<Call>());
 
   const twilioDevice = useTwilioDevice({
     manualInit: true,
@@ -253,6 +260,49 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     });
   }, [safeSet, scheduleReconnect]);
 
+  const promoteCallToActive = useCallback((
+    call: Call,
+    isIncoming: boolean,
+    callId: string,
+    meta?: { from?: string | null; to?: string | null },
+  ) => {
+    if (promotedActiveCallsRef.current.has(call)) return;
+    promotedActiveCallsRef.current.add(call);
+
+    const sid = extractCallSidFromSdkCall(call);
+    if (sid) {
+      const provisional = provisionalCallIdRef.current;
+      void pushCallLegSync({
+        call_sid: sid,
+        provisional_id: provisional && provisional !== sid ? provisional : undefined,
+        direction: isIncoming ? 'inbound' : 'outbound',
+        from_number: meta?.from ?? undefined,
+        to_number: meta?.to ?? undefined,
+      });
+      if (isTwilioCallSid(sid)) provisionalCallIdRef.current = null;
+    }
+
+    const resolvedId = sid ?? callId;
+    console.log('[WebPhone] call active:', resolvedId, isIncoming ? 'inbound' : 'outbound');
+
+    if (isIncoming) {
+      outboundDialRef.current = false;
+      safeSet(setHasOutboundSession, false);
+      isInboundRingingLiveRef.current = false;
+      acceptingInboundRef.current = false;
+      safeSet(setIsInboundRinging, false);
+      inboundRingStartedRef.current = null;
+      incomingCallRef.current = null;
+      activeCallRef.current = call;
+      window.dispatchEvent(new CustomEvent('gd-webrtc-inbound-active'));
+    }
+
+    bindRemoteMediaToTwilioCall(call);
+    bindPeerMonitor(call);
+    safeSet(setCallStatus, 'active');
+    safeSet(setActiveCallId, resolvedId);
+  }, [bindPeerMonitor, pushCallLegSync, safeSet]);
+
   const setupCallEventHandlers = useCallback((
     call: Call,
     isIncoming: boolean,
@@ -282,21 +332,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
     call.on('accept', () => {
       syncIfNeeded();
-      const resolvedId = extractCallSidFromSdkCall(call) ?? callId;
-      console.log('[WebPhone] call accepted:', resolvedId);
-      if (isIncoming) {
-        outboundDialRef.current = false;
-        safeSet(setHasOutboundSession, false);
-        isInboundRingingLiveRef.current = false;
-        acceptingInboundRef.current = false;
-        safeSet(setIsInboundRinging, false);
-        inboundRingStartedRef.current = null;
-        window.dispatchEvent(new CustomEvent('gd-webrtc-inbound-active'));
-      }
-      bindRemoteMediaToTwilioCall(call);
-      bindPeerMonitor(call);
-      safeSet(setCallStatus, 'active');
-      safeSet(setActiveCallId, extractCallSidFromSdkCall(call) ?? callId);
+      promoteCallToActive(call, isIncoming, callId, meta);
     });
 
     call.on('disconnect', () => {
@@ -364,18 +400,12 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         safeSet(setCallStatus, 'idle');
       }
     });
-  }, [safeSet, bindPeerMonitor, pushCallLegSync]);
+  }, [safeSet, promoteCallToActive, pushCallLegSync]);
 
   handleIncomingRef.current = (call: Call) => {
     const callId = getCallStableId(call);
-    const fromNumber =
-      call.parameters?.From
-      ?? call.customParameters?.get?.('From')
-      ?? null;
-    const toNumber =
-      call.parameters?.To
-      ?? call.customParameters?.get?.('To')
-      ?? null;
+    const fromNumber = extractInboundFromNumber(call);
+    const toNumber = extractInboundToNumber(call);
     console.log('[WebPhone] incoming call:', callId, fromNumber ?? '');
 
     outboundDialRef.current = false;
@@ -412,6 +442,10 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     }
 
     setupCallEventHandlers(call, true, { from: fromNumber, to: toNumber });
+
+    if (isTwilioCallOpen(call)) {
+      promoteCallToActive(call, true, callId, { from: fromNumber, to: toNumber });
+    }
 
     const sid = extractCallSidFromSdkCall(call);
     if (sid) {
@@ -609,8 +643,35 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     });
   }, [safeSet, setupCallEventHandlers, twilioDevice]);
 
+  const waitForInboundCallOpen = useCallback(async (call: Call, timeoutMs = 15_000): Promise<boolean> => {
+    if (isTwilioCallOpen(call) || promotedActiveCallsRef.current.has(call)) return true;
+
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (ok: boolean) => {
+        if (settled) return;
+        settled = true;
+        clearInterval(poll);
+        clearTimeout(timer);
+        call.removeListener('accept', onAccept);
+        resolve(ok);
+      };
+
+      const onAccept = () => finish(true);
+      call.on('accept', onAccept);
+
+      const poll = setInterval(() => {
+        if (isTwilioCallOpen(call) || promotedActiveCallsRef.current.has(call)) {
+          finish(true);
+        }
+      }, 200);
+
+      const timer = setTimeout(() => finish(isTwilioCallOpen(call)), timeoutMs);
+    });
+  }, []);
+
   const answerIncomingCall = useCallback(async (): Promise<boolean> => {
-    const target = incomingCallRef.current;
+    const target = incomingCallRef.current ?? activeCallRef.current;
     if (!target) {
       console.warn('[WebPhone] answerIncomingCall: no incoming call');
       return false;
@@ -621,10 +682,25 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
     acceptingInboundRef.current = true;
 
+    const callId = getCallStableId(target);
+    const meta = {
+      from: extractInboundFromNumber(target),
+      to: extractInboundToNumber(target),
+    };
+
     try {
-      console.log('[WebPhone] accepting incoming call:', getCallStableId(target));
-      target.accept();
-      return true;
+      console.log('[WebPhone] accepting incoming call:', callId, 'status:', target.status());
+      if (!isTwilioCallOpen(target)) {
+        target.accept();
+      }
+      const opened = await waitForInboundCallOpen(target);
+      if (opened && !promotedActiveCallsRef.current.has(target)) {
+        promoteCallToActive(target, true, callId, meta);
+      }
+      if (!opened) {
+        acceptingInboundRef.current = false;
+      }
+      return opened;
     } catch (err) {
       acceptingInboundRef.current = false;
       console.error('[WebPhone] accept failed:', err, {
@@ -633,7 +709,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       });
       return false;
     }
-  }, []);
+  }, [promoteCallToActive, waitForInboundCallOpen]);
 
   const hangup = useCallback(() => {
     const target = incomingCallRef.current ?? activeCallRef.current;
