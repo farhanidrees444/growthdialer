@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
+import { isTelnyxProvider } from '@/lib/voice/provider';
 
 type CallControlAction = 'pause_recording' | 'resume_recording' | 'mute' | 'hold' | 'unhold' | 'unmute';
 
@@ -14,6 +15,10 @@ interface CallControlBody {
 const TELNYX_API_BASE = 'https://api.telnyx.com/v2';
 
 export async function POST(request: NextRequest) {
+  if (!isTelnyxProvider()) {
+    return NextResponse.json({ error: 'Call control not available for this voice provider' }, { status: 410 });
+  }
+
   let body: CallControlBody;
   try {
     body = await request.json();

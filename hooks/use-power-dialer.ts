@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { setPowerAutoAnswer } from '@/lib/parallel-dial/auto-answer-flag';
 import { getSavedQueueConfig } from '@/lib/dialer/queue-config';
 import type { DialerQueueConfig } from '@/lib/dialer/queue-query';
 
@@ -44,6 +45,9 @@ interface UsePowerDialerOptions {
   onLeadReady?: (lead: LeadRecord) => void;
   onShouldDial?: (lead: LeadRecord) => void;
   onSessionComplete?: (summary: SessionSummary) => void;
+  /** When true, REST power-dial path is used (Twilio server-originated). */
+  useRestDial?: boolean;
+  apiFetch?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
 const LS_KEY = 'pd_session_v2';
@@ -65,6 +69,8 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
   const calledRef = useRef(calledLeadIds);
   const currentLeadRef = useRef(currentLead);
   const configRef = useRef(config);
+  const useRestDialRef = useRef(options.useRestDial ?? false);
+  const restApiFetchRef = useRef(options.apiFetch ?? apiFetch);
   const onLeadReadyRef = useRef(options.onLeadReady);
   const onShouldDialRef = useRef(options.onShouldDial);
   const onSessionCompleteRef = useRef(options.onSessionComplete);
@@ -73,6 +79,8 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
   calledRef.current = calledLeadIds;
   currentLeadRef.current = currentLead;
   configRef.current = config;
+  useRestDialRef.current = options.useRestDial ?? false;
+  restApiFetchRef.current = options.apiFetch ?? apiFetch;
   onLeadReadyRef.current = options.onLeadReady;
   onShouldDialRef.current = options.onShouldDial;
   onSessionCompleteRef.current = options.onSessionComplete;
@@ -120,8 +128,43 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     if (pdState !== 'preview' || countdown !== 0 || autoCalledRef.current) return;
     autoCalledRef.current = true;
     const lead = currentLeadRef.current;
-    if (lead) onShouldDialRef.current?.(lead);
-  }, [countdown, pdState]);
+    const sess = sessionRef.current;
+    if (!lead) return;
+
+    if (useRestDialRef.current && sess) {
+      setPowerAutoAnswer(true);
+      void (async () => {
+        try {
+          const res = await restApiFetchRef.current('/api/twilio/power-dialer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              session_id: sess.id,
+              lead_id: lead.id,
+              phone: lead.phone,
+            }),
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({})) as { error?: string };
+            toast.error(err.error ?? 'Power dial failed');
+            setPowerAutoAnswer(false);
+            if (stateRef.current === 'paused') return;
+            preStateRef.current = 'preview';
+            setPdState('paused');
+            await apiFetch(`/api/dialer/power-session/${sess.id}/pause`, { method: 'POST' }).catch(() => {});
+            return;
+          }
+          setPdState('calling');
+        } catch {
+          toast.error('Power dial request failed');
+          setPowerAutoAnswer(false);
+        }
+      })();
+      return;
+    }
+
+    onShouldDialRef.current?.(lead);
+  }, [countdown, pdState, apiFetch]);
 
   // ── Internal: set countdown for a lead ────────────────────────────────────
   const startCountdown = useCallback((seconds: number, lead: LeadRecord) => {
@@ -139,6 +182,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
 
   // ── Internal: end session ──────────────────────────────────────────────────
   const stopSession = useCallback(async (sess: PowerSession) => {
+    setPowerAutoAnswer(false);
     setCountdown(0);
     clearLS();
 
@@ -231,6 +275,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     const merged: SessionConfig = { delay_seconds: 5, ...cfg };
     setConfig(merged);
     setPdState('starting');
+    if (useRestDialRef.current) setPowerAutoAnswer(true);
 
     try {
       const queue_config = getSavedQueueConfig();
@@ -266,6 +311,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
       startCountdown(merged.delay_seconds ?? 5, firstLead);
       saveLS(sess.id, firstLead.id, Date.now(), merged.delay_seconds ?? 5, []);
     } catch {
+      setPowerAutoAnswer(false);
       setPdState('idle');
     }
   }, [apiFetch, startCountdown, saveLS]);
@@ -319,6 +365,7 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
 
     preStateRef.current = stateRef.current;
     setPdState('paused');
+    setPowerAutoAnswer(false);
 
     apiFetch(`/api/dialer/power-session/${sess.id}/pause`, { method: 'POST' }).catch(() => {});
   }, []);
@@ -333,8 +380,8 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
     apiFetch(`/api/dialer/power-session/${sess.id}/resume`, { method: 'POST' }).catch(() => {});
 
     if ((prev === 'preview' || prev === 'countdown') && lead) {
-      // Restart full countdown — setPdState and setCountdown batched together
       setPdState('preview');
+      if (useRestDialRef.current) setPowerAutoAnswer(true);
       startCountdown(configRef.current.delay_seconds ?? 5, lead);
     } else {
       setPdState(prev);
@@ -344,14 +391,31 @@ export function usePowerDialer(options: UsePowerDialerOptions = {}) {
   // ── Public: skip countdown ─────────────────────────────────────────────────
   const skipCountdown = useCallback(() => {
     const lead = currentLeadRef.current;
+    const sess = sessionRef.current;
     if (!lead) return;
-    autoCalledRef.current = true; // prevent fire effect from also calling
+    autoCalledRef.current = true;
     setCountdown(0);
+    if (useRestDialRef.current && sess) {
+      setPowerAutoAnswer(true);
+      void restApiFetchRef.current('/api/twilio/power-dialer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sess.id,
+          lead_id: lead.id,
+          phone: lead.phone,
+        }),
+      }).then((res) => {
+        if (res.ok) setPdState('calling');
+      }).catch(() => toast.error('Power dial request failed'));
+      return;
+    }
     onShouldDialRef.current?.(lead);
   }, []);
 
   // ── Public: stop ───────────────────────────────────────────────────────────
   const stop = useCallback(async () => {
+    setPowerAutoAnswer(false);
     const sess = sessionRef.current;
     if (!sess) {
       setCountdown(0);

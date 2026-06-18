@@ -7,7 +7,8 @@ import { useInboundRinging } from '@/contexts/inbound-ringing-context';
 import { useWebPhone } from '@/contexts/webphone-context';
 import { formatInboundCallerDisplay } from '@/lib/inbound/phone';
 
-function formatPhone(e164: string): string {
+function formatPhone(e164: string | null | undefined): string {
+  if (!e164) return 'Unknown line';
   const m = e164.match(/^\+1(\d{3})(\d{3})(\d{4})$/);
   if (m) return `+1 (${m[1]}) ${m[2]}-${m[3]}`;
   return e164;
@@ -64,9 +65,11 @@ export function InboundCallOverlay() {
     ? leadName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
     : null;
 
+  if (!call) return null;
+
   return (
     <AnimatePresence>
-      {call && (
+      {call ? (
         <motion.div
           key="inbound-overlay"
           initial={{ opacity: 0 }}
@@ -210,7 +213,7 @@ export function InboundCallOverlay() {
             </div>
           </motion.div>
         </motion.div>
-      )}
+      ) : null}
     </AnimatePresence>
   );
 }

@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { isTwilioVoiceConfigured } from '@/lib/twilio/voice-config';
+import { getVoiceProvider } from '@/lib/voice/provider';
 
 /** Block legacy Telnyx-only number APIs when Twilio is the active voice provider. */
 export function blockLegacyTelnyxNumberApi(): NextResponse | null {
+  if (getVoiceProvider() === 'telnyx') return null;
   if (!isTwilioVoiceConfigured()) return null;
   return NextResponse.json(
     {

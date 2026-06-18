@@ -24,7 +24,7 @@ export interface OutboundRouteResult {
 
 export function twilioStatusCallbackUrl(): string | undefined {
   const base = resolveVoiceAppBaseUrl();
-  return base ? `${base}/api/twilio/status` : undefined;
+  return base ? `${base}/api/twilio/status-callback` : undefined;
 }
 
 export function twilioRecordingCallbackUrl(): string | undefined {

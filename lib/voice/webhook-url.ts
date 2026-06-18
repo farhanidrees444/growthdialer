@@ -24,5 +24,5 @@ export function resolveVoiceAppBaseUrl(): string {
 export function resolveVoiceWebhookUrl(): string {
   const base = resolveVoiceAppBaseUrl();
   if (!base) return '';
-  return `${base}/api/twilio/webhook`;
+  return `${base}/api/twilio/voice`;
 }

@@ -58,7 +58,8 @@ const MODE_ICONS = {
   off: PhoneOff,
 } as const;
 
-function fmtPhone(phone: string): string {
+function fmtPhone(phone: string | null | undefined): string {
+  if (!phone) return '—';
   const m = phone.match(/^\+1(\d{3})(\d{3})(\d{4})$/);
   if (m) return `+1 (${m[1]}) ${m[2]}-${m[3]}`;
   return phone;

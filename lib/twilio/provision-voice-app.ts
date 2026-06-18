@@ -48,8 +48,8 @@ export async function ensureTwilioVoiceAppConfigured(): Promise<ProvisionVoiceAp
     };
   }
 
-  const voiceUrl = `${base}/api/twilio/webhook`;
-  const statusCallback = `${base}/api/twilio/status`;
+  const voiceUrl = `${base}/api/twilio/voice`;
+  const statusCallback = `${base}/api/twilio/status-callback`;
 
   try {
     await client.applications(twimlAppSid).update({

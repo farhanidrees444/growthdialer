@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { bridgeProspectToAgent, hangupCallControl } from './agent-bridge';
 import { dropVoicemailAndHangup } from '@/lib/voicemail/drop-on-call';
 import { triggerParallelLegTrackingAsync } from './leg-tracking';
+import { isTwilioProvider } from '@/lib/voice/provider';
 
 async function cancelOtherLegs(
   supabase: SupabaseClient,
@@ -120,6 +121,15 @@ export async function bridgeParallelWinner(
 
   if (!leg?.is_winner || leg.status === 'connected') return false;
 
+  if (isTwilioProvider()) {
+    await supabase
+      .from('parallel_dial_legs')
+      .update({ status: 'connected', updated_at: new Date().toISOString() })
+      .eq('id', legId);
+    await markSessionConnected(supabase, leg.session_id);
+    return true;
+  }
+
   const bridged = await bridgeProspectToAgent(
     supabase,
     userId,
@@ -211,6 +221,24 @@ export async function handleParallelLegAnswered(
       sessionId: claimed.session_id,
       legId: claimed.id,
     };
+  }
+
+  if (isTwilioProvider()) {
+    await supabase
+      .from('parallel_dial_legs')
+      .update({ status: 'connected', updated_at: new Date().toISOString() })
+      .eq('id', claimed.id);
+    await markSessionConnected(supabase, claimed.session_id);
+    triggerParallelLegTrackingAsync({
+      event: 'leg_winner',
+      session_id: claimed.session_id,
+      leg_id: claimed.id,
+      user_id: sessionRow?.user_id ?? '',
+      workspace_id: sessionRow?.workspace_id ?? null,
+      telnyx_call_id: callControlId,
+      at: new Date().toISOString(),
+    });
+    return { bridged: true, sessionId: claimed.session_id, legId: claimed.id };
   }
 
   const bridged = await bridgeProspectToAgent(

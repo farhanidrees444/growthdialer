@@ -41,7 +41,7 @@ export function useParallelDialer(options: UseParallelDialerOptions = {}) {
   const [session, setSession] = useState<ParallelDialSession | null>(null);
   const [legs, setLegs] = useState<ParallelDialLeg[]>([]);
   const [summary, setSummary] = useState<ParallelSessionSummary | null>(null);
-  const [config, setConfig] = useState<ParallelSessionConfig>({ lines_count: 3 });
+  const [config, setConfig] = useState<ParallelSessionConfig>({ lines_count: 2 });
   const [dialedLeadIds, setDialedLeadIds] = useState<string[]>([]);
   const [winnerLeg, setWinnerLeg] = useState<ParallelDialLeg | null>(null);
 
@@ -168,7 +168,7 @@ export function useParallelDialer(options: UseParallelDialerOptions = {}) {
 
   const start = useCallback(async (cfg?: Partial<ParallelSessionConfig>) => {
     if (stateRef.current !== 'idle') return;
-    const merged = { lines_count: 3, amd_enabled: true, vm_drop_enabled: true, ...cfg };
+    const merged = { lines_count: 2, amd_enabled: true, vm_drop_enabled: true, ...cfg };
     setConfig(merged);
     setState('starting');
     setParallelAutoAnswer(true);

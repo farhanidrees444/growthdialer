@@ -24,7 +24,7 @@ interface ParallelDialConfigModalProps {
 
 import { MAX_PARALLEL_LINES } from '@/lib/parallel-dial/architecture';
 
-const LINE_PRESETS = [2, 3] as const;
+const LINE_PRESETS = [2, 3, 4, 5] as const;
 
 export function ParallelDialConfigModal({
   open,
@@ -32,7 +32,7 @@ export function ParallelDialConfigModal({
   onClose,
   onStart,
 }: ParallelDialConfigModalProps) {
-  const [lines, setLines] = useState(3);
+  const [lines, setLines] = useState(2);
   const [amd, setAmd] = useState(true);
   const [vmDrop, setVmDrop] = useState(true);
 

@@ -20,9 +20,9 @@
  * - Leg tracking webhooks include workspace + user for downstream analytics
  */
 
-export const MAX_PARALLEL_LINES = 3;
+export const MAX_PARALLEL_LINES = 5;
 export const MIN_PARALLEL_LINES = 2;
-export const DEFAULT_PARALLEL_LINES = 3;
+export const DEFAULT_PARALLEL_LINES = 2;
 
 export const PARALLEL_WINNER_STATUSES = ['dialing', 'ringing', 'answered'] as const;
 

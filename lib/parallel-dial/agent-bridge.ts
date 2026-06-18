@@ -7,6 +7,8 @@ import { resolveInboundBrowserCredential } from '@/lib/inbound/browser-credentia
 import { dialVoiceLeg, telnyxCallActionDetailed } from '@/lib/inbound/telnyx-actions';
 import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
 import { voiceApiBearerToken } from '@/lib/voice/read-env';
+import { isTwilioProvider } from '@/lib/voice/provider';
+import { hangupVoiceCall } from '@/lib/twilio/hangup-call';
 
 export function getAgentBridgeDestination(): string | null {
   const explicit = process.env.TELNYX_AGENT_SIP_URI?.trim();
@@ -94,6 +96,15 @@ export async function bridgeProspectToAgent(
 }
 
 export async function hangupCallControl(callControlId: string): Promise<void> {
+  if (isTwilioProvider()) {
+    try {
+      await hangupVoiceCall(callControlId);
+    } catch (err) {
+      console.error('[PARALLEL] Twilio hangup exception:', err);
+    }
+    return;
+  }
+
   try {
     await fetch(
       `https://api.telnyx.com/v2/calls/${encodeURIComponent(callControlId)}/actions/hangup`,

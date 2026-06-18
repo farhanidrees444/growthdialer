@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { Device, Call } from '@twilio/voice-sdk';
+import { Call } from '@twilio/voice-sdk';
 import {
   attachPeerConnectionMonitor,
   getCallPeerConnection,
@@ -25,6 +25,7 @@ import {
 } from '@/lib/voice/remote-audio';
 import { voiceSessionLog } from '@/lib/debug/voice-session-log';
 import { extractCallSidFromSdkCall, isTwilioCallSid } from '@/lib/twilio/extract-call-sid';
+import { useTwilioDevice } from '@/hooks/use-twilio-device';
 
 export type PhoneStatus = 'idle' | 'initializing' | 'ready' | 'error';
 export type WebRTCCallStatus = 'idle' | 'connecting' | 'ringing' | 'active' | 'held' | 'ended';
@@ -126,16 +127,6 @@ function mapCallStatus(status: string): WebRTCCallStatus {
   }
 }
 
-const TOKEN_URL = '/api/twilio/token';
-const REGISTER_TIMEOUT_MS = 20_000;
-
-const TOKEN_ERROR_MESSAGES: Record<string, string> = {
-  missing_credentials:
-    'Voice credentials are missing on the server. Add TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN in Vercel, then redeploy.',
-  missing_twiml_app:
-    'TWILIO_TWIML_APP_SID is not set on the server. Add it in Vercel environment variables, then redeploy.',
-};
-
 function bindRemoteMediaToTwilioCall(call: Call): void {
   try {
     const stream = call.getRemoteStream();
@@ -162,6 +153,8 @@ function bindRemoteMediaToTwilioCall(call: Call): void {
 }
 
 export function WebPhoneProvider({ children }: { children: ReactNode }) {
+  const handleIncomingRef = useRef<(call: Call) => void>(() => {});
+
   const [phoneStatus, setPhoneStatus] = useState<PhoneStatus>('idle');
   const [callStatus, setCallStatus] = useState<WebRTCCallStatus>('idle');
   const [activeCallId, setActiveCallId] = useState<string | null>(null);
@@ -175,7 +168,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const [voiceError, setVoiceError] = useState<string | null>(null);
 
   // Refs hold live objects that should NOT trigger re-renders
-  const deviceRef = useRef<Device | null>(null);
+  const deviceRef = useRef<import('@twilio/voice-sdk').Device | null>(null);
   const activeCallRef = useRef<Call | null>(null);
   const incomingCallRef = useRef<Call | null>(null);
   const callStatusRef = useRef<WebRTCCallStatus>('idle');
@@ -195,6 +188,10 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const acceptingInboundRef = useRef(false);
   const isInboundRingingLiveRef = useRef(false);
   const provisionalCallIdRef = useRef<string | null>(null);
+
+  const twilioDevice = useTwilioDevice({
+    onIncoming: (call) => handleIncomingRef.current(call),
+  });
 
   const pushCallLegSync = useCallback(async (payload: {
     call_sid: string;
@@ -383,187 +380,90 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     });
   }, [safeSet, bindPeerMonitor, pushCallLegSync]);
 
+  handleIncomingRef.current = (call: Call) => {
+    const callId = getCallStableId(call);
+    const fromNumber =
+      call.parameters?.From
+      ?? call.customParameters?.get?.('From')
+      ?? null;
+    console.log('[WebPhone] incoming call:', callId, fromNumber ?? '');
+
+    outboundDialRef.current = false;
+    safeSet(setHasOutboundSession, false);
+
+    incomingCallRef.current = call;
+    activeCallRef.current = call;
+    deviceRef.current = twilioDevice.device;
+    safeSet(setActiveCallId, callId);
+
+    const status = call.status();
+    const mapped = mapCallStatus(status);
+
+    safeSet(setCallStatus, mapped);
+
+    if (mapped === 'ringing' || mapped === 'connecting') {
+      if (!inboundRingStartedRef.current) {
+        inboundRingStartedRef.current = Date.now();
+      }
+      isInboundRingingLiveRef.current = true;
+      safeSet(setIsInboundRinging, true);
+      bindPeerMonitor(call);
+
+      window.dispatchEvent(
+        new CustomEvent('gd-webrtc-inbound-ring', {
+          detail: {
+            call_id: callId,
+            from_number: fromNumber,
+            provider: 'twilio',
+          },
+        }),
+      );
+    }
+
+    setupCallEventHandlers(call, true, { from: fromNumber });
+
+    {
+      const sid = extractCallSidFromSdkCall(call);
+      if (sid) {
+        void pushCallLegSync({
+          call_sid: sid,
+          direction: 'inbound',
+          from_number: fromNumber,
+        });
+      }
+    }
+
+    voiceSessionLog({
+      location: 'webphone-context.tsx:incoming',
+      message: 'incoming call received',
+      data: {
+        callId,
+        status,
+        mapped,
+        fromNumber,
+      },
+      hypothesisId: 'H-C',
+      runId: 'run1',
+    });
+  };
+
   const initClient = useCallback(async () => {
     safeSet(setPhoneStatus, 'initializing');
-
-    try {
-      const res = await fetch(TOKEN_URL, {
-        method: 'GET',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      const data = await res.json().catch(() => ({})) as {
-        token?: string;
-        identity?: string;
-        error?: string;
-        code?: string;
-      };
-
-      if (!res.ok) {
-        const msg =
-          (data.code && TOKEN_ERROR_MESSAGES[data.code])
-          ?? data.error
-          ?? `Voice token request failed (${res.status})`;
-        console.error('[WebPhone] token fetch failed:', res.status, data.code ?? data.error);
-        safeSet(setVoiceError, msg);
-        scheduleReconnect(`token HTTP ${res.status}`);
-        return;
-      }
-
-      if (data.error || !data.token) {
-        console.error('[WebPhone] token error:', data.error ?? 'missing token');
-        safeSet(setVoiceError, data.error ?? 'Voice token missing from server response');
-        scheduleReconnect('token error');
-        return;
-      }
-
-      safeSet(setVoiceError, null);
-
-      // Tear down existing device if reconnecting
-      if (deviceRef.current) {
-        try { deviceRef.current.destroy(); } catch { /* ignore */ }
-        deviceRef.current = null;
-      }
-
-      const device = new Device(data.token, {
-        codecPreferences: ['pcmu', 'opus'] as Call.Codec[],
-        closeProtection: true,
-        logLevel: process.env.NODE_ENV === 'development' ? 1 : 0,
-      } as ConstructorParameters<typeof Device>[1]);
-
-      deviceRef.current = device;
-
-      device.on('registered', () => {
-        console.log('[WebPhone] device registered');
-        initAttemptsRef.current = 0;
-        safeSet(setPhoneStatus, 'ready');
-        safeSet(setVoiceError, null);
-        safeSet(setIsReconnecting, false);
-      });
-
-      device.on('error', (err: Error) => {
-        console.error('[WebPhone] device error:', err.message);
-        const live = callStatusRef.current;
-        if (live === 'connecting' || live === 'ringing' || live === 'active' || live === 'held') {
-          return;
-        }
-        safeSet(setVoiceError, err.message || 'Voice device error');
-        if (phoneStatusRef.current === 'initializing') {
-          scheduleReconnect(`device error: ${err.message}`);
-          return;
-        }
-        safeSet(setPhoneStatus, 'error');
-      });
-
-      device.on('unregistered', () => {
-        const live = callStatusRef.current;
-        if (live === 'connecting' || live === 'ringing' || live === 'active' || live === 'held') {
-          safeSet(setIsReconnecting, true);
-          if (!reconnectDuringCallRef.current) {
-            reconnectDuringCallRef.current = true;
-            scheduleReconnect('device unregistered during call');
-            setTimeout(() => { reconnectDuringCallRef.current = false; }, 4000);
-          }
-          return;
-        }
-        if (phoneStatusRef.current === 'ready') {
-          safeSet(setPhoneStatus, 'initializing');
-        }
-      });
-
-      device.on('incoming', (call: Call) => {
-        const callId = getCallStableId(call);
-        const fromNumber =
-          call.parameters?.From
-          ?? call.customParameters?.get?.('From')
-          ?? null;
-        console.log('[WebPhone] incoming call:', callId, fromNumber ?? '');
-
-        // Ignore incoming if we're already on an outbound call
-        if (outboundDialRef.current) {
-          console.warn('[WebPhone] rejecting incoming call — outbound in progress');
-          try { call.reject(); } catch { /* ignore */ }
-          return;
-        }
-
-        outboundDialRef.current = false;
-        safeSet(setHasOutboundSession, false);
-
-        incomingCallRef.current = call;
-        activeCallRef.current = call;
-        safeSet(setActiveCallId, callId);
-
-        const status = call.status();
-        const mapped = mapCallStatus(status);
-
-        safeSet(setCallStatus, mapped);
-
-        if (mapped === 'ringing' || mapped === 'connecting') {
-          if (!inboundRingStartedRef.current) {
-            inboundRingStartedRef.current = Date.now();
-          }
-          isInboundRingingLiveRef.current = true;
-          safeSet(setIsInboundRinging, true);
-          bindPeerMonitor(call);
-
-          window.dispatchEvent(
-            new CustomEvent('gd-webrtc-inbound-ring', {
-              detail: {
-                call_id: callId,
-                from_number: fromNumber,
-                provider: 'twilio',
-              },
-            }),
-          );
-        }
-
-        setupCallEventHandlers(call, true, { from: fromNumber });
-
-        {
-          const sid = extractCallSidFromSdkCall(call);
-          if (sid) {
-            void pushCallLegSync({
-              call_sid: sid,
-              direction: 'inbound',
-              from_number: fromNumber,
-            });
-          }
-        }
-
-        voiceSessionLog({
-          location: 'webphone-context.tsx:incoming',
-          message: 'incoming call received',
-          data: {
-            callId,
-            status,
-            mapped,
-            fromNumber,
-          },
-          hypothesisId: 'H-C',
-          runId: 'run1',
-        });
-      });
-
-      const registerTimeout = window.setTimeout(() => {
-        if (phoneStatusRef.current !== 'initializing') return;
-        console.warn('[WebPhone] device registration timed out');
-        safeSet(setVoiceError, 'Voice registration timed out — check Twilio TwiML App and network.');
-        try { device.destroy(); } catch { /* ignore */ }
-        if (deviceRef.current === device) deviceRef.current = null;
-        scheduleReconnect('register timeout');
-      }, REGISTER_TIMEOUT_MS);
-
-      try {
-        await device.register();
-      } finally {
-        window.clearTimeout(registerTimeout);
-      }
-    } catch (err) {
-      console.error('[WebPhone] init error:', err);
-      scheduleReconnect('init exception');
+    deviceRef.current = twilioDevice.device;
+    if (twilioDevice.voiceError) {
+      safeSet(setVoiceError, twilioDevice.voiceError);
     }
-  }, [safeSet, scheduleReconnect, bindPeerMonitor, setupCallEventHandlers, pushCallLegSync]);
+    await twilioDevice.initDevice();
+    deviceRef.current = twilioDevice.device;
+    if (twilioDevice.isReady) {
+      initAttemptsRef.current = 0;
+      safeSet(setPhoneStatus, 'ready');
+      safeSet(setVoiceError, null);
+      safeSet(setIsReconnecting, false);
+    } else if (twilioDevice.voiceError) {
+      scheduleReconnect('token or device error');
+    }
+  }, [safeSet, scheduleReconnect, twilioDevice]);
 
   useEffect(() => {
     if (phoneStatus !== 'ready') return;
@@ -574,6 +474,17 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   }, [phoneStatus]);
 
   initClientRef.current = initClient;
+
+  useEffect(() => {
+    deviceRef.current = twilioDevice.device;
+    if (twilioDevice.isReady) {
+      safeSet(setPhoneStatus, 'ready');
+      safeSet(setVoiceError, twilioDevice.voiceError);
+    }
+    if (twilioDevice.voiceError && phoneStatusRef.current === 'initializing') {
+      safeSet(setVoiceError, twilioDevice.voiceError);
+    }
+  }, [twilioDevice.device, twilioDevice.isReady, twilioDevice.voiceError, safeSet]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -602,20 +513,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     primeVoiceAudioOnUserGesture();
     initClient();
 
-    // Refresh JWT before Twilio token expiry (~1h) for long dashboard sessions
-    const tokenRefresh = setInterval(() => {
-      if (phoneStatusRef.current === 'ready' && callStatusRef.current === 'idle') {
-        console.log('[WebPhone] refreshing voice token');
-        void initClientRef.current();
-      }
-    }, 50 * 60 * 1000); // Refresh at 50 minutes (token TTL is 60 min)
-
     return () => {
       mountedRef.current = false;
-      clearInterval(tokenRefresh);
-      if (deviceRef.current) {
-        try { deviceRef.current.destroy(); } catch { /* ignore */ }
-      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -671,7 +570,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     return new Promise((resolve) => {
       const deadline = Date.now() + timeoutMs;
       const check = () => {
-        if (deviceRef.current && phoneStatusRef.current === 'ready') {
+        if (twilioDevice.isReady && twilioDevice.device) {
+          deviceRef.current = twilioDevice.device;
           resolve(true);
           return;
         }
@@ -683,15 +583,15 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       };
       check();
     });
-  }, []);
+  }, [twilioDevice.device, twilioDevice.isReady]);
 
   // ── Call actions ─────────────────────────────────────────────────────────────
-  const makeCall = useCallback((destination: string, _callerNumber?: string) => {
+  const makeCall = useCallback(async (destination: string, _callerNumber?: string) => {
     voiceSessionLog({
       location: 'webphone-context.tsx:makeCall',
       message: 'makeCall invoked',
       data: {
-        hasDevice: Boolean(deviceRef.current),
+        hasDevice: Boolean(twilioDevice.device),
         phoneStatus: phoneStatusRef.current,
         callStatus: callStatusRef.current,
         destLen: destination?.length ?? 0,
@@ -700,12 +600,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       runId: 'run1',
     });
 
-    if (!deviceRef.current) {
-      console.warn('[WebPhone] makeCall: device not initialized');
-      return;
-    }
-    if (phoneStatusRef.current !== 'ready') {
-      console.warn('[WebPhone] makeCall: phone not ready, status:', phoneStatusRef.current);
+    if (!twilioDevice.device || !twilioDevice.isReady) {
+      console.warn('[WebPhone] makeCall: device not ready');
       return;
     }
     const currentStatus = callStatusRef.current;
@@ -721,36 +617,32 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     setIsOnHold(false);
 
     console.log('[WebPhone] initiating call to:', destination);
+    deviceRef.current = twilioDevice.device;
 
-    // device.connect() returns Promise<Call>
-    deviceRef.current.connect({
-      params: {
-        To: destination,
-        ...(_callerNumber ? { CallerId: _callerNumber } : {}),
-      },
-    }).then((call) => {
-      if (!mountedRef.current) {
-        try { call.disconnect(); } catch { /* ignore */ }
-        return;
-      }
-
-      const callId = getCallStableId(call);
-      activeCallRef.current = call;
-      safeSet(setActiveCallId, callId);
-
-      setupCallEventHandlers(call, false, { to: destination, from: _callerNumber ?? null });
-
-      call.on('ringing', () => {
-        console.log('[WebPhone] outbound call ringing:', getCallStableId(call));
-        safeSet(setCallStatus, 'ringing');
-      });
-    }).catch((err) => {
-      console.error('[WebPhone] connect error:', err);
+    const call = await twilioDevice.makeCall(destination, _callerNumber);
+    if (!call) {
       outboundDialRef.current = false;
       setHasOutboundSession(false);
       setCallStatus('idle');
+      return;
+    }
+
+    if (!mountedRef.current) {
+      try { call.disconnect(); } catch { /* ignore */ }
+      return;
+    }
+
+    const callId = getCallStableId(call);
+    activeCallRef.current = call;
+    safeSet(setActiveCallId, callId);
+
+    setupCallEventHandlers(call, false, { to: destination, from: _callerNumber ?? null });
+
+    call.on('ringing', () => {
+      console.log('[WebPhone] outbound call ringing:', getCallStableId(call));
+      safeSet(setCallStatus, 'ringing');
     });
-  }, [safeSet, setupCallEventHandlers]);
+  }, [safeSet, setupCallEventHandlers, twilioDevice]);
 
   const waitForInboundWebRtcLeg = useCallback((timeoutMs = 15000): Promise<boolean> => {
     return new Promise((resolve) => {

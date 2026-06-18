@@ -144,6 +144,7 @@ export default function DialerPage() {
   const [powerConfirmOpen, setPowerConfirmOpen] = useState(false);
   const [parallelConfirmOpen, setParallelConfirmOpen] = useState(false);
   const [dialMode, setDialMode] = useState<DialMode>('manual');
+  const [voiceProvider, setVoiceProvider] = useState<'twilio' | 'telnyx'>('twilio');
 
   const parallelDialer = useParallelDialer({
     onLeadConnected: (lead, leg) => {
@@ -154,6 +155,8 @@ export default function DialerPage() {
   });
 
   const powerDialer = usePowerDialer({
+    useRestDial: voiceProvider === 'twilio',
+    apiFetch,
     onLeadReady: (lead) => { selectLead(lead); },
     onShouldDial: (lead) => {
       void (async () => {
@@ -226,7 +229,13 @@ export default function DialerPage() {
   useEffect(() => {
     if (!userId) return;
     void loadFromNumber();
-  }, [userId, loadFromNumber]);
+    void apiFetch('/api/voice/health')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data: { provider?: 'twilio' | 'telnyx' } | null) => {
+        if (data?.provider) setVoiceProvider(data.provider);
+      })
+      .catch(() => {});
+  }, [userId, loadFromNumber, apiFetch]);
 
   // ── Stats ──────────────────────────────────────────────────────────────────
   const loadStats = useCallback(async () => {
