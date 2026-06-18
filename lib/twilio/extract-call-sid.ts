@@ -41,6 +41,9 @@ function readCallParam(call: Call, ...keys: string[]): string | null {
 
 /** PSTN caller ID from an inbound Twilio Client call, when present. */
 export function extractInboundFromNumber(call: Call): string | null {
+  const fromTwiml = readCallParam(call, 'gd_from_number');
+  if (fromTwiml && isValidCallerPhone(fromTwiml)) return normalizeE164(fromTwiml);
+
   const raw = readCallParam(call, 'From', 'from', 'Caller', 'caller');
   if (!raw || !isValidCallerPhone(raw)) return null;
   return normalizeE164(raw);
@@ -48,8 +51,13 @@ export function extractInboundFromNumber(call: Call): string | null {
 
 /** Called line (agent DID) from an inbound Twilio Client call. */
 export function extractInboundToNumber(call: Call): string | null {
+  const toTwiml = readCallParam(call, 'gd_to_number');
+  if (toTwiml && isValidCallerPhone(toTwiml)) return normalizeE164(toTwiml);
+
   const raw = readCallParam(call, 'To', 'to', 'Called', 'called');
   if (!raw) return null;
+  if (raw.toLowerCase().startsWith('client:')) return null;
+  if (!isValidCallerPhone(raw)) return null;
   return normalizeE164(raw);
 }
 

@@ -421,6 +421,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     if (!shouldBridgeAutoAnswer() && externalInboundHandlerRef.current) {
       outboundDialRef.current = false;
       safeSet(setHasOutboundSession, false);
+      isInboundRingingLiveRef.current = true;
+      safeSet(setIsInboundRinging, true);
       externalInboundHandlerRef.current(call);
       return;
     }
@@ -518,6 +520,15 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       safeSet(setVoiceError, twilioDevice.voiceError);
     }
   }, [twilioDevice.device, twilioDevice.isReady, twilioDevice.voiceError, safeSet]);
+
+  useEffect(() => {
+    const onCallEnded = () => {
+      isInboundRingingLiveRef.current = false;
+      safeSet(setIsInboundRinging, false);
+    };
+    window.addEventListener('gd-call-ended', onCallEnded);
+    return () => window.removeEventListener('gd-call-ended', onCallEnded);
+  }, [safeSet]);
 
   useEffect(() => {
     const interval = setInterval(() => {

@@ -143,7 +143,9 @@ export async function handleTwilioVoiceWebhook(
       ...dialStatusCallbackOptions(statusCallback),
       // TODO: reconnect recording pipeline — Twilio session
     });
-    dial.client(inbound.clientIdentity);
+    const client = dial.client(inbound.clientIdentity);
+    client.parameter({ name: 'gd_from_number', value: inbound.fromNumber });
+    client.parameter({ name: 'gd_to_number', value: inbound.toNumber });
     return twimlResponse(response);
   } catch (error) {
     console.error('[TwilioVoice] Exception:', error instanceof Error ? error.message : String(error));

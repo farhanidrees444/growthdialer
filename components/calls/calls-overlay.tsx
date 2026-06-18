@@ -91,6 +91,7 @@ export default function CallsOverlay() {
     isMuted,
     isOnHold,
     minimized,
+    connectError,
     accept,
     decline,
     hangup,
@@ -232,7 +233,13 @@ export default function CallsOverlay() {
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Securing voice link…
                 </p>
+                {connectError && (
+                  <p className="mt-2 text-center text-xs text-red-300/90">{connectError}</p>
+                )}
               </div>
+            )}
+            {isIncoming && connectError && (
+              <p className="mt-4 text-center text-xs text-red-300/90">{connectError}</p>
             )}
             {isActive && (
               <div className="mt-6 w-full">

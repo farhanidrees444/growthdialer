@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
@@ -15,22 +16,13 @@ import { useCallContext } from '@/lib/call-context';
 import { playInboundRingtone, stopInboundRingtone } from '@/lib/inbound/ringtone';
 import { resumeVoiceAudioContext } from '@/lib/voice/audio-unlock';
 import { bindRemoteStreamToAudio, unlockRemoteAudioElement } from '@/lib/voice/remote-audio';
-import { getCallPeerConnection } from '@/lib/voice/peer-monitor';
+import { attachPeerConnectionMonitor } from '@/lib/voice/peer-monitor';
 import {
   extractCallSidFromSdkCall,
   extractInboundFromNumber,
   extractInboundToNumber,
   isTwilioCallOpen,
 } from '@/lib/twilio/extract-call-sid';
-
-/**
- * Calls — self-contained inbound calling on the native Twilio Voice SDK.
- *
- * This module owns the full inbound lifecycle (ringing → connecting → active →
- * ended) with a single linear state machine driven by the SDK's own Call events.
- * It reuses the shared Device registered by the WebPhone provider, so outbound
- * dialing and the power/parallel dialer are untouched.
- */
 
 export type CallPhase = 'idle' | 'incoming' | 'connecting' | 'active' | 'ended';
 
@@ -44,9 +36,8 @@ export interface CallsContextValue {
   isMuted: boolean;
   isOnHold: boolean;
   minimized: boolean;
-  /** True for any non-idle inbound session. */
+  connectError: string | null;
   isInboundSession: boolean;
-  /** True while the line is ringing (pre-answer). */
   isRinging: boolean;
   accept: () => Promise<void>;
   decline: () => void;
@@ -59,29 +50,19 @@ export interface CallsContextValue {
 
 const CallsContext = createContext<CallsContextValue | null>(null);
 
-const OPEN_POLL_INTERVAL_MS = 200;
-const OPEN_POLL_TIMEOUT_MS = 10_000;
+const OPEN_POLL_MS = 250;
+const OPEN_TIMEOUT_MS = 15_000;
+const AUDIO_RETRY_MS = 400;
+const AUDIO_RETRY_MAX = 20;
 
 function bindRemoteAudio(call: Call): void {
-  // Twilio plays remote audio automatically, but we also bind the stream to our
-  // unlocked <audio> element so playback survives autoplay policies + device swaps.
   try {
     const stream = (call as Call & { getRemoteStream?: () => MediaStream | null }).getRemoteStream?.();
     if (stream) {
       void bindRemoteStreamToAudio(stream);
-      return;
     }
   } catch {
-    /* getRemoteStream not available in this SDK build */
-  }
-
-  const pc = getCallPeerConnection(call);
-  if (!pc) return;
-  for (const receiver of pc.getReceivers()) {
-    if (receiver.track?.kind === 'audio' && receiver.track.readyState === 'live') {
-      void bindRemoteStreamToAudio(new MediaStream([receiver.track]));
-      return;
-    }
+    /* optional SDK API */
   }
 }
 
@@ -98,20 +79,19 @@ export function CallsProvider({ children }: { children: ReactNode }) {
   const [isMuted, setIsMuted] = useState(false);
   const [isOnHold, setIsOnHold] = useState(false);
   const [minimized, setMinimized] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
 
   const callRef = useRef<Call | null>(null);
   const phaseRef = useRef<CallPhase>('idle');
-  const mountedRef = useRef(true);
+  const handlersBoundRef = useRef<WeakSet<Call>>(new WeakSet());
+  const peerCleanupRef = useRef<(() => void) | null>(null);
+  const openPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioRetryRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const ringStartedRef = useRef<number | null>(null);
   const activeStartedRef = useRef<number | null>(null);
-  const openPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const openPollDeadlineRef = useRef<number>(0);
   const endedHandledRef = useRef(false);
+  const promotedRef = useRef<WeakSet<Call>>(new WeakSet());
   phaseRef.current = phase;
-
-  const safeSet = useCallback(<T,>(setter: (v: T) => void, value: T) => {
-    if (mountedRef.current) setter(value);
-  }, []);
 
   const clearOpenPoll = useCallback(() => {
     if (openPollRef.current) {
@@ -120,95 +100,182 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const clearAudioRetry = useCallback(() => {
+    if (audioRetryRef.current) {
+      clearInterval(audioRetryRef.current);
+      audioRetryRef.current = null;
+    }
+  }, []);
+
   const resetSession = useCallback(() => {
     clearOpenPoll();
+    clearAudioRetry();
+    peerCleanupRef.current?.();
+    peerCleanupRef.current = null;
     callRef.current = null;
     ringStartedRef.current = null;
     activeStartedRef.current = null;
     endedHandledRef.current = false;
     stopInboundRingtone();
-    safeSet(setPhase, 'idle');
-    safeSet(setFromNumber, null);
-    safeSet(setToNumber, null);
-    safeSet(setCallId, null);
-    safeSet(setDurationSec, 0);
-    safeSet(setRingElapsedSec, 0);
-    safeSet(setIsMuted, false);
-    safeSet(setIsOnHold, false);
-    safeSet(setMinimized, false);
-  }, [clearOpenPoll, safeSet]);
+    setPhase('idle');
+    setFromNumber(null);
+    setToNumber(null);
+    setCallId(null);
+    setDurationSec(0);
+    setRingElapsedSec(0);
+    setIsMuted(false);
+    setIsOnHold(false);
+    setMinimized(false);
+    setConnectError(null);
+  }, [clearAudioRetry, clearOpenPoll]);
 
   const endSession = useCallback(() => {
     if (endedHandledRef.current) return;
     endedHandledRef.current = true;
     clearOpenPoll();
+    clearAudioRetry();
+    peerCleanupRef.current?.();
+    peerCleanupRef.current = null;
     stopInboundRingtone();
-    safeSet(setPhase, 'ended');
+    setPhase('ended');
     window.dispatchEvent(new CustomEvent('gd-call-ended'));
-    setTimeout(() => {
-      if (mountedRef.current) resetSession();
-    }, 600);
-  }, [clearOpenPoll, resetSession, safeSet]);
+    setTimeout(resetSession, 600);
+  }, [clearAudioRetry, clearOpenPoll, resetSession]);
+
+  const startAudioRetry = useCallback((call: Call) => {
+    clearAudioRetry();
+    let attempts = 0;
+    audioRetryRef.current = setInterval(() => {
+      attempts += 1;
+      bindRemoteAudio(call);
+      if (attempts >= AUDIO_RETRY_MAX) clearAudioRetry();
+    }, AUDIO_RETRY_MS);
+  }, [clearAudioRetry]);
+
+  const syncCallLeg = useCallback((call: Call, from: string | null, to: string | null) => {
+    const sid = extractCallSidFromSdkCall(call);
+    if (!sid) return;
+    void fetch('/api/calls/sync-leg', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        call_sid: sid,
+        direction: 'inbound',
+        from_number: from,
+        to_number: to,
+      }),
+    }).catch(() => {});
+  }, []);
 
   const goActive = useCallback((call: Call) => {
-    if (phaseRef.current === 'active') return;
+    if (promotedRef.current.has(call)) return;
+    promotedRef.current.add(call);
+
     clearOpenPoll();
     stopInboundRingtone();
+    setConnectError(null);
     activeStartedRef.current = Date.now();
     bindRemoteAudio(call);
-    safeSet(setPhase, 'active');
-    safeSet(setDurationSec, 0);
+    startAudioRetry(call);
+    setPhase('active');
+    setDurationSec(0);
+
     const sid = extractCallSidFromSdkCall(call);
+    const from = extractInboundFromNumber(call);
+    const to = extractInboundToNumber(call);
+    if (from) setFromNumber(from);
+    if (to) setToNumber(to);
     if (sid) {
+      setCallId(sid);
       window.dispatchEvent(new CustomEvent('gd-inbound-answered', { detail: { callId: sid } }));
     }
-  }, [clearOpenPoll, safeSet]);
 
-  // ── Incoming call handler (owns the raw SDK Call) ──────────────────────────
-  useEffect(() => {
-    const onIncoming = (call: Call) => {
-      // A new inbound call supersedes any lingering session.
-      if (callRef.current && callRef.current !== call) {
-        try { callRef.current.disconnect(); } catch { /* ignore */ }
-      }
-      clearOpenPoll();
-      endedHandledRef.current = false;
-      callRef.current = call;
+    syncCallLeg(call, from, to);
+  }, [clearOpenPoll, startAudioRetry, syncCallLeg]);
 
-      const from = extractInboundFromNumber(call);
-      const to = extractInboundToNumber(call);
-      const sid = extractCallSidFromSdkCall(call);
+  const bindCallHandlers = useCallback((call: Call) => {
+    if (handlersBoundRef.current.has(call)) return;
+    handlersBoundRef.current.add(call);
 
-      ringStartedRef.current = Date.now();
-      safeSet(setFromNumber, from);
-      safeSet(setToNumber, to);
-      safeSet(setCallId, sid);
-      safeSet(setRingElapsedSec, 0);
-      safeSet(setDurationSec, 0);
-      safeSet(setIsMuted, false);
-      safeSet(setIsOnHold, false);
-      safeSet(setMinimized, false);
-      safeSet(setPhase, 'incoming');
-      playInboundRingtone();
+    peerCleanupRef.current?.();
+    peerCleanupRef.current = attachPeerConnectionMonitor(call, {
+      onRemoteTrack: (stream) => { void bindRemoteStreamToAudio(stream); },
+      onIceState: (state) => {
+        if (state === 'connected' || state === 'completed') {
+          bindRemoteAudio(call);
+          if (phaseRef.current === 'connecting' || phaseRef.current === 'incoming') {
+            goActive(call);
+          }
+        }
+      },
+    });
 
-      call.on('accept', () => goActive(call));
-      call.on('disconnect', () => endSession());
-      call.on('cancel', () => endSession());
-      call.on('reject', () => endSession());
-      call.on('error', (err: unknown) => {
-        console.error('[Calls] call error:', err);
-        endSession();
-      });
+    call.on('accept', () => goActive(call));
+    call.on('disconnect', () => endSession());
+    call.on('cancel', () => endSession());
+    call.on('reject', () => endSession());
+    call.on('error', (err: unknown) => {
+      console.error('[Calls] call error:', err);
+      setConnectError('Voice link error — try again or check mic permission.');
+      endSession();
+    });
 
-      // Rare: call already open by the time we attach (e.g. very fast media).
-      if (isTwilioCallOpen(call)) goActive(call);
-    };
+    if (isTwilioCallOpen(call)) goActive(call);
+  }, [endSession, goActive]);
 
+  const onIncoming = useCallback((call: Call) => {
+    console.log('[Calls] inbound ring', extractCallSidFromSdkCall(call), call.status());
+
+    if (callRef.current && callRef.current !== call) {
+      try { callRef.current.disconnect(); } catch { /* ignore */ }
+    }
+
+    endedHandledRef.current = false;
+    clearOpenPoll();
+    clearAudioRetry();
+    callRef.current = call;
+
+    const from = extractInboundFromNumber(call);
+    const to = extractInboundToNumber(call);
+    const sid = extractCallSidFromSdkCall(call);
+
+    ringStartedRef.current = Date.now();
+    setFromNumber(from);
+    setToNumber(to);
+    setCallId(sid);
+    setRingElapsedSec(0);
+    setDurationSec(0);
+    setIsMuted(false);
+    setIsOnHold(false);
+    setMinimized(false);
+    setConnectError(null);
+    setPhase('incoming');
+    playInboundRingtone();
+
+    bindCallHandlers(call);
+
+    if (sid) {
+      void fetch('/api/calls/sync-leg', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          call_sid: sid,
+          direction: 'inbound',
+          from_number: from,
+          to_number: to,
+        }),
+      }).catch(() => {});
+    }
+  }, [bindCallHandlers, clearAudioRetry, clearOpenPoll]);
+
+  // Register before paint so we never miss an early incoming leg.
+  useLayoutEffect(() => {
     registerInboundHandler(onIncoming);
     return () => registerInboundHandler(null);
-  }, [registerInboundHandler, clearOpenPoll, safeSet, goActive, endSession]);
+  }, [registerInboundHandler, onIncoming]);
 
-  // ── Timers ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (phase !== 'incoming' && phase !== 'connecting') return;
     const t = setInterval(() => {
@@ -229,38 +296,34 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(t);
   }, [phase]);
 
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => { mountedRef.current = false; };
-  }, []);
-
-  // ── Actions ──────────────────────────────────────────────────────────────────
   const accept = useCallback(async () => {
     const call = callRef.current;
-    if (!call || phaseRef.current !== 'incoming') return;
+    if (!call || (phaseRef.current !== 'incoming' && phaseRef.current !== 'connecting')) return;
 
-    safeSet(setPhase, 'connecting');
+    setPhase('connecting');
+    setConnectError(null);
     stopInboundRingtone();
 
-    // CRITICAL: acquire the microphone BEFORE accept so the SDK can build
-    // two-way media immediately. Doing this fire-and-forget is what previously
-    // left calls stuck on "connecting" with no audio.
-    try {
-      await requestMicPermission();
-    } catch {
-      /* continue — caller audio can still play even if mic is blocked */
+    const micOk = await requestMicPermission();
+    if (!micOk) {
+      setConnectError('Microphone access is required to answer. Allow mic in browser settings.');
+      setPhase('incoming');
+      playInboundRingtone();
+      return;
     }
+
     await resumeVoiceAudioContext();
     await unlockRemoteAudioElement();
-
     registerCallMeta(null, fromNumber ?? '');
 
     try {
-      if (!isTwilioCallOpen(call)) call.accept();
+      if (!isTwilioCallOpen(call)) {
+        call.accept({ rtcConstraints: { audio: true } });
+      }
     } catch (err) {
       console.error('[Calls] accept failed:', err);
-      // Revert to ringing so the agent can retry.
-      safeSet(setPhase, 'incoming');
+      setConnectError('Could not answer — tap Accept again.');
+      setPhase('incoming');
       playInboundRingtone();
       return;
     }
@@ -270,20 +333,27 @@ export function CallsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Fallback: if the 'accept' event is missed, poll for the open status.
     clearOpenPoll();
-    openPollDeadlineRef.current = Date.now() + OPEN_POLL_TIMEOUT_MS;
+    const deadline = Date.now() + OPEN_TIMEOUT_MS;
     openPollRef.current = setInterval(() => {
       const current = callRef.current;
-      if (!current) { clearOpenPoll(); return; }
-      if (isTwilioCallOpen(current)) {
-        goActive(current);
-      } else if (Date.now() > openPollDeadlineRef.current) {
-        console.error('[Calls] call did not reach open status within timeout');
+      if (!current) {
         clearOpenPoll();
+        return;
       }
-    }, OPEN_POLL_INTERVAL_MS);
-  }, [clearOpenPoll, fromNumber, goActive, registerCallMeta, requestMicPermission, safeSet]);
+      if (isTwilioCallOpen(current) || promotedRef.current.has(current)) {
+        goActive(current);
+        return;
+      }
+      if (Date.now() > deadline) {
+        clearOpenPoll();
+        console.error('[Calls] accept timed out — call never reached open');
+        setConnectError('Could not establish voice link. Check network and try again.');
+        setPhase('incoming');
+        playInboundRingtone();
+      }
+    }, OPEN_POLL_MS);
+  }, [clearOpenPoll, fromNumber, goActive, registerCallMeta, requestMicPermission]);
 
   const decline = useCallback(() => {
     const call = callRef.current;
@@ -318,7 +388,6 @@ export function CallsProvider({ children }: { children: ReactNode }) {
   }, [isMuted]);
 
   const toggleHold = useCallback(() => {
-    // The Twilio SDK has no native hold; mute both directions as a substitute.
     const call = callRef.current;
     if (!call) return;
     try {
@@ -346,6 +415,7 @@ export function CallsProvider({ children }: { children: ReactNode }) {
         isMuted,
         isOnHold,
         minimized,
+        connectError,
         isInboundSession: phase !== 'idle',
         isRinging: phase === 'incoming',
         accept,
