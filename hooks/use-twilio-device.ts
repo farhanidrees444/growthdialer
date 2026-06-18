@@ -261,6 +261,13 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
         });
 
         newDevice.on('incoming', (call: Call) => {
+          console.log('[TwilioDevice] INCOMING FIRED', Date.now(), {
+            sid: call.parameters?.CallSid ?? null,
+            status: call.status?.() ?? null,
+            direction: call.direction ?? null,
+            deviceState: newDevice.state,
+          });
+
           if (outboundDialRef.current) {
             try { call.reject(); } catch { /* ignore */ }
             return;

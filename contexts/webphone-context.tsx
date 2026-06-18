@@ -590,7 +590,15 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     const toNumber = extractInboundToNumber(call);
     const status = call.status();
 
-    console.log('[WebPhone] incoming call:', callId, fromNumber ?? '');
+    console.log('[WebPhone] incoming call:', {
+      callId,
+      sid: call.parameters?.CallSid ?? null,
+      refSidBefore: incomingCallRef.current?.parameters?.CallSid ?? null,
+      status,
+      direction: call.direction ?? null,
+      from: fromNumber ?? null,
+      to: toNumber ?? null,
+    });
 
     outboundDialRef.current = false;
     safeSet(setHasOutboundSession, false);
@@ -832,6 +840,16 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
   const answerIncomingCall = useCallback(async (): Promise<boolean> => {
     const target = incomingCallRef.current ?? activeCallRef.current;
+    console.log('[WebPhone] ACCEPT CLICKED', {
+      exists: Boolean(target),
+      incomingSid: incomingCallRef.current?.parameters?.CallSid ?? null,
+      activeSid: activeCallRef.current?.parameters?.CallSid ?? null,
+      chosenSid: target?.parameters?.CallSid ?? null,
+      status: target?.status?.() ?? null,
+      direction: target?.direction ?? null,
+      phoneStatus: phoneStatusRef.current,
+    });
+
     if (!target) {
       console.warn('[WebPhone] answerIncomingCall: no incoming call');
       return false;
