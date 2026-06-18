@@ -10,10 +10,11 @@ import { WebPhoneProvider } from "@/contexts/webphone-context";
 import { CallProvider, useCallContext } from "@/lib/call-context";
 import { CallOrchestratorProvider } from "@/contexts/call-orchestrator-context";
 import ActiveCallOverlay from "@/components/active-call-overlay";
+import CallsOverlay from "@/components/calls/calls-overlay";
 import SaveAsLeadModal from "@/components/save-as-lead-modal";
 import { WorkspaceProvider } from "@/contexts/workspace-context";
 import { WorkspaceGate } from "@/components/workspace/workspace-gate";
-import { InboundRingingProvider } from "@/contexts/inbound-ringing-context";
+import { CallsProvider } from "@/contexts/calls-context";
 import { VoiceConnectionHud } from "@/components/voice/voice-connection-hud";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { PremiumOverlays } from "@/components/premium/premium-overlays";
@@ -32,6 +33,7 @@ function DashboardOverlays({ userId }: { userId: string | undefined }) {
   return (
     <>
       <ActiveCallOverlay />
+      <CallsOverlay />
       <VoiceConnectionHud />
       {showSaveAsLead && activePhone && (
         <SaveAsLeadModal phone={activePhone} onClose={dismissSaveAsLead} />
@@ -58,7 +60,7 @@ export default function DashboardLayout({
       <VoiceAudioUnlock />
       <WebPhoneProvider>
         <CallProvider>
-          <InboundRingingProvider userId={userId}>
+          <CallsProvider>
           <FloatingEdgeProvider>
           <CallOrchestratorProvider>
           <LeadsProvider>
@@ -92,7 +94,7 @@ export default function DashboardLayout({
           </LeadsProvider>
           </CallOrchestratorProvider>
           </FloatingEdgeProvider>
-          </InboundRingingProvider>
+          </CallsProvider>
         </CallProvider>
       </WebPhoneProvider>
     </WorkspaceProvider>

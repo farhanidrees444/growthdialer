@@ -20,7 +20,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useWebPhone } from '@/contexts/webphone-context';
-import { useInboundRinging } from '@/hooks/use-inbound-ringing';
+import { useCalls } from '@/contexts/calls-context';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { PageHeader } from '@/components/ui/page-header';
 import { SurfaceCard } from '@/components/ui/surface-card';
@@ -29,7 +29,6 @@ import { InboundHistoryPanel } from '@/components/calls/inbound-history-panel';
 import { InboundHealthPanel } from '@/components/inbound/inbound-health-panel';
 import { LiveWaveform } from '@/components/marketing/live-floor/LiveWaveform';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 
 interface PurchasedNumber {
@@ -71,7 +70,7 @@ function fmtPhone(phone: string | null | undefined): string {
 function phoneStatusLabel(status: string): { label: string; color: string; pulse: boolean } {
   switch (status) {
     case 'ready':
-      return { label: 'Ready — WebRTC live', color: 'text-emerald-400', pulse: true };
+      return { label: 'Ready — line live', color: 'text-emerald-400', pulse: true };
     case 'initializing':
       return { label: 'Connecting voice node…', color: 'text-amber-400', pulse: true };
     case 'error':
@@ -204,10 +203,10 @@ function TrafficFeed({ logs }: { logs: FloorLogEntry[] }) {
   );
 }
 
-export default function LiveFloorPage() {
+export default function CallsPage() {
   const { apiFetch } = useWorkspace();
   const { phoneStatus, reconnect, voiceError, callStatus, voiceQuality } = useWebPhone();
-  const { isRinging, sessionPhase } = useInboundRinging();
+  const { isRinging, phase } = useCalls();
 
   const [stats, setStats] = useState<InboundStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -232,10 +231,10 @@ export default function LiveFloorPage() {
   useEffect(() => { loadStats(); }, [loadStats]);
 
   useEffect(() => {
-    pushLog('Live Floor channel subscribed', 'violet');
+    pushLog('Calls channel subscribed', 'violet');
     const supabase = createClient();
     const channel = supabase
-      .channel('live-floor-calls')
+      .channel('calls-page-stream')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'calls' },
@@ -259,8 +258,8 @@ export default function LiveFloorPage() {
   }, [isRinging, pushLog]);
 
   useEffect(() => {
-    if (sessionPhase === 'connected') pushLog('Inbound connected on Live Floor', 'emerald');
-  }, [sessionPhase, pushLog]);
+    if (phase === 'active') pushLog('Inbound call connected', 'emerald');
+  }, [phase, pushLog]);
 
   useEffect(() => {
     if (callStatus === 'active') pushLog(`Voice session ${voiceQuality}`, 'emerald');
@@ -292,7 +291,7 @@ export default function LiveFloorPage() {
       <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-3 py-24">
           <Loader2 className="h-8 w-8 animate-spin text-cyan-400/50" />
-          <p className="text-sm text-muted-foreground">Initializing Live Floor…</p>
+          <p className="text-sm text-muted-foreground">Initializing Calls…</p>
         </div>
       </main>
     );
@@ -303,15 +302,15 @@ export default function LiveFloorPage() {
       <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
         <div className="mx-auto max-w-5xl space-y-5">
           <PageHeader
-            title="Live Floor"
-            description="Enterprise command center for inbound traffic, agent voice status, and real-time call intelligence."
+            title="Calls"
+            description="Command center for inbound traffic, agent voice status, and real-time call intelligence."
             icon={Radio}
             badge="Command Center"
           />
           <PremiumEmptyState
             icon={Phone}
             scene="numbers"
-            title="Provision a line to open the floor"
+            title="Provision a line to start receiving calls"
             description="Buy or sync a number — inbound calls will stream here with live metrics and traffic feeds."
             primaryAction={{ label: 'My Numbers', href: '/numbers' }}
             accent="cyan"
@@ -325,7 +324,7 @@ export default function LiveFloorPage() {
     <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
       <div className="mx-auto max-w-6xl space-y-5">
         <PageHeader
-          title="Live Floor"
+          title="Calls"
           description="Real-time inbound command center — keep this page open to receive browser-routed calls."
           icon={Radio}
           badge={phoneStatus === 'ready' ? 'Live' : 'Setup'}

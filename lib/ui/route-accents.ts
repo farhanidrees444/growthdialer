@@ -179,6 +179,7 @@ const NAV_ITEM_ACCENT: Record<string, RouteAccentId> = {
   dialer: 'dialer',
   sequences: 'sequences',
   leads: 'leads',
+  calls: 'calls',
   inbound: 'calls',
   'call-logs': 'calls',
   recordings: 'recordings',
@@ -199,6 +200,7 @@ export function resolveRouteAccent(pathname: string): RouteAccent {
   if (pathname.startsWith('/dialer')) return ROUTE_ACCENTS.dialer;
   if (pathname.startsWith('/sequences')) return ROUTE_ACCENTS.sequences;
   if (pathname.startsWith('/leads')) return ROUTE_ACCENTS.leads;
+  if (pathname.startsWith('/calls')) return ROUTE_ACCENTS.calls;
   if (pathname.startsWith('/live-floor')) return ROUTE_ACCENTS.calls;
   if (pathname.startsWith('/inbound')) return ROUTE_ACCENTS.calls;
   if (pathname.startsWith('/call-logs')) return ROUTE_ACCENTS.calls;

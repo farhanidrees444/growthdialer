@@ -31,6 +31,7 @@ import {
   isTwilioCallSid,
 } from '@/lib/twilio/extract-call-sid';
 import { useTwilioDevice } from '@/hooks/use-twilio-device';
+import { shouldBridgeAutoAnswer } from '@/lib/parallel-dial/auto-answer-flag';
 
 export type PhoneStatus = 'idle' | 'initializing' | 'ready' | 'error';
 export type WebRTCCallStatus = 'idle' | 'connecting' | 'ringing' | 'active' | 'held' | 'ended';
@@ -64,6 +65,13 @@ export interface WebPhoneContextValue {
   waitForPhoneReady: (timeoutMs?: number) => Promise<boolean>;
   /** Human-readable reason when phoneStatus is error (server config, token, device). */
   voiceError: string | null;
+  /**
+   * Register an external owner for genuine inbound PSTN calls (the Calls module).
+   * When set, raw incoming calls are handed off and the WebPhone does no inbound
+   * state work. Dialer bridge legs and outbound dialing are unaffected.
+   * Pass null to unregister.
+   */
+  registerInboundHandler: (handler: ((call: Call) => void) | null) => void;
 }
 
 const WebPhoneContext = createContext<WebPhoneContextValue | null>(null);
@@ -188,6 +196,11 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const isInboundRingingLiveRef = useRef(false);
   const provisionalCallIdRef = useRef<string | null>(null);
   const promotedActiveCallsRef = useRef(new WeakSet<Call>());
+  const externalInboundHandlerRef = useRef<((call: Call) => void) | null>(null);
+
+  const registerInboundHandler = useCallback((handler: ((call: Call) => void) | null) => {
+    externalInboundHandlerRef.current = handler;
+  }, []);
 
   const twilioDevice = useTwilioDevice({
     manualInit: true,
@@ -403,6 +416,15 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   }, [safeSet, promoteCallToActive, pushCallLegSync]);
 
   handleIncomingRef.current = (call: Call) => {
+    // Genuine inbound PSTN calls are owned by the Calls module. Dialer bridge legs
+    // (power/parallel auto-answer) keep using the WebPhone's own handling below.
+    if (!shouldBridgeAutoAnswer() && externalInboundHandlerRef.current) {
+      outboundDialRef.current = false;
+      safeSet(setHasOutboundSession, false);
+      externalInboundHandlerRef.current(call);
+      return;
+    }
+
     const callId = getCallStableId(call);
     const fromNumber = extractInboundFromNumber(call);
     const toNumber = extractInboundToNumber(call);
@@ -794,6 +816,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         requestMicPermission,
         waitForPhoneReady,
         voiceError: voiceError ?? twilioDevice.voiceError,
+        registerInboundHandler,
       }}
     >
       {/* Hidden audio — Twilio WebRTC plays remote caller audio through this element */}

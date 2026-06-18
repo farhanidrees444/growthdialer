@@ -69,7 +69,7 @@ const ENGAGE_ITEMS: NavItem[] = [
   { id: "dialer", icon: Phone, label: "AI Dialer", href: "/dialer", badge: "Live", sparkle: true },
   { id: "sequences", icon: ListOrdered, label: "Sequences", href: "/sequences" },
   { id: "leads", icon: Users, label: "Leads", href: "/leads", countKey: "leads" },
-  { id: "live-floor", icon: PhoneIncoming, label: "Live Floor", href: "/live-floor", badge: "Live" },
+  { id: "calls", icon: PhoneIncoming, label: "Calls", href: "/calls", badge: "Live" },
 ];
 
 const INTELLIGENCE_ITEMS: NavItem[] = [
