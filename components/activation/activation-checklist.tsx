@@ -103,9 +103,9 @@ export function ActivationChecklist() {
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         className="mx-4 mb-4 lg:mx-6"
       >
-        <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/50 shadow-xl shadow-black/25 backdrop-blur-md">
+        <div className="relative overflow-hidden rounded-[1.5rem] border border-white/[0.08] bg-[linear-gradient(135deg,rgba(39,39,42,0.7),rgba(9,9,11,0.72)_56%,rgba(6,182,212,0.08))] shadow-[0_24px_90px_rgba(0,0,0,0.36)] backdrop-blur-xl">
           <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-600/[0.1] via-transparent to-cyan-500/[0.06]"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(139,92,246,0.18),transparent_34%),radial-gradient(circle_at_88%_18%,rgba(6,182,212,0.12),transparent_32%)]"
             aria-hidden
           />
           {!reduce && (
@@ -124,7 +124,7 @@ export function ActivationChecklist() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-violet-400" />
-                <h2 className="text-sm font-bold text-white sm:text-base">Get started in minutes</h2>
+                <h2 className="text-sm font-bold text-white sm:text-base">Launch sequence</h2>
               </div>
               <p className="mt-1 text-xs text-slate-400 sm:text-sm">
                 {completedCount} of {totalSteps} complete ·{' '}
@@ -176,7 +176,7 @@ export function ActivationChecklist() {
                     <div
                       className={cn(
                         'flex items-center gap-3 rounded-xl px-3 py-3 transition-colors sm:gap-4 sm:px-4',
-                        isNext && 'bg-white/[0.04] ring-1 ring-violet-500/15',
+                        isNext && 'bg-white/[0.055] ring-1 ring-violet-500/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]',
                       )}
                     >
                       <motion.div

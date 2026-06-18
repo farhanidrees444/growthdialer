@@ -51,8 +51,9 @@ export default function UpNextQueue() {
   }, [currentWorkspace?.id, apiFetch]);
 
   return (
-    <Card className="flex h-full flex-col overflow-hidden border-white/[0.06] bg-white/[0.02] shadow-lg shadow-black/20 backdrop-blur-xl transition-shadow hover:shadow-xl hover:shadow-black/25">
-      <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+    <Card className="relative flex h-full flex-col overflow-hidden rounded-[1.5rem] border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-xl transition-all hover:border-white/[0.12] hover:shadow-[0_26px_90px_rgba(0,0,0,0.42)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_0%,rgba(99,102,241,0.14),transparent_34%)]" aria-hidden />
+      <div className="relative flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-indigo-400" />
           <span className="text-xs font-semibold text-white">Up Next</span>
@@ -62,7 +63,7 @@ export default function UpNextQueue() {
         </span>
       </div>
 
-      <div className="flex-1 px-3 py-2">
+      <div className="relative flex-1 px-3 py-2">
         {loading ? (
           <div className="space-y-2 pt-1">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -95,7 +96,7 @@ export default function UpNextQueue() {
                 variants={{ hidden: { opacity: 0, x: 8 }, show: { opacity: 1, x: 0 } }}
                 transition={{ duration: 0.18 }}
                 onClick={() => router.push(`/dialer?lead_id=${lead.id}`)}
-                className="group flex w-full items-center gap-3 rounded-xl border border-transparent px-2.5 py-2 text-left transition-all hover:border-white/[0.06] hover:bg-white/[0.03]"
+                className="group flex w-full items-center gap-3 rounded-xl border border-transparent px-2.5 py-2 text-left transition-all hover:border-white/[0.07] hover:bg-white/[0.045]"
               >
                 {/* Avatar */}
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-[11px] font-bold text-indigo-300">
@@ -127,7 +128,7 @@ export default function UpNextQueue() {
         )}
       </div>
 
-      <div className="border-t border-white/[0.06] px-4 py-2.5">
+      <div className="relative border-t border-white/[0.06] px-4 py-2.5">
         <Link
           href="/leads"
           className="flex items-center justify-center gap-1 text-[11px] font-medium text-slate-500 transition-colors hover:text-slate-300"

@@ -8,7 +8,7 @@ import { GsapCountUp } from "@/components/gsap/GsapCountUp";
 import { GsapScrollReveal, refreshGsapScrollTriggers } from "@/components/gsap/GsapScrollReveal";
 import {
   Phone, Users, CalendarCheck, Clock, TrendingUp, TrendingDown,
-  ChevronRight,
+  ChevronRight, Activity,
 } from "lucide-react";
 import { NumberHealthCard } from "@/components/dashboard/number-health-card";
 import { MiniWave } from "@/components/marketing/live-floor/LiveWaveform";
@@ -139,6 +139,9 @@ function Skeleton({ className }: { className?: string }) {
   return <div className={cn("animate-pulse rounded-lg bg-white/[0.05]", className)} />;
 }
 
+const premiumPanel =
+  "relative overflow-hidden rounded-[1.5rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-xl";
+
 // ── KPI Card ──────────────────────────────────────────────────────────────────
 
 function KpiCard({
@@ -178,11 +181,17 @@ function KpiCard({
       data-gsap-reveal
       whileHover={reduce ? undefined : { y: -2 }}
       transition={{ duration: 0.2 }}
-      className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl transition-shadow hover:border-white/[0.10] hover:shadow-lg hover:shadow-black/20"
+      className={cn(premiumPanel, "transition-all hover:-translate-y-0.5 hover:border-white/[0.13] hover:shadow-[0_26px_90px_rgba(0,0,0,0.42)]")}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" aria-hidden />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.16] to-transparent" aria-hidden />
+      <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: color }} aria-hidden />
       <div className="p-4 pb-1">
-        <p className="text-[10px] uppercase tracking-widest text-white/40">{title}</p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[10px] uppercase tracking-widest text-white/40">{title}</p>
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.035]">
+            <Icon className={cn("h-4 w-4", iconColor)} />
+          </span>
+        </div>
         {loading ? (
           <div className="mt-2 space-y-2">
             <Skeleton className="h-10 w-24" />
@@ -190,7 +199,7 @@ function KpiCard({
           </div>
         ) : hasData ? (
           <>
-            <p className="mt-1.5 font-display text-3xl font-light tabular-nums text-white sm:text-4xl">
+            <p className="mt-1.5 font-display text-3xl font-semibold tracking-tight tabular-nums text-white sm:text-4xl">
               {countUp ? (
                 <GsapCountUp
                   value={countUp.value}
@@ -292,10 +301,14 @@ function CallActivityChart({
   return (
     <div
       data-gsap-reveal
-      className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]"
+      className={premiumPanel}
     >
-      <div className="flex items-center justify-between p-5 pb-3">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(139,92,246,0.13),transparent_34%),radial-gradient(circle_at_88%_12%,rgba(6,182,212,0.09),transparent_30%)]" aria-hidden />
+      <div className="relative flex items-center justify-between p-5 pb-3">
         <div className="flex items-center gap-2.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.035]">
+            <Activity className="h-4 w-4 text-violet-300" />
+          </span>
           <h3 className="text-sm font-semibold text-white">Call Activity</h3>
           {/* Brand waveform motif — live/active identity */}
           <MiniWave className="h-3.5 opacity-80" />
@@ -323,7 +336,7 @@ function CallActivityChart({
         </div>
       ) : enoughToChart ? (
         <>
-          <div className="h-[240px] px-2 lg:h-[280px]">
+          <div className="relative h-[240px] px-2 lg:h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 5, right: 8, bottom: 0, left: -20 }}>
                 <defs>
@@ -377,7 +390,7 @@ function CallActivityChart({
         </>
       ) : (
         <div className="flex h-[240px] flex-col items-center justify-center gap-4 px-5 lg:h-[280px]">
-          <div className="relative h-20 w-20 overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/60">
+          <div className="relative h-20 w-20 overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/60 shadow-[0_0_45px_rgba(139,92,246,0.12)]">
             <WorkflowSceneMotion scene="analytics" />
           </div>
           <p className="max-w-xs text-center text-sm text-slate-500">
@@ -399,9 +412,13 @@ function CallActivityChart({
 
 function RecentCallsList({ calls, loading }: { calls: DashboardRecentCall[] | null; loading: boolean }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
-      <div className="flex items-center justify-between px-5 py-4">
-        <h3 className="text-sm font-semibold text-white">Recent Calls</h3>
+    <div className={premiumPanel}>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(6,182,212,0.12),transparent_34%)]" aria-hidden />
+      <div className="relative flex items-center justify-between px-5 py-4">
+        <div className="flex items-center gap-2">
+          <Activity className="h-4 w-4 text-cyan-300" />
+          <h3 className="text-sm font-semibold text-white">Recent Calls</h3>
+        </div>
         <Link href="/call-logs" className="flex items-center gap-1 text-xs text-slate-600 transition-colors hover:text-slate-400">
           All <ChevronRight className="h-3 w-3" />
         </Link>
@@ -434,7 +451,7 @@ function RecentCallsList({ calls, loading }: { calls: DashboardRecentCall[] | nu
           />
         </div>
       ) : (
-        <div className="divide-y divide-white/[0.04]">
+        <div className="relative divide-y divide-white/[0.04]">
           {calls.map(call => {
             const name = getRecentCallCounterparty(call);
             const company = call.leads?.company;
@@ -449,9 +466,9 @@ function RecentCallsList({ calls, loading }: { calls: DashboardRecentCall[] | nu
                 key={call.id}
                 href={href}
                 data-gsap-reveal
-                className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-white/[0.03]"
+                className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-white/[0.04]"
               >
-                <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[11px] font-bold text-white", grad)}>
+                <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-[11px] font-bold text-white shadow-[0_10px_25px_rgba(0,0,0,0.25)]", grad)}>
                   {getInitials(name)}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -465,7 +482,7 @@ function RecentCallsList({ calls, loading }: { calls: DashboardRecentCall[] | nu
                     )}
                   </p>
                 </div>
-                <span className={cn("shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold", dispStyle)}>
+                <span className={cn("shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-transform group-hover:scale-[1.02]", dispStyle)}>
                   {dispLabel}
                 </span>
               </Link>
@@ -674,7 +691,9 @@ export default function DashboardPage() {
   }, [allLoading, stats, recentCalls]);
 
   return (
-    <GsapScrollReveal className="flex-1 overflow-y-auto">
+    <GsapScrollReveal className="relative flex-1 overflow-y-auto">
+        <div aria-hidden className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_42%_0%,rgba(139,92,246,0.1),transparent_32%),radial-gradient(circle_at_92%_28%,rgba(6,182,212,0.06),transparent_28%)]" />
+        <div className="relative z-[1]">
         <DashboardHero greeting={greeting} firstName={firstName} dateStr={dateStr} />
 
         <ActivationChecklist />
@@ -741,7 +760,7 @@ export default function DashboardPage() {
         {/* Call Activity Chart */}
         <div className="mt-4 px-4 lg:mt-5 lg:px-6">
           {metricsLoading ? (
-            <div className="h-[300px] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.02]" />
+            <div className="h-[300px] animate-pulse rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03]" />
           ) : (
             <CallActivityChart
               sparkline={sparkline}
@@ -761,6 +780,7 @@ export default function DashboardPage() {
           <RecentCallsList calls={recentCalls} loading={recentCallsLoading} />
           <UpNextQueue />
           <NumberHealthCard />
+        </div>
         </div>
     </GsapScrollReveal>
   );
