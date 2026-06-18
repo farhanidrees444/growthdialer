@@ -46,16 +46,20 @@ const extraNumbers = process.argv.slice(2);
 const defaultNumber = process.env.TWILIO_NUMBER?.trim();
 
 async function main() {
-  const voiceUrl = `${appUrl}/api/twilio/webhook`;
-  const statusUrl = `${appUrl}/api/twilio/status`;
+  const voiceUrl = `${appUrl}/api/twilio/voice`;
+  const voiceFallbackUrl = `${appUrl}/api/twilio/voice-fallback`;
+  const statusUrl = `${appUrl}/api/twilio/status-callback`;
 
   console.log('Updating TwiML App', twimlAppSid);
   console.log('  Voice URL:', voiceUrl);
+  console.log('  Fallback URL:', voiceFallbackUrl);
   console.log('  Status URL:', statusUrl);
 
   await client.applications(twimlAppSid).update({
     voiceUrl,
     voiceMethod: 'POST',
+    voiceFallbackUrl,
+    voiceFallbackMethod: 'POST',
     statusCallback: statusUrl,
     statusCallbackMethod: 'POST',
   });
