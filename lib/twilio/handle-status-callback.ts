@@ -7,6 +7,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { formDataToTwilioParams } from '@/lib/twilio/handle-voice-webhook';
 import { logCallEvent } from '@/lib/webhooks/log-call-event';
 import { processTwilioDialerStatusCallback } from '@/lib/twilio/dialer-status';
+import { syncInboundCallFromTwilioStatus } from '@/lib/twilio/sync-inbound-call';
 
 export async function handleTwilioStatusCallback(
   request: NextRequest,
@@ -44,6 +45,12 @@ export async function handleTwilioStatusCallback(
       void syncCallFromTwilioStatus(supabase, params).catch((err) => {
         console.error('[TwilioStatusCallback] sync:', err);
       });
+
+      if ((params.Direction ?? '').toLowerCase().includes('inbound')) {
+        void syncInboundCallFromTwilioStatus(supabase, params).catch((err) => {
+          console.error('[TwilioStatusCallback] inbound sync:', err);
+        });
+      }
     }
 
     return new NextResponse(null, { status: 200 });

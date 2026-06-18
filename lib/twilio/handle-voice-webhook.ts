@@ -13,6 +13,7 @@ import { resolveTwilioSignedWebhookUrl } from '@/lib/twilio/signed-webhook-url';
 import { createServiceClient } from '@/lib/supabase/service';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import { resolveInboundRingTargets } from '@/lib/twilio/resolve-inbound-ring-targets';
+import { recordInboundCallStarted } from '@/lib/twilio/sync-inbound-call';
 import { twilioRecordingCallbackUrl } from '@/lib/twilio/webhook-routing';
 import twilio from 'twilio';
 
@@ -106,6 +107,22 @@ export async function handleTwilioVoiceWebhook(
     }
 
     const { routing } = inbound;
+    const { data: ownerRow } = await supabase
+      .from('purchased_numbers')
+      .select('workspace_id')
+      .eq('phone_number', inbound.toNumber)
+      .neq('status', 'released')
+      .limit(1)
+      .maybeSingle();
+    const inboundWorkspaceId = (ownerRow?.workspace_id as string | undefined) ?? null;
+
+    void recordInboundCallStarted(supabase, {
+      callSid: params.CallSid ?? null,
+      fromNumber: inbound.fromNumber,
+      toNumber: inbound.toNumber,
+      ownerAgentId: inbound.userId,
+      workspaceId: inboundWorkspaceId,
+    });
 
     if (routing.inbound_mode === 'off') {
       response.reject();
@@ -137,17 +154,9 @@ export async function handleTwilioVoiceWebhook(
     }
 
     // browser (default) — presence-aware ring group; no-answer → inbound-dial-status
-    const { data: ownerRow } = await supabase
-      .from('purchased_numbers')
-      .select('workspace_id')
-      .eq('phone_number', inbound.toNumber)
-      .neq('status', 'released')
-      .limit(1)
-      .maybeSingle();
-
     const ringTargets = await resolveInboundRingTargets(supabase, {
       primaryUserId: inbound.userId,
-      workspaceId: (ownerRow?.workspace_id as string | undefined) ?? null,
+      workspaceId: inboundWorkspaceId,
     });
 
     if (ringTargets.length === 0) {

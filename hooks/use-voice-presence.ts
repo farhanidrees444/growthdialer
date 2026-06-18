@@ -6,6 +6,7 @@ import type { PhoneStatus } from '@/contexts/webphone-context';
 
 const HEARTBEAT_MS = 25_000;
 const TAB_CHANNEL = 'gd-voice-presence';
+const HEARTBEAT_URL = '/api/agent-presence/heartbeat';
 
 function getOrCreateTabId(): string {
   if (typeof window === 'undefined') return 'server';
@@ -70,13 +71,13 @@ export function useVoicePresence({
 
     if (presenceStatus === 'offline' && typeof navigator !== 'undefined' && navigator.sendBeacon) {
       navigator.sendBeacon(
-        '/api/voice/presence/heartbeat',
+        HEARTBEAT_URL,
         new Blob([JSON.stringify(body)], { type: 'application/json' }),
       );
       return;
     }
 
-    await fetch('/api/voice/presence/heartbeat', {
+    await fetch(HEARTBEAT_URL, {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },

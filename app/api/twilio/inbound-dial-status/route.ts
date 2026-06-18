@@ -8,6 +8,7 @@ import { getCachedNumberOwner } from '@/lib/inbound/number-owner-cache';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import { resolveNumberRouting } from '@/lib/voice/phone-number-settings';
 import { twilioRecordingCallbackUrl } from '@/lib/twilio/webhook-routing';
+import { syncInboundCallFromTwilioStatus } from '@/lib/twilio/sync-inbound-call';
 import twilio from 'twilio';
 
 const { VoiceResponse } = twilio.twiml;
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceClient();
     if (supabase) {
       await syncCallFromTwilioStatus(supabase, params);
+      await syncInboundCallFromTwilioStatus(supabase, params);
 
       if (dialStatus === 'no-answer' || dialStatus === 'busy' || dialStatus === 'failed') {
         const row = await findCallByTwilioLegs(supabase, [callSid, params.DialCallSid]);
