@@ -190,6 +190,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const provisionalCallIdRef = useRef<string | null>(null);
 
   const twilioDevice = useTwilioDevice({
+    manualInit: true,
     onIncoming: (call) => handleIncomingRef.current(call),
   });
 
@@ -511,10 +512,11 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     mountedRef.current = true;
     primeVoiceAudioOnUserGesture();
-    initClient();
+    void initClient();
 
     return () => {
       mountedRef.current = false;
+      twilioDevice.destroyDevice();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -893,7 +895,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         waitForInboundWebRtcLeg,
         setInboundAcceptInFlight,
         isInboundRingingLive,
-        voiceError,
+        voiceError: voiceError ?? twilioDevice.voiceError,
       }}
     >
       {/* Hidden audio — Twilio WebRTC plays remote caller audio through this element */}

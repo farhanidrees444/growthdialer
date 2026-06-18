@@ -4,6 +4,7 @@ import { normalizeE164 } from '@/lib/inbound/phone';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
 import { isTwilioCallSid } from '@/lib/twilio/extract-call-sid';
 import { findCallByTwilioLegs } from '@/lib/twilio/find-call-row';
+import { parseTwilioClientIdentity } from '@/lib/twilio/client-identity';
 
 const STATUS_MAP: Record<string, string> = {
   queued: 'ringing',
@@ -92,7 +93,33 @@ export async function syncCallFromTwilioStatus(
     return;
   }
 
-  if (!direction.includes('inbound')) return;
+  if (!direction.includes('inbound')) {
+    const clientUserId = parseTwilioClientIdentity(from);
+    if (clientUserId && direction.includes('outbound')) {
+      const toE164 = normalizeE164(to);
+      if (!toE164) return;
+
+      const workspaceId = await resolveUserWorkspaceId(supabase, clientUserId);
+      await supabase.from('calls').insert({
+        user_id: clientUserId,
+        workspace_id: workspaceId,
+        direction: 'outbound',
+        telnyx_call_id: isTwilioCallSid(parentCallSid) ? parentCallSid : callSid,
+        telnyx_session_id: isTwilioCallSid(parentCallSid) && parentCallSid !== callSid ? callSid : null,
+        from_number: normalizeE164(from) ?? from,
+        to_number: toE164,
+        status: mappedStatus,
+        started_at: now,
+        answered_at: mappedStatus === 'active' ? now : null,
+        ended_at:
+          mappedStatus === 'completed' || mappedStatus === 'failed' || mappedStatus === 'missed'
+            ? now
+            : null,
+        duration_seconds: duration != null && !Number.isNaN(duration) && duration > 0 ? duration : null,
+      });
+    }
+    return;
+  }
 
   const toE164 = normalizeE164(to);
   if (!toE164) return;

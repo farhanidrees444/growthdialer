@@ -4,6 +4,7 @@ import { isValidCallerPhone, normalizeE164 } from '@/lib/inbound/phone';
 import { parseTwilioClientIdentity, toTwilioClientIdentity } from '@/lib/twilio/client-identity';
 import { resolveVoiceAppBaseUrl } from '@/lib/voice/webhook-url';
 import { resolveNumberRouting } from '@/lib/voice/phone-number-settings';
+import { readTwilioNumber } from '@/lib/twilio/voice-config';
 
 export interface InboundRouteResult {
   clientIdentity: string;
@@ -103,9 +104,9 @@ export async function resolveOutboundRoute(
 
   const { data: numbers } = await supabase
     .from('purchased_numbers')
-    .select('id, phone_number, is_default')
+    .select('id, phone_number, is_default, status')
     .eq('user_id', userId)
-    .eq('status', 'active')
+    .neq('status', 'released')
     .order('is_default', { ascending: false })
     .order('purchased_at', { ascending: false });
 
@@ -126,6 +127,13 @@ export async function resolveOutboundRoute(
   if (!callerId && rows[0]?.phone_number) {
     callerId = normalizeE164(rows[0].phone_number as string);
     purchasedNumberId = rows[0].id as string;
+  }
+
+  if (!callerId) {
+    const envNumber = readTwilioNumber();
+    if (envNumber) {
+      callerId = envNumber;
+    }
   }
 
   if (!callerId) return null;

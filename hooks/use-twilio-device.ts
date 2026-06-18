@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { shouldBridgeAutoAnswer } from '@/lib/parallel-dial/auto-answer-flag';
 
 const TOKEN_URL = '/api/twilio/token';
-const REGISTER_TIMEOUT_MS = 20_000;
+const REGISTER_TIMEOUT_MS = 25_000;
 const TOKEN_TTL_MS = 3600 * 1000;
 const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
 
@@ -29,10 +29,19 @@ function decodeJwtExpiryMs(jwt: string): number | null {
   }
 }
 
+function readTwilioEdge(): string | undefined {
+  const edge = process.env.NEXT_PUBLIC_TWILIO_EDGE?.trim();
+  return edge || undefined;
+}
+
+function isTransportError(err: Error): boolean {
+  const msg = err.message ?? '';
+  return msg.includes('31009') || msg.toLowerCase().includes('transport');
+}
+
 export interface UseTwilioDeviceOptions {
-  /** When true, skip auto-init on mount (caller will call initDevice). */
+  /** When true, skip auto-init on mount — parent calls initDevice once. */
   manualInit?: boolean;
-  /** Fired after an incoming call is stored (auto-answer may already have run). */
   onIncoming?: (call: Call) => void;
 }
 
@@ -50,6 +59,7 @@ export interface UseTwilioDeviceReturn {
   toggleMute: () => void;
   initDevice: () => Promise<void>;
   refreshToken: () => Promise<void>;
+  destroyDevice: () => void;
 }
 
 /**
@@ -65,21 +75,36 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
   const [voiceError, setVoiceError] = useState<string | null>(null);
 
   const deviceRef = useRef<Device | null>(null);
+  const isReadyRef = useRef(false);
   const activeCallRef = useRef<Call | null>(null);
   const incomingCallRef = useRef<Call | null>(null);
   const outboundDialRef = useRef(false);
   const mountedRef = useRef(true);
   const initAttemptsRef = useRef(0);
+  const initInFlightRef = useRef<Promise<void> | null>(null);
+  const registerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initDeviceRef = useRef<() => Promise<void>>(async () => {});
   const onIncomingRef = useRef(options.onIncoming);
   onIncomingRef.current = options.onIncoming;
+
+  const clearRegisterTimeout = useCallback(() => {
+    if (registerTimeoutRef.current) {
+      clearTimeout(registerTimeoutRef.current);
+      registerTimeoutRef.current = null;
+    }
+  }, []);
 
   const clearRefreshTimer = useCallback(() => {
     if (refreshTimerRef.current) {
       clearTimeout(refreshTimerRef.current);
       refreshTimerRef.current = null;
     }
+  }, []);
+
+  const setReady = useCallback((ready: boolean) => {
+    isReadyRef.current = ready;
+    if (mountedRef.current) setIsReady(ready);
   }, []);
 
   const scheduleTokenRefresh = useCallback((jwt: string) => {
@@ -141,105 +166,147 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
     setIncomingCall(incoming);
   }, []);
 
+  const destroyDevice = useCallback(() => {
+    clearRegisterTimeout();
+    clearRefreshTimer();
+    setReady(false);
+    const d = deviceRef.current;
+    deviceRef.current = null;
+    if (d) {
+      try { d.destroy(); } catch { /* ignore */ }
+    }
+    if (mountedRef.current) setDevice(null);
+  }, [clearRegisterTimeout, clearRefreshTimer, setReady]);
+
   const initDevice = useCallback(async () => {
-    setIsReady(false);
+    if (initInFlightRef.current) {
+      await initInFlightRef.current;
+      return;
+    }
 
-    try {
-      const tokenData = await fetchToken();
-      if (!tokenData) {
-        initAttemptsRef.current += 1;
-        if (initAttemptsRef.current < 3) {
-          setTimeout(() => { if (mountedRef.current) void initDeviceRef.current(); }, 1200 * initAttemptsRef.current);
-        }
-        return;
-      }
+    const run = async () => {
+      setReady(false);
 
-      const existing = deviceRef.current;
-      if (existing) {
-        try {
-          await existing.updateToken(tokenData.token);
-          scheduleTokenRefresh(tokenData.token);
-          setIsReady(true);
-          initAttemptsRef.current = 0;
-          return;
-        } catch {
-          try { existing.destroy(); } catch { /* ignore */ }
-          deviceRef.current = null;
-        }
-      }
-
-      const newDevice = new Device(tokenData.token, {
-        codecPreferences: ['pcmu', 'opus'] as Call.Codec[],
-        closeProtection: true,
-        logLevel: process.env.NODE_ENV === 'development' ? 1 : 0,
-      } as ConstructorParameters<typeof Device>[1]);
-
-      deviceRef.current = newDevice;
-      setDevice(newDevice);
-
-      newDevice.on('registered', () => {
-        initAttemptsRef.current = 0;
-        setIsReady(true);
-        setVoiceError(null);
-      });
-
-      newDevice.on('error', (err: Error) => {
-        console.error('[TwilioDevice] device error:', err.message);
-        setVoiceError(err.message || 'Voice device error');
-        toast.error(err.message || 'Voice connection error');
-      });
-
-      newDevice.on('incoming', (call: Call) => {
-        if (outboundDialRef.current) {
-          try { call.reject(); } catch { /* ignore */ }
+      try {
+        const tokenData = await fetchToken();
+        if (!tokenData) {
+          initAttemptsRef.current += 1;
+          if (initAttemptsRef.current < 3) {
+            setTimeout(() => { if (mountedRef.current) void initDeviceRef.current(); }, 1200 * initAttemptsRef.current);
+          }
           return;
         }
 
-        bindCallRefs(call, call);
-        outboundDialRef.current = false;
-
-        if (shouldBridgeAutoAnswer()) {
+        const existing = deviceRef.current;
+        if (existing) {
           try {
-            call.accept();
-          } catch (err) {
-            console.warn('[TwilioDevice] bridge auto-answer failed:', err);
+            await existing.updateToken(tokenData.token);
+            if (existing.state === Device.State.Unregistered) {
+              await existing.register();
+            }
+            scheduleTokenRefresh(tokenData.token);
+            setReady(true);
+            initAttemptsRef.current = 0;
+            return;
+          } catch {
+            destroyDevice();
           }
         }
 
-        onIncomingRef.current?.(call);
-      });
+        const edge = readTwilioEdge();
+        const newDevice = new Device(tokenData.token, {
+          codecPreferences: ['pcmu', 'opus'] as Call.Codec[],
+          closeProtection: true,
+          allowIncomingWhileBusy: true,
+          logLevel: process.env.NODE_ENV === 'development' ? 1 : 0,
+          ...(edge ? { edge } : {}),
+        } as ConstructorParameters<typeof Device>[1]);
 
-      const registerTimeout = window.setTimeout(() => {
-        if (!deviceRef.current || deviceRef.current !== newDevice) return;
-        console.warn('[TwilioDevice] registration timed out');
-        setVoiceError('Voice registration timed out — check voice app configuration and network.');
-        toast.error('Voice registration timed out');
-        try { newDevice.destroy(); } catch { /* ignore */ }
-        if (deviceRef.current === newDevice) {
-          deviceRef.current = null;
-          setDevice(null);
+        deviceRef.current = newDevice;
+        if (mountedRef.current) setDevice(newDevice);
+
+        newDevice.on('registered', () => {
+          clearRegisterTimeout();
+          initAttemptsRef.current = 0;
+          setReady(true);
+          setVoiceError(null);
+        });
+
+        newDevice.on('unregistered', () => {
+          setReady(false);
+        });
+
+        newDevice.on('error', (err: Error) => {
+          console.error('[TwilioDevice] device error:', err.message);
+          setVoiceError(err.message || 'Voice device error');
+
+          if (isTransportError(err)) {
+            initAttemptsRef.current += 1;
+            if (initAttemptsRef.current <= 3) {
+              setTimeout(() => { if (mountedRef.current) void initDeviceRef.current(); }, 1500 * initAttemptsRef.current);
+            } else {
+              toast.error('Voice connection lost — tap reconnect in the dialer header.');
+            }
+            return;
+          }
+
+          toast.error(err.message || 'Voice connection error');
+        });
+
+        newDevice.on('incoming', (call: Call) => {
+          if (outboundDialRef.current) {
+            try { call.reject(); } catch { /* ignore */ }
+            return;
+          }
+
+          bindCallRefs(call, call);
+          outboundDialRef.current = false;
+
+          if (shouldBridgeAutoAnswer()) {
+            try {
+              call.accept();
+            } catch (err) {
+              console.warn('[TwilioDevice] bridge auto-answer failed:', err);
+            }
+          }
+
+          onIncomingRef.current?.(call);
+        });
+
+        registerTimeoutRef.current = setTimeout(() => {
+          if (!deviceRef.current || deviceRef.current !== newDevice) return;
+          if (isReadyRef.current) return;
+          console.warn('[TwilioDevice] registration timed out');
+          setVoiceError('Voice registration timed out — check voice app URL and network.');
+          toast.error('Voice registration timed out');
+          destroyDevice();
+          initAttemptsRef.current += 1;
+          if (initAttemptsRef.current < 3) {
+            setTimeout(() => { if (mountedRef.current) void initDeviceRef.current(); }, 1500 * initAttemptsRef.current);
+          }
+        }, REGISTER_TIMEOUT_MS);
+
+        await newDevice.register();
+        scheduleTokenRefresh(tokenData.token);
+
+        if (newDevice.state === Device.State.Registered) {
+          clearRegisterTimeout();
+          setReady(true);
         }
+      } catch (err) {
+        console.error('[TwilioDevice] init error:', err);
         initAttemptsRef.current += 1;
         if (initAttemptsRef.current < 3) {
-          setTimeout(() => { if (mountedRef.current) void initDeviceRef.current(); }, 1200 * initAttemptsRef.current);
+          setTimeout(() => { if (mountedRef.current) void initDeviceRef.current(); }, 1500 * initAttemptsRef.current);
         }
-      }, REGISTER_TIMEOUT_MS);
-
-      try {
-        await newDevice.register();
-      } finally {
-        window.clearTimeout(registerTimeout);
       }
+    };
 
-      scheduleTokenRefresh(tokenData.token);
-    } catch (err) {
-      console.error('[TwilioDevice] init error:', err);
-      initAttemptsRef.current += 1;
-      if (initAttemptsRef.current < 3) {
-        setTimeout(() => { if (mountedRef.current) void initDeviceRef.current(); }, 1200 * initAttemptsRef.current);
-      }
-    }
-  }, [bindCallRefs, fetchToken, scheduleTokenRefresh]);
+    initInFlightRef.current = run().finally(() => {
+      initInFlightRef.current = null;
+    });
+    await initInFlightRef.current;
+  }, [bindCallRefs, clearRegisterTimeout, destroyDevice, fetchToken, scheduleTokenRefresh, setReady]);
 
   initDeviceRef.current = initDevice;
 
@@ -251,13 +318,27 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
       try {
         await d.updateToken(tokenData.token);
         scheduleTokenRefresh(tokenData.token);
+        if (d.state === Device.State.Unregistered) {
+          await d.register();
+        }
+        setReady(d.state === Device.State.Registered);
         return;
       } catch {
         /* fall through to full re-init */
       }
     }
     await initDevice();
-  }, [fetchToken, initDevice, scheduleTokenRefresh]);
+  }, [fetchToken, initDevice, scheduleTokenRefresh, setReady]);
+
+  const waitUntilReady = useCallback(async (timeoutMs = 12_000): Promise<boolean> => {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const d = deviceRef.current;
+      if (d && isReadyRef.current && d.state === Device.State.Registered) return true;
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    return false;
+  }, []);
 
   const acceptCall = useCallback(() => {
     const target = incomingCallRef.current ?? activeCallRef.current;
@@ -291,9 +372,10 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
   }, [rejectCall]);
 
   const makeCall = useCallback(async (toNumber: string, callerId?: string): Promise<Call | null> => {
+    const ready = await waitUntilReady();
     const d = deviceRef.current;
-    if (!d || !isReady) {
-      toast.error('Phone not ready');
+    if (!ready || !d) {
+      toast.error('Phone not ready — wait for Live status or tap reconnect');
       return null;
     }
 
@@ -312,10 +394,16 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
     } catch (err) {
       outboundDialRef.current = false;
       console.error('[TwilioDevice] connect error:', err);
-      toast.error('Could not place call');
+      const msg = err instanceof Error ? err.message : 'Could not place call';
+      if (isTransportError(err instanceof Error ? err : new Error(msg))) {
+        toast.error('Voice link dropped — reconnecting…');
+        void initDeviceRef.current();
+      } else {
+        toast.error('Could not place call');
+      }
       return null;
     }
-  }, [bindCallRefs, isReady]);
+  }, [bindCallRefs, waitUntilReady]);
 
   const toggleMute = useCallback(() => {
     const target = activeCallRef.current;
@@ -336,9 +424,8 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
     }
     return () => {
       mountedRef.current = false;
-      clearRefreshTimer();
-      if (deviceRef.current) {
-        try { deviceRef.current.destroy(); } catch { /* ignore */ }
+      if (!options.manualInit) {
+        destroyDevice();
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -358,5 +445,6 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
     toggleMute,
     initDevice,
     refreshToken,
+    destroyDevice,
   };
 }

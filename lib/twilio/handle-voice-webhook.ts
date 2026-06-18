@@ -66,10 +66,11 @@ export async function handleTwilioVoiceWebhook(
     const dialActionUrl = twilioInboundDialStatusUrl();
     const response = new VoiceResponse();
     const clientUserId = parseTwilioClientIdentity(from);
+    const outboundTo = params.To?.trim() || params.to?.trim() || '';
 
     // Outbound: browser Device.connect({ To, CallerId })
-    if (clientUserId || direction.startsWith('outbound')) {
-      const route = await resolveOutboundRoute(supabase, from, to, callerIdParam);
+    if (clientUserId || direction.startsWith('outbound') || (from.toLowerCase().startsWith('client:') && outboundTo)) {
+      const route = await resolveOutboundRoute(supabase, from, outboundTo || to, callerIdParam);
       if (!route) {
         console.error('[TwilioVoice] OUTBOUND route failed', { from, to, callerIdParam });
         response.say('No caller ID is configured for your account.');
