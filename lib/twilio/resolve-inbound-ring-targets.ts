@@ -13,6 +13,7 @@ interface PresenceRow {
   user_id: string;
   phone_status: string;
   presence_status: string;
+  device_state: string | null;
   last_heartbeat_at: string;
   last_seen_at: string;
 }
@@ -21,8 +22,8 @@ function isAgentRingable(row: PresenceRow, nowMs: number): boolean {
   const heartbeatAt = row.last_heartbeat_at ?? row.last_seen_at;
   const age = nowMs - new Date(heartbeatAt).getTime();
   if (age > PRESENCE_HEARTBEAT_FRESH_MS) return false;
-  if (row.presence_status !== 'online') return false;
-  return row.phone_status === 'ready';
+  if (row.presence_status === 'offline') return false;
+  return row.phone_status === 'ready' && row.device_state === 'registered';
 }
 
 /**
@@ -54,7 +55,7 @@ export async function resolveInboundRingTargets(
 
   const { data: presenceRows } = await supabase
     .from('voice_agent_presence')
-    .select('user_id, phone_status, presence_status, last_heartbeat_at, last_seen_at')
+    .select('user_id, phone_status, presence_status, device_state, last_heartbeat_at, last_seen_at')
     .in('user_id', candidateUserIds);
 
   const online = new Set<string>();
