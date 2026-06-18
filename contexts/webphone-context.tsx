@@ -39,6 +39,7 @@ export type PhoneStatus = 'idle' | 'initializing' | 'ready' | 'error';
 export type WebRTCCallStatus = 'idle' | 'connecting' | 'ringing' | 'active' | 'held' | 'ended';
 export type MicPermission = 'unknown' | 'granted' | 'denied';
 export type VoiceConnectionQuality = 'excellent' | 'good' | 'degraded' | 'disconnected' | 'unknown';
+const DEBUG_ENDPOINT = 'http://127.0.0.1:7379/ingest/0b038bd8-a4b0-46ba-b218-7da01641d89a';
 
 export interface WebPhoneContextValue {
   phoneStatus: PhoneStatus;
@@ -112,6 +113,49 @@ function getCallStableId(call: Call): string {
     c.__gdId = `call-${callIdCounter}`;
   }
   return c.__gdId as string;
+}
+
+function agentDebugLog(
+  hypothesisId: string,
+  location: string,
+  message: string,
+  data: Record<string, unknown>,
+): void {
+  const payload = {
+    sessionId: '30998c',
+    runId: 'run1',
+    hypothesisId,
+    location,
+    message,
+    data,
+    timestamp: Date.now(),
+  };
+
+  fetch(DEBUG_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '30998c' },
+    body: JSON.stringify(payload),
+  }).catch(() => {});
+  fetch('/api/agent-debug/30998c', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).catch(() => {});
+}
+
+function safeWebPhoneSnapshot(call: Call | null): Record<string, unknown> {
+  const pc = call ? getCallPeerConnection(call) : null;
+  return {
+    hasCall: Boolean(call),
+    status: call?.status?.() ?? null,
+    direction: call?.direction ?? null,
+    hasPeerConnection: Boolean(pc),
+    iceConnectionState: pc?.iceConnectionState ?? null,
+    connectionState: pc?.connectionState ?? null,
+    receiverAudioTracks: pc?.getReceivers?.().filter((r) => r.track?.kind === 'audio').length ?? null,
+    liveReceiverAudioTracks: pc?.getReceivers?.().filter((r) => r.track?.kind === 'audio' && r.track.readyState === 'live').length ?? null,
+  };
 }
 
 function isIncomingTwilioCall(call: Call, outboundDialActive: boolean): boolean {
@@ -269,6 +313,15 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     peerCleanupRef.current?.();
     peerCleanupRef.current = attachPeerConnectionMonitor(call, {
       onIceState: (state, quality) => {
+        // #region agent log
+        agentDebugLog('H3', 'contexts/webphone-context.tsx:bindPeerMonitor:onIceState', 'Inbound peer ICE state changed', {
+          state,
+          quality,
+          callStatus: callStatusRef.current,
+          snapshot: safeWebPhoneSnapshot(call),
+        });
+        // #endregion
+
         safeSet(setIceConnectionState, state);
         safeSet(setVoiceQuality, quality);
         if (quality === 'disconnected' && callStatusRef.current === 'active') {
@@ -278,6 +331,14 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         }
       },
       onConnectionState: (state) => {
+        // #region agent log
+        agentDebugLog('H3', 'contexts/webphone-context.tsx:bindPeerMonitor:onConnectionState', 'Inbound peer connection state changed', {
+          state,
+          callStatus: callStatusRef.current,
+          snapshot: safeWebPhoneSnapshot(call),
+        });
+        // #endregion
+
         if (state === 'failed' && callStatusRef.current === 'active') {
           safeSet(setIsReconnecting, true);
           if (!reconnectDuringCallRef.current) {
@@ -288,6 +349,14 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         }
       },
       onRemoteTrack: (stream) => {
+        // #region agent log
+        agentDebugLog('H3', 'contexts/webphone-context.tsx:bindPeerMonitor:onRemoteTrack', 'Remote audio track observed by peer monitor', {
+          audioTracks: stream.getAudioTracks().length,
+          liveAudioTracks: stream.getAudioTracks().filter((track) => track.readyState === 'live').length,
+          snapshot: safeWebPhoneSnapshot(call),
+        });
+        // #endregion
+
         void bindRemoteStreamToAudio(stream);
       },
     });
@@ -301,6 +370,14 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   ) => {
     if (promotedActiveCallsRef.current.has(call)) return;
     promotedActiveCallsRef.current.add(call);
+
+    // #region agent log
+    agentDebugLog('H3,H4', 'contexts/webphone-context.tsx:promoteCallToActive:start', 'Promoting SDK call to active WebPhone state', {
+      isIncoming,
+      callStatusBefore: callStatusRef.current,
+      snapshot: safeWebPhoneSnapshot(call),
+    });
+    // #endregion
 
     const sid = extractCallSidFromSdkCall(call);
     if (sid) {
@@ -335,6 +412,14 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     bindPeerMonitor(call);
     safeSet(setCallStatus, 'active');
     safeSet(setActiveCallId, resolvedId);
+
+    // #region agent log
+    agentDebugLog('H3,H4', 'contexts/webphone-context.tsx:promoteCallToActive:end', 'WebPhone active state set after remote media bind attempt', {
+      isIncoming,
+      resolvedIdKind: resolvedId.startsWith('CA') ? 'twilio-call-sid' : 'local-id',
+      snapshot: safeWebPhoneSnapshot(call),
+    });
+    // #endregion
   }, [bindPeerMonitor, pushCallLegSync, safeSet]);
 
   const setupCallEventHandlers = useCallback((
@@ -441,6 +526,15 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     call: Call,
     meta?: { from?: string | null; to?: string | null },
   ) => {
+    // #region agent log
+    agentDebugLog('H4', 'contexts/webphone-context.tsx:adoptInboundCall', 'CallsProvider handed accepted inbound SDK call to WebPhone', {
+      callStatusBefore: callStatusRef.current,
+      hasMetaFrom: Boolean(meta?.from),
+      hasMetaTo: Boolean(meta?.to),
+      snapshot: safeWebPhoneSnapshot(call),
+    });
+    // #endregion
+
     const callId = getCallStableId(call);
     activeCallRef.current = call;
     incomingCallRef.current = null;

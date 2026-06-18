@@ -55,6 +55,50 @@ export interface CallsContextValue {
 const CallsContext = createContext<CallsContextValue | null>(null);
 
 const ACCEPT_TIMEOUT_MS = 12_000;
+const DEBUG_ENDPOINT = 'http://127.0.0.1:7379/ingest/0b038bd8-a4b0-46ba-b218-7da01641d89a';
+
+function agentDebugLog(
+  hypothesisId: string,
+  location: string,
+  message: string,
+  data: Record<string, unknown>,
+): void {
+  const payload = {
+    sessionId: '30998c',
+    runId: 'run1',
+    hypothesisId,
+    location,
+    message,
+    data,
+    timestamp: Date.now(),
+  };
+
+  fetch(DEBUG_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '30998c' },
+    body: JSON.stringify(payload),
+  }).catch(() => {});
+  fetch('/api/agent-debug/30998c', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).catch(() => {});
+}
+
+function safeCallSnapshot(call: Call | null): Record<string, unknown> {
+  if (!call) return { hasCall: false };
+  const params = call.parameters ?? {};
+  return {
+    hasCall: true,
+    status: call.status(),
+    direction: call.direction ?? null,
+    hasFromParam: Boolean(params.From),
+    hasToParam: Boolean(params.To),
+    hasCallSidParam: Boolean(params.CallSid),
+    parameterKeys: Object.keys(params).sort(),
+  };
+}
 
 const EMPTY_CALLER_CONTEXT: CallerContext = {
   loading: false,
@@ -184,6 +228,16 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     const to = extractInboundToNumber(call);
     const sid = extractCallSidFromSdkCall(call);
 
+    // #region agent log
+    agentDebugLog('H1,H5', 'contexts/calls-context.tsx:onIncoming', 'Twilio SDK incoming call reached CallsProvider', {
+      snapshot: safeCallSnapshot(call),
+      hasExtractedSid: Boolean(sid),
+      hasExtractedFrom: Boolean(from),
+      hasExtractedTo: Boolean(to),
+      staleTabWarning,
+    });
+    // #endregion
+
     ringStartedRef.current = Date.now();
     setFromNumber(from);
     setToNumber(to);
@@ -219,6 +273,15 @@ export function CallsProvider({ children }: { children: ReactNode }) {
   }, [registerInboundHandler, onIncoming]);
 
   useEffect(() => {
+    // #region agent log
+    agentDebugLog('H0', 'contexts/calls-context.tsx:mount', 'CallsProvider instrumentation loaded in browser', {
+      phase: phaseRef.current,
+      hasCurrentCall: Boolean(callRef.current),
+    });
+    // #endregion
+  }, []);
+
+  useEffect(() => {
     if (phase !== 'incoming' && phase !== 'connecting') return;
     const t = setInterval(() => {
       if (ringStartedRef.current) {
@@ -232,11 +295,29 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     const call = callRef.current;
     if (!call || (phaseRef.current !== 'incoming' && phaseRef.current !== 'connecting')) return;
 
+    const acceptStartedAt = Date.now();
+
+    // #region agent log
+    agentDebugLog('H1,H2', 'contexts/calls-context.tsx:accept:start', 'Agent clicked Accept; starting SDK accept path', {
+      phase: phaseRef.current,
+      snapshot: safeCallSnapshot(call),
+    });
+    // #endregion
+
     setPhase('connecting');
     setConnectError(null);
     stopInboundRingtone();
 
     const micOk = await requestMicPermission();
+
+    // #region agent log
+    agentDebugLog('H2', 'contexts/calls-context.tsx:accept:mic', 'Microphone permission result before call.accept', {
+      micOk,
+      elapsedMs: Date.now() - acceptStartedAt,
+      snapshot: safeCallSnapshot(call),
+    });
+    // #endregion
+
     if (!micOk) {
       setConnectError('Microphone access is required to answer. Allow mic in browser settings.');
       setPhase('incoming');
@@ -248,6 +329,13 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     await unlockRemoteAudioElement();
     registerCallMeta(null, fromNumber ?? '');
 
+    // #region agent log
+    agentDebugLog('H1,H2', 'contexts/calls-context.tsx:accept:pre-call-accept', 'Audio unlock completed; invoking call.accept next', {
+      elapsedMs: Date.now() - acceptStartedAt,
+      snapshot: safeCallSnapshot(call),
+    });
+    // #endregion
+
     const meta = {
       from: extractInboundFromNumber(call) ?? fromNumber,
       to: extractInboundToNumber(call) ?? toNumber,
@@ -255,6 +343,13 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     const sid = extractCallSidFromSdkCall(call);
 
     const handoff = () => {
+      // #region agent log
+      agentDebugLog('H1,H4', 'contexts/calls-context.tsx:accept:event', 'Twilio SDK accept event fired; handing call to WebPhone', {
+        elapsedMs: Date.now() - acceptStartedAt,
+        snapshot: safeCallSnapshot(call),
+      });
+      // #endregion
+
       clearAcceptTimer();
       adoptInboundCall(call, meta);
       resetSession();
@@ -265,6 +360,12 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     clearAcceptTimer();
     acceptTimerRef.current = setTimeout(() => {
       if (phaseRef.current !== 'connecting') return;
+      // #region agent log
+      agentDebugLog('H1', 'contexts/calls-context.tsx:accept:timeout', 'Twilio SDK accept event did not fire before timeout', {
+        elapsedMs: Date.now() - acceptStartedAt,
+        snapshot: safeCallSnapshot(call),
+      });
+      // #endregion
       voiceClientLog('inbound_accept_timeout', {
         status: call.status(),
         parameters: call.parameters,
@@ -277,9 +378,23 @@ export function CallsProvider({ children }: { children: ReactNode }) {
 
     try {
       call.accept({ rtcConstraints: { audio: true } });
+      // #region agent log
+      agentDebugLog('H1', 'contexts/calls-context.tsx:accept:called', 'call.accept returned without throwing', {
+        elapsedMs: Date.now() - acceptStartedAt,
+        snapshot: safeCallSnapshot(call),
+      });
+      // #endregion
     } catch (err) {
       clearAcceptTimer();
       call.removeListener('accept', handoff);
+      // #region agent log
+      agentDebugLog('H1,H2', 'contexts/calls-context.tsx:accept:throw', 'call.accept threw synchronously', {
+        elapsedMs: Date.now() - acceptStartedAt,
+        errorName: err instanceof Error ? err.name : null,
+        errorMessage: err instanceof Error ? err.message : String(err),
+        snapshot: safeCallSnapshot(call),
+      });
+      // #endregion
       console.error('[Calls] accept failed:', err);
       voiceClientLog('inbound_accept_throw', {
         message: err instanceof Error ? err.message : String(err),
