@@ -17,6 +17,7 @@ import { playInboundRingtone, stopInboundRingtone } from '@/lib/inbound/ringtone
 import { resumeVoiceAudioContext } from '@/lib/voice/audio-unlock';
 import { unlockRemoteAudioElement } from '@/lib/voice/remote-audio';
 import { voiceSessionLog } from '@/lib/debug/voice-session-log';
+import { isTwilioCallSid } from '@/lib/twilio/extract-call-sid';
 
 export interface InboundLead {
   first_name: string | null;
@@ -128,12 +129,38 @@ export function InboundRingingProvider({
     if (stopAudio) stopInboundRingtone();
   }, []);
 
-  const finishAccept = useCallback((callId: string) => {
+  const finishAccept = useCallback(async (callId: string, callSid?: string) => {
+    let dbId = callId;
+    const sid =
+      callSid && isTwilioCallSid(callSid)
+        ? callSid
+        : isTwilioCallSid(callId)
+          ? callId
+          : null;
+
+    if (sid) {
+      try {
+        const res = await apiFetchRef.current('/api/calls/sync-leg', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            call_sid: sid,
+            provisional_id: callId !== sid ? callId : undefined,
+            direction: 'inbound',
+          }),
+        });
+        const data = await res.json() as { db_id?: string };
+        if (data.db_id) dbId = data.db_id;
+      } catch {
+        /* non-fatal */
+      }
+    }
+
     // #region agent log
     voiceSessionLog({
       location: 'inbound-ringing-context.tsx:finishAccept',
       message: 'accept completed',
-      data: { callId, callStatus: callStatusRef.current },
+      data: { callId: dbId, callStatus: callStatusRef.current },
       hypothesisId: 'H-D',
       runId: 'run1',
     });
@@ -148,7 +175,7 @@ export function InboundRingingProvider({
     setRingElapsedSec(0);
     setCall(null);
     window.dispatchEvent(
-      new CustomEvent('gd-inbound-answered', { detail: { callId } }),
+      new CustomEvent('gd-inbound-answered', { detail: { callId: dbId } }),
     );
   }, [setInboundAcceptInFlight]);
 
@@ -177,7 +204,7 @@ export function InboundRingingProvider({
             void apiFetchRef.current('/api/calls/decline', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ call_control_id: p.call_control_id }),
+              body: JSON.stringify({ call_sid: p.call_control_id }),
             }).catch(() => {});
             return;
           }
@@ -357,13 +384,14 @@ export function InboundRingingProvider({
     const onWebrtcRing = (ev: Event) => {
       const detail = (ev as CustomEvent<{ call_id?: string; from_number?: string | null; provider?: string }>).detail;
       if (detail?.provider === 'twilio' || detail?.from_number != null) {
+        if (!detail?.call_id) return;
         if (blocksNewInboundNow()) {
           hangup();
           return;
         }
         beginRing({
-          id: detail.call_id ?? `twilio-${Date.now()}`,
-          call_control_id: detail.call_id ?? '',
+          id: detail.call_id,
+          call_control_id: detail.call_id,
           from_number: detail.from_number ?? null,
           to_number: '',
           lead_id: null,
@@ -475,7 +503,7 @@ export function InboundRingingProvider({
         clearCall(true);
         return;
       }
-      finishAccept(callId);
+      finishAccept(callId, call.call_control_id || call.id);
       return;
     }
 
@@ -553,9 +581,20 @@ export function InboundRingingProvider({
 
   const decline = useCallback(async () => {
     if (!call || accepting) return;
+    const snapshot = call;
     clearCall(true);
     hangup();
-    if (call.provider === 'twilio') {
+    if (snapshot.provider === 'twilio') {
+      const sid = snapshot.call_control_id || snapshot.id;
+      if (isTwilioCallSid(sid)) {
+        try {
+          await apiFetch('/api/calls/decline', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ call_sid: sid }),
+          });
+        } catch { /* non-fatal */ }
+      }
       window.dispatchEvent(new CustomEvent('gd-call-ended'));
       return;
     }

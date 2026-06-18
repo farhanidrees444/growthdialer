@@ -15,6 +15,7 @@ import { useCallContext } from '@/lib/call-context';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { DispositionModal } from '@/components/dialer/disposition-modal';
 import type { DispositionType, LeadRecord } from '@/lib/dialer/state-machine';
+import { isTwilioCallSid } from '@/lib/twilio/extract-call-sid';
 
 const DISPOSITION_THRESHOLD_SEC = 10;
 
@@ -187,6 +188,22 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
 
     void register();
   }, [activeCallId, apiFetch, isInboundRinging, hasOutboundSession]);
+
+  // When Twilio assigns a real CallSid after provisional SDK id, link it to the DB row.
+  useEffect(() => {
+    if (isInboundRinging && !hasOutboundSession) return;
+    if (!callDbId || !activeCallId || !isTwilioCallSid(activeCallId)) return;
+
+    void apiFetch('/api/calls/sync-leg', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        call_sid: activeCallId,
+        db_id: callDbId,
+        direction: 'outbound',
+      }),
+    }).catch(() => { /* non-fatal */ });
+  }, [activeCallId, callDbId, apiFetch, isInboundRinging, hasOutboundSession]);
 
   const autoSaveVoicemail = useCallback(async (dbId: string) => {
     try {

@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseTwilioClientIdentity } from '@/lib/twilio/client-identity';
 import {
+  dialStatusCallbackOptions,
   resolveInboundRoute,
   resolveOutboundRoute,
+  twilioInboundDialStatusUrl,
+  twilioRecordingCallbackUrl,
   twilioStatusCallbackUrl,
 } from '@/lib/twilio/webhook-routing';
 import { validateTwilioWebhookRequest } from '@/lib/twilio/validate-webhook';
 import { createServiceClient } from '@/lib/supabase/service';
+import { normalizeE164 } from '@/lib/inbound/phone';
 import twilio from 'twilio';
 
 const { VoiceResponse } = twilio.twiml;
@@ -19,12 +23,18 @@ function formDataToParams(formData: FormData): Record<string, string> {
   return params;
 }
 
+function recordingDialOptions(recordingEnabled: boolean, recordingCallback: string | undefined) {
+  if (!recordingEnabled || !recordingCallback) return {};
+  return {
+    record: 'record-from-answer-dual' as const,
+    recordingStatusCallback: recordingCallback,
+    recordingStatusCallbackMethod: 'POST' as const,
+    recordingStatusCallbackEvent: ['completed'] as ['completed'],
+  };
+}
+
 /**
  * POST /api/twilio/webhook
- *
- * Multi-tenant TwiML App voice URL:
- *   - Inbound PSTN to a purchased DID → ring that account's browser Client
- *   - Outbound browser connect → dial PSTN with the user's default caller ID
  */
 export async function POST(request: NextRequest) {
   try {
@@ -33,6 +43,7 @@ export async function POST(request: NextRequest) {
     const to = params.To ?? '';
     const from = params.From ?? '';
     const direction = (params.Direction ?? '').toLowerCase();
+    const callerIdParam = params.CallerId?.trim() || null;
 
     const webhookUrl = request.nextUrl.origin + request.nextUrl.pathname;
     const signature = request.headers.get('x-twilio-signature');
@@ -45,37 +56,36 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceClient();
     if (!supabase) {
-      console.error('[TwilioWebhook] Service client unavailable');
       const err = new VoiceResponse();
       err.say('Voice service is temporarily unavailable.');
       return twimlResponse(err);
     }
 
     const statusCallback = twilioStatusCallbackUrl();
+    const recordingCallback = twilioRecordingCallbackUrl();
+    const dialActionUrl = twilioInboundDialStatusUrl();
     const response = new VoiceResponse();
     const clientUserId = parseTwilioClientIdentity(from);
 
-    // Outbound: browser Device.connect({ To }) — From is client:gd_<userId>
+    // Outbound: browser Device.connect({ To, CallerId })
     if (clientUserId || direction.startsWith('outbound')) {
-      const route = await resolveOutboundRoute(supabase, from, to);
+      const route = await resolveOutboundRoute(supabase, from, to, callerIdParam);
       if (!route) {
-        console.error('[TwilioWebhook] OUTBOUND route failed', { from, to });
-        response.say('No caller ID is configured for your account. Add a voice line in settings.');
+        console.error('[TwilioWebhook] OUTBOUND route failed', { from, to, callerIdParam });
+        response.say('No caller ID is configured for your account.');
         return twimlResponse(response);
       }
 
-      console.log(
-        `[TwilioWebhook] OUTBOUND user=${route.userId} to=${route.toNumber} from=${route.callerId}`,
-      );
       const dial = response.dial({
         callerId: route.callerId,
-        ...(statusCallback ? { statusCallback, statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'] } : {}),
+        ...dialStatusCallbackOptions(statusCallback),
+        ...recordingDialOptions(route.routing.recording_enabled, recordingCallback),
       });
       dial.number(route.toNumber);
       return twimlResponse(response);
     }
 
-    // Inbound PSTN → browser client for the DID owner
+    // Inbound PSTN
     const inbound = await resolveInboundRoute(supabase, to, from);
     if (!inbound) {
       console.error('[TwilioWebhook] INBOUND no owner for To=', to);
@@ -83,22 +93,51 @@ export async function POST(request: NextRequest) {
       return twimlResponse(response);
     }
 
-    console.log(
-      `[TwilioWebhook] INBOUND user=${inbound.userId} client=${inbound.clientIdentity} from=${inbound.fromNumber}`,
-    );
+    const { routing } = inbound;
+
+    if (routing.inbound_mode === 'off') {
+      response.reject();
+      return twimlResponse(response);
+    }
+
+    if (routing.inbound_mode === 'forward' && routing.inbound_forward_number) {
+      const forwardTo = normalizeE164(routing.inbound_forward_number);
+      if (forwardTo) {
+        const dial = response.dial({
+          callerId: inbound.fromNumber,
+          timeout: routing.inbound_ring_seconds,
+          ...dialStatusCallbackOptions(statusCallback),
+          ...recordingDialOptions(routing.recording_enabled, recordingCallback),
+        });
+        dial.number(forwardTo);
+        return twimlResponse(response);
+      }
+    }
+
+    if (routing.inbound_mode === 'voicemail') {
+      response.say('Please leave a message after the tone.');
+      response.record({
+        maxLength: 120,
+        playBeep: true,
+        recordingStatusCallback: recordingCallback,
+        recordingStatusCallbackMethod: 'POST',
+      });
+      return twimlResponse(response);
+    }
+
+    // browser (default) — ring agent client; no-answer → inbound-dial-status
     const dial = response.dial({
       callerId: inbound.fromNumber,
-      timeout: 30,
-      ...(statusCallback ? { statusCallback, statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'] } : {}),
+      timeout: Math.min(Math.max(routing.inbound_ring_seconds, 15), 60),
+      action: dialActionUrl,
+      method: 'POST',
+      ...dialStatusCallbackOptions(statusCallback),
+      ...recordingDialOptions(routing.recording_enabled, recordingCallback),
     });
     dial.client(inbound.clientIdentity);
     return twimlResponse(response);
   } catch (error) {
-    console.error(
-      '[TwilioWebhook] Exception:',
-      error instanceof Error ? error.message : String(error),
-    );
-
+    console.error('[TwilioWebhook] Exception:', error instanceof Error ? error.message : String(error));
     const fallback = new VoiceResponse();
     fallback.say('Sorry, an error occurred. Please try again later.');
     return twimlResponse(fallback);

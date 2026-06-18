@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { REMOTE_AUDIO_ELEMENT_ID } from '@/lib/voice/remote-audio';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import {
@@ -77,7 +78,7 @@ function LiveWaveform({ active }: { active: boolean }) {
     let mounted = true;
 
     function setupAnalyser(): AnalyserNode | null {
-      const audioEl = document.getElementById('telnyx-remote-audio') as HTMLAudioElement | null;
+      const audioEl = document.getElementById(REMOTE_AUDIO_ELEMENT_ID) as HTMLAudioElement | null;
       if (!audioEl) return null;
       try {
         if (!ctxRef.current) ctxRef.current = new AudioContext();

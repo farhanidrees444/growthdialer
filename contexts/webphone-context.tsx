@@ -24,6 +24,7 @@ import {
   unlockRemoteAudioElement,
 } from '@/lib/voice/remote-audio';
 import { voiceSessionLog } from '@/lib/debug/voice-session-log';
+import { extractCallSidFromSdkCall, isTwilioCallSid } from '@/lib/twilio/extract-call-sid';
 
 export type PhoneStatus = 'idle' | 'initializing' | 'ready' | 'error';
 export type WebRTCCallStatus = 'idle' | 'connecting' | 'ringing' | 'active' | 'held' | 'ended';
@@ -79,12 +80,12 @@ export function useWebPhone(): WebPhoneContextValue {
  */
 let callIdCounter = 0;
 function getCallStableId(call: Call): string {
+  const sid = extractCallSidFromSdkCall(call);
+  if (sid) return sid;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const c = call as any;
-  // Twilio stores the CallSid internally after signaling completes
-  if (c._callSid) return c._callSid as string;
   if (c.outboundConnectionId) return c.outboundConnectionId as string;
-  // Fallback: use a synthetic ID based on the call reference
   if (!c.__gdId) {
     callIdCounter += 1;
     c.__gdId = `call-${callIdCounter}`;
@@ -182,6 +183,27 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const reconnectDuringCallRef = useRef(false);
   const acceptingInboundRef = useRef(false);
   const isInboundRingingLiveRef = useRef(false);
+  const provisionalCallIdRef = useRef<string | null>(null);
+
+  const pushCallLegSync = useCallback(async (payload: {
+    call_sid: string;
+    provisional_id?: string | null;
+    direction: 'inbound' | 'outbound';
+    from_number?: string | null;
+    to_number?: string | null;
+    db_id?: string | null;
+  }) => {
+    try {
+      await fetch('/api/calls/sync-leg', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      console.warn('[WebPhone] sync-leg failed', err);
+    }
+  }, []);
 
   const setInboundAcceptInFlight = useCallback((active: boolean) => {
     acceptingInboundRef.current = active;
@@ -237,11 +259,37 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     });
   }, [safeSet, scheduleReconnect]);
 
-  const setupCallEventHandlers = useCallback((call: Call, isIncoming: boolean) => {
+  const setupCallEventHandlers = useCallback((
+    call: Call,
+    isIncoming: boolean,
+    meta?: { from?: string | null; to?: string | null },
+  ) => {
+    let lastSyncedSid: string | null = null;
+    const syncIfNeeded = () => {
+      const sid = extractCallSidFromSdkCall(call);
+      if (!sid || sid === lastSyncedSid) return;
+      lastSyncedSid = sid;
+      const provisional = provisionalCallIdRef.current;
+      void pushCallLegSync({
+        call_sid: sid,
+        provisional_id: provisional && provisional !== sid ? provisional : undefined,
+        direction: isIncoming ? 'inbound' : 'outbound',
+        from_number: meta?.from ?? undefined,
+        to_number: meta?.to ?? undefined,
+      });
+      safeSet(setActiveCallId, sid);
+      if (isTwilioCallSid(sid)) provisionalCallIdRef.current = null;
+    };
+
     const callId = getCallStableId(call);
+    provisionalCallIdRef.current = isTwilioCallSid(callId) ? null : callId;
+
+    call.on('ringing', syncIfNeeded);
 
     call.on('accept', () => {
-      console.log('[WebPhone] call accepted:', callId);
+      syncIfNeeded();
+      const resolvedId = extractCallSidFromSdkCall(call) ?? callId;
+      console.log('[WebPhone] call accepted:', resolvedId);
       if (isIncoming) {
         outboundDialRef.current = false;
         safeSet(setHasOutboundSession, false);
@@ -253,11 +301,12 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       bindRemoteMediaToTwilioCall(call);
       bindPeerMonitor(call);
       safeSet(setCallStatus, 'active');
-      safeSet(setActiveCallId, callId);
+      safeSet(setActiveCallId, extractCallSidFromSdkCall(call) ?? callId);
     });
 
     call.on('disconnect', () => {
-      console.log('[WebPhone] call disconnected:', callId);
+      const resolvedId = extractCallSidFromSdkCall(call) ?? callId;
+      console.log('[WebPhone] call disconnected:', resolvedId);
       peerCleanupRef.current?.();
       peerCleanupRef.current = null;
       safeSet(setVoiceQuality, 'unknown');
@@ -298,7 +347,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     });
 
     call.on('cancel', () => {
-      console.log('[WebPhone] call cancelled:', callId);
+      const resolvedId = extractCallSidFromSdkCall(call) ?? callId;
+      console.log('[WebPhone] call cancelled:', resolvedId);
       if (isIncoming && !acceptingInboundRef.current) {
         inboundRingStartedRef.current = null;
         isInboundRingingLiveRef.current = false;
@@ -309,7 +359,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     });
 
     call.on('reject', () => {
-      console.log('[WebPhone] call rejected:', callId);
+      const resolvedId = extractCallSidFromSdkCall(call) ?? callId;
+      console.log('[WebPhone] call rejected:', resolvedId);
       if (isIncoming) {
         inboundRingStartedRef.current = null;
         isInboundRingingLiveRef.current = false;
@@ -318,7 +369,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         safeSet(setCallStatus, 'idle');
       }
     });
-  }, [safeSet, bindPeerMonitor]);
+  }, [safeSet, bindPeerMonitor, pushCallLegSync]);
 
   const initClient = useCallback(async () => {
     safeSet(setPhoneStatus, 'initializing');
@@ -440,7 +491,18 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           );
         }
 
-        setupCallEventHandlers(call, true);
+        setupCallEventHandlers(call, true, { from: fromNumber });
+
+        {
+          const sid = extractCallSidFromSdkCall(call);
+          if (sid) {
+            void pushCallLegSync({
+              call_sid: sid,
+              direction: 'inbound',
+              from_number: fromNumber,
+            });
+          }
+        }
 
         voiceSessionLog({
           location: 'webphone-context.tsx:incoming',
@@ -461,7 +523,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       console.error('[WebPhone] init error:', err);
       scheduleReconnect('init exception');
     }
-  }, [safeSet, scheduleReconnect, bindPeerMonitor, setupCallEventHandlers]);
+  }, [safeSet, scheduleReconnect, bindPeerMonitor, setupCallEventHandlers, pushCallLegSync]);
 
   useEffect(() => {
     if (phoneStatus !== 'ready') return;
@@ -624,6 +686,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     deviceRef.current.connect({
       params: {
         To: destination,
+        ...(_callerNumber ? { CallerId: _callerNumber } : {}),
       },
     }).then((call) => {
       if (!mountedRef.current) {
@@ -635,18 +698,11 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       activeCallRef.current = call;
       safeSet(setActiveCallId, callId);
 
-      setupCallEventHandlers(call, false);
+      setupCallEventHandlers(call, false, { to: destination, from: _callerNumber ?? null });
 
       call.on('ringing', () => {
-        console.log('[WebPhone] outbound call ringing:', callId);
+        console.log('[WebPhone] outbound call ringing:', getCallStableId(call));
         safeSet(setCallStatus, 'ringing');
-      });
-
-      call.on('accept', () => {
-        console.log('[WebPhone] outbound call accepted:', callId);
-        safeSet(setCallStatus, 'active');
-        bindRemoteMediaToTwilioCall(call);
-        bindPeerMonitor(call);
       });
     }).catch((err) => {
       console.error('[WebPhone] connect error:', err);
@@ -654,7 +710,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       setHasOutboundSession(false);
       setCallStatus('idle');
     });
-  }, [safeSet, setupCallEventHandlers, bindPeerMonitor]);
+  }, [safeSet, setupCallEventHandlers]);
 
   const waitForInboundWebRtcLeg = useCallback((timeoutMs = 15000): Promise<boolean> => {
     return new Promise((resolve) => {
