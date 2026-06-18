@@ -13,14 +13,12 @@ import { Call } from '@twilio/voice-sdk';
 import {
   attachPeerConnectionMonitor,
   getCallPeerConnection,
-  type IceConnectionQuality,
 } from '@/lib/voice/peer-monitor';
 import { resumeVoiceAudioContext, primeVoiceAudioOnUserGesture } from '@/lib/voice/audio-unlock';
 import {
   REMOTE_AUDIO_ELEMENT_ID,
   REMOTE_AUDIO_LEGACY_ID,
   bindRemoteStreamToAudio,
-  getRemoteAudioElement,
   unlockRemoteAudioElement,
 } from '@/lib/voice/remote-audio';
 import {
@@ -78,8 +76,8 @@ export interface WebPhoneContextValue {
    */
   registerInboundHandler: (handler: ((call: Call) => void) | null) => void;
   /**
-   * Hand off an accepted inbound SDK call to the shared ActiveCallOverlay path.
-   * Called by CallsProvider after `call.on('accept')` fires.
+   * Hand off an inbound SDK call to the shared ActiveCallOverlay path.
+   * CallsProvider owns the ringing UI; WebPhone owns accept/open media events.
    */
   adoptInboundCall: (call: Call, meta?: { from?: string | null; to?: string | null }) => void;
   /** Another tab may have registered the Twilio Device — calls ring there instead. */
@@ -253,6 +251,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const isInboundRingingLiveRef = useRef(false);
   const provisionalCallIdRef = useRef<string | null>(null);
   const promotedActiveCallsRef = useRef(new WeakSet<Call>());
+  const callEventHandlersBoundRef = useRef(new WeakSet<Call>());
   const externalInboundHandlerRef = useRef<((call: Call) => void) | null>(null);
 
   const registerInboundHandler = useCallback((handler: ((call: Call) => void) | null) => {
@@ -427,6 +426,9 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     isIncoming: boolean,
     meta?: { from?: string | null; to?: string | null },
   ) => {
+    if (callEventHandlersBoundRef.current.has(call)) return;
+    callEventHandlersBoundRef.current.add(call);
+
     let lastSyncedSid: string | null = null;
     const syncIfNeeded = () => {
       const sid = extractCallSidFromSdkCall(call);
@@ -527,7 +529,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     meta?: { from?: string | null; to?: string | null },
   ) => {
     // #region agent log
-    agentDebugLog('H4', 'contexts/webphone-context.tsx:adoptInboundCall', 'CallsProvider handed accepted inbound SDK call to WebPhone', {
+    agentDebugLog('H4', 'contexts/webphone-context.tsx:adoptInboundCall', 'CallsProvider handed inbound SDK call to WebPhone before accept', {
       callStatusBefore: callStatusRef.current,
       hasMetaFrom: Boolean(meta?.from),
       hasMetaTo: Boolean(meta?.to),
@@ -543,7 +545,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     deviceRef.current = twilioDevice.device;
 
     safeSet(setHasOutboundSession, false);
-    safeSet(setHasInboundActiveSession, true);
+    safeSet(setHasInboundActiveSession, false);
     safeSet(setIsInboundRinging, false);
     isInboundRingingLiveRef.current = false;
     inboundRingStartedRef.current = null;
@@ -944,7 +946,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     initAttemptsRef.current = 0;
     safeSet(setVoiceError, null);
     void initClient();
-  }, [initClient]);
+  }, [initClient, safeSet]);
 
   return (
     <WebPhoneContext.Provider

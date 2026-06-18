@@ -129,7 +129,10 @@ export function CallsProvider({ children }: { children: ReactNode }) {
   const acceptTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ringStartedRef = useRef<number | null>(null);
   const endedHandledRef = useRef(false);
-  phaseRef.current = phase;
+
+  useLayoutEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
 
   const clearAcceptTimer = useCallback(() => {
     if (acceptTimerRef.current) {
@@ -344,17 +347,17 @@ export function CallsProvider({ children }: { children: ReactNode }) {
 
     const handoff = () => {
       // #region agent log
-      agentDebugLog('H1,H4', 'contexts/calls-context.tsx:accept:event', 'Twilio SDK accept event fired; handing call to WebPhone', {
+      agentDebugLog('H1,H4', 'contexts/calls-context.tsx:accept:event', 'Twilio SDK accept event fired; clearing pre-answer Calls UI', {
         elapsedMs: Date.now() - acceptStartedAt,
         snapshot: safeCallSnapshot(call),
       });
       // #endregion
 
       clearAcceptTimer();
-      adoptInboundCall(call, meta);
       resetSession();
     };
 
+    adoptInboundCall(call, meta);
     call.once('accept', handoff);
 
     clearAcceptTimer();

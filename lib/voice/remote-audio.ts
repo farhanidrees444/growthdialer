@@ -81,30 +81,6 @@ function installPlayRetryOnGesture(): void {
   window.addEventListener('keydown', retry, { capture: true, once: true });
 }
 
-function replayPendingStream(): void {
-  if (!pendingRemoteStream) return;
-  const el = getRemoteAudioElement();
-  if (!el) return;
-
-  const stream = pendingRemoteStream;
-  pendingRemoteStream = null;
-
-  if (el.srcObject !== stream) {
-    el.srcObject = stream;
-  }
-  el.muted = false;
-  el.volume = 1;
-
-  el.play()
-    .then(() => {
-      console.log('[RemoteAudio] deferred playback succeeded');
-    })
-    .catch(() => {
-      pendingRemoteStream = stream;
-      installPlayRetryOnGesture();
-    });
-}
-
 /** Bind a remote MediaStream to the hidden playback element and start playback. */
 export async function bindRemoteStreamToAudio(stream: MediaStream): Promise<void> {
   const el = getRemoteAudioElement();
