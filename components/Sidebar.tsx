@@ -42,7 +42,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { ROLE_LABELS } from "@/lib/auth/permissions";
 import { useCalls } from "@/contexts/calls-context";
 import { EASE_OUT, SPRING } from "@/components/marketing/live-floor/motion";
-import { UserMenu } from "@/components/layout/user-menu";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { getNavItemAccent, resolveRouteAccent } from "@/lib/ui/route-accents";
 
@@ -517,7 +516,7 @@ function SidebarInner() {
           "relative flex flex-col border-r border-zinc-800/50 bg-zinc-950 text-sidebar-foreground",
           "fixed inset-y-0 left-0 z-50 transition-[width,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
           isOpen ? "translate-x-0" : "-translate-x-full",
-          "lg:static lg:z-auto lg:h-screen lg:shrink-0 lg:translate-x-0",
+          "lg:static lg:z-auto lg:h-full lg:shrink-0 lg:translate-x-0",
           isDesktopCollapsed ? "w-[72px]" : "w-[280px] lg:w-[240px]",
         )}
       >
@@ -528,10 +527,10 @@ function SidebarInner() {
           )}
           aria-hidden
         />
-        {/* Logo + collapse */}
+        {/* Mobile drawer header. Desktop brand and account controls live in the top bar. */}
         <div
           className={cn(
-            "flex shrink-0 items-center border-b border-zinc-800/50",
+            "flex shrink-0 items-center border-b border-zinc-800/50 lg:hidden",
             isDesktopCollapsed
               ? "flex-col gap-3 px-2 py-4"
               : "justify-between gap-3 px-4 py-5 min-h-[72px]",
@@ -666,24 +665,25 @@ function SidebarInner() {
             />
           </div>
 
-          {/* User profile — bottom rail (desktop only; mobile uses header menu) */}
-          <div className="hidden shrink-0 border-t border-zinc-800/50 p-2 pb-3 lg:block">
-            {isDesktopCollapsed ? (
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <div className="w-full">
-                      <UserMenu placement="sidebar" collapsed />
-                    </div>
-                  }
-                />
-                <TooltipContent side="right" sideOffset={8}>
-                  Account menu
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <UserMenu placement="sidebar" collapsed={false} />
-            )}
+          <div className="hidden shrink-0 border-t border-zinc-800/50 px-2 py-2 lg:block">
+            <button
+              type="button"
+              onClick={() => setCollapsed((v) => !v)}
+              className={cn(
+                "flex min-h-10 w-full items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-200",
+                !isDesktopCollapsed && "justify-start gap-3 px-3 text-sm",
+              )}
+              aria-label={isDesktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {isDesktopCollapsed ? (
+                <PanelLeft className="h-4 w-4" />
+              ) : (
+                <>
+                  <PanelLeftClose className="h-4 w-4" />
+                  <span>Collapse rail</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </aside>

@@ -66,24 +66,26 @@ export default function DashboardLayout({
           <LeadsProvider>
             <MobileNavProvider>
             <ImportLeadsDialog />
-            <div className="dashboard-shell relative flex h-[100dvh] overflow-hidden bg-zinc-950 text-zinc-100">
+            <div className="dashboard-shell relative flex h-[100dvh] flex-col overflow-hidden bg-zinc-950 text-zinc-100">
               <AmbientShell accent={routeAccent.ambient} />
               <div className="pointer-events-none absolute inset-0 grid-bg opacity-[0.12]" aria-hidden />
 
-              {!isOnboarding && <Sidebar />}
-              <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
-                {!isOnboarding && <TopHeader />}
-                <div
-                  className={cn(
-                    "flex min-h-0 flex-1 flex-col overflow-hidden",
-                    !isOnboarding && "pb-[calc(var(--bottom-nav-height)+env(safe-area-inset-bottom,0px))] lg:pb-0",
-                  )}
-                >
-                  <WorkspaceGate>
-                    <PageEnter className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                      {children}
-                    </PageEnter>
-                  </WorkspaceGate>
+              {!isOnboarding && <TopHeader />}
+              <div className="relative z-10 flex min-h-0 flex-1 overflow-hidden">
+                {!isOnboarding && <Sidebar />}
+                <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                  <div
+                    className={cn(
+                      "flex min-h-0 flex-1 flex-col overflow-hidden",
+                      !isOnboarding && "pb-[calc(var(--bottom-nav-height)+env(safe-area-inset-bottom,0px))] lg:pb-0",
+                    )}
+                  >
+                    <WorkspaceGate>
+                      <PageEnter className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                        {children}
+                      </PageEnter>
+                    </WorkspaceGate>
+                  </div>
                 </div>
               </div>
             </div>
