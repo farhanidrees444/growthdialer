@@ -40,10 +40,10 @@ export function Nav() {
     >
       <div
         className={cn(
-          'mx-auto flex h-[4.25rem] max-w-7xl items-center justify-between gap-5 px-5 transition-all duration-300 sm:h-[4.5rem] lg:px-8',
+          'mx-auto mt-3 flex h-[4.25rem] max-w-7xl items-center justify-between gap-5 rounded-2xl px-5 transition-all duration-300 sm:h-[4.5rem] lg:px-8',
           scrolled
-            ? 'border-b border-white/[0.06] bg-[#08080A]/80 backdrop-blur-xl'
-            : 'border-b border-transparent bg-transparent'
+            ? 'marketing-glass max-w-[calc(100%-1.5rem)] shadow-[0_18px_80px_rgba(0,0,0,0.42)]'
+            : 'max-w-[calc(100%-1.5rem)] border border-white/[0.04] bg-white/[0.025] backdrop-blur-md'
         )}
       >
         <BrandLogo href="/" showText size="nav" priority className="shrink-0" />
@@ -86,7 +86,7 @@ export function Nav() {
                       exit={{ opacity: 0, scaleY: 0.95, y: 6 }}
                       transition={{ duration: 0.15 }}
                       style={{ transformOrigin: 'top' }}
-                      className="absolute left-1/2 top-full z-50 mt-2 w-[480px] -translate-x-1/2 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0c0c0e]/95 shadow-2xl shadow-black/50 backdrop-blur-xl"
+                      className="marketing-glass absolute left-1/2 top-full z-50 mt-3 w-[520px] -translate-x-1/2 overflow-hidden rounded-3xl p-1"
                     >
                       <div className="grid grid-cols-2 gap-0 p-2">
                         <div className="space-y-1 p-2">
@@ -133,7 +133,7 @@ export function Nav() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 6 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute left-0 top-full z-50 mt-1 min-w-[200px] rounded-xl border border-white/[0.08] bg-[#0c0c0e]/95 py-1.5 shadow-xl shadow-black/40 backdrop-blur-xl"
+                    className="marketing-glass absolute left-0 top-full z-50 mt-3 min-w-[220px] rounded-2xl py-1.5"
                     >
                       {item.children.map((child) => (
                         <Link
@@ -185,7 +185,7 @@ export function Nav() {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] text-zinc-300 lg:hidden"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] text-zinc-300 backdrop-blur-xl lg:hidden"
           aria-label="Toggle menu"
           aria-expanded={open}
         >
@@ -201,7 +201,7 @@ export function Nav() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 top-16 z-40 bg-[#08080A] lg:hidden"
+            className="fixed inset-0 z-40 bg-[#08080A]/96 pt-24 backdrop-blur-2xl lg:hidden"
           >
             <motion.div
               initial="hidden"
@@ -210,7 +210,7 @@ export function Nav() {
                 hidden: {},
                 show: { transition: { staggerChildren: 0.05 } },
               }}
-              className="space-y-1 px-5 py-6"
+              className="mx-auto max-w-lg space-y-2 px-5 py-6"
             >
               {TOP_NAV.map((item) =>
                 item.children ? (
@@ -220,7 +220,7 @@ export function Nav() {
                       onClick={() =>
                         setMobileExpanded((v) => (v === item.label ? null : item.label))
                       }
-                      className="flex w-full items-center justify-between rounded-lg px-3 py-3 text-base text-zinc-300"
+                      className="flex w-full items-center justify-between rounded-2xl border border-white/[0.06] bg-white/[0.025] px-4 py-4 text-base text-zinc-200"
                     >
                       {item.label}
                       <ChevronDown
@@ -237,7 +237,7 @@ export function Nav() {
                             key={child.label}
                             href={child.href}
                             onClick={() => setOpen(false)}
-                            className="block rounded-lg px-3 py-2 text-sm text-zinc-500 hover:text-[#F5F5F7]"
+                          className="block rounded-xl px-4 py-3 text-sm text-zinc-500 hover:bg-white/[0.035] hover:text-[#F5F5F7]"
                           >
                             {child.label}
                           </Link>
@@ -250,7 +250,7 @@ export function Nav() {
                     <Link
                       href={item.href}
                       onClick={() => setOpen(false)}
-                      className="block rounded-lg px-3 py-3 text-base text-zinc-300"
+                      className="block rounded-2xl border border-white/[0.06] bg-white/[0.025] px-4 py-4 text-base text-zinc-200"
                     >
                       {item.label}
                     </Link>

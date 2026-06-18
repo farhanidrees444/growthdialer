@@ -76,9 +76,9 @@ export function HomePricing() {
               key={plan.id}
               whileHover={{ y: -4 }}
               transition={{ duration: 0.2 }}
-              className={`relative flex flex-col rounded-2xl border p-6 backdrop-blur-xl ${
+              className={`marketing-hover-lift relative flex flex-col rounded-[1.75rem] border p-6 backdrop-blur-xl ${
                 plan.popular
-                  ? 'scale-[1.02] border-[#7C3AED]/40 bg-[#7C3AED]/[0.04] shadow-[0_0_60px_rgba(124,58,237,0.12)]'
+                  ? 'scale-[1.02] border-[#7C3AED]/40 bg-[#7C3AED]/[0.06] shadow-[0_0_70px_rgba(124,58,237,0.18)]'
                   : 'border-white/[0.08] bg-[#0F0F12]/80'
               }`}
             >
@@ -88,7 +88,7 @@ export function HomePricing() {
                     aria-hidden
                     className="pointer-events-none absolute -inset-px -z-10 rounded-2xl bg-gradient-to-b from-[#7C3AED]/40 to-transparent opacity-30 blur-xl"
                   />
-                  <span className="absolute -top-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-[#7C3AED] px-3 py-1 text-[11px] font-semibold text-white">
+                  <span className="absolute -top-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-[#7C3AED] px-3 py-1 text-[11px] font-semibold text-white shadow-[0_0_36px_rgba(124,58,237,0.55)]">
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white/80" />
                     Most popular
                   </span>
@@ -96,7 +96,7 @@ export function HomePricing() {
               )}
               <Spotlight color={plan.popular ? '#7C3AED' : undefined} />
               <h3 className="text-[15px] font-semibold text-[#F5F5F7]">{plan.name}</h3>
-              <p className="mt-1 text-[13px] text-zinc-500">{plan.seats}</p>
+              <p className="mt-1 text-[13px] text-zinc-500">{plan.tagline}</p>
               <div className="my-5 flex items-end gap-1">
                 {isFree ? (
                   <span className="font-display text-4xl font-light text-[#F5F5F7]">Free</span>

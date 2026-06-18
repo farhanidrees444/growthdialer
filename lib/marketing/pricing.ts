@@ -66,7 +66,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
       { label: 'Coaching floor — listen + feedback' },
       { label: 'Whisper / barge coaching audio', soon: true },
       { label: 'Number health & spam monitoring' },
-      { label: 'Inbound browser ringing', soon: true },
+      { label: 'Inbound browser ringing' },
     ],
   },
   {

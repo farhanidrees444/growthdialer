@@ -51,7 +51,7 @@ export function SiteFooter() {
         GrowthDialer
       </p>
 
-      <div className="relative mx-auto grid max-w-7xl gap-10 sm:grid-cols-2 lg:grid-cols-6">
+      <div className="marketing-glass relative mx-auto grid max-w-7xl gap-10 rounded-[2rem] p-6 sm:grid-cols-2 lg:grid-cols-6 lg:p-8">
         <div className="sm:col-span-2 lg:col-span-1">
           <BrandLogo href="/" showText size="footer" />
           <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-zinc-500">
@@ -67,7 +67,7 @@ export function SiteFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.02] text-zinc-500 transition-all hover:translate-x-0.5 hover:border-white/[0.12] hover:text-[#F5F5F7]"
+                  className="marketing-hover-lift flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.02] text-zinc-500 hover:text-[#F5F5F7]"
                 >
                   <Icon />
                 </a>
@@ -92,9 +92,11 @@ export function SiteFooter() {
                 <li key={l.label}>
                   <Link
                     href={l.href}
-                    className="inline-block text-[13px] text-zinc-400 transition-all hover:translate-x-0.5 hover:text-[#F5F5F7]"
+                    className="group inline-block text-[13px] text-zinc-400 transition-all hover:translate-x-0.5 hover:text-[#F5F5F7]"
                   >
+                    <span className="bg-gradient-to-r from-[#A78BFA] to-[#67E8F9] bg-[length:0%_1px] bg-left-bottom bg-no-repeat transition-[background-size] duration-300 group-hover:bg-[length:100%_1px]">
                     {l.label}
+                    </span>
                   </Link>
                 </li>
               ))}

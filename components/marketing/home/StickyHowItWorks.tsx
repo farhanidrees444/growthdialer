@@ -109,7 +109,7 @@ export function StickyHowItWorks() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.7, ease: EASE_OUT }}
-              className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0F0F12] p-8 shadow-[0_40px_80px_rgba(0,0,0,0.45)]"
+              className="marketing-glass relative overflow-hidden rounded-[1.75rem] p-8"
             >
               <div
                 aria-hidden

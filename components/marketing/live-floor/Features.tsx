@@ -90,7 +90,7 @@ export function Features() {
           <motion.article
             variants={reveal}
             whileHover={{ y: -4 }}
-            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0F0F12] p-6 transition-colors hover:border-[#7C3AED]/30 hover:bg-[#16161A] hover:shadow-[0_20px_40px_rgba(0,0,0,0.4),0_0_0_1px_rgba(124,58,237,0.15)] lg:col-span-7 lg:row-span-2"
+            className="marketing-hover-lift group relative flex flex-col justify-between overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-[#0F0F12] p-6 transition-colors hover:bg-[#16161A] lg:col-span-7 lg:row-span-2"
           >
             <Spotlight />
             <div>
@@ -115,7 +115,7 @@ export function Features() {
           <motion.article
             variants={reveal}
             whileHover={{ y: -4 }}
-            className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0F0F12] p-6 transition-colors hover:border-[#7C3AED]/30 hover:bg-[#16161A] lg:col-span-3 lg:row-span-2"
+            className="marketing-hover-lift group relative overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-[#0F0F12] p-6 transition-colors hover:bg-[#16161A] lg:col-span-3 lg:row-span-2"
           >
             <Spotlight />
             <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#7C3AED]/10 text-[#A78BFA]">
@@ -137,7 +137,7 @@ export function Features() {
                 key={f.title}
                 variants={reveal}
                 whileHover={{ y: -4 }}
-                className={`group relative rounded-2xl border border-white/[0.06] bg-[#0F0F12] p-5 transition-colors hover:border-[#7C3AED]/30 hover:bg-[#16161A] ${f.col}`}
+                className={`marketing-hover-lift group relative rounded-[1.5rem] border border-white/[0.06] bg-[#0F0F12] p-5 transition-colors hover:bg-[#16161A] ${f.col}`}
               >
                 <Spotlight />
                 <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.04] text-zinc-300 group-hover:text-[#A78BFA]">

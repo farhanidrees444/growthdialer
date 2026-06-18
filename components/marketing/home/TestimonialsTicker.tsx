@@ -56,18 +56,6 @@ const ROW2 = [
   },
 ];
 
-function Stars() {
-  return (
-    <div className="mb-3 flex gap-0.5" aria-label="5 out of 5 stars">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <svg key={i} viewBox="0 0 20 20" className="h-3.5 w-3.5 fill-amber-400" aria-hidden>
-          <path d="M10 1.5l2.47 5.01 5.53.8-4 3.9.94 5.5L10 14.77l-4.94 2.94.94-5.5-4-3.9 5.53-.8L10 1.5z" />
-        </svg>
-      ))}
-    </div>
-  );
-}
-
 function Card({
   quote,
   name,
@@ -79,11 +67,13 @@ function Card({
     <article
       className={
         featured
-          ? 'w-[320px] shrink-0 rounded-2xl border border-l-2 border-l-[#7C3AED] border-white/[0.08] bg-[#12121A] p-5 transition-transform duration-200 hover:scale-[1.02] hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]'
-          : 'w-[320px] shrink-0 rounded-2xl border border-white/[0.08] bg-[#0F0F12] p-5 transition-transform duration-200 hover:scale-[1.02] hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]'
+          ? 'marketing-hover-lift w-[320px] shrink-0 rounded-2xl border border-l-2 border-l-[#7C3AED] border-white/[0.08] bg-[#12121A] p-5'
+          : 'marketing-hover-lift w-[320px] shrink-0 rounded-2xl border border-white/[0.08] bg-[#0F0F12] p-5'
       }
     >
-      <Stars />
+      <span className="mb-3 inline-flex rounded-full border border-white/[0.08] bg-white/[0.035] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">
+        Early feedback
+      </span>
       <p className="text-[15px] italic leading-relaxed text-zinc-200">&ldquo;{quote}&rdquo;</p>
       <div className="mt-4 flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7C3AED]/20 text-sm font-semibold text-[#A78BFA]">

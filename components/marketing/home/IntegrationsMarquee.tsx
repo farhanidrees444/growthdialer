@@ -7,6 +7,7 @@ export function IntegrationsMarquee() {
 
   return (
     <section id="integrations" className="relative px-5 py-16 lg:px-8 lg:py-24" aria-label="Integrations">
+      <div aria-hidden className="pointer-events-none absolute inset-x-5 top-1/2 h-px bg-gradient-to-r from-transparent via-white/[0.12] to-transparent" />
       <div className="mx-auto mb-10 max-w-2xl text-center">
         <p className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
           Integrations
@@ -15,7 +16,7 @@ export function IntegrationsMarquee() {
           HubSpot is live. The rest of your stack is next.
         </h2>
         <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-zinc-500">
-          HubSpot connects today; other CRM and automation tools are on the waitlist — every dial still logs in GrowthDialer.
+          HubSpot connects today; other CRM and automation tools are on the waitlist. Every dial still logs in GrowthDialer.
         </p>
         <Link
           href="/integrations"
@@ -33,7 +34,7 @@ export function IntegrationsMarquee() {
             return (
               <li
                 key={`${b.id}-${i}`}
-                className="group relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.05] p-3 backdrop-blur-xl sm:h-[4.5rem] sm:w-[4.5rem] sm:p-3.5"
+                className="marketing-hover-lift group relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.05] p-3 backdrop-blur-xl sm:h-[4.5rem] sm:w-[4.5rem] sm:p-3.5"
                 style={{ ['--brand']: b.color } as React.CSSProperties}
               >
                 {/* Localized radial glow on hover */}

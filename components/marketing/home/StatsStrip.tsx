@@ -21,13 +21,13 @@ export function StatsStrip() {
       />
       <InViewReveal
         variants={revealContainer}
-        className="relative mx-auto grid max-w-5xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.06] lg:grid-cols-4"
+        className="marketing-glass relative mx-auto grid max-w-5xl grid-cols-2 gap-px overflow-hidden rounded-[1.75rem] lg:grid-cols-4"
       >
         {STATS.map((s, i) => (
           <motion.div
             key={i}
             variants={reveal}
-            className="bg-[#0F0F12] px-6 py-10 text-center"
+            className="bg-[#0F0F12]/80 px-6 py-10 text-center transition-colors hover:bg-[#16161A]"
           >
             <p className="font-display text-[clamp(2.5rem,4vw,4rem)] font-light tracking-tight text-[#F5F5F7]">
               <CountUp to={s.to} prefix={s.prefix} suffix={s.suffix} />

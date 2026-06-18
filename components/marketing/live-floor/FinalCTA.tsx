@@ -13,7 +13,7 @@ export function FinalCTA() {
   return (
     <>
       <section className="relative overflow-hidden px-5 py-28 lg:px-8 lg:py-36">
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-20" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 marketing-grid-deep opacity-25" />
         <div
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-1/2 h-[560px] w-[min(95vw,900px)] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.14] blur-[130px]"
@@ -41,18 +41,18 @@ export function FinalCTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-100px' }}
           transition={{ duration: 0.9, ease: EASE_OUT }}
-          className="relative mx-auto max-w-2xl text-center"
+          className="marketing-glass relative mx-auto max-w-3xl rounded-[2rem] px-6 py-14 text-center sm:px-10"
         >
           <div className="mb-8 flex justify-center">
             <LiveWaveform bars={28} height={36} barWidth={2.5} gap={3} />
           </div>
           <h2 className="font-display text-[clamp(2.4rem,5.5vw,3.75rem)] font-light leading-[1.02] tracking-tight text-[#F5F5F7]">
-            Your best sales call
+            Bring every call
             <br />
-            <span className="font-medium">hasn&apos;t happened yet.</span>
+            <span className="font-medium marketing-shimmer-text">back into focus.</span>
           </h2>
           <p className="mx-auto mt-6 max-w-lg text-[17px] leading-relaxed text-zinc-400">
-            Join growing outbound teams that dial smarter with GrowthDialer — summaries, coaching and analytics from call one.
+            Start with a real web dialer, then layer recordings, AI summaries, coaching and analytics as your team grows.
           </p>
           <div className="mt-10 flex justify-center">
             <ShimmerButton href={APP_SIGNUP} size="lg">

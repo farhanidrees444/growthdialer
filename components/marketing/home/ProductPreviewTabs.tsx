@@ -204,7 +204,7 @@ export function ProductPreviewTabs() {
         </p>
       </Reveal>
 
-      <div className="mx-auto mt-14 grid max-w-6xl gap-8 lg:grid-cols-[220px_1fr]">
+      <div className="mx-auto mt-14 grid max-w-6xl gap-8 lg:grid-cols-[240px_1fr]">
         <nav className="flex flex-row gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
           {TABS.map((t) => {
             const Icon = t.icon;
@@ -215,7 +215,7 @@ export function ProductPreviewTabs() {
                 type="button"
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  'flex shrink-0 items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-all duration-200',
+                  'marketing-hover-lift flex shrink-0 items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-all duration-200',
                   active
                     ? 'border-[#7C3AED]/30 bg-[#7C3AED]/[0.08] text-[#F5F5F7]'
                     : 'border-white/[0.06] bg-white/[0.02] text-zinc-400 hover:border-white/[0.12] hover:text-zinc-200'
@@ -239,7 +239,8 @@ export function ProductPreviewTabs() {
           })}
         </nav>
 
-        <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0F0F12]/90 p-6 shadow-[0_40px_80px_rgba(0,0,0,0.5)] backdrop-blur-xl lg:p-8">
+        <div className="marketing-glass relative overflow-hidden rounded-[1.75rem] p-6 lg:p-8">
+          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(124,58,237,0.2),transparent_36%),radial-gradient(circle_at_90%_8%,rgba(6,182,212,0.14),transparent_30%)]" />
           <Spotlight />
           <AnimatePresence mode="wait">
             <motion.div
