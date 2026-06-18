@@ -73,11 +73,13 @@ function agentDebugLog(
     timestamp: Date.now(),
   };
 
-  fetch(DEBUG_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '30998c' },
-    body: JSON.stringify(payload),
-  }).catch(() => {});
+  if (process.env.NODE_ENV === 'development') {
+    fetch(DEBUG_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '30998c' },
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+  }
   fetch('/api/agent-debug/30998c', {
     method: 'POST',
     credentials: 'same-origin',

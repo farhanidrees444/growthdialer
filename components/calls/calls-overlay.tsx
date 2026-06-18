@@ -176,11 +176,11 @@ export default function CallsOverlay() {
             <button
               type="button"
               onClick={() => decline()}
-              disabled={isConnecting || isEnded}
+              disabled={isEnded}
               className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-red-500/35 bg-red-500/12 py-4 text-sm font-semibold text-red-300 transition hover:bg-red-500/22 active:scale-[0.98] disabled:opacity-40"
             >
               <PhoneOff className="h-5 w-5" />
-              Decline
+              {isConnecting ? 'Cancel' : 'Decline'}
             </button>
             <button
               type="button"
