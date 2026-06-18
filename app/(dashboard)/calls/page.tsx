@@ -205,8 +205,8 @@ function TrafficFeed({ logs }: { logs: FloorLogEntry[] }) {
 
 export default function CallsPage() {
   const { apiFetch } = useWorkspace();
-  const { phoneStatus, reconnect, voiceError, callStatus, voiceQuality } = useWebPhone();
-  const { isRinging, phase } = useCalls();
+  const { isRinging } = useCalls();
+  const { phoneStatus, reconnect, voiceError, callStatus, voiceQuality, hasInboundActiveSession } = useWebPhone();
 
   const [stats, setStats] = useState<InboundStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -258,8 +258,10 @@ export default function CallsPage() {
   }, [isRinging, pushLog]);
 
   useEffect(() => {
-    if (phase === 'active') pushLog('Inbound call connected', 'emerald');
-  }, [phase, pushLog]);
+    if (hasInboundActiveSession && callStatus === 'active') {
+      pushLog('Inbound call connected', 'emerald');
+    }
+  }, [hasInboundActiveSession, callStatus, pushLog]);
 
   useEffect(() => {
     if (callStatus === 'active') pushLog(`Voice session ${voiceQuality}`, 'emerald');

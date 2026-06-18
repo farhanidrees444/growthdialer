@@ -8,7 +8,7 @@ import { resolveInboundBrowserCredential } from '@/lib/inbound/browser-credentia
 import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
 import { readVoiceApiKey } from '@/lib/voice/read-env';
 
-import { voiceServerLog } from '@/lib/debug/voice-server-log';
+import { voiceSessionLog } from '@/lib/voice/session-log';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -111,7 +111,7 @@ export async function ringBrowserForInbound(
           .eq('id', resolvedDbCallId)
           .eq('telnyx_webrtc_leg_id', DIAL_PENDING);
         // #region agent log
-        voiceServerLog({
+        voiceSessionLog({
           location: 'bridge-to-browser:stalePendingCleared',
           message: 'cleared stale dial_pending — retrying dial',
           data: { dbCallId: resolvedDbCallId },
@@ -161,7 +161,7 @@ export async function ringBrowserForInbound(
         .maybeSingle();
       if (pendingRow?.telnyx_webrtc_leg_id === DIAL_PENDING) {
         // #region agent log
-        voiceServerLog({
+        voiceSessionLog({
           location: 'bridge-to-browser:skipDuplicateDial',
           message: 'peer dial in flight — skipping duplicate',
           data: { dbCallId: resolvedDbCallId },
@@ -191,7 +191,7 @@ export async function ringBrowserForInbound(
   console.log('[INBOUND] Ringing browser | call_control_app:', dialAppId, '| credential:', credentialId ?? 'env', '| sip:', username);
 
   // #region agent log
-  voiceServerLog({
+  voiceSessionLog({
     location: 'bridge-to-browser:dialStart',
     message: 'originating browser leg',
     data: { dbCallId: resolvedDbCallId ?? dbCallId, pstnCallControlId },
@@ -222,7 +222,7 @@ export async function ringBrowserForInbound(
   if (!dialed.ok || !dialed.call_control_id) {
     console.warn('[INBOUND] dial WebRTC leg failed:', dialed.detail?.slice(0, 200));
     // #region agent log
-    voiceServerLog({
+    voiceSessionLog({
       location: 'bridge-to-browser:dialFailed',
       message: 'browser leg dial failed — no automatic retry (prevents duplicate invites)',
       data: { dbCallId: resolvedDbCallId ?? dbCallId, pstnCallControlId, detail: dialed.detail?.slice(0, 120) },
@@ -257,7 +257,7 @@ export async function ringBrowserForInbound(
 
   console.log('[INBOUND] Browser ring leg created:', webrtcLegId, '| PSTN still ringing:', pstnCallControlId);
   // #region agent log
-  voiceServerLog({
+  voiceSessionLog({
     location: 'bridge-to-browser:dialDone',
     message: 'browser leg created',
     data: { dbCallId: callRowId, webrtcLegId },

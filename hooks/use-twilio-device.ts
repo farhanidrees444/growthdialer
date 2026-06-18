@@ -8,7 +8,7 @@ import { shouldBridgeAutoAnswer } from '@/lib/parallel-dial/auto-answer-flag';
 const TOKEN_URL = '/api/twilio/token';
 const REGISTER_TIMEOUT_MS = 25_000;
 const TOKEN_TTL_MS = 3600 * 1000;
-const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
+const TOKEN_REFRESH_RATIO = 0.25; // refresh at ~75% of TTL elapsed
 
 const TOKEN_ERROR_MESSAGES: Record<string, string> = {
   missing_credentials:
@@ -110,7 +110,8 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
   const scheduleTokenRefresh = useCallback((jwt: string) => {
     clearRefreshTimer();
     const expMs = decodeJwtExpiryMs(jwt) ?? Date.now() + TOKEN_TTL_MS;
-    const refreshAt = Math.max(0, expMs - Date.now() - TOKEN_REFRESH_BUFFER_MS);
+    const ttlRemaining = expMs - Date.now();
+    const refreshAt = Math.max(15_000, ttlRemaining * TOKEN_REFRESH_RATIO);
     refreshTimerRef.current = setTimeout(() => {
       if (mountedRef.current) void initDeviceRef.current();
     }, refreshAt);

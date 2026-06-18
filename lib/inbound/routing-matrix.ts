@@ -10,7 +10,7 @@ import {
   type ResolvedNumberRouting,
 } from '@/lib/voice/phone-number-settings';
 import { voiceLog } from '@/lib/voice/structured-log';
-import { voiceServerLog } from '@/lib/debug/voice-server-log';
+import { voiceSessionLog } from '@/lib/voice/session-log';
 
 export interface InboundInitiatedContext {
   callControlId: string;
@@ -190,7 +190,7 @@ export async function executeInboundRouting(
   });
 
   // #region agent log
-  voiceServerLog({
+  void voiceSessionLog({
     location: 'routing-matrix:broadcastDispatched',
     message: 'broadcastIncomingCallEvent dispatched',
     data: {

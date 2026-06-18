@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ROLE_LABELS } from "@/lib/auth/permissions";
+import { useCalls } from "@/contexts/calls-context";
 import { EASE_OUT, SPRING } from "@/components/marketing/live-floor/motion";
 import { UserMenu } from "@/components/layout/user-menu";
 import { BrandLogo } from "@/components/ui/brand-logo";
@@ -286,6 +287,8 @@ function SidebarNavItem({
 }) {
   const Icon = item.icon;
   const accent = getNavItemAccent(item.id);
+  const { isRinging: callsRinging } = useCalls();
+  const showRingPulse = item.id === "calls" && callsRinging;
 
   const linkInner = (
     <Link
@@ -340,8 +343,13 @@ function SidebarNavItem({
       )}
 
       {!collapsed && item.badge === "Live" && (
-        <Badge className="relative z-[1] h-4 shrink-0 rounded-md border-0 bg-zinc-800 px-1.5 py-0 text-[10px] font-normal text-zinc-300">
-          Live
+        <Badge className={cn(
+          "relative z-[1] h-4 shrink-0 rounded-md border-0 px-1.5 py-0 text-[10px] font-normal",
+          showRingPulse
+            ? "bg-cyan-500/20 text-cyan-200"
+            : "bg-zinc-800 text-zinc-300",
+        )}>
+          {showRingPulse ? "Ringing" : "Live"}
         </Badge>
       )}
 
@@ -357,8 +365,20 @@ function SidebarNavItem({
     <motion.div
       whileHover={reduceMotion || active ? undefined : { x: 2 }}
       transition={{ duration: 0.15, ease: EASE_OUT }}
-      className={cn("rounded-lg transition-shadow duration-200", !active && accent.hoverGlow)}
+      className={cn("relative rounded-lg transition-shadow duration-200", !active && accent.hoverGlow)}
     >
+      {showRingPulse && !reduceMotion && (
+        <motion.span
+          className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-cyan-400/40"
+          animate={{ opacity: [0.35, 0.85, 0.35], boxShadow: [
+            "0 0 0 0 rgba(6,182,212,0)",
+            "0 0 18px 2px rgba(139,92,246,0.35)",
+            "0 0 0 0 rgba(6,182,212,0)",
+          ] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+          aria-hidden
+        />
+      )}
       {linkInner}
     </motion.div>
   );

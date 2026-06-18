@@ -31,6 +31,8 @@ import {
   isTwilioCallSid,
 } from '@/lib/twilio/extract-call-sid';
 import { useTwilioDevice } from '@/hooks/use-twilio-device';
+import { useVoicePresence } from '@/hooks/use-voice-presence';
+import { useWorkspace } from '@/contexts/workspace-context';
 import { shouldBridgeAutoAnswer } from '@/lib/parallel-dial/auto-answer-flag';
 
 export type PhoneStatus = 'idle' | 'initializing' | 'ready' | 'error';
@@ -44,6 +46,8 @@ export interface WebPhoneContextValue {
   activeCallId: string | null;
   /** True while an outbound dial we initiated is connecting, ringing, or live */
   hasOutboundSession: boolean;
+  /** True while an inbound call was accepted and is live in ActiveCallOverlay */
+  hasInboundActiveSession: boolean;
   /** True when the browser is ringing for an inbound call (not outbound) */
   isInboundRinging: boolean;
   isMuted: boolean;
@@ -72,6 +76,13 @@ export interface WebPhoneContextValue {
    * Pass null to unregister.
    */
   registerInboundHandler: (handler: ((call: Call) => void) | null) => void;
+  /**
+   * Hand off an accepted inbound SDK call to the shared ActiveCallOverlay path.
+   * Called by CallsProvider after `call.on('accept')` fires.
+   */
+  adoptInboundCall: (call: Call, meta?: { from?: string | null; to?: string | null }) => void;
+  /** Another tab may have registered the Twilio Device — calls ring there instead. */
+  staleTabWarning: boolean;
 }
 
 const WebPhoneContext = createContext<WebPhoneContextValue | null>(null);
@@ -161,6 +172,7 @@ function bindRemoteMediaToTwilioCall(call: Call): void {
 
 export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const handleIncomingRef = useRef<(call: Call) => void>(() => {});
+  const { currentWorkspace } = useWorkspace();
 
   const [phoneStatus, setPhoneStatus] = useState<PhoneStatus>('idle');
   const [callStatus, setCallStatus] = useState<WebRTCCallStatus>('idle');
@@ -181,6 +193,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const callStatusRef = useRef<WebRTCCallStatus>('idle');
   const outboundDialRef = useRef(false);
   const [hasOutboundSession, setHasOutboundSession] = useState(false);
+  const [hasInboundActiveSession, setHasInboundActiveSession] = useState(false);
   const [isInboundRinging, setIsInboundRinging] = useState(false);
   const phoneStatusRef = useRef<PhoneStatus>('idle');
   callStatusRef.current = callStatus;
@@ -205,6 +218,13 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const twilioDevice = useTwilioDevice({
     manualInit: true,
     onIncoming: (call) => handleIncomingRef.current(call),
+  });
+
+  const { staleTabWarning } = useVoicePresence({
+    phoneStatus,
+    device: twilioDevice.device,
+    workspaceId: currentWorkspace?.id ?? null,
+    enabled: phoneStatus === 'ready' || phoneStatus === 'initializing',
   });
 
   const pushCallLegSync = useCallback(async (payload: {
@@ -301,6 +321,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     if (isIncoming) {
       outboundDialRef.current = false;
       safeSet(setHasOutboundSession, false);
+      safeSet(setHasInboundActiveSession, true);
       isInboundRingingLiveRef.current = false;
       acceptingInboundRef.current = false;
       safeSet(setIsInboundRinging, false);
@@ -375,6 +396,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         isInboundRingingLiveRef.current = false;
         safeSet(setIsInboundRinging, false);
         safeSet(setHasOutboundSession, false);
+        safeSet(setHasInboundActiveSession, false);
         safeSet(setActiveCallId, null);
         safeSet(setIsMuted, false);
         safeSet(setIsOnHold, false);
@@ -414,6 +436,33 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       }
     });
   }, [safeSet, promoteCallToActive, pushCallLegSync]);
+
+  const adoptInboundCall = useCallback((
+    call: Call,
+    meta?: { from?: string | null; to?: string | null },
+  ) => {
+    const callId = getCallStableId(call);
+    activeCallRef.current = call;
+    incomingCallRef.current = null;
+    outboundDialRef.current = false;
+    acceptingInboundRef.current = false;
+    deviceRef.current = twilioDevice.device;
+
+    safeSet(setHasOutboundSession, false);
+    safeSet(setHasInboundActiveSession, true);
+    safeSet(setIsInboundRinging, false);
+    isInboundRingingLiveRef.current = false;
+    inboundRingStartedRef.current = null;
+
+    setupCallEventHandlers(call, true, meta);
+
+    if (isTwilioCallOpen(call) || promotedActiveCallsRef.current.has(call)) {
+      promoteCallToActive(call, true, callId, meta);
+    } else {
+      safeSet(setCallStatus, 'connecting');
+      safeSet(setActiveCallId, callId);
+    }
+  }, [promoteCallToActive, safeSet, setupCallEventHandlers, twilioDevice.device]);
 
   handleIncomingRef.current = (call: Call) => {
     // Genuine inbound PSTN calls are owned by the Calls module. Dialer bridge legs
@@ -760,6 +809,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     incomingCallRef.current = null;
     outboundDialRef.current = false;
     setHasOutboundSession(false);
+    setHasInboundActiveSession(false);
     setIsInboundRinging(false);
     setActiveCallId(null);
     setIsMuted(false);
@@ -809,6 +859,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         callStatus,
         activeCallId,
         hasOutboundSession,
+        hasInboundActiveSession,
         isInboundRinging,
         isMuted,
         isOnHold,
@@ -828,6 +879,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         waitForPhoneReady,
         voiceError: voiceError ?? twilioDevice.voiceError,
         registerInboundHandler,
+        adoptInboundCall,
+        staleTabWarning,
       }}
     >
       {/* Hidden audio — Twilio WebRTC plays remote caller audio through this element */}

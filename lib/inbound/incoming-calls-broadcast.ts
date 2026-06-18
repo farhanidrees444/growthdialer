@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { voiceLog } from '@/lib/voice/structured-log';
-import { voiceServerLog } from '@/lib/debug/voice-server-log';
+import { voiceSessionLog } from '@/lib/voice/session-log';
 
 export type IncomingCallsBroadcastEvent =
   | 'incoming_call'
@@ -72,7 +72,7 @@ export async function broadcastIncomingCallEvent(
             : `Realtime broadcast failed: ${event} (${status})`,
         );
 
-        void voiceServerLog({
+        void voiceSessionLog({
           location: 'incoming-calls-broadcast',
           message: `broadcast ${status === 'sent' ? 'sent' : 'failed'} (${status})`,
           data: {

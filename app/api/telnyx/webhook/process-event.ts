@@ -12,7 +12,7 @@ import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
 import { voiceApiBearerToken } from '@/lib/voice/read-env';
 import { executeInboundRouting, shouldRecordInboundAnswer } from '@/lib/inbound/routing-matrix';
 import { voiceLog } from '@/lib/voice/structured-log';
-import { voiceServerLog } from '@/lib/debug/voice-server-log';
+import { voiceSessionLog } from '@/lib/voice/session-log';
 import type { FastAnswerResult } from '@/lib/telnyx/fast-answer';
 import { logCallEvent } from '@/lib/webhooks/log-call-event';
 import { logInboundCallStep } from '@/lib/inbound/call-step-log';
@@ -355,7 +355,7 @@ export async function processTelnyxWebhookBackground(
               .maybeSingle();
             if (raced) {
               newCall = { id: raced.id };
-              voiceServerLog({
+              voiceSessionLog({
                 location: 'webhook:call.initiated:insertRace',
                 message: 'insert race lost — skip routing (peer webhook owns dial)',
                 data: {
@@ -389,7 +389,7 @@ export async function processTelnyxWebhookBackground(
             },
             'Reusing existing inbound call record',
           );
-          voiceServerLog({
+          voiceSessionLog({
             location: 'webhook:call.initiated:skipRouting',
             message: 'duplicate call.initiated — skip routing (first webhook owns dial)',
             data: {

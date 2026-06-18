@@ -366,6 +366,8 @@ export default function ActiveCallOverlay() {
     sendDTMF,
     hangup,
     hasOutboundSession,
+    hasInboundActiveSession,
+    voiceQuality,
   } = useWebPhone();
   const { activeLead, activePhone, callAnsweredAt } = useCallContext();
   const { apiFetch } = useWorkspace();
@@ -596,14 +598,20 @@ export default function ActiveCallOverlay() {
     savePos(x, y);
   }, [dragX, dragY]);
 
-  // ── Guard (outbound sessions only — inbound is owned by CallsOverlay) ───────
-  const isOutboundVisible = ['connecting', 'ringing', 'active', 'held'].includes(callStatus)
-    && hasOutboundSession;
+  // ── Guard — outbound or accepted inbound sessions ───────────────────────────
+  const isCallSessionVisible = ['connecting', 'ringing', 'active', 'held'].includes(callStatus)
+    && (hasOutboundSession || hasInboundActiveSession);
 
   if (pathname?.startsWith('/dialer') && activeLead) return null;
-  if (!isOutboundVisible) return null;
+  if (!isCallSessionVisible) return null;
 
-  const isVisible = isOutboundVisible;
+  const isVisible = isCallSessionVisible;
+
+  const qualityLabel = voiceQuality === 'excellent' ? 'Excellent'
+    : voiceQuality === 'good' ? 'Good'
+    : voiceQuality === 'degraded' ? 'Fair'
+    : voiceQuality === 'disconnected' ? 'Poor'
+    : null;
 
   const displayName = activeLead?.name
     || (activePhone ? formatInboundCallerDisplay(activePhone) : null)

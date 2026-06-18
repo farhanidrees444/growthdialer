@@ -1,21 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  Phone, PhoneOff, Mic, MicOff, Pause, Play, Hash, Loader2, Clock, User, Minimize2, X,
+  Phone, PhoneOff, Loader2, Clock, User, Building2, History,
 } from 'lucide-react';
-import { useCalls } from '@/contexts/calls-context';
-import { PersistentCallBar } from '@/components/premium/persistent-call-bar';
+import { useCalls, useCallerDisplayName } from '@/contexts/calls-context';
 import { formatInboundCallerDisplay } from '@/lib/inbound/phone';
 
 function fmtTime(seconds: number): string {
-  if (seconds >= 3600) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  }
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
@@ -28,47 +20,15 @@ function fmtLine(e164: string | null | undefined): string {
   return e164;
 }
 
-const DTMF_ROWS = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9'], ['*', '0', '#']];
-
-function DtmfPad({ onDigit, onClose }: { onDigit: (d: string) => void; onClose: () => void }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 8, scale: 0.96 }}
-      className="mb-3 rounded-2xl border border-white/[0.1] bg-white/[0.03] p-3"
-    >
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Keypad</span>
-        <button type="button" onClick={onClose} className="text-slate-600 transition hover:text-slate-400">
-          <X className="h-3 w-3" />
-        </button>
-      </div>
-      <div className="mx-auto grid w-fit grid-cols-3 gap-1.5">
-        {DTMF_ROWS.flat().map((k) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => onDigit(k)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm font-bold text-white transition hover:bg-white/[0.08] active:scale-95"
-          >
-            {k}
-          </button>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-function WaveBars({ active }: { active: boolean }) {
+function WaveBars() {
   return (
     <div className="flex h-10 items-end justify-center gap-1.5">
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <motion.div
           key={i}
           className="w-1.5 rounded-full bg-gradient-to-t from-cyan-500 to-emerald-400"
-          animate={active ? { height: ['14px', '36px', '18px', '40px', '14px'] } : { height: '12px' }}
-          transition={{ duration: 1.2, repeat: active ? Infinity : 0, delay: i * 0.1, ease: 'easeInOut' }}
+          animate={{ height: ['14px', '36px', '18px', '40px', '14px'] }}
+          transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.1, ease: 'easeInOut' }}
         />
       ))}
     </div>
@@ -76,74 +36,27 @@ function WaveBars({ active }: { active: boolean }) {
 }
 
 /**
- * The single inbound call surface. One persistent shell morphs across
- * incoming → connecting → active without ever unmounting, so accepting never
- * flashes the modal. The connected state is minimizable to the call bar and the
- * call keeps running while minimized.
+ * Pre-accept inbound surface only. Connected calls use ActiveCallOverlay (shared with outbound).
  */
 export default function CallsOverlay() {
   const {
     phase,
     fromNumber,
     toNumber,
-    durationSec,
     ringElapsedSec,
-    isMuted,
-    isOnHold,
-    minimized,
     connectError,
+    callerContext,
     accept,
     decline,
-    hangup,
-    toggleMute,
-    toggleHold,
-    sendDigit,
-    setMinimized,
   } = useCalls();
 
-  const [showDTMF, setShowDTMF] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
+  const displayName = useCallerDisplayName(fromNumber, callerContext);
 
   if (phase === 'idle') return null;
 
   const isIncoming = phase === 'incoming';
   const isConnecting = phase === 'connecting';
-  const isActive = phase === 'active';
   const isEnded = phase === 'ended';
-
-  const displayName = fromNumber ? formatInboundCallerDisplay(fromNumber) : 'Unknown / Blocked';
-
-  // ── Minimized (connected) → call bar; call keeps running ─────────────────────
-  if (isActive && minimized) {
-    return (
-      <PersistentCallBar
-        name={displayName}
-        elapsed={durationSec}
-        callStatus={isOnHold ? 'held' : 'active'}
-        isMuted={isMuted}
-        isMobile={isMobile}
-        layoutId="gd-call-pill"
-        onExpand={() => setMinimized(false)}
-        onHangup={hangup}
-        onToggleMute={toggleMute}
-      />
-    );
-  }
-
-  const headerLabel = isActive
-    ? (isOnHold ? 'On hold' : 'Connected')
-    : isConnecting
-      ? 'Connecting'
-      : isEnded
-        ? 'Call ended'
-        : 'Incoming call';
 
   return (
     <motion.div
@@ -153,7 +66,7 @@ export default function CallsOverlay() {
       className="fixed inset-0 z-[70] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
-      aria-label="Live call session"
+      aria-label="Incoming call"
     >
       <div className="absolute inset-0 bg-black/75 backdrop-blur-md" />
       <motion.div
@@ -180,33 +93,19 @@ export default function CallsOverlay() {
           <div className="mb-6 flex items-center justify-between">
             <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400">
               <motion.span
-                animate={{ opacity: isConnecting ? 1 : isActive ? 1 : [1, 0.35, 1] }}
-                transition={{ duration: 1.2, repeat: isConnecting || isActive ? 0 : Infinity }}
-                className={`inline-block h-2 w-2 rounded-full ${isActive && !isOnHold ? 'bg-emerald-400' : isOnHold ? 'bg-amber-400' : 'bg-cyan-400'}`}
+                animate={{ opacity: isConnecting ? 1 : [1, 0.35, 1] }}
+                transition={{ duration: 1.2, repeat: isConnecting ? 0 : Infinity }}
+                className="inline-block h-2 w-2 rounded-full bg-cyan-400"
               />
-              {headerLabel}
+              {isConnecting ? 'Connecting' : isEnded ? 'Call ended' : 'Incoming call'}
             </p>
-            {isActive ? (
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-lg font-bold tabular-nums text-white">{fmtTime(durationSec)}</span>
-                <button
-                  type="button"
-                  onClick={() => setMinimized(true)}
-                  aria-label="Minimize"
-                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.08] text-slate-500 transition hover:border-white/[0.16] hover:text-slate-200"
-                >
-                  <Minimize2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ) : (
-              <span className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] text-white/45">
-                <Clock className="h-3 w-3" />
-                {fmtTime(ringElapsedSec)}
-              </span>
-            )}
+            <span className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] text-white/45">
+              <Clock className="h-3 w-3" />
+              {fmtTime(ringElapsedSec)}
+            </span>
           </div>
 
-          <div className="mb-8 flex flex-col items-center text-center">
+          <div className="mb-6 flex flex-col items-center text-center">
             <div className="relative mb-5">
               {isIncoming && (
                 <motion.div
@@ -223,97 +122,85 @@ export default function CallsOverlay() {
               </div>
             </div>
             <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">{displayName}</h2>
-            <p className="mt-3 font-mono text-base text-white/50">{formatInboundCallerDisplay(fromNumber)}</p>
+            {fromNumber && !callerContext.anonymous && (
+              <p className="mt-3 font-mono text-base text-white/50">{formatInboundCallerDisplay(fromNumber)}</p>
+            )}
             <p className="mt-1 text-xs text-white/30">To your line {fmtLine(toNumber)}</p>
 
             {isConnecting && (
               <div className="mt-6 w-full">
-                <WaveBars active />
+                <WaveBars />
                 <p className="mt-3 flex items-center justify-center gap-2 text-sm text-cyan-200/75">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Securing voice link…
                 </p>
-                {connectError && (
-                  <p className="mt-2 text-center text-xs text-red-300/90">{connectError}</p>
-                )}
               </div>
             )}
-            {isIncoming && connectError && (
+            {connectError && (
               <p className="mt-4 text-center text-xs text-red-300/90">{connectError}</p>
-            )}
-            {isActive && (
-              <div className="mt-6 w-full">
-                <WaveBars active={!isOnHold} />
-              </div>
             )}
           </div>
 
-          {isActive ? (
-            <div className="space-y-3">
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { icon: isMuted ? MicOff : Mic, label: isMuted ? 'Unmute' : 'Mute', onClick: toggleMute, active: isMuted },
-                  { icon: isOnHold ? Play : Pause, label: isOnHold ? 'Resume' : 'Hold', onClick: toggleHold, active: isOnHold },
-                  { icon: Hash, label: 'Keypad', onClick: () => setShowDTMF((v) => !v), active: showDTMF },
-                ].map(({ icon: Icon, label, onClick, active }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={onClick}
-                    className={`flex flex-col items-center gap-1 rounded-xl border py-3 text-[10px] font-semibold transition ${
-                      active
-                        ? 'border-cyan-500/30 bg-cyan-500/15 text-cyan-300'
-                        : 'border-white/[0.08] bg-white/[0.04] text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <AnimatePresence>
-                {showDTMF && <DtmfPad onDigit={sendDigit} onClose={() => setShowDTMF(false)} />}
-              </AnimatePresence>
-              <button
-                type="button"
-                onClick={hangup}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 py-4 text-sm font-semibold text-white shadow-lg shadow-red-900/25 transition hover:brightness-110 active:scale-[0.98]"
-              >
-                <PhoneOff className="h-5 w-5" />
-                End Call
-              </button>
-            </div>
-          ) : (
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => decline()}
-                disabled={isConnecting || isEnded}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-red-500/35 bg-red-500/12 py-4 text-sm font-semibold text-red-300 transition hover:bg-red-500/22 active:scale-[0.98] disabled:opacity-40"
-              >
-                <PhoneOff className="h-5 w-5" />
-                Decline
-              </button>
-              <button
-                type="button"
-                onClick={() => void accept()}
-                disabled={isConnecting || isEnded}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-cyan-500 py-4 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:brightness-110 active:scale-[0.98] disabled:opacity-70"
-              >
-                {isConnecting ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    Connecting…
-                  </>
-                ) : (
-                  <>
-                    <Phone className="h-5 w-5" />
-                    Accept
-                  </>
+          {(callerContext.company || callerContext.pastCallCount > 0 || callerContext.lastDisposition || callerContext.carrier) && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-left"
+            >
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-violet-400/90">Caller context</p>
+              <div className="space-y-1.5 text-sm text-white/70">
+                {callerContext.company && (
+                  <p className="flex items-center gap-2">
+                    <Building2 className="h-3.5 w-3.5 text-cyan-400/80" />
+                    {callerContext.company}
+                  </p>
                 )}
-              </button>
-            </div>
+                {callerContext.carrier && (
+                  <p className="text-xs text-white/40">{callerContext.carrier}</p>
+                )}
+                {callerContext.pastCallCount > 0 && (
+                  <p className="flex items-center gap-2 text-xs">
+                    <History className="h-3.5 w-3.5 text-violet-400/80" />
+                    {callerContext.pastCallCount} prior call{callerContext.pastCallCount === 1 ? '' : 's'}
+                    {callerContext.lastDisposition ? ` · last: ${callerContext.lastDisposition}` : ''}
+                  </p>
+                )}
+              </div>
+              {callerContext.loading && (
+                <p className="mt-2 text-[10px] text-white/30">Loading enrichment…</p>
+              )}
+            </motion.div>
           )}
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => decline()}
+              disabled={isConnecting || isEnded}
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-red-500/35 bg-red-500/12 py-4 text-sm font-semibold text-red-300 transition hover:bg-red-500/22 active:scale-[0.98] disabled:opacity-40"
+            >
+              <PhoneOff className="h-5 w-5" />
+              Decline
+            </button>
+            <button
+              type="button"
+              onClick={() => void accept()}
+              disabled={isConnecting || isEnded}
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-cyan-500 py-4 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:brightness-110 active:scale-[0.98] disabled:opacity-70"
+            >
+              {isConnecting ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Connecting…
+                </>
+              ) : (
+                <>
+                  <Phone className="h-5 w-5" />
+                  Accept
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </motion.div>
     </motion.div>

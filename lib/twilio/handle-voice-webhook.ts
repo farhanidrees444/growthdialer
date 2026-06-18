@@ -12,6 +12,8 @@ import { validateTwilioWebhookRequest } from '@/lib/twilio/validate-webhook';
 import { resolveTwilioSignedWebhookUrl } from '@/lib/twilio/signed-webhook-url';
 import { createServiceClient } from '@/lib/supabase/service';
 import { normalizeE164 } from '@/lib/inbound/phone';
+import { resolveInboundRingTargets } from '@/lib/twilio/resolve-inbound-ring-targets';
+import { twilioRecordingCallbackUrl } from '@/lib/twilio/webhook-routing';
 import twilio from 'twilio';
 
 const { VoiceResponse } = twilio.twiml;
@@ -134,7 +136,32 @@ export async function handleTwilioVoiceWebhook(
       return twimlResponse(response);
     }
 
-    // browser (default) — ring agent client; no-answer → inbound-dial-status
+    // browser (default) — presence-aware ring group; no-answer → inbound-dial-status
+    const { data: ownerRow } = await supabase
+      .from('purchased_numbers')
+      .select('workspace_id')
+      .eq('phone_number', inbound.toNumber)
+      .neq('status', 'released')
+      .limit(1)
+      .maybeSingle();
+
+    const ringTargets = await resolveInboundRingTargets(supabase, {
+      primaryUserId: inbound.userId,
+      workspaceId: (ownerRow?.workspace_id as string | undefined) ?? null,
+    });
+
+    if (ringTargets.length === 0) {
+      const recordingCallback = twilioRecordingCallbackUrl();
+      response.say('No agents are available right now. Please leave a message after the tone.');
+      response.record({
+        maxLength: 120,
+        playBeep: true,
+        recordingStatusCallback: recordingCallback,
+        recordingStatusCallbackMethod: 'POST',
+      });
+      return twimlResponse(response);
+    }
+
     const dial = response.dial({
       callerId: inbound.fromNumber,
       timeout: Math.min(Math.max(routing.inbound_ring_seconds, 15), 60),
@@ -143,9 +170,13 @@ export async function handleTwilioVoiceWebhook(
       ...dialStatusCallbackOptions(statusCallback),
       // TODO: reconnect recording pipeline — Twilio session
     });
-    const client = dial.client(inbound.clientIdentity);
-    client.parameter({ name: 'gd_from_number', value: inbound.fromNumber });
-    client.parameter({ name: 'gd_to_number', value: inbound.toNumber });
+
+    for (const target of ringTargets) {
+      const client = dial.client(target.clientIdentity);
+      client.parameter({ name: 'gd_from_number', value: inbound.fromNumber });
+      client.parameter({ name: 'gd_to_number', value: inbound.toNumber });
+    }
+
     return twimlResponse(response);
   } catch (error) {
     console.error('[TwilioVoice] Exception:', error instanceof Error ? error.message : String(error));
