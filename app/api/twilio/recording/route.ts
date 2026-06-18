@@ -58,6 +58,19 @@ export async function POST(request: NextRequest) {
         .eq('id', row.id);
     }
 
+    const inboundSid = parentSid ?? callSid;
+    await supabase
+      .from('inbound_calls')
+      .update({
+        status: 'voicemail',
+        voicemail_recording_url: recordingUrl,
+        duration_seconds:
+          duration != null && !Number.isNaN(duration) ? duration : null,
+        ended_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('twilio_call_sid', inboundSid);
+
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error('[TwilioRecording]', error);

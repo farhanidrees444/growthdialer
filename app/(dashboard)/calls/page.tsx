@@ -237,13 +237,11 @@ export default function CallsPage() {
       .channel('calls-page-stream')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'calls' },
+        { event: '*', schema: 'public', table: 'inbound_calls' },
         (payload) => {
           const row = (payload.new ?? payload.old) as Record<string, unknown>;
-          const dir = row.direction as string | undefined;
-          if (dir !== 'inbound' && dir !== 'outbound') return;
           const status = (row.status as string) ?? 'update';
-          pushLog(`${dir} call ${status}`, dir === 'inbound' ? 'cyan' : 'emerald');
+          pushLog(`incoming call ${status}`, status === 'active' || status === 'completed' ? 'emerald' : 'cyan');
           loadStats();
           setHistoryKey((k) => k + 1);
         },
@@ -293,7 +291,7 @@ export default function CallsPage() {
       <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-3 py-24">
           <Loader2 className="h-8 w-8 animate-spin text-cyan-400/50" />
-          <p className="text-sm text-muted-foreground">Initializing Calls…</p>
+          <p className="text-sm text-muted-foreground">Initializing Incoming…</p>
         </div>
       </main>
     );
@@ -304,7 +302,7 @@ export default function CallsPage() {
       <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
         <div className="mx-auto max-w-5xl space-y-5">
           <PageHeader
-            title="Calls"
+            title="Incoming"
             description="Command center for inbound traffic, agent voice status, and real-time call intelligence."
             icon={Radio}
             badge="Command Center"
@@ -326,7 +324,7 @@ export default function CallsPage() {
     <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
       <div className="mx-auto max-w-6xl space-y-5">
         <PageHeader
-          title="Calls"
+          title="Incoming"
           description="Real-time inbound command center — keep this page open to receive browser-routed calls."
           icon={Radio}
           badge={phoneStatus === 'ready' ? 'Live' : 'Setup'}

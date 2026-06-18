@@ -13,8 +13,9 @@ const nextConfig: NextConfig = {
     return [
       // Align legacy/alias auth path to the canonical /login route
       { source: "/signin", destination: "/login", permanent: false },
-      { source: "/inbound", destination: "/calls", permanent: false },
-      { source: "/live-floor", destination: "/calls", permanent: false },
+      { source: "/inbound", destination: "/incoming", permanent: false },
+      { source: "/live-floor", destination: "/incoming", permanent: false },
+      { source: "/calls", destination: "/incoming", permanent: false },
     ]
   },
 };

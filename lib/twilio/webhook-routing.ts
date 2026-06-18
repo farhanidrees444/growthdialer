@@ -28,6 +28,11 @@ export function twilioStatusCallbackUrl(): string | undefined {
   return base ? `${base}/api/twilio/status-callback` : undefined;
 }
 
+export function twilioVoiceStatusCallbackUrl(): string | undefined {
+  const base = resolveVoiceAppBaseUrl();
+  return base ? `${base}/api/twilio/voice-status` : undefined;
+}
+
 export function twilioRecordingCallbackUrl(): string | undefined {
   const base = resolveVoiceAppBaseUrl();
   return base ? `${base}/api/twilio/recording` : undefined;

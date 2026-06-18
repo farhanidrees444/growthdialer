@@ -51,7 +51,7 @@ const MORE_SECTIONS: MoreSection[] = [
     title: 'Engage',
     links: [
       { icon: ListOrdered, label: 'Sequences', href: '/sequences' },
-      { icon: PhoneIncoming, label: 'Calls', href: '/calls' },
+      { icon: PhoneIncoming, label: 'Incoming', href: '/incoming' },
     ],
   },
   {

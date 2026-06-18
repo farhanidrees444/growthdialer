@@ -24,7 +24,7 @@ export function InboundHistoryPanel({ live = false }: Props) {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(() => {
-    void apiFetch('/api/calls/logs?direction=inbound&limit=8')
+    void apiFetch('/api/incoming/history?limit=8')
       .then((r) => r.json())
       .then((d: { calls?: CallLogRow[] }) => setCalls(d.calls ?? []))
       .finally(() => setLoading(false));
@@ -39,10 +39,10 @@ export function InboundHistoryPanel({ live = false }: Props) {
       .channel(`inbound-history-${userId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'calls', filter: `user_id=eq.${userId}` },
+        { event: '*', schema: 'public', table: 'inbound_calls', filter: `routed_agent_id=eq.${userId}` },
         (payload) => {
           const row = payload.new as Record<string, unknown> | undefined;
-          if (row?.direction === 'inbound') load();
+          if (row) load();
         },
       )
       .subscribe();

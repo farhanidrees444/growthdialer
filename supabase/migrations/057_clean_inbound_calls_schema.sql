@@ -7,19 +7,19 @@
 -- parallel dialer code paths. Drop those only after their Twilio replacements
 -- are complete and verified.
 
+DROP TABLE IF EXISTS public.voice_session_logs CASCADE;
+DROP TABLE IF EXISTS public.voice_agent_presence CASCADE;
+DROP TABLE IF EXISTS public.inbound_calls CASCADE;
+DROP TABLE IF EXISTS public.agent_presence CASCADE;
+
 CREATE TABLE IF NOT EXISTS public.agent_presence (
   agent_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  workspace_id UUID REFERENCES public.workspaces(id) ON DELETE SET NULL,
   status TEXT NOT NULL DEFAULT 'offline'
     CHECK (status IN ('online', 'away', 'offline')),
   last_heartbeat_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   device_state TEXT,
-  tab_id TEXT,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
-CREATE INDEX IF NOT EXISTS idx_agent_presence_workspace_status
-  ON public.agent_presence(workspace_id, status, last_heartbeat_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_agent_presence_ringable
   ON public.agent_presence(last_heartbeat_at DESC)
@@ -35,9 +35,6 @@ CREATE POLICY agent_presence_own ON public.agent_presence
 CREATE TABLE IF NOT EXISTS public.inbound_calls (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   twilio_call_sid TEXT UNIQUE,
-  twilio_parent_call_sid TEXT,
-  workspace_id UUID REFERENCES public.workspaces(id) ON DELETE SET NULL,
-  owner_agent_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   routed_agent_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   from_number TEXT NOT NULL,
   to_number TEXT NOT NULL,
@@ -53,29 +50,18 @@ CREATE TABLE IF NOT EXISTS public.inbound_calls (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_inbound_calls_workspace_started
-  ON public.inbound_calls(workspace_id, started_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_inbound_calls_owner_started
-  ON public.inbound_calls(owner_agent_id, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_inbound_calls_routed_started
+  ON public.inbound_calls(routed_agent_id, started_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_inbound_calls_status_started
   ON public.inbound_calls(status, started_at DESC);
 
 ALTER TABLE public.inbound_calls ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS inbound_calls_workspace_select ON public.inbound_calls;
-CREATE POLICY inbound_calls_workspace_select ON public.inbound_calls
+DROP POLICY IF EXISTS inbound_calls_agent_select ON public.inbound_calls;
+CREATE POLICY inbound_calls_agent_select ON public.inbound_calls
   FOR SELECT USING (
-    owner_agent_id = auth.uid()
-    OR routed_agent_id = auth.uid()
-    OR EXISTS (
-      SELECT 1
-      FROM public.workspace_members wm
-      WHERE wm.workspace_id = inbound_calls.workspace_id
-        AND wm.user_id = auth.uid()
-        AND wm.status = 'active'
-    )
+    routed_agent_id = auth.uid()
   );
 
 -- Webhooks write through service-role server clients. No broad INSERT/UPDATE

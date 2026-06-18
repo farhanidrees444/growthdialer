@@ -39,7 +39,7 @@ async function issueTwilioToken(request: NextRequest): Promise<NextResponse> {
   }
 
   const identity = toTwilioClientIdentity(authUser.id);
-  const edge = process.env.NEXT_PUBLIC_TWILIO_EDGE?.trim() || 'roaming';
+  const edge = process.env.NEXT_PUBLIC_TWILIO_EDGE?.trim() || null;
   const acceptLanguage = request.headers.get('accept-language')?.split(',')[0]?.trim() || 'en';
 
   const voiceGrant = new VoiceGrant({

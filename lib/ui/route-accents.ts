@@ -74,7 +74,7 @@ export const ROUTE_ACCENTS: Record<RouteAccentId, RouteAccent> = {
   },
   calls: {
     id: 'calls',
-    label: 'Call Logs',
+    label: 'Incoming',
     icon: 'text-sky-400',
     activePill: 'border border-sky-500/20 bg-sky-500/[0.08] shadow-[0_0_24px_rgba(56,189,248,0.12)]',
     bar: 'from-sky-500 to-cyan-400',
@@ -179,6 +179,7 @@ const NAV_ITEM_ACCENT: Record<string, RouteAccentId> = {
   dialer: 'dialer',
   sequences: 'sequences',
   leads: 'leads',
+  incoming: 'calls',
   calls: 'calls',
   inbound: 'calls',
   'call-logs': 'calls',
@@ -200,6 +201,7 @@ export function resolveRouteAccent(pathname: string): RouteAccent {
   if (pathname.startsWith('/dialer')) return ROUTE_ACCENTS.dialer;
   if (pathname.startsWith('/sequences')) return ROUTE_ACCENTS.sequences;
   if (pathname.startsWith('/leads')) return ROUTE_ACCENTS.leads;
+  if (pathname.startsWith('/incoming')) return ROUTE_ACCENTS.calls;
   if (pathname.startsWith('/calls')) return ROUTE_ACCENTS.calls;
   if (pathname.startsWith('/live-floor')) return ROUTE_ACCENTS.calls;
   if (pathname.startsWith('/inbound')) return ROUTE_ACCENTS.calls;

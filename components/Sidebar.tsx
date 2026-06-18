@@ -70,7 +70,7 @@ const ENGAGE_ITEMS: NavItem[] = [
   { id: "dialer", icon: Phone, label: "AI Dialer", href: "/dialer", badge: "Live", sparkle: true },
   { id: "sequences", icon: ListOrdered, label: "Sequences", href: "/sequences" },
   { id: "leads", icon: Users, label: "Leads", href: "/leads", countKey: "leads" },
-  { id: "calls", icon: PhoneIncoming, label: "Calls", href: "/calls", badge: "Live" },
+  { id: "incoming", icon: PhoneIncoming, label: "Incoming", href: "/incoming", badge: "Live" },
 ];
 
 const INTELLIGENCE_ITEMS: NavItem[] = [
@@ -288,7 +288,7 @@ function SidebarNavItem({
   const Icon = item.icon;
   const accent = getNavItemAccent(item.id);
   const { isRinging: callsRinging } = useCalls();
-  const showRingPulse = item.id === "calls" && callsRinging;
+  const showRingPulse = item.id === "incoming" && callsRinging;
 
   const linkInner = (
     <Link

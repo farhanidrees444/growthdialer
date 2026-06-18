@@ -7,6 +7,7 @@ import {
   resolveOutboundRoute,
   twilioInboundDialStatusUrl,
   twilioStatusCallbackUrl,
+  twilioVoiceStatusCallbackUrl,
 } from '@/lib/twilio/webhook-routing';
 import { validateTwilioWebhookRequest } from '@/lib/twilio/validate-webhook';
 import { resolveTwilioSignedWebhookUrl } from '@/lib/twilio/signed-webhook-url';
@@ -66,6 +67,7 @@ export async function handleTwilioVoiceWebhook(
     }
 
     const statusCallback = twilioStatusCallbackUrl();
+    const inboundStatusCallback = twilioVoiceStatusCallbackUrl();
     const dialActionUrl = twilioInboundDialStatusUrl();
     const response = new VoiceResponse();
     const clientUserId = parseTwilioClientIdentity(from);
@@ -120,8 +122,7 @@ export async function handleTwilioVoiceWebhook(
       callSid: params.CallSid ?? null,
       fromNumber: inbound.fromNumber,
       toNumber: inbound.toNumber,
-      ownerAgentId: inbound.userId,
-      workspaceId: inboundWorkspaceId,
+      routedAgentId: inbound.userId,
     });
 
     if (routing.inbound_mode === 'off') {
@@ -135,7 +136,7 @@ export async function handleTwilioVoiceWebhook(
         const dial = response.dial({
           callerId: inbound.fromNumber,
           timeout: routing.inbound_ring_seconds,
-          ...dialStatusCallbackOptions(statusCallback),
+          ...dialStatusCallbackOptions(inboundStatusCallback),
           // TODO: reconnect recording pipeline — Twilio session
         });
         dial.number(forwardTo);
@@ -176,7 +177,7 @@ export async function handleTwilioVoiceWebhook(
       timeout: Math.min(Math.max(routing.inbound_ring_seconds, 15), 60),
       action: dialActionUrl,
       method: 'POST',
-      ...dialStatusCallbackOptions(statusCallback),
+      ...dialStatusCallbackOptions(inboundStatusCallback),
       // TODO: reconnect recording pipeline — Twilio session
     });
 

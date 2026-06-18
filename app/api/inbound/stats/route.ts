@@ -35,10 +35,9 @@ export async function GET(request: NextRequest) {
       .eq('status', 'active')
       .order('is_default', { ascending: false }),
     supabase
-      .from('calls')
-      .select('id, status, disposition, answered_at, started_at, created_at')
-      .eq('user_id', user.id)
-      .eq('direction', 'inbound')
+      .from('inbound_calls')
+      .select('id, status, answered_at, started_at, created_at')
+      .eq('routed_agent_id', user.id)
       .order('started_at', { ascending: false, nullsFirst: false })
       .limit(200),
   ]);
@@ -51,7 +50,6 @@ export async function GET(request: NextRequest) {
   todayStart.setHours(0, 0, 0, 0);
 
   const missedCount = calls.filter((c) => {
-    if (c.disposition === 'missed') return true;
     return !c.answered_at && ['missed', 'no_answer', 'canceled', 'failed', 'rejected'].includes(c.status ?? '');
   }).length;
 

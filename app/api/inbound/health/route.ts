@@ -54,10 +54,9 @@ export async function GET(request: NextRequest) {
       .eq('status', 'active')
       .order('is_default', { ascending: false }),
     supabase
-      .from('calls')
+      .from('inbound_calls')
       .select('id, started_at')
-      .eq('user_id', user.id)
-      .eq('direction', 'inbound')
+      .eq('routed_agent_id', user.id)
       .order('started_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
