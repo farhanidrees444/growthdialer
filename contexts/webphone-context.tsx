@@ -563,20 +563,31 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   }, [promoteCallToActive, safeSet, setupCallEventHandlers, twilioDevice.device]);
 
   handleIncomingRef.current = (call: Call) => {
+    const callId = getCallStableId(call);
+    const fromNumber = extractInboundFromNumber(call);
+    const toNumber = extractInboundToNumber(call);
+    const status = call.status();
+    const mapped = mapCallStatus(status);
+
     // Genuine inbound PSTN calls are owned by the Calls module. Dialer bridge legs
     // (power/parallel auto-answer) keep using the WebPhone's own handling below.
     if (!shouldBridgeAutoAnswer() && externalInboundHandlerRef.current) {
       outboundDialRef.current = false;
+      incomingCallRef.current = call;
+      activeCallRef.current = call;
+      deviceRef.current = twilioDevice.device;
       safeSet(setHasOutboundSession, false);
+      safeSet(setActiveCallId, callId);
+      safeSet(setCallStatus, mapped);
       isInboundRingingLiveRef.current = true;
+      if (!inboundRingStartedRef.current) {
+        inboundRingStartedRef.current = Date.now();
+      }
       safeSet(setIsInboundRinging, true);
+      setupCallEventHandlers(call, true, { from: fromNumber, to: toNumber });
       externalInboundHandlerRef.current(call);
       return;
     }
-
-    const callId = getCallStableId(call);
-    const fromNumber = extractInboundFromNumber(call);
-    const toNumber = extractInboundToNumber(call);
     console.log('[WebPhone] incoming call:', callId, fromNumber ?? '');
 
     outboundDialRef.current = false;
@@ -586,9 +597,6 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     activeCallRef.current = call;
     deviceRef.current = twilioDevice.device;
     safeSet(setActiveCallId, callId);
-
-    const status = call.status();
-    const mapped = mapCallStatus(status);
 
     safeSet(setCallStatus, mapped);
 

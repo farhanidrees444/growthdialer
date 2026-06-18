@@ -114,7 +114,13 @@ const EMPTY_CALLER_CONTEXT: CallerContext = {
 };
 
 export function CallsProvider({ children }: { children: ReactNode }) {
-  const { registerInboundHandler, requestMicPermission, adoptInboundCall, staleTabWarning } = useWebPhone();
+  const {
+    registerInboundHandler,
+    requestMicPermission,
+    answerIncomingCall,
+    hangup: hangupWebPhone,
+    staleTabWarning,
+  } = useWebPhone();
   const { registerCallMeta } = useCallContext();
 
   const [phase, setPhase] = useState<CallPhase>('idle');
@@ -335,16 +341,12 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     registerCallMeta(null, fromNumber ?? '');
 
     // #region agent log
-    agentDebugLog('H1,H2', 'contexts/calls-context.tsx:accept:pre-call-accept', 'Audio unlock completed; invoking call.accept next', {
+    agentDebugLog('H1,H2', 'contexts/calls-context.tsx:accept:pre-call-accept', 'Audio unlock completed; invoking WebPhone answer path next', {
       elapsedMs: Date.now() - acceptStartedAt,
       snapshot: safeCallSnapshot(call),
     });
     // #endregion
 
-    const meta = {
-      from: extractInboundFromNumber(call) ?? fromNumber,
-      to: extractInboundToNumber(call) ?? toNumber,
-    };
     const sid = extractCallSidFromSdkCall(call);
 
     const handoff = () => {
@@ -359,7 +361,6 @@ export function CallsProvider({ children }: { children: ReactNode }) {
       resetSession();
     };
 
-    adoptInboundCall(call, meta);
     call.once('accept', handoff);
 
     clearAcceptTimer();
@@ -382,13 +383,24 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     }, ACCEPT_TIMEOUT_MS);
 
     try {
-      call.accept({ rtcConstraints: { audio: true } });
+      const opened = await answerIncomingCall();
       // #region agent log
-      agentDebugLog('H1', 'contexts/calls-context.tsx:accept:called', 'call.accept returned without throwing', {
+      agentDebugLog('H1', 'contexts/calls-context.tsx:accept:called', 'WebPhone answer path completed', {
         elapsedMs: Date.now() - acceptStartedAt,
+        opened,
         snapshot: safeCallSnapshot(call),
       });
       // #endregion
+      if (opened) {
+        clearAcceptTimer();
+        resetSession();
+        return;
+      }
+      clearAcceptTimer();
+      call.removeListener('accept', handoff);
+      setConnectError('Call connection failed — caller will hear voicemail fallback.');
+      setPhase('incoming');
+      playInboundRingtone();
     } catch (err) {
       clearAcceptTimer();
       call.removeListener('accept', handoff);
@@ -411,13 +423,12 @@ export function CallsProvider({ children }: { children: ReactNode }) {
       playInboundRingtone();
     }
   }, [
-    adoptInboundCall,
+    answerIncomingCall,
     clearAcceptTimer,
     fromNumber,
     registerCallMeta,
     requestMicPermission,
     resetSession,
-    toNumber,
   ]);
 
   const decline = useCallback(() => {
@@ -429,8 +440,9 @@ export function CallsProvider({ children }: { children: ReactNode }) {
         else call.disconnect();
       } catch { /* ignore */ }
     }
+    hangupWebPhone();
     endSession();
-  }, [endSession]);
+  }, [endSession, hangupWebPhone]);
 
   const displayFrom = fromNumber;
 
