@@ -29,11 +29,31 @@ export function formDataToTwilioParams(formData: FormData): Record<string, strin
   return params;
 }
 
-function twimlResponse(twiml: InstanceType<typeof VoiceResponse>): NextResponse {
-  return new NextResponse(twiml.toString(), {
+function shouldLogGeneratedTwiml(request?: NextRequest): boolean {
+  if (process.env.NODE_ENV !== 'production') return true;
+  return request?.nextUrl.searchParams.get('twiml_debug') === '1'
+    || request?.nextUrl.searchParams.get('gd_debug_twiml') === '1';
+}
+
+function twimlResponse(
+  twiml: InstanceType<typeof VoiceResponse>,
+  request?: NextRequest,
+  label = 'TwilioVoice',
+): NextResponse {
+  const body = twiml.toString();
+  if (shouldLogGeneratedTwiml(request)) {
+    console.info(`[${label}] Generated TwiML:\n${body}`);
+  }
+  return new NextResponse(body, {
     status: 200,
     headers: { 'Content-Type': 'text/xml; charset=utf-8' },
   });
+}
+
+function hangupTwimlResponse(request: NextRequest, label: string): NextResponse {
+  const response = new VoiceResponse();
+  response.hangup();
+  return twimlResponse(response, request, label);
 }
 
 /**
@@ -57,14 +77,16 @@ export async function handleTwilioVoiceWebhook(
 
     if (!verification.ok) {
       console.error('[TwilioVoice] Signature validation failed:', verification.reason);
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
+      // Twilio Voice URLs must return TwiML even when we reject the request.
+      // Do not process invalid signatures; hang up with valid XML to avoid 12200 warnings.
+      return hangupTwimlResponse(request, 'TwilioVoiceInvalidSignature');
     }
 
     const supabase = createServiceClient();
     if (!supabase) {
       const err = new VoiceResponse();
       err.say('Voice service is temporarily unavailable.');
-      return twimlResponse(err);
+      return twimlResponse(err, request);
     }
 
     const statusCallback = twilioStatusCallbackUrl();
@@ -81,7 +103,7 @@ export async function handleTwilioVoiceWebhook(
       if (!route) {
         console.error('[TwilioVoice] OUTBOUND route failed', { from, to, callerIdParam });
         response.say('No caller ID is configured for your account.');
-        return twimlResponse(response);
+        return twimlResponse(response, request);
       }
 
       const dial = response.dial({
@@ -90,7 +112,7 @@ export async function handleTwilioVoiceWebhook(
         ...(route.routing.recording_enabled ? dialRecordingOptions(recordingCallback) : {}),
       });
       dial.number(route.toNumber);
-      return twimlResponse(response);
+      return twimlResponse(response, request);
     }
 
     // Dialer bridge TwiML — prospect answered, connect agent browser client
@@ -108,7 +130,7 @@ export async function handleTwilioVoiceWebhook(
       );
       const client = dial.client(bridgeIdentity);
       client.parameter({ name: 'gd_bridge_auto_answer', value: '1' });
-      return twimlResponse(response);
+      return twimlResponse(response, request);
     }
 
     // Inbound PSTN
@@ -116,7 +138,7 @@ export async function handleTwilioVoiceWebhook(
     if (!inbound) {
       console.error('[TwilioVoice] INBOUND no owner for To=', to);
       response.say('This number is not configured to receive calls.');
-      return twimlResponse(response);
+      return twimlResponse(response, request);
     }
 
     const { routing } = inbound;
@@ -140,7 +162,7 @@ export async function handleTwilioVoiceWebhook(
 
     if (routing.inbound_mode === 'off') {
       response.reject();
-      return twimlResponse(response);
+      return twimlResponse(response, request);
     }
 
     if (routing.inbound_mode === 'forward' && routing.inbound_forward_number) {
@@ -153,7 +175,7 @@ export async function handleTwilioVoiceWebhook(
           ...(routing.recording_enabled ? dialRecordingOptions(recordingCallback) : {}),
         });
         dial.number(forwardTo);
-        return twimlResponse(response);
+        return twimlResponse(response, request);
       }
     }
 
@@ -165,7 +187,7 @@ export async function handleTwilioVoiceWebhook(
         recordingStatusCallback: recordingCallback,
         recordingStatusCallbackMethod: 'POST',
       });
-      return twimlResponse(response);
+      return twimlResponse(response, request);
     }
 
     // browser (default) — presence-aware ring group; no-answer → inbound-dial-status
@@ -182,7 +204,7 @@ export async function handleTwilioVoiceWebhook(
         recordingStatusCallback: recordingCallback,
         recordingStatusCallbackMethod: 'POST',
       });
-      return twimlResponse(response);
+      return twimlResponse(response, request);
     }
 
     const dial = response.dial({
@@ -201,18 +223,18 @@ export async function handleTwilioVoiceWebhook(
       client.parameter({ name: 'gd_to_number', value: inbound.toNumber });
     }
 
-    return twimlResponse(response);
+    return twimlResponse(response, request);
   } catch (error) {
     console.error('[TwilioVoice] Exception:', error instanceof Error ? error.message : String(error));
     const fallback = new VoiceResponse();
     fallback.say('Sorry, an error occurred. Please try again later.');
-    return twimlResponse(fallback);
+    return twimlResponse(fallback, request);
   }
 }
 
-export function twilioVoiceFallbackTwiml(): NextResponse {
+export function twilioVoiceFallbackTwiml(request?: NextRequest): NextResponse {
   const response = new VoiceResponse();
   response.say('We could not complete your call. Please try again later.');
   response.hangup();
-  return twimlResponse(response);
+  return twimlResponse(response, request, 'TwilioVoiceFallback');
 }

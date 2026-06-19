@@ -19,6 +19,12 @@ function formDataToParams(formData: FormData): Record<string, string> {
   return params;
 }
 
+function shouldLogGeneratedTwiml(request: NextRequest): boolean {
+  if (process.env.NODE_ENV !== 'production') return true;
+  return request.nextUrl.searchParams.get('twiml_debug') === '1'
+    || request.nextUrl.searchParams.get('gd_debug_twiml') === '1';
+}
+
 /**
  * POST /api/twilio/inbound-dial-status
  * After <Dial><Client> completes — route no-answer to voicemail when configured.
@@ -32,7 +38,12 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get('x-twilio-signature');
     const verification = validateTwilioWebhookRequest(signature, webhookUrl, params);
     if (!verification.ok) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
+      console.error('[TwilioInboundDialStatus] Signature validation failed:', verification.reason);
+      // <Dial action> expects TwiML. Reject invalid signatures without processing,
+      // but still return valid XML so Twilio does not raise a 12200 warning.
+      const response = new VoiceResponse();
+      response.hangup();
+      return twimlResponse(response, request);
     }
 
     const dialStatus = (params.DialCallStatus ?? '').toLowerCase();
@@ -69,24 +80,28 @@ export async function POST(request: NextRequest) {
               recordingStatusCallback: recordingCallback,
               recordingStatusCallbackMethod: 'POST',
             });
-            return twimlResponse(response);
+            return twimlResponse(response, request);
           }
         }
       }
     }
 
     response.hangup();
-    return twimlResponse(response);
+    return twimlResponse(response, request);
   } catch (error) {
     console.error('[TwilioInboundDialStatus]', error);
     const response = new VoiceResponse();
     response.hangup();
-    return twimlResponse(response);
+    return twimlResponse(response, request);
   }
 }
 
-function twimlResponse(twiml: InstanceType<typeof VoiceResponse>): NextResponse {
-  return new NextResponse(twiml.toString(), {
+function twimlResponse(twiml: InstanceType<typeof VoiceResponse>, request: NextRequest): NextResponse {
+  const body = twiml.toString();
+  if (shouldLogGeneratedTwiml(request)) {
+    console.info(`[TwilioInboundDialStatus] Generated TwiML:\n${body}`);
+  }
+  return new NextResponse(body, {
     status: 200,
     headers: { 'Content-Type': 'text/xml; charset=utf-8' },
   });

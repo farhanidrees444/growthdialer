@@ -18,5 +18,5 @@ export async function POST(request: NextRequest) {
   } catch {
     /* still return TwiML */
   }
-  return twilioVoiceFallbackTwiml();
+  return twilioVoiceFallbackTwiml(request);
 }

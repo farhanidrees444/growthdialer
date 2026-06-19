@@ -39,7 +39,10 @@ export async function POST(request: NextRequest) {
     const verification = validateTwilioWebhookRequest(signature, webhookUrl, params);
 
     if (!verification.ok) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
+      console.error('[TwilioRecording] Signature validation failed:', verification.reason);
+      // Recording callbacks are status notifications, not TwiML requests. Reject
+      // invalid signatures without processing and without returning a JSON body.
+      return new NextResponse(null, { status: 403 });
     }
 
     const recordingUrl = params.RecordingUrl?.trim()

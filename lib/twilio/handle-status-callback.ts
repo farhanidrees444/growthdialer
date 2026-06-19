@@ -22,7 +22,10 @@ export async function handleTwilioStatusCallback(
     const verification = validateTwilioWebhookRequest(signature, webhookUrl, params);
 
     if (!verification.ok) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
+      console.error('[TwilioStatusCallback] Signature validation failed:', verification.reason);
+      // Status callbacks do not consume TwiML. Fail closed without a JSON body so
+      // Twilio sees a plain webhook rejection and no parseable-but-invalid payload.
+      return new NextResponse(null, { status: 403 });
     }
 
     const supabase = createServiceClient();
