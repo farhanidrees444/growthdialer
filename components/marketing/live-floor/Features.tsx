@@ -64,7 +64,7 @@ function TranscriptDemo() {
       <motion.div
         initial={false}
         animate={{ opacity: line >= 2 ? 1 : 0 }}
-        className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-400"
+        className="inline-flex items-center gap-1.5 rounded-full border border-[#06B6D4]/20 bg-[#06B6D4]/10 px-2.5 py-1 text-[11px] text-[#06B6D4]"
       >
         Positive sentiment
       </motion.div>
@@ -75,7 +75,24 @@ function TranscriptDemo() {
 
 export function Features() {
   return (
-    <section id="features" className="relative px-5 py-20 lg:px-8 lg:py-28">
+    <motion.section
+      id="features"
+      className="relative overflow-hidden px-5 py-16 lg:px-8 lg:py-24"
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, amount: 0.25, margin: '-10%' }}
+      variants={revealContainer}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-[-8%] top-0 h-[420px] w-[420px] rounded-full opacity-[0.05] blur-3xl"
+        style={{ background: 'radial-gradient(circle, #8B5CF6 0%, transparent 70%)' }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute right-[-6%] top-28 h-[360px] w-[360px] rounded-full opacity-[0.04] blur-3xl"
+        style={{ background: 'radial-gradient(circle, #06B6D4 0%, transparent 72%)' }}
+      />
       <div className="mx-auto max-w-7xl">
         <InViewReveal variants={revealContainer} className="mb-14 max-w-2xl">
           <motion.p variants={reveal} className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
@@ -95,7 +112,7 @@ export function Features() {
             <Spotlight />
             <div>
               <div className="mb-5 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7C3AED]/10 text-[#A78BFA]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8B5CF6]/10 text-[#8B5CF6]">
                   <Brain className="h-5 w-5" />
                 </span>
                 <span className="rounded-full border border-white/[0.08] px-2.5 py-1 text-[11px] font-medium text-zinc-400">
@@ -118,7 +135,7 @@ export function Features() {
             className="marketing-hover-lift group relative overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-[#0F0F12] p-6 transition-colors hover:bg-[#16161A] lg:col-span-3 lg:row-span-2"
           >
             <Spotlight />
-            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#7C3AED]/10 text-[#A78BFA]">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#8B5CF6]/10 text-[#8B5CF6]">
               <Target className="h-5 w-5" />
             </div>
             <h3 className="font-display text-xl font-medium text-[#F5F5F7]">AI Dialer</h3>
@@ -140,7 +157,7 @@ export function Features() {
                 className={`marketing-hover-lift group relative rounded-[1.5rem] border border-white/[0.06] bg-[#0F0F12] p-5 transition-colors hover:bg-[#16161A] ${f.col}`}
               >
                 <Spotlight />
-                <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.04] text-zinc-300 group-hover:text-[#A78BFA]">
+                <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.04] text-zinc-300 group-hover:text-[#8B5CF6]">
                   <Icon className="h-4 w-4" />
                 </span>
                 <h3 className="text-[15px] font-medium text-[#F5F5F7]">{f.title}</h3>
@@ -166,6 +183,6 @@ export function Features() {
           </div>
         </InViewReveal>
       </div>
-    </section>
+    </motion.section>
   );
 }

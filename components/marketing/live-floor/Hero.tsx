@@ -1,11 +1,11 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { ArrowRight, Play, Phone, Sparkles, Activity, Mic2, CheckCircle2 } from 'lucide-react';
 import { ShimmerButton } from './ShimmerButton';
 import { TypewriterRotator } from './TypewriterRotator';
-import { useMarketingMotionReduced, EASE_OUT } from './motion';
+import { useMarketingMotionReduced, EASE_OUT, SPRING } from './motion';
 import { LottiePulse } from '@/components/marketing/home/LottiePulse';
 import { cn } from '@/lib/utils';
 
@@ -37,7 +37,7 @@ function VoiceOrb() {
     <div className="relative mx-auto mb-6 flex h-20 w-20 items-center justify-center">
       <LottiePulse size={128} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-80" />
       <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-white/[0.12] bg-white/[0.06] shadow-[0_0_60px_rgba(124,58,237,0.35)] backdrop-blur-xl">
-        <Mic2 className="h-7 w-7 text-[#C4B5FD]" />
+        <Mic2 className="h-7 w-7 text-[#8B5CF6]" />
       </div>
     </div>
   );
@@ -46,14 +46,28 @@ function VoiceOrb() {
 function DashboardMockup() {
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useMarketingMotionReduced();
+  const [active, setActive] = useState(false);
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
-  const smoothX = useSpring(mx, { stiffness: 120, damping: 18, mass: 0.4 });
-  const smoothY = useSpring(my, { stiffness: 120, damping: 18, mass: 0.4 });
+  const smoothX = useSpring(mx, { stiffness: 200, damping: 25, mass: 0.4 });
+  const smoothY = useSpring(my, { stiffness: 200, damping: 25, mass: 0.4 });
   const rotateY = useTransform(smoothX, [-0.5, 0.5], [-9, 9]);
   const rotateX = useTransform(smoothY, [-0.5, 0.5], [7, -7]);
 
-  const onMove = (event: React.PointerEvent<HTMLDivElement>) => {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setActive(entry.isIntersecting),
+      { threshold: 0.4, rootMargin: '-10%' }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const onMove = (event: PointerEvent<HTMLDivElement>) => {
     if (reduce) return;
     const rect = ref.current?.getBoundingClientRect();
     if (!rect) return;
@@ -69,103 +83,116 @@ function DashboardMockup() {
   return (
     <motion.div
       initial={{ opacity: 0, y: 44, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.8, delay: 0.42, ease: EASE_OUT }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.35, margin: '-10%' }}
+      transition={{ ...SPRING, delay: 0.2 }}
       className="relative mx-auto mt-14 max-w-6xl [perspective:1600px]"
     >
       <motion.div
-        ref={ref}
-        onPointerMove={onMove}
-        onPointerLeave={onLeave}
-        style={reduce ? undefined : { rotateX, rotateY, transformStyle: 'preserve-3d' }}
-        className="marketing-glass relative overflow-hidden rounded-[2rem] p-3 sm:p-4"
+        animate={!reduce && active ? { y: [0, -4, 0] } : { y: 0 }}
+        transition={{ duration: 6, repeat: active ? Infinity : 0, ease: 'easeInOut' }}
+        style={!reduce && active ? { willChange: 'transform' } : undefined}
+        className="relative"
       >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(124,58,237,0.22),transparent_32%),radial-gradient(circle_at_88%_10%,rgba(6,182,212,0.16),transparent_34%)]" />
-        <div className="relative overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-[#09090b]/90">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
-            <div className="flex gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-red-400/60" />
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-300/60" />
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-300/60" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -inset-8 rounded-[2.5rem] opacity-40 blur-[60px]"
+          style={{ background: 'radial-gradient(circle at 50% 52%, rgba(139,92,246,0.28), rgba(6,182,212,0.08) 42%, transparent 70%)' }}
+        />
+        <motion.div
+          ref={ref}
+          onPointerMove={onMove}
+          onPointerLeave={onLeave}
+          style={reduce ? undefined : { rotateX, rotateY, transformStyle: 'preserve-3d' }}
+          className="marketing-glass relative overflow-hidden rounded-[2rem] p-3 sm:p-4"
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(139,92,246,0.22),transparent_32%),radial-gradient(circle_at_88%_10%,rgba(6,182,212,0.16),transparent_34%)]" />
+          <div className="relative overflow-hidden rounded-[1.35rem] border border-white/[0.08] bg-[#09090b]/90">
+            <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+              <div className="flex gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#8B5CF6]/55" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#06B6D4]/55" />
+              </div>
+              <span className="rounded-full border border-[#06B6D4]/25 bg-[#06B6D4]/10 px-3 py-1 text-[11px] font-medium text-[#06B6D4]">
+                Live call analyzed
+              </span>
             </div>
-            <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] font-medium text-emerald-300">
-              Live call analyzed
-            </span>
-          </div>
 
-          <div className="grid gap-4 p-4 md:grid-cols-[1.15fr_0.85fr] md:p-6">
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-[#7C3AED]/25 bg-[#7C3AED]/[0.08] p-4">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7C3AED]/20 text-[#C4B5FD]">
-                    <Phone className="h-5 w-5" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-white">Maya Patel · RevOps</p>
-                    <p className="text-xs text-zinc-500">Connected · recording and AI active</p>
+            <div className="grid gap-4 p-4 md:grid-cols-[1.15fr_0.85fr] md:p-6">
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-[#8B5CF6]/25 bg-[#8B5CF6]/[0.08] p-4">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#8B5CF6]/20 text-[#8B5CF6]">
+                      <Phone className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-white">Maya Patel · RevOps</p>
+                      <p className="text-xs text-zinc-500">Connected · recording and AI active</p>
+                    </div>
+                    <p className="font-mono text-2xl font-semibold text-[#8B5CF6]">03:18</p>
                   </div>
-                  <p className="font-mono text-2xl font-semibold text-[#A78BFA]">03:18</p>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { label: 'Calls', value: '84', icon: Activity },
-                  { label: 'Connects', value: '31', icon: CheckCircle2 },
-                  { label: 'AI notes', value: '19', icon: Sparkles },
-                ].map(({ label, value, icon: Icon }) => (
-                  <div key={label} className="rounded-2xl border border-white/[0.06] bg-white/[0.035] p-4">
-                    <Icon className="mb-3 h-4 w-4 text-[#A78BFA]" />
-                    <p className="font-display text-2xl font-semibold text-white">{value}</p>
-                    <p className="text-[10px] uppercase tracking-wider text-zinc-500">{label as string}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
-                <p className="mb-3 text-[11px] uppercase tracking-[0.18em] text-zinc-600">Weekly connect rate</p>
-                <div className="flex h-24 items-end gap-2">
-                  {[32, 54, 44, 68, 71, 58, 82].map((h, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ height: 0 }}
-                      animate={{ height: `${h}%` }}
-                      transition={{ duration: 0.65, delay: 0.75 + i * 0.045, ease: EASE_OUT }}
-                      className="flex-1 rounded-t-lg bg-gradient-to-t from-[#7C3AED]/30 to-[#67E8F9]"
-                    />
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: 'Calls', value: '84', icon: Activity },
+                    { label: 'Connects', value: '31', icon: CheckCircle2 },
+                    { label: 'AI notes', value: '19', icon: Sparkles },
+                  ].map(({ label, value, icon: Icon }) => (
+                    <div key={label} className="rounded-2xl border border-white/[0.06] bg-white/[0.035] p-4">
+                      <Icon className="mb-3 h-4 w-4 text-[#8B5CF6]" />
+                      <p className="font-display text-[2.1rem] font-bold leading-none tracking-tight text-white">{value}</p>
+                      <p className="mt-2 text-[10px] uppercase tracking-wider text-zinc-500">{label as string}</p>
+                    </div>
                   ))}
                 </div>
-              </div>
-            </div>
 
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-emerald-400/15 bg-emerald-400/[0.06] p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300">AI summary</p>
-                <ul className="mt-3 space-y-2 text-sm leading-relaxed text-zinc-300">
-                  <li>• Prospect asked for team pricing and onboarding timeline.</li>
-                  <li>• Buying signal: replacing spreadsheet call tracking.</li>
-                  <li>• Next step: send 12-seat annual proposal.</li>
-                </ul>
+                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
+                  <p className="mb-3 text-[11px] uppercase tracking-[0.18em] text-zinc-600">Weekly connect rate</p>
+                  <div className="flex h-24 items-end gap-2">
+                    {[32, 54, 44, 68, 71, 58, 82].map((h, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ height: 0 }}
+                        animate={{ height: `${h}%` }}
+                        transition={{ duration: 0.65, delay: 0.75 + i * 0.045, ease: EASE_OUT }}
+                        className="flex-1 rounded-t-lg bg-gradient-to-t from-[#8B5CF6]/30 to-[#06B6D4]"
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div className="rounded-2xl border border-white/[0.06] bg-black/30 p-4">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-600">Transcript stream</p>
-                <div className="mt-3 space-y-2">
-                  {['Rep: What would make switching worth it?', 'Buyer: Faster call notes and coaching.', 'AI: Positive intent · pricing'].map((line, i) => (
-                    <motion.p
-                      key={line}
-                      initial={{ opacity: 0, x: 12 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 1 + i * 0.16, duration: 0.45 }}
-                      className="rounded-xl bg-white/[0.035] px-3 py-2 text-xs text-zinc-400"
-                    >
-                      {line}
-                    </motion.p>
-                  ))}
+
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-[#06B6D4]/15 bg-[#06B6D4]/[0.06] p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#06B6D4]">AI summary</p>
+                  <ul className="mt-3 space-y-2 text-sm leading-relaxed text-zinc-300">
+                    <li>• Prospect asked for team pricing and onboarding timeline.</li>
+                    <li>• Buying signal: replacing spreadsheet call tracking.</li>
+                    <li>• Next step: send 12-seat annual proposal.</li>
+                  </ul>
+                </div>
+                <div className="rounded-2xl border border-white/[0.06] bg-black/30 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-600">Transcript stream</p>
+                  <div className="mt-3 space-y-2">
+                    {['Rep: What would make switching worth it?', 'Buyer: Faster call notes and coaching.', 'AI: Positive intent · pricing'].map((line, i) => (
+                      <motion.p
+                        key={line}
+                        initial={{ opacity: 0, x: 12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 1 + i * 0.16, duration: 0.45 }}
+                        className="rounded-xl bg-white/[0.035] px-3 py-2 text-xs text-zinc-400"
+                      >
+                        {line}
+                      </motion.p>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
     </motion.div>
   );
@@ -193,7 +220,7 @@ export function Hero() {
           transition={{ duration: 0.55, ease: EASE_OUT }}
         >
           <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.045] px-3.5 py-2 text-[12px] font-medium text-zinc-300 backdrop-blur-xl">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,0.9)]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#06B6D4] shadow-[0_0_16px_rgba(6,182,212,0.85)]" />
             New: inbound voice and AI recordings are live
           </div>
 

@@ -67,7 +67,7 @@ export function Nav() {
               >
                 <button
                   type="button"
-                  className="group relative flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/50"
+                  className="group relative flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
                 >
                   {item.label}
                   <ChevronDown
@@ -76,7 +76,7 @@ export function Nav() {
                       dropdownOpen === item.label && 'rotate-180'
                     )}
                   />
-                  <span className="absolute bottom-1 left-3 right-3 h-px origin-left scale-x-0 bg-[#7C3AED] transition-transform duration-300 group-hover:scale-x-100" />
+                  <span className="absolute bottom-1 left-3 right-3 h-px origin-left scale-x-0 bg-[#8B5CF6] transition-transform duration-300 group-hover:scale-x-100" />
                 </button>
                 <AnimatePresence>
                   {dropdownOpen === item.label && item.label === 'Features' && (
@@ -98,7 +98,7 @@ export function Nav() {
                                 href={f.href}
                                 className="flex items-start gap-3 rounded-xl p-3 transition-colors hover:bg-white/[0.04]"
                               >
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#7C3AED]/10 text-[#A78BFA]">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#8B5CF6]/10 text-[#8B5CF6]">
                                   <Icon className="h-4 w-4" />
                                 </span>
                                 <span>
@@ -110,7 +110,7 @@ export function Nav() {
                           })}
                         </div>
                         <div className="border-l border-white/[0.06] p-4">
-                          <span className="mb-2 inline-flex rounded-full bg-[#7C3AED]/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#A78BFA]">
+                          <span className="mb-2 inline-flex rounded-full bg-[#8B5CF6]/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#8B5CF6]">
                             What&apos;s new
                           </span>
                           <p className="text-sm font-medium text-[#F5F5F7]">AI Call Briefs</p>
@@ -119,7 +119,7 @@ export function Nav() {
                           </p>
                           <Link
                             href="/features/ai"
-                            className="mt-3 inline-flex items-center gap-1 text-[12px] font-medium text-[#A78BFA] hover:text-[#C4B5FD]"
+                            className="mt-3 inline-flex items-center gap-1 text-[12px] font-medium text-[#8B5CF6] hover:text-[#06B6D4]"
                           >
                             Read more <ArrowRight className="h-3 w-3" />
                           </Link>
@@ -153,7 +153,7 @@ export function Nav() {
                 key={item.label}
                 href={item.href}
                 onMouseEnter={() => setHovered(item.label)}
-                className="group relative rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/50"
+                className="group relative rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
               >
                 {hovered === item.label && (
                   <motion.span
@@ -163,7 +163,7 @@ export function Nav() {
                   />
                 )}
                 {item.label}
-                <span className="absolute bottom-1 left-3 right-3 h-px origin-left scale-x-0 bg-[#7C3AED] transition-transform duration-300 group-hover:scale-x-100" />
+                <span className="absolute bottom-1 left-3 right-3 h-px origin-left scale-x-0 bg-[#8B5CF6] transition-transform duration-300 group-hover:scale-x-100" />
               </Link>
             )
           )}
@@ -172,7 +172,7 @@ export function Nav() {
         <div className="hidden shrink-0 items-center gap-2 lg:flex">
           <a
             href={APP_SIGNIN}
-            className="rounded-lg px-3.5 py-2 text-sm text-zinc-300 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/50"
+            className="rounded-lg px-3.5 py-2 text-sm text-zinc-300 transition-colors hover:text-[#F5F5F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
           >
             Log in
           </a>

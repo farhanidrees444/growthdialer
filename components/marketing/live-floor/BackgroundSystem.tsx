@@ -7,7 +7,7 @@ export function BackgroundSystem() {
         className="marketing-orb-violet absolute left-1/2 top-[-10%] h-[620px] w-[min(92vw,980px)] -translate-x-1/2 rounded-full blur-3xl"
         style={{
           background:
-            'radial-gradient(ellipse at center, rgba(124,58,237,0.22) 0%, rgba(124,58,237,0.08) 38%, transparent 72%)',
+            'radial-gradient(ellipse at center, rgba(139,92,246,0.22) 0%, rgba(139,92,246,0.08) 38%, transparent 72%)',
         }}
       />
       <div
@@ -21,7 +21,7 @@ export function BackgroundSystem() {
         className="absolute bottom-[-18%] left-[-12%] h-[560px] w-[560px] rounded-full blur-3xl"
         style={{
           background:
-            'radial-gradient(circle, rgba(52,211,153,0.11) 0%, rgba(52,211,153,0.035) 42%, transparent 70%)',
+            'radial-gradient(circle, rgba(6,182,212,0.10) 0%, rgba(139,92,246,0.035) 42%, transparent 70%)',
         }}
       />
       <div className="marketing-grid-deep absolute inset-0 opacity-[0.4]" />

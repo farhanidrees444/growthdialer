@@ -1,5 +1,9 @@
 'use client';
 
+import { useRef, useState, type PointerEvent } from 'react';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { reveal, revealContainer, SPRING } from '@/components/marketing/live-floor/motion';
+
 const ROW1 = [
   {
     quote: 'We stopped scribbling notes mid-call. Summaries land before I hang up.',
@@ -63,21 +67,56 @@ function Card({
   company,
   featured,
 }: (typeof ROW1)[number]) {
+  const ref = useRef<HTMLElement>(null);
+  const [hovered, setHovered] = useState(false);
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const smoothX = useSpring(mx, { stiffness: 200, damping: 25, mass: 0.35 });
+  const smoothY = useSpring(my, { stiffness: 200, damping: 25, mass: 0.35 });
+  const rotateY = useTransform(smoothX, [-0.5, 0.5], [-4, 4]);
+  const rotateX = useTransform(smoothY, [-0.5, 0.5], [4, -4]);
+
+  const onMove = (event: PointerEvent<HTMLElement>) => {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!rect) return;
+    mx.set((event.clientX - rect.left) / rect.width - 0.5);
+    my.set((event.clientY - rect.top) / rect.height - 0.5);
+  };
+
+  const onLeave = () => {
+    setHovered(false);
+    mx.set(0);
+    my.set(0);
+  };
+
   return (
-    <article
+    <motion.article
+      ref={ref}
+      onPointerEnter={() => setHovered(true)}
+      onPointerMove={onMove}
+      onPointerLeave={onLeave}
+      whileHover={{ y: -2 }}
+      transition={SPRING}
+      style={{ rotateX, rotateY, willChange: hovered ? 'transform' : 'auto' }}
       className={
         featured
-          ? 'marketing-hover-lift w-[320px] shrink-0 rounded-2xl border border-l-2 border-l-[#7C3AED] border-white/[0.08] bg-[#12121A] p-5'
-          : 'marketing-hover-lift w-[320px] shrink-0 rounded-2xl border border-white/[0.08] bg-[#0F0F12] p-5'
+          ? 'relative w-[320px] shrink-0 self-start rounded-2xl border border-l-2 border-l-[#8B5CF6] border-white/[0.08] bg-[#12121A] p-5 shadow-[0_22px_70px_rgba(0,0,0,0.35)] [transform-style:preserve-3d]'
+          : 'relative w-[320px] shrink-0 self-start rounded-2xl border border-white/[0.08] bg-[#0F0F12] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.28)] [transform-style:preserve-3d]'
       }
     >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+      />
       <span className="mb-3 inline-flex rounded-full border border-white/[0.08] bg-white/[0.035] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">
         Early feedback
       </span>
       <p className="text-[15px] italic leading-relaxed text-zinc-200">&ldquo;{quote}&rdquo;</p>
       <div className="mt-4 flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7C3AED]/20 text-sm font-semibold text-[#A78BFA]">
-          {name.charAt(0)}
+        <span className="rounded-full bg-[conic-gradient(from_120deg,#8B5CF6,#06B6D4,#8B5CF6)] p-px">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0B0B0E] text-sm font-semibold text-white">
+            {name.charAt(0)}
+          </span>
         </span>
         <div>
           <p className="text-sm font-semibold text-[#F5F5F7]">{name}</p>
@@ -86,7 +125,7 @@ function Card({
           </p>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }
 
@@ -100,7 +139,7 @@ function TickerRow({
   const doubled = [...items, ...items];
   return (
     <div className="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
-      <div className={`flex w-max gap-4 ${reverse ? 'marquee-track-reverse' : 'marquee-track'}`}>
+      <div className={`flex w-max items-start gap-4 [perspective:800px] ${reverse ? 'marquee-track-reverse' : 'marquee-track'}`}>
         {doubled.map((t, i) => (
           <Card key={`${t.name}-${i}`} {...t} />
         ))}
@@ -111,8 +150,24 @@ function TickerRow({
 
 export function TestimonialsTicker() {
   return (
-    <section className="relative overflow-hidden px-5 py-20 lg:px-8 lg:py-28">
-      <div className="mx-auto mb-12 max-w-2xl text-center">
+    <motion.section
+      className="relative overflow-hidden px-5 py-20 lg:px-8 lg:py-28"
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, amount: 0.3, margin: '-10%' }}
+      variants={revealContainer}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-[8%] top-16 h-80 w-80 rounded-full opacity-[0.045] blur-3xl"
+        style={{ background: 'radial-gradient(circle, #8B5CF6 0%, transparent 70%)' }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute bottom-10 right-[8%] h-72 w-72 rounded-full opacity-[0.04] blur-3xl"
+        style={{ background: 'radial-gradient(circle, #06B6D4 0%, transparent 70%)' }}
+      />
+      <motion.div variants={reveal} className="mx-auto mb-12 max-w-2xl text-center">
         <p className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
           Early teams
         </p>
@@ -122,11 +177,11 @@ export function TestimonialsTicker() {
         <p className="mt-4 text-[15px] text-zinc-500">
           Trusted by early SDR teams — feedback from our first customers.
         </p>
-      </div>
-      <div className="space-y-4">
+      </motion.div>
+      <motion.div variants={reveal} className="space-y-4">
         <TickerRow items={ROW1} />
         <TickerRow items={ROW2} reverse />
-      </div>
-    </section>
+      </motion.div>
+    </motion.section>
   );
 }

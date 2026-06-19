@@ -23,7 +23,7 @@ export function ShimmerButton({
     return (
       <a
         className={cn(
-          'group inline-flex items-center justify-center gap-2 rounded-[10px] border border-white/[0.12] font-medium text-zinc-300 transition-all duration-200 hover:border-[#7C3AED]/50 hover:bg-white/[0.03] hover:text-[#F5F5F7] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
+          'group inline-flex items-center justify-center gap-2 rounded-[10px] border border-white/[0.12] font-medium text-zinc-300 transition-all duration-200 hover:border-[#8B5CF6]/50 hover:bg-white/[0.03] hover:text-[#F5F5F7] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
           sizes[size],
           className
         )}
@@ -37,7 +37,7 @@ export function ShimmerButton({
   return (
     <a
       className={cn(
-        'group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-[10px] bg-[#7C3AED] font-medium text-white transition-all duration-200 hover:bg-[#6D28D9] hover:shadow-[0_0_30px_rgba(124,58,237,0.5)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A]',
+        'group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-[10px] bg-[#8B5CF6] font-medium text-white transition-all duration-200 hover:bg-[#06B6D4] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A]',
         sizes[size],
         className
       )}

@@ -38,7 +38,7 @@ export function TypewriterRotator({ prefix = 'The ' }: { prefix?: string }) {
     return (
       <p className="mt-4 text-[18px] text-zinc-400">
         {prefix}
-        <span className="font-medium text-[#A78BFA]">{PHRASES[0]}</span>
+        <span className="font-medium text-[#8B5CF6]">{PHRASES[0]}</span>
       </p>
     );
   }
@@ -46,8 +46,8 @@ export function TypewriterRotator({ prefix = 'The ' }: { prefix?: string }) {
   return (
     <p className="mt-4 min-h-[28px] text-[18px] text-zinc-400">
       {prefix}
-      <span className="font-medium text-[#A78BFA]">{text}</span>
-      <span className="ml-0.5 inline-block h-[1.1em] w-[2px] animate-pulse bg-[#7C3AED]" />
+      <span className="font-medium text-[#8B5CF6]">{text}</span>
+      <span className="ml-0.5 inline-block h-[1.1em] w-[2px] animate-pulse bg-[#06B6D4]" />
     </p>
   );
 }
