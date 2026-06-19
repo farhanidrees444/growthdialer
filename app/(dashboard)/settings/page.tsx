@@ -24,6 +24,7 @@ import { ROLE_LABELS, ROLE_COLORS, type Role } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { SoundDesignToggle } from "@/components/premium/sound-design-toggle";
+import { MIN_PLAYABLE_RECORDING_SECONDS } from "@/lib/recordings/eligibility";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -328,7 +329,7 @@ function RecordingTab({ settings, onChange, recordingStats }: {
         <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-[#06B6D4]/20 bg-[#06B6D4]/[0.05] p-3">
           <Info className="h-4 w-4 shrink-0 text-[#06B6D4] mt-0.5" />
           <p className="text-xs text-[#06B6D4]/80 leading-relaxed">
-            <span className="font-semibold">30-second minimum:</span> Only calls lasting 30 seconds or more are saved. Shorter calls are discarded automatically — keeping your library clean.
+            <span className="font-semibold">Playable recording rule:</span> Call recordings appear after the call ends when the saved audio is playable and the conversation lasted over 30 seconds.
           </p>
         </div>
       </SectionCard>
@@ -382,14 +383,17 @@ function RecordingTab({ settings, onChange, recordingStats }: {
       </SectionCard>
 
       <SectionCard title="Privacy & Compliance">
-        <ToggleRow
-          label="Enforce 30-second minimum"
-          description="Discard recordings from calls shorter than 30 seconds — prevents storing accidental or dropped calls"
-          checked={settings.recording_auto_delete_short}
-          onChange={(v) => onChange({ recording_auto_delete_short: v })}
-          icon={Trash2}
-          iconColor="text-red-400/70"
-        />
+        <div className="flex items-start gap-3 py-3 border-b border-white/[0.04]">
+          <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.04]">
+            <Trash2 className="h-3.5 w-3.5 text-red-400/70" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white/80">Short calls are excluded</p>
+            <p className="text-xs text-white/35 leading-relaxed mt-0.5">
+              Calls at or under 30 seconds are not shown in Recordings or sent for AI analysis, which keeps accidental and dropped calls out of your library.
+            </p>
+          </div>
+        </div>
         <ToggleRow
           label="Play recording disclaimer"
           description="Auto-triggered at call start for regions requiring two-party consent (CA, MA, IL, EU, and more)"
@@ -1309,12 +1313,17 @@ export default function SettingsPage() {
 
       const { data: calls } = await supabase
         .from('calls')
-        .select('duration_seconds, recording_url')
+        .select('duration_seconds, recording_duration_seconds, recording_url')
         .eq('user_id', session.user.id)
-        .not('recording_url', 'is', null);
+        .not('recording_url', 'is', null)
+        .not('recording_supabase_path', 'is', null)
+        .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`);
 
       if (calls) {
-        const totalSeconds = calls.reduce((s, c) => s + (c.duration_seconds ?? 0), 0);
+        const totalSeconds = calls.reduce(
+          (s, c) => s + (c.recording_duration_seconds ?? c.duration_seconds ?? 0),
+          0,
+        );
         setRecordingStats({
           count: calls.length,
           hours: totalSeconds / 3600,

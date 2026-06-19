@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { triggerProcessCallAsync } from '@/lib/ai/trigger-process-call';
 import { AI_PROCESSING_STALE_MS } from '@/lib/ai/pipeline-status';
+import { MIN_PLAYABLE_RECORDING_SECONDS } from '@/lib/recordings/eligibility';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,7 @@ export async function GET(req: NextRequest) {
     .from('calls')
     .select('id')
     .not('recording_url', 'is', null)
+    .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`)
     .eq('ai_processed', false)
     .in('ai_processing_status', ['pending', 'failed'])
     .order('created_at', { ascending: true })
@@ -42,6 +44,7 @@ export async function GET(req: NextRequest) {
     .from('calls')
     .select('id')
     .not('recording_url', 'is', null)
+    .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`)
     .eq('ai_processed', false)
     .eq('ai_processing_status', 'processing')
     .lt('ai_processed_at', staleBefore)

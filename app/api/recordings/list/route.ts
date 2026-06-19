@@ -5,6 +5,7 @@ import { canViewTeamCalls, ownCallsOrFilter } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createCallRecordingSignedUrl } from '@/lib/recordings/storage';
+import { MIN_PLAYABLE_RECORDING_SECONDS } from '@/lib/recordings/eligibility';
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,13 +34,15 @@ export async function GET(request: NextRequest) {
       .from('calls')
       .select(`
         id, recording_url, recording_supabase_path,
-        duration_seconds, transcript, ai_summary, ai_sentiment, ai_sentiment_score,
+        duration_seconds, recording_duration_seconds, transcript, ai_summary, ai_sentiment, ai_sentiment_score,
         ai_keywords, ai_next_steps, ai_objections, ai_processing_status, ai_error,
         analytics_id, was_recorded,
         from_number, to_number, started_at, created_at, disposition, direction, lead_id,
         leads:lead_id (id, name, first_name, last_name, company, phone)
       `)
       .not('recording_url', 'is', null)
+      .not('recording_supabase_path', 'is', null)
+      .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`)
       .order('started_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
       .limit(100);
@@ -83,7 +86,7 @@ export async function GET(request: NextRequest) {
         id: r.id,
         recording_url: r.recording_url,
         recording_supabase_path: r.recording_supabase_path ?? null,
-        duration_seconds: r.duration_seconds,
+        duration_seconds: r.recording_duration_seconds ?? r.duration_seconds,
         transcript: r.transcript,
         started_at: r.started_at ?? r.created_at,
         disposition: r.disposition,

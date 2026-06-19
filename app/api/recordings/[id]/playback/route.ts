@@ -4,7 +4,11 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
-import { createCallRecordingSignedUrl } from '@/lib/recordings/storage';
+import {
+  createCallRecordingSignedUrl,
+  mirrorCallRecordingToStorage,
+} from '@/lib/recordings/storage';
+import { isPlayableRecordingDuration } from '@/lib/recordings/eligibility';
 
 export async function GET(
   request: NextRequest,
@@ -37,7 +41,7 @@ export async function GET(
 
     const { data: row } = await supabase
       .from('calls')
-      .select('recording_url, recording_supabase_path')
+      .select('recording_url, recording_supabase_path, recording_duration_seconds, duration_seconds')
       .eq('id', id)
       .maybeSingle();
 
@@ -45,11 +49,16 @@ export async function GET(
       return NextResponse.json({ error: 'No recording' }, { status: 404 });
     }
 
-    let playback_url = row.recording_url as string | null;
-    let source: 'storage' | 'telnyx' = 'telnyx';
+    const duration = row.recording_duration_seconds ?? row.duration_seconds;
+    if (!isPlayableRecordingDuration(duration)) {
+      return NextResponse.json({ error: 'Recording unavailable' }, { status: 404 });
+    }
+
+    let playback_url: string | null = null;
+    let source: 'storage' | 'voice_service' = 'voice_service';
+    const service = createServiceClient();
 
     if (row.recording_supabase_path) {
-      const service = createServiceClient();
       if (service) {
         const signed = await createCallRecordingSignedUrl(
           service,
@@ -60,6 +69,25 @@ export async function GET(
           source = 'storage';
         }
       }
+    }
+
+    if (!playback_url && row.recording_url && service) {
+      const mirrored = await mirrorCallRecordingToStorage(service, {
+        callId: id,
+        userId: user.id,
+        recordingUrl: row.recording_url as string,
+      });
+      if (mirrored.ok) {
+        const signed = await createCallRecordingSignedUrl(service, mirrored.path);
+        if (signed) {
+          playback_url = signed;
+          source = 'storage';
+        }
+      }
+    }
+
+    if (!playback_url) {
+      playback_url = row.recording_url as string | null;
     }
 
     if (!playback_url) {

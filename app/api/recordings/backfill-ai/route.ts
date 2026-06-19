@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { triggerProcessCall } from '@/lib/ai/trigger-process-call';
 import { AI_PROCESSING_STALE_MS } from '@/lib/ai/pipeline-status';
+import { MIN_PLAYABLE_RECORDING_SECONDS } from '@/lib/recordings/eligibility';
 
 const MAX_BATCH = 10;
 
@@ -31,6 +32,7 @@ export async function POST(req: NextRequest) {
     .select('id, ai_processing_status, ai_processed_at')
     .eq('user_id', user.id)
     .not('recording_url', 'is', null)
+    .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`)
     .eq('ai_processed', false)
     .neq('ai_processing_status', 'skipped_short')
     .or(`ai_processing_status.in.(pending,failed),and(ai_processing_status.eq.processing,ai_processed_at.lt.${staleBefore})`)

@@ -13,6 +13,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { RecordingDetailHero } from '@/components/recordings/recording-detail-hero';
+import { isPlayableRecordingDuration } from '@/lib/recordings/eligibility';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,6 +39,7 @@ interface CallDetail {
   id: string;
   recording_url: string | null;
   duration_seconds: number | null;
+  recording_duration_seconds: number | null;
   created_at: string;
   disposition: string | null;
   notes: string | null;
@@ -494,11 +496,16 @@ export default function RecordingDetailPage() {
       try {
         const { data: callData } = await supabase
           .from('calls')
-          .select('id, recording_url, duration_seconds, created_at, disposition, notes, analytics_id, leads(id, name, company, phone)')
+          .select('id, recording_url, duration_seconds, recording_duration_seconds, created_at, disposition, notes, analytics_id, leads(id, name, company, phone)')
           .eq('id', id)
           .single();
 
         if (!callData) { setLoading(false); return; }
+        const duration = callData.recording_duration_seconds ?? callData.duration_seconds;
+        if (!callData.recording_url || !isPlayableRecordingDuration(duration)) {
+          setLoading(false);
+          return;
+        }
         setCall(callData as unknown as CallDetail);
 
         if (callData.recording_url) {
@@ -581,7 +588,7 @@ export default function RecordingDetailPage() {
           leadName={lead?.name ?? 'Unknown Caller'}
           company={lead?.company ?? null}
           phone={lead?.phone ?? null}
-          duration={formatDuration(call.duration_seconds)}
+          duration={formatDuration(call.recording_duration_seconds ?? call.duration_seconds)}
           date={formatDate(call.created_at)}
           disposition={call.disposition}
           hasAi={Boolean(analytics && !analytics.error)}
@@ -592,7 +599,7 @@ export default function RecordingDetailPage() {
         {(playbackUrl ?? call.recording_url) && (
           <AudioPlayer
             url={playbackUrl ?? call.recording_url!}
-            duration={call.duration_seconds}
+            duration={call.recording_duration_seconds ?? call.duration_seconds}
             onTimeUpdate={setCurrentTime}
             seekTo={seekTo}
           />

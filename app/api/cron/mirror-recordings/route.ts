@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { mirrorCallRecordingToStorage } from '@/lib/recordings/storage';
+import { MIN_PLAYABLE_RECORDING_SECONDS } from '@/lib/recordings/eligibility';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,7 @@ export async function GET(req: NextRequest) {
     .from('calls')
     .select('id, user_id, recording_url, recording_supabase_path')
     .not('recording_url', 'is', null)
+    .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`)
     .is('recording_supabase_path', null)
     .order('created_at', { ascending: true })
     .limit(BATCH_LIMIT);

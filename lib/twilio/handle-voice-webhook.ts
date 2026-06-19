@@ -3,11 +3,13 @@ import { NextResponse } from 'next/server';
 import { parseTwilioClientIdentity } from '@/lib/twilio/client-identity';
 import {
   dialStatusCallbackOptions,
+  dialRecordingOptions,
   resolveInboundRoute,
   resolveOutboundRoute,
   twilioInboundDialStatusUrl,
   twilioStatusCallbackUrl,
   twilioVoiceStatusCallbackUrl,
+  twilioRecordingCallbackUrl,
 } from '@/lib/twilio/webhook-routing';
 import { validateTwilioWebhookRequest } from '@/lib/twilio/validate-webhook';
 import { resolveTwilioSignedWebhookUrl } from '@/lib/twilio/signed-webhook-url';
@@ -15,7 +17,6 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import { resolveInboundRingTargets } from '@/lib/twilio/resolve-inbound-ring-targets';
 import { recordInboundCallStarted } from '@/lib/twilio/sync-inbound-call';
-import { twilioRecordingCallbackUrl } from '@/lib/twilio/webhook-routing';
 import twilio from 'twilio';
 
 const { VoiceResponse } = twilio.twiml;
@@ -69,6 +70,7 @@ export async function handleTwilioVoiceWebhook(
     const statusCallback = twilioStatusCallbackUrl();
     const inboundStatusCallback = twilioVoiceStatusCallbackUrl();
     const dialActionUrl = twilioInboundDialStatusUrl();
+    const recordingCallback = twilioRecordingCallbackUrl();
     const response = new VoiceResponse();
     const clientUserId = parseTwilioClientIdentity(from);
     const outboundTo = params.To?.trim() || params.to?.trim() || '';
@@ -85,7 +87,7 @@ export async function handleTwilioVoiceWebhook(
       const dial = response.dial({
         callerId: route.callerId,
         ...dialStatusCallbackOptions(statusCallback),
-        // TODO: reconnect recording pipeline — Twilio session
+        ...(route.routing.recording_enabled ? dialRecordingOptions(recordingCallback) : {}),
       });
       dial.number(route.toNumber);
       return twimlResponse(response);
@@ -95,7 +97,15 @@ export async function handleTwilioVoiceWebhook(
     const bridgeUserId = params.gd_user_id?.trim();
     const bridgeIdentity = params.gd_client_identity?.trim();
     if (bridgeUserId && bridgeIdentity) {
-      const dial = response.dial();
+      const { data: settings } = await supabase
+        .from('user_settings')
+        .select('recording_mode')
+        .eq('user_id', bridgeUserId)
+        .maybeSingle();
+      const bridgeRecordingEnabled = settings?.recording_mode !== 'never';
+      const dial = response.dial(
+        bridgeRecordingEnabled ? dialRecordingOptions(recordingCallback) : {},
+      );
       const client = dial.client(bridgeIdentity);
       client.parameter({ name: 'gd_bridge_auto_answer', value: '1' });
       return twimlResponse(response);
@@ -140,7 +150,7 @@ export async function handleTwilioVoiceWebhook(
           callerId: inbound.fromNumber,
           timeout: routing.inbound_ring_seconds,
           ...dialStatusCallbackOptions(inboundStatusCallback),
-          // TODO: reconnect recording pipeline — Twilio session
+          ...(routing.recording_enabled ? dialRecordingOptions(recordingCallback) : {}),
         });
         dial.number(forwardTo);
         return twimlResponse(response);
@@ -152,7 +162,8 @@ export async function handleTwilioVoiceWebhook(
       response.record({
         maxLength: 120,
         playBeep: true,
-        // TODO: reconnect recording pipeline — Twilio session
+        recordingStatusCallback: recordingCallback,
+        recordingStatusCallbackMethod: 'POST',
       });
       return twimlResponse(response);
     }
@@ -164,7 +175,6 @@ export async function handleTwilioVoiceWebhook(
     });
 
     if (ringTargets.length === 0) {
-      const recordingCallback = twilioRecordingCallbackUrl();
       response.say('No agents are available right now. Please leave a message after the tone.');
       response.record({
         maxLength: 120,
@@ -182,7 +192,7 @@ export async function handleTwilioVoiceWebhook(
       action: dialActionUrl,
       method: 'POST',
       ...dialStatusCallbackOptions(inboundStatusCallback),
-      // TODO: reconnect recording pipeline — Twilio session
+      ...(routing.recording_enabled ? dialRecordingOptions(recordingCallback) : {}),
     });
 
     for (const target of ringTargets) {

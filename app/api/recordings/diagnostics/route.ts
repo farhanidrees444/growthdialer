@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { resolveAppBaseUrl } from '@/lib/ai/trigger-process-call';
 import { AI_PROCESSING_STALE_MS } from '@/lib/ai/pipeline-status';
+import { MIN_PLAYABLE_RECORDING_SECONDS } from '@/lib/recordings/eligibility';
 
 // GET /api/recordings/diagnostics
 // Authenticated. Returns a checklist that explains exactly why the recordings
@@ -43,13 +44,15 @@ export async function GET(_req: NextRequest) {
     .from('calls')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id)
-    .not('recording_url', 'is', null);
+    .not('recording_url', 'is', null)
+    .not('recording_supabase_path', 'is', null)
+    .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`);
 
   const { count: longEnough } = await supabase
     .from('calls')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id)
-    .gte('duration_seconds', 30);
+    .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`);
 
   const { count: recordedFlag } = await supabase
     .from('calls')
@@ -68,6 +71,7 @@ export async function GET(_req: NextRequest) {
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id)
     .not('recording_url', 'is', null)
+    .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`)
     .in('ai_processing_status', ['pending', 'processing']);
 
   const { count: aiFailed } = await supabase
@@ -87,6 +91,7 @@ export async function GET(_req: NextRequest) {
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id)
     .not('recording_url', 'is', null)
+    .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`)
     .is('recording_supabase_path', null);
 
   const staleBefore = new Date(Date.now() - AI_PROCESSING_STALE_MS).toISOString();
@@ -135,7 +140,7 @@ export async function GET(_req: NextRequest) {
       );
     } else if (withUrl === 0) {
       issues.push(
-        'Calls are marked recorded but no recording URL was saved. Enable programmatic recording in your voice provider portal.',
+        'Calls are marked recorded but no playable recording URL was saved. Check call recording is enabled in your voice service.',
       );
     }
   }
@@ -194,7 +199,7 @@ export async function GET(_req: NextRequest) {
     },
     next_step:
       issues.length === 0
-        ? 'Pipeline looks healthy. Make a test call >30s and refresh /recordings within 60s.'
+        ? 'Pipeline looks healthy. Make a test call over 30 seconds and refresh /recordings within 60s.'
         : 'Fix the issues above. Most common: voice webhook URL not configured.',
   });
 }

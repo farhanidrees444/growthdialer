@@ -4,6 +4,10 @@ import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/worksp
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
 import { triggerProcessCall } from '@/lib/ai/trigger-process-call';
+import {
+  isPlayableRecordingDuration,
+  MIN_PLAYABLE_RECORDING_SECONDS,
+} from '@/lib/recordings/eligibility';
 
 export async function POST(
   request: NextRequest,
@@ -38,7 +42,7 @@ export async function POST(
 
     const { data: callRow } = await supabase
       .from('calls')
-      .select('id, recording_url, ai_processing_status, analytics_id')
+      .select('id, recording_url, recording_duration_seconds, duration_seconds, ai_processing_status, analytics_id')
       .eq('id', id)
       .maybeSingle();
 
@@ -46,6 +50,14 @@ export async function POST(
     if (!callRow.recording_url) {
       console.warn('[REPROCESS] No recording_url on call:', id);
       return NextResponse.json({ error: 'No recording URL — recording may not have saved yet' }, { status: 400 });
+    }
+
+    const duration = callRow.recording_duration_seconds ?? callRow.duration_seconds;
+    if (!isPlayableRecordingDuration(duration)) {
+      return NextResponse.json(
+        { error: `Only recordings over ${MIN_PLAYABLE_RECORDING_SECONDS} seconds can be processed` },
+        { status: 400 },
+      );
     }
 
     console.log('[REPROCESS] Call found, recording_url:', callRow.recording_url,

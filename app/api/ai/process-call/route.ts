@@ -10,6 +10,7 @@ import {
   downloadRecordingAudio,
   downloadRecordingFromStorage,
 } from '@/lib/recordings/storage';
+import { isPlayableRecordingDuration } from '@/lib/recordings/eligibility';
 
 export const maxDuration = 120;
 
@@ -52,6 +53,8 @@ export async function POST(request: NextRequest) {
     lead_id: string | null;
     recording_url: string | null;
     recording_supabase_path?: string | null;
+    duration_seconds?: number | null;
+    recording_duration_seconds?: number | null;
     analytics_id?: string | null;
     ai_processed?: boolean | null;
     ai_processing_status?: string | null;
@@ -59,7 +62,7 @@ export async function POST(request: NextRequest) {
   } | null = null;
 
   const fullSelect =
-    'id, user_id, lead_id, recording_url, recording_supabase_path, analytics_id, ai_processed, ai_processing_status, ai_processed_at';
+    'id, user_id, lead_id, recording_url, recording_supabase_path, duration_seconds, recording_duration_seconds, analytics_id, ai_processed, ai_processing_status, ai_processed_at';
   const { data: callFull, error: callError } = await supabase
     .from('calls')
     .select(fullSelect)
@@ -70,7 +73,7 @@ export async function POST(request: NextRequest) {
     console.warn('[AI] analytics_id column missing — retrying select without it. Run migration 033.');
     const { data: callLite, error: liteErr } = await supabase
       .from('calls')
-      .select('id, user_id, lead_id, recording_url, recording_supabase_path, ai_processed, ai_processing_status, ai_processed_at')
+      .select('id, user_id, lead_id, recording_url, recording_supabase_path, duration_seconds, recording_duration_seconds, ai_processed, ai_processing_status, ai_processed_at')
       .eq('id', callId)
       .single();
     if (liteErr || !callLite) {
@@ -94,6 +97,16 @@ export async function POST(request: NextRequest) {
   if (!call.recording_url) {
     console.warn('[AI] No recording URL for call:', callId);
     return NextResponse.json({ skipped: true, reason: 'no_recording' });
+  }
+
+  const recordingDuration = call.recording_duration_seconds ?? call.duration_seconds;
+  if (!isPlayableRecordingDuration(recordingDuration)) {
+    console.log('[AI] Skipping short recording:', callId, '| duration:', recordingDuration);
+    await supabase
+      .from('calls')
+      .update({ ai_processing_status: 'skipped_short', ai_error: null })
+      .eq('id', callId);
+    return NextResponse.json({ skipped: true, reason: 'short_recording' });
   }
 
   // Mark as in-progress to prevent duplicate runs.

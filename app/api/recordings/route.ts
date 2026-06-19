@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { MIN_PLAYABLE_RECORDING_SECONDS } from '@/lib/recordings/eligibility';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,9 +19,11 @@ export async function GET(request: NextRequest) {
 
     let recordingsQuery = supabase
       .from('calls')
-      .select('id,status,disposition,notes,duration_seconds,recording_url,started_at,ended_at,lead_id,leads(id,name,company,phone)')
+      .select('id,status,disposition,notes,duration_seconds,recording_duration_seconds,recording_url,started_at,ended_at,lead_id,leads(id,name,company,phone)')
       .eq('user_id', userId)
-      .not('recording_url', 'is', null);
+      .not('recording_url', 'is', null)
+      .not('recording_supabase_path', 'is', null)
+      .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`);
 
     if (query) {
       const escapedQuery = query.replace(/%/g, '\\%').replace(/_/g, '\\_');

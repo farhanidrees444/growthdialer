@@ -404,7 +404,7 @@ function EmptyState() {
         scene="recordings"
         accent="emerald"
         title="Your call library is empty"
-        description="Calls 30 seconds or longer are automatically recorded. Enable recording in Settings."
+        description="Playable call recordings appear here after conversations last over 30 seconds. Review recording behavior in Settings."
         features={[
           { icon: Mic, label: 'Auto-recording' },
           { icon: FileText, label: 'Transcription' },
@@ -463,7 +463,7 @@ function RecordingPipelinePanel({
             {loading
               ? 'Checking recording capture, secure playback, and AI analysis status...'
               : diagnostics?.ok
-                ? 'Pipeline looks ready. Make a real call over 30 seconds, then refresh here to confirm recording, transcript, and summary.'
+                ? 'Pipeline looks ready. Make a real call over 30 seconds, then refresh here to confirm playback, transcript, and summary.'
                 : 'A few checks need attention before recordings and AI can be considered production-ready.'}
           </p>
         </div>
@@ -480,7 +480,7 @@ function RecordingPipelinePanel({
       {summary && (
         <div className="mt-4 grid gap-2 sm:grid-cols-4">
           {[
-            { label: 'Saved audio', value: summary.calls_with_recording_url },
+            { label: 'Playable audio', value: summary.calls_with_recording_url },
             { label: 'AI complete', value: summary.ai_completed },
             { label: 'AI pending', value: pendingAi },
             { label: 'Storage pending', value: pendingStorage },

@@ -7,7 +7,14 @@ export function callRecordingStoragePath(userId: string, callId: string): string
   return `${userId}/${callId}.mp3`;
 }
 
-/** Download call audio from a Telnyx recording URL (public or API-key auth). */
+function twilioBasicAuthHeader(): string | null {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID?.trim();
+  const authToken = process.env.TWILIO_AUTH_TOKEN?.trim();
+  if (!accountSid || !authToken) return null;
+  return `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`;
+}
+
+/** Download call audio from a voice-service recording URL. */
 export async function downloadRecordingAudio(
   recordingUrl: string,
 ): Promise<{ buffer: ArrayBuffer; contentType: string }> {
@@ -17,6 +24,15 @@ export async function downloadRecordingAudio(
       headers: { Authorization: `Bearer ${process.env.TELNYX_API_KEY ?? ''}` },
       signal: AbortSignal.timeout(60_000),
     });
+  }
+  if (!audioRes.ok && audioRes.status === 401) {
+    const auth = twilioBasicAuthHeader();
+    if (auth) {
+      audioRes = await fetch(recordingUrl, {
+        headers: { Authorization: auth },
+        signal: AbortSignal.timeout(60_000),
+      });
+    }
   }
   if (!audioRes.ok) {
     const errBody = await audioRes.text().catch(() => '');

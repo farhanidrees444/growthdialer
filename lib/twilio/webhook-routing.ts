@@ -63,6 +63,19 @@ export function dialStatusCallbackOptions(statusCallback: string | undefined) {
   };
 }
 
+export function dialRecordingOptions(recordingCallback: string | undefined) {
+  return {
+    record: 'record-from-answer-dual' as const,
+    ...(recordingCallback
+      ? {
+          recordingStatusCallback: recordingCallback,
+          recordingStatusCallbackEvent: ['completed' as const],
+          recordingStatusCallbackMethod: 'POST' as const,
+        }
+      : {}),
+  };
+}
+
 export async function resolveInboundRoute(
   supabase: SupabaseClient,
   to: string,
