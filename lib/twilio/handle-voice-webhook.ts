@@ -227,7 +227,7 @@ export async function handleTwilioVoiceWebhook(
   } catch (error) {
     console.error('[TwilioVoice] Exception:', error instanceof Error ? error.message : String(error));
     const fallback = new VoiceResponse();
-    fallback.say('Sorry, an error occurred. Please try again later.');
+    fallback.hangup();
     return twimlResponse(fallback, request);
   }
 }
