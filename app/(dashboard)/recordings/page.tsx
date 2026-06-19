@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Play, Pause, Clock, Mic, Sparkles, FileText, Search, Phone,
+  Play, Pause, Clock, Sparkles, FileText, Search, Phone,
   TrendingUp, TrendingDown, Minus, RefreshCw, ChevronDown,
   ChevronRight, Volume2, X, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
@@ -425,15 +425,16 @@ function EmptyState() {
         icon={Volume2}
         scene="recordings"
         accent="emerald"
-        title="Your call library is empty"
-        description="Playable call recordings appear here after conversations last over 30 seconds. Review recording behavior in Settings."
+        title="Recordings appear after eligible calls"
+        description="Calls need saved audio and a conversation longer than 30 seconds before playback, transcripts, and AI analysis show here."
         features={[
-          { icon: Mic, label: 'Auto-recording' },
+          { icon: Clock, label: '30s+ calls only' },
           { icon: FileText, label: 'Transcription' },
           { icon: Sparkles, label: 'AI insights' },
           { icon: Search, label: 'Full-text search' },
         ]}
         primaryAction={{ label: 'Start dialing', href: '/dialer' }}
+        secondaryAction={{ label: 'Recording settings', href: '/settings?tab=recording' }}
       />
     </div>
   );

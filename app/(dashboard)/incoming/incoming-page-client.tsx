@@ -366,9 +366,15 @@ export function IncomingPageClient() {
           <PremiumEmptyState
             icon={Phone}
             scene="numbers"
-            title="Provision a line to start receiving calls"
-            description="Buy or sync a number - inbound calls will stream here with live metrics and traffic feeds."
-            primaryAction={{ label: 'My Numbers', href: '/numbers' }}
+            title="Claim a line before receiving calls"
+            description="Inbound works when a number is active, routed to your workspace, and browser voice is ready. Keep this page open once setup is complete."
+            primaryAction={{ label: 'Claim number', href: '/numbers' }}
+            secondaryAction={{ label: 'Call routing', href: '/settings?tab=calling' }}
+            features={[
+              { icon: Phone, label: 'Active number' },
+              { icon: Radio, label: 'Browser voice ready' },
+              { icon: Settings, label: 'Routing confirmed' },
+            ]}
             accent="cyan"
           />
         </div>

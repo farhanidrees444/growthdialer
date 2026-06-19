@@ -25,6 +25,7 @@ interface PremiumEmptyStateProps {
   description: string;
   primaryAction?: Action;
   secondaryAction?: Action;
+  tertiaryAction?: Action;
   features?: FeatureChip[];
   compact?: boolean;
   className?: string;
@@ -34,7 +35,7 @@ interface PremiumEmptyStateProps {
 
 function ActionButton({ action, primary }: { action: Action; primary?: boolean }) {
   const className = cn(
-    'inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-200',
+    'inline-flex cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60',
     primary
       ? 'bg-zinc-100 text-zinc-950 shadow-[0_1px_0_rgba(255,255,255,0.2)] hover:bg-white hover:shadow-lg hover:shadow-violet-500/15 hover:-translate-y-px'
       : 'border border-zinc-700/60 bg-zinc-900/40 text-zinc-400 hover:border-zinc-500 hover:bg-zinc-800/60 hover:text-zinc-200',
@@ -61,6 +62,7 @@ export function PremiumEmptyState({
   description,
   primaryAction,
   secondaryAction,
+  tertiaryAction,
   features,
   compact = false,
   className,
@@ -138,7 +140,7 @@ export function PremiumEmptyState({
         </div>
       )}
 
-      {(primaryAction || secondaryAction) && (
+      {(primaryAction || secondaryAction || tertiaryAction) && (
         <div
           className={cn(
             'relative flex flex-wrap items-center justify-center gap-3',
@@ -148,6 +150,9 @@ export function PremiumEmptyState({
           {primaryAction && <ActionButton action={primaryAction} primary />}
           {secondaryAction && (
             <ActionButton action={{ ...secondaryAction, variant: 'secondary' }} />
+          )}
+          {tertiaryAction && (
+            <ActionButton action={{ ...tertiaryAction, variant: 'secondary' }} />
           )}
         </div>
       )}

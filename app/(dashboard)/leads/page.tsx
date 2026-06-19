@@ -459,13 +459,13 @@ function EmptyState({
         icon={UserPlus}
         scene="leads"
         accent="emerald"
-        title="Your pipeline starts here"
-        description="Import a CSV from HubSpot, Salesforce, or a spreadsheet — or add leads one at a time."
+        title="Bring in your first leads"
+        description="Upload a CSV with a header row, or add a single lead by hand. At minimum, include name and phone so the dialer can build your queue."
         primaryAction={{ label: 'Import CSV', onClick: onImport }}
         secondaryAction={{ label: 'Add lead', onClick: onAddLead }}
         features={[
-          { icon: Sparkles, label: 'AI scoring' },
-          { icon: Phone, label: 'Power dial ready' },
+          { icon: Upload, label: 'CSV: name + phone' },
+          { icon: Phone, label: 'Dialer queue ready' },
           { icon: Tag, label: 'Tags & filters' },
         ]}
       />

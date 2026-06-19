@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutGrid, List, Loader2, Plus, Search, Shield, Sparkles, X } from 'lucide-react';
+import { LayoutGrid, List, Loader2, Phone, Plus, Search, Shield, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { NumberInventoryRow } from '@/components/numbers/number-inventory-row';
@@ -192,9 +192,15 @@ export function MyNumbersPanel({
       <PremiumEmptyState
         icon={Plus}
         scene="numbers"
-        title="Your caller ID inventory"
-        description="Add local and toll-free lines, verify deliverability, and rotate automatically as you scale outbound."
-        primaryAction={{ label: 'Get your first number', onClick: onBuyNew }}
+        title="Add your first caller ID"
+        description="Search available numbers to start outbound calling and inbound routing. Existing lines will appear here once they are linked to your workspace."
+        primaryAction={{ label: 'Search numbers', onClick: onBuyNew }}
+        secondaryAction={{ label: 'Call settings', href: '/settings?tab=calling' }}
+        features={[
+          { icon: Phone, label: 'Outbound caller ID' },
+          { icon: Shield, label: 'Line verification' },
+          { icon: Sparkles, label: 'Rotation ready' },
+        ]}
         accent="violet"
       />
     );

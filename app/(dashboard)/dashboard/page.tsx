@@ -229,7 +229,9 @@ function KpiCard({
             >
               <Icon className={cn("h-4 w-4", iconColor)} />
             </motion.div>
-            <p className="text-xs text-slate-500">Waiting for your first call</p>
+            <p className="max-w-[10rem] text-xs leading-relaxed text-slate-500">
+              Metrics unlock after your first completed call.
+            </p>
             <Link
               href="/dialer"
               className="inline-flex w-fit items-center gap-1 rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-semibold text-zinc-200 transition hover:bg-white/[0.1]"
@@ -394,7 +396,7 @@ function CallActivityChart({
             <WorkflowSceneMotion scene="analytics" />
           </div>
           <p className="max-w-xs text-center text-sm text-slate-500">
-            {anyData ? 'Your activity chart builds as more calls come in' : 'Activity will appear once you start calling'}
+            {anyData ? 'Your activity chart builds as more calls come in' : 'Start a call to build your activity timeline'}
           </p>
           <Link
             href="/dialer"
@@ -445,8 +447,9 @@ function RecentCallsList({ calls, loading }: { calls: DashboardRecentCall[] | nu
             accent="cyan"
             compact
             title="No recent calls"
-            description="Your latest conversations will show up here with disposition and duration."
+            description="Completed calls will show here with duration, disposition, and links to recordings when eligible."
             primaryAction={{ label: 'Start dialing', href: '/dialer' }}
+            secondaryAction={{ label: 'Import leads', href: '/leads' }}
             className="border-0 bg-transparent py-6 shadow-none"
           />
         </div>

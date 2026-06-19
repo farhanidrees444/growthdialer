@@ -318,9 +318,10 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
               accent="violet"
               compact
               title="Queue is empty"
-              description="Import leads to start dialing — they'll appear here by priority."
+              description="Import leads with phone numbers to build a queue. You can also manage leads manually before starting a call session."
               primaryAction={{ label: 'Import CSV', onClick: () => setImportOpen(true) }}
               secondaryAction={{ label: 'View leads', href: '/leads' }}
+              tertiaryAction={{ label: 'Claim caller ID', href: '/numbers' }}
             />
           ) : (
             <PremiumEmptyState

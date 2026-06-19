@@ -647,6 +647,7 @@ export default function DialerPage() {
                   callbackCount={queueCounts.callbacks}
                   onStartPowerDial={() => { setDialMode('power'); setPowerConfirmOpen(true); }}
                   onStartParallelDial={() => { setDialMode('parallel'); setParallelConfirmOpen(true); }}
+                  onOpenManualDial={() => setDialpadOpen(true)}
                 />
               </motion.div>
             )}

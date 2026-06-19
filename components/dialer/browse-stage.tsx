@@ -14,6 +14,7 @@ interface BrowseStageProps {
   callbackCount: number;
   onStartPowerDial: () => void;
   onStartParallelDial?: () => void;
+  onOpenManualDial?: () => void;
 }
 
 function getContextualSubtitle(): string {
@@ -42,6 +43,7 @@ export function BrowseStage({
   callbackCount,
   onStartPowerDial,
   onStartParallelDial,
+  onOpenManualDial,
 }: BrowseStageProps) {
   const subtitle = useMemo(() => getContextualSubtitle(), []);
   const { setImportOpen } = useLeads();
@@ -54,10 +56,13 @@ export function BrowseStage({
           icon={Upload}
           scene="dialer"
           title="No leads in queue"
-          description="Import a CSV or add leads to start dialing. Your AI dialer will pick up automatically once the queue has contacts."
+          description="Import leads to build a calling queue, or place a one-off manual call. Claim a caller ID first if outbound calling is not ready."
           primaryAction={{ label: 'Import leads', onClick: () => setImportOpen(true) }}
+          secondaryAction={onOpenManualDial ? { label: 'Manual dial', onClick: onOpenManualDial } : undefined}
+          tertiaryAction={{ label: 'Claim caller ID', href: '/numbers' }}
           features={[
-            { icon: Zap, label: 'Power dial' },
+            { icon: PhoneCall, label: 'Manual calls' },
+            { icon: Zap, label: 'Power sessions' },
             { icon: Grid3x3, label: 'Parallel lines' },
           ]}
         />

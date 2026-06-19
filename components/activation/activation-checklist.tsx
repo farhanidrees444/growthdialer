@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Check, ChevronRight, Upload, Phone, Hash, ClipboardCheck, X, Sparkles,
+  Mic2, Radio,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -26,34 +27,34 @@ const STEPS: {
   onAction?: 'import';
 }[] = [
   {
+    id: 'phone_number',
+    title: 'Claim a caller ID',
+    description: 'Add an active line so outbound and inbound calls route correctly.',
+    href: '/numbers',
+    icon: Hash,
+    actionLabel: 'Get a number',
+  },
+  {
     id: 'import_leads',
     title: 'Import your leads',
-    description: 'Upload a CSV or add contacts — your queue lives here.',
+    description: 'Upload a CSV with name and phone columns, or add leads by hand.',
     href: '/leads',
     icon: Upload,
     actionLabel: 'Import CSV',
     onAction: 'import',
   },
   {
-    id: 'phone_number',
-    title: 'Claim a caller ID',
-    description: 'Buy or assign a number so prospects see a local line.',
-    href: '/numbers',
-    icon: Hash,
-    actionLabel: 'Get a number',
-  },
-  {
     id: 'first_call',
     title: 'Make your first call',
-    description: 'Pick a lead from the queue and dial in one click.',
+    description: 'Open the dialer, choose a lead, or place a manual call.',
     href: '/dialer',
     icon: Phone,
     actionLabel: 'Open dialer',
   },
   {
     id: 'first_disposition',
-    title: 'Log a disposition',
-    description: 'Mark the outcome — we update lead status and analytics automatically.',
+    title: 'Verify the outcome',
+    description: 'Save a disposition; recordings and AI appear after eligible 30s+ calls.',
     href: '/dialer',
     icon: ClipboardCheck,
     actionLabel: 'Continue dialing',
@@ -124,7 +125,7 @@ export function ActivationChecklist() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-violet-400" />
-                <h2 className="text-sm font-bold text-white sm:text-base">Launch sequence</h2>
+                <h2 className="text-sm font-bold text-white sm:text-base">Activation path</h2>
               </div>
               <p className="mt-1 text-xs text-slate-400 sm:text-sm">
                 {completedCount} of {totalSteps} complete ·{' '}
@@ -228,6 +229,43 @@ export function ActivationChecklist() {
                 );
               })}
             </motion.ul>
+          )}
+
+          {!collapsed && (
+            <div className="relative grid gap-2 border-t border-white/[0.05] p-3 sm:grid-cols-2">
+              <Link
+                href="/recordings"
+                className="group rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3 transition hover:border-emerald-500/25 hover:bg-emerald-500/[0.04]"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-300">
+                    <Mic2 className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold text-white">Check recordings after real calls</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                      Playback, transcripts, and AI analysis appear for calls over 30 seconds.
+                    </p>
+                  </div>
+                </div>
+              </Link>
+              <Link
+                href="/incoming"
+                className="group rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3 transition hover:border-cyan-500/25 hover:bg-cyan-500/[0.04]"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-300">
+                    <Radio className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold text-white">Keep inbound ready</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                      Leave browser voice ready and confirm your line routing before receiving calls.
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            </div>
           )}
         </div>
       </motion.section>

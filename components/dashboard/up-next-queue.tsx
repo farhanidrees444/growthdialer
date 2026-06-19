@@ -77,9 +77,10 @@ export default function UpNextQueue() {
             accent="violet"
             compact
             title="Nothing queued yet"
-            description="Import leads to see your top priorities here."
+            description="Import leads with phone numbers, then this card will surface the next prospects to call by priority."
             primaryAction={{ label: 'Import CSV', onClick: () => setImportOpen(true) }}
             secondaryAction={{ label: 'Open dialer', href: '/dialer' }}
+            tertiaryAction={{ label: 'Claim caller ID', href: '/numbers' }}
             className="py-8"
           />
         ) : (

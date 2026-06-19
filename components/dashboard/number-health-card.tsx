@@ -97,9 +97,14 @@ export function NumberHealthCard() {
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/[0.07] bg-violet-500/10">
             <Phone className="h-5 w-5 text-violet-400/60" />
           </div>
-          <p className="text-sm text-white/40">No caller IDs yet</p>
-          <Link href="/numbers" className="text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors">
-            Get a number →
+          <div>
+            <p className="text-sm font-semibold text-white/70">No caller IDs yet</p>
+            <p className="mt-1 max-w-[15rem] text-xs leading-relaxed text-slate-500">
+              Claim a line to place calls, receive inbound, and monitor line health.
+            </p>
+          </div>
+          <Link href="/numbers" className="text-xs font-semibold text-violet-400 transition-colors hover:text-violet-300">
+            Search numbers →
           </Link>
         </div>
       ) : (
