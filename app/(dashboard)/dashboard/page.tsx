@@ -24,6 +24,7 @@ import { WORKSPACE_ID_HEADER } from "@/lib/auth/workspace-access";
 import { cn } from "@/lib/utils";
 import type { SystemMetricsData, HourlyMetricPoint } from "@/lib/dashboard-types";
 import { ActivationChecklist } from "@/components/activation/activation-checklist";
+import { CallConfidenceCenter } from "@/components/dashboard/call-confidence-center";
 import { DashboardHero } from "@/components/dashboard/dashboard-hero";
 import { KpiGhostSparkline } from "@/components/dashboard/kpi-ghost-sparkline";
 import UpNextQueue from "@/components/dashboard/up-next-queue";
@@ -697,6 +698,10 @@ export default function DashboardPage() {
         <DashboardHero greeting={greeting} firstName={firstName} dateStr={dateStr} />
 
         <ActivationChecklist />
+
+        <div className="px-4 pb-4 lg:px-6 lg:pb-5">
+          <CallConfidenceCenter />
+        </div>
 
         {/* KPI Grid — 2×2 mobile, 4×1 desktop */}
         <div className="grid grid-cols-2 gap-3 px-4 lg:grid-cols-4 lg:gap-4 lg:px-6">
