@@ -6,26 +6,6 @@ import { hasPermission } from '@/lib/auth/permissions';
 
 type Ctx = { params: Promise<{ id: string }> };
 
-async function telnyxCallAction(callControlId: string, action: string, payload = {}) {
-  const res = await fetch(
-    `https://api.telnyx.com/v2/calls/${encodeURIComponent(callControlId)}/actions/${action}`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.TELNYX_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    },
-  );
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    const detail = (err as { errors?: { detail?: string }[] }).errors?.[0]?.detail ?? `${action} failed`;
-    throw new Error(detail);
-  }
-  return res.json();
-}
-
 export async function POST(request: NextRequest, { params }: Ctx) {
   const { id: callControlId } = await params;
   const supabase = await createClient();
@@ -54,15 +34,8 @@ export async function POST(request: NextRequest, { params }: Ctx) {
   );
   if (isCallAccessError(call)) return call;
 
-  const controlId = call.telnyx_call_id ?? callControlId;
-
-  try {
-    await telnyxCallAction(controlId, action === 'hold' ? 'hold' : 'unhold');
-    console.log(`[CALL-HOLD] ${action} success — call:`, call.id);
-    return NextResponse.json({ ok: true, action });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Hold action failed';
-    console.error('[CALL-HOLD] Error:', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
-  }
+  return NextResponse.json(
+    { error: 'Hold controls are handled in the browser for this voice backend.' },
+    { status: 501 },
+  );
 }

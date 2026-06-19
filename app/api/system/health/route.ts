@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { apiForbidden, apiUnauthorized } from '@/lib/api/errors';
 import { userCanViewOpsHealth } from '@/lib/auth/health-access';
+import { readTwilioAccountSid, readTwilioAuthToken } from '@/lib/twilio/voice-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,8 +15,15 @@ interface ServiceStatus {
 async function checkVoiceNetwork(): Promise<ServiceStatus> {
   const start = Date.now();
   try {
-    const res = await fetch('https://api.telnyx.com/v2/whoami', {
-      headers: { Authorization: `Bearer ${process.env.TELNYX_API_KEY ?? ''}` },
+    const accountSid = readTwilioAccountSid();
+    const authToken = readTwilioAuthToken();
+    if (!accountSid || !authToken) {
+      return { ok: false, latency: Date.now() - start, error: 'Voice credentials missing' };
+    }
+
+    const credentials = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
+    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}.json`, {
+      headers: { Authorization: `Basic ${credentials}` },
       signal: AbortSignal.timeout(5000),
     });
     return { ok: res.ok, latency: Date.now() - start };

@@ -1,17 +1,11 @@
-import { isTwilioVoiceConfigured } from '@/lib/twilio/voice-config';
-
-export type VoiceProvider = 'twilio' | 'telnyx';
+export type VoiceProvider = 'twilio';
 
 /**
- * Active voice provider — defaults to Twilio when configured, else Telnyx.
- * Set VOICE_PROVIDER=telnyx to force legacy Telnyx paths.
+ * Active voice provider.
+ * GrowthDialer is Twilio-only; legacy provider env vars must not steer call routing.
  */
 export function getVoiceProvider(): VoiceProvider {
-  const explicit = process.env.VOICE_PROVIDER?.trim().toLowerCase();
-  if (explicit === 'twilio' || explicit === 'telnyx') {
-    return explicit;
-  }
-  return isTwilioVoiceConfigured() ? 'twilio' : 'telnyx';
+  return 'twilio';
 }
 
 export function isTwilioProvider(): boolean {
@@ -19,5 +13,5 @@ export function isTwilioProvider(): boolean {
 }
 
 export function isTelnyxProvider(): boolean {
-  return getVoiceProvider() === 'telnyx';
+  return false;
 }

@@ -379,56 +379,30 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     safeSet(setActiveCallId, resolvedId);
   }, [bindPeerMonitor, pushCallLegSync, safeSet]);
 
-  const verifyInboundAudioAndPromote = useCallback(async (
+  const verifyInboundAudioAfterPromote = useCallback(async (
     call: Call,
-    callId: string,
-    meta?: { from?: string | null; to?: string | null },
-  ): Promise<boolean> => {
+  ): Promise<void> => {
     if (audioVerifiedCallsRef.current.has(call)) {
-      promoteCallToActive(call, true, callId, meta);
-      return true;
+      return;
     }
 
     bindRemoteMediaToTwilioCall(call);
     bindPeerMonitor(call);
-    stopInboundRingtone();
-    safeSet(setIncomingCall, {
-      phase: 'connecting',
-      fromNumber: meta?.from ?? extractInboundFromNumber(call),
-      toNumber: meta?.to ?? extractInboundToNumber(call),
-      callId,
-      ringStartedAt: inboundRingStartedRef.current,
-      liveStartedAt: null,
-      error: null,
-    });
 
     const verified = await waitForVerifiedRemoteAudio(call);
     if (verified) {
       audioVerifiedCallsRef.current.add(call);
-      promoteCallToActive(call, true, callId, meta);
-      return true;
+      return;
     }
 
-    acceptingInboundRef.current = false;
     const snapshot = safeWebPhoneSnapshot(call);
-    console.error('[WebPhone] inbound accepted but remote audio was not verified', {
+    console.warn('[WebPhone] inbound accepted but remote audio was not verified yet', {
       status: call.status(),
       parameters: call.parameters,
       snapshot,
     });
-    safeSet(setVoiceError, 'Inbound audio could not be verified. Check microphone permission and network, then try the call again.');
-    safeSet(setIncomingCall, {
-      phase: 'failed',
-      fromNumber: meta?.from ?? extractInboundFromNumber(call),
-      toNumber: meta?.to ?? extractInboundToNumber(call),
-      callId,
-      ringStartedAt: inboundRingStartedRef.current,
-      liveStartedAt: null,
-      error: 'Voice connected, but no remote audio track arrived. Ask the caller to retry or reconnect voice.',
-    });
-    safeSet(setCallStatus, 'ended');
-    return false;
-  }, [bindPeerMonitor, promoteCallToActive, safeSet]);
+    safeSet(setVoiceError, 'Call connected, but audio is still initializing. If you cannot hear the caller, reconnect voice and try again.');
+  }, [bindPeerMonitor, safeSet]);
 
   const setupCallEventHandlers = useCallback((
     call: Call,
@@ -464,7 +438,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       console.log('[WebPhone] call connected:', getCallStableId(call));
       syncIfNeeded();
       if (isIncoming) {
-        void verifyInboundAudioAndPromote(call, callId, meta);
+        promoteCallToActive(call, true, callId, meta);
+        void verifyInboundAudioAfterPromote(call);
       } else {
         promoteCallToActive(call, false, callId, meta);
       }
@@ -493,7 +468,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         && isLiveIncomingTwilioCall(incomingCallRef.current, outboundDialRef.current),
       );
 
-      if (!acceptingInboundRef.current && !stillLive) {
+      if (!stillLive) {
+        acceptingInboundRef.current = false;
         inboundRingStartedRef.current = null;
         isInboundRingingLiveRef.current = false;
         safeSet(setIsInboundRinging, false);
@@ -560,7 +536,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       const resolvedId = extractCallSidFromSdkCall(call) ?? callId;
       console.log('[WebPhone] call cancelled:', resolvedId);
       stopInboundRingtone();
-      if (isIncoming && !acceptingInboundRef.current) {
+      if (isIncoming) {
+        acceptingInboundRef.current = false;
         inboundRingStartedRef.current = null;
         isInboundRingingLiveRef.current = false;
         safeSet(setIsInboundRinging, false);
@@ -575,6 +552,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       console.log('[WebPhone] call rejected:', resolvedId);
       stopInboundRingtone();
       if (isIncoming) {
+        acceptingInboundRef.current = false;
         inboundRingStartedRef.current = null;
         isInboundRingingLiveRef.current = false;
         safeSet(setIsInboundRinging, false);
@@ -583,7 +561,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         safeSet(setIncomingCall, EMPTY_INCOMING_CALL);
       }
     });
-  }, [safeSet, promoteCallToActive, pushCallLegSync, verifyInboundAudioAndPromote]);
+  }, [safeSet, promoteCallToActive, pushCallLegSync, verifyInboundAudioAfterPromote]);
 
   handleIncomingRef.current = (call: Call) => {
     const callId = getCallStableId(call);
@@ -858,10 +836,26 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
+    const pendingCallId = getCallStableId(pendingTarget);
+    const pendingMeta = {
+      from: extractInboundFromNumber(pendingTarget),
+      to: extractInboundToNumber(pendingTarget),
+    };
+
     await resumeVoiceAudioContext();
     await unlockRemoteAudioElement();
 
     acceptingInboundRef.current = true;
+    stopInboundRingtone();
+    safeSet(setIncomingCall, {
+      phase: 'connecting',
+      fromNumber: pendingMeta.from,
+      toNumber: pendingMeta.to,
+      callId: pendingCallId,
+      ringStartedAt: inboundRingStartedRef.current,
+      liveStartedAt: null,
+      error: null,
+    });
 
     // Single source of truth for accept(): prefer the orchestrator (which calls
     // call.accept() on its tracked session). If the orchestrator never received
@@ -904,7 +898,11 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
     try {
       console.log('[WebPhone] accepting incoming call:', callId, 'status:', target.status());
-      return await verifyInboundAudioAndPromote(target, callId, meta);
+      if (target.status() === 'open') {
+        promoteCallToActive(target, true, callId, meta);
+        void verifyInboundAudioAfterPromote(target);
+      }
+      return true;
     } catch (err) {
       acceptingInboundRef.current = false;
       console.error('[WebPhone] accept failed:', err, {
@@ -913,7 +911,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       });
       return false;
     }
-  }, [verifyInboundAudioAndPromote]);
+  }, [promoteCallToActive, safeSet, verifyInboundAudioAfterPromote]);
 
   const hangup = useCallback(() => {
     const target = incomingCallRef.current ?? activeCallRef.current;

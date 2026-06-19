@@ -34,15 +34,14 @@ export async function GET(_req: NextRequest) {
   const wsId = access.workspaceId;
   const ownCallScope = ownCallsOrFilter(wsId, user.id);
   const eligibleDurationFilter = PLAYABLE_RECORDING_DURATION_FILTER;
-  const legacyVoiceConfigured = Boolean(process.env.TELNYX_API_KEY && process.env.TELNYX_CONNECTION_ID);
   const twilioVoiceConfigured = isTwilioVoiceConfigured();
-  const webhookSignatureConfigured = Boolean(process.env.TELNYX_PUBLIC_KEY || readTwilioAuthToken());
+  const webhookSignatureConfigured = Boolean(readTwilioAuthToken());
 
   // 1. Internal pipeline configuration (generic keys only — never vendor names)
   const appBaseUrl = resolveAppBaseUrl();
   const env = {
-    voice_provider: legacyVoiceConfigured || twilioVoiceConfigured,
-    voice_connection: Boolean(process.env.TELNYX_CONNECTION_ID || process.env.TWILIO_TWIML_APP_SID),
+    voice_provider: twilioVoiceConfigured,
+    voice_connection: Boolean(process.env.TWILIO_TWIML_APP_SID),
     webhook_signature: webhookSignatureConfigured,
     app_url: !!appBaseUrl,
     app_url_value: appBaseUrl || null,

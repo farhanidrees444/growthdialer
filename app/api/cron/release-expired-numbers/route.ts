@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { releaseTwilioNumber } from '@/lib/twilio/number-inventory';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,20 +36,9 @@ export async function GET(req: NextRequest) {
     const userId = (number as Record<string, unknown>).user_id as string;
 
     if (telnyxId) {
-      try {
-        const res = await fetch(
-          `https://api.telnyx.com/v2/phone_numbers/${encodeURIComponent(telnyxId)}`,
-          {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${process.env.TELNYX_API_KEY}` },
-          },
-        );
-        if (!res.ok && res.status !== 404) {
-          console.error('[CRON-NUMBERS] Provider release failed:', phoneNumber, res.status);
-          continue;
-        }
-      } catch (err) {
-        console.error('[CRON-NUMBERS] Provider release exception:', phoneNumber, err);
+      const providerReleased = await releaseTwilioNumber(telnyxId);
+      if (!providerReleased) {
+        console.error('[CRON-NUMBERS] Provider release failed:', phoneNumber);
         continue;
       }
     }

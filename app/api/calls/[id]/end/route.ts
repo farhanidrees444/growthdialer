@@ -4,11 +4,10 @@ import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/worksp
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
 import { emitCallWebhooks } from '@/lib/webhooks/outgoing';
-import { stopInboundHoldPlayback } from '@/lib/inbound/hold-playback';
-import { telnyxCallAction } from '@/lib/inbound/telnyx-actions';
 import { createServiceClient } from '@/lib/supabase/service';
 import { logInboundCallStep } from '@/lib/inbound/call-step-log';
-import { DIAL_PENDING } from '@/lib/inbound/bridge-to-browser';
+import { isTwilioCallSid } from '@/lib/twilio/extract-call-sid';
+import { hangupVoiceCall } from '@/lib/twilio/hangup-call';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -55,33 +54,21 @@ export async function POST(request: NextRequest, { params }: Ctx) {
     if (isInboundDecline) {
       const service = createServiceClient();
       if (service && controlId) {
-        await stopInboundHoldPlayback(controlId);
-        await logInboundCallStep(service, controlId, 'leg_a_playback_stopped');
         await logInboundCallStep(service, controlId, 'agent_declined');
       }
-      if (call.telnyx_webrtc_leg_id && call.telnyx_webrtc_leg_id !== DIAL_PENDING) {
-        await telnyxCallAction(call.telnyx_webrtc_leg_id, 'hangup');
+      if (isTwilioCallSid(call.telnyx_webrtc_leg_id)) {
+        await hangupVoiceCall(call.telnyx_webrtc_leg_id).catch(() => {
+          /* browser leg may already be gone */
+        });
       }
       skipHangup = false;
     }
 
     if (!skipHangup) {
-      const res = await fetch(
-        `https://api.telnyx.com/v2/calls/${encodeURIComponent(controlId)}/actions/hangup`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${process.env.TELNYX_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({}),
-        },
-      );
-      if (!res.ok && res.status !== 404) {
-        const err = await res.json().catch(() => ({}));
-        const detail = (err as { errors?: { detail?: string }[] }).errors?.[0]?.detail ?? 'Hangup failed';
-        console.error('[CALL-END] Telnyx error:', detail);
-        return NextResponse.json({ error: detail }, { status: 500 });
+      if (isTwilioCallSid(controlId)) {
+        await hangupVoiceCall(controlId).catch((err) => {
+          console.warn('[CALL-END] Twilio hangup skipped:', err);
+        });
       }
     }
 

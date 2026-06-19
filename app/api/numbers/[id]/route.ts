@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { releaseTwilioNumber } from '@/lib/twilio/number-inventory';
 
 export async function DELETE(
   _request: NextRequest,
@@ -31,15 +32,8 @@ export async function DELETE(
     }
 
     if (numRecord.telnyx_number_id) {
-      const res = await fetch(
-        `https://api.telnyx.com/v2/phone_numbers/${encodeURIComponent(numRecord.telnyx_number_id)}`,
-        {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${process.env.TELNYX_API_KEY}` },
-        },
-      );
-      if (!res.ok && res.status !== 404) {
-        console.error('Release failed:', await res.text());
+      const released = await releaseTwilioNumber(numRecord.telnyx_number_id);
+      if (!released) {
         return NextResponse.json({ error: 'Could not release number' }, { status: 500 });
       }
     }

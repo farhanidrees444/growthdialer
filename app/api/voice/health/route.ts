@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { hasPermission } from '@/lib/auth/permissions';
-import { getVoiceProvider } from '@/lib/voice/provider';
 import { isTwilioVoiceConfigured } from '@/lib/twilio/voice-config';
 import { resolveVoiceWebhookUrl } from '@/lib/voice/webhook-url';
 
@@ -19,8 +18,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const provider = getVoiceProvider();
-  const configured = provider === 'twilio' ? isTwilioVoiceConfigured() : Boolean(process.env.TELNYX_API_KEY);
+  const provider = 'twilio';
+  const configured = isTwilioVoiceConfigured();
   const webhookUrl = resolveVoiceWebhookUrl();
   const blockers: string[] = [];
   if (!configured) blockers.push('Voice credentials not configured');

@@ -83,6 +83,20 @@ export async function purchaseTwilioNumber(input: {
   }
 }
 
+export async function releaseTwilioNumber(sid: string): Promise<boolean> {
+  const client = getTwilioRestClient();
+  if (!client || !sid) return false;
+
+  try {
+    return await client.incomingPhoneNumbers(sid).remove();
+  } catch (err) {
+    const status = (err as { status?: number }).status;
+    if (status === 404) return true;
+    console.error('[Twilio] number release failed:', err);
+    return false;
+  }
+}
+
 export async function syncTwilioNumbersForUser(
   supabase: SupabaseClient,
   userId: string,

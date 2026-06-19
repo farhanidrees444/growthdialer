@@ -94,13 +94,15 @@ class CallOrchestrator {
     if (!this.incomingSession) return null;
 
     const session = this.incomingSession;
-    this.incomingSession = null;
-    this.activeSession = session;
 
     if (session.call.status() !== 'open') {
       session.call.accept(options);
+      this.emitSnapshot();
+      return session.call;
     }
 
+    this.incomingSession = null;
+    this.activeSession = session;
     eventBus.emit('CALL_ACTIVE', session.call);
     eventBus.emit('CALL_ACTIVE_SESSION', session.snapshot());
     this.emitSnapshot();
@@ -204,6 +206,15 @@ class CallOrchestrator {
       this.activeSession = null;
       this.outboundDialActive = false;
       this.isMuted = false;
+      this.emitSnapshot();
+    });
+    eventBus.on<ReturnType<CallSession['snapshot']>>('CALL_SESSION_UPDATED', (snapshot) => {
+      if (snapshot.phase !== 'active') return;
+      if (this.incomingSession?.call !== snapshot.call) return;
+      this.activeSession = this.incomingSession;
+      this.incomingSession = null;
+      eventBus.emit('CALL_ACTIVE', snapshot.call);
+      eventBus.emit('CALL_ACTIVE_SESSION', snapshot);
       this.emitSnapshot();
     });
   }
