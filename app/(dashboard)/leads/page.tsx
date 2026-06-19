@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Phone, Mail, Search, X, ExternalLink, ChevronLeft, ChevronRight,
   Sparkles, Clock, UserPlus, MoreHorizontal, Pencil,
-  Trash2, Eye, Filter, Download, Plus, Tag, Check,
+  Trash2, Eye, Filter, Download, Upload, Plus, Tag, Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -928,6 +928,16 @@ export default function LeadsPage() {
               >
                 <Download className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Export</span>
+              </button>
+
+              {/* Import leads */}
+              <button
+                type="button"
+                onClick={() => setImportOpen(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-white/[0.07] px-3 py-2 text-xs font-semibold text-slate-500 transition hover:text-slate-300"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Import leads</span>
               </button>
 
               {/* View toggle */}
