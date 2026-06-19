@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Upload, PhoneCall, Sparkles } from 'lucide-react';
 import { Reveal } from '@/components/marketing/live-floor/Reveal';
-import { useMarketingMotionReduced, EASE_OUT, revealContainer } from '@/components/marketing/live-floor/motion';
+import { useMarketingMotionReduced, EASE_OUT } from '@/components/marketing/live-floor/motion';
 
 const STEPS = [
   {
@@ -12,7 +12,7 @@ const STEPS = [
     icon: Upload,
     title: 'Import your leads',
     body: 'CSV upload or manual entry — leads land in a clean queue, ready to dial.',
-    accent: '#8B5CF6',
+    accent: '#7C3AED',
   },
   {
     n: '2',
@@ -26,7 +26,7 @@ const STEPS = [
     icon: Sparkles,
     title: 'AI handles the rest',
     body: 'Transcripts, summaries, sentiment and next steps — logged automatically.',
-    accent: '#8B5CF6',
+    accent: '#A78BFA',
   },
 ];
 
@@ -45,28 +45,14 @@ export function StickyHowItWorks() {
   const lineScale = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   return (
-    <motion.section
+    <section
       id="how-it-works"
       ref={ref}
-      className="relative overflow-hidden scroll-mt-24"
+      className="relative scroll-mt-24"
       style={{ height: reduce ? 'auto' : '280vh' }}
       aria-label="How it works"
-      initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, amount: 0.18, margin: '-10%' }}
-      variants={revealContainer}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-[8%] top-0 h-[420px] w-[420px] rounded-full opacity-[0.05] blur-3xl"
-        style={{ background: 'radial-gradient(circle, #8B5CF6 0%, transparent 70%)' }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute right-[12%] top-40 h-[360px] w-[360px] rounded-full opacity-[0.04] blur-3xl"
-        style={{ background: 'radial-gradient(circle, #06B6D4 0%, transparent 72%)' }}
-      />
-      <div className={reduce ? 'px-5 py-16 lg:px-8 lg:py-24' : 'sticky top-0 flex min-h-screen items-start px-5 py-24 lg:px-8'}>
+      <div className={reduce ? 'px-5 py-16 lg:px-8 lg:py-24' : 'sticky top-0 flex min-h-screen items-center px-5 py-24 lg:px-8'}>
         <div className="mx-auto w-full max-w-6xl">
           <Reveal className="mb-14 max-w-xl">
             <p className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
@@ -81,7 +67,7 @@ export function StickyHowItWorks() {
             <div className="relative space-y-6">
               {!reduce && (
                 <motion.div
-                  className="absolute bottom-4 left-5 top-4 w-px origin-top bg-gradient-to-b from-[#8B5CF6] via-[#8B5CF6]/40 to-transparent"
+                  className="absolute bottom-4 left-5 top-4 w-px origin-top bg-gradient-to-b from-[#7C3AED] via-[#7C3AED]/40 to-transparent"
                   style={{ scaleY: lineScale }}
                   aria-hidden
                 />
@@ -130,7 +116,7 @@ export function StickyHowItWorks() {
                 className="pointer-events-none absolute inset-0 opacity-30"
                 style={{
                   background:
-                    'radial-gradient(circle at 30% 20%, rgba(139,92,246,0.25), transparent 55%)',
+                    'radial-gradient(circle at 30% 20%, rgba(124,58,237,0.25), transparent 55%)',
                 }}
               />
               <div className="relative space-y-4">
@@ -142,17 +128,17 @@ export function StickyHowItWorks() {
                     import.csv → 847 leads queued → dial session started
                   </p>
                 </div>
-                <div className="rounded-xl border border-[#8B5CF6]/20 bg-[#8B5CF6]/[0.06] p-4">
+                <div className="rounded-xl border border-[#7C3AED]/20 bg-[#7C3AED]/[0.06] p-4">
                   <p className="text-[13px] text-zinc-300">
                     &ldquo;Send pricing for twelve seats — let&apos;s reconnect Thursday.&rdquo;
                   </p>
-                  <p className="mt-2 text-[12px] text-[#8B5CF6]">→ Summary ready in 4s</p>
+                  <p className="mt-2 text-[12px] text-[#A78BFA]">→ Summary ready in 4s</p>
                 </div>
               </div>
             </motion.div>
           </div>
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 }

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
 import { MotionShell } from '@/components/marketing/live-floor/MotionShell';
 import { Nav } from '@/components/marketing/live-floor/Nav';
 import { BackgroundSystem } from '@/components/marketing/live-floor/BackgroundSystem';
@@ -22,73 +21,39 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://growthdialer.com' },
 };
 
-function AmbientSection({
-  children,
-  tone = 'purple',
-  align = 'left',
-}: {
-  children: ReactNode;
-  tone?: 'purple' | 'cyan' | 'mixed';
-  align?: 'left' | 'right' | 'center';
-}) {
-  const background =
-    tone === 'cyan'
-      ? 'radial-gradient(circle, #06B6D4 0%, transparent 70%)'
-      : tone === 'mixed'
-        ? 'radial-gradient(circle at 42% 48%, #8B5CF6 0%, #06B6D4 44%, transparent 72%)'
-        : 'radial-gradient(circle, #8B5CF6 0%, transparent 70%)';
-  const position =
-    align === 'right'
-      ? 'right-[4%]'
-      : align === 'center'
-        ? 'left-1/2 -translate-x-1/2'
-        : 'left-[4%]';
-
-  return (
-    <div className="marketing-section relative overflow-hidden">
-      <div
-        aria-hidden
-        className={`pointer-events-none absolute top-0 h-[420px] w-[min(84vw,680px)] rounded-full opacity-[0.045] blur-3xl ${position}`}
-        style={{ background }}
-      />
-      {children}
-    </div>
-  );
-}
-
 export default function LandingPage() {
   return (
     <MotionShell>
-      <div className="relative min-h-screen bg-[#08080A] text-[#F8F8FF] antialiased selection:bg-[#8B5CF6]/30 selection:text-white">
+      <div className="relative min-h-screen bg-[#08080A] text-[#F8F8FF] antialiased selection:bg-[#7C3AED]/30 selection:text-white">
         <BackgroundSystem />
         <ScrollProgress />
         <Nav />
         <main className="relative z-[2]">
           <Hero />
-          <AmbientSection tone="purple" align="left">
+          <div className="marketing-section">
             <IntegrationsMarquee />
-          </AmbientSection>
-          <AmbientSection tone="cyan" align="right">
+          </div>
+          <div className="marketing-section">
             <ProductPreviewTabs />
-          </AmbientSection>
-          <AmbientSection tone="mixed" align="center">
+          </div>
+          <div className="marketing-section">
             <Features />
-          </AmbientSection>
-          <AmbientSection tone="purple" align="left">
+          </div>
+          <div className="marketing-section">
             <StickyHowItWorks />
-          </AmbientSection>
-          <AmbientSection tone="cyan" align="right">
+          </div>
+          <div className="marketing-section">
             <StatsStrip />
-          </AmbientSection>
-          <AmbientSection tone="mixed" align="center">
+          </div>
+          <div className="marketing-section">
             <TestimonialsTicker />
-          </AmbientSection>
-          <AmbientSection tone="purple" align="right">
+          </div>
+          <div className="marketing-section">
             <HomePricing />
-          </AmbientSection>
-          <AmbientSection tone="cyan" align="left">
+          </div>
+          <div className="marketing-section">
             <HomeFAQ />
-          </AmbientSection>
+          </div>
           <FinalCTA />
         </main>
       </div>

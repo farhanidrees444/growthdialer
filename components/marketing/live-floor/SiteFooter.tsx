@@ -41,7 +41,7 @@ export function SiteFooter() {
     <footer className="relative overflow-hidden px-5 pb-10 pt-16 lg:px-8">
       <div
         aria-hidden
-        className="mb-12 h-px w-full bg-gradient-to-r from-transparent via-[#8B5CF6]/40 to-transparent"
+        className="mb-12 h-px w-full bg-gradient-to-r from-transparent via-[#7C3AED]/40 to-transparent"
       />
 
       <p
@@ -76,7 +76,7 @@ export function SiteFooter() {
           </div>
           <a
             href={APP_SIGNUP}
-            className="mt-5 inline-flex text-[13px] font-medium text-[#8B5CF6] transition-colors hover:text-[#06B6D4]"
+            className="mt-5 inline-flex text-[13px] font-medium text-[#A78BFA] transition-colors hover:text-[#C4B5FD]"
           >
             Start free →
           </a>
@@ -94,7 +94,7 @@ export function SiteFooter() {
                     href={l.href}
                     className="group inline-block text-[13px] text-zinc-400 transition-all hover:translate-x-0.5 hover:text-[#F5F5F7]"
                   >
-                    <span className="bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] bg-[length:0%_1px] bg-left-bottom bg-no-repeat transition-[background-size] duration-300 group-hover:bg-[length:100%_1px]">
+                    <span className="bg-gradient-to-r from-[#A78BFA] to-[#67E8F9] bg-[length:0%_1px] bg-left-bottom bg-no-repeat transition-[background-size] duration-300 group-hover:bg-[length:100%_1px]">
                     {l.label}
                     </span>
                   </Link>
@@ -114,8 +114,8 @@ export function SiteFooter() {
           className="inline-flex items-center gap-2 text-[12px] text-zinc-500 transition-colors hover:text-zinc-300"
         >
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#06B6D4] opacity-40" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#06B6D4]" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-40" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
           </span>
           All systems operational
         </Link>
