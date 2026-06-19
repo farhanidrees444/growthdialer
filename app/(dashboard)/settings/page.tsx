@@ -24,7 +24,10 @@ import { ROLE_LABELS, ROLE_COLORS, type Role } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { SoundDesignToggle } from "@/components/premium/sound-design-toggle";
-import { MIN_PLAYABLE_RECORDING_SECONDS } from "@/lib/recordings/eligibility";
+import {
+  MIN_PLAYABLE_RECORDING_SECONDS,
+  PLAYABLE_RECORDING_DURATION_FILTER,
+} from "@/lib/recordings/eligibility";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -329,9 +332,31 @@ function RecordingTab({ settings, onChange, recordingStats }: {
         <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-[#06B6D4]/20 bg-[#06B6D4]/[0.05] p-3">
           <Info className="h-4 w-4 shrink-0 text-[#06B6D4] mt-0.5" />
           <p className="text-xs text-[#06B6D4]/80 leading-relaxed">
-            <span className="font-semibold">Playable recording rule:</span> Call recordings appear after the call ends when the saved audio is playable and the conversation lasted over 30 seconds.
+            <span className="font-semibold">Playable recording rule:</span> Call recordings appear after the call ends when saved audio is playable and the conversation lasted over {MIN_PLAYABLE_RECORDING_SECONDS} seconds.
           </p>
         </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Recording Pipeline Requirements"
+        description="These server-side checks must pass before new calls can appear in the Recordings library."
+      >
+        <div className="space-y-3">
+          {[
+            'Voice provider credentials and voice application are configured.',
+            'Public app URL points to this deployment so call recording webhooks can reach it.',
+            'Webhook signing key is configured in production so call events are accepted.',
+            'Saved-audio storage and AI service keys are available for playback, transcripts, and summaries.',
+          ].map((item) => (
+            <div key={item} className="flex items-start gap-2 rounded-xl border border-white/[0.05] bg-white/[0.02] p-3">
+              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#06B6D4]" />
+              <p className="text-xs leading-relaxed text-white/45">{item}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-[11px] leading-relaxed text-white/25">
+          Diagnostics on the Recordings page only warn about eligible calls. Calls at or under {MIN_PLAYABLE_RECORDING_SECONDS} seconds are treated as skipped, not stuck.
+        </p>
       </SectionCard>
 
       <SectionCard title="Storage & Retention">
@@ -390,7 +415,7 @@ function RecordingTab({ settings, onChange, recordingStats }: {
           <div className="min-w-0">
             <p className="text-sm font-medium text-white/80">Short calls are excluded</p>
             <p className="text-xs text-white/35 leading-relaxed mt-0.5">
-              Calls at or under 30 seconds are not shown in Recordings or sent for AI analysis, which keeps accidental and dropped calls out of your library.
+              Calls at or under {MIN_PLAYABLE_RECORDING_SECONDS} seconds are not shown in Recordings or sent for AI analysis, which keeps accidental and dropped calls out of your library.
             </p>
           </div>
         </div>
@@ -1317,7 +1342,7 @@ export default function SettingsPage() {
         .eq('user_id', session.user.id)
         .not('recording_url', 'is', null)
         .not('recording_supabase_path', 'is', null)
-        .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`);
+        .or(PLAYABLE_RECORDING_DURATION_FILTER);
 
       if (calls) {
         const totalSeconds = calls.reduce(

@@ -51,6 +51,7 @@ interface RecordingDiagnostics {
   summary: {
     total_calls: number;
     calls_with_recording_url: number;
+    eligible_recordings_captured?: number;
     calls_marked_was_recorded: number;
     calls_over_30s: number;
     ai_completed: number;
@@ -444,7 +445,7 @@ function RecordingPipelinePanel({
 }) {
   const summary = diagnostics?.summary;
   const hasIssues = Boolean(diagnostics && !diagnostics.ok);
-  const pendingAi = (summary?.ai_pending_or_processing ?? 0) + (summary?.ai_failed ?? 0) + (summary?.ai_stuck_processing ?? 0);
+  const pendingAi = (summary?.ai_pending_or_processing ?? 0) + (summary?.ai_failed ?? 0);
   const pendingStorage = summary?.pending_storage_mirror ?? 0;
 
   return (
@@ -464,7 +465,7 @@ function RecordingPipelinePanel({
               ? 'Checking recording capture, secure playback, and AI analysis status...'
               : diagnostics?.ok
                 ? 'Pipeline looks ready. Make a real call over 30 seconds, then refresh here to confirm playback, transcript, and summary.'
-                : 'A few checks need attention before recordings and AI can be considered production-ready.'}
+                : 'A few checks need attention before eligible recordings and AI analysis are ready.'}
           </p>
         </div>
         <button

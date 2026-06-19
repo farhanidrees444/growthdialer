@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { canViewTeamCalls, ownCallsOrFilter } from '@/lib/auth/call-access';
+import { hasPermission } from '@/lib/auth/permissions';
 import { resolveAppBaseUrl } from '@/lib/ai/trigger-process-call';
 import { AI_PROCESSING_STALE_MS } from '@/lib/ai/pipeline-status';
-import { MIN_PLAYABLE_RECORDING_SECONDS } from '@/lib/recordings/eligibility';
+import {
+  MIN_PLAYABLE_RECORDING_SECONDS,
+  PLAYABLE_RECORDING_DURATION_FILTER,
+} from '@/lib/recordings/eligibility';
+import { isTwilioVoiceConfigured, readTwilioAuthToken } from '@/lib/twilio/voice-config';
 
 // GET /api/recordings/diagnostics
 // Authenticated. Returns a checklist that explains exactly why the recordings
@@ -13,12 +20,30 @@ export async function GET(_req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const access = await requireWorkspaceFromRequest(_req, supabase, user.id);
+  if (isWorkspaceError(access)) return access;
+
+  if (
+    !hasPermission(access.role, 'VIEW_ALL_RECORDINGS')
+    && !hasPermission(access.role, 'VIEW_OWN_RECORDINGS')
+  ) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const teamView = canViewTeamCalls(access);
+  const wsId = access.workspaceId;
+  const ownCallScope = ownCallsOrFilter(wsId, user.id);
+  const eligibleDurationFilter = PLAYABLE_RECORDING_DURATION_FILTER;
+  const legacyVoiceConfigured = Boolean(process.env.TELNYX_API_KEY && process.env.TELNYX_CONNECTION_ID);
+  const twilioVoiceConfigured = isTwilioVoiceConfigured();
+  const webhookSignatureConfigured = Boolean(process.env.TELNYX_PUBLIC_KEY || readTwilioAuthToken());
+
   // 1. Internal pipeline configuration (generic keys only — never vendor names)
   const appBaseUrl = resolveAppBaseUrl();
   const env = {
-    voice_provider: !!process.env.TELNYX_API_KEY,
-    voice_connection: !!process.env.TELNYX_CONNECTION_ID,
-    webhook_signature: !!process.env.TELNYX_PUBLIC_KEY,
+    voice_provider: legacyVoiceConfigured || twilioVoiceConfigured,
+    voice_connection: Boolean(process.env.TELNYX_CONNECTION_ID || process.env.TWILIO_TWIML_APP_SID),
+    webhook_signature: webhookSignatureConfigured,
     app_url: !!appBaseUrl,
     app_url_value: appBaseUrl || null,
     internal_pipeline: !!process.env.INTERNAL_API_SECRET,
@@ -35,80 +60,132 @@ export async function GET(_req: NextRequest) {
     .maybeSingle();
 
   // 3. Counts: total calls, calls with recording_url, calls long enough
-  const { count: totalCalls } = await supabase
+  let totalCallsQuery = supabase
     .from('calls')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id);
+    .select('*', { count: 'exact', head: true });
+  totalCallsQuery = teamView
+    ? totalCallsQuery.eq('workspace_id', wsId)
+    : totalCallsQuery.or(ownCallScope);
+  const { count: totalCalls } = await totalCallsQuery;
 
-  const { count: withUrl } = await supabase
+  let capturedEligibleQuery = supabase
     .from('calls')
     .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
+    .not('recording_url', 'is', null)
+    .or(eligibleDurationFilter);
+  capturedEligibleQuery = teamView
+    ? capturedEligibleQuery.eq('workspace_id', wsId)
+    : capturedEligibleQuery.or(ownCallScope);
+  const { count: capturedEligible } = await capturedEligibleQuery;
+
+  let playableQuery = supabase
+    .from('calls')
+    .select('*', { count: 'exact', head: true })
     .not('recording_url', 'is', null)
     .not('recording_supabase_path', 'is', null)
-    .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`);
+    .or(eligibleDurationFilter);
+  playableQuery = teamView
+    ? playableQuery.eq('workspace_id', wsId)
+    : playableQuery.or(ownCallScope);
+  const { count: playableRecordings } = await playableQuery;
 
-  const { count: longEnough } = await supabase
+  let longEnoughQuery = supabase
     .from('calls')
     .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`);
+    .or(eligibleDurationFilter);
+  longEnoughQuery = teamView
+    ? longEnoughQuery.eq('workspace_id', wsId)
+    : longEnoughQuery.or(ownCallScope);
+  const { count: longEnough } = await longEnoughQuery;
 
-  const { count: recordedFlag } = await supabase
+  let recordedFlagQuery = supabase
     .from('calls')
     .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
     .eq('was_recorded', true);
+  recordedFlagQuery = teamView
+    ? recordedFlagQuery.eq('workspace_id', wsId)
+    : recordedFlagQuery.or(ownCallScope);
+  const { count: recordedFlag } = await recordedFlagQuery;
 
-  const { count: aiCompleted } = await supabase
+  let aiCompletedQuery = supabase
     .from('calls')
     .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
+    .not('recording_url', 'is', null)
+    .not('recording_supabase_path', 'is', null)
+    .or(eligibleDurationFilter)
     .eq('ai_processed', true);
+  aiCompletedQuery = teamView
+    ? aiCompletedQuery.eq('workspace_id', wsId)
+    : aiCompletedQuery.or(ownCallScope);
+  const { count: aiCompleted } = await aiCompletedQuery;
 
-  const { count: aiPending } = await supabase
+  let aiPendingQuery = supabase
     .from('calls')
     .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
     .not('recording_url', 'is', null)
-    .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`)
+    .or(eligibleDurationFilter)
     .in('ai_processing_status', ['pending', 'processing']);
+  aiPendingQuery = teamView
+    ? aiPendingQuery.eq('workspace_id', wsId)
+    : aiPendingQuery.or(ownCallScope);
+  const { count: aiPending } = await aiPendingQuery;
 
-  const { count: aiFailed } = await supabase
+  let aiFailedQuery = supabase
     .from('calls')
     .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .eq('ai_processing_status', 'failed');
-
-  const { count: mirroredToStorage } = await supabase
-    .from('calls')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .not('recording_supabase_path', 'is', null);
-
-  const { count: needsMirror } = await supabase
-    .from('calls')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
     .not('recording_url', 'is', null)
-    .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`)
+    .or(eligibleDurationFilter)
+    .eq('ai_processing_status', 'failed');
+  aiFailedQuery = teamView
+    ? aiFailedQuery.eq('workspace_id', wsId)
+    : aiFailedQuery.or(ownCallScope);
+  const { count: aiFailed } = await aiFailedQuery;
+
+  let mirroredToStorageQuery = supabase
+    .from('calls')
+    .select('*', { count: 'exact', head: true })
+    .not('recording_url', 'is', null)
+    .or(eligibleDurationFilter)
+    .not('recording_supabase_path', 'is', null);
+  mirroredToStorageQuery = teamView
+    ? mirroredToStorageQuery.eq('workspace_id', wsId)
+    : mirroredToStorageQuery.or(ownCallScope);
+  const { count: mirroredToStorage } = await mirroredToStorageQuery;
+
+  let needsMirrorQuery = supabase
+    .from('calls')
+    .select('*', { count: 'exact', head: true })
+    .not('recording_url', 'is', null)
+    .or(eligibleDurationFilter)
     .is('recording_supabase_path', null);
+  needsMirrorQuery = teamView
+    ? needsMirrorQuery.eq('workspace_id', wsId)
+    : needsMirrorQuery.or(ownCallScope);
+  const { count: needsMirror } = await needsMirrorQuery;
 
   const staleBefore = new Date(Date.now() - AI_PROCESSING_STALE_MS).toISOString();
-  const { count: aiStuck } = await supabase
+  let aiStuckQuery = supabase
     .from('calls')
     .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
+    .not('recording_url', 'is', null)
+    .or(eligibleDurationFilter)
     .eq('ai_processing_status', 'processing')
     .lt('ai_processed_at', staleBefore);
+  aiStuckQuery = teamView
+    ? aiStuckQuery.eq('workspace_id', wsId)
+    : aiStuckQuery.or(ownCallScope);
+  const { count: aiStuck } = await aiStuckQuery;
 
   // 4. Most recent 5 calls — show what state they are in
-  const { data: recent } = await supabase
+  let recentQuery = supabase
     .from('calls')
     .select(
       'id, created_at, status, duration_seconds, was_recorded, recording_url, recording_supabase_path, ai_processing_status, ai_error, hangup_cause',
-    )
-    .eq('user_id', user.id)
+    );
+  recentQuery = teamView
+    ? recentQuery.eq('workspace_id', wsId)
+    : recentQuery.or(ownCallScope);
+  const { data: recent } = await recentQuery
     .order('created_at', { ascending: false })
     .limit(5);
 
@@ -118,11 +195,11 @@ export async function GET(_req: NextRequest) {
   if (!env.voice_provider) issues.push('Voice provider is not configured — recordings cannot be started.');
   if (!env.webhook_signature) {
     issues.push(
-      'Webhook signature key is not configured — production voice webhooks may be rejected.',
+      'Webhook signing key is not configured — production voice webhooks may be rejected.',
     );
   }
   if (!env.app_url) {
-    issues.push('Application URL is not configured — set APP_URL or NEXT_PUBLIC_APP_URL so AI can be triggered.');
+    issues.push('Application URL is not configured — add the public app URL in deployment settings so processing callbacks can run.');
   }
   if (!env.database_service)
     issues.push('Database service is not configured — webhooks cannot persist call data.');
@@ -130,28 +207,28 @@ export async function GET(_req: NextRequest) {
   if (!env.call_analysis) issues.push('Call analysis service is not configured — summaries may be limited.');
 
   if (settings?.recording_mode === 'never') {
-    issues.push("Settings → Calling → Recording mode is 'never'. Set it to 'always' to record.");
-  }
-
-  if (totalCalls && totalCalls > 0) {
-    if (recordedFlag === 0) {
-      issues.push(
-        'You have calls but none are marked as recorded. Verify your voice webhook URL is configured in your telephony provider settings.',
-      );
-    } else if (withUrl === 0) {
-      issues.push(
-        'Calls are marked recorded but no playable recording URL was saved. Check call recording is enabled in your voice service.',
-      );
-    }
+    issues.push("Settings → Recording → Recording mode is 'never'. Set it to 'always' to record.");
   }
 
   if (longEnough === 0 && totalCalls && totalCalls > 0) {
     issues.push(
-      `None of your ${totalCalls} calls reached 30 seconds duration. Recordings under 30s are auto-discarded. Make a longer test call.`,
+      `None of your ${totalCalls} calls reached ${MIN_PLAYABLE_RECORDING_SECONDS} seconds. Short calls are intentionally excluded from the recording library and AI queue.`,
     );
   }
 
-  if ((withUrl ?? 0) > 0 && (aiCompleted ?? 0) === 0 && (aiPending ?? 0) === 0) {
+  if (totalCalls && totalCalls > 0 && (longEnough ?? 0) > 0) {
+    if (recordedFlag === 0 || capturedEligible === 0) {
+      issues.push(
+        'Eligible calls exist, but no call recording audio has been captured yet. Check recording mode and voice webhook configuration.',
+      );
+    } else if (playableRecordings === 0 && (needsMirror ?? 0) === 0) {
+      issues.push(
+        'Call recordings were captured but are not playable yet. Check saved-audio storage configuration.',
+      );
+    }
+  }
+
+  if ((capturedEligible ?? 0) > 0 && (aiCompleted ?? 0) === 0 && (aiPending ?? 0) === 0) {
     issues.push(
       'Recordings exist but none completed AI analysis. Retry the AI queue or check AI service keys.',
     );
@@ -159,7 +236,7 @@ export async function GET(_req: NextRequest) {
 
   if ((aiStuck ?? 0) > 0) {
     issues.push(
-      `${aiStuck} recording(s) stuck in processing >12 min — cron or POST /api/recordings/backfill-ai will retry.`,
+      `${aiStuck} eligible recording(s) stuck in processing >12 min — cron or POST /api/recordings/backfill-ai will retry.`,
     );
   }
 
@@ -167,9 +244,9 @@ export async function GET(_req: NextRequest) {
     issues.push(`${aiFailed} recording(s) failed AI — open Recent calls for ai_error, then reprocess from Recordings.`);
   }
 
-  if ((withUrl ?? 0) > 0 && (needsMirror ?? 0) > 0) {
+  if ((capturedEligible ?? 0) > 0 && (needsMirror ?? 0) > 0) {
     issues.push(
-      `${needsMirror} recording(s) not yet mirrored to storage — POST /api/recordings/backfill-storage or wait for cron.`,
+      `${needsMirror} eligible recording(s) not yet saved for secure playback — POST /api/recordings/backfill-storage or wait for cron.`,
     );
   }
 
@@ -177,7 +254,8 @@ export async function GET(_req: NextRequest) {
     ok: issues.length === 0,
     summary: {
       total_calls: totalCalls ?? 0,
-      calls_with_recording_url: withUrl ?? 0,
+      calls_with_recording_url: playableRecordings ?? 0,
+      eligible_recordings_captured: capturedEligible ?? 0,
       calls_marked_was_recorded: recordedFlag ?? 0,
       calls_over_30s: longEnough ?? 0,
       ai_completed: aiCompleted ?? 0,
@@ -199,7 +277,7 @@ export async function GET(_req: NextRequest) {
     },
     next_step:
       issues.length === 0
-        ? 'Pipeline looks healthy. Make a test call over 30 seconds and refresh /recordings within 60s.'
+        ? `Pipeline looks healthy. Make a test call over ${MIN_PLAYABLE_RECORDING_SECONDS} seconds and refresh /recordings within 60s.`
         : 'Fix the issues above. Most common: voice webhook URL not configured.',
   });
 }

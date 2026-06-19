@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { MIN_PLAYABLE_RECORDING_SECONDS } from '@/lib/recordings/eligibility';
+import { PLAYABLE_RECORDING_DURATION_FILTER } from '@/lib/recordings/eligibility';
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       .eq('user_id', userId)
       .not('recording_url', 'is', null)
       .not('recording_supabase_path', 'is', null)
-      .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`);
+      .or(PLAYABLE_RECORDING_DURATION_FILTER);
 
     if (query) {
       const escapedQuery = query.replace(/%/g, '\\%').replace(/_/g, '\\_');

@@ -1,4 +1,6 @@
 export const MIN_PLAYABLE_RECORDING_SECONDS = 30;
+export const PLAYABLE_RECORDING_DURATION_FILTER =
+  `recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},and(recording_duration_seconds.is.null,duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS})`;
 
 export function parseRecordingDurationSeconds(value: string | null | undefined): number | null {
   if (!value) return null;

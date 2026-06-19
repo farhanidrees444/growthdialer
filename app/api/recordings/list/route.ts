@@ -5,7 +5,7 @@ import { canViewTeamCalls, ownCallsOrFilter } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createCallRecordingSignedUrl } from '@/lib/recordings/storage';
-import { MIN_PLAYABLE_RECORDING_SECONDS } from '@/lib/recordings/eligibility';
+import { PLAYABLE_RECORDING_DURATION_FILTER } from '@/lib/recordings/eligibility';
 
 export async function GET(request: NextRequest) {
   try {
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       `)
       .not('recording_url', 'is', null)
       .not('recording_supabase_path', 'is', null)
-      .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`)
+      .or(PLAYABLE_RECORDING_DURATION_FILTER)
       .order('started_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
       .limit(100);

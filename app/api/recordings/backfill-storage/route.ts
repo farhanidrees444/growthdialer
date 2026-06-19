@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { mirrorCallRecordingToStorage } from '@/lib/recordings/storage';
-import { MIN_PLAYABLE_RECORDING_SECONDS } from '@/lib/recordings/eligibility';
+import { PLAYABLE_RECORDING_DURATION_FILTER } from '@/lib/recordings/eligibility';
 
 const MAX_BATCH = 10;
 
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     .select('id, recording_url, recording_supabase_path')
     .eq('user_id', user.id)
     .not('recording_url', 'is', null)
-    .or(`recording_duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS},duration_seconds.gt.${MIN_PLAYABLE_RECORDING_SECONDS}`)
+    .or(PLAYABLE_RECORDING_DURATION_FILTER)
     .is('recording_supabase_path', null)
     .order('created_at', { ascending: false })
     .limit(limit);
