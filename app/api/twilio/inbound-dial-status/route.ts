@@ -25,6 +25,19 @@ function shouldLogGeneratedTwiml(request: NextRequest): boolean {
     || request.nextUrl.searchParams.get('gd_debug_twiml') === '1';
 }
 
+function voicemailRecordingOptions(recordingCallback: string | undefined) {
+  return {
+    maxLength: 120,
+    playBeep: true,
+    ...(recordingCallback
+      ? {
+          recordingStatusCallback: recordingCallback,
+          recordingStatusCallbackMethod: 'POST' as const,
+        }
+      : {}),
+  };
+}
+
 /**
  * POST /api/twilio/inbound-dial-status
  * After <Dial><Client> completes — route no-answer to voicemail when configured.
@@ -74,12 +87,7 @@ export async function POST(request: NextRequest) {
           if (routing.inbound_mode === 'browser' || routing.inbound_mode === 'forward') {
             const recordingCallback = twilioRecordingCallbackUrl();
             response.say('Please leave a message after the tone.');
-            response.record({
-              maxLength: 120,
-              playBeep: true,
-              recordingStatusCallback: recordingCallback,
-              recordingStatusCallbackMethod: 'POST',
-            });
+            response.record(voicemailRecordingOptions(recordingCallback));
             return twimlResponse(response, request);
           }
         }

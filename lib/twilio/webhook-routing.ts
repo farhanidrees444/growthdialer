@@ -48,10 +48,6 @@ const STATUS_EVENTS = [
   'ringing',
   'answered',
   'completed',
-  'busy',
-  'no-answer',
-  'failed',
-  'canceled',
 ] as const;
 
 export function dialStatusCallbackOptions(statusCallback: string | undefined) {

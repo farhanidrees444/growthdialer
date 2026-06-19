@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { parseTwilioClientIdentity } from '@/lib/twilio/client-identity';
+import { isValidTwilioClientIdentity, parseTwilioClientIdentity } from '@/lib/twilio/client-identity';
 import {
   dialStatusCallbackOptions,
   dialRecordingOptions,
@@ -56,6 +56,19 @@ function hangupTwimlResponse(request: NextRequest, label: string): NextResponse 
   return twimlResponse(response, request, label);
 }
 
+function voicemailRecordingOptions(recordingCallback: string | undefined) {
+  return {
+    maxLength: 120,
+    playBeep: true,
+    ...(recordingCallback
+      ? {
+          recordingStatusCallback: recordingCallback,
+          recordingStatusCallbackMethod: 'POST' as const,
+        }
+      : {}),
+  };
+}
+
 /**
  * Shared TwiML voice handler for inbound PSTN, outbound browser, and dialer bridges.
  */
@@ -86,6 +99,7 @@ export async function handleTwilioVoiceWebhook(
     if (!supabase) {
       const err = new VoiceResponse();
       err.say('Voice service is temporarily unavailable.');
+      err.hangup();
       return twimlResponse(err, request);
     }
 
@@ -103,6 +117,7 @@ export async function handleTwilioVoiceWebhook(
       if (!route) {
         console.error('[TwilioVoice] OUTBOUND route failed', { from, to, callerIdParam });
         response.say('No caller ID is configured for your account.');
+        response.hangup();
         return twimlResponse(response, request);
       }
 
@@ -119,6 +134,12 @@ export async function handleTwilioVoiceWebhook(
     const bridgeUserId = params.gd_user_id?.trim();
     const bridgeIdentity = params.gd_client_identity?.trim();
     if (bridgeUserId && bridgeIdentity) {
+      if (!isValidTwilioClientIdentity(bridgeIdentity)) {
+        console.error('[TwilioVoice] Invalid bridge client identity', { bridgeUserId, bridgeIdentity });
+        response.hangup();
+        return twimlResponse(response, request, 'TwilioVoiceInvalidBridgeIdentity');
+      }
+
       const { data: settings } = await supabase
         .from('user_settings')
         .select('recording_mode')
@@ -138,6 +159,7 @@ export async function handleTwilioVoiceWebhook(
     if (!inbound) {
       console.error('[TwilioVoice] INBOUND no owner for To=', to);
       response.say('This number is not configured to receive calls.');
+      response.hangup();
       return twimlResponse(response, request);
     }
 
@@ -181,12 +203,7 @@ export async function handleTwilioVoiceWebhook(
 
     if (routing.inbound_mode === 'voicemail') {
       response.say('Please leave a message after the tone.');
-      response.record({
-        maxLength: 120,
-        playBeep: true,
-        recordingStatusCallback: recordingCallback,
-        recordingStatusCallbackMethod: 'POST',
-      });
+      response.record(voicemailRecordingOptions(recordingCallback));
       return twimlResponse(response, request);
     }
 
@@ -198,12 +215,7 @@ export async function handleTwilioVoiceWebhook(
 
     if (ringTargets.length === 0) {
       response.say('No agents are available right now. Please leave a message after the tone.');
-      response.record({
-        maxLength: 120,
-        playBeep: true,
-        recordingStatusCallback: recordingCallback,
-        recordingStatusCallbackMethod: 'POST',
-      });
+      response.record(voicemailRecordingOptions(recordingCallback));
       return twimlResponse(response, request);
     }
 
@@ -211,8 +223,7 @@ export async function handleTwilioVoiceWebhook(
       answerOnBridge: true,
       callerId: inbound.fromNumber,
       timeout: Math.min(Math.max(routing.inbound_ring_seconds, 15), 60),
-      action: dialActionUrl,
-      method: 'POST',
+      ...(dialActionUrl ? { action: dialActionUrl, method: 'POST' as const } : {}),
       ...dialStatusCallbackOptions(inboundStatusCallback),
       ...(routing.recording_enabled ? dialRecordingOptions(recordingCallback) : {}),
     });

@@ -39,7 +39,7 @@ export async function createTwilioOutboundCall(
     from: options.from,
     url: `${base}/api/twilio/voice?${query.toString()}`,
     method: 'POST',
-    ...(options.machineDetection
+    ...(options.machineDetection && statusCallback
       ? {
           machineDetection: 'DetectMessageEnd' as const,
           asyncAmd: 'true' as const,
@@ -51,7 +51,7 @@ export async function createTwilioOutboundCall(
       ? {
           statusCallback,
           statusCallbackMethod: 'POST' as const,
-          statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed', 'busy', 'no-answer', 'failed', 'canceled'],
+          statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
         }
       : {}),
   });
