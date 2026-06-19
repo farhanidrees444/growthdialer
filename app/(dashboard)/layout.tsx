@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { LeadsProvider } from "@/contexts/leads-context";
 import { ImportLeadsDialog } from "@/components/ImportLeadsDialog";
@@ -52,6 +53,7 @@ export default function DashboardLayout({
   const routeAccent = resolveRouteAccent(pathname);
   const session = useSupabaseSession();
   const userId = session?.user?.id;
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
     <WorkspaceProvider>
@@ -70,9 +72,14 @@ export default function DashboardLayout({
               <AmbientShell accent={routeAccent.ambient} />
               <div className="pointer-events-none absolute inset-0 grid-bg opacity-[0.12]" aria-hidden />
 
-              {!isOnboarding && <TopHeader />}
+              {!isOnboarding && (
+                <TopHeader
+                  isSidebarCollapsed={isSidebarCollapsed}
+                  onSidebarCollapseToggle={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
+                />
+              )}
               <div className="relative z-10 flex min-h-0 flex-1 overflow-hidden">
-                {!isOnboarding && <Sidebar />}
+                {!isOnboarding && <Sidebar isDesktopCollapsed={isSidebarCollapsed} />}
                 <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                   <div
                     className={cn(

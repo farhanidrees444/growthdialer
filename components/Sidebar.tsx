@@ -29,7 +29,7 @@ import {
   Plus,
   Building2,
 } from "lucide-react";
-import { useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useMobileNav } from "@/contexts/mobile-nav-context";
 import { useSidebarCounts, formatSidebarCount } from "@/hooks/use-sidebar-counts";
 import { useWorkspace } from "@/contexts/workspace-context";
@@ -466,32 +466,54 @@ function NavSection({
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({
+  isDesktopCollapsed = false,
+}: {
+  isDesktopCollapsed?: boolean;
+}) {
   return (
     <Suspense
       fallback={
         <aside
-          className="hidden w-[240px] shrink-0 border-r border-zinc-800/50 bg-zinc-950 lg:block"
+          className={cn(
+            "hidden shrink-0 border-r border-zinc-800/50 bg-zinc-950 lg:block",
+            isDesktopCollapsed ? "w-[72px]" : "w-[240px]",
+          )}
           aria-hidden
         />
       }
     >
-      <SidebarInner />
+      <SidebarInner isDesktopCollapsed={isDesktopCollapsed} />
     </Suspense>
   );
 }
 
-function SidebarInner() {
+function SidebarInner({
+  isDesktopCollapsed,
+}: {
+  isDesktopCollapsed: boolean;
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isOpen, close } = useMobileNav();
   const sidebarCounts = useSidebarCounts();
   const { currentRole } = useWorkspace();
   const reduceMotion = useReducedMotion();
+  const [isDesktopViewport, setIsDesktopViewport] = useState(false);
 
   const canCoach = Boolean(currentRole && ["owner", "admin", "manager"].includes(currentRole));
-  const isDesktopCollapsed = false;
+  const isCollapsed = isDesktopCollapsed && isDesktopViewport;
   const routeAccent = resolveRouteAccent(pathname);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    const updateViewport = () => setIsDesktopViewport(mediaQuery.matches);
+
+    updateViewport();
+    mediaQuery.addEventListener("change", updateViewport);
+
+    return () => mediaQuery.removeEventListener("change", updateViewport);
+  }, []);
 
   return (
     <>
@@ -512,7 +534,7 @@ function SidebarInner() {
           "fixed inset-y-0 left-0 z-50 transition-[width,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
           isOpen ? "translate-x-0" : "-translate-x-full",
           "lg:static lg:z-auto lg:h-full lg:shrink-0 lg:translate-x-0",
-          isDesktopCollapsed ? "w-[72px]" : "w-[280px] lg:w-[240px]",
+          isCollapsed ? "w-[72px]" : "w-[280px] lg:w-[240px]",
         )}
       >
         <div
@@ -526,7 +548,7 @@ function SidebarInner() {
         <div
           className={cn(
             "flex shrink-0 items-center border-b border-zinc-800/50 lg:hidden",
-            isDesktopCollapsed
+            isCollapsed
               ? "flex-col gap-3 px-2 py-4"
               : "justify-between gap-3 px-4 py-5 min-h-[72px]",
           )}
@@ -534,20 +556,20 @@ function SidebarInner() {
           <BrandLogo
             href="/dashboard"
             onClick={close}
-            showText={!isDesktopCollapsed}
+            showText={!isCollapsed}
             size="sidebar"
             variant="icon-dark"
-            framed={isDesktopCollapsed}
+            framed={isCollapsed}
             priority
             className={cn(
               "min-w-0",
-              isDesktopCollapsed
+              isCollapsed
                 ? "mx-auto justify-center"
                 : "flex-1 min-w-0 pr-1",
             )}
           />
 
-          <div className={cn("flex items-center gap-1", isDesktopCollapsed && "w-full justify-center")}>
+          <div className={cn("flex items-center gap-1", isCollapsed && "w-full justify-center")}>
             <button
               type="button"
               onClick={close}
@@ -559,8 +581,8 @@ function SidebarInner() {
           </div>
         </div>
 
-        <div className={cn("shrink-0 pt-3", isDesktopCollapsed && "pt-2")}>
-          <WorkspaceSwitcher collapsed={isDesktopCollapsed} />
+        <div className={cn("shrink-0 pt-3", isCollapsed && "pt-2")}>
+          <WorkspaceSwitcher collapsed={isCollapsed} />
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -586,7 +608,7 @@ function SidebarInner() {
               <SidebarNavItem
                 item={DASHBOARD_ITEM}
                 active={isNavActive(pathname, searchParams, DASHBOARD_ITEM)}
-                collapsed={isDesktopCollapsed}
+                collapsed={isCollapsed}
                 counts={sidebarCounts}
                 onNavigate={close}
                 reduceMotion={!!reduceMotion}
@@ -596,7 +618,7 @@ function SidebarInner() {
             <NavSection
               title="Engage"
               items={ENGAGE_ITEMS}
-              collapsed={isDesktopCollapsed}
+              collapsed={isCollapsed}
               canCoach={canCoach}
               pathname={pathname}
               searchParams={searchParams}
@@ -608,7 +630,7 @@ function SidebarInner() {
             <NavSection
               title="Intelligence"
               items={INTELLIGENCE_ITEMS}
-              collapsed={isDesktopCollapsed}
+              collapsed={isCollapsed}
               canCoach={canCoach}
               pathname={pathname}
               searchParams={searchParams}
@@ -621,7 +643,7 @@ function SidebarInner() {
             <NavSection
               title="Team"
               items={TEAM_ITEMS}
-              collapsed={isDesktopCollapsed}
+              collapsed={isCollapsed}
               canCoach={canCoach}
               pathname={pathname}
               searchParams={searchParams}
@@ -633,7 +655,7 @@ function SidebarInner() {
             <NavSection
               title="Setup"
               items={SETUP_ITEMS}
-              collapsed={isDesktopCollapsed}
+              collapsed={isCollapsed}
               canCoach={canCoach}
               pathname={pathname}
               searchParams={searchParams}

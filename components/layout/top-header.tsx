@@ -9,7 +9,13 @@ import { UserMenu } from './user-menu';
 import { useMobileNav } from '@/contexts/mobile-nav-context';
 import { useLeads } from '@/contexts/leads-context';
 
-export function TopHeader() {
+export function TopHeader({
+  isSidebarCollapsed = false,
+  onSidebarCollapseToggle,
+}: {
+  isSidebarCollapsed?: boolean;
+  onSidebarCollapseToggle?: () => void;
+}) {
   const pathname = usePathname();
   const { toggle } = useMobileNav();
   const { setImportOpen } = useLeads();
@@ -22,6 +28,18 @@ export function TopHeader() {
       <LeadSearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
       <header className="relative z-30 flex h-14 flex-shrink-0 items-center justify-between gap-3 border-b border-zinc-800/60 bg-zinc-950/[0.92] px-2 shadow-[0_1px_0_rgba(255,255,255,0.03),0_18px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:px-4 lg:px-5">
         <div className="flex min-w-0 items-center gap-3">
+          {onSidebarCollapseToggle && (
+            <button
+              type="button"
+              onClick={onSidebarCollapseToggle}
+              aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-pressed={isSidebarCollapsed}
+              className="hidden min-h-10 min-w-10 flex-shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-800/40 hover:text-zinc-100 lg:flex"
+            >
+              <Menu size={18} />
+            </button>
+          )}
+
           <BrandLogo
             href="/dashboard"
             showText
