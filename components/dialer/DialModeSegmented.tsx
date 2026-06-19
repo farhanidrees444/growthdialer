@@ -23,7 +23,7 @@ const SEGMENTS: {
   Icon: typeof Phone;
   activeGradient: string;
 }[] = [
-  { id: 'manual', label: 'Manual', Icon: Phone, activeGradient: 'from-zinc-700/80 to-zinc-800/80' },
+  { id: 'manual', label: 'Manual', Icon: Phone, activeGradient: 'from-white/[0.10] to-white/[0.045]' },
   { id: 'power', label: 'Power', Icon: Zap, activeGradient: 'from-violet-600/90 to-violet-500/80' },
   { id: 'parallel', label: 'Parallel', Icon: Grid3x3, activeGradient: 'from-cyan-600/80 to-violet-600/70' },
 ];
@@ -50,7 +50,7 @@ export default function DialModeSegmented({
   return (
     <div
       className={cn(
-        'relative inline-flex w-full max-w-md rounded-xl border border-white/[0.06] bg-zinc-900/70 p-1 backdrop-blur-md',
+        'relative inline-flex w-full max-w-md rounded-2xl border border-white/[0.06] bg-white/[0.02] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl',
         className,
       )}
       role="tablist"
@@ -58,7 +58,7 @@ export default function DialModeSegmented({
     >
       {!reduce && (
         <div
-          className="pointer-events-none absolute inset-0 rounded-xl bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(139,92,246,0.08),transparent_70%)]"
+          className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(139,92,246,0.10),transparent_70%)]"
           aria-hidden
         />
       )}
@@ -75,7 +75,7 @@ export default function DialModeSegmented({
             disabled={disabled}
             onClick={() => handleClick(id)}
             className={cn(
-              'relative flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-medium transition-colors',
+              'relative flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-xs font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70',
               disabled && 'cursor-not-allowed opacity-50',
               !disabled && !isActive && 'cursor-pointer text-zinc-500 hover:text-zinc-200',
               isActive && 'text-white',
@@ -84,14 +84,14 @@ export default function DialModeSegmented({
             {isActive && (
               <motion.div
                 layoutId="dial-mode-pill-enterprise"
-                className={cn('absolute inset-0 rounded-lg bg-gradient-to-r shadow-sm', activeGradient)}
-                transition={{ type: 'spring', stiffness: 400, damping: 34 }}
+                className={cn('absolute inset-0 rounded-xl bg-gradient-to-r shadow-[0_10px_24px_rgba(0,0,0,0.24)]', activeGradient)}
+                transition={{ type: 'spring', stiffness: 200, damping: 25 }}
               />
             )}
             {isActive && !reduce && id !== 'manual' && (
               <motion.div
                 aria-hidden
-                className="absolute inset-0 rounded-lg opacity-50"
+                className="absolute inset-0 rounded-xl opacity-50"
                 style={{
                   background: id === 'power'
                     ? 'radial-gradient(circle at 50% 0%, rgba(167,139,250,0.4), transparent 70%)'

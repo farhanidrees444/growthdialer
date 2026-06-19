@@ -521,7 +521,7 @@ export default function DialerPage() {
         onReconnect={reconnect}
       />
 
-      <div className="flex-shrink-0 border-b border-zinc-800/50 px-4 py-3">
+      <div className="flex-shrink-0 border-b border-white/[0.06] bg-white/[0.01] px-4 py-3 backdrop-blur-xl">
         <DialModeSegmented
           mode={dialMode}
           onModeChange={setDialMode}
@@ -589,7 +589,7 @@ export default function DialerPage() {
 
         {/* Queue column */}
         <div
-          className={`flex-shrink-0 border-r border-white/[0.06] overflow-hidden transition-all duration-300 ${
+          className={`flex-shrink-0 border-r border-white/[0.06] overflow-hidden bg-white/[0.01] transition-all duration-300 backdrop-blur-xl ${
             isLive ? 'w-0 md:w-20' : 'w-0 md:w-[300px] lg:w-[380px]'
           } flex-col hidden md:flex`}
         >
@@ -707,7 +707,7 @@ export default function DialerPage() {
               animate={{ width: 340, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-              className="flex-shrink-0 border-l border-white/[0.06] overflow-hidden hidden xl:flex flex-col"
+              className="flex-shrink-0 border-l border-white/[0.06] overflow-hidden hidden xl:flex flex-col bg-white/[0.01] backdrop-blur-xl"
             >
               {mode === 'preview' ? (
                 <AiBriefPanel lead={selectedLead} />

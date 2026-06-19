@@ -148,7 +148,7 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
   ];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col bg-white/[0.01] backdrop-blur-xl">
 
       {/* Search */}
       <div className="px-3 pt-3 pb-2">
@@ -160,13 +160,13 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search leads..."
-            className="w-full bg-white/[0.04] border border-white/[0.07] rounded-lg pl-8 pr-8 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-cyan-400 focus:border-transparent"
+            className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] py-2 pl-8 pr-8 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all duration-200 placeholder:text-white/25 focus:border-cyan-400/40 focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
             aria-label="Search queue"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded text-white/30 transition-colors duration-200 hover:text-white/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60"
               aria-label="Clear search"
             >
               <X className="w-3 h-3" />
@@ -181,7 +181,7 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`relative flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium transition-colors ${
+            className={`relative flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 ${
               tab === key ? 'text-white' : 'text-white/40 hover:text-white/60'
             }`}
           >
@@ -195,7 +195,8 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
               <motion.div
                 layoutId="queue-tab-indicator"
                 className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full"
-                style={{ background: 'linear-gradient(90deg, #7C3AED, #06B6D4)' }}
+                style={{ background: 'linear-gradient(90deg, #8B5CF6, #06B6D4)' }}
+                transition={{ type: 'spring', stiffness: 200, damping: 25 }}
               />
             )}
           </button>
@@ -207,7 +208,7 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
 
         {/* Sort dropdown */}
         <Popover>
-          <PopoverTrigger className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white/80 px-2 py-1 rounded-lg hover:bg-white/[0.04] transition-colors">
+          <PopoverTrigger className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white/80 px-2 py-1 rounded-lg hover:bg-white/[0.04] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60">
             <ArrowDownUp size={12} />
             {SORT_LABELS[sort]}
             <ChevronDown size={10} />
@@ -223,7 +224,7 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
                 onClick={() => setSort(id)}
                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
                   sort === id
-                    ? 'bg-cyan-500/10 text-cyan-400'
+                    ? 'bg-cyan-500/10 text-cyan-200'
                     : 'text-white/70 hover:bg-white/[0.05]'
                 }`}
               >
@@ -236,11 +237,11 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
 
         {/* Filter dropdown */}
         <Popover>
-          <PopoverTrigger className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white/80 px-2 py-1 rounded-lg hover:bg-white/[0.04] transition-colors">
+          <PopoverTrigger className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white/80 px-2 py-1 rounded-lg hover:bg-white/[0.04] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60">
             <Filter size={12} />
             Filter
             {activeFilterCount > 0 && (
-              <span className="ml-0.5 px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-[10px] tabular-nums">
+              <span className="ml-0.5 rounded-full border border-cyan-400/20 bg-white/[0.04] px-1.5 py-0.5 text-[10px] tabular-nums text-cyan-200">
                 {activeFilterCount}
               </span>
             )}
@@ -255,13 +256,13 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
               {FILTER_OPTIONS.map(({ id, label }) => (
                 <label
                   key={id}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/[0.04] cursor-pointer transition-colors"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/[0.04] cursor-pointer transition-colors duration-200"
                 >
                   <input
                     type="checkbox"
                     checked={filters[id]}
                     onChange={(e) => setFilters((prev) => ({ ...prev, [id]: e.target.checked }))}
-                    className="w-3.5 h-3.5 rounded border-white/20 bg-white/5 accent-cyan-500"
+                    className="w-3.5 h-3.5 rounded border-white/20 bg-white/5 accent-cyan-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60"
                   />
                   <span className="text-sm text-white/80">{label}</span>
                 </label>
@@ -270,7 +271,7 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
             {activeFilterCount > 0 && (
               <button
                 onClick={() => setFilters(DEFAULT_FILTERS)}
-                className="w-full text-xs text-white/40 hover:text-white/60 border-t border-white/[0.06] mt-2.5 pt-2 transition-colors"
+                className="w-full border-t border-white/[0.06] mt-2.5 pt-2 text-xs text-white/40 transition-colors duration-200 hover:text-white/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60"
               >
                 Clear all filters
               </button>
@@ -285,7 +286,24 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
         {loading ? (
           <div className="space-y-2 px-1">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-[76px] rounded-lg bg-white/[0.03] animate-pulse" />
+              <div key={i} className="relative h-[76px] overflow-hidden rounded-xl border border-white/[0.04] bg-white/[0.02]">
+                <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-violet-400/30 to-cyan-400/30" />
+                <motion.div
+                  aria-hidden
+                  className="absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/[0.055] to-transparent"
+                  initial={{ x: '-120%' }}
+                  animate={{ x: '240%' }}
+                  transition={{ duration: 1.7, repeat: Infinity, ease: 'linear' }}
+                />
+                <div className="flex h-full items-center gap-3 px-3">
+                  <div className="h-10 w-10 rounded-full bg-white/[0.045]" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-2/3 rounded-full bg-white/[0.045]" />
+                    <div className="h-2.5 w-1/2 rounded-full bg-white/[0.035]" />
+                  </div>
+                  <div className="h-5 w-14 rounded-full bg-white/[0.035]" />
+                </div>
+              </div>
             ))}
           </div>
         ) : displayLeads.length === 0 ? (
@@ -308,7 +326,7 @@ export function QueueColumn({ selectedLeadId, onSelectLead, searchRef, onCountsC
             <PremiumEmptyState
               icon={tab === 'hot' ? Flame : Clock}
               scene={tab === 'hot' ? 'leads' : 'calls'}
-              accent="emerald"
+              accent="violet"
               compact
               title={tab === 'hot' ? 'No hot leads' : 'No callbacks due'}
               description={tab === 'hot'
