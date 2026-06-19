@@ -28,9 +28,6 @@ import {
   Headset,
   Plus,
   Building2,
-  Settings,
-  PanelLeftClose,
-  PanelLeft,
 } from "lucide-react";
 import { useState, Suspense } from "react";
 import { useMobileNav } from "@/contexts/mobile-nav-context";
@@ -86,7 +83,6 @@ const TEAM_ITEMS: NavItem[] = [
 const SETUP_ITEMS: NavItem[] = [
   { id: "numbers", icon: Hash, label: "My Numbers", href: "/numbers", countKey: "numbers" },
   { id: "integrations", icon: Zap, label: "Integrations", href: "/dashboard/integrations" },
-  { id: "settings", icon: Settings, label: "Settings", href: "/settings" },
 ];
 
 const PLAN_BADGES: Record<string, { label: string; className: string }> = {
@@ -491,11 +487,10 @@ function SidebarInner() {
   const { isOpen, close } = useMobileNav();
   const sidebarCounts = useSidebarCounts();
   const { currentRole } = useWorkspace();
-  const [collapsed, setCollapsed] = useState(false);
   const reduceMotion = useReducedMotion();
 
   const canCoach = Boolean(currentRole && ["owner", "admin", "manager"].includes(currentRole));
-  const isDesktopCollapsed = collapsed;
+  const isDesktopCollapsed = false;
   const routeAccent = resolveRouteAccent(pathname);
 
   return (
@@ -553,18 +548,6 @@ function SidebarInner() {
           />
 
           <div className={cn("flex items-center gap-1", isDesktopCollapsed && "w-full justify-center")}>
-            <button
-              type="button"
-              onClick={() => setCollapsed((v) => !v)}
-              className="hidden min-h-9 min-w-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-200 lg:flex"
-              aria-label={isDesktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              {isDesktopCollapsed ? (
-                <PanelLeft className="h-4 w-4" />
-              ) : (
-                <PanelLeftClose className="h-4 w-4" />
-              )}
-            </button>
             <button
               type="button"
               onClick={close}
@@ -647,11 +630,6 @@ function SidebarInner() {
               reduceMotion={!!reduceMotion}
               showDivider
             />
-          </motion.nav>
-          </LayoutGroup>
-
-          {/* Setup — pinned bottom */}
-          <div className="shrink-0 border-t border-zinc-800/50 px-2 py-3">
             <NavSection
               title="Setup"
               items={SETUP_ITEMS}
@@ -662,29 +640,10 @@ function SidebarInner() {
               counts={sidebarCounts}
               onNavigate={close}
               reduceMotion={!!reduceMotion}
+              showDivider
             />
-          </div>
-
-          <div className="hidden shrink-0 border-t border-zinc-800/50 px-2 py-2 lg:block">
-            <button
-              type="button"
-              onClick={() => setCollapsed((v) => !v)}
-              className={cn(
-                "flex min-h-10 w-full items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-200",
-                !isDesktopCollapsed && "justify-start gap-3 px-3 text-sm",
-              )}
-              aria-label={isDesktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              {isDesktopCollapsed ? (
-                <PanelLeft className="h-4 w-4" />
-              ) : (
-                <>
-                  <PanelLeftClose className="h-4 w-4" />
-                  <span>Collapse rail</span>
-                </>
-              )}
-            </button>
-          </div>
+          </motion.nav>
+          </LayoutGroup>
         </div>
       </aside>
     </>
