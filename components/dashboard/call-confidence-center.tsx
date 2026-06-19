@@ -132,6 +132,10 @@ function formatDuration(seconds: number | null | undefined): string {
   return rest ? `${minutes}m ${rest}s` : `${minutes}m`;
 }
 
+function isHealthError(data: CallConfidenceHealth | { error?: string }): data is { error?: string } {
+  return 'error' in data;
+}
+
 function statusBadge(status: ConfidenceStatus, className?: string) {
   const meta = STATUS_COPY[status];
   const Icon = meta.icon;
@@ -239,8 +243,9 @@ export function CallConfidenceCenter() {
     try {
       const res = await apiFetch('/api/call-confidence/health');
       const data = await res.json() as CallConfidenceHealth | { error?: string };
-      if (!res.ok || 'error' in data) {
-        setError(('error' in data && data.error) ? data.error : 'Could not load call confidence checks');
+      const healthError = isHealthError(data);
+      if (!res.ok || healthError) {
+        setError(healthError && data.error ? data.error : 'Could not load call confidence checks');
         return;
       }
       setHealth(data);
