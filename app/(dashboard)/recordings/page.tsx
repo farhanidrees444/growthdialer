@@ -13,6 +13,7 @@ import { useWorkspace } from '@/contexts/workspace-context';
 import { toast } from 'sonner';
 import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
 import { RecordingsStatsStrip } from '@/components/recordings/recordings-stats-strip';
+import { RecordingQAStatusPill } from '@/components/recordings/recording-qa-scorecard';
 import { cn } from '@/lib/utils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -33,6 +34,7 @@ interface Recording {
   disposition: string | null;
   was_recorded: boolean;
   ai_processing_status: string | null;
+  ai_error: string | null;
   analytics_id: string | null;
   from_number: string | null;
   to_number: string | null;
@@ -265,6 +267,25 @@ function RecordingCard({
               <sent.icon className="h-3 w-3" />{sent.label}
             </span>
           )}
+          <RecordingQAStatusPill
+            className="hidden md:inline-flex"
+            call={{
+              recordingUrl: rec.playback_url ?? rec.recording_url,
+              durationSeconds: rec.duration_seconds,
+              transcript: rec.transcript,
+              disposition: rec.disposition,
+              aiProcessingStatus: rec.ai_processing_status,
+              aiError: rec.ai_error,
+            }}
+            analytics={rec.analytics_id ? {
+              transcript: rec.transcript,
+              summary: rec.ai_summary_raw,
+              sentiment: rec.ai_sentiment,
+              sentiment_score: rec.ai_sentiment_score,
+              objections: rec.ai_objections,
+              next_steps: rec.ai_next_steps_raw,
+            } : null}
+          />
           {isProcessing && (
             <span className="hidden sm:flex items-center gap-1 text-[11px] text-slate-500">
               <RefreshCw className="h-3 w-3 animate-spin" /> Analyzing…

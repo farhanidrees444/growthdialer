@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { PostCallCommandCenter } from '@/components/calls/post-call-command-center';
 import { RecordingDetailHero } from '@/components/recordings/recording-detail-hero';
+import { RecordingQAScorecard } from '@/components/recordings/recording-qa-scorecard';
 import { isPlayableRecordingDuration } from '@/lib/recordings/eligibility';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -505,14 +506,12 @@ export default function RecordingDetailPage() {
           .single();
 
         if (!callData) { setLoading(false); return; }
-        const duration = callData.recording_duration_seconds ?? callData.duration_seconds;
-        if (!callData.recording_url || !isPlayableRecordingDuration(duration)) {
-          setLoading(false);
-          return;
-        }
         setCall(callData as unknown as CallDetail);
 
-        if (callData.recording_url) {
+        const duration = callData.recording_duration_seconds ?? callData.duration_seconds;
+        const hasPlayableRecording = Boolean(callData.recording_url && isPlayableRecordingDuration(duration));
+
+        if (hasPlayableRecording && callData.recording_url) {
           const playbackRes = await apiFetch(`/api/recordings/${id}/playback`);
           if (playbackRes.ok) {
             const playback = await playbackRes.json() as { playback_url?: string };
@@ -655,10 +654,23 @@ export default function RecordingDetailPage() {
             aiError: call.ai_error,
             analytics,
           }}
-          recordingHref={`/recordings/${call.id}`}
+          recordingHref={call.recording_url ? `/recordings/${call.id}` : null}
           onOpenTranscript={() => setTab('transcript')}
           onSaveNotes={saveCallNotes}
           onSaveDisposition={saveCallDisposition}
+        />
+
+        <RecordingQAScorecard
+          call={{
+            recordingUrl: playbackUrl ?? call.recording_url,
+            durationSeconds: call.recording_duration_seconds ?? call.duration_seconds,
+            transcript: analytics?.transcript ?? call.transcript,
+            disposition: call.disposition,
+            notes: call.notes,
+            aiProcessingStatus: call.ai_processing_status,
+            aiError: call.ai_error,
+          }}
+          analytics={analytics}
         />
 
         {/* Tabs */}
