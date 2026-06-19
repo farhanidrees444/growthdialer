@@ -32,7 +32,8 @@ export async function GET(request: NextRequest) {
     .select(`
       id, direction, status, disposition, from_number, to_number,
       duration_seconds, started_at, created_at, answered_at, ended_at,
-      recording_url, was_recorded, lead_id,
+      recording_url, was_recorded, notes, transcript, ai_processing_status, ai_error,
+      analytics_id, ai_summary, ai_next_steps, ai_sentiment, ai_sentiment_score, lead_id,
       leads:lead_id (id, name, company, phone)
     `, { count: 'exact' })
     .order('started_at', { ascending: false, nullsFirst: false })

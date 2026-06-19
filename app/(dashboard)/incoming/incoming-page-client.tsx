@@ -26,10 +26,12 @@ import { PageHeader } from '@/components/ui/page-header';
 import { SurfaceCard } from '@/components/ui/surface-card';
 import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
 import { InboundHistoryPanel } from '@/components/calls/inbound-history-panel';
+import { PostCallCommandCenter } from '@/components/calls/post-call-command-center';
 import { InboundHealthPanel } from '@/components/inbound/inbound-health-panel';
 import { LiveWaveform } from '@/components/marketing/live-floor/LiveWaveform';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
+import type { CallLogRow } from '@/lib/calls/display';
 
 interface PurchasedNumber {
   id: string;
@@ -214,6 +216,8 @@ export function IncomingPageClient() {
   const [historyKey, setHistoryKey] = useState(0);
   const [logs, setLogs] = useState<FloorLogEntry[]>([]);
   const [lastWrapUpAt, setLastWrapUpAt] = useState<string | null>(null);
+  const [lastWrapUpCall, setLastWrapUpCall] = useState<CallLogRow | null>(null);
+  const [wrapUpLoading, setWrapUpLoading] = useState(false);
   const logIdRef = useRef(0);
 
   const pushLog = useCallback((label: string, tone: FloorLogEntry['tone'] = 'cyan') => {
@@ -227,6 +231,19 @@ export function IncomingPageClient() {
       .then((r) => r.json())
       .then((d: InboundStats) => setStats(d))
       .finally(() => setLoading(false));
+  }, [apiFetch]);
+
+  const loadLatestWrapUpCall = useCallback(async () => {
+    setWrapUpLoading(true);
+    try {
+      const res = await apiFetch('/api/calls/logs?direction=inbound&limit=1');
+      const data = await res.json() as { calls?: CallLogRow[] };
+      setLastWrapUpCall(data.calls?.[0] ?? null);
+    } catch {
+      setLastWrapUpCall(null);
+    } finally {
+      setWrapUpLoading(false);
+    }
   }, [apiFetch]);
 
   useEffect(() => { loadStats(); }, [loadStats]);
@@ -271,11 +288,12 @@ export function IncomingPageClient() {
       loadStats();
       setHistoryKey((k) => k + 1);
       setLastWrapUpAt(new Date().toISOString());
+      void loadLatestWrapUpCall();
       pushLog('Call session ended', 'violet');
     };
     window.addEventListener('gd-call-ended', onEnd);
     return () => window.removeEventListener('gd-call-ended', onEnd);
-  }, [loadStats, pushLog]);
+  }, [loadLatestWrapUpCall, loadStats, pushLog]);
 
   const copyNumber = async (num: string) => {
     try {
@@ -287,6 +305,42 @@ export function IncomingPageClient() {
 
   const primaryNumber = stats?.primary_number ?? stats?.numbers[0]?.phone_number ?? null;
   const activeRings = isRinging ? 1 : 0;
+
+  const saveLatestCallNotes = async (notes: string) => {
+    if (!lastWrapUpCall) return;
+    const res = await apiFetch(`/api/calls/${lastWrapUpCall.id}/notes`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes }),
+    });
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    if (!res.ok || data.error) throw new Error(data.error ?? 'Could not save call notes');
+    setLastWrapUpCall((prev) => prev ? { ...prev, notes } : prev);
+    setHistoryKey((k) => k + 1);
+  };
+
+  const saveLatestCallDisposition = async (
+    disposition: string,
+    notes: string,
+    dates?: { callbackAt?: string; meetingAt?: string },
+  ) => {
+    if (!lastWrapUpCall) return;
+    const res = await apiFetch(`/api/calls/${lastWrapUpCall.id}/disposition`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        disposition,
+        notes,
+        callback_at: dates?.callbackAt,
+        meeting_at: dates?.meetingAt,
+      }),
+    });
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    if (!res.ok || data.error) throw new Error(data.error ?? 'Could not save disposition');
+    setLastWrapUpCall((prev) => prev ? { ...prev, disposition, notes } : prev);
+    setHistoryKey((k) => k + 1);
+    loadStats();
+  };
 
   if (loading) {
     return (
@@ -367,43 +421,86 @@ export function IncomingPageClient() {
         )}
 
         {lastWrapUpAt && !isRinging && !hasInboundActiveSession && (
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/[0.08] to-cyan-500/[0.05] p-4"
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-white">Inbound call wrapped</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Review the latest call, add notes or disposition, and confirm recording/AI status after calls over 30 seconds.
-                </p>
+          wrapUpLoading ? (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/[0.08] to-cyan-500/[0.05] p-4 text-sm text-emerald-100/80"
+            >
+              <Loader2 className="h-4 w-4 animate-spin text-emerald-300" />
+              Loading latest call wrap-up...
+            </motion.div>
+          ) : lastWrapUpCall ? (
+            <PostCallCommandCenter
+              compact
+              call={{
+                id: lastWrapUpCall.id,
+                leadName: lastWrapUpCall.leads?.name ?? fmtPhone(lastWrapUpCall.from_number),
+                company: lastWrapUpCall.leads?.company ?? null,
+                phone: lastWrapUpCall.leads?.phone ?? lastWrapUpCall.from_number,
+                direction: lastWrapUpCall.direction,
+                startedAt: lastWrapUpCall.started_at,
+                durationSeconds: lastWrapUpCall.duration_seconds,
+                disposition: lastWrapUpCall.disposition,
+                notes: lastWrapUpCall.notes,
+                recordingUrl: lastWrapUpCall.recording_url,
+                transcript: lastWrapUpCall.transcript,
+                aiProcessingStatus: lastWrapUpCall.ai_processing_status,
+                aiError: lastWrapUpCall.ai_error,
+                analytics: {
+                  summary: lastWrapUpCall.ai_summary,
+                  sentiment: lastWrapUpCall.ai_sentiment,
+                  sentiment_score: lastWrapUpCall.ai_sentiment_score,
+                  next_steps: lastWrapUpCall.ai_next_steps,
+                },
+              }}
+              recordingHref={lastWrapUpCall.recording_url ? `/recordings/${lastWrapUpCall.id}` : null}
+              onOpenTranscript={lastWrapUpCall.recording_url ? () => { window.location.href = `/recordings/${lastWrapUpCall.id}`; } : undefined}
+              onSaveNotes={saveLatestCallNotes}
+              onSaveDisposition={saveLatestCallDisposition}
+            />
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/[0.08] to-cyan-500/[0.05] p-4"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-white">Inbound call wrapped</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Review the latest call, add notes or disposition, and confirm recording/AI status after calls over 30 seconds.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    href="/call-logs?filter=inbound"
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-500/10"
+                  >
+                    <PhoneIncoming className="h-3.5 w-3.5" />
+                    Open call log
+                  </Link>
+                  <Link
+                    href="/recordings"
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/10"
+                  >
+                    <Radio className="h-3.5 w-3.5" />
+                    Check recording
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLastWrapUpAt(null);
+                      setLastWrapUpCall(null);
+                    }}
+                    className="inline-flex items-center rounded-xl border border-white/[0.08] px-3.5 py-2 text-xs font-semibold text-muted-foreground transition hover:text-white"
+                  >
+                    Dismiss
+                  </button>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  href="/call-logs?filter=inbound"
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-500/10"
-                >
-                  <PhoneIncoming className="h-3.5 w-3.5" />
-                  Open call log
-                </Link>
-                <Link
-                  href="/recordings"
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/10"
-                >
-                  <Radio className="h-3.5 w-3.5" />
-                  Check recording
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setLastWrapUpAt(null)}
-                  className="inline-flex items-center rounded-xl border border-white/[0.08] px-3.5 py-2 text-xs font-semibold text-muted-foreground transition hover:text-white"
-                >
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          )
         )}
 
         <AgentVoiceNode phoneStatus={phoneStatus} voiceError={voiceError} onReconnect={reconnect} />

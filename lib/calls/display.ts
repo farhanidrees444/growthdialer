@@ -14,6 +14,15 @@ export interface CallLogRow {
   ended_at: string | null;
   recording_url: string | null;
   was_recorded: boolean | null;
+  notes?: string | null;
+  transcript?: string | null;
+  ai_processing_status?: string | null;
+  ai_error?: string | null;
+  analytics_id?: string | null;
+  ai_summary?: unknown;
+  ai_next_steps?: unknown;
+  ai_sentiment?: string | null;
+  ai_sentiment_score?: number | null;
   lead_id: string | null;
   leads?: {
     id: string;

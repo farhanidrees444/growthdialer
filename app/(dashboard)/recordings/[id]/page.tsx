@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { PostCallCommandCenter } from '@/components/calls/post-call-command-center';
 import { RecordingDetailHero } from '@/components/recordings/recording-detail-hero';
 import { isPlayableRecordingDuration } from '@/lib/recordings/eligibility';
 
@@ -43,6 +44,9 @@ interface CallDetail {
   created_at: string;
   disposition: string | null;
   notes: string | null;
+  transcript: string | null;
+  ai_processing_status: string | null;
+  ai_error: string | null;
   analytics_id: string | null;
   leads: { id: string; name: string | null; company: string | null; phone: string | null } | null;
 }
@@ -496,7 +500,7 @@ export default function RecordingDetailPage() {
       try {
         const { data: callData } = await supabase
           .from('calls')
-          .select('id, recording_url, duration_seconds, recording_duration_seconds, created_at, disposition, notes, analytics_id, leads(id, name, company, phone)')
+          .select('id, recording_url, duration_seconds, recording_duration_seconds, created_at, disposition, notes, transcript, ai_processing_status, ai_error, analytics_id, leads(id, name, company, phone)')
           .eq('id', id)
           .single();
 
@@ -575,6 +579,37 @@ export default function RecordingDetailPage() {
 
   const lead = Array.isArray(call.leads) ? call.leads[0] : call.leads;
 
+  const saveCallNotes = async (notes: string) => {
+    const res = await apiFetch(`/api/calls/${call.id}/notes`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes }),
+    });
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    if (!res.ok || data.error) throw new Error(data.error ?? 'Could not save call notes');
+    setCall((prev) => prev ? { ...prev, notes } : prev);
+  };
+
+  const saveCallDisposition = async (
+    disposition: string,
+    notes: string,
+    dates?: { callbackAt?: string; meetingAt?: string },
+  ) => {
+    const res = await apiFetch(`/api/calls/${call.id}/disposition`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        disposition,
+        notes,
+        callback_at: dates?.callbackAt,
+        meeting_at: dates?.meetingAt,
+      }),
+    });
+    const data = await res.json().catch(() => ({})) as { error?: string };
+    if (!res.ok || data.error) throw new Error(data.error ?? 'Could not save disposition');
+    setCall((prev) => prev ? { ...prev, disposition, notes } : prev);
+  };
+
   const TABS: { key: Tab; label: string; count?: number }[] = [
     { key: 'insights', label: 'AI Insights' },
     { key: 'transcript', label: 'Transcript' },
@@ -604,6 +639,27 @@ export default function RecordingDetailPage() {
             seekTo={seekTo}
           />
         )}
+
+        <PostCallCommandCenter
+          call={{
+            id: call.id,
+            leadName: lead?.name ?? 'Unknown Caller',
+            company: lead?.company ?? null,
+            phone: lead?.phone ?? null,
+            durationSeconds: call.recording_duration_seconds ?? call.duration_seconds,
+            disposition: call.disposition,
+            notes: call.notes,
+            recordingUrl: playbackUrl ?? call.recording_url,
+            transcript: analytics?.transcript ?? call.transcript,
+            aiProcessingStatus: call.ai_processing_status,
+            aiError: call.ai_error,
+            analytics,
+          }}
+          recordingHref={`/recordings/${call.id}`}
+          onOpenTranscript={() => setTab('transcript')}
+          onSaveNotes={saveCallNotes}
+          onSaveDisposition={saveCallDisposition}
+        />
 
         {/* Tabs */}
         <div className="flex gap-1 border-b border-white/[0.07]">
