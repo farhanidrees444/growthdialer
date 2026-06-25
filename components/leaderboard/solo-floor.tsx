@@ -17,6 +17,9 @@ export type LeaderboardRow = {
   meetings: number;
   connect_rate: number;
   points: number;
+  talk_time_seconds?: number;
+  coaching_score?: number;
+  badges?: string[];
 };
 
 function initials(name: string | null) {

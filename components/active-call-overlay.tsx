@@ -15,6 +15,7 @@ import { useWorkspace } from '@/contexts/workspace-context';
 import { PersistentCallBar } from '@/components/premium/persistent-call-bar';
 import { SentimentAmbient } from '@/components/premium/sentiment-ambient';
 import { formatInboundCallerDisplay } from '@/lib/inbound/phone';
+import { AgentWhisperListener } from '@/components/coaching/AgentWhisperListener';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -72,7 +73,10 @@ function LiveWaveform({ active }: { active: boolean }) {
   const rafRef = useRef<number>(0);
   const activeRef = useRef(active);
   const synthTRef = useRef(0);
-  activeRef.current = active;
+
+  useEffect(() => {
+    activeRef.current = active;
+  }, [active]);
 
   useEffect(() => {
     let mounted = true;
@@ -367,7 +371,6 @@ export default function ActiveCallOverlay() {
     hangup,
     hasOutboundSession,
     hasInboundActiveSession,
-    voiceQuality,
   } = useWebPhone();
   const { activeLead, activePhone, callAnsweredAt } = useCallContext();
   const { apiFetch } = useWorkspace();
@@ -605,14 +608,6 @@ export default function ActiveCallOverlay() {
   if (pathname?.startsWith('/dialer') && activeLead) return null;
   if (!isCallSessionVisible) return null;
 
-  const isVisible = isCallSessionVisible;
-
-  const qualityLabel = voiceQuality === 'excellent' ? 'Excellent'
-    : voiceQuality === 'good' ? 'Good'
-    : voiceQuality === 'degraded' ? 'Fair'
-    : voiceQuality === 'disconnected' ? 'Poor'
-    : null;
-
   const displayName = activeLead?.name
     || (activePhone ? formatInboundCallerDisplay(activePhone) : null)
     || 'Unknown Caller';
@@ -843,6 +838,8 @@ export default function ActiveCallOverlay() {
               <LiveWaveform active={callStatus === 'active' && !isOnHold} />
             </div>
           )}
+
+          <AgentWhisperListener callId={dbCallId} />
 
           {/* ── Controls ────────────────────────────────────────────── */}
           <div className="relative px-4 pb-4">

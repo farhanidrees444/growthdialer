@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Phone, Target, Calendar, Loader2 } from 'lucide-react';
+import { Trophy, Phone, Target, Calendar, Loader2, Brain, Clock } from 'lucide-react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { PageHeader, PeriodToggle } from '@/components/ui/page-header';
 import { SurfaceCard } from '@/components/ui/surface-card';
@@ -24,6 +24,15 @@ const PERIODS = [
   { days: 30, label: '30 days' },
 ] as const;
 
+type Metric = 'points' | 'calls' | 'talk_time' | 'deals' | 'ai_score';
+
+const METRICS: Array<{ value: Metric; label: string }> = [
+  { value: 'calls', label: 'Calls Made' },
+  { value: 'talk_time', label: 'Talk Time' },
+  { value: 'deals', label: 'Deals Booked' },
+  { value: 'ai_score', label: 'AI Score' },
+];
+
 function initials(name: string | null) {
   const n = name ?? 'Agent';
   return n.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
@@ -41,18 +50,26 @@ export default function LeaderboardPage() {
   const [rankings, setRankings] = useState<LeaderboardRow[]>([]);
   const [solo, setSolo] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [metric, setMetric] = useState<Metric>('calls');
 
   useEffect(() => {
     if (!currentWorkspace?.id) return;
-    setLoading(true);
-    void apiFetch(`/api/workspaces/${currentWorkspace.id}/leaderboard?days=${days}`)
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) setLoading(true);
+    });
+    void apiFetch(`/api/workspaces/${currentWorkspace.id}/leaderboard?days=${days}&metric=${metric}`)
       .then((r) => r.json())
       .then((d: { rankings?: LeaderboardRow[]; solo?: boolean }) => {
+        if (cancelled) return;
         setRankings(d.rankings ?? []);
         setSolo(d.solo ?? (d.rankings?.length ?? 0) <= 1);
       })
-      .finally(() => setLoading(false));
-  }, [apiFetch, currentWorkspace?.id, days]);
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [apiFetch, currentWorkspace?.id, days, metric]);
 
   const rest = rankings.filter((r) => r.rank > 3);
   const podiumSlots = buildPodiumSlots(rankings);
@@ -75,6 +92,23 @@ export default function LeaderboardPage() {
         >
           <PeriodToggle value={days} onChange={setDays} periods={PERIODS} />
         </PageHeader>
+
+        <div className="mb-5 flex flex-wrap gap-2">
+          {METRICS.map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => setMetric(item.value)}
+              className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                metric === item.value
+                  ? 'border-violet-500/40 bg-violet-500/15 text-violet-100'
+                  : 'border-white/10 bg-black/30 text-slate-400 hover:bg-white/[0.04]'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
 
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
@@ -139,11 +173,16 @@ export default function LeaderboardPage() {
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-white truncate">{row.full_name ?? 'Agent'}</p>
                     <p className="text-xs text-muted-foreground capitalize">{row.role}</p>
+                    {!!row.badges?.length && (
+                      <p className="mt-1 text-[10px] text-amber-300">{row.badges.join(' · ')}</p>
+                    )}
                   </div>
                   <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{row.calls}</span>
                     <span className="flex items-center gap-1"><Target className="h-3 w-3" />{row.connect_rate}%</span>
                     <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{row.meetings}</span>
+                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{Math.round((row.talk_time_seconds ?? 0) / 60)}m</span>
+                    <span className="flex items-center gap-1"><Brain className="h-3 w-3" />{row.coaching_score ?? 0}</span>
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-bold tabular-nums text-primary">{row.points}</p>

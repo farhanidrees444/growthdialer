@@ -73,11 +73,11 @@ const INTELLIGENCE_ITEMS: NavItem[] = [
   { id: "call-logs", icon: ScrollText, label: "Call Logs", href: "/call-logs", countKey: "calls" },
   { id: "recordings", icon: Headphones, label: "Recordings", href: "/recordings", countKey: "recordings" },
   { id: "analytics", icon: BarChart2, label: "Analytics", href: "/analytics" },
+  { id: "coaching", icon: Headset, label: "Coaching", href: "/coaching", managerOnly: true },
 ];
 
 const TEAM_ITEMS: NavItem[] = [
   { id: "leaderboard", icon: Trophy, label: "Leaderboard", href: "/leaderboard", managerOnly: true },
-  { id: "coaching", icon: Headset, label: "Coaching", href: "/coaching/live", managerOnly: true },
 ];
 
 const SETUP_ITEMS: NavItem[] = [
