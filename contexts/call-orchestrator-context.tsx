@@ -17,7 +17,35 @@ import { DispositionModal } from '@/components/dialer/disposition-modal';
 import type { DispositionType, LeadRecord } from '@/lib/dialer/state-machine';
 import { isTwilioCallSid } from '@/lib/twilio/extract-call-sid';
 
-const DISPOSITION_THRESHOLD_SEC = 10;
+const MIN_WRAP_UP_CONNECTED_SECONDS = 5;
+const WRAP_UP_STATUS_POLL_MS = 350;
+const WRAP_UP_STATUS_POLL_ATTEMPTS = 6;
+const UNCONNECTED_CALL_STATUSES = new Set([
+  'busy',
+  'canceled',
+  'cancelled',
+  'declined',
+  'failed',
+  'missed',
+  'no-answer',
+  'no_answer',
+  'rejected',
+]);
+const LIVE_CONNECTED_CALL_STATUSES = new Set([
+  'active',
+  'answered',
+  'connected',
+  'in-progress',
+  'in_progress',
+]);
+
+interface CallWrapUpSnapshot {
+  id: string;
+  status: string | null;
+  direction: string | null;
+  answered_at: string | null;
+  duration_seconds: number | null;
+}
 
 export interface PowerDialBridge {
   onCallStarted: () => void;
@@ -83,6 +111,47 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
   const registerPowerDialBridge = useCallback((bridge: PowerDialBridge | null) => {
     powerBridgeRef.current = bridge;
   }, []);
+
+  const isEligibleForWrapUp = useCallback((call: CallWrapUpSnapshot | null, localSeconds: number) => {
+    if (!call) return false;
+    const status = (call.status ?? '').toLowerCase();
+    if (UNCONNECTED_CALL_STATUSES.has(status)) return false;
+
+    const connectedByStatus = LIVE_CONNECTED_CALL_STATUSES.has(status);
+    const connectedByAnswer = Boolean(call.answered_at);
+    const duration = call.duration_seconds ?? localSeconds;
+
+    return (connectedByAnswer || connectedByStatus) && duration >= MIN_WRAP_UP_CONNECTED_SECONDS;
+  }, []);
+
+  const fetchCallWrapUpSnapshot = useCallback(async (
+    dbId: string,
+    localSeconds: number,
+  ): Promise<CallWrapUpSnapshot | null> => {
+    let lastSnapshot: CallWrapUpSnapshot | null = null;
+
+    for (let attempt = 0; attempt < WRAP_UP_STATUS_POLL_ATTEMPTS; attempt += 1) {
+      try {
+        const res = await apiFetch(`/api/calls/${dbId}`);
+        if (!res.ok) return lastSnapshot;
+        const data = await res.json() as { call?: CallWrapUpSnapshot };
+        lastSnapshot = data.call ?? null;
+
+        const status = (lastSnapshot?.status ?? '').toLowerCase();
+        if (UNCONNECTED_CALL_STATUSES.has(status) || isEligibleForWrapUp(lastSnapshot, localSeconds)) {
+          return lastSnapshot;
+        }
+      } catch {
+        return lastSnapshot;
+      }
+
+      if (attempt < WRAP_UP_STATUS_POLL_ATTEMPTS - 1) {
+        await new Promise((resolve) => setTimeout(resolve, WRAP_UP_STATUS_POLL_MS));
+      }
+    }
+
+    return lastSnapshot;
+  }, [apiFetch, isEligibleForWrapUp]);
 
   const beginOutboundCall = useCallback((e164: string, leadId?: string, lead?: LeadRecord | null) => {
     pendingRegRef.current = { e164, leadId };
@@ -205,16 +274,6 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
     }).catch(() => { /* non-fatal */ });
   }, [activeCallId, callDbId, apiFetch, isInboundRinging, hasOutboundSession]);
 
-  const autoSaveVoicemail = useCallback(async (dbId: string) => {
-    try {
-      await apiFetch(`/api/calls/${dbId}/disposition`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ disposition: 'voicemail' }),
-      });
-    } catch { /* non-fatal */ }
-  }, [apiFetch]);
-
   const handleCallEnded = useCallback(() => {
     const seconds = durationRef.current;
     const dbId = callDbIdRef.current;
@@ -223,33 +282,42 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
 
     bridge?.onCallEnd();
 
+    const finishWithoutWrapUp = () => {
+      setCallDbId(null);
+      hadActiveCallRef.current = false;
+      resetTimer();
+
+      if (bridge?.isActive()) {
+        setTimeout(() => {
+          bridge.onDispositionSaved('no_answer', false, false);
+        }, 500);
+      }
+    };
+
     if (inboundCallActiveRef.current) {
       inboundCallActiveRef.current = false;
-      hadActiveCallRef.current = false;
-      setCallDbId(null);
-      resetTimer();
+      finishWithoutWrapUp();
       return;
     }
 
-    if (seconds >= DISPOSITION_THRESHOLD_SEC || hadActiveCallRef.current) {
-      setDispositionLead(lead);
-      setDispositionOpen(true);
-      hadActiveCallRef.current = false;
+    if (!dbId || !hadActiveCallRef.current) {
+      finishWithoutWrapUp();
       return;
     }
 
-    if (dbId) void autoSaveVoicemail(dbId);
+    void fetchCallWrapUpSnapshot(dbId, seconds).then((snapshot) => {
+      if (callDbIdRef.current !== dbId) return;
 
-    if (bridge?.isActive()) {
-      setTimeout(() => {
-        bridge.onDispositionSaved('voicemail', false, false);
-      }, 2000);
-    }
+      if (isEligibleForWrapUp(snapshot, seconds)) {
+        setDispositionLead(lead);
+        setDispositionOpen(true);
+        hadActiveCallRef.current = false;
+        return;
+      }
 
-    setCallDbId(null);
-    hadActiveCallRef.current = false;
-    resetTimer();
-  }, [activeLead, autoSaveVoicemail, resetTimer]);
+      finishWithoutWrapUp();
+    });
+  }, [activeLead, fetchCallWrapUpSnapshot, isEligibleForWrapUp, resetTimer]);
 
   // Central call lifecycle transitions
   useEffect(() => {
