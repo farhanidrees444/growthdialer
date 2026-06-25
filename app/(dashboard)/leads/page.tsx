@@ -9,8 +9,8 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Phone, Mail, Search, X, ExternalLink, ChevronLeft, ChevronRight,
-  Sparkles, Clock, UserPlus, MoreHorizontal, Pencil,
-  Trash2, Eye, Filter, Download, Upload, Plus, Tag, Check,
+  Sparkles, Clock, UserPlus, Pencil,
+  Trash2, Eye, Filter, Download, Upload, Plus, Tag, Check, Loader2, RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,6 @@ import { createClient } from "@/lib/supabase/client";
 import { useLeads } from "@/contexts/leads-context";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useOutboundCall } from "@/hooks/use-outbound-call";
-import { AnimatePresence as AP } from "framer-motion";
 import { LeadAddModal } from "@/components/leads/lead-add-modal";
 import { LeadEditModal } from "@/components/leads/lead-edit-modal";
 import { BulkActionBar } from "@/components/leads/bulk-action-bar";
@@ -31,6 +30,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SpotlightCard } from "@/components/premium/spotlight-card";
 import { LeadsStatsStrip } from "@/components/leads/leads-stats-strip";
 import { navigateWithTransition, setLeadTransitionId } from "@/lib/ui/lead-transition";
+import { LeadActionsMenu } from "@/components/leads/lead-actions-menu";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -119,6 +119,15 @@ function formatLastCall(iso: string | null): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+async function responseErrorMessage(response: Response, fallback: string): Promise<string> {
+  try {
+    const body = await response.json() as { error?: string; message?: string };
+    return body.message ?? body.error ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function StatusBadge({ status }: { status: string }) {
   const { bg, text } = STATUS_COLORS[status] ?? { bg: "bg-slate-500/15", text: "text-slate-300" };
   return (
@@ -127,10 +136,6 @@ function StatusBadge({ status }: { status: string }) {
     </span>
   );
 }
-
-// ─── 3-dot menu ───────────────────────────────────────────────────────────────
-
-import { useEffect as useEff, useRef as useR } from "react";
 
 function LeadMenu({
   lead, onCall, onView, onEdit, onDelete,
@@ -141,67 +146,63 @@ function LeadMenu({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useR<HTMLDivElement>(null);
-
-  useEff(() => {
-    if (!open) return;
-    const h = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, [open]);
-
-  const items = [
-    { icon: <Phone className="h-3.5 w-3.5" />, label: "Call", onClick: onCall, cls: "text-emerald-400" },
-    { icon: <Eye className="h-3.5 w-3.5" />, label: "View", onClick: onView, cls: "" },
-    { icon: <Pencil className="h-3.5 w-3.5" />, label: "Edit", onClick: onEdit, cls: "" },
-    { icon: <Trash2 className="h-3.5 w-3.5" />, label: "Delete", onClick: onDelete, cls: "text-red-400" },
-  ];
-
   return (
-    <div ref={ref} className="relative" onClick={(e) => e.stopPropagation()}>
-      <button
-        type="button"
-        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
-        className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.07] text-slate-600 hover:text-white hover:border-white/10 transition sm:opacity-0 sm:group-hover:opacity-100"
-      >
-        <MoreHorizontal className="h-3.5 w-3.5" />
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -4 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -4 }}
-            className="absolute right-0 top-7 z-50 min-w-[140px] rounded-xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] py-1 shadow-2xl"
-          >
-            {items.map(({ icon, label, onClick, cls }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setOpen(false); onClick(); }}
-                className={cn("flex w-full items-center gap-2.5 px-3.5 py-2.5 text-xs text-slate-300 hover:bg-white/[0.05] transition min-h-[40px]", cls)}
-              >
-                {icon}
-                {label}
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <LeadActionsMenu
+      leadName={lead.name}
+      triggerClassName="sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+      actions={[
+        {
+          id: "call",
+          label: "Call lead",
+          description: lead.phone,
+          icon: <Phone className="h-4 w-4" />,
+          tone: "success",
+          onSelect: onCall,
+        },
+        {
+          id: "view",
+          label: "View profile",
+          description: "Open full lead timeline",
+          icon: <Eye className="h-4 w-4" />,
+          onSelect: onView,
+        },
+        {
+          id: "edit",
+          label: "Edit lead",
+          description: "Update contact details",
+          icon: <Pencil className="h-4 w-4" />,
+          onSelect: onEdit,
+        },
+        {
+          id: "delete",
+          label: "Move to Trash",
+          description: "Recoverable for 7 days",
+          icon: <Trash2 className="h-4 w-4" />,
+          tone: "danger",
+          onSelect: onDelete,
+        },
+      ]}
+    />
   );
 }
 
 // ─── Delete confirmation ──────────────────────────────────────────────────────
 
-function DeleteConfirmModal({ name, onConfirm, onCancel }: { name: string; onConfirm: () => void; onCancel: () => void }) {
+function DeleteConfirmModal({
+  name,
+  loading,
+  onConfirm,
+  onCancel,
+}: {
+  name: string;
+  loading: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { if (!loading) onCancel(); }} />
       <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
         className="relative z-10 w-full max-w-sm rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] p-6 shadow-2xl">
         <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-red-500/15">
@@ -212,13 +213,14 @@ function DeleteConfirmModal({ name, onConfirm, onCancel }: { name: string; onCon
           This lead will be moved to trash and automatically deleted after 7 days. Restore from the Trash tab.
         </p>
         <div className="flex gap-2">
-          <button type="button" onClick={onCancel}
+          <button type="button" onClick={onCancel} disabled={loading}
             className="flex-1 rounded-xl border border-white/[0.08] py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.04] transition">
             Cancel
           </button>
-          <button type="button" onClick={onConfirm}
-            className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white hover:bg-red-500 transition">
-            Delete
+          <button type="button" onClick={onConfirm} disabled={loading}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white transition hover:bg-red-500 disabled:opacity-70">
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+            Move to Trash
           </button>
         </div>
       </motion.div>
@@ -252,16 +254,17 @@ function LeadCard({
       as="article"
       onClick={onView}
       className={cn(
-        "group relative flex h-full cursor-pointer flex-col gap-3 rounded-2xl border p-4 transition-all",
+        "group relative flex h-full cursor-pointer flex-col gap-4 overflow-hidden rounded-2xl border p-4 transition-all",
         "border-white/[0.07] bg-[oklch(0.09_0.006_285)] hover:border-emerald-500/20 hover:bg-emerald-500/[0.03] hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(52,211,153,0.08)]",
         isHot && "border-amber-500/25 hover:border-amber-500/40 hover:shadow-[0_8px_32px_rgba(245,158,11,0.1)]",
         selected && "border-emerald-500/35 bg-emerald-500/5 shadow-[0_0_24px_rgba(52,211,153,0.1)]",
         focused && "ring-2 ring-[#8B5CF6]/40 ring-offset-2 ring-offset-[oklch(0.09_0.006_285)]",
       )}
     >
+      <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/35 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
       {/* Checkbox top-left — larger tap area on mobile */}
       <div
-        className="absolute left-2 top-2 flex h-7 w-7 items-center justify-center"
+        className="absolute left-2 top-2 z-10 flex h-7 w-7 items-center justify-center"
         onClick={(e) => { e.stopPropagation(); onSelect(); }}
       >
         <div className={cn(
@@ -275,9 +278,9 @@ function LeadCard({
       </div>
 
       {/* 3-dot menu top-right */}
-      <div className="absolute right-3 top-3 flex items-center gap-1">
+      <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">
         {isHot && (
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/15">
+          <span className="flex h-7 w-7 items-center justify-center rounded-xl border border-amber-500/15 bg-amber-500/10">
             <Sparkles className="h-3 w-3 text-amber-400" />
           </span>
         )}
@@ -285,10 +288,10 @@ function LeadCard({
       </div>
 
       {/* Top: avatar + score */}
-      <div className="flex items-start gap-3 pt-1">
+      <div className="flex items-start gap-3 pr-20 pt-1">
         <motion.div
           layoutId={`lead-avatar-${lead.id}`}
-          className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${grad} text-sm font-bold text-white shadow-sm`}
+          className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${grad} text-sm font-bold text-white shadow-lg shadow-black/20`}
         >
           {getInitials(lead.name)}
           {lead.ai_score != null && lead.ai_score > 0 && (
@@ -298,9 +301,9 @@ function LeadCard({
           )}
         </motion.div>
         <div className="min-w-0 flex-1 pt-0.5">
-          <motion.p layoutId={`lead-name-${lead.id}`} className="truncate text-sm font-semibold text-white leading-tight">{lead.name}</motion.p>
+          <motion.p layoutId={`lead-name-${lead.id}`} className="truncate text-base font-semibold leading-tight text-white">{lead.name}</motion.p>
           {(lead.title || lead.company) && (
-            <p className="mt-0.5 truncate text-[11px] text-slate-500 leading-tight">
+            <p className="mt-1 truncate text-xs leading-tight text-slate-400">
               {[lead.title, lead.company].filter(Boolean).join(" · ")}
             </p>
           )}
@@ -308,23 +311,23 @@ function LeadCard({
       </div>
 
       {/* Status + attempts */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex flex-wrap items-center gap-2">
         <StatusBadge status={lead.status} />
         {lead.call_attempts != null && lead.call_attempts > 0 && (
-          <span className="flex items-center gap-1 text-[10px] text-slate-600">
+          <span className="flex items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.025] px-2 py-0.5 text-[10px] text-slate-500">
             <Phone className="h-2.5 w-2.5" /> {lead.call_attempts}×
           </span>
         )}
       </div>
 
       {/* Contact info */}
-      <div className="space-y-1">
-        <p className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
-          <Phone className="h-3 w-3 shrink-0 text-slate-600" />{lead.phone}
+      <div className="space-y-1.5 rounded-2xl border border-white/[0.05] bg-white/[0.025] p-3">
+        <p className="flex items-center gap-2 font-mono text-xs text-slate-300">
+          <Phone className="h-3.5 w-3.5 shrink-0 text-emerald-400" />{lead.phone}
         </p>
         {lead.email && (
-          <p className="flex items-center gap-1.5 text-[11px] text-slate-500 truncate">
-            <Mail className="h-3 w-3 shrink-0 text-slate-600" />{lead.email}
+          <p className="flex items-center gap-2 truncate text-xs text-slate-500">
+            <Mail className="h-3.5 w-3.5 shrink-0 text-slate-600" />{lead.email}
           </p>
         )}
       </div>
@@ -344,7 +347,7 @@ function LeadCard({
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between">
+      <div className="mt-auto flex items-center justify-between">
         <span className="flex items-center gap-1 text-[10px] text-slate-600">
           <Clock className="h-2.5 w-2.5" />
           {formatLastCall(lead.last_called_at)}
@@ -426,15 +429,17 @@ function TrashLeadCard({
         <button
           type="button"
           onClick={onRestore}
-          className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600/20 border border-emerald-500/25 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-600/30"
+          className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/25 bg-emerald-600/20 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-600/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/35"
         >
+          <RotateCcw className="h-3.5 w-3.5" />
           Restore
         </button>
         <button
           type="button"
           onClick={onDeleteForever}
-          className="flex items-center justify-center gap-1.5 rounded-xl bg-red-600/15 border border-red-500/25 py-2 text-xs font-semibold text-red-400 transition hover:bg-red-600/25"
+          className="flex items-center justify-center gap-1.5 rounded-xl border border-red-500/25 bg-red-600/15 py-2 text-xs font-semibold text-red-400 transition hover:bg-red-600/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/35"
         >
+          <Trash2 className="h-3.5 w-3.5" />
           Delete Forever
         </button>
       </div>
@@ -554,6 +559,7 @@ export default function LeadsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editLead, setEditLead] = useState<FullLead | null>(null);
   const [deleteLead, setDeleteLead] = useState<FullLead | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteForeverLead, setDeleteForeverLead] = useState<FullLead | null>(null);
   const [deleteForeverBusy, setDeleteForeverBusy] = useState(false);
   const [showExport, setShowExport] = useState(false);
@@ -725,35 +731,61 @@ export default function LeadsPage() {
   }, [paginated, focusIndex, viewMode, tab, handleView, handleCall]);
 
   const handleDeleteSingle = useCallback(async (lead: FullLead) => {
-    const res = await apiFetch(`/api/leads/${lead.id}`, { method: "DELETE" });
-    if (!res.ok) { toast.error("Failed to delete"); return; }
-    setLeads((p) => p.map((l) => l.id === lead.id ? { ...l, deleted_at: new Date().toISOString() } : l));
-    toast.success(`${lead.name} deleted`, {
-      description: "Recoverable from Trash tab for 30 days",
-    });
-    setDeleteLead(null);
-  }, []);
+    setDeleteBusy(true);
+    try {
+      const res = await apiFetch(`/api/leads/${lead.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        toast.error(await responseErrorMessage(res, "Failed to delete lead"));
+        return;
+      }
+
+      const body = await res.json() as { lead?: Partial<FullLead> };
+      const deletedAt = body.lead?.deleted_at ?? new Date().toISOString();
+      setLeads((p) => p.map((l) => l.id === lead.id ? { ...l, deleted_at: deletedAt } : l));
+      toast.success(`${lead.name} moved to Trash`, {
+        description: "Recoverable from the Trash tab for 7 days",
+      });
+      setDeleteLead(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete lead");
+    } finally {
+      setDeleteBusy(false);
+    }
+  }, [apiFetch]);
 
   const handleRestoreFromTrash = useCallback(async (lead: FullLead) => {
-    const res = await apiFetch(`/api/leads/${lead.id}/restore`, { method: "POST" });
-    if (!res.ok) { toast.error("Restore failed"); return; }
-    setLeads((p) => p.map((l) => l.id === lead.id ? { ...l, deleted_at: null } : l));
-    toast.success(`${lead.name} restored`);
-  }, []);
+    try {
+      const res = await apiFetch(`/api/leads/${lead.id}/restore`, { method: "POST" });
+      if (!res.ok) {
+        toast.error(await responseErrorMessage(res, "Restore failed"));
+        return;
+      }
+
+      setLeads((p) => p.map((l) => l.id === lead.id ? { ...l, deleted_at: null } : l));
+      toast.success(`${lead.name} restored`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Restore failed");
+    }
+  }, [apiFetch]);
 
   const handleDeleteForever = useCallback(async (lead: FullLead) => {
     setDeleteForeverBusy(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase.from("leads").delete().eq("id", lead.id);
-      if (error) { toast.error("Delete failed: " + error.message); return; }
+      const res = await apiFetch(`/api/leads/${lead.id}?permanent=1`, { method: "DELETE" });
+      if (!res.ok) {
+        toast.error(await responseErrorMessage(res, "Permanent delete failed"));
+        return;
+      }
+
       setLeads((p) => p.filter((l) => l.id !== lead.id));
       toast.success(`${lead.name} permanently deleted`);
       setDeleteForeverLead(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Permanent delete failed");
     } finally {
       setDeleteForeverBusy(false);
     }
-  }, []);
+  }, [apiFetch]);
 
   const handleToggleSelect = useCallback((id: string) => {
     setSelectedIds((p) => {
@@ -827,6 +859,7 @@ export default function LeadsPage() {
         {deleteLead && (
           <DeleteConfirmModal
             name={deleteLead.name}
+            loading={deleteBusy}
             onConfirm={() => handleDeleteSingle(deleteLead)}
             onCancel={() => setDeleteLead(null)}
           />

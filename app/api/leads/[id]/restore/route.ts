@@ -19,19 +19,26 @@ export async function POST(
     if (isWorkspaceError(access)) return access;
 
     const { id } = await params;
+    const restoredAt = new Date().toISOString();
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('leads')
-      .update({ deleted_at: null, deleted_by: null })
+      .update({ deleted_at: null, deleted_by: null, updated_at: restoredAt })
       .eq('id', id)
-      .eq('workspace_id', access.workspaceId);
+      .eq('workspace_id', access.workspaceId)
+      .select('id, deleted_at')
+      .maybeSingle();
 
     if (error) {
       console.error('[LEADS-RESTORE] Error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    if (!data) {
+      return NextResponse.json({ error: 'Lead not found or could not be restored' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, lead: data });
   } catch (error) {
     console.error('[LEADS-RESTORE] Exception:', error);
     return NextResponse.json({ error: 'Unable to restore lead' }, { status: 500 });

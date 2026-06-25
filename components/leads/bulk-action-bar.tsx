@@ -22,7 +22,16 @@ export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids, action }),
     });
-    if (!res.ok) throw new Error('Bulk action failed');
+    if (!res.ok) {
+      let message = 'Bulk action failed';
+      try {
+        const body = await res.json() as { error?: string; message?: string };
+        message = body.message ?? body.error ?? message;
+      } catch {
+        // Keep the fallback when the server returns an empty/non-JSON error body.
+      }
+      throw new Error(message);
+    }
     return res.json();
   };
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -37,8 +46,8 @@ export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
         action: { label: 'Undo', onClick: () => toast.info('Undo not available for this action') },
       });
       onClear();
-    } catch {
-      toast.error('Action failed');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Action failed');
     } finally {
       setBusy(null);
     }
@@ -54,8 +63,8 @@ export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
         action: { label: 'Undo', onClick: () => toast.info('Go to Trash tab to restore') },
       });
       onClear();
-    } catch {
-      toast.error('Delete failed');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Delete failed');
     } finally {
       setBusy(null);
       setShowDeleteConfirm(false);

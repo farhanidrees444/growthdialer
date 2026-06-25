@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { hasPermission } from '@/lib/auth/permissions';
 
@@ -142,22 +143,80 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const permanent = request.nextUrl.searchParams.get('permanent') === '1';
 
-    const { error } = await supabase
+    const { data: existingLead, error: fetchError } = await supabase
+      .from('leads')
+      .select('id, deleted_at')
+      .eq('id', id)
+      .eq('workspace_id', access.workspaceId)
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error('[LEADS-DELETE] Fetch error:', fetchError);
+      return NextResponse.json({ error: 'Unable to verify lead access' }, { status: 500 });
+    }
+
+    if (!existingLead) {
+      return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+    }
+
+    if (permanent) {
+      if (!existingLead.deleted_at) {
+        return NextResponse.json(
+          { error: 'Move this lead to Trash before deleting it forever' },
+          { status: 409 },
+        );
+      }
+
+      const service = createServiceClient();
+      if (!service) {
+        return NextResponse.json({ error: 'Permanent delete is unavailable' }, { status: 500 });
+      }
+
+      const { data, error } = await service
+        .from('leads')
+        .delete()
+        .eq('id', id)
+        .eq('workspace_id', access.workspaceId)
+        .select('id')
+        .maybeSingle();
+
+      if (error) {
+        console.error('[LEADS-DELETE-PERMANENT] Error:', error);
+        return NextResponse.json({ error: error.message, code: error.code }, { status: 500 });
+      }
+
+      if (!data) {
+        return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+      }
+
+      return NextResponse.json({ success: true, deleted: true });
+    }
+
+    const deletedAt = new Date().toISOString();
+    const { data, error } = await supabase
       .from('leads')
       .update({
-        deleted_at: new Date().toISOString(),
+        deleted_at: deletedAt,
         deleted_by: userId,
+        updated_at: deletedAt,
       })
       .eq('id', id)
-      .eq('workspace_id', access.workspaceId);
+      .eq('workspace_id', access.workspaceId)
+      .select('id, deleted_at')
+      .maybeSingle();
 
     if (error) {
       console.error('[LEADS-DELETE] Error:', error);
       return NextResponse.json({ error: error.message, code: error.code }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    if (!data) {
+      return NextResponse.json({ error: 'Lead not found or could not be deleted' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, lead: data });
   } catch (error) {
     console.error('[LEADS-DELETE] Exception:', error);
     return NextResponse.json({ error: 'Unable to delete lead' }, { status: 500 });

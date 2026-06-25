@@ -1,9 +1,9 @@
 'use client';
 
-import { Phone, Mail, ExternalLink, MoreHorizontal, Clock, Pencil, Trash2, Eye } from 'lucide-react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { useState, useRef, useEffect } from 'react';
+import { Phone, Mail, ExternalLink, Clock, Pencil, Trash2, Eye } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { LeadActionsMenu } from '@/components/leads/lead-actions-menu';
 
 export interface TableLead {
   id: string;
@@ -64,55 +64,43 @@ function RowMenu({ lead, onCall, onView, onEdit, onDelete }: {
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
-        className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.06] text-slate-600 transition hover:border-white/10 hover:text-white"
-      >
-        <MoreHorizontal className="h-3.5 w-3.5" />
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -4 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -4 }}
-            className="absolute right-0 top-8 z-50 min-w-[140px] rounded-xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] py-1 shadow-2xl"
-          >
-            {[
-              { icon: <Phone className="h-3.5 w-3.5" />, label: 'Call', onClick: onCall, className: 'text-emerald-400' },
-              { icon: <Eye className="h-3.5 w-3.5" />, label: 'View', onClick: onView },
-              { icon: <Pencil className="h-3.5 w-3.5" />, label: 'Edit', onClick: onEdit },
-              { icon: <Trash2 className="h-3.5 w-3.5" />, label: 'Delete', onClick: onDelete, className: 'text-red-400 hover:bg-red-500/10' },
-            ].map(({ icon, label, onClick, className }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setOpen(false); onClick(); }}
-                className={cn('flex w-full items-center gap-2.5 px-3.5 py-2 text-sm text-slate-300 transition hover:bg-white/[0.05]', className)}
-              >
-                {icon}
-                {label}
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <LeadActionsMenu
+      leadName={lead.name}
+      triggerClassName="h-7 w-7 rounded-lg bg-white/[0.02]"
+      actions={[
+        {
+          id: 'call',
+          label: 'Call lead',
+          description: lead.phone,
+          icon: <Phone className="h-4 w-4" />,
+          tone: 'success',
+          onSelect: onCall,
+        },
+        {
+          id: 'view',
+          label: 'View profile',
+          description: 'Open full lead timeline',
+          icon: <Eye className="h-4 w-4" />,
+          onSelect: onView,
+        },
+        {
+          id: 'edit',
+          label: 'Edit lead',
+          description: 'Update contact details',
+          icon: <Pencil className="h-4 w-4" />,
+          onSelect: onEdit,
+        },
+        {
+          id: 'delete',
+          label: 'Move to Trash',
+          description: 'Recoverable for 7 days',
+          icon: <Trash2 className="h-4 w-4" />,
+          tone: 'danger',
+          onSelect: onDelete,
+        },
+      ]}
+    />
   );
 }
 
