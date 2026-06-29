@@ -17,6 +17,8 @@ import {
   PodiumCard,
   type LeaderboardRow,
 } from '@/components/leaderboard/solo-floor';
+import { PlanGate } from '@/lib/plan/plan-guard';
+import { UpgradePrompt } from '@/lib/plan/upgrade-prompt';
 
 const PERIODS = [
   { days: 1, label: 'Today' },
@@ -78,8 +80,21 @@ export default function LeaderboardPage() {
   const showEmpty = !loading && rankings.length === 0;
 
   return (
-    <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
-      <div className="mx-auto max-w-4xl">
+    <PlanGate
+      feature="leaderboard"
+      fallback={
+        <main className="flex flex-1 items-center justify-center p-6">
+          <UpgradePrompt
+            feature="leaderboard"
+            title="Unlock leaderboards"
+            description="Growth includes team rankings and performance comparisons."
+            className="max-w-md"
+          />
+        </main>
+      }
+    >
+      <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
+        <div className="mx-auto max-w-4xl">
         <PageHeader
           title="Team Leaderboard"
           description={
@@ -193,7 +208,8 @@ export default function LeaderboardPage() {
             ))}
           </div>
         )}
-      </div>
-    </main>
+        </div>
+      </main>
+    </PlanGate>
   );
 }

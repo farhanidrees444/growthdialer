@@ -16,6 +16,8 @@ import { PostCallCommandCenter } from '@/components/calls/post-call-command-cent
 import { RecordingDetailHero } from '@/components/recordings/recording-detail-hero';
 import { RecordingQAScorecard } from '@/components/recordings/recording-qa-scorecard';
 import { isPlayableRecordingDuration } from '@/lib/recordings/eligibility';
+import { PlanGate } from '@/lib/plan/plan-guard';
+import { UpgradePrompt } from '@/lib/plan/upgrade-prompt';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -660,18 +662,29 @@ export default function RecordingDetailPage() {
           onSaveDisposition={saveCallDisposition}
         />
 
-        <RecordingQAScorecard
-          call={{
-            recordingUrl: playbackUrl ?? call.recording_url,
-            durationSeconds: call.recording_duration_seconds ?? call.duration_seconds,
-            transcript: analytics?.transcript ?? call.transcript,
-            disposition: call.disposition,
-            notes: call.notes,
-            aiProcessingStatus: call.ai_processing_status,
-            aiError: call.ai_error,
-          }}
-          analytics={analytics}
-        />
+        <PlanGate
+          feature="ai_call_scoring"
+          fallback={
+            <UpgradePrompt
+              feature="ai_call_scoring"
+              title="Unlock AI call scoring"
+              description="Growth includes scorecards, sentiment, objections, and coaching evidence."
+            />
+          }
+        >
+          <RecordingQAScorecard
+            call={{
+              recordingUrl: playbackUrl ?? call.recording_url,
+              durationSeconds: call.recording_duration_seconds ?? call.duration_seconds,
+              transcript: analytics?.transcript ?? call.transcript,
+              disposition: call.disposition,
+              notes: call.notes,
+              aiProcessingStatus: call.ai_processing_status,
+              aiError: call.ai_error,
+            }}
+            analytics={analytics}
+          />
+        </PlanGate>
 
         {/* Tabs */}
         <div className="flex gap-1 border-b border-white/[0.07]">
@@ -698,7 +711,12 @@ export default function RecordingDetailPage() {
             transition={{ duration: 0.18 }}
           >
             {tab === 'insights' && analytics && !analytics.error && (
-              <InsightsTab analytics={analytics} />
+              <PlanGate
+                feature="ai_call_scoring"
+                fallback={<UpgradePrompt feature="ai_call_scoring" title="Unlock AI insights" />}
+              >
+                <InsightsTab analytics={analytics} />
+              </PlanGate>
             )}
             {tab === 'insights' && !analytics && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -708,7 +726,12 @@ export default function RecordingDetailPage() {
               </div>
             )}
             {tab === 'insights' && analytics?.error && (
-              <InsightsTab analytics={analytics} />
+              <PlanGate
+                feature="ai_call_scoring"
+                fallback={<UpgradePrompt feature="ai_call_scoring" title="Unlock AI insights" />}
+              >
+                <InsightsTab analytics={analytics} />
+              </PlanGate>
             )}
             {tab === 'transcript' && analytics && (
               <TranscriptTab analytics={analytics} onSeek={(t) => setSeekTo(t)} />

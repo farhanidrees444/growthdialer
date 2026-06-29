@@ -25,6 +25,7 @@ import {
   ScrollText,
   ChevronsUpDown,
   Check,
+  LockKeyhole,
   Headset,
   Plus,
   Building2,
@@ -41,6 +42,8 @@ import { useCalls } from "@/contexts/calls-context";
 import { EASE_OUT, SPRING } from "@/components/marketing/live-floor/motion";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { getNavItemAccent, resolveRouteAccent } from "@/lib/ui/route-accents";
+import { usePlan } from "@/lib/plan/use-plan";
+import type { FeatureKey } from "@/lib/plan/plan-gates";
 
 type CountKey = "leads" | "recordings" | "numbers" | "calls";
 
@@ -53,6 +56,7 @@ type NavItem = {
   countKey?: CountKey;
   sparkle?: boolean;
   managerOnly?: boolean;
+  gateFeature?: FeatureKey;
 };
 
 const DASHBOARD_ITEM: NavItem = {
@@ -73,11 +77,11 @@ const INTELLIGENCE_ITEMS: NavItem[] = [
   { id: "call-logs", icon: ScrollText, label: "Call Logs", href: "/call-logs", countKey: "calls" },
   { id: "recordings", icon: Headphones, label: "Recordings", href: "/recordings", countKey: "recordings" },
   { id: "analytics", icon: BarChart2, label: "Analytics", href: "/analytics" },
-  { id: "coaching", icon: Headset, label: "Coaching", href: "/coaching", managerOnly: true },
+  { id: "coaching", icon: Headset, label: "Coaching", href: "/coaching", managerOnly: true, gateFeature: "coaching_dashboard" },
 ];
 
 const TEAM_ITEMS: NavItem[] = [
-  { id: "leaderboard", icon: Trophy, label: "Leaderboard", href: "/leaderboard", managerOnly: true },
+  { id: "leaderboard", icon: Trophy, label: "Leaderboard", href: "/leaderboard", managerOnly: true, gateFeature: "leaderboard" },
 ];
 
 const SETUP_ITEMS: NavItem[] = [
@@ -283,16 +287,19 @@ function SidebarNavItem({
   const Icon = item.icon;
   const accent = getNavItemAccent(item.id);
   const { isRinging: callsRinging } = useCalls();
+  const { can } = usePlan();
   const showRingPulse = item.id === "incoming" && callsRinging;
+  const locked = item.gateFeature ? !can(item.gateFeature) : false;
 
   const linkInner = (
     <Link
-      href={item.href}
+      href={locked ? "/pricing?highlight=growth" : item.href}
       onClick={onNavigate}
       className={cn(
         "relative flex items-center rounded-lg text-sm font-medium transition-all duration-200",
         collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
         active ? "text-white" : "text-zinc-400 hover:text-zinc-100",
+        locked && "text-white/30 hover:text-white/50",
       )}
       aria-current={active ? "page" : undefined}
     >
@@ -334,6 +341,7 @@ function SidebarNavItem({
         >
           <span className="truncate">{item.label}</span>
           {item.sparkle && <Sparkles className="h-3 w-3 shrink-0 text-violet-400/70" aria-hidden />}
+          {locked && <LockKeyhole className="h-3 w-3 shrink-0 text-white/30" aria-hidden />}
         </motion.span>
       )}
 
@@ -384,6 +392,7 @@ function SidebarNavItem({
         <TooltipTrigger render={hoverWrap} />
         <TooltipContent side="right" sideOffset={8} className="flex items-center gap-2">
           {item.label}
+          {locked && <LockKeyhole className="h-3 w-3 text-white/30" />}
           {item.badge === "Live" && (
             <span className="text-[10px] font-semibold text-[#06B6D4]">Live</span>
           )}

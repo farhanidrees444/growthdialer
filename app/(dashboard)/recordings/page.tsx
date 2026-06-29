@@ -15,6 +15,8 @@ import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
 import { RecordingsStatsStrip } from '@/components/recordings/recordings-stats-strip';
 import { RecordingQAStatusPill } from '@/components/recordings/recording-qa-scorecard';
 import { cn } from '@/lib/utils';
+import { PlanGate } from '@/lib/plan/plan-guard';
+import { UpgradePrompt } from '@/lib/plan/upgrade-prompt';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -334,45 +336,56 @@ function RecordingCard({
 
               {/* AI Summary */}
               {hasAi && summaryBullets.length > 0 && (
-                <div className="rounded-xl border border-emerald-500/15 bg-gradient-to-br from-emerald-500/[0.07] to-teal-500/[0.05] p-4">
-                  <div className="mb-2.5 flex items-center gap-2">
-                    <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">AI Summary</span>
-                  </div>
-                  <ul className="space-y-1.5">
-                    {summaryBullets.map((b, i) => (
-                      <li key={i} className="flex gap-2 text-sm text-white/75 leading-relaxed">
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400/60" />
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* Keywords */}
-                  {rec.ai_keywords && rec.ai_keywords.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {rec.ai_keywords.slice(0, 6).map((kw, i) => (
-                        <span key={i} className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[11px] text-slate-400">
-                          {kw}
-                        </span>
+                <PlanGate
+                  feature="ai_call_scoring"
+                  fallback={
+                    <UpgradePrompt
+                      feature="ai_call_scoring"
+                      title="Unlock AI summaries"
+                      description="Growth includes call summaries, scoring, and coaching signals."
+                    />
+                  }
+                >
+                  <div className="rounded-xl border border-emerald-500/15 bg-gradient-to-br from-emerald-500/[0.07] to-teal-500/[0.05] p-4">
+                    <div className="mb-2.5 flex items-center gap-2">
+                      <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">AI Summary</span>
+                    </div>
+                    <ul className="space-y-1.5">
+                      {summaryBullets.map((b, i) => (
+                        <li key={i} className="flex gap-2 text-sm text-white/75 leading-relaxed">
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400/60" />
+                          {b}
+                        </li>
                       ))}
-                    </div>
-                  )}
+                    </ul>
 
-                  {/* Next steps */}
-                  {nextSteps.length > 0 && (
-                    <div className="mt-3 border-t border-white/[0.06] pt-3">
-                      <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Next Steps</p>
-                      <ul className="space-y-1">
-                        {nextSteps.map((s, i) => (
-                          <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
-                            <span className="mt-0.5 shrink-0 text-teal-400">→</span>{s}
-                          </li>
+                    {/* Keywords */}
+                    {rec.ai_keywords && rec.ai_keywords.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {rec.ai_keywords.slice(0, 6).map((kw, i) => (
+                          <span key={i} className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[11px] text-slate-400">
+                            {kw}
+                          </span>
                         ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
+                      </div>
+                    )}
+
+                    {/* Next steps */}
+                    {nextSteps.length > 0 && (
+                      <div className="mt-3 border-t border-white/[0.06] pt-3">
+                        <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Next Steps</p>
+                        <ul className="space-y-1">
+                          {nextSteps.map((s, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                              <span className="mt-0.5 shrink-0 text-teal-400">-&gt;</span>{s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </PlanGate>
               )}
 
               {/* Processing indicator */}

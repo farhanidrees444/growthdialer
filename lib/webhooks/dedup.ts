@@ -8,7 +8,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export async function claimWebhookEvent(
   supabase: SupabaseClient,
   eventId: string,
-  provider: 'telnyx' | 'stripe',
+  provider: 'telnyx' | 'stripe' | 'polar',
   eventType?: string,
 ): Promise<boolean> {
   if (!eventId?.trim()) return true;

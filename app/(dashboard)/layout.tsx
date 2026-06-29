@@ -28,6 +28,7 @@ import { resolveRouteAccent } from "@/lib/ui/route-accents";
 import { PostHogIdentify } from "@/components/PostHogIdentify";
 import { VoiceAccountBootstrap } from "@/components/voice/voice-account-bootstrap";
 import { VoiceAudioUnlock } from "@/components/voice/voice-audio-unlock";
+import { TrialBanner } from "@/components/layout/trial-banner";
 
 function DashboardOverlays({ userId }: { userId: string | undefined }) {
   const { showSaveAsLead, activePhone, dismissSaveAsLead } = useCallContext();
@@ -72,6 +73,9 @@ export default function DashboardLayout({
               <AmbientShell accent={routeAccent.ambient} />
               <div className="pointer-events-none absolute inset-0 grid-bg opacity-[0.12]" aria-hidden />
 
+              {!isOnboarding && (
+                <TrialBanner />
+              )}
               {!isOnboarding && (
                 <TopHeader
                   isSidebarCollapsed={isSidebarCollapsed}

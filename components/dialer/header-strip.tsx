@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, HelpCircle, Flame } from 'lucide-react';
+import { usePlan } from '@/lib/plan/use-plan';
+import { UpgradePrompt } from '@/lib/plan/upgrade-prompt';
 
 interface CallDot {
   id: string;
@@ -49,6 +51,8 @@ export function HeaderStrip({
   onDotClick,
 }: HeaderStripProps) {
   const [statsExpanded, setStatsExpanded] = useState(false);
+  const { can } = usePlan();
+  const canAiScore = can('ai_call_scoring');
   const isLive =
     !inboundPreAnswer
     && (callStatus === 'active' || callStatus === 'connecting' || callStatus === 'ringing' || callStatus === 'held');
@@ -106,6 +110,24 @@ export function HeaderStrip({
               <span className="text-white/38">{item.label}</span>
             </span>
           ))}
+        </div>
+
+        <div className="group relative hidden md:block">
+          <div className="flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs font-semibold text-white/55">
+            AI scoring
+            <span className={canAiScore ? 'text-[#06B6D4]' : 'text-white/30'}>
+              {canAiScore ? 'On' : 'Locked'}
+            </span>
+          </div>
+          {!canAiScore && (
+            <div className="pointer-events-none absolute left-0 top-[calc(100%+0.5rem)] z-50 w-72 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
+              <UpgradePrompt
+                feature="ai_call_scoring"
+                title="Unlock AI scoring"
+                description="Growth adds call scoring, summaries, and coaching signals."
+              />
+            </div>
+          )}
         </div>
 
         {/* Mobile compressed */}

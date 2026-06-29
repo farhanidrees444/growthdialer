@@ -3,6 +3,8 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { hasPermission, type Role } from '@/lib/auth/permissions';
 import { CoachingDashboard } from '@/components/coaching/CoachingDashboard';
 import type { AgentRosterRow, CoachingCall, CoachingNote, CoachingScore } from '@/components/coaching/types';
+import { PlanGate } from '@/lib/plan/plan-guard';
+import { UpgradePrompt } from '@/lib/plan/upgrade-prompt';
 
 export const dynamic = 'force-dynamic';
 
@@ -131,12 +133,26 @@ export default async function CoachingPage() {
   });
 
   return (
-    <CoachingDashboard
-      workspaceId={workspaceId}
-      roster={roster}
-      scoresByAgent={scoresByAgent}
-      callsByAgent={callsByAgent}
-      notesByAgent={notesByAgent}
-    />
+    <PlanGate
+      feature="coaching_dashboard"
+      fallback={
+        <main className="flex flex-1 items-center justify-center p-6">
+          <UpgradePrompt
+            feature="coaching_dashboard"
+            title="Unlock coaching dashboards"
+            description="Growth includes manager dashboards, score trends, and team coaching visibility."
+            className="max-w-md"
+          />
+        </main>
+      }
+    >
+      <CoachingDashboard
+        workspaceId={workspaceId}
+        roster={roster}
+        scoresByAgent={scoresByAgent}
+        callsByAgent={callsByAgent}
+        notesByAgent={notesByAgent}
+      />
+    </PlanGate>
   );
 }
