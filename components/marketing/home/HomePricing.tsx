@@ -22,6 +22,7 @@ const HOME_PLANS = [
     tagline: 'Core AI dialing, recording, transcripts, and CRM sync for lean teams.',
     cta: 'View Starter',
     href: '/pricing?highlight=starter',
+    popular: false,
     features: ['AI dialer', 'Unlimited calls', 'Recordings and transcripts', '1 local number'],
   },
   {
@@ -47,6 +48,7 @@ const HOME_PLANS = [
     tagline: 'Live floor visibility, manager controls, platform access, and priority support.',
     cta: 'View Pro',
     href: '/pricing?highlight=pro',
+    popular: false,
     features: ['Live monitor', 'Whisper, barge, takeover', 'API and webhooks', 'Priority support'],
   },
 ] as const;
