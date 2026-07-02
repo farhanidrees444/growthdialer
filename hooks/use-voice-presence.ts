@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Device } from '@twilio/voice-sdk';
+import type { TelnyxRTC } from '@telnyx/webrtc';
 import type { PhoneStatus } from '@/contexts/webphone-context';
 
 const HEARTBEAT_MS = 25_000;
@@ -23,18 +23,14 @@ function mapPhoneStatus(status: PhoneStatus): 'idle' | 'initializing' | 'ready' 
   return status;
 }
 
-function mapDeviceState(device: Device | null): string | null {
+function mapDeviceState(device: TelnyxRTC | null): string | null {
   if (!device) return null;
-  try {
-    return device.state ?? null;
-  } catch {
-    return null;
-  }
+  return 'registered';
 }
 
 export interface UseVoicePresenceOptions {
   phoneStatus: PhoneStatus;
-  device: Device | null;
+  device: TelnyxRTC | null;
   workspaceId?: string | null;
   enabled?: boolean;
 }

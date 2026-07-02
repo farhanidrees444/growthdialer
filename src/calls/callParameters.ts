@@ -1,6 +1,6 @@
-import type { Call } from '@twilio/voice-sdk';
+import type { VoiceSdkCall } from '@/lib/voice/telnyx-call-shim';
 
-export function readCallParameter(call: Call, key: string): string | null {
+export function readCallParameter(call: VoiceSdkCall, key: string): string | null {
   const direct = call.parameters?.[key]?.trim();
   if (direct) return direct;
   try {

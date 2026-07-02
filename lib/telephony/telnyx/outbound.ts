@@ -1,0 +1,129 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { MakeCallParams, CallHandle } from '@/lib/telephony/types';
+import { telephonyRequest } from '@/lib/telephony/telnyx/http';
+import {
+  readCallControlAppId,
+  readConnectionId,
+  readOutboundVoiceProfileId,
+} from '@/lib/telephony/telnyx/env';
+
+function encodeClientState(state: Record<string, unknown>): string {
+  return Buffer.from(JSON.stringify(state)).toString('base64');
+}
+
+export async function dialOutboundCall(
+  supabase: SupabaseClient,
+  params: MakeCallParams,
+): Promise<CallHandle> {
+  const connectionId = readConnectionId();
+  const appId = readCallControlAppId();
+  const voiceProfileId = readOutboundVoiceProfileId();
+  if (!connectionId || !appId) {
+    throw new Error('Voice service is not configured');
+  }
+
+  const clientState = encodeClientState({
+    tenant_id: params.tenantId,
+    agent_id: params.agentId,
+    lead_id: params.leadId ?? null,
+    parallel_session_id: params.parallelSessionId ?? null,
+    parallel_leg_id: params.parallelLegId ?? null,
+    ...params.clientState,
+  });
+
+  const dialBody: Record<string, unknown> = {
+    connection_id: connectionId,
+    to: params.to,
+    from: params.from,
+    webhook_url: params.webhookUrl,
+    webhook_url_method: 'POST',
+    webhook_api_version: '2',
+    timeout_secs: params.timeoutSecs ?? 30,
+    answering_machine_detection: params.amd ?? 'disabled',
+    client_state: clientState,
+  };
+
+  if (voiceProfileId) {
+    dialBody.outbound_voice_profile_id = voiceProfileId;
+  }
+
+  const result = await telephonyRequest<{ data?: { call_control_id?: string } }>(
+    '/calls',
+    { method: 'POST', body: JSON.stringify(dialBody) },
+  );
+
+  const callControlId = result.data?.call_control_id;
+  if (!callControlId) {
+    throw new Error('Voice provider did not return a call id');
+  }
+
+  const nowIso = new Date().toISOString();
+  const { data: inserted, error } = await supabase
+    .from('calls')
+    .insert({
+      user_id: params.agentId,
+      workspace_id: params.tenantId,
+      lead_id: params.leadId ?? null,
+      direction: 'outbound',
+      to_number: params.to,
+      from_number: params.from,
+      telnyx_call_id: callControlId,
+      status: 'initiated',
+      started_at: nowIso,
+      created_at: nowIso,
+      parallel_dial_session_id: params.parallelSessionId ?? null,
+      parallel_dial_leg_id: params.parallelLegId ?? null,
+    })
+    .select('id')
+    .single();
+
+  if (error) {
+    console.error('[telephony/outbound] call row insert failed:', error);
+  }
+
+  return {
+    callControlId,
+    dbCallId: inserted?.id ?? null,
+    status: 'initiated',
+  };
+}
+
+export async function hangupProviderCall(callControlId: string): Promise<void> {
+  await telephonyRequest(
+    `/calls/${encodeURIComponent(callControlId)}/actions/hangup`,
+    { method: 'POST', body: JSON.stringify({}) },
+  );
+}
+
+export async function bridgeCalls(
+  callControlIdA: string,
+  callControlIdB: string,
+): Promise<void> {
+  await telephonyRequest(
+    `/calls/${encodeURIComponent(callControlIdA)}/actions/bridge`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ call_control_id: callControlIdB }),
+    },
+  );
+}
+
+export async function transferCall(
+  callControlId: string,
+  to: string,
+): Promise<void> {
+  await telephonyRequest(
+    `/calls/${encodeURIComponent(callControlId)}/actions/transfer`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ to }),
+    },
+  );
+}
+
+export async function answerCall(callControlId: string): Promise<void> {
+  await telephonyRequest(
+    `/calls/${encodeURIComponent(callControlId)}/actions/answer`,
+    { method: 'POST', body: JSON.stringify({}) },
+  );
+}

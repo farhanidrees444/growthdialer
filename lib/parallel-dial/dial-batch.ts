@@ -9,8 +9,6 @@ import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
 import { resolveWorkspaceOutboundTrust } from '@/lib/compliance/workspace-trust';
 import { buildOutboundDialPayload } from '@/lib/voice/outbound-dial-payload';
 import { triggerParallelLegTrackingAsync } from './leg-tracking';
-import { getVoiceProvider } from '@/lib/voice/provider';
-import { dialParallelBatchTwilio } from '@/lib/twilio/parallel-dial-batch';
 
 export async function dialParallelBatch(
   supabase: SupabaseClient,
@@ -21,10 +19,6 @@ export async function dialParallelBatch(
     queueConfig?: DialerQueueConfig;
   } = {},
 ): Promise<{ legs: ParallelDialLeg[]; leads: LeadRecord[] }> {
-  if (getVoiceProvider() === 'twilio') {
-    return dialParallelBatchTwilio(supabase, session, userId, options);
-  }
-
   return dialParallelBatchTelnyx(supabase, session, userId, options);
 }
 

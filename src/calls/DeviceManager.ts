@@ -1,70 +1,67 @@
-import { Call, Device } from '@twilio/voice-sdk';
+import { TelnyxRTC, type Call as TelnyxCall } from '@telnyx/webrtc';
+import {
+  handleTelnyxCallStateChange,
+  patchTelnyxCall,
+  type VoiceSdkCall,
+} from '@/lib/voice/telnyx-call-shim';
 import { eventBus } from './eventBus';
-
-type DeviceOptions = NonNullable<ConstructorParameters<typeof Device>[1]>;
 
 export interface DeviceManagerInitOptions {
   edge?: string;
-  logLevel?: DeviceOptions['logLevel'];
+  logLevel?: number;
 }
 
 class DeviceManager {
-  private device: Device | null = null;
+  private client: TelnyxRTC | null = null;
   private token: string | null = null;
+  private incomingEmitted = new WeakSet<object>();
   isReady = false;
 
-  async init(token: string, options: DeviceManagerInitOptions = {}): Promise<Device> {
-    if (this.device && this.token) {
-      try {
-        await this.device.updateToken(token);
-        this.token = token;
-        if (this.device.state === Device.State.Unregistered) {
-          await this.device.register();
-        }
-        this.isReady = this.device.state === Device.State.Registered;
-        if (this.isReady) eventBus.emit('DEVICE_READY', this.snapshot());
-        return this.device;
-      } catch {
-        this.destroy();
-      }
+  async init(loginToken: string, _options: DeviceManagerInitOptions = {}): Promise<TelnyxRTC> {
+    if (this.client && this.token === loginToken && this.isReady) {
+      return this.client;
     }
 
-    this.token = token;
+    if (this.client) {
+      this.destroy();
+    }
+
+    this.token = loginToken;
     this.isReady = false;
-    this.device = new Device(token, {
-      codecPreferences: ['pcmu', 'opus'] as Call.Codec[],
-      closeProtection: true,
-      allowIncomingWhileBusy: true,
-      ...(options.edge ? { edge: options.edge } : {}),
-      ...(options.logLevel != null ? { logLevel: options.logLevel } : {}),
-    } as ConstructorParameters<typeof Device>[1]);
 
-    this.registerEvents(this.device);
-    await this.device.register();
-    this.isReady = this.device.state === Device.State.Registered;
-    if (this.isReady) eventBus.emit('DEVICE_READY', this.snapshot());
-    return this.device;
+    const rtc = new TelnyxRTC({ login_token: loginToken });
+    rtc.remoteElement = 'remoteMedia';
+    this.bindClientEvents(rtc);
+    rtc.connect();
+
+    this.client = rtc;
+    return rtc;
   }
 
-  getDevice(): Device | null {
-    return this.device;
+  getDevice(): TelnyxRTC | null {
+    return this.client;
   }
 
-  async connect(params: Record<string, string>): Promise<Call> {
-    if (!this.device || !this.isReady) {
+  async connect(params: Record<string, string>): Promise<VoiceSdkCall> {
+    if (!this.client || !this.isReady) {
       throw new Error('Voice device is not registered');
     }
-    return this.device.connect({ params });
+
+    const call = this.client.newCall({
+      destinationNumber: params.To,
+      callerNumber: params.CallerId,
+    });
+    return patchTelnyxCall(call);
   }
 
   destroy(): void {
-    const device = this.device;
-    this.device = null;
+    const client = this.client;
+    this.client = null;
     this.token = null;
     this.isReady = false;
-    if (device) {
+    if (client) {
       try {
-        device.destroy();
+        client.disconnect();
       } catch {
         // Ignore SDK cleanup errors.
       }
@@ -74,29 +71,42 @@ class DeviceManager {
 
   snapshot() {
     return {
-      device: this.device,
+      device: this.client,
       isReady: this.isReady,
-      state: this.device?.state ?? null,
+      state: this.isReady ? 'registered' : 'unregistered',
     };
   }
 
-  private registerEvents(device: Device): void {
-    device.on('registered', () => {
+  private bindClientEvents(rtc: TelnyxRTC): void {
+    rtc.on('telnyx.ready', () => {
       this.isReady = true;
       eventBus.emit('DEVICE_READY', this.snapshot());
     });
 
-    device.on('unregistered', () => {
+    rtc.on('telnyx.error', (error: Error) => {
+      eventBus.emit('DEVICE_ERROR', error);
+    });
+
+    rtc.on('telnyx.socket.close', () => {
       this.isReady = false;
       eventBus.emit('DEVICE_UNREGISTERED', this.snapshot());
     });
 
-    device.on('error', (error: Error) => {
-      eventBus.emit('DEVICE_ERROR', error);
-    });
+    rtc.on('telnyx.notification', (notification: { type?: string; call?: TelnyxCall }) => {
+      const call = notification.call;
+      if (!call || notification.type !== 'callUpdate') return;
 
-    device.on('incoming', (call: Call) => {
-      eventBus.emit('DEVICE_INCOMING', call);
+      handleTelnyxCallStateChange(call);
+      const patched = patchTelnyxCall(call);
+
+      if (
+        call.direction === 'inbound'
+        && call.state === 'ringing'
+        && !this.incomingEmitted.has(call)
+      ) {
+        this.incomingEmitted.add(call);
+        eventBus.emit('DEVICE_INCOMING', patched);
+      }
     });
   }
 }

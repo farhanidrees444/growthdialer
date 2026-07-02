@@ -9,7 +9,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { Call } from '@twilio/voice-sdk';
+import type { VoiceSdkCall } from '@/lib/voice/telnyx-call-shim';
+
+type Call = VoiceSdkCall;
 import {
   attachPeerConnectionMonitor,
   getCallPeerConnection,
@@ -222,7 +224,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const [incomingCall, setIncomingCall] = useState<IncomingCallUiState>(EMPTY_INCOMING_CALL);
 
   // Refs hold live objects that should NOT trigger re-renders
-  const deviceRef = useRef<import('@twilio/voice-sdk').Device | null>(null);
+  const deviceRef = useRef<import('@telnyx/webrtc').TelnyxRTC | null>(null);
   const activeCallRef = useRef<Call | null>(null);
   const incomingCallRef = useRef<Call | null>(null);
   const callStatusRef = useRef<WebRTCCallStatus>('idle');
@@ -286,7 +288,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const scheduleReconnect = useCallback((reason: string) => {
     if (initAttemptsRef.current >= 3) {
       safeSet(setPhoneStatus, 'error');
-      safeSet(setVoiceError, (prev) => prev ?? `Voice could not connect (${reason}). Tap reconnect or check server Twilio settings.`);
+      safeSet(setVoiceError, (prev) => prev ?? `Voice could not connect (${reason}). Tap reconnect or check server voice settings.`);
       return;
     }
     initAttemptsRef.current += 1;

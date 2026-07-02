@@ -8,21 +8,21 @@ export function readEnv(name: string): string | null {
 }
 
 export function readVoiceApiKey(): string | null {
-  return readEnv('TWILIO_AUTH_TOKEN');
+  return readEnv('TELNYX_API_KEY');
 }
 
 export function voiceApiBearerToken(): string {
   return readVoiceApiKey() ?? '';
 }
 
-/** Programmable voice application SID (TwiML App). */
+/** Call Control application id for inbound/outbound routing. */
 export function readCallControlAppId(): string | null {
-  return readEnv('TWILIO_TWIML_APP_SID');
+  return readEnv('TELNYX_CALL_CONTROL_APP_ID');
 }
 
-/** @deprecated Legacy alias — use readCallControlAppId */
+/** SIP / WebRTC connection id for browser credentials. */
 export function readConfiguredConnectionId(): string | null {
-  return readCallControlAppId();
+  return readEnv('TELNYX_CONNECTION_ID');
 }
 
 /** @deprecated Legacy alias */

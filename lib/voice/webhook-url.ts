@@ -22,7 +22,10 @@ export function resolveVoiceAppBaseUrl(): string {
 }
 
 export function resolveVoiceWebhookUrl(): string {
+  const explicit = process.env.TELNYX_VOICE_WEBHOOK_URL?.trim();
+  if (explicit) return explicit.replace(/\/$/, '');
+
   const base = resolveVoiceAppBaseUrl();
   if (!base) return '';
-  return `${base}/api/twilio/voice`;
+  return `${base}/api/telnyx/webhook`;
 }

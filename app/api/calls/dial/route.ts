@@ -8,11 +8,12 @@ import { assertWorkspaceCanPlaceCalls } from '@/lib/billing/workspace-billing-ga
 import { apiUnauthorized, parseJsonBody } from '@/lib/api/errors';
 import { dialRequestSchema } from '@/lib/validations';
 import { resolveCallerIdForLead } from '@/lib/dialer/resolve-caller-id';
-import { isTwilioVoiceConfigured } from '@/lib/twilio/voice-config';
+import { getTelephonyProvider } from '@/lib/telephony';
 
 export async function POST(request: NextRequest) {
   try {
-    if (!isTwilioVoiceConfigured()) {
+    const provider = getTelephonyProvider();
+    if (!provider.isConfigured()) {
       return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
     }
 

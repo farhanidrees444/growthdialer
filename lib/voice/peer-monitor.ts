@@ -1,4 +1,4 @@
-import type { Call } from '@twilio/voice-sdk';
+import type { VoiceSdkCall } from '@/lib/voice/telnyx-call-shim';
 
 export type IceConnectionQuality =
   | 'excellent'
@@ -29,7 +29,10 @@ type PeerConnectionLike = RTCPeerConnection & { connectionState?: string };
 /**
  * Extract the underlying RTCPeerConnection from a Twilio Call object.
  */
-export function getCallPeerConnection(call: Call): PeerConnectionLike | null {
+export function getCallPeerConnection(call: VoiceSdkCall): PeerConnectionLike | null {
+  const peer = call.peer;
+  if (peer?.instance) return peer.instance as PeerConnectionLike;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const c = call as any;
 
@@ -58,7 +61,7 @@ function tryIceRestart(pc: RTCPeerConnection): void {
 }
 
 export function attachPeerConnectionMonitor(
-  call: Call,
+  call: VoiceSdkCall,
   handlers: {
     onIceState?: (state: string, quality: IceConnectionQuality) => void;
     onConnectionState?: (state: string) => void;

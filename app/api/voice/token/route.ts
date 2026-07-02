@@ -1,57 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { toTwilioClientIdentity } from '@/lib/twilio/client-identity';
-import { resolveTwilioAccessTokenCredentials } from '@/lib/twilio/access-token-credentials';
-import { readTwilioTwimlAppSid, isTwilioVoiceConfigured } from '@/lib/twilio/voice-config';
-import twilio from 'twilio';
+import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { getTelephonyProvider } from '@/lib/telephony';
 
-const { AccessToken } = twilio.jwt;
-const { VoiceGrant } = AccessToken;
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
-/** Issues Twilio browser voice credentials (legacy path alias for /api/twilio/token). */
-export async function POST(_request: NextRequest) {
-  if (!isTwilioVoiceConfigured()) {
-    return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
-  }
-
+export async function POST(request: NextRequest) {
   try {
+    const provider = getTelephonyProvider();
+    if (!provider.isConfigured()) {
+      return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
+    }
+
     const supabase = await createClient();
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (!authUser?.id) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const creds = resolveTwilioAccessTokenCredentials();
-    const twimlAppSid = readTwilioTwimlAppSid();
-    if (!creds || !twimlAppSid) {
-      return NextResponse.json({ error: 'Voice service configuration incomplete' }, { status: 500 });
-    }
+    const access = await requireWorkspaceFromRequest(request, supabase, user.id);
+    if (isWorkspaceError(access)) return access;
 
-    const identity = toTwilioClientIdentity(authUser.id);
-    const voiceGrant = new VoiceGrant({
-      outgoingApplicationSid: twimlAppSid,
-      incomingAllow: true,
-    });
-
-    const token = new AccessToken(creds.accountSid, creds.signingKeySid, creds.secret, {
-      identity,
-      ttl: 3600,
-    });
-    token.addGrant(voiceGrant);
-
+    const token = await provider.getWebRTCToken(user.id, access.workspaceId);
     return NextResponse.json({
-      token: token.toJwt(),
-      login_token: token.toJwt(),
-      identity,
+      token: token.loginToken,
+      login_token: token.loginToken,
+      credential_id: token.credentialId,
+      sip_username: token.sipUsername,
+      identity: user.id,
     });
   } catch (error) {
     console.error('[voice/token] error:', error);
-    return NextResponse.json({ error: 'Could not issue credentials' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Could not issue credentials' },
+      { status: 500 },
+    );
   }
 }
 
 export async function GET(request: NextRequest) {
-  const url = new URL(request.url);
-  url.pathname = url.pathname.replace('/api/voice/token', '/api/twilio/token');
-  return NextResponse.redirect(url);
+  return POST(request);
 }

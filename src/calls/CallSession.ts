@@ -1,4 +1,4 @@
-import type { Call } from '@twilio/voice-sdk';
+import type { VoiceSdkCall } from '@/lib/voice/telnyx-call-shim';
 import { extractCallSidFromSdkCall } from '@/lib/twilio/extract-call-sid';
 import { eventBus } from './eventBus';
 
@@ -7,15 +7,14 @@ export type CallSessionPhase = 'pending' | 'ringing' | 'connecting' | 'active' |
 
 let fallbackCallId = 0;
 
-function stableCallId(call: Call): string {
+function stableCallId(call: VoiceSdkCall): string {
   const sid = extractCallSidFromSdkCall(call);
   if (sid) return sid;
 
-  const c = call as Call & { __gdSessionId?: string; outboundConnectionId?: string };
-  if (c.outboundConnectionId) return c.outboundConnectionId;
+  const c = call as VoiceSdkCall & { __gdSessionId?: string };
   if (!c.__gdSessionId) {
     fallbackCallId += 1;
-    c.__gdSessionId = `call-${fallbackCallId}`;
+    c.__gdSessionId = call.id || `call-${fallbackCallId}`;
   }
   return c.__gdSessionId;
 }
@@ -26,7 +25,7 @@ export class CallSession {
   private bound = false;
 
   constructor(
-    readonly call: Call,
+    readonly call: VoiceSdkCall,
     readonly direction: CallDirection,
     readonly meta: { from?: string | null; to?: string | null } = {},
   ) {

@@ -1,4 +1,4 @@
-import type { Call } from '@twilio/voice-sdk';
+import type { VoiceSdkCall } from '@/lib/voice/telnyx-call-shim';
 
 export type InboundDecision =
   | { action: 'queue'; reason: 'device_not_ready' }
@@ -6,7 +6,7 @@ export type InboundDecision =
   | { action: 'ring' };
 
 export function decideInboundCall(params: {
-  call: Call;
+  call: VoiceSdkCall;
   deviceReady: boolean;
   hasDevice: boolean;
   hasActiveCall: boolean;

@@ -1,17 +1,14 @@
-export type VoiceProvider = 'twilio';
+export type VoiceProvider = 'telnyx';
 
-/**
- * Active voice provider.
- * GrowthDialer is Twilio-only; legacy provider env vars must not steer call routing.
- */
+/** Active voice provider — all call control routes through /lib/telephony. */
 export function getVoiceProvider(): VoiceProvider {
-  return 'twilio';
+  return 'telnyx';
 }
 
 export function isTwilioProvider(): boolean {
-  return getVoiceProvider() === 'twilio';
+  return false;
 }
 
 export function isTelnyxProvider(): boolean {
-  return false;
+  return getVoiceProvider() === 'telnyx';
 }

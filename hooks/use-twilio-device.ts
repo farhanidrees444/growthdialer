@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Call } from '@twilio/voice-sdk';
-import { Device } from '@twilio/voice-sdk';
+import type { TelnyxRTC } from '@telnyx/webrtc';
+import type { VoiceSdkCall } from '@/lib/voice/telnyx-call-shim';
 import { toast } from 'sonner';
 import {
   callOrchestrator,
@@ -11,15 +11,13 @@ import {
 } from '@/src/calls';
 import { eventBus } from '@/src/calls/eventBus';
 
-const TOKEN_URL = '/api/twilio/token';
+const TOKEN_URL = '/api/voice/token';
 const TOKEN_TTL_MS = 3600 * 1000;
 const TOKEN_REFRESH_RATIO = 0.75; // refresh at ~75% of TTL elapsed
 
 const TOKEN_ERROR_MESSAGES: Record<string, string> = {
   missing_credentials:
-    'Voice credentials are missing on the server. Add TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN in Vercel, then redeploy.',
-  missing_twiml_app:
-    'TWILIO_TWIML_APP_SID is not set on the server. Add it in Vercel environment variables, then redeploy.',
+    'Voice credentials are missing on the server. Add voice service API keys in Vercel, then redeploy.',
 };
 
 function decodeJwtExpiryMs(jwt: string): number | null {
@@ -46,19 +44,19 @@ function isTransportError(err: Error): boolean {
 export interface UseTwilioDeviceOptions {
   /** When true, skip auto-init on mount — parent calls initDevice once. */
   manualInit?: boolean;
-  onIncoming?: (call: Call) => void;
+  onIncoming?: (call: VoiceSdkCall) => void;
 }
 
 export interface UseTwilioDeviceReturn {
-  device: Device | null;
+  device: TelnyxRTC | null;
   isReady: boolean;
-  incomingCall: Call | null;
-  activeCall: Call | null;
+  incomingCall: VoiceSdkCall | null;
+  activeCall: VoiceSdkCall | null;
   isMuted: boolean;
   voiceError: string | null;
   acceptCall: () => void;
   rejectCall: () => void;
-  makeCall: (toNumber: string, callerId?: string) => Promise<Call | null>;
+  makeCall: (toNumber: string, callerId?: string) => Promise<VoiceSdkCall | null>;
   hangup: () => void;
   toggleMute: () => void;
   initDevice: () => Promise<void>;
@@ -118,6 +116,7 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
 
     const data = await res.json().catch(() => ({})) as {
       token?: string;
+      login_token?: string;
       identity?: string;
       session_meta?: Record<string, string>;
       error?: string;
@@ -134,7 +133,8 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
       return null;
     }
 
-    if (data.error || !data.token) {
+    const loginToken = data.login_token ?? data.token;
+    if (data.error || !loginToken) {
       const msg = data.error ?? 'Voice token missing from server response';
       setVoiceError(msg);
       toast.error(msg);
@@ -150,7 +150,7 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
     }
 
     setVoiceError(null);
-    return { token: data.token, identity: data.identity };
+    return { token: loginToken, identity: data.identity };
   }, []);
 
   const initDevice = useCallback(async () => {
@@ -216,7 +216,7 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
     syncSnapshot();
   }, [syncSnapshot]);
 
-  const makeCall = useCallback(async (toNumber: string, callerId?: string): Promise<Call | null> => {
+  const makeCall = useCallback(async (toNumber: string, callerId?: string): Promise<VoiceSdkCall | null> => {
     try {
       const call = await callOrchestrator.makeCall(toNumber, callerId);
       syncSnapshot();
@@ -247,7 +247,7 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}): UseTwilio
   useEffect(() => {
     mountedRef.current = true;
     const offSnapshot = eventBus.on<CallOrchestratorSnapshot>('CALL_SNAPSHOT', syncSnapshot);
-    const offIncoming = eventBus.on<Call>('CALL_INCOMING', (call) => {
+    const offIncoming = eventBus.on<VoiceSdkCall>('CALL_INCOMING', (call) => {
       onIncomingRef.current?.(call);
     });
     const offError = eventBus.on<Error>('DEVICE_ERROR', (error) => {

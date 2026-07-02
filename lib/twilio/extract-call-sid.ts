@@ -1,25 +1,34 @@
-import type { Call } from '@twilio/voice-sdk';
+import type { VoiceSdkCall } from '@/lib/voice/telnyx-call-shim';
 import { isValidCallerPhone, normalizeE164 } from '@/lib/inbound/phone';
 
 const TWILIO_SID_RE = /^CA[a-f0-9]{32}$/i;
+const TELNYX_CONTROL_RE = /^v\d:/;
 
 export function isTwilioCallSid(value: string | null | undefined): value is string {
   return Boolean(value && TWILIO_SID_RE.test(value.trim()));
 }
 
-/** Read Twilio CallSid from Voice SDK Call (parameters or internal field). */
-export function extractCallSidFromSdkCall(call: Call): string | null {
-  const fromParams = call.parameters?.CallSid?.trim();
-  if (isTwilioCallSid(fromParams)) return fromParams;
+export function isTelnyxCallControlId(value: string | null | undefined): value is string {
+  if (!value) return false;
+  const trimmed = value.trim();
+  return TELNYX_CONTROL_RE.test(trimmed) || trimmed.length >= 20;
+}
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const internal = (call as any)._callSid as string | undefined;
-  if (isTwilioCallSid(internal)) return internal;
+/** Read provider call id from the browser voice SDK call object. */
+export function extractCallSidFromSdkCall(call: VoiceSdkCall): string | null {
+  const fromParams = call.parameters?.CallSid?.trim();
+  if (fromParams && (isTwilioCallSid(fromParams) || isTelnyxCallControlId(fromParams))) {
+    return fromParams;
+  }
+
+  const ids = call.telnyxIDs;
+  if (isTelnyxCallControlId(ids.telnyxCallControlId)) return ids.telnyxCallControlId;
+  if (call.id) return call.id;
 
   return null;
 }
 
-function readCallParam(call: Call, ...keys: string[]): string | null {
+function readCallParam(call: VoiceSdkCall, ...keys: string[]): string | null {
   const params = call.parameters ?? {};
   for (const key of keys) {
     const value = params[key]?.trim();
@@ -39,8 +48,8 @@ function readCallParam(call: Call, ...keys: string[]): string | null {
   return null;
 }
 
-/** PSTN caller ID from an inbound Twilio Client call, when present. */
-export function extractInboundFromNumber(call: Call): string | null {
+/** PSTN caller ID from an inbound browser call, when present. */
+export function extractInboundFromNumber(call: VoiceSdkCall): string | null {
   const fromTwiml = readCallParam(call, 'gd_from_number');
   if (fromTwiml && isValidCallerPhone(fromTwiml)) return normalizeE164(fromTwiml);
 
@@ -49,8 +58,8 @@ export function extractInboundFromNumber(call: Call): string | null {
   return normalizeE164(raw);
 }
 
-/** Called line (agent DID) from an inbound Twilio Client call. */
-export function extractInboundToNumber(call: Call): string | null {
+/** Called line (agent DID) from an inbound browser call. */
+export function extractInboundToNumber(call: VoiceSdkCall): string | null {
   const toTwiml = readCallParam(call, 'gd_to_number');
   if (toTwiml && isValidCallerPhone(toTwiml)) return normalizeE164(toTwiml);
 
@@ -61,6 +70,6 @@ export function extractInboundToNumber(call: Call): string | null {
   return normalizeE164(raw);
 }
 
-export function isTwilioCallOpen(call: Call): boolean {
+export function isTwilioCallOpen(call: VoiceSdkCall): boolean {
   return call.status() === 'open';
 }

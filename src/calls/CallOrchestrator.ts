@@ -1,4 +1,5 @@
-import type { Call, Device } from '@twilio/voice-sdk';
+import type { TelnyxRTC } from '@telnyx/webrtc';
+import type { VoiceSdkCall } from '@/lib/voice/telnyx-call-shim';
 import { shouldBridgeAutoAnswer } from '@/lib/parallel-dial/auto-answer-flag';
 import { readCallParameter } from './callParameters';
 import { CallSession } from './CallSession';
@@ -7,10 +8,10 @@ import { decideInboundCall } from './InboundRouter';
 import { eventBus } from './eventBus';
 
 export interface CallOrchestratorSnapshot {
-  device: Device | null;
+  device: TelnyxRTC | null;
   isReady: boolean;
-  incomingCall: Call | null;
-  activeCall: Call | null;
+  incomingCall: VoiceSdkCall | null;
+  activeCall: VoiceSdkCall | null;
   isMuted: boolean;
   voiceError: string | null;
   outboundDialActive: boolean;
@@ -19,7 +20,7 @@ export interface CallOrchestratorSnapshot {
 class CallOrchestrator {
   private activeSession: CallSession | null = null;
   private incomingSession: CallSession | null = null;
-  private queue: Call[] = [];
+  private queue: VoiceSdkCall[] = [];
   private outboundDialActive = false;
   private isMuted = false;
   private voiceError: string | null = null;
@@ -49,7 +50,7 @@ class CallOrchestrator {
     };
   }
 
-  handleIncoming(call: Call): void {
+  handleIncoming(call: VoiceSdkCall): void {
     const decision = decideInboundCall({
       call,
       deviceReady: deviceManager.isReady,
@@ -69,7 +70,7 @@ class CallOrchestrator {
       try {
         call.reject();
       } catch {
-        // Ignore stale Twilio call objects.
+        // Ignore stale call objects.
       }
       eventBus.emit('CALL_REJECTED', { reason: decision.reason });
       return;
@@ -90,7 +91,7 @@ class CallOrchestrator {
     }
   }
 
-  async acceptIncoming(options?: Parameters<Call['accept']>[0]): Promise<Call | null> {
+  async acceptIncoming(options?: unknown): Promise<VoiceSdkCall | null> {
     if (!this.incomingSession) return null;
 
     const session = this.incomingSession;
@@ -116,13 +117,13 @@ class CallOrchestrator {
       try {
         session.call.reject();
       } catch {
-        // Ignore stale Twilio call objects.
+        // Ignore stale call objects.
       }
     }
     this.emitSnapshot();
   }
 
-  async makeCall(toNumber: string, callerId?: string): Promise<Call | null> {
+  async makeCall(toNumber: string, callerId?: string): Promise<VoiceSdkCall | null> {
     this.outboundDialActive = true;
     this.voiceError = null;
     this.emitSnapshot();
@@ -157,7 +158,7 @@ class CallOrchestrator {
           call.disconnect();
         }
       } catch {
-        // Ignore stale Twilio call objects.
+        // Ignore stale call objects.
       }
     }
     this.incomingSession = null;
@@ -191,7 +192,7 @@ class CallOrchestrator {
     if (this.wired) return;
     this.wired = true;
 
-    eventBus.on<Call>('DEVICE_INCOMING', (call) => this.handleIncoming(call));
+    eventBus.on<VoiceSdkCall>('DEVICE_INCOMING', (call) => this.handleIncoming(call));
     eventBus.on<Error>('DEVICE_ERROR', (error) => {
       this.voiceError = error.message || 'Voice device error';
       this.emitSnapshot();
