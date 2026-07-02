@@ -12,3 +12,9 @@ export function setTelephonyProvider(provider: TelephonyProvider): void {
 }
 
 export * from '@/lib/telephony/types';
+export {
+  handleInboundCallInitiated,
+  advanceInboundRingGroup,
+  markInboundAccepted,
+  finalizeInboundMissed,
+} from '@/lib/telephony/telnyx/inbound-router';

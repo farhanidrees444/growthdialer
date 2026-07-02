@@ -111,14 +111,21 @@ export async function bridgeCalls(
 export async function transferCall(
   callControlId: string,
   to: string,
-): Promise<void> {
-  await telephonyRequest(
-    `/calls/${encodeURIComponent(callControlId)}/actions/transfer`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ to }),
-    },
-  );
+  from?: string,
+): Promise<boolean> {
+  try {
+    await telephonyRequest(
+      `/calls/${encodeURIComponent(callControlId)}/actions/transfer`,
+      {
+        method: 'POST',
+        body: JSON.stringify(from ? { to, from } : { to }),
+      },
+    );
+    return true;
+  } catch (error) {
+    console.error('[telephony/outbound] transfer failed:', error);
+    return false;
+  }
 }
 
 export async function answerCall(callControlId: string): Promise<void> {

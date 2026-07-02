@@ -21,6 +21,17 @@ export async function resolveWorkspaceForDid(
   return data?.workspace_id ?? null;
 }
 
+function isAgentRingable(row: {
+  status: string;
+  device_state: string | null;
+  last_heartbeat_at: string;
+}): boolean {
+  const age = Date.now() - new Date(row.last_heartbeat_at).getTime();
+  if (age > RINGABLE_HEARTBEAT_MS) return false;
+  if (row.status === 'offline') return false;
+  return row.device_state === 'registered';
+}
+
 export async function listRingableAgents(
   supabase: SupabaseClient,
   workspaceId: string,
@@ -29,20 +40,23 @@ export async function listRingableAgents(
   const { data: members } = await supabase
     .from('workspace_members')
     .select('user_id')
-    .eq('workspace_id', workspaceId);
+    .eq('workspace_id', workspaceId)
+    .eq('status', 'active');
 
   const memberIds = (members ?? []).map((row) => row.user_id).filter(Boolean);
   if (!memberIds.length) return [];
 
   const { data: presence } = await supabase
     .from('agent_presence')
-    .select('agent_id, status, last_heartbeat_at')
+    .select('agent_id, status, device_state, last_heartbeat_at')
     .in('agent_id', memberIds)
     .neq('status', 'offline')
     .gte('last_heartbeat_at', cutoff)
     .order('last_heartbeat_at', { ascending: false });
 
-  return (presence ?? []).map((row) => row.agent_id);
+  return (presence ?? [])
+    .filter((row) => isAgentRingable(row))
+    .map((row) => row.agent_id);
 }
 
 export async function createInboundCallRow(input: {

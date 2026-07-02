@@ -131,12 +131,30 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     const micOk = await requestMicPermission();
     if (!micOk) return;
     registerCallMeta(null, fromNumber ?? '');
+    void fetch('/api/inbound/accept', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from_number: fromNumber,
+        to_number: toNumber,
+      }),
+    }).catch(() => undefined);
     await answerIncomingCall();
-  }, [answerIncomingCall, fromNumber, phase, registerCallMeta, requestMicPermission]);
+  }, [answerIncomingCall, fromNumber, phase, registerCallMeta, requestMicPermission, toNumber]);
 
   const decline = useCallback(() => {
+    void fetch('/api/inbound/decline', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from_number: fromNumber,
+        to_number: toNumber,
+      }),
+    }).catch(() => undefined);
     hangup();
-  }, [hangup]);
+  }, [fromNumber, hangup, toNumber]);
 
   const connectError = useMemo(() => {
     if (incomingCall.error) return incomingCall.error;

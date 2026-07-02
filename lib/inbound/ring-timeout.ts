@@ -1,61 +1,65 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { declineInboundCall } from '@/lib/inbound/inbound-decline-call';
+import { advanceInboundRingGroup } from '@/lib/telephony/telnyx/inbound-router';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export interface RingTimeoutParams {
-  callId: string;
+  inboundCallId: string;
   callControlId: string;
-  userId: string;
+  agentId: string;
   ringSeconds: number;
   inboundMode: string;
 }
 
 /**
- * After ringSeconds, if inbound is still ringing, run decline logic (voicemail or hangup).
+ * After ringSeconds, if inbound is still ringing for this agent, advance ring group.
  */
 export async function processInboundRingTimeout(
   supabase: SupabaseClient,
   params: RingTimeoutParams,
 ): Promise<void> {
-  const { callId, callControlId, userId, ringSeconds, inboundMode } = params;
+  const { inboundCallId, agentId, ringSeconds, inboundMode } = params;
 
   if (!['browser', 'forward'].includes(inboundMode)) return;
 
   await sleep(Math.max(ringSeconds, 10) * 1000);
 
-  const { data: call } = await supabase
-    .from('calls')
-    .select('id, status, answered_at, direction')
-    .eq('id', callId)
+  const { data: inbound } = await supabase
+    .from('inbound_calls')
+    .select('id, status, answered_at, routed_agent_id')
+    .eq('id', inboundCallId)
     .maybeSingle();
 
-  if (!call || call.direction !== 'inbound') return;
-  if (call.answered_at) return;
-  if (call.status !== 'ringing') return;
+  if (!inbound) return;
+  if (inbound.answered_at) return;
+  if (inbound.status !== 'ringing') return;
+  if (inbound.routed_agent_id !== agentId) return;
 
-  console.log('[INBOUND] Ring timeout — declining unanswered call:', callId);
+  console.log('[INBOUND] Ring timeout — advancing ring group:', inboundCallId);
 
-  await declineInboundCall(supabase, {
-    callId,
-    callControlId,
-    userId,
-    reason: 'ring_timeout',
-  });
+  await advanceInboundRingGroup(supabase, inboundCallId, 'ring_timeout');
 
   const { data: notifSettings } = await supabase
     .from('user_settings')
     .select('missed_call_notify')
-    .eq('user_id', userId)
+    .eq('user_id', agentId)
     .maybeSingle();
 
-  if ((notifSettings?.missed_call_notify as boolean | null) !== false) {
+  if ((notifSettings?.missed_call_notify as boolean | null) === false) return;
+
+  const { data: inboundRow } = await supabase
+    .from('inbound_calls')
+    .select('from_number, status')
+    .eq('id', inboundCallId)
+    .maybeSingle();
+
+  if (inboundRow?.status === 'missed') {
     await supabase.from('notifications').insert({
-      user_id: userId,
+      user_id: agentId,
       type: 'call',
       title: 'Missed call',
-      body: 'An inbound caller hung up or was not answered in time',
-      metadata: { call_id: callId, event: 'inbound_ring_timeout' },
+      body: `Missed inbound call from ${inboundRow.from_number ?? 'unknown'}`,
+      metadata: { inbound_call_id: inboundCallId, event: 'inbound_ring_timeout' },
     }).maybeSingle();
   }
 }

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { resolveActiveCredentialId, fetchCredentialSipUsername } from '@/lib/telnyx/active-credential';
 
 export interface InboundBrowserCredential {
   credentialId: string;
@@ -6,10 +7,19 @@ export interface InboundBrowserCredential {
   token: string;
 }
 
-/** Twilio browser clients use /api/twilio/token — no SIP credential bridge. */
 export async function resolveInboundBrowserCredential(
-  _supabase: SupabaseClient,
-  _userId: string,
+  supabase: SupabaseClient,
+  userId: string,
 ): Promise<InboundBrowserCredential | null> {
-  return null;
+  const credentialId = await resolveActiveCredentialId(supabase, userId);
+  if (!credentialId) return null;
+
+  const sipUsername = await fetchCredentialSipUsername(credentialId);
+  if (!sipUsername) return null;
+
+  return {
+    credentialId,
+    sipUsername,
+    token: '',
+  };
 }

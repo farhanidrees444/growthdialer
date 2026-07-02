@@ -2,15 +2,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import { telnyxCallAction } from '@/lib/inbound/telnyx-actions';
 import { triggerInboundRingTimeoutAsync } from '@/lib/inbound/trigger-ring-timeout';
-import { isAgentVoiceReady } from '@/lib/inbound/agent-presence';
-import { logInboundCallStep } from '@/lib/inbound/call-step-log';
-import { broadcastIncomingCallEvent } from '@/lib/inbound/incoming-calls-broadcast';
 import {
   resolveNumberRouting,
   type ResolvedNumberRouting,
 } from '@/lib/voice/phone-number-settings';
 import { voiceLog } from '@/lib/voice/structured-log';
-import { voiceSessionLog } from '@/lib/voice/session-log';
+import { routeInboundToBrowserAgents } from '@/lib/telephony/telnyx/inbound-router';
 
 export interface InboundInitiatedContext {
   callControlId: string;
@@ -21,6 +18,7 @@ export interface InboundInitiatedContext {
   workspaceId: string | null;
   purchasedNumberId: string | undefined;
   dbCallId: string | undefined;
+  inboundCallId?: string;
 }
 
 async function startRecordingIfEnabled(
@@ -176,56 +174,38 @@ export async function executeInboundRouting(
     return;
   }
 
-  // browser mode — PSTN rings until agent accepts; notify dashboard via Realtime
-  const agentOnline = await isAgentVoiceReady(supabase, ctx.userId);
-
-  await logInboundCallStep(supabase, ctx.callControlId, 'agent_notified');
-  await broadcastIncomingCallEvent(supabase, ctx.userId, 'incoming_call', {
-    call_control_id: ctx.callControlId,
-    caller_number: ctx.fromNumber,
-    call_id: ctx.dbCallId,
-    to_number: ctx.toNumber,
-    status: 'ringing',
-    timestamp: new Date().toISOString(),
-  });
-
-  // #region agent log
-  void voiceSessionLog({
-    location: 'routing-matrix:broadcastDispatched',
-    message: 'broadcastIncomingCallEvent dispatched',
-    data: {
-      userId: ctx.userId,
-      callControlId: ctx.callControlId,
-      dbCallId: ctx.dbCallId ?? null,
-      callerNumber: ctx.fromNumber ?? null,
-      agentOnline,
-    },
-    hypothesisId: 'H-M',
-    runId: 'run11',
-  });
-  // #endregion
-
-  if (!agentOnline) {
-    voiceLog.info(
-      { ...logCtx, event: 'browser_notify_stale_presence' },
-      'Inbound notified agent (stale presence heartbeat)',
-    );
-  } else {
-    voiceLog.info(
-      { ...logCtx, event: 'browser_notify' },
-      'Inbound agent notified — awaiting accept',
-    );
+  // browser mode — sequential SIP transfer ring group (no Realtime broadcast)
+  let inboundCallId = ctx.inboundCallId;
+  if (!inboundCallId) {
+    const { data: inboundRow } = await supabase
+      .from('inbound_calls')
+      .select('id')
+      .eq('provider_call_id', ctx.callControlId)
+      .maybeSingle();
+    inboundCallId = inboundRow?.id;
   }
 
-  if (ctx.dbCallId) {
-    triggerInboundRingTimeoutAsync(
-      ctx.dbCallId,
-      ctx.callControlId,
-      ctx.userId,
-      routing.inbound_ring_seconds,
-      'browser',
-    );
+  if (!inboundCallId || !ctx.workspaceId) {
+    await applyBrowserFallback(supabase, ctx, routing, 'inbound_row_missing');
+    return;
   }
+
+  await routeInboundToBrowserAgents(supabase, {
+    providerCallId: ctx.callControlId,
+    callSessionId: ctx.callSessionId,
+    fromNumber: ctx.fromNumber,
+    toNumber: ctx.toNumber,
+    ownerUserId: ctx.userId,
+    workspaceId: ctx.workspaceId,
+    purchasedNumberId: ctx.purchasedNumberId,
+    inboundCallId,
+    callsRowId: ctx.dbCallId ?? null,
+  });
+
+  voiceLog.info(
+    { ...logCtx, event: 'browser_route_started' },
+    'Inbound browser ring group started',
+  );
 }
 
 export async function shouldRecordInboundAnswer(

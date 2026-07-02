@@ -10,7 +10,12 @@ import { completeInboundBridge } from '@/lib/inbound/bridge-to-browser';
 import { decodeClientState } from '@/lib/inbound/telnyx-actions';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
 import { voiceApiBearerToken } from '@/lib/voice/read-env';
-import { executeInboundRouting, shouldRecordInboundAnswer } from '@/lib/inbound/routing-matrix';
+import { shouldRecordInboundAnswer } from '@/lib/inbound/routing-matrix';
+import {
+  finalizeInboundMissed,
+  handleInboundCallInitiated,
+  markInboundAccepted,
+} from '@/lib/telephony/telnyx/inbound-router';
 import { voiceLog } from '@/lib/voice/structured-log';
 import { voiceSessionLog } from '@/lib/voice/session-log';
 import type { FastAnswerResult } from '@/lib/telnyx/fast-answer';
@@ -284,152 +289,13 @@ async function processTelnyxWebhookBackground(
         const treatAsInbound = dirInbound === true || (dirInbound === null && Boolean(ownedTo));
 
         if (treatAsInbound) {
-        // ── INBOUND CALL ────────────────────────────────────────────────────
-        console.log('[INBOUND] Incoming call:', fromNumber ?? '(blocked)', '→', toNumber, '| raw_to:', payload.to, '| raw_from:', payload.from, '| direction:', payload.direction);
-
-        const ownedNumber = ownedTo;
-
-        console.log('[INBOUND] Number lookup — to:', toNumber, '| found:', ownedNumber?.phone_number ?? 'none', '| status:', ownedNumber?.status ?? 'n/a', '| user:', ownedNumber?.user_id ?? 'none');
-
-        if (!ownedNumber) {
-          console.log('[INBOUND] No active owner for number — rejecting:', toNumber);
-          await telnyxCallAction(callControlId, 'reject', { cause: 'CALL_REJECTED' });
-          return;
-        }
-
-        const userId = ownedNumber.user_id as string;
-        const purchasedNumberId = ownedNumber.id as string | undefined;
-
-        const [workspaceId, ownedRows, existingInbound] = await Promise.all([
-          (ownedNumber.workspace_id as string | null | undefined)
-            ?? resolveUserWorkspaceId(supabase, userId),
-          supabase
-            .from('purchased_numbers')
-            .select('phone_number')
-            .eq('user_id', userId)
-            .neq('status', 'released'),
-          supabase
-            .from('calls')
-            .select('id, telnyx_webrtc_leg_id, status')
-            .eq('telnyx_call_id', callControlId)
-            .maybeSingle(),
-        ]);
-
-        const lead = fromNumber
-          ? await findLeadByCallerPhone(supabase, userId, fromNumber, {
-            excludeNumbers: (ownedRows.data ?? []).map((r) => r.phone_number as string),
-          })
-          : null;
-
-        let newCall: { id: string } | null = existingInbound.data
-          ? { id: existingInbound.data.id }
-          : null;
-        let shouldExecuteRouting = false;
-
-        if (!existingInbound.data) {
-          const { data: inserted, error: insertErr } = await supabase
-            .from('calls')
-            .insert({
-              user_id: userId,
-              workspace_id: workspaceId,
-              lead_id: lead?.id ?? null,
-              direction: 'inbound',
-              telnyx_call_id: callControlId,
-              telnyx_session_id: callSessionId ?? null,
-              from_number: fromNumber,
-              to_number: toNumber,
-              status: 'ringing',
-              started_at: new Date().toISOString(),
-            })
-            .select('id')
-            .single();
-
-          if (inserted) {
-            newCall = inserted;
-            shouldExecuteRouting = true;
-          } else if (insertErr) {
-            // Concurrent webhooks can race on insert — peer won; never dial twice.
-            const { data: raced } = await supabase
-              .from('calls')
-              .select('id, telnyx_webrtc_leg_id, status')
-              .eq('telnyx_call_id', callControlId)
-              .maybeSingle();
-            if (raced) {
-              newCall = { id: raced.id };
-              voiceSessionLog({
-                location: 'webhook:call.initiated:insertRace',
-                message: 'insert race lost — skip routing (peer webhook owns dial)',
-                data: {
-                  callId: raced.id,
-                  leg: raced.telnyx_webrtc_leg_id ?? null,
-                  status: raced.status,
-                  error: insertErr.message,
-                },
-                hypothesisId: 'H-L',
-                runId: 'run9',
-              });
-            } else {
-              voiceLog.error(
-                {
-                  service: 'telnyx-webhook',
-                  event: 'call.initiated',
-                  user_id: userId,
-                  did: toNumber,
-                  error: insertErr.message,
-                },
-                'Inbound call insert failed',
-              );
-            }
-          }
-        } else {
-          voiceLog.debug(
-            {
-              service: 'telnyx-webhook',
-              event: 'call.initiated',
-              call_id: existingInbound.data.id,
-            },
-            'Reusing existing inbound call record',
-          );
-          voiceSessionLog({
-            location: 'webhook:call.initiated:skipRouting',
-            message: 'duplicate call.initiated — skip routing (first webhook owns dial)',
-            data: {
-              callId: existingInbound.data.id,
-              leg: existingInbound.data.telnyx_webrtc_leg_id ?? null,
-              status: existingInbound.data.status,
-            },
-            hypothesisId: 'H-L',
-            runId: 'run9',
-          });
-        }
-
-        if (shouldExecuteRouting && newCall?.id) {
-          try {
-            await logInboundCallStep(supabase, callControlId, 'ringing');
-            await executeInboundRouting(supabase, {
-              callControlId,
-              callSessionId,
-              fromNumber,
-              toNumber,
-              userId,
-              workspaceId: workspaceId ?? null,
-              purchasedNumberId,
-              dbCallId: newCall.id,
-            });
-          } catch (routeErr) {
-            voiceLog.error(
-              {
-                service: 'telnyx-webhook',
-                event: 'call.initiated',
-                user_id: userId,
-                call_id: newCall.id,
-                did: toNumber,
-                error: routeErr instanceof Error ? routeErr.message : String(routeErr),
-              },
-              'Inbound routing matrix failed',
-            );
-          }
-        }
+        await handleInboundCallInitiated(supabase, {
+          providerCallId: callControlId,
+          callSessionId: callSessionId ?? undefined,
+          fromNumber,
+          toNumber,
+          direction: payload.direction,
+        });
         } else {
         // ── OUTBOUND CALL — update existing row only (WebRTC dial route owns insert) ──
         const { data: existingOutbound } = await supabase
@@ -711,6 +577,18 @@ async function processTelnyxWebhookBackground(
         })
         .eq('id', callRow.id);
 
+      if (callRow.direction === 'inbound' && callControlId) {
+        const { data: inboundRow } = await supabase
+          .from('inbound_calls')
+          .select('id, routed_agent_id, status')
+          .eq('provider_call_id', callControlId)
+          .maybeSingle();
+        if (inboundRow?.id && inboundRow.status === 'ringing') {
+          const agentId = (inboundRow.routed_agent_id as string | null) ?? (callRow.user_id as string);
+          await markInboundAccepted(supabase, inboundRow.id, agentId);
+        }
+      }
+
       // Check user recording preference
       const { data: settings } = await supabase
         .from('user_settings')
@@ -860,6 +738,7 @@ async function processTelnyxWebhookBackground(
         if (inboundStillRinging) {
           const pstnControlId = callRow.telnyx_call_id as string | null;
           if (pstnControlId && callControlId === pstnControlId) {
+            await finalizeInboundMissed(supabase, pstnControlId);
             await logInboundCallStep(supabase, pstnControlId, 'missed');
             const missedPayload: IncomingCallBroadcastPayload = {
               call_control_id: pstnControlId,

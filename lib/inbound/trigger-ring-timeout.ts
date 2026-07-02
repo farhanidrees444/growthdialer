@@ -1,9 +1,9 @@
 import { resolveVoiceAppBaseUrl } from '@/lib/voice/webhook-url';
 
 export function triggerInboundRingTimeoutAsync(
-  callId: string,
+  inboundCallId: string,
   callControlId: string,
-  userId: string,
+  agentId: string,
   ringSeconds: number,
   inboundMode: string,
 ): void {
@@ -22,9 +22,9 @@ export function triggerInboundRingTimeoutAsync(
       'x-internal-secret': internalSecret,
     },
     body: JSON.stringify({
-      call_id: callId,
+      inbound_call_id: inboundCallId,
       call_control_id: callControlId,
-      user_id: userId,
+      agent_id: agentId,
       ring_seconds: ringSeconds,
       inbound_mode: inboundMode,
     }),
