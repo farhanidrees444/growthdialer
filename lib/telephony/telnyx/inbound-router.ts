@@ -202,7 +202,11 @@ async function ringCurrentAgent(
     metadata: { agent_index: agentIndex, agent_total: agentTotal, sip_username: sip.sipUsername },
   });
 
-  const transferred = await transferCall(ctx.providerCallId, sip.sipUri, ctx.toNumber);
+  const transferred = await transferCall(ctx.providerCallId, sip.sipUri, ctx.toNumber, {
+    gd_inbound_leg_b: true,
+    inbound_call_id: ctx.inboundCallId,
+    agent_id: agentId,
+  });
   if (!transferred) {
     voiceLog.error(
       {

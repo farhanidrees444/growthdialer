@@ -18,12 +18,18 @@ function readApiKey(): string | null {
   return trimmed || null;
 }
 
-/** True when client_state marks a browser bridge leg (must not answer). */
+/**
+ * True when client_state marks a leg that must NOT be auto-answered by us:
+ * - `gd_inbound_leg_b` — the agent's SIP transfer target for inbound ring-group
+ *   routing. Auto-answering it would connect the call before the agent clicks
+ *   Accept; Telnyx/the agent's WebRTC client controls when this leg answers.
+ * - `gd_parallel_bridge` — Parallel Dialer's agent/prospect bridge legs.
+ */
 export function isBridgeLegClientState(raw: string | undefined): boolean {
   if (!raw) return false;
   try {
     const json = JSON.parse(Buffer.from(raw, 'base64').toString('utf8')) as Record<string, unknown>;
-    return Boolean(json.gd_inbound_bridge || json.gd_parallel_bridge);
+    return Boolean(json.gd_inbound_leg_b || json.gd_parallel_bridge);
   } catch {
     return false;
   }

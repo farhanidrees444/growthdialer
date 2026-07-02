@@ -108,17 +108,33 @@ export async function bridgeCalls(
   );
 }
 
+/**
+ * Transfer creates a brand-new Leg B with its own call_control_id (Telnyx
+ * webhook sequence: call.initiated → call.bridged (on original leg) →
+ * call.answered/call.hangup on Leg B). `targetLegClientState` tags Leg B so
+ * its own webhooks can be attributed back to our inbound state machine
+ * without relying on the shared call_session_id (which the original leg
+ * also carries) — this is what lets us fail over to the next ring-group
+ * agent the instant a SIP transfer target fails, not just on timeout.
+ */
 export async function transferCall(
   callControlId: string,
   to: string,
   from?: string,
+  targetLegClientState?: Record<string, unknown>,
 ): Promise<boolean> {
   try {
+    const body: Record<string, unknown> = from ? { to, from } : { to };
+    if (targetLegClientState) {
+      body.target_leg_client_state = Buffer.from(
+        JSON.stringify(targetLegClientState),
+      ).toString('base64');
+    }
     await telephonyRequest(
       `/calls/${encodeURIComponent(callControlId)}/actions/transfer`,
       {
         method: 'POST',
-        body: JSON.stringify(from ? { to, from } : { to }),
+        body: JSON.stringify(body),
       },
     );
     return true;
