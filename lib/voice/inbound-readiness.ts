@@ -100,7 +100,7 @@ export function listInboundBlockers(input: {
       code: 'call_control_app',
       label: 'Programmable voice application not configured',
       fix:
-        'Set TWILIO_TWIML_APP_SID (or legacy voice application ID) in deployment settings, then redeploy.',
+        'Set TELNYX_CALL_CONTROL_APP_ID in deployment settings, then redeploy.',
     });
   }
 
@@ -145,6 +145,30 @@ export function listInboundBlockers(input: {
   }
 
   return blockers;
+}
+
+export function isTelnyxInboundReady(input: {
+  hasNumbers: boolean;
+  inboundEnabled: boolean;
+  browserAnswering: boolean;
+  primaryRouted: boolean;
+  credentialReady: boolean;
+  eventsVerified: boolean;
+  appUrl: string;
+  connectionOk: boolean;
+  blockers: InboundBlocker[];
+}): boolean {
+  return (
+    input.hasNumbers
+    && input.inboundEnabled
+    && input.browserAnswering
+    && input.primaryRouted
+    && input.credentialReady
+    && input.eventsVerified
+    && Boolean(input.appUrl)
+    && input.connectionOk
+    && input.blockers.length === 0
+  );
 }
 
 export function resolveInboundAppUrl(host: string | null): string {

@@ -36,6 +36,7 @@ export function InboundHealthPanel({ phoneReady }: Props) {
   const { apiFetch } = useWorkspace();
   const [health, setHealth] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activating, setActivating] = useState(false);
   const load = useCallback(() => {
     setLoading(true);
     void apiFetch('/api/inbound/health')
@@ -53,6 +54,13 @@ export function InboundHealthPanel({ phoneReady }: Props) {
     window.addEventListener('gd-voice-account-prepared', onPrepared);
     return () => window.removeEventListener('gd-voice-account-prepared', onPrepared);
   }, [load]);
+
+  const activateRouting = useCallback(() => {
+    setActivating(true);
+    void apiFetch('/api/voice/prepare', { method: 'POST' })
+      .then(() => load())
+      .finally(() => setActivating(false));
+  }, [apiFetch, load]);
 
   if (loading && !health) {
     return (
@@ -148,6 +156,18 @@ export function InboundHealthPanel({ phoneReady }: Props) {
             </li>
           ))}
         </ul>
+      )}
+
+      {health.action?.type === 'activate_routing' && (
+        <button
+          type="button"
+          onClick={activateRouting}
+          disabled={activating || loading}
+          className="relative mt-4 inline-flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-500/20 disabled:opacity-50"
+        >
+          {activating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+          {health.action.label}
+        </button>
       )}
     </div>
   );
