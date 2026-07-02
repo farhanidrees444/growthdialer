@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { WorkspaceOutboundTrustContext, StirAttestationLevel } from '@/lib/compliance/ten-dlc-profile';
+import { getWorkspaceMessagingProfile } from '@/lib/compliance/sms-gate';
 
 const DEFAULT_DISPLAY = 'GrowthDialer';
 
@@ -35,12 +36,17 @@ export async function resolveWorkspaceOutboundTrust(
   const hasVerifiedDid = Boolean(numberRow);
   const stir: StirAttestationLevel = hasVerifiedDid ? 'A' : 'none';
 
+  const messagingProfile = await getWorkspaceMessagingProfile(supabase, workspaceId);
+  const campaignActive =
+    messagingProfile?.brand_status === 'approved'
+    && messagingProfile?.campaign_status === 'active';
+
   return {
     workspace_id: workspaceId,
     from_display_name: displayName.slice(0, 15),
     stir_attestation: stir,
-    ten_dlc_campaign_id: null,
+    ten_dlc_campaign_id: messagingProfile?.campaign_id ?? null,
     cnam_registered: hasVerifiedDid,
-    trust_tier: hasVerifiedDid ? 'standard' : 'unverified',
+    trust_tier: campaignActive ? 'enterprise' : hasVerifiedDid ? 'standard' : 'unverified',
   };
 }

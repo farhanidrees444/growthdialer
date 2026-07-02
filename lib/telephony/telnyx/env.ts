@@ -49,3 +49,7 @@ export function isTelephonyConfigured(): boolean {
     && readCallControlAppId(),
   );
 }
+
+export function isMessagingConfigured(): boolean {
+  return Boolean(readTelephonyApiKey() && readMessagingProfileId());
+}

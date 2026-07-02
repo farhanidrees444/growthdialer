@@ -9,7 +9,7 @@ import {
   MIN_PLAYABLE_RECORDING_SECONDS,
   PLAYABLE_RECORDING_DURATION_FILTER,
 } from '@/lib/recordings/eligibility';
-import { isTwilioVoiceConfigured, readTwilioAuthToken } from '@/lib/twilio/voice-config';
+import { isVoiceServiceConfigured, readVoiceWebhookSignatureReady, snapshotVoiceEnv } from '@/lib/voice/voice-readiness';
 
 // GET /api/recordings/diagnostics
 // Authenticated. Returns a checklist that explains exactly why the recordings
@@ -34,14 +34,16 @@ export async function GET(_req: NextRequest) {
   const wsId = access.workspaceId;
   const ownCallScope = ownCallsOrFilter(wsId, user.id);
   const eligibleDurationFilter = PLAYABLE_RECORDING_DURATION_FILTER;
-  const twilioVoiceConfigured = isTwilioVoiceConfigured();
-  const webhookSignatureConfigured = Boolean(readTwilioAuthToken());
+  const twilioVoiceConfigured = isVoiceServiceConfigured();
+  const webhookSignatureConfigured = readVoiceWebhookSignatureReady();
 
   // 1. Internal pipeline configuration (generic keys only — never vendor names)
   const appBaseUrl = resolveAppBaseUrl();
+  const voiceEnv = snapshotVoiceEnv();
   const env = {
-    voice_provider: twilioVoiceConfigured,
-    voice_connection: Boolean(process.env.TWILIO_TWIML_APP_SID),
+    voice_provider: voiceEnv.configured,
+    voice_connection: Boolean(voiceEnv.connectionId),
+    voice_call_control: Boolean(voiceEnv.callControlAppId),
     webhook_signature: webhookSignatureConfigured,
     app_url: !!appBaseUrl,
     app_url_value: appBaseUrl || null,

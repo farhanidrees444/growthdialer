@@ -1,65 +1,105 @@
 import type { ConferenceHandle, TelephonyConferenceMode } from '@/lib/telephony/types';
 import { telephonyRequest } from '@/lib/telephony/telnyx/http';
-import { issueWebRtcToken } from '@/lib/telephony/telnyx/webrtc';
-import { createClient } from '@/lib/supabase/server';
-import { transferCall } from '@/lib/telephony/telnyx/outbound';
+import { supervisorRoleForMode } from '@/lib/coaching/coaching-mode';
 
-export async function createConferenceForCall(callControlId: string): Promise<ConferenceHandle> {
-  const result = await telephonyRequest<{ data?: { id?: string; call_control_id?: string } }>(
+export function coachingConferenceName(callId: string): string {
+  return `gd-coaching-${callId}`;
+}
+
+export async function createConferenceForCall(
+  callControlId: string,
+  callId: string,
+): Promise<ConferenceHandle> {
+  const conferenceName = coachingConferenceName(callId);
+  const result = await telephonyRequest<{
+    data?: { id?: string; name?: string; call_control_id?: string };
+  }>(
     `/calls/${encodeURIComponent(callControlId)}/actions/conference`,
     {
       method: 'POST',
       body: JSON.stringify({
-        conference_name: `gd-coach-${callControlId.slice(0, 12)}`,
+        conference_name: conferenceName,
         start_conference_on_enter: true,
         end_conference_on_exit: false,
+        beep_enabled: 'never',
       }),
     },
   );
 
-  const conferenceId = result.data?.id;
-  if (!conferenceId) {
-    throw new Error('Could not create coaching conference');
-  }
-
+  const conferenceId = result.data?.name ?? result.data?.id ?? conferenceName;
   return {
     conferenceId,
     callControlId: result.data?.call_control_id ?? callControlId,
   };
 }
 
-export async function joinConferenceAsManager(
+export async function joinCallToConference(
   conferenceId: string,
-  agentId: string,
-  tenantId: string,
-  mode: TelephonyConferenceMode,
+  participantCallControlId: string,
+  options: {
+    mode: TelephonyConferenceMode;
+    whisperToCallControlIds?: string[];
+  },
 ): Promise<void> {
-  const supabase = await createClient();
-  const token = await issueWebRtcToken(supabase, agentId, tenantId);
-  const sipUri = token.sipUsername
-    ? `sip:${token.sipUsername}@sip.telnyx.com`
-    : null;
+  const supervisorRole = supervisorRoleForMode(options.mode);
+  const body: Record<string, unknown> = {
+    call_control_id: participantCallControlId,
+    supervisor_role: supervisorRole,
+    beep_enabled: 'never',
+    start_conference_on_enter: false,
+    mute: supervisorRole === 'monitor',
+  };
 
-  if (!sipUri) {
-    throw new Error('Could not resolve manager voice endpoint');
+  if (supervisorRole === 'whisper' && options.whisperToCallControlIds?.length) {
+    body.whisper_call_control_ids = options.whisperToCallControlIds;
   }
 
-  const muted = mode === 'listen' || mode === 'whisper';
   await telephonyRequest(
     `/conferences/${encodeURIComponent(conferenceId)}/actions/join`,
+    { method: 'POST', body: JSON.stringify(body) },
+  );
+}
+
+export async function updateConferenceParticipantRole(
+  conferenceId: string,
+  participantCallControlId: string,
+  options: {
+    mode: TelephonyConferenceMode;
+    whisperToCallControlIds?: string[];
+  },
+): Promise<void> {
+  const supervisorRole = supervisorRoleForMode(options.mode);
+  const body: Record<string, unknown> = {
+    call_control_id: participantCallControlId,
+    supervisor_role: supervisorRole,
+  };
+
+  if (supervisorRole === 'whisper' && options.whisperToCallControlIds?.length) {
+    body.whisper_call_control_ids = options.whisperToCallControlIds;
+  }
+
+  await telephonyRequest(
+    `/conferences/${encodeURIComponent(conferenceId)}/actions/update`,
+    { method: 'POST', body: JSON.stringify(body) },
+  );
+}
+
+export async function removeParticipantFromConference(
+  conferenceId: string,
+  callControlId: string,
+): Promise<void> {
+  await telephonyRequest(
+    `/conferences/${encodeURIComponent(conferenceId)}/actions/leave`,
     {
       method: 'POST',
-      body: JSON.stringify({
-        call_control_id: conferenceId,
-        client_state: Buffer.from(JSON.stringify({ mode, agent_id: agentId })).toString('base64'),
-        mute: muted,
-        hold: false,
-        sip_uri: sipUri,
-      }),
+      body: JSON.stringify({ call_control_id: callControlId }),
     },
   );
+}
 
-  if (mode === 'takeover') {
-    await transferCall(conferenceId, sipUri);
-  }
+export async function hangupCallLeg(callControlId: string): Promise<void> {
+  await telephonyRequest(
+    `/calls/${encodeURIComponent(callControlId)}/actions/hangup`,
+    { method: 'POST', body: JSON.stringify({}) },
+  );
 }

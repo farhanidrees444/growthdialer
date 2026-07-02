@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
-import { findInProgressConference } from '@/lib/coaching/twilio-conference';
-import { getTwilioRestClient } from '@/lib/twilio/rest-client';
-import { isTwilioCallSid } from '@/lib/twilio/extract-call-sid';
+import {
+  removeParticipantFromConference,
+  updateConferenceParticipantRole,
+} from '@/lib/coaching/telnyx-conference';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,38 +23,63 @@ export async function POST(request: NextRequest) {
   const callId = body.call_id?.trim();
   if (!callId) return NextResponse.json({ error: 'call_id required' }, { status: 400 });
 
-  const { data: active } = await supabase
-    .from('active_calls')
-    .select('call_id, workspace_id, agent_id, conference_sid, agent_participant_sid, metadata')
+  const { data: session } = await supabase
+    .from('coaching_sessions')
+    .select('id, coach_id, telnyx_conference_id, coach_call_control_id, agent_participant_sid')
     .eq('call_id', callId)
+    .eq('coach_id', user.id)
+    .is('ended_at', null)
+    .maybeSingle();
+
+  if (!session?.telnyx_conference_id || !session.coach_call_control_id) {
+    return NextResponse.json(
+      { error: 'Active coaching session not found. Start coaching first, then take over.' },
+      { status: 409 },
+    );
+  }
+
+  const { data: call } = await supabase
+    .from('calls')
+    .select('user_id')
+    .eq('id', callId)
     .eq('workspace_id', access.workspaceId)
     .maybeSingle();
-  if (!active) return NextResponse.json({ error: 'Active conference data not found. Barge first, then take over.' }, { status: 409 });
-  if (active.agent_id === user.id) return NextResponse.json({ error: 'Cannot take over your own call' }, { status: 400 });
 
-  const metadata = (active.metadata ?? {}) as { conference_name?: string };
-  const conferenceName = metadata.conference_name ?? active.conference_sid;
-  const agentLegSid = active.agent_participant_sid;
-  if (!conferenceName || !isTwilioCallSid(agentLegSid)) {
-    return NextResponse.json({ error: 'Conference participant data is incomplete' }, { status: 409 });
+  if (!call) return NextResponse.json({ error: 'Call not found' }, { status: 404 });
+  if (call.user_id === user.id) {
+    return NextResponse.json({ error: 'Cannot take over your own call' }, { status: 400 });
   }
 
-  const client = getTwilioRestClient();
-  if (!client) return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
-
-  const conference = await findInProgressConference(conferenceName);
-  if (!conference) {
-    return NextResponse.json({ error: 'Conference is not active yet. Try again after the barge connection is established.' }, { status: 409 });
+  const agentLeg = session.agent_participant_sid?.trim();
+  if (agentLeg) {
+    try {
+      await removeParticipantFromConference(session.telnyx_conference_id, agentLeg);
+    } catch (err) {
+      console.error('[coaching/takeover] remove agent failed:', err);
+    }
   }
 
-  await client.conferences(conference.sid).participants(agentLegSid).remove();
+  try {
+    await updateConferenceParticipantRole(
+      session.telnyx_conference_id,
+      session.coach_call_control_id,
+      {
+        mode: 'takeover',
+        whisperToCallControlIds: undefined,
+      },
+    );
+  } catch (err) {
+    console.error('[coaching/takeover] promote coach failed:', err);
+    return NextResponse.json({ error: 'Takeover could not be completed' }, { status: 502 });
+  }
 
   await supabase
     .from('coaching_sessions')
-    .update({ mode: 'takeover', ended_at: null })
-    .eq('call_id', callId)
-    .eq('coach_id', user.id)
-    .is('ended_at', null);
+    .update({ mode: 'takeover' })
+    .eq('id', session.id);
 
-  return NextResponse.json({ ok: true, dropped_agent_call_sid: agentLegSid });
+  return NextResponse.json({
+    ok: true,
+    dropped_agent_call_control_id: agentLeg ?? null,
+  });
 }

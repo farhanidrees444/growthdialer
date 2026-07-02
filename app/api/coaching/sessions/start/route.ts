@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { hasPermission, type Role } from '@/lib/auth/permissions';
+import { startCoachOnCall } from '@/lib/coaching/telnyx-conference';
+import { normalizeE164 } from '@/lib/inbound/phone';
+import { readEnv } from '@/lib/voice/read-env';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +21,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'call_id and valid mode required' }, { status: 400 });
   }
 
-  // Verify coach has permission
   const { data: coachMember } = await supabase
     .from('workspace_members')
     .select('workspace_id, role')
@@ -32,21 +34,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // Get the call being coached
   const { data: call } = await supabase
     .from('calls')
-    .select('id, user_id, telnyx_call_id, workspace_id, status')
+    .select('id, user_id, telnyx_call_id, telnyx_session_id, telnyx_webrtc_leg_id, from_number, workspace_id, status, ended_at')
     .eq('id', call_id)
     .eq('workspace_id', coachMember.workspace_id)
     .single();
 
   if (!call) return NextResponse.json({ error: 'Call not found' }, { status: 404 });
-  if (call.status === 'ended') return NextResponse.json({ error: 'Call has ended' }, { status: 410 });
+  if (call.ended_at || call.status === 'completed') {
+    return NextResponse.json({ error: 'Call has ended' }, { status: 410 });
+  }
   if (call.user_id === user.id) {
     return NextResponse.json({ error: 'Cannot coach your own call' }, { status: 400 });
   }
 
-  // End any existing coaching session for this call by this coach
+  const fromNumber = normalizeE164(call.from_number ?? '') ?? readEnv('TELNYX_FROM_NUMBER');
+  if (!fromNumber) {
+    return NextResponse.json({ error: 'No caller ID available for coaching leg' }, { status: 422 });
+  }
+
   await supabase
     .from('coaching_sessions')
     .update({ ended_at: new Date().toISOString() })
@@ -54,7 +61,18 @@ export async function POST(request: NextRequest) {
     .eq('coach_id', user.id)
     .is('ended_at', null);
 
-  // Create new coaching session record
+  const telephony = await startCoachOnCall(supabase, {
+    call,
+    coachId: user.id,
+    workspaceId: coachMember.workspace_id,
+    mode,
+    fromNumber,
+  });
+
+  if (!telephony.ok) {
+    return NextResponse.json({ error: telephony.error }, { status: telephony.status });
+  }
+
   const { data: coachingSession, error } = await supabase
     .from('coaching_sessions')
     .insert({
@@ -63,6 +81,9 @@ export async function POST(request: NextRequest) {
       coach_id: user.id,
       workspace_id: coachMember.workspace_id,
       mode,
+      telnyx_conference_id: telephony.conferenceId,
+      coach_call_control_id: telephony.coachCallControlId,
+      agent_participant_sid: telephony.agentCallControlId,
       started_at: new Date().toISOString(),
     })
     .select()
@@ -70,17 +91,26 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // For barge/whisper: the coach would join via Telnyx conference API
-  // This requires the agent's call to be moved into a conference room.
-  // The telnyx_call_id is the call control ID for the agent's leg.
-  // In production: create conference, issue transfer/join commands via Telnyx API.
-  // The coach's browser WebRTC SDK then dials into the conference number.
-  const telnyxCallId = call.telnyx_call_id;
+  const now = new Date().toISOString();
+  await supabase
+    .from('active_calls')
+    .update({
+      conference_sid: telephony.conferenceId,
+      agent_participant_sid: telephony.agentCallControlId,
+      metadata: {
+        conference_name: telephony.conferenceId,
+        coach_call_control_id: telephony.coachCallControlId,
+      },
+      updated_at: now,
+      last_event_at: now,
+    })
+    .eq('call_id', call_id);
 
   return NextResponse.json({
     ok: true,
     session: coachingSession,
-    telnyx_call_id: telnyxCallId,
+    telnyx_conference_id: telephony.conferenceId,
+    coach_call_control_id: telephony.coachCallControlId,
     mode,
   }, { status: 201 });
 }

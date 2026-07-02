@@ -3,9 +3,9 @@ import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { canViewTeamCalls, ownCallsOrFilter } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
-import { isTwilioVoiceConfigured, readTwilioAuthToken } from '@/lib/twilio/voice-config';
 import { resolveVoiceWebhookUrl } from '@/lib/voice/webhook-url';
 import { resolveInboundAppUrl } from '@/lib/voice/inbound-readiness';
+import { isVoiceServiceConfigured, readVoiceWebhookSignatureReady } from '@/lib/voice/voice-readiness';
 import { AI_PROCESSING_STALE_MS } from '@/lib/ai/pipeline-status';
 import { PLAYABLE_RECORDING_DURATION_FILTER } from '@/lib/recordings/eligibility';
 
@@ -86,9 +86,9 @@ export async function GET(request: NextRequest) {
   const inboundEnabled = inboundMode !== 'off';
   const browserAnswering = inboundMode === 'browser' || inboundMode === 'forward';
   const appUrl = resolveInboundAppUrl(host);
-  const voiceConfigured = isTwilioVoiceConfigured();
+  const voiceConfigured = isVoiceServiceConfigured();
   const webhookUrl = resolveVoiceWebhookUrl();
-  const webhookSignatureReady = Boolean(readTwilioAuthToken());
+  const webhookSignatureReady = readVoiceWebhookSignatureReady();
   const recordingMode = (settings?.recording_mode as string | null) ?? 'always';
   const aiFeaturesEnabled = settings?.ai_auto_transcribe !== false || settings?.ai_auto_summarize !== false;
   const aiKeysReady = Boolean(process.env.GROQ_API_KEY?.trim() && process.env.GEMINI_API_KEY?.trim());

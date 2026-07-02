@@ -29,7 +29,9 @@ function isAgentRingable(row: {
   const age = Date.now() - new Date(row.last_heartbeat_at).getTime();
   if (age > RINGABLE_HEARTBEAT_MS) return false;
   if (row.status === 'offline') return false;
-  return row.device_state === 'registered';
+  if (row.device_state === 'registered') return true;
+  // Heartbeat may arrive before device_state is persisted — still ring online agents.
+  return row.status === 'online';
 }
 
 export async function listRingableAgents(

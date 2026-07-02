@@ -1,51 +1,49 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { MakeCallParams, CallHandle } from '@/lib/telephony/types';
 import { telephonyRequest } from '@/lib/telephony/telnyx/http';
-import {
-  readCallControlAppId,
-  readConnectionId,
-  readOutboundVoiceProfileId,
-} from '@/lib/telephony/telnyx/env';
+import { readCallControlAppId } from '@/lib/telephony/telnyx/env';
+import { buildOutboundDialPayload } from '@/lib/voice/outbound-dial-payload';
+import type { WorkspaceOutboundTrustContext } from '@/lib/compliance/ten-dlc-profile';
 
-function encodeClientState(state: Record<string, unknown>): string {
-  return Buffer.from(JSON.stringify(state)).toString('base64');
+function defaultTrust(tenantId: string): WorkspaceOutboundTrustContext {
+  return {
+    workspace_id: tenantId,
+    from_display_name: 'GrowthDialer',
+    stir_attestation: 'none',
+    ten_dlc_campaign_id: null,
+    cnam_registered: false,
+    trust_tier: 'unverified',
+  };
 }
 
 export async function dialOutboundCall(
   supabase: SupabaseClient,
   params: MakeCallParams,
 ): Promise<CallHandle> {
-  const connectionId = readConnectionId();
   const appId = readCallControlAppId();
-  const voiceProfileId = readOutboundVoiceProfileId();
-  if (!connectionId || !appId) {
+  if (!appId) {
     throw new Error('Voice service is not configured');
   }
 
-  const clientState = encodeClientState({
-    tenant_id: params.tenantId,
-    agent_id: params.agentId,
-    lead_id: params.leadId ?? null,
-    parallel_session_id: params.parallelSessionId ?? null,
-    parallel_leg_id: params.parallelLegId ?? null,
-    ...params.clientState,
-  });
-
-  const dialBody: Record<string, unknown> = {
-    connection_id: connectionId,
+  const trust = params.trust ?? defaultTrust(params.tenantId);
+  const dialBody = buildOutboundDialPayload({
+    connectionId: appId,
     to: params.to,
     from: params.from,
-    webhook_url: params.webhookUrl,
-    webhook_url_method: 'POST',
-    webhook_api_version: '2',
-    timeout_secs: params.timeoutSecs ?? 30,
-    answering_machine_detection: params.amd ?? 'disabled',
-    client_state: clientState,
-  };
-
-  if (voiceProfileId) {
-    dialBody.outbound_voice_profile_id = voiceProfileId;
-  }
+    webhookUrl: params.webhookUrl,
+    trust,
+    amd: params.amd ?? 'disabled',
+    timeoutSecs: params.timeoutSecs ?? 30,
+    clientState: {
+      tenant_id: params.tenantId,
+      agent_id: params.agentId,
+      lead_id: params.leadId ?? null,
+      parallel_session_id: params.parallelSessionId ?? null,
+      parallel_leg_id: params.parallelLegId ?? null,
+      power_dial_session_id: params.powerDialSessionId ?? null,
+      ...params.clientState,
+    },
+  });
 
   const result = await telephonyRequest<{ data?: { call_control_id?: string } }>(
     '/calls',
@@ -73,6 +71,7 @@ export async function dialOutboundCall(
       created_at: nowIso,
       parallel_dial_session_id: params.parallelSessionId ?? null,
       parallel_dial_leg_id: params.parallelLegId ?? null,
+      power_dial_session_id: params.powerDialSessionId ?? null,
     })
     .select('id')
     .single();

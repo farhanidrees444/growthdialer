@@ -1,8 +1,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { bridgeProspectToAgent, hangupCallControl } from './agent-bridge';
+import { bridgeProspectToAgent } from './agent-bridge';
 import { dropVoicemailAndHangup } from '@/lib/voicemail/drop-on-call';
 import { triggerParallelLegTrackingAsync } from './leg-tracking';
-import { isTwilioProvider } from '@/lib/voice/provider';
+import { getTelephonyProvider } from '@/lib/telephony';
+import { maybeAutoStartRecording } from '@/lib/recordings/auto-start';
+
+async function hangupLeg(callControlId: string): Promise<void> {
+  try {
+    await getTelephonyProvider().hangupCall(callControlId);
+  } catch (err) {
+    console.error('[PARALLEL] hangup failed:', callControlId, err);
+  }
+}
 
 async function cancelOtherLegs(
   supabase: SupabaseClient,
@@ -59,7 +68,7 @@ async function cancelOtherLegs(
           at: new Date().toISOString(),
         });
       } else {
-        await hangupCallControl(other.telnyx_call_id);
+        await hangupLeg(other.telnyx_call_id);
         await supabase
           .from('parallel_dial_legs')
           .update({ status: 'canceled', updated_at: new Date().toISOString() })
@@ -115,20 +124,11 @@ export async function bridgeParallelWinner(
 ): Promise<boolean> {
   const { data: leg } = await supabase
     .from('parallel_dial_legs')
-    .select('id, session_id, is_winner, status')
+    .select('id, session_id, is_winner, status, call_id')
     .eq('id', legId)
     .single();
 
   if (!leg?.is_winner || leg.status === 'connected') return false;
-
-  if (isTwilioProvider()) {
-    await supabase
-      .from('parallel_dial_legs')
-      .update({ status: 'connected', updated_at: new Date().toISOString() })
-      .eq('id', legId);
-    await markSessionConnected(supabase, leg.session_id);
-    return true;
-  }
 
   const bridged = await bridgeProspectToAgent(
     supabase,
@@ -145,7 +145,35 @@ export async function bridgeParallelWinner(
     .eq('id', legId);
 
   await markSessionConnected(supabase, leg.session_id);
+
+  if (bridged && leg.call_id) {
+    await startRecordingForParallelLeg(supabase, legId, callControlId);
+  }
+
   return bridged;
+}
+
+async function startRecordingForParallelLeg(
+  supabase: SupabaseClient,
+  legId: string,
+  callControlId: string,
+): Promise<void> {
+  const { data: leg } = await supabase
+    .from('parallel_dial_legs')
+    .select('call_id')
+    .eq('id', legId)
+    .maybeSingle();
+
+  if (!leg?.call_id) return;
+
+  const { data: callRow } = await supabase
+    .from('calls')
+    .select('id, user_id, telnyx_call_id, telnyx_webrtc_leg_id, recording_status')
+    .eq('id', leg.call_id)
+    .maybeSingle();
+
+  if (!callRow) return;
+  await maybeAutoStartRecording(supabase, callRow, callControlId);
 }
 
 /**
@@ -167,11 +195,41 @@ export async function handleParallelLegAnswered(
 
   const { data: sessionRow } = await supabase
     .from('parallel_dial_sessions')
-    .select('user_id, workspace_id, vm_drop_enabled, amd_enabled')
+    .select('user_id, workspace_id, vm_drop_enabled, amd_enabled, status')
     .eq('id', leg.session_id)
     .single();
 
-  const pendingStatus = sessionRow?.amd_enabled ? 'answered' : 'connected';
+  if (!sessionRow || !['dialing', 'active'].includes(sessionRow.status)) {
+    await hangupLeg(callControlId);
+    await supabase
+      .from('parallel_dial_legs')
+      .update({ status: 'canceled', updated_at: new Date().toISOString() })
+      .eq('id', leg.id);
+    return { bridged: false };
+  }
+
+  const pendingStatus = sessionRow.amd_enabled ? 'answered' : 'connected';
+
+  // Session-level lock: only the first answer while status=dialing wins the batch.
+  const { data: sessionClaim } = await supabase
+    .from('parallel_dial_sessions')
+    .update({
+      status: 'connected',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', leg.session_id)
+    .eq('status', 'dialing')
+    .select('id')
+    .maybeSingle();
+
+  if (!sessionClaim) {
+    await hangupLeg(callControlId);
+    await supabase
+      .from('parallel_dial_legs')
+      .update({ status: 'canceled', updated_at: new Date().toISOString() })
+      .eq('id', leg.id);
+    return { bridged: false };
+  }
 
   const { data: claimed } = await supabase
     .from('parallel_dial_legs')
@@ -187,7 +245,7 @@ export async function handleParallelLegAnswered(
     .maybeSingle();
 
   if (!claimed) {
-    await hangupCallControl(callControlId);
+    await hangupLeg(callControlId);
     await supabase
       .from('parallel_dial_legs')
       .update({ status: 'canceled', updated_at: new Date().toISOString() })
@@ -204,7 +262,7 @@ export async function handleParallelLegAnswered(
     sessionRow?.vm_drop_enabled ?? false,
   );
 
-  if (sessionRow?.amd_enabled) {
+  if (sessionRow.amd_enabled) {
     triggerParallelLegTrackingAsync({
       event: 'leg_winner',
       session_id: claimed.session_id,
@@ -223,27 +281,9 @@ export async function handleParallelLegAnswered(
     };
   }
 
-  if (isTwilioProvider()) {
-    await supabase
-      .from('parallel_dial_legs')
-      .update({ status: 'connected', updated_at: new Date().toISOString() })
-      .eq('id', claimed.id);
-    await markSessionConnected(supabase, claimed.session_id);
-    triggerParallelLegTrackingAsync({
-      event: 'leg_winner',
-      session_id: claimed.session_id,
-      leg_id: claimed.id,
-      user_id: sessionRow?.user_id ?? '',
-      workspace_id: sessionRow?.workspace_id ?? null,
-      telnyx_call_id: callControlId,
-      at: new Date().toISOString(),
-    });
-    return { bridged: true, sessionId: claimed.session_id, legId: claimed.id };
-  }
-
   const bridged = await bridgeProspectToAgent(
     supabase,
-    sessionRow?.user_id ?? '',
+    sessionRow.user_id ?? '',
     callControlId,
     fromNumber ?? process.env.TELNYX_FROM_NUMBER ?? '',
     claimed.session_id,
@@ -255,14 +295,18 @@ export async function handleParallelLegAnswered(
       event: 'leg_winner',
       session_id: claimed.session_id,
       leg_id: claimed.id,
-      user_id: sessionRow?.user_id ?? '',
-      workspace_id: sessionRow?.workspace_id ?? null,
+      user_id: sessionRow.user_id ?? '',
+      workspace_id: sessionRow.workspace_id ?? null,
       telnyx_call_id: callControlId,
       at: new Date().toISOString(),
     });
   }
 
   await markSessionConnected(supabase, claimed.session_id);
+
+  if (bridged) {
+    await startRecordingForParallelLeg(supabase, claimed.id, callControlId);
+  }
 
   return { bridged, sessionId: claimed.session_id, legId: claimed.id };
 }

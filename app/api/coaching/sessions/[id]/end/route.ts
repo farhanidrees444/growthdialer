@@ -16,7 +16,7 @@ export async function POST(request: NextRequest, { params }: Ctx) {
   // Verify session belongs to coach
   const { data: coachSession } = await supabase
     .from('coaching_sessions')
-    .select('id, coach_id')
+    .select('id, coach_id, coach_call_control_id, telnyx_conference_id')
     .eq('id', id)
     .is('ended_at', null)
     .single();
@@ -24,6 +24,13 @@ export async function POST(request: NextRequest, { params }: Ctx) {
   if (!coachSession) return NextResponse.json({ error: 'Session not found or already ended' }, { status: 404 });
   if (coachSession.coach_id !== user.id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  if (coachSession.coach_call_control_id) {
+    const { hangupCallLeg } = await import('@/lib/telephony/telnyx/conference');
+    await hangupCallLeg(coachSession.coach_call_control_id).catch((err) => {
+      console.warn('[coaching/end] coach leg hangup failed:', err);
+    });
   }
 
   const patch: Record<string, unknown> = { ended_at: new Date().toISOString() };

@@ -3,7 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { isCallAccessError, requireCallAccess } from '@/lib/auth/call-access';
 import { hasPermission } from '@/lib/auth/permissions';
-import { isTwilioVoiceConfigured } from '@/lib/twilio/voice-config';
+import { getTelephonyProvider } from '@/lib/telephony';
+import { resolveRecordableControlId } from '@/lib/telephony/telnyx/recording';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -35,16 +36,29 @@ export async function POST(request: NextRequest, { params }: Ctx) {
   );
   if (isCallAccessError(call)) return call;
 
-  if (isTwilioVoiceConfigured()) {
-    return NextResponse.json({
-      ok: true,
-      action,
-      message:
-        action === 'record_start'
-          ? 'Recording is enabled automatically on connected calls when recording is turned on for your line.'
-          : 'Recording stops when the call ends.',
-    });
+  const provider = getTelephonyProvider();
+  if (!provider.isConfigured()) {
+    return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
   }
 
-  return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
+  const callControlId = resolveRecordableControlId(call);
+  if (!callControlId) {
+    return NextResponse.json({ error: 'Call is not connected yet' }, { status: 409 });
+  }
+
+  try {
+    if (action === 'record_start') {
+      await provider.startRecording(callControlId, call.id);
+      return NextResponse.json({ ok: true, action, message: 'Recording started' });
+    }
+
+    await provider.stopRecording(callControlId);
+    return NextResponse.json({ ok: true, action, message: 'Recording stopped' });
+  } catch (error) {
+    console.error('[calls/record]', error);
+    return NextResponse.json(
+      { error: 'Recording could not be updated for this call' },
+      { status: 502 },
+    );
+  }
 }

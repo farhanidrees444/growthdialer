@@ -1,3 +1,5 @@
+import type { WorkspaceOutboundTrustContext } from '@/lib/compliance/ten-dlc-profile';
+
 export type TelephonyConferenceMode = 'listen' | 'whisper' | 'barge' | 'takeover';
 
 export type AmdMode = 'detect' | 'disabled';
@@ -14,6 +16,8 @@ export interface MakeCallParams {
   clientState?: Record<string, unknown>;
   parallelSessionId?: string | null;
   parallelLegId?: string | null;
+  powerDialSessionId?: string | null;
+  trust?: WorkspaceOutboundTrustContext;
 }
 
 export interface SendSMSParams {
@@ -52,14 +56,15 @@ export interface TelephonyProvider {
   makeCall(params: MakeCallParams): Promise<CallHandle>;
   hangupCall(callControlId: string): Promise<void>;
   sendSMS(params: SendSMSParams): Promise<MessageHandle>;
-  startConference(callControlId: string): Promise<ConferenceHandle>;
+  startConference(callControlId: string, dbCallId: string): Promise<ConferenceHandle>;
   joinConference(
     conferenceId: string,
-    agentId: string,
-    tenantId: string,
+    coachCallControlId: string,
+    agentCallControlId: string,
     mode: TelephonyConferenceMode,
   ): Promise<void>;
   startRecording(callControlId: string, dbCallId: string): Promise<void>;
+  stopRecording(callControlId: string): Promise<void>;
   getWebRTCToken(agentId: string, tenantId: string): Promise<WebRTCTokenResult>;
   isConfigured(): boolean;
 }

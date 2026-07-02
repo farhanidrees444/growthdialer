@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { hasPermission } from '@/lib/auth/permissions';
-import { isTwilioVoiceConfigured } from '@/lib/twilio/voice-config';
+import { resolveActiveCredentialId } from '@/lib/telnyx/active-credential';
+import { ensureVoiceConnectionConfigured } from '@/lib/voice/configure-connection';
 import { resolveVoiceWebhookUrl } from '@/lib/voice/webhook-url';
+import { snapshotVoiceEnv } from '@/lib/voice/voice-readiness';
 
 /** GET /api/voice/health — voice stack readiness for the logged-in agent. */
 export async function GET(request: NextRequest) {
@@ -18,24 +20,36 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const provider = 'twilio';
-  const configured = isTwilioVoiceConfigured();
+  const env = snapshotVoiceEnv();
   const webhookUrl = resolveVoiceWebhookUrl();
   const blockers: string[] = [];
-  if (!configured) blockers.push('Voice credentials not configured');
-  if (!webhookUrl) blockers.push('APP_URL missing');
 
-  const { data: numbers } = await supabase
-    .from('purchased_numbers')
-    .select('phone_number, is_default')
-    .eq('user_id', user.id)
-    .eq('status', 'active');
+  if (!env.configured) blockers.push('Voice credentials not configured on server');
+  if (!webhookUrl) blockers.push('APP_URL missing');
+  if (!env.webhookSignatureReady) blockers.push('Voice webhook signature key not configured');
+
+  const [connection, credentialId, numbersRes] = await Promise.all([
+    ensureVoiceConnectionConfigured(),
+    resolveActiveCredentialId(supabase, user.id),
+    supabase
+      .from('purchased_numbers')
+      .select('phone_number, is_default')
+      .eq('user_id', user.id)
+      .eq('status', 'active'),
+  ]);
+
+  if (!connection.ok) blockers.push('Voice connection not ready');
+  if (!credentialId) blockers.push('Browser voice endpoint not ready');
+
+  const numbers = numbersRes.data ?? [];
 
   return NextResponse.json({
-    ok: configured && blockers.length === 0 && (numbers?.length ?? 0) > 0,
-    provider,
+    ok: env.configured && blockers.length === 0 && numbers.length > 0,
+    provider: env.provider,
     webhook_url: webhookUrl || null,
-    number_count: numbers?.length ?? 0,
+    number_count: numbers.length,
+    credential_ready: Boolean(credentialId),
+    connection_ready: connection.ok,
     blockers,
   });
 }

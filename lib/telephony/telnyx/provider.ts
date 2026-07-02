@@ -16,9 +16,12 @@ import { sendProviderSms } from '@/lib/telephony/telnyx/sms';
 import { issueWebRtcToken } from '@/lib/telephony/telnyx/webrtc';
 import {
   createConferenceForCall,
-  joinConferenceAsManager,
+  joinCallToConference,
 } from '@/lib/telephony/telnyx/conference';
-import { startMediaForkRecording } from '@/lib/telephony/telnyx/recording';
+import {
+  startMediaForkRecording,
+  stopCallRecording,
+} from '@/lib/telephony/telnyx/recording';
 
 export class TelnyxTelephonyProvider implements TelephonyProvider {
   isConfigured(): boolean {
@@ -39,21 +42,32 @@ export class TelnyxTelephonyProvider implements TelephonyProvider {
     return sendProviderSms(supabase, params);
   }
 
-  async startConference(callControlId: string): Promise<ConferenceHandle> {
-    return createConferenceForCall(callControlId);
+  async startConference(callControlId: string, dbCallId: string): Promise<ConferenceHandle> {
+    return createConferenceForCall(callControlId, dbCallId);
   }
 
   async joinConference(
     conferenceId: string,
-    agentId: string,
-    tenantId: string,
+    coachCallControlId: string,
+    agentCallControlId: string,
     mode: TelephonyConferenceMode,
   ): Promise<void> {
-    await joinConferenceAsManager(conferenceId, agentId, tenantId, mode);
+    await joinCallToConference(conferenceId, coachCallControlId, {
+      mode,
+      whisperToCallControlIds: agentCallControlId ? [agentCallControlId] : undefined,
+    });
   }
 
   async startRecording(callControlId: string, dbCallId: string): Promise<void> {
-    await startMediaForkRecording(callControlId, dbCallId);
+    const supabase = await createClient();
+    const started = await startMediaForkRecording(callControlId, dbCallId, supabase);
+    if (!started) {
+      throw new Error('Recording could not be started for this call');
+    }
+  }
+
+  async stopRecording(callControlId: string): Promise<void> {
+    await stopCallRecording(callControlId);
   }
 
   async getWebRTCToken(agentId: string, tenantId: string): Promise<WebRTCTokenResult> {

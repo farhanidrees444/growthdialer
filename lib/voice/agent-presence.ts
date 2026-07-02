@@ -17,13 +17,22 @@ export async function upsertCleanAgentPresence(
   heartbeat: AgentPresenceHeartbeat,
 ): Promise<void> {
   const now = new Date().toISOString();
+  const reachability =
+    heartbeat.phoneStatus === 'ready' && heartbeat.status !== 'offline'
+      ? 'online'
+      : heartbeat.status;
+
+  const deviceState =
+    heartbeat.phoneStatus === 'ready'
+      ? (heartbeat.deviceState ?? 'registered')
+      : (heartbeat.deviceState ?? null);
 
   const { error } = await supabase.from('agent_presence').upsert(
     {
       agent_id: heartbeat.agentId,
-      status: heartbeat.status,
+      status: reachability,
       last_heartbeat_at: now,
-      device_state: heartbeat.deviceState ?? null,
+      device_state: deviceState,
       updated_at: now,
     },
     { onConflict: 'agent_id' },

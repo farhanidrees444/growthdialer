@@ -53,6 +53,7 @@ export const PERMISSIONS = {
 
   // Calls
   MAKE_CALLS: ['owner', 'admin', 'manager', 'agent'],
+  SEND_SMS: ['owner', 'admin', 'manager', 'agent'],
   COACH_CALLS: ['owner', 'admin', 'manager'],
   BARGE_CALLS: ['owner', 'admin', 'manager'],
   VIEW_ALL_CALLS: ['owner', 'admin', 'manager'],

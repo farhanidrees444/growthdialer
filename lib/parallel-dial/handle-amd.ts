@@ -2,7 +2,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { dropVoicemailAndHangup } from '@/lib/voicemail/drop-on-call';
 import { bridgeParallelWinner } from './handle-answered';
 import { hangupCallControl } from './agent-bridge';
-import { isTwilioProvider } from '@/lib/voice/provider';
 
 /**
  * Telnyx AMD result: machine | human | not_sure | fax | silent
@@ -66,13 +65,6 @@ export async function handleParallelLegAmd(
   }
 
   if (isHuman && leg.status === 'answered') {
-    if (isTwilioProvider()) {
-      await supabase
-        .from('parallel_dial_legs')
-        .update({ status: 'connected', updated_at: new Date().toISOString() })
-        .eq('id', leg.id);
-      return;
-    }
     await bridgeParallelWinner(supabase, leg.id, callControlId, fromNumber, session.user_id);
   }
 }

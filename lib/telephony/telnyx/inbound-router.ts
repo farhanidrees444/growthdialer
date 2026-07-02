@@ -16,6 +16,7 @@ import {
   recordInboundTransition,
 } from '@/lib/telephony/telnyx/inbound';
 import { answerCall, hangupProviderCall, transferCall } from '@/lib/telephony/telnyx/outbound';
+import { startCallRecording } from '@/lib/telephony/telnyx/recording';
 
 export interface InboundRoutingContext {
   providerCallId: string;
@@ -113,18 +114,11 @@ async function routeToVoicemail(
     agentId: null,
   });
 
-  const { telephonyRequest } = await import('@/lib/telephony/telnyx/http');
-  await telephonyRequest(
-    `/calls/${encodeURIComponent(ctx.providerCallId)}/actions/record_start`,
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        format: 'mp3',
-        channels: routing.inbound_mode === 'voicemail' ? 'single' : 'dual',
-        play_beep: routing.inbound_mode === 'voicemail',
-      }),
-    },
-  );
+  await startCallRecording(ctx.providerCallId, {
+    format: 'mp3',
+    channels: routing.inbound_mode === 'voicemail' ? 'single' : 'dual',
+    playBeep: routing.inbound_mode === 'voicemail',
+  });
 
   if (ctx.callsRowId) {
     await supabase

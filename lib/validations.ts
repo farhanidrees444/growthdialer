@@ -67,5 +67,14 @@ export const dispositionRequestSchema = z.object({
   workspace_id: z.string().uuid().optional(),
 });
 
+export const smsSendSchema = z.object({
+  to: z.string().min(7, 'Phone number is required'),
+  body: z.string().min(1, 'Message is required').max(1600),
+  lead_id: z.string().uuid().optional(),
+  from: z.string().min(7).optional(),
+  workspace_id: z.string().uuid().optional(),
+});
+
 export type DialRequestInput = z.infer<typeof dialRequestSchema>;
 export type DispositionRequestInput = z.infer<typeof dispositionRequestSchema>;
+export type SmsSendInput = z.infer<typeof smsSendSchema>;
