@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { isTwilioVoiceConfigured } from '@/lib/twilio/voice-config';
-import { purchaseTwilioNumber } from '@/lib/twilio/number-inventory';
+import { isTelephonyConfigured } from '@/lib/telephony/telnyx/env';
+import { purchaseTelephonyNumber } from '@/lib/telephony/telnyx/numbers';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
 import { calculateRetailPrice } from '@/lib/pricing/calculate-price';
 import { normalizeE164 } from '@/lib/inbound/phone';
 
 export async function POST(request: NextRequest) {
-  if (!isTwilioVoiceConfigured()) {
+  if (!isTelephonyConfigured()) {
     return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
   }
 
@@ -32,9 +32,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Phone number is required' }, { status: 400 });
     }
 
-    const purchased = await purchaseTwilioNumber({ phoneNumber: e164, userId });
+    const purchased = await purchaseTelephonyNumber({ phoneNumber: e164 });
     if (!purchased) {
       return NextResponse.json({ error: 'Could not purchase number' }, { status: 500 });
+    }
+    if (!purchased.connectionAssigned) {
+      // Part 9: never allow a number with no Connection to look "purchased" —
+      // it has no inbound routing and no outbound permissions.
+      console.error('[NUMBERS-PURCHASE] Connection assignment failed for', purchased.phoneNumber);
+      return NextResponse.json({
+        error: 'Number was purchased but voice routing could not be configured. Contact support before using this number.',
+      }, { status: 502 });
     }
 
     const workspaceId = await resolveUserWorkspaceId(supabase, userId);
@@ -54,7 +62,7 @@ export async function POST(request: NextRequest) {
       user_id: userId,
       workspace_id: workspaceId,
       phone_number: purchased.phoneNumber,
-      telnyx_number_id: purchased.sid,
+      telnyx_number_id: purchased.providerId,
       country: country ?? 'US',
       number_type: numberType ?? 'local',
       monthly_cost: retailCost,

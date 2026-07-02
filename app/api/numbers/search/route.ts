@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { isTwilioVoiceConfigured } from '@/lib/twilio/voice-config';
-import { searchTwilioAvailableNumbers } from '@/lib/twilio/number-inventory';
+import { isTelephonyConfigured } from '@/lib/telephony/telnyx/env';
+import { searchAvailableTelephonyNumbers } from '@/lib/telephony/telnyx/numbers';
 
 export async function POST(request: NextRequest) {
-  if (!isTwilioVoiceConfigured()) {
+  if (!isTelephonyConfigured()) {
     return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
   }
 
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       type?: string;
     };
 
-    const numbers = await searchTwilioAvailableNumbers({
+    const numbers = await searchAvailableTelephonyNumbers({
       country,
       areaCode,
       type,

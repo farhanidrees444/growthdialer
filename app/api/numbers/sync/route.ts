@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
-import { isTwilioVoiceConfigured } from '@/lib/twilio/voice-config';
-import { syncTwilioNumbersForUser } from '@/lib/twilio/number-inventory';
+import { isTelephonyConfigured } from '@/lib/telephony/telnyx/env';
+import { syncTelephonyNumbersForUser } from '@/lib/telephony/telnyx/numbers';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
-  if (!isTwilioVoiceConfigured()) {
+  if (!isTelephonyConfigured()) {
     return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
   }
 
@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user: authUser } } = await supabase.auth.getUser();
     const userId = authUser?.id;
-    const userEmail = authUser?.email ?? '';
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = (await request.json().catch(() => ({}))) as { claim_untagged?: boolean };
@@ -32,7 +31,7 @@ export async function POST(request: NextRequest) {
     const canClaimOrphans =
       isOwner && (body.claim_untagged === true || (ownedCount ?? 0) === 0);
 
-    const result = await syncTwilioNumbersForUser(supabase, userId, userEmail, {
+    const result = await syncTelephonyNumbersForUser(supabase, userId, access.workspaceId, {
       claimOrphans: canClaimOrphans,
     });
 
