@@ -61,23 +61,49 @@ export function fmtPhone(num: string | null | undefined): string {
   return num;
 }
 
+export function isVoicemailCall(call: CallLogRow): boolean {
+  return call.disposition === 'voicemail' || call.status === 'voicemail';
+}
+
 export function getCounterparty(call: CallLogRow): string {
   const raw = call.direction === 'inbound' ? call.from_number : call.to_number;
   const leadName = call.leads?.name?.trim();
+  const phone = fmtPhone(raw);
+
+  if (call.direction === 'inbound') {
+    if (leadName && phone !== 'Unknown') return `${leadName} · ${phone}`;
+    if (leadName) return leadName;
+    return phone;
+  }
+
   if (leadName) return leadName;
-  return fmtPhone(raw);
+  return phone;
+}
+
+/** Inbound caller number for secondary line in call log rows. */
+export function getInboundCallerNumber(call: CallLogRow): string | null {
+  if (call.direction !== 'inbound' || !call.from_number) return null;
+  return fmtPhone(call.from_number);
 }
 
 export function isMissedCall(call: CallLogRow): boolean {
+  if (isVoicemailCall(call)) return false;
   if (call.disposition === 'missed') return true;
   if (call.direction === 'inbound' && !call.answered_at) {
-    return ['no_answer', 'canceled', 'failed', 'missed'].includes(call.status);
+    return ['no_answer', 'canceled', 'failed', 'missed'].includes(call.status)
+      || call.status === 'completed';
   }
   return false;
 }
 
+/** True when a human agent actually connected (not voicemail or PSTN-only duration). */
 export function isConnected(call: CallLogRow): boolean {
-  return !!call.answered_at || ['answered', 'connected', 'in_progress', 'completed'].includes(call.status);
+  if (isVoicemailCall(call) || isMissedCall(call)) return false;
+  if (call.direction === 'inbound') {
+    return !!call.answered_at;
+  }
+  return !!call.answered_at
+    || ['answered', 'connected', 'in_progress', 'completed'].includes(call.status);
 }
 
 const DISP_LABELS: Record<string, string> = {
@@ -138,6 +164,9 @@ export const DATE_GROUP_LABELS: Record<CallDateGroup, string> = {
 };
 
 export function getCallStatusPill(call: CallLogRow): { label: string; className: string } {
+  if (isVoicemailCall(call)) {
+    return { label: 'Voicemail', className: 'bg-blue-500/10 text-blue-400 border-blue-500/20' };
+  }
   if (isMissedCall(call)) {
     return { label: 'Missed', className: 'bg-red-500/10 text-red-400 border-red-500/20' };
   }

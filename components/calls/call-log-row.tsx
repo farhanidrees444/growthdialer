@@ -22,8 +22,10 @@ import {
   getCounterparty,
   getCallDetailHref,
   getCallStatusPill,
+  getInboundCallerNumber,
   isMissedCall,
   isConnected,
+  isVoicemailCall,
 } from '@/lib/calls/display';
 import { cn } from '@/lib/utils';
 
@@ -35,12 +37,15 @@ interface CallLogRowCardProps {
 export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
   const missed = isMissedCall(call);
   const connected = isConnected(call);
+  const voicemail = isVoicemailCall(call);
   const inbound = call.direction === 'inbound';
   const disp = dispositionLabel(call.disposition);
   const statusPill = getCallStatusPill(call);
   const detailHref = getCallDetailHref(call);
   const counterparty = getCounterparty(call);
+  const inboundCaller = getInboundCallerNumber(call);
   const rawNumber = inbound ? call.from_number : call.to_number;
+  const yourLine = inbound ? call.to_number : call.from_number;
 
   const DirectionIcon = missed
     ? PhoneMissed
@@ -50,15 +55,19 @@ export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
 
   const iconWrap = missed
     ? 'bg-red-500/10 border-red-500/20'
-    : inbound
-      ? 'bg-sky-500/10 border-sky-500/20'
-      : 'bg-cyan-500/10 border-cyan-500/20';
+    : voicemail
+      ? 'bg-blue-500/10 border-blue-500/20'
+      : inbound
+        ? 'bg-sky-500/10 border-sky-500/20'
+        : 'bg-cyan-500/10 border-cyan-500/20';
 
   const iconColor = missed
     ? 'text-red-400'
-    : inbound
-      ? 'text-sky-400'
-      : 'text-cyan-400';
+    : voicemail
+      ? 'text-blue-400'
+      : inbound
+        ? 'text-sky-400'
+        : 'text-cyan-400';
 
   const cardInner = (
     <>
@@ -104,7 +113,13 @@ export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
           <span className="font-medium tabular-nums text-slate-400">
             {fmtCallDuration(call.duration_seconds)}
           </span>
-          {rawNumber && counterparty !== fmtPhone(rawNumber) && (
+          {inbound && inboundCaller && (
+            <span className="tabular-nums text-slate-400">{inboundCaller}</span>
+          )}
+          {inbound && yourLine && (
+            <span className="tabular-nums text-slate-600">→ {fmtPhone(yourLine)}</span>
+          )}
+          {!inbound && rawNumber && counterparty !== fmtPhone(rawNumber) && (
             <span className="tabular-nums">{fmtPhone(rawNumber)}</span>
           )}
           {call.leads?.company && (

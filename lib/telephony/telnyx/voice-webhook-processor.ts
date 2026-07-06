@@ -16,7 +16,6 @@ import { shouldRecordInboundAnswer } from '@/lib/inbound/routing-matrix';
 import {
   finalizeInboundMissed,
   handleInboundCallInitiated,
-  markInboundAccepted,
 } from '@/lib/telephony/telnyx/inbound-router';
 import { voiceLog } from '@/lib/voice/structured-log';
 import { voiceSessionLog } from '@/lib/voice/session-log';
@@ -232,7 +231,8 @@ async function processTelnyxWebhookBackground(
         }
 
         const toNumber = normalizeE164(payload.to ?? '');
-        const fromNumber = normalizeInboundCallerId(payload.from ?? '');
+        const fromRaw = payload.from ?? '';
+        const fromNumber = normalizeInboundCallerId(fromRaw) ?? (fromRaw.trim() || null);
         const ownedTo = await getCachedNumberOwner(supabase, toNumber);
         const dirInbound = directionSaysInbound(payload.direction);
         const treatAsInbound = dirInbound === true || (dirInbound === null && Boolean(ownedTo));
@@ -409,9 +409,7 @@ async function processTelnyxWebhookBackground(
           .eq('id', inboundCallId)
           .maybeSingle();
 
-        if (inboundRow?.status === 'ringing' && agentId) {
-          await markInboundAccepted(supabase, inboundCallId, agentId);
-
+        if (inboundRow?.status === 'active' && agentId) {
           const pstnId = inboundRow.provider_call_id as string;
           const { data: callRow } = await supabase
             .from('calls')
@@ -431,9 +429,11 @@ async function processTelnyxWebhookBackground(
               await maybeAutoStartRecording(supabase, callRow, pstnId);
             }
           }
+        } else if (inboundRow?.status === 'ringing') {
+          console.log('[INBOUND] Leg B answered before agent accept — not marking connected:', inboundCallId);
         }
 
-        console.log('[INBOUND] Leg B (agent) answered — bridge:', inboundRow?.status === 'active' ? 'already active' : 'ok');
+        console.log('[INBOUND] Leg B (agent) answered — inbound status:', inboundRow?.status ?? 'unknown');
         return;
       }
 
@@ -474,27 +474,22 @@ async function processTelnyxWebhookBackground(
         return;
       }
 
-      // Update status (also save session ID here as a safety net)
+      // Outbound (and inbound already accepted): mark answered when media is up.
       const nextStatus = callRow.direction === 'inbound' ? 'active' : 'answered';
+      const shouldSetAnswered =
+        callRow.direction !== 'inbound' || callRow.status === 'active' || !!callRow.answered_at;
+
       await supabase
         .from('calls')
         .update({
           status: nextStatus,
-          answered_at: new Date().toISOString(),
+          ...(shouldSetAnswered ? { answered_at: callRow.answered_at ?? new Date().toISOString() } : {}),
           ...(callSessionId && !callRow.telnyx_session_id ? { telnyx_session_id: callSessionId } : {}),
         })
         .eq('id', callRow.id);
 
-      if (callRow.direction === 'inbound' && callControlId) {
-        const { data: inboundRow } = await supabase
-          .from('inbound_calls')
-          .select('id, routed_agent_id, status')
-          .eq('provider_call_id', callControlId)
-          .maybeSingle();
-        if (inboundRow?.id && inboundRow.status === 'ringing') {
-          const agentId = (inboundRow.routed_agent_id as string | null) ?? (callRow.user_id as string);
-          await markInboundAccepted(supabase, inboundRow.id, agentId);
-        }
+      if (callRow.direction === 'inbound' && callControlId && shouldSetAnswered) {
+        await logInboundCallStep(supabase, callControlId, 'active');
       }
 
       if (callControlId) {
@@ -582,8 +577,36 @@ async function processTelnyxWebhookBackground(
               status: 'missed',
               ended_at: endedAt,
               hangup_cause: hangupCause,
+              duration_seconds: null,
             })
             .eq('id', callRow.id);
+        } else if (isVoicemail) {
+          await supabase
+            .from('calls')
+            .update({
+              status: 'voicemail',
+              disposition: 'voicemail',
+              ended_at: endedAt,
+              hangup_cause: hangupCause,
+              ...(durationSeconds !== null ? { duration_seconds: durationSeconds } : {}),
+            })
+            .eq('id', callRow.id);
+        } else if (callRow.direction === 'inbound' && !callRow.answered_at) {
+          await supabase
+            .from('calls')
+            .update({
+              disposition: 'missed',
+              status: 'missed',
+              ended_at: endedAt,
+              hangup_cause: hangupCause,
+              duration_seconds: null,
+            })
+            .eq('id', callRow.id);
+
+          const pstnControlId = callRow.telnyx_call_id as string | null;
+          if (pstnControlId && callControlId === pstnControlId) {
+            await finalizeInboundMissed(supabase, pstnControlId);
+          }
         } else {
           await supabase
             .from('calls')
@@ -646,24 +669,29 @@ async function processTelnyxWebhookBackground(
             .maybeSingle();
 
           if (inboundRow) {
+            const isVm =
+              inboundRow.disposition === 'voicemail' || inboundRow.status === 'voicemail';
+            const missedInbound =
+              inboundRow.direction === 'inbound' && !inboundRow.answered_at && !isVm;
+
             await supabase
               .from('calls')
               .update({
-                status: 'completed',
+                status: isVm ? 'voicemail' : missedInbound ? 'missed' : 'completed',
+                disposition: isVm
+                  ? 'voicemail'
+                  : missedInbound
+                    ? 'missed'
+                    : inboundRow.disposition,
                 ended_at: endedAt,
                 hangup_cause: hangupCause,
-                ...(durationSeconds !== null ? { duration_seconds: durationSeconds } : {}),
+                ...(durationSeconds !== null && !missedInbound
+                  ? { duration_seconds: durationSeconds }
+                  : { duration_seconds: isVm ? durationSeconds : null }),
               })
               .eq('id', inboundRow.id);
 
-            const fallbackVoicemail =
-              inboundRow.disposition === 'voicemail' || inboundRow.status === 'voicemail';
-            if (inboundRow.direction === 'inbound' && !inboundRow.answered_at && !fallbackVoicemail) {
-              await supabase
-                .from('calls')
-                .update({ disposition: 'missed', status: 'missed' })
-                .eq('id', inboundRow.id);
-
+            if (missedInbound) {
               const { data: notifSettings } = await supabase
                 .from('user_settings')
                 .select('missed_call_notify')

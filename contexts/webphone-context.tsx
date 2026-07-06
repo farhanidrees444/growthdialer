@@ -619,7 +619,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
           call_id: callId,
           from_number: fromNumber,
           to_number: toNumber,
-          provider: 'twilio',
+          provider: 'telnyx',
         },
       }),
     );
