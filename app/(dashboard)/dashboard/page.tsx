@@ -32,7 +32,7 @@ import {
   getRecentCallHref,
   getRecentDispositionLabel,
 } from "@/lib/calls/recent";
-import { ShimmerSkeleton } from "@/components/ui/shimmer-skeleton";
+import { ShimmerSkeleton, SkeletonGlassPanel } from "@/components/ui/shimmer-skeleton";
 import type { DailyPoint } from "@/components/dashboard/call-activity-chart";
 
 const CallActivityChart = lazy(() =>
@@ -624,9 +624,9 @@ export default function DashboardPage() {
         <div className="mt-4 px-4 lg:mt-5 lg:px-6">
           <Suspense
             fallback={
-              <div className="h-[300px] overflow-hidden rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03]">
+              <SkeletonGlassPanel className="h-[300px] overflow-hidden rounded-[1.5rem]">
                 <ShimmerSkeleton className="h-full w-full" rounded="rounded-[1.5rem]" />
-              </div>
+              </SkeletonGlassPanel>
             }
           >
             <CallActivityChart
@@ -647,29 +647,29 @@ export default function DashboardPage() {
           <RecentCallsList calls={recentCalls} loading={recentCallsLoading} />
           <Suspense
             fallback={
-              <div className="min-h-[320px] overflow-hidden rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5">
-                <ShimmerSkeleton className="mb-4 h-4 w-24" />
+              <SkeletonGlassPanel className="min-h-[320px] overflow-hidden rounded-[1.5rem] p-5">
+                <ShimmerSkeleton className="mb-4 h-4 w-24" rounded="rounded-md" />
                 <div className="space-y-3">
                   {Array.from({ length: 3 }).map((_, i) => (
                     <ShimmerSkeleton key={i} className="h-12 w-full" rounded="rounded-xl" />
                   ))}
                 </div>
-              </div>
+              </SkeletonGlassPanel>
             }
           >
             <UpNextQueue />
           </Suspense>
           <Suspense
             fallback={
-              <div className="min-h-[320px] overflow-hidden rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 lg:col-span-2 xl:col-span-1">
-                <ShimmerSkeleton className="mb-4 h-4 w-28" />
+              <SkeletonGlassPanel className="min-h-[320px] overflow-hidden rounded-[1.5rem] p-5 lg:col-span-2 xl:col-span-1">
+                <ShimmerSkeleton className="mb-4 h-4 w-28" rounded="rounded-md" />
                 <ShimmerSkeleton className="mb-3 h-10 w-full" rounded="rounded-xl" />
                 <div className="space-y-3">
                   {Array.from({ length: 3 }).map((_, i) => (
                     <ShimmerSkeleton key={i} className="h-10 w-full" rounded="rounded-lg" />
                   ))}
                 </div>
-              </div>
+              </SkeletonGlassPanel>
             }
           >
             <NumberHealthCard />

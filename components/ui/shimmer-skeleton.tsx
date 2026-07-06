@@ -1,4 +1,22 @@
+import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+
+/** Shared glass panel for skeleton card containers — no harsh white borders. */
+export const skeletonGlassPanelClass = 'skeleton-glass-panel';
+
+export function SkeletonGlassPanel({
+  className,
+  children,
+}: {
+  className?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className={cn(skeletonGlassPanelClass, 'rounded-xl', className)}>
+      {children}
+    </div>
+  );
+}
 
 export function ShimmerSkeleton({
   className,
@@ -10,13 +28,11 @@ export function ShimmerSkeleton({
   return (
     <div
       className={cn(
-        'relative overflow-hidden bg-white/[0.04]',
+        'premium-skeleton-shimmer relative overflow-hidden',
         rounded,
         className,
       )}
       aria-hidden
-    >
-      <div className="skeleton-shimmer absolute inset-0" />
-    </div>
+    />
   );
 }

@@ -323,21 +323,44 @@
   50% { background-position: 100% 50%; }
 }
 
-@keyframes skeleton-shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-glass-panel {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.premium-skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(139, 92, 246, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* Legacy alias — routes through the same violet sweep */
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    transparent 0%,
-    rgba(139, 92, 246, 0.06) 45%,
-    rgba(139, 92, 246, 0.12) 50%,
-    rgba(139, 92, 246, 0.06) 55%,
-    transparent 100%
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(139, 92, 246, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
   );
-  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
 }
 
 /* Marketing site grain + focus (scoped — dashboard unaffected) */
@@ -364,7 +387,8 @@
   html:not(:has(.marketing-site)) .marquee-track-reverse,
   html:not(:has(.marketing-site)) .animate-float,
   html:not(:has(.marketing-site)) .animate-beam,
-  html:not(:has(.marketing-site)) .skeleton-shimmer {
+  html:not(:has(.marketing-site)) .skeleton-shimmer,
+  html:not(:has(.marketing-site)) .premium-skeleton-shimmer {
     animation: none;
   }
 }
