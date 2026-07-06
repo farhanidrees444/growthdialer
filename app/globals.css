@@ -323,6 +323,23 @@
   50% { background-position: 100% 50%; }
 }
 
+@keyframes skeleton-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.06) 45%,
+    rgba(139, 92, 246, 0.12) 50%,
+    rgba(139, 92, 246, 0.06) 55%,
+    transparent 100%
+  );
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
 /* Marketing site grain + focus (scoped — dashboard unaffected) */
 .marketing-site::before {
   content: '';
@@ -346,7 +363,8 @@
   html:not(:has(.marketing-site)) .marquee-track,
   html:not(:has(.marketing-site)) .marquee-track-reverse,
   html:not(:has(.marketing-site)) .animate-float,
-  html:not(:has(.marketing-site)) .animate-beam {
+  html:not(:has(.marketing-site)) .animate-beam,
+  html:not(:has(.marketing-site)) .skeleton-shimmer {
     animation: none;
   }
 }

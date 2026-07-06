@@ -41,6 +41,7 @@ import { ROLE_LABELS } from "@/lib/auth/permissions";
 import { useCalls } from "@/contexts/calls-context";
 import { EASE_OUT, SPRING } from "@/components/marketing/live-floor/motion";
 import { BrandLogo } from "@/components/ui/brand-logo";
+import { SidebarSkeleton } from "@/components/layout/sidebar-skeleton";
 import { getNavItemAccent, resolveRouteAccent } from "@/lib/ui/route-accents";
 import { usePlan } from "@/lib/plan/use-plan";
 import type { FeatureKey } from "@/lib/plan/plan-gates";
@@ -77,12 +78,14 @@ const INTELLIGENCE_ITEMS: NavItem[] = [
   { id: "call-logs", icon: ScrollText, label: "Call Logs", href: "/call-logs", countKey: "calls" },
   { id: "recordings", icon: Headphones, label: "Recordings", href: "/recordings", countKey: "recordings" },
   { id: "analytics", icon: BarChart2, label: "Analytics", href: "/analytics" },
-  { id: "coaching", icon: Headset, label: "Coaching", href: "/coaching", managerOnly: true, gateFeature: "coaching_dashboard" },
 ];
 
 const TEAM_ITEMS: NavItem[] = [
   { id: "leaderboard", icon: Trophy, label: "Leaderboard", href: "/leaderboard", managerOnly: true, gateFeature: "leaderboard" },
+  { id: "coaching", icon: Headset, label: "Coaching", href: "/coaching", managerOnly: true, gateFeature: "coaching_dashboard" },
 ];
+
+const PREFETCH_HREFS = new Set(["/dialer", "/leads", "/analytics"]);
 
 const SETUP_ITEMS: NavItem[] = [
   { id: "numbers", icon: Hash, label: "My Numbers", href: "/numbers", countKey: "numbers" },
@@ -294,6 +297,7 @@ function SidebarNavItem({
   const linkInner = (
     <Link
       href={locked ? "/pricing?highlight=growth" : item.href}
+      prefetch={PREFETCH_HREFS.has(item.href)}
       onClick={onNavigate}
       className={cn(
         "relative flex items-center rounded-lg text-sm font-medium transition-all duration-200",
@@ -481,17 +485,7 @@ export default function Sidebar({
   isDesktopCollapsed?: boolean;
 }) {
   return (
-    <Suspense
-      fallback={
-        <aside
-          className={cn(
-            "hidden shrink-0 border-r border-zinc-800/50 bg-zinc-950 lg:block",
-            isDesktopCollapsed ? "w-[72px]" : "w-[240px]",
-          )}
-          aria-hidden
-        />
-      }
-    >
+    <Suspense fallback={<SidebarSkeleton collapsed={isDesktopCollapsed} />}>
       <SidebarInner isDesktopCollapsed={isDesktopCollapsed} />
     </Suspense>
   );

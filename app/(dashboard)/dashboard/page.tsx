@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, lazy, Suspense } from "react";
 import Link from "next/link";
 import { GsapCountUp } from "@/components/gsap/GsapCountUp";
 import { GsapScrollReveal, refreshGsapScrollTriggers } from "@/components/gsap/GsapScrollReveal";
@@ -10,11 +10,9 @@ import {
   Phone, Users, CalendarCheck, Clock, TrendingUp, TrendingDown,
   ChevronRight, Activity,
 } from "lucide-react";
-import { NumberHealthCard } from "@/components/dashboard/number-health-card";
-import { MiniWave } from "@/components/marketing/live-floor/LiveWaveform";
 import {
-  AreaChart, Area, XAxis, CartesianGrid,
-  ResponsiveContainer, Tooltip as RechartsTooltip,
+  AreaChart, Area,
+  ResponsiveContainer,
 } from "recharts";
 import { useLeads } from "@/contexts/leads-context";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
@@ -26,9 +24,7 @@ import type { SystemMetricsData, HourlyMetricPoint } from "@/lib/dashboard-types
 import { ActivationChecklist } from "@/components/activation/activation-checklist";
 import { DashboardHero } from "@/components/dashboard/dashboard-hero";
 import { KpiGhostSparkline } from "@/components/dashboard/kpi-ghost-sparkline";
-import UpNextQueue from "@/components/dashboard/up-next-queue";
 import { PremiumEmptyState } from "@/components/ui/premium-empty-state";
-import { WorkflowSceneMotion } from "@/components/ui/workflow-scene-motion";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   type DashboardRecentCall,
@@ -36,6 +32,17 @@ import {
   getRecentCallHref,
   getRecentDispositionLabel,
 } from "@/lib/calls/recent";
+import { DashboardPageSkeleton } from "@/components/dashboard/dashboard-page-skeleton";
+import { ShimmerSkeleton } from "@/components/ui/shimmer-skeleton";
+import type { DailyPoint } from "@/components/dashboard/call-activity-chart";
+
+const CallActivityChart = lazy(() =>
+  import("@/components/dashboard/call-activity-chart").then((m) => ({ default: m.CallActivityChart })),
+);
+const NumberHealthCard = lazy(() =>
+  import("@/components/dashboard/number-health-card").then((m) => ({ default: m.NumberHealthCard })),
+);
+const UpNextQueue = lazy(() => import("@/components/dashboard/up-next-queue"));
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -45,12 +52,6 @@ interface StatsData {
   meetingsBooked: number;
   pipelineValue: number;
   yesterday: { calls: number; connectRate: number };
-}
-
-interface DailyPoint {
-  label: string;
-  calls: number;
-  connected: number;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -83,12 +84,6 @@ const DISP_STYLES: Record<string, string> = {
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function fmtHour(h: number): string {
-  if (h === 0) return "12A";
-  if (h === 12) return "12P";
-  return h > 12 ? `${h - 12}P` : `${h}A`;
-}
 
 function fmtDuration(s: number | null): string {
   if (!s || s === 0) return "—";
@@ -136,7 +131,7 @@ function avatarGradient(name: string): string {
 }
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-lg bg-white/[0.05]", className)} />;
+  return <ShimmerSkeleton className={className} />;
 }
 
 const premiumPanel =
@@ -268,145 +263,6 @@ function KpiCard({
         )}
       </div>
     </motion.div>
-  );
-}
-
-// ── Call Activity Chart ───────────────────────────────────────────────────────
-
-function CallActivityChart({
-  sparkline,
-  weeklyData,
-  weeklyLoading,
-  timeRange,
-  onTimeRangeChange,
-}: {
-  sparkline: HourlyMetricPoint[];
-  weeklyData: DailyPoint[] | null;
-  weeklyLoading: boolean;
-  timeRange: '24H' | '7D';
-  onTimeRangeChange: (r: '24H' | '7D') => void;
-}) {
-  const nowHour = new Date().getHours();
-  const chart24H = Array.from({ length: 24 }, (_, i) => {
-    const h = (nowHour - 23 + i + 24) % 24;
-    const pt = sparkline.find(p => p.hour === h);
-    return { label: fmtHour(h), calls: pt?.calls ?? 0, connected: pt?.connected ?? 0 };
-  });
-
-  const chartData = timeRange === '24H' ? chart24H : (weeklyData ?? []);
-  const nonZeroPoints = chartData.filter(p => p.calls > 0 || p.connected > 0).length;
-  const anyData = nonZeroPoints > 0;
-  // A single non-zero point renders as a lonely spike — need ≥2 to draw a real
-  // curve. Below that, show a clean premium state instead.
-  const enoughToChart = nonZeroPoints >= 2;
-
-  return (
-    <div
-      data-gsap-reveal
-      className={premiumPanel}
-    >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(139,92,246,0.13),transparent_34%),radial-gradient(circle_at_88%_12%,rgba(6,182,212,0.09),transparent_30%)]" aria-hidden />
-      <div className="relative flex items-center justify-between p-5 pb-3">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.035]">
-            <Activity className="h-4 w-4 text-violet-300" />
-          </span>
-          <h3 className="text-sm font-semibold text-white">Call Activity</h3>
-          {/* Brand waveform motif — live/active identity */}
-          <MiniWave className="h-3.5 opacity-80" />
-        </div>
-        <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-black/20 p-0.5">
-          {(['24H', '7D'] as const).map(r => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => onTimeRangeChange(r)}
-              className={cn(
-                "rounded-md px-3 py-1 text-xs font-semibold transition-colors",
-                timeRange === r ? "bg-white/[0.09] text-white" : "text-slate-600 hover:text-slate-400",
-              )}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {weeklyLoading && timeRange === '7D' ? (
-        <div className="flex h-[240px] items-center justify-center lg:h-[280px]">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/10 border-t-white/40" />
-        </div>
-      ) : enoughToChart ? (
-        <>
-          <div className="relative h-[240px] px-2 lg:h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 5, right: 8, bottom: 0, left: -20 }}>
-                <defs>
-                  <linearGradient id="act-calls-grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="act-conn-grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#06B6D4" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#06B6D4" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fill: '#475569', fontSize: 10 }}
-                  tickLine={false}
-                  axisLine={false}
-                  interval={timeRange === '24H' ? 3 : 0}
-                />
-                <RechartsTooltip
-                  content={({ active, payload, label }) => {
-                    if (!active || !payload?.length) return null;
-                    return (
-                      <div className="rounded-lg border border-white/10 bg-[oklch(0.1_0.006_285)] px-3 py-2 text-xs shadow-xl">
-                        <p className="mb-1 font-medium text-slate-300">{String(label ?? '')}</p>
-                        {payload.map(p => (
-                          <p key={String(p.name)} style={{ color: String(p.color ?? '#fff') }}>
-                            {p.name}: {p.value}
-                          </p>
-                        ))}
-                      </div>
-                    );
-                  }}
-                />
-                <Area type="monotone" dataKey="calls" name="Calls Made" stroke="#8B5CF6" strokeWidth={2} fill="url(#act-calls-grad)" dot={false} isAnimationActive={false} />
-                <Area type="monotone" dataKey="connected" name="Connected" stroke="#06B6D4" strokeWidth={2} fill="url(#act-conn-grad)" dot={false} isAnimationActive={false} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex justify-end gap-4 px-5 pb-4 pt-1">
-            <div className="flex items-center gap-1.5">
-              <div className="h-[2px] w-3 rounded bg-[#8B5CF6]" />
-              <span className="text-[10px] text-slate-500">Calls Made</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="h-[2px] w-3 rounded bg-[#06B6D4]" />
-              <span className="text-[10px] text-slate-500">Connected</span>
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="flex h-[240px] flex-col items-center justify-center gap-4 px-5 lg:h-[280px]">
-          <div className="relative h-20 w-20 overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/60 shadow-[0_0_45px_rgba(139,92,246,0.12)]">
-            <WorkflowSceneMotion scene="analytics" />
-          </div>
-          <p className="max-w-xs text-center text-sm text-slate-500">
-            {anyData ? 'Your activity chart builds as more calls come in' : 'Start a call to build your activity timeline'}
-          </p>
-          <Link
-            href="/dialer"
-            className="rounded-full bg-zinc-100 px-4 py-2 text-xs font-semibold text-zinc-950 transition hover:bg-white"
-          >
-            Go to dialer
-          </Link>
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -684,8 +540,8 @@ export default function DashboardPage() {
     : null;
 
   const allLoading = metricsLoading || statsLoading;
-  // Single source of truth for the KPI empty-state so all four cards agree.
   const hasCallsToday = (stats?.callsToday ?? 0) > 0;
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (!allLoading) {
@@ -693,8 +549,18 @@ export default function DashboardPage() {
     }
   }, [allLoading, stats, recentCalls]);
 
+  if (allLoading) {
+    return <DashboardPageSkeleton />;
+  }
+
   return (
     <GsapScrollReveal className="relative flex-1 overflow-y-auto">
+      <motion.div
+        initial={reduceMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        className="relative flex-1"
+      >
         <div aria-hidden className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_42%_0%,rgba(139,92,246,0.1),transparent_32%),radial-gradient(circle_at_92%_28%,rgba(6,182,212,0.06),transparent_28%)]" />
         <div className="relative z-[1]">
         <DashboardHero greeting={greeting} firstName={firstName} dateStr={dateStr} />
@@ -762,9 +628,13 @@ export default function DashboardPage() {
 
         {/* Call Activity Chart */}
         <div className="mt-4 px-4 lg:mt-5 lg:px-6">
-          {metricsLoading ? (
-            <div className="h-[300px] animate-pulse rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03]" />
-          ) : (
+          <Suspense
+            fallback={
+              <div className="h-[300px] overflow-hidden rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03]">
+                <ShimmerSkeleton className="h-full w-full" rounded="rounded-[1.5rem]" />
+              </div>
+            }
+          >
             <CallActivityChart
               sparkline={sparkline}
               weeklyData={weeklyData}
@@ -772,7 +642,7 @@ export default function DashboardPage() {
               timeRange={timeRange}
               onTimeRangeChange={setTimeRange}
             />
-          )}
+          </Suspense>
         </div>
 
         {/* Bottom Row — Recent · Up Next · Number Health */}
@@ -781,10 +651,38 @@ export default function DashboardPage() {
           className="mt-4 grid grid-cols-1 gap-4 px-4 pb-6 lg:mt-5 lg:grid-cols-2 xl:grid-cols-3 lg:px-6"
         >
           <RecentCallsList calls={recentCalls} loading={recentCallsLoading} />
-          <UpNextQueue />
-          <NumberHealthCard />
+          <Suspense
+            fallback={
+              <div className="min-h-[320px] overflow-hidden rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5">
+                <ShimmerSkeleton className="mb-4 h-4 w-24" />
+                <div className="space-y-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <ShimmerSkeleton key={i} className="h-12 w-full" rounded="rounded-xl" />
+                  ))}
+                </div>
+              </div>
+            }
+          >
+            <UpNextQueue />
+          </Suspense>
+          <Suspense
+            fallback={
+              <div className="min-h-[320px] overflow-hidden rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 lg:col-span-2 xl:col-span-1">
+                <ShimmerSkeleton className="mb-4 h-4 w-28" />
+                <ShimmerSkeleton className="mb-3 h-10 w-full" rounded="rounded-xl" />
+                <div className="space-y-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <ShimmerSkeleton key={i} className="h-10 w-full" rounded="rounded-lg" />
+                  ))}
+                </div>
+              </div>
+            }
+          >
+            <NumberHealthCard />
+          </Suspense>
         </div>
         </div>
+      </motion.div>
     </GsapScrollReveal>
   );
 }

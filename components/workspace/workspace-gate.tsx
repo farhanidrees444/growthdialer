@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { DashboardPageSkeleton } from '@/components/dashboard/dashboard-page-skeleton';
 
 const ONBOARDING_PREFIXES = ['/workspace/setup'];
 
@@ -26,20 +26,11 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
   }, [needsWorkspace, router]);
 
   if (loading) {
-    return (
-      <div className="flex flex-1 items-center justify-center min-h-[40vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-400" aria-label="Loading workspace" />
-      </div>
-    );
+    return <DashboardPageSkeleton />;
   }
 
   if (needsWorkspace) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center min-h-[40vh] gap-3 text-center px-4">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
-        <p className="text-sm text-white/50">Setting up your workspace…</p>
-      </div>
-    );
+    return <DashboardPageSkeleton />;
   }
 
   return <>{children}</>;
