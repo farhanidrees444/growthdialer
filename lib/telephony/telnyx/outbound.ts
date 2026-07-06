@@ -128,6 +128,19 @@ export async function transferCall(
       body.target_leg_client_state = Buffer.from(
         JSON.stringify(targetLegClientState),
       ).toString('base64');
+
+      const fromDisplay = targetLegClientState.gd_from_number;
+      const toDisplay = targetLegClientState.gd_to_number;
+      const headers: Array<{ name: string; value: string }> = [];
+      if (typeof fromDisplay === 'string' && fromDisplay.trim()) {
+        headers.push({ name: 'X-GD-From-Number', value: fromDisplay.trim() });
+      }
+      if (typeof toDisplay === 'string' && toDisplay.trim()) {
+        headers.push({ name: 'X-GD-To-Number', value: toDisplay.trim() });
+      }
+      if (headers.length) {
+        body.custom_headers = headers;
+      }
     }
     await telephonyRequest(
       `/calls/${encodeURIComponent(callControlId)}/actions/transfer`,

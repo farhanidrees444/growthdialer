@@ -122,7 +122,7 @@ export default function CallsOverlay() {
               </div>
             </div>
             <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">{displayName}</h2>
-            {fromNumber && !callerContext.anonymous && (
+            {fromNumber && (
               <p className="mt-3 font-mono text-base text-white/50">{formatInboundCallerDisplay(fromNumber)}</p>
             )}
             <p className="mt-1 text-xs text-white/30">To your line {fmtLine(toNumber)}</p>

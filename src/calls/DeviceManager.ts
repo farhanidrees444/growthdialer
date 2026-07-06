@@ -11,6 +11,12 @@ export interface DeviceManagerInitOptions {
   logLevel?: number;
 }
 
+const INBOUND_RING_STATES = new Set(['ringing', 'trying', 'new', 'requesting']);
+
+function shouldEmitIncoming(call: TelnyxCall): boolean {
+  return call.direction === 'inbound' && INBOUND_RING_STATES.has(call.state);
+}
+
 class DeviceManager {
   private client: TelnyxRTC | null = null;
   private token: string | null = null;
@@ -99,11 +105,7 @@ class DeviceManager {
       handleTelnyxCallStateChange(call);
       const patched = patchTelnyxCall(call);
 
-      if (
-        call.direction === 'inbound'
-        && call.state === 'ringing'
-        && !this.incomingEmitted.has(call)
-      ) {
+      if (shouldEmitIncoming(call) && !this.incomingEmitted.has(call)) {
         this.incomingEmitted.add(call);
         eventBus.emit('DEVICE_INCOMING', patched);
       }

@@ -11,8 +11,10 @@ import {
 } from 'react';
 import { useWebPhone } from '@/contexts/webphone-context';
 import { useCallContext } from '@/lib/call-context';
+import { useInboundServerRing } from '@/hooks/use-inbound-server-ring';
+import { useSupabaseSession } from '@/lib/supabase/hooks';
 import { isAnonymousCaller } from '@/lib/twilio/caller-id-utils';
-import { formatInboundCallerDisplay } from '@/lib/inbound/phone';
+import { formatInboundCallerDisplay, isValidCallerPhone, normalizeE164 } from '@/lib/inbound/phone';
 
 export type CallPhase = 'idle' | 'incoming' | 'connecting' | 'ended';
 
@@ -61,7 +63,15 @@ function mapIncomingPhase(phase: ReturnType<typeof useWebPhone>['incomingCall'][
   return 'idle';
 }
 
+function lookupFromForContext(from: string | null): string | null {
+  if (!from) return null;
+  if (isValidCallerPhone(from)) return normalizeE164(from);
+  return null;
+}
+
 export function CallsProvider({ children }: { children: ReactNode }) {
+  const session = useSupabaseSession();
+  const userId = session?.user?.id;
   const {
     incomingCall,
     requestMicPermission,
@@ -70,22 +80,33 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     staleTabWarning,
   } = useWebPhone();
   const { registerCallMeta } = useCallContext();
+  const { serverRing, clearServerRing } = useInboundServerRing(userId);
   const [callerContext, setCallerContext] = useState<CallerContext>(EMPTY_CALLER_CONTEXT);
   const [ringElapsedSec, setRingElapsedSec] = useState(0);
+  const [connectingFromServer, setConnectingFromServer] = useState(false);
 
-  const phase = mapIncomingPhase(incomingCall.phase);
-  const fromNumber = incomingCall.fromNumber;
-  const toNumber = incomingCall.toNumber;
-  const callId = incomingCall.callId;
+  const webrtcPhase = mapIncomingPhase(incomingCall.phase);
+
+  const phase: CallPhase = useMemo(() => {
+    if (webrtcPhase !== 'idle') return webrtcPhase;
+    if (connectingFromServer) return 'connecting';
+    if (serverRing) return 'incoming';
+    return 'idle';
+  }, [connectingFromServer, serverRing, webrtcPhase]);
+
+  const fromNumber = incomingCall.fromNumber ?? serverRing?.fromNumber ?? null;
+  const toNumber = incomingCall.toNumber ?? serverRing?.toNumber ?? null;
+  const callId = incomingCall.callId ?? serverRing?.inboundCallId ?? null;
 
   const fetchCallerContext = useCallback((from: string | null) => {
-    if (!from || isAnonymousCaller(from)) {
-      setCallerContext({ ...EMPTY_CALLER_CONTEXT, anonymous: true });
+    const lookup = lookupFromForContext(from);
+    if (!lookup || isAnonymousCaller(lookup)) {
+      setCallerContext({ ...EMPTY_CALLER_CONTEXT, anonymous: !lookup });
       return;
     }
 
     setCallerContext((prev) => ({ ...prev, loading: true }));
-    void fetch(`/api/voice/caller-context?from=${encodeURIComponent(from)}`, {
+    void fetch(`/api/voice/caller-context?from=${encodeURIComponent(lookup)}`, {
       credentials: 'same-origin',
     })
       .then((r) => r.json())
@@ -108,40 +129,74 @@ export function CallsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (phase === 'idle') {
-      void Promise.resolve().then(() => {
-        setCallerContext(EMPTY_CALLER_CONTEXT);
-        setRingElapsedSec(0);
-      });
+      setCallerContext(EMPTY_CALLER_CONTEXT);
+      setRingElapsedSec(0);
+      setConnectingFromServer(false);
       return;
     }
-    void Promise.resolve().then(() => fetchCallerContext(fromNumber));
+    fetchCallerContext(fromNumber);
   }, [fetchCallerContext, fromNumber, phase]);
 
   useEffect(() => {
+    if (webrtcPhase === 'incoming' || webrtcPhase === 'connecting') {
+      clearServerRing({ stopTone: false });
+      setConnectingFromServer(false);
+    }
+  }, [clearServerRing, webrtcPhase]);
+
+  useEffect(() => {
     if (phase !== 'incoming' && phase !== 'connecting') return;
-    const startedAt = incomingCall.ringStartedAt ?? Date.now();
+    const startedAt = incomingCall.ringStartedAt ?? serverRing?.ringStartedAt ?? Date.now();
     const tick = () => setRingElapsedSec(Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [incomingCall.ringStartedAt, phase]);
+  }, [incomingCall.ringStartedAt, phase, serverRing?.ringStartedAt]);
 
   const accept = useCallback(async () => {
     if (phase !== 'incoming') return;
     const micOk = await requestMicPermission();
     if (!micOk) return;
+
     registerCallMeta(null, fromNumber ?? '');
-    void fetch('/api/inbound/accept', {
+    setConnectingFromServer(true);
+
+    await fetch('/api/inbound/accept', {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        inbound_call_id: serverRing?.inboundCallId,
+        provider_call_id: serverRing?.providerCallId,
         from_number: fromNumber,
         to_number: toNumber,
       }),
     }).catch(() => undefined);
-    await answerIncomingCall();
-  }, [answerIncomingCall, fromNumber, phase, registerCallMeta, requestMicPermission, toNumber]);
+
+    let answered = await answerIncomingCall();
+    if (!answered) {
+      for (let i = 0; i < 24; i += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        answered = await answerIncomingCall();
+        if (answered) break;
+      }
+    }
+
+    if (!answered) {
+      setConnectingFromServer(false);
+    }
+    clearServerRing();
+  }, [
+    answerIncomingCall,
+    clearServerRing,
+    fromNumber,
+    phase,
+    registerCallMeta,
+    requestMicPermission,
+    serverRing?.inboundCallId,
+    serverRing?.providerCallId,
+    toNumber,
+  ]);
 
   const decline = useCallback(() => {
     void fetch('/api/inbound/decline', {
@@ -149,20 +204,27 @@ export function CallsProvider({ children }: { children: ReactNode }) {
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        inbound_call_id: serverRing?.inboundCallId,
+        provider_call_id: serverRing?.providerCallId,
         from_number: fromNumber,
         to_number: toNumber,
       }),
     }).catch(() => undefined);
+    clearServerRing();
+    setConnectingFromServer(false);
     hangup();
-  }, [fromNumber, hangup, toNumber]);
+  }, [clearServerRing, fromNumber, hangup, serverRing?.inboundCallId, serverRing?.providerCallId, toNumber]);
 
   const connectError = useMemo(() => {
     if (incomingCall.error) return incomingCall.error;
     if (staleTabWarning && phase !== 'idle') {
       return 'Another browser tab may also be registered for calls. Use one active call tab per agent.';
     }
+    if (connectingFromServer && webrtcPhase === 'idle') {
+      return 'Waiting for voice link — keep this tab open on Incoming.';
+    }
     return null;
-  }, [incomingCall.error, phase, staleTabWarning]);
+  }, [connectingFromServer, incomingCall.error, phase, staleTabWarning, webrtcPhase]);
 
   return (
     <CallsContext.Provider
@@ -194,6 +256,6 @@ export function useCalls(): CallsContextValue {
 export function useCallerDisplayName(from: string | null, ctx: CallerContext): string {
   if (ctx.leadName) return ctx.leadName;
   if (ctx.callerName) return ctx.callerName;
-  if (!from || ctx.anonymous) return 'Unknown Caller';
+  if (!from || ctx.anonymous) return formatInboundCallerDisplay(from);
   return formatInboundCallerDisplay(from);
 }

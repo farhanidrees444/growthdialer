@@ -50,7 +50,7 @@ function readCallParam(call: VoiceSdkCall, ...keys: string[]): string | null {
 
 /** PSTN caller ID from an inbound browser call, when present. */
 export function extractInboundFromNumber(call: VoiceSdkCall): string | null {
-  const fromTwiml = readCallParam(call, 'gd_from_number');
+  const fromTwiml = readCallParam(call, 'gd_from_number', 'X-GD-From-Number');
   if (fromTwiml && isValidCallerPhone(fromTwiml)) return normalizeE164(fromTwiml);
 
   const raw = readCallParam(call, 'From', 'from', 'Caller', 'caller');
@@ -60,7 +60,7 @@ export function extractInboundFromNumber(call: VoiceSdkCall): string | null {
 
 /** Called line (agent DID) from an inbound browser call. */
 export function extractInboundToNumber(call: VoiceSdkCall): string | null {
-  const toTwiml = readCallParam(call, 'gd_to_number');
+  const toTwiml = readCallParam(call, 'gd_to_number', 'X-GD-To-Number');
   if (toTwiml && isValidCallerPhone(toTwiml)) return normalizeE164(toTwiml);
 
   const raw = readCallParam(call, 'To', 'to', 'Called', 'called');

@@ -24,10 +24,19 @@ export function normalizeInboundCallerId(raw: string): string | null {
 
 /** Human label for inbound overlay when caller ID is missing or blocked. */
 export function formatInboundCallerDisplay(raw: string | null | undefined): string {
-  if (!raw || !isValidCallerPhone(raw)) return 'Unknown / Blocked';
-  const m = normalizeE164(raw).match(/^\+1(\d{3})(\d{3})(\d{4})$/);
+  if (!raw?.trim()) return 'Unknown / Blocked';
+  const trimmed = raw.trim();
+  if (/^restricted@/i.test(trimmed) || /^anonymous@/i.test(trimmed) || /^private@/i.test(trimmed)) {
+    return 'Restricted / Private';
+  }
+  if (trimmed.includes('@') && !isValidCallerPhone(trimmed)) {
+    const user = trimmed.split('@')[0];
+    return user ? `${user} (blocked ID)` : 'Unknown / Blocked';
+  }
+  if (!isValidCallerPhone(trimmed)) return 'Unknown / Blocked';
+  const m = normalizeE164(trimmed).match(/^\+1(\d{3})(\d{3})(\d{4})$/);
   if (m) return `+1 (${m[1]}) ${m[2]}-${m[3]}`;
-  return normalizeE164(raw);
+  return normalizeE164(trimmed);
 }
 
 /** Strip to digits for fuzzy comparison. */

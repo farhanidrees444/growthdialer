@@ -51,7 +51,15 @@ export function fmtCallTime(iso: string | null | undefined): string {
 
 export function fmtPhone(num: string | null | undefined): string {
   if (!num) return 'Unknown';
-  const d = num.replace(/\D/g, '');
+  const trimmed = num.trim();
+  if (/^restricted@/i.test(trimmed) || /^anonymous@/i.test(trimmed) || /^private@/i.test(trimmed)) {
+    return 'Restricted / Private';
+  }
+  if (trimmed.includes('@') && !/^\+?\d/.test(trimmed)) {
+    const user = trimmed.split('@')[0];
+    return user ? `${user} (blocked ID)` : 'Unknown';
+  }
+  const d = trimmed.replace(/\D/g, '');
   if (d.length === 11 && d.startsWith('1')) {
     return `+1 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`;
   }
@@ -71,7 +79,7 @@ export function getCounterparty(call: CallLogRow): string {
   const phone = fmtPhone(raw);
 
   if (call.direction === 'inbound') {
-    if (leadName && phone !== 'Unknown') return `${leadName} · ${phone}`;
+    if (leadName && phone !== 'Unknown' && !phone.includes('blocked')) return `${leadName} · ${phone}`;
     if (leadName) return leadName;
     return phone;
   }

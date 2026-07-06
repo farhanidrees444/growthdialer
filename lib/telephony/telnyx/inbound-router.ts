@@ -200,6 +200,8 @@ async function ringCurrentAgent(
     gd_inbound_leg_b: true,
     inbound_call_id: ctx.inboundCallId,
     agent_id: agentId,
+    gd_from_number: ctx.fromNumber ?? '',
+    gd_to_number: ctx.toNumber,
   });
   if (!transferred) {
     voiceLog.error(

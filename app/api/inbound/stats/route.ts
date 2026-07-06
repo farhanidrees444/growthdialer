@@ -51,19 +51,20 @@ export async function GET(request: NextRequest) {
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
-  const missedCount = calls.filter((c) => {
-    return !c.answered_at && ['missed', 'no_answer', 'canceled', 'failed', 'rejected'].includes(c.status ?? '');
+  const isToday = (c: { started_at?: string | null; created_at?: string | null }) => {
+    const ts = c.started_at ?? c.created_at;
+    return Boolean(ts && new Date(ts) >= todayStart);
+  };
+
+  const todayCalls = calls.filter(isToday);
+
+  const missedCount = todayCalls.filter((c) => {
+    return !c.answered_at && ['missed', 'no_answer', 'canceled', 'failed', 'rejected', 'voicemail'].includes(c.status ?? '');
   }).length;
 
-  const todayInbound = calls.filter((c) => {
-    const ts = c.started_at ?? c.created_at;
-    return ts && new Date(ts) >= todayStart;
-  }).length;
+  const todayInbound = todayCalls.length;
 
-  const answeredToday = calls.filter((c) => {
-    const ts = c.started_at ?? c.created_at;
-    return c.answered_at && ts && new Date(ts) >= todayStart;
-  }).length;
+  const answeredToday = todayCalls.filter((c) => Boolean(c.answered_at)).length;
 
   const mode = (settings?.inbound_mode as string | null) ?? 'browser';
   const primary = callableNumbers.find((n) => n.is_default) ?? callableNumbers[0] ?? numbers[0] ?? null;
