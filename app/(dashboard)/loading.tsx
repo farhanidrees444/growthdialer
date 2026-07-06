@@ -1,5 +1,4 @@
-import { DashboardPageSkeleton } from '@/components/dashboard/dashboard-page-skeleton';
-
+/** Route transition — layout shell stays visible; page handles its own inline loading. */
 export default function DashboardLoading() {
-  return <DashboardPageSkeleton />;
+  return null;
 }

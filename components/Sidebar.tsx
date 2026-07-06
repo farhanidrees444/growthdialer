@@ -81,8 +81,8 @@ const INTELLIGENCE_ITEMS: NavItem[] = [
 ];
 
 const TEAM_ITEMS: NavItem[] = [
-  { id: "leaderboard", icon: Trophy, label: "Leaderboard", href: "/leaderboard", managerOnly: true, gateFeature: "leaderboard" },
-  { id: "coaching", icon: Headset, label: "Coaching", href: "/coaching", managerOnly: true, gateFeature: "coaching_dashboard" },
+  { id: "leaderboard", icon: Trophy, label: "Leaderboard", href: "/leaderboard", gateFeature: "leaderboard" },
+  { id: "coaching", icon: Headset, label: "Coaching", href: "/coaching", gateFeature: "coaching_dashboard" },
 ];
 
 const PREFETCH_HREFS = new Set(["/dialer", "/leads", "/analytics"]);
@@ -591,7 +591,7 @@ function SidebarInner({
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <LayoutGroup>
             <motion.nav
-              initial={reduceMotion ? false : "hidden"}
+              initial={false}
               animate="show"
               variants={reduceMotion ? undefined : STAGGER}
               className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-2 py-2 scrollbar-thin"

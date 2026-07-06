@@ -71,10 +71,35 @@ interface WorkspaceContextValue {
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 const STORAGE_KEY = 'gd-current-workspace';
+const SNAPSHOT_KEY = 'gd-workspace-snapshot';
+
+interface WorkspaceSnapshot {
+  workspaces: Workspace[];
+  workspace: Workspace;
+  role: Role;
+  memberId: string | null;
+}
 
 function getSavedWorkspaceId(): string | null {
   if (typeof window === 'undefined') return null;
   try { return localStorage.getItem(STORAGE_KEY); } catch { return null; }
+}
+
+function readWorkspaceSnapshot(): WorkspaceSnapshot | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(SNAPSHOT_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as WorkspaceSnapshot;
+  } catch {
+    return null;
+  }
+}
+
+function writeWorkspaceSnapshot(snapshot: WorkspaceSnapshot) {
+  try {
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snapshot));
+  } catch { /* ignore */ }
 }
 
 function saveWorkspaceId(id: string) {
@@ -86,11 +111,16 @@ function saveWorkspaceId(id: string) {
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const session = useSupabaseSession();
   const userId = session?.user?.id ?? null;
+  const cachedSnapshot = readWorkspaceSnapshot();
 
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [currentWorkspace, setCurrentWorkspaceState] = useState<Workspace | null>(null);
-  const [currentRole, setCurrentRole] = useState<Role | null>(null);
-  const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(cachedSnapshot?.workspaces ?? []);
+  const [currentWorkspace, setCurrentWorkspaceState] = useState<Workspace | null>(
+    cachedSnapshot?.workspace ?? null,
+  );
+  const [currentRole, setCurrentRole] = useState<Role | null>(cachedSnapshot?.role ?? null);
+  const [currentMemberId, setCurrentMemberId] = useState<string | null>(
+    cachedSnapshot?.memberId ?? null,
+  );
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [membersLoading, setMembersLoading] = useState(false);
@@ -134,6 +164,12 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       setCurrentRole((membership?.role as Role) ?? null);
       setCurrentMemberId(membership?.id ?? null);
       saveWorkspaceId(target.id);
+      writeWorkspaceSnapshot({
+        workspaces: wsList,
+        workspace: target,
+        role: (membership?.role as Role) ?? null,
+        memberId: membership?.id ?? null,
+      });
     }
     setLoading(false);
   }, [userId]);
@@ -177,6 +213,16 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     setCurrentRole((data?.role as Role) ?? null);
     setCurrentMemberId(data?.id ?? null);
     saveWorkspaceId(ws.id);
+    setWorkspaces((prev) => {
+      const next = prev.some((w) => w.id === ws.id) ? prev : [...prev, ws];
+      writeWorkspaceSnapshot({
+        workspaces: next,
+        workspace: ws,
+        role: (data?.role as Role) ?? null,
+        memberId: data?.id ?? null,
+      });
+      return next;
+    });
   }, [userId]);
 
   const inviteMember = useCallback(async (email: string, role: Role, message?: string) => {

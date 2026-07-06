@@ -32,7 +32,6 @@ import {
   getRecentCallHref,
   getRecentDispositionLabel,
 } from "@/lib/calls/recent";
-import { DashboardPageSkeleton } from "@/components/dashboard/dashboard-page-skeleton";
 import { ShimmerSkeleton } from "@/components/ui/shimmer-skeleton";
 import type { DailyPoint } from "@/components/dashboard/call-activity-chart";
 
@@ -549,16 +548,11 @@ export default function DashboardPage() {
     }
   }, [allLoading, stats, recentCalls]);
 
-  if (allLoading) {
-    return <DashboardPageSkeleton />;
-  }
-
   return (
     <GsapScrollReveal className="relative flex-1 overflow-y-auto">
       <motion.div
-        initial={reduceMotion ? false : { opacity: 0 }}
+        initial={false}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         className="relative flex-1"
       >
         <div aria-hidden className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_42%_0%,rgba(139,92,246,0.1),transparent_32%),radial-gradient(circle_at_92%_28%,rgba(6,182,212,0.06),transparent_28%)]" />
