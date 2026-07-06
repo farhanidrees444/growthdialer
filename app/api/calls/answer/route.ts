@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
   }
 
   await markInboundAccepted(service, telnyxSessionId, user.id);
+  console.log('[INBOUND-ANSWERED]', telnyxSessionId);
   return NextResponse.json({
     ok: true,
     status: 'answered',

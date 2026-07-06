@@ -42,5 +42,6 @@ export async function POST(request: NextRequest) {
   }
 
   await markInboundDeclined(service, telnyxSessionId);
-  return NextResponse.json({ ok: true, status: 'declined' });
+  console.log('[INBOUND-DECLINED]', telnyxSessionId);
+  return NextResponse.json({ ok: true, status: 'missed' });
 }

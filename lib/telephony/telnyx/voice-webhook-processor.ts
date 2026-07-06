@@ -7,6 +7,7 @@ import {
 } from '@/lib/recordings/handle-saved';
 import { handleCoachLegAnswered } from '@/lib/coaching/telnyx-conference';
 import { normalizeE164, normalizeInboundCallerId } from '@/lib/inbound/phone';
+import { extractInboundCallerFromEventPayload } from '@/lib/telephony/telnyx/payload-utils';
 import { findLeadByCallerPhone } from '@/lib/inbound/match-lead';
 import { getCachedNumberOwner } from '@/lib/inbound/number-owner-cache';
 import { completeInboundBridge } from '@/lib/inbound/bridge-to-browser';
@@ -236,13 +237,9 @@ async function processTelnyxWebhookBackground(
         }
 
         const toNumber = normalizeE164(payload.to ?? '');
-        const fromCandidates = [payload.from, payload.caller_id_number, payload.from_number];
-        let fromNumber: string | null = null;
-        for (const raw of fromCandidates) {
-          if (typeof raw !== 'string' || !raw.trim()) continue;
-          fromNumber = normalizeInboundCallerId(raw) ?? raw.trim();
-          if (fromNumber) break;
-        }
+        const fromNumber = extractInboundCallerFromEventPayload(
+          payload as unknown as Record<string, unknown>,
+        );
         const ownedTo = await getCachedNumberOwner(supabase, toNumber);
         const dirInbound = directionSaysInbound(payload.direction);
         const treatAsInbound = dirInbound === true || (dirInbound === null && Boolean(ownedTo));

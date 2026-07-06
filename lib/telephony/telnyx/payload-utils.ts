@@ -1,4 +1,4 @@
-import { normalizeInboundCallerId } from '@/lib/inbound/phone';
+import { normalizeE164, normalizeInboundCallerId } from '@/lib/inbound/phone';
 
 export function readTelnyxInnerPayload(
   root: Record<string, unknown>,
@@ -25,21 +25,47 @@ export function isInboundTelnyxPayload(root: Record<string, unknown>): boolean {
   return dir === 'incoming' || dir === 'inbound';
 }
 
-/** Caller ID from Telnyx inbound webhook — field order per Telnyx payload variants. */
+function readPhoneFromTelnyxFromField(fromField: unknown): string | null {
+  if (fromField && typeof fromField === 'object' && fromField !== null) {
+    const phone = (fromField as { phone_number?: unknown }).phone_number;
+    if (typeof phone === 'string' && phone.trim()) {
+      return normalizeInboundCallerId(phone) ?? normalizeE164(phone);
+    }
+  }
+  if (typeof fromField === 'string' && fromField.trim()) {
+    return normalizeInboundCallerId(fromField) ?? fromField.trim();
+  }
+  return null;
+}
+
+/** Caller ID from Telnyx inbound webhook payload (string or nested from.phone_number). */
 export function extractInboundCallerNumber(root: Record<string, unknown>): string | null {
   const inner = readTelnyxInnerPayload(root);
-  const data = root.data as Record<string, unknown> | undefined;
+
+  const fromObject = readPhoneFromTelnyxFromField(inner.from);
+  if (fromObject) return fromObject;
+
   const candidates = [
-    inner.from,
     inner.caller_id_number,
     inner.from_number,
-    data?.from,
-    root.from,
   ];
 
   for (const raw of candidates) {
     if (typeof raw !== 'string' || !raw.trim()) continue;
-    const normalized = normalizeInboundCallerId(raw) ?? (raw.trim() || null);
+    const normalized = normalizeInboundCallerId(raw) ?? raw.trim();
+    if (normalized) return normalized;
+  }
+  return null;
+}
+
+export function extractInboundCallerFromEventPayload(payload: Record<string, unknown>): string | null {
+  const fromObject = readPhoneFromTelnyxFromField(payload.from);
+  if (fromObject) return fromObject;
+
+  const candidates = [payload.caller_id_number, payload.from_number];
+  for (const raw of candidates) {
+    if (typeof raw !== 'string' || !raw.trim()) continue;
+    const normalized = normalizeInboundCallerId(raw) ?? raw.trim();
     if (normalized) return normalized;
   }
   return null;

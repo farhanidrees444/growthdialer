@@ -48,11 +48,7 @@ export function useInboundCallsRing(userId: string | null | undefined) {
 
   const applyRing = useCallback((mapped: ServerInboundRing | null) => {
     if (mapped) {
-      console.log('[INBOUND-POPUP-TRIGGER]', {
-        call_id: mapped.callId,
-        session: mapped.telnyxSessionId,
-        from: mapped.fromNumber,
-      });
+      console.log('[INBOUND-POPUP-TRIGGER] showing popup for', mapped.telnyxSessionId);
       setRing(mapped);
       playInboundRingtone();
       return;
@@ -108,7 +104,24 @@ export function useInboundCallsRing(userId: string | null | undefined) {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
+          schema: 'public',
+          table: 'calls',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const row = payload.new as Record<string, unknown> | undefined;
+          if (!row?.id) return;
+          if (row.direction !== 'inbound' || row.status !== 'ringing') return;
+          const mapped = mapRow(row);
+          if (!mapped) return;
+          applyRing(mapped);
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
           schema: 'public',
           table: 'calls',
           filter: `user_id=eq.${userId}`,
@@ -116,13 +129,6 @@ export function useInboundCallsRing(userId: string | null | undefined) {
         (payload) => {
           const row = (payload.new ?? payload.old) as Record<string, unknown> | undefined;
           if (!row?.id) return;
-
-          if (payload.eventType === 'DELETE') {
-            if (ringRef.current?.callId === row.id) {
-              clearRing();
-            }
-            return;
-          }
 
           if (row.direction !== 'inbound' || row.status !== 'ringing') {
             if (ringRef.current?.callId === row.id) {

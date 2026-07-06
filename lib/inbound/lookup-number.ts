@@ -4,7 +4,7 @@ import { buildPhoneVariants, normalizeE164, phoneDigits } from '@/lib/inbound/ph
 export interface OwnedNumberRow {
   user_id: string;
   phone_number: string;
-  status: string;
+  status?: string;
   workspace_id?: string | null;
 }
 
@@ -19,49 +19,76 @@ function digitsMatch(a: string, b: string): boolean {
 }
 
 /**
+ * Primary inbound DID lookup — uses purchased_numbers.user_id (not workspace_id).
+ * SELECT user_id FROM purchased_numbers WHERE phone_number = E.164
+ */
+export async function findPurchasedNumberOwner(
+  supabase: SupabaseClient,
+  toE164: string,
+): Promise<{
+  id: string;
+  user_id: string;
+  phone_number: string;
+  telnyx_number_id: string | null;
+} | null> {
+  const normalized = normalizeE164(toE164);
+  if (!normalized) return null;
+
+  const { data, error } = await supabase
+    .from('purchased_numbers')
+    .select('id, user_id, phone_number, telnyx_number_id')
+    .eq('phone_number', normalized)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error('[INBOUND] purchased_numbers lookup failed:', error.message, { to: normalized });
+  }
+  if (data?.user_id) return data;
+
+  for (const variant of buildPhoneVariants(normalized)) {
+    if (variant === normalized) continue;
+    const { data: alt } = await supabase
+      .from('purchased_numbers')
+      .select('id, user_id, phone_number, telnyx_number_id')
+      .eq('phone_number', variant)
+      .limit(1)
+      .maybeSingle();
+    if (alt?.user_id) return alt;
+  }
+
+  return null;
+}
+
+/**
  * Resolve the owner of a DID using E.164 normalization and legacy stored formats.
  */
 export async function findNumberOwner(
   supabase: SupabaseClient,
   toE164: string,
 ): Promise<OwnedNumberRow | null> {
-  const normalized = normalizeE164(toE164);
-  const variants = buildPhoneVariants(normalized);
-  if (variants.length === 0) return null;
-
-  const { data: exact } = await supabase
-    .from('purchased_numbers')
-    .select('user_id, phone_number, status, workspace_id, is_default')
-    .in('phone_number', variants)
-    .neq('status', 'released')
-    .order('is_default', { ascending: false })
-    .limit(2);
-
-  if (exact && exact.length > 1) {
-    console.error(
-      '[INBOUND] duplicate DID ownership — using primary owner | did:',
-      normalized,
-      '| users:',
-      exact.map((r) => r.user_id).join(','),
-    );
+  const row = await findPurchasedNumberOwner(supabase, toE164);
+  if (row) {
+    return {
+      user_id: row.user_id,
+      phone_number: row.phone_number,
+    };
   }
 
-  if (exact?.[0]) return exact[0] as OwnedNumberRow;
-
+  const normalized = normalizeE164(toE164);
   const targetDigits = phoneDigits(normalized);
   const last10 = targetDigits.length >= 10 ? targetDigits.slice(-10) : null;
 
   if (last10) {
     const { data: candidates } = await supabase
       .from('purchased_numbers')
-      .select('user_id, phone_number, status, workspace_id, is_default')
-      .neq('status', 'released')
+      .select('user_id, phone_number')
       .or(`phone_number.ilike.%${last10}%,phone_number.ilike.%${targetDigits}%`)
       .limit(30);
 
-    for (const row of candidates ?? []) {
-      if (digitsMatch(row.phone_number ?? '', normalized)) {
-        return row as OwnedNumberRow;
+    for (const candidate of candidates ?? []) {
+      if (digitsMatch(candidate.phone_number ?? '', normalized)) {
+        return candidate as OwnedNumberRow;
       }
     }
   }
@@ -73,46 +100,9 @@ export async function findNumberOwnerWithMeta(
   supabase: SupabaseClient,
   toE164: string,
 ): Promise<(OwnedNumberRow & { id?: string; telnyx_number_id?: string | null }) | null> {
-  const normalized = normalizeE164(toE164);
-  const variants = buildPhoneVariants(normalized);
-  if (variants.length === 0) return null;
+  const direct = await findPurchasedNumberOwner(supabase, toE164);
+  if (direct) return direct;
 
-  const { data: exact } = await supabase
-    .from('purchased_numbers')
-    .select('id, user_id, phone_number, status, workspace_id, telnyx_number_id, is_default')
-    .in('phone_number', variants)
-    .neq('status', 'released')
-    .order('is_default', { ascending: false })
-    .limit(2);
-
-  if (exact && exact.length > 1) {
-    console.error(
-      '[INBOUND] duplicate DID ownership — using primary owner | did:',
-      normalized,
-      '| users:',
-      exact.map((r) => r.user_id).join(','),
-    );
-  }
-
-  if (exact?.[0]) return exact[0] as OwnedNumberRow & { id?: string; telnyx_number_id?: string | null };
-
-  const targetDigits = phoneDigits(normalized);
-  const last10 = targetDigits.length >= 10 ? targetDigits.slice(-10) : null;
-
-  if (last10) {
-    const { data: candidates } = await supabase
-      .from('purchased_numbers')
-      .select('id, user_id, phone_number, status, workspace_id, telnyx_number_id')
-      .neq('status', 'released')
-      .or(`phone_number.ilike.%${last10}%,phone_number.ilike.%${targetDigits}%`)
-      .limit(30);
-
-    for (const row of candidates ?? []) {
-      if (digitsMatch(row.phone_number ?? '', normalized)) {
-        return row as OwnedNumberRow & { id?: string; telnyx_number_id?: string | null };
-      }
-    }
-  }
-
-  return null;
+  const owner = await findNumberOwner(supabase, toE164);
+  return owner;
 }
