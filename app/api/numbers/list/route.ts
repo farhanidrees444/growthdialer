@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { withBillingMeta } from '@/lib/numbers/billing-lifecycle';
 import { computeNumberHealth } from '@/lib/numbers/health';
 import { getPhoneNumberSettings } from '@/lib/voice/phone-number-settings';
 
@@ -13,7 +14,8 @@ export async function GET(request: NextRequest) {
     const access = await requireWorkspaceFromRequest(request, supabase, user.id);
     if (isWorkspaceError(access)) return access;
 
-    let query = supabase
+    // User-owned lines — workspace_id is routing metadata, not visibility scope.
+    const { data: numbers, error } = await supabase
       .from('purchased_numbers')
       .select(`
         id, phone_number, telnyx_number_id, country, number_type,
@@ -23,12 +25,7 @@ export async function GET(request: NextRequest) {
         label, health_score, spam_status
       `)
       .eq('user_id', user.id)
-      .neq('status', 'released');
-
-    // Scope to active workspace when numbers are workspace-linked
-    query = query.or(`workspace_id.eq.${access.workspaceId},workspace_id.is.null`);
-
-    const { data: numbers, error } = await query
+      .neq('status', 'released')
       .order('is_default', { ascending: false })
       .order('purchased_at', { ascending: false });
 
@@ -77,7 +74,7 @@ export async function GET(request: NextRequest) {
           connect_rate: connectRate,
         });
 
-        return {
+        return withBillingMeta({
           ...num,
           settings: settings ?? {
             recording_enabled: true,
@@ -93,7 +90,7 @@ export async function GET(request: NextRequest) {
             last_used: lastRes.data?.started_at ?? null,
           },
           ...health,
-        };
+        });
       }),
     );
 

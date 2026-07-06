@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { LayoutGrid, List, Loader2, Phone, Plus, Search, Shield, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { createClient } from '@/lib/supabase/client';
+import { withBillingMeta } from '@/lib/numbers/billing-lifecycle';
 import { NumberInventoryRow } from '@/components/numbers/number-inventory-row';
 import { NumbersPortfolioSummary } from '@/components/numbers/numbers-portfolio-summary';
 import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
@@ -64,6 +66,50 @@ export function MyNumbersPanel({
     void load();
   }, [load, refreshSignal]);
 
+  useEffect(() => {
+    const supabase = createClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    void (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      channel = supabase
+        .channel(`my-numbers-${user.id}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'purchased_numbers', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            if (payload.eventType === 'DELETE') {
+              const oldRow = payload.old as { id?: string };
+              if (oldRow.id) {
+                setNumbers((prev) => prev.filter((n) => n.id !== oldRow.id));
+              }
+              return;
+            }
+
+            const row = payload.new as PurchasedNumberRecord;
+            if (!row?.id || row.status === 'released') {
+              if (row?.id) setNumbers((prev) => prev.filter((n) => n.id !== row.id));
+              return;
+            }
+
+            setNumbers((prev) => {
+              const existing = prev.find((n) => n.id === row.id);
+              const merged = withBillingMeta({ ...existing, ...row } as PurchasedNumberRecord);
+              if (!existing) return [merged, ...prev];
+              return prev.map((n) => (n.id === row.id ? { ...n, ...merged } : n));
+            });
+          },
+        )
+        .subscribe();
+    })();
+
+    return () => {
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, []);
+
   const active = useMemo(
     () => numbers.filter((n) => n.status !== 'released'),
     [numbers],
@@ -89,6 +135,28 @@ export function MyNumbersPanel({
   }, [active, filter, search]);
 
   const unchecked = active.filter((n) => !n.has_reputation_check);
+
+  async function handleExtend(id: string) {
+    const res = await apiFetch(`/api/numbers/${id}/extend`, { method: 'POST' });
+    const data = await res.json() as { error?: string; next_billing_date?: string };
+    if (data.error) {
+      toast.error(data.error);
+      return;
+    }
+    toast.success('Line extended for 30 days');
+    setNumbers((prev) =>
+      prev.map((n) =>
+        n.id === id
+          ? withBillingMeta({
+              ...n,
+              next_billing_date: data.next_billing_date ?? n.next_billing_date,
+              billing_status: 'active',
+              status: 'active',
+            })
+          : n,
+      ),
+    );
+  }
 
   async function handleSettingsPatch(
     id: string,
@@ -341,6 +409,7 @@ export function MyNumbersPanel({
                 onSpamCheck={() => handleSpamCheck(num.id)}
                 onLabelSave={(label) => handleLabelSave(num.id, label)}
                 onSettingsPatch={(patch) => handleSettingsPatch(num.id, patch)}
+                onExtend={() => handleExtend(num.id)}
               />
             </motion.div>
           ))}

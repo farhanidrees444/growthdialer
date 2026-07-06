@@ -1,4 +1,9 @@
 import {
+  daysUntilBilling,
+  isExpiringWithinDays,
+  type NumberBillingFields,
+} from '@/lib/numbers/billing-lifecycle';
+import {
   averageComputedHealth,
   isConfirmedIssue,
   type NumberHealthAction,
@@ -43,17 +48,17 @@ export type PurchasedNumberRecord = {
   action_required?: NumberHealthAction;
   has_call_data?: boolean;
   has_reputation_check?: boolean;
+  purchased_at?: string | null;
+  days_remaining?: number | null;
+  is_expired?: boolean;
+  is_callable?: boolean;
+  days_label?: string | null;
 };
 
-export function daysUntilBilling(iso: string | null | undefined): number | null {
-  if (!iso) return null;
-  return Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);
-}
+export { daysUntilBilling };
 
-export function isExpiringSoon(num: PurchasedNumberRecord): boolean {
-  if (!num.next_billing_date || num.stripe_subscription_id) return false;
-  const d = daysUntilBilling(num.next_billing_date);
-  return d !== null && d <= 7 && d >= 0;
+export function isExpiringSoon(num: PurchasedNumberRecord & NumberBillingFields): boolean {
+  return isExpiringWithinDays(num, 7);
 }
 
 export function filterNumbers(numbers: PurchasedNumberRecord[], filter: NumberFilter): PurchasedNumberRecord[] {

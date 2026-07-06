@@ -1,9 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { isNumberCallable } from '@/lib/numbers/billing-lifecycle';
 import { getBestCallerNumber } from '@/lib/utils/local-presence';
 
 interface PurchasedNumberRow {
   phone_number: string;
   is_default: boolean;
+  status: string;
+  next_billing_date?: string | null;
+  stripe_subscription_id?: string | null;
 }
 
 export interface CallerNumberCache {
@@ -17,14 +21,18 @@ export async function prefetchUserCallerNumbers(
 ): Promise<CallerNumberCache> {
   const { data: numbers } = await supabase
     .from('purchased_numbers')
-    .select('phone_number, is_default')
+    .select('phone_number, is_default, status, next_billing_date, stripe_subscription_id')
     .eq('user_id', userId)
     .eq('status', 'active')
     .order('is_default', { ascending: false })
     .order('purchased_at', { ascending: false });
 
+  const callable = (numbers ?? []).filter((row) =>
+    isNumberCallable(row as PurchasedNumberRow),
+  ) as PurchasedNumberRow[];
+
   return {
-    numbers: (numbers ?? []) as PurchasedNumberRow[],
+    numbers: callable,
     fallback: '',
   };
 }

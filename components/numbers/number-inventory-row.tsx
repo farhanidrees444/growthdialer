@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { NumberHealthBadge } from '@/components/numbers/number-health-badge';
+import { NumberBillingBadge } from '@/components/numbers/number-billing-badge';
 import { NumberStatusIndicator } from '@/components/numbers/number-health-ring';
 import {
   formatHealthPercent,
@@ -53,6 +54,7 @@ export function NumberInventoryRow({
   onSpamCheck,
   onLabelSave,
   onSettingsPatch,
+  onExtend,
 }: {
   num: PurchasedNumberRecord;
   retailPrice: number;
@@ -62,6 +64,7 @@ export function NumberInventoryRow({
   onSpamCheck: () => Promise<void>;
   onLabelSave: (label: string) => Promise<void>;
   onSettingsPatch: (patch: Record<string, unknown>) => Promise<void>;
+  onExtend: () => Promise<void>;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -92,10 +95,12 @@ export function NumberInventoryRow({
     <div
       className={cn(
         'group overflow-hidden rounded-2xl border transition-all duration-200',
-        num.needs_attention
+        num.is_expired
+          ? 'border-red-500/25 bg-red-500/[0.03] opacity-90'
+          : num.needs_attention
           ? 'border-orange-500/25 bg-orange-500/[0.03] shadow-[0_0_0_1px_rgba(251,146,60,0.08)]'
           : 'border-white/[0.08] bg-white/[0.025] hover:border-white/[0.14] hover:bg-white/[0.04]',
-        num.is_default && 'ring-1 ring-cyan-500/15',
+        num.is_default && !num.is_expired && 'ring-1 ring-cyan-500/15',
       )}
     >
       <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:gap-6 lg:p-5">
@@ -160,9 +165,17 @@ export function NumberInventoryRow({
               <span>${retailPrice.toFixed(2)}/mo</span>
               <span className="text-slate-700">·</span>
               <span className={num.billing_status === 'active' ? 'text-emerald-400/90' : 'text-amber-400/90'}>
-                {num.billing_status === 'active' ? 'Subscribed' : 'No subscription'}
+                {num.billing_status === 'active' ? 'Active' : 'Billing pending'}
               </span>
             </div>
+
+            <NumberBillingBadge num={num} onExtend={onExtend} />
+
+            {num.is_expired && (
+              <p className="text-xs text-red-300/90">
+                This line has expired — extend it or outbound calls will be blocked.
+              </p>
+            )}
 
             <div className="flex flex-wrap gap-2 pt-0.5">
               <MetricPill
@@ -194,7 +207,7 @@ export function NumberInventoryRow({
         </div>
 
         <div className="flex items-center gap-2 lg:shrink-0">
-          {!checked && (
+          {!num.is_expired && !checked && (
             <button
               type="button"
               disabled={busy === 'spam'}
@@ -205,7 +218,7 @@ export function NumberInventoryRow({
               Verify line
             </button>
           )}
-          {checked && (
+          {!num.is_expired && checked && (
             <button
               type="button"
               disabled={busy === 'spam'}

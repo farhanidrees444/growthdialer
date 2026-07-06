@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     const { fromNumber } = await resolveCallerIdForLead(supabase, userId, leadPhone ?? to);
     if (!fromNumber) {
       return NextResponse.json(
-        { error: 'No active caller ID — contact support to assign a voice line.' },
+        { error: 'No active caller ID — extend or add a number in My Numbers.' },
         { status: 422 },
       );
     }

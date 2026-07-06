@@ -120,15 +120,17 @@ export function CallProvider({ children }: { children: ReactNode }) {
       // Auto-fetch the user's default purchased number so Telnyx accepts the call
       try {
         const res = await fetch('/api/numbers/list');
-        const data = await res.json() as { numbers?: Array<{ phone_number: string; is_default: boolean }> };
-        const nums = data.numbers ?? [];
+        const data = await res.json() as {
+          numbers?: Array<{ phone_number: string; is_default: boolean; is_callable?: boolean; status: string }>;
+        };
+        const nums = (data.numbers ?? []).filter((n) => n.is_callable !== false && n.status === 'active');
         const defaultNum = nums.find((n) => n.is_default) ?? nums[0];
         fromNumber = defaultNum?.phone_number;
       } catch { /* proceed without — call may be rejected by Telnyx */ }
     }
 
     if (!fromNumber) {
-      toast.error('No outbound caller ID — add a number in My Numbers');
+      toast.error('No active caller ID — extend or add a number in My Numbers');
       return;
     }
 

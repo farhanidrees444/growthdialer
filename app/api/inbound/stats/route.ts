@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
+import { isNumberCallable, withBillingMeta } from '@/lib/numbers/billing-lifecycle';
 import { hasPermission } from '@/lib/auth/permissions';
 
 const MODE_LABELS: Record<string, string> = {
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
       .maybeSingle(),
     supabase
       .from('purchased_numbers')
-      .select('id, phone_number, is_default, status, label')
+      .select('id, phone_number, is_default, status, label, next_billing_date, stripe_subscription_id, purchased_at')
       .eq('user_id', user.id)
       .eq('status', 'active')
       .order('is_default', { ascending: false }),
@@ -43,7 +44,8 @@ export async function GET(request: NextRequest) {
   ]);
 
   const settings = settingsRes.data;
-  const numbers = numbersRes.data ?? [];
+  const numbers = (numbersRes.data ?? []).map((n) => withBillingMeta(n));
+  const callableNumbers = numbers.filter((n) => isNumberCallable(n));
   const calls = callsRes.data ?? [];
 
   const todayStart = new Date();
@@ -64,7 +66,7 @@ export async function GET(request: NextRequest) {
   }).length;
 
   const mode = (settings?.inbound_mode as string | null) ?? 'browser';
-  const primary = numbers.find((n) => n.is_default) ?? numbers[0] ?? null;
+  const primary = callableNumbers.find((n) => n.is_default) ?? callableNumbers[0] ?? numbers[0] ?? null;
 
   return NextResponse.json({
     inbound_mode: mode,
@@ -74,9 +76,12 @@ export async function GET(request: NextRequest) {
     missed_call_notify: settings?.missed_call_notify ?? true,
     numbers,
     has_numbers: numbers.length > 0,
+    has_callable_numbers: callableNumbers.length > 0,
     missed_count: missedCount,
     today_inbound: todayInbound,
     answered_today: answeredToday,
     primary_number: primary?.phone_number ?? null,
+    primary_days_label: primary?.days_label ?? null,
+    primary_is_expired: primary?.is_expired ?? false,
   });
 }

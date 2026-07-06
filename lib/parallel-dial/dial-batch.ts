@@ -48,6 +48,9 @@ export async function dialParallelBatch(
 
   const amd = session.amd_enabled ? 'detect' : 'disabled';
   const numberCache = await prefetchUserCallerNumbers(supabase, userId);
+  if (!numberCache.numbers.length) {
+    throw new Error('No active caller ID — extend or add a number in My Numbers');
+  }
   const workspaceId = session.workspace_id ?? '';
   const trust = workspaceId
     ? await resolveWorkspaceOutboundTrust(supabase, workspaceId, numberCache.numbers[0]?.phone_number ?? '')

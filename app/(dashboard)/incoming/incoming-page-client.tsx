@@ -29,6 +29,8 @@ import { InboundHistoryPanel } from '@/components/calls/inbound-history-panel';
 import { PostCallCommandCenter } from '@/components/calls/post-call-command-center';
 import { InboundHealthPanel } from '@/components/inbound/inbound-health-panel';
 import { LiveWaveform } from '@/components/marketing/live-floor/LiveWaveform';
+import { NumberBillingBadge } from '@/components/numbers/number-billing-badge';
+import { withBillingMeta } from '@/lib/numbers/billing-lifecycle';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import type { CallLogRow } from '@/lib/calls/display';
@@ -39,6 +41,10 @@ interface PurchasedNumber {
   is_default: boolean;
   status: string;
   label: string | null;
+  next_billing_date?: string | null;
+  stripe_subscription_id?: string | null;
+  days_label?: string | null;
+  is_expired?: boolean;
 }
 
 interface InboundStats {
@@ -49,10 +55,13 @@ interface InboundStats {
   missed_call_notify: boolean;
   numbers: PurchasedNumber[];
   has_numbers: boolean;
+  has_callable_numbers?: boolean;
   missed_count: number;
   today_inbound: number;
   answered_today: number;
   primary_number: string | null;
+  primary_days_label?: string | null;
+  primary_is_expired?: boolean;
 }
 
 interface FloorLogEntry {
@@ -249,6 +258,47 @@ export function IncomingPageClient() {
   useEffect(() => { loadStats(); }, [loadStats]);
 
   useEffect(() => {
+    const supabase = createClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    void (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      channel = supabase
+        .channel(`incoming-numbers-${user.id}`)
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'purchased_numbers', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            const row = payload.new as PurchasedNumber;
+            if (!row?.id) return;
+            const merged = withBillingMeta(row);
+            setStats((prev) => {
+              if (!prev) return prev;
+              const numbers = prev.numbers.map((n) =>
+                n.id === row.id ? { ...n, ...merged } : n,
+              );
+              const primary = numbers.find((n) => n.is_default) ?? numbers[0] ?? null;
+              return {
+                ...prev,
+                numbers,
+                primary_number: primary?.phone_number ?? prev.primary_number,
+                primary_days_label: primary?.days_label ?? null,
+                primary_is_expired: primary?.is_expired ?? false,
+              };
+            });
+          },
+        )
+        .subscribe();
+    })();
+
+    return () => {
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
     pushLog('Incoming channel subscribed', 'violet');
     const supabase = createClient();
     const channel = supabase
@@ -304,6 +354,10 @@ export function IncomingPageClient() {
   };
 
   const primaryNumber = stats?.primary_number ?? stats?.numbers[0]?.phone_number ?? null;
+  const primaryLine = stats?.numbers.find((n) => n.phone_number === primaryNumber)
+    ?? stats?.numbers.find((n) => n.is_default)
+    ?? stats?.numbers[0]
+    ?? null;
   const activeRings = isRinging ? 1 : 0;
 
   const saveLatestCallNotes = async (notes: string) => {
@@ -521,6 +575,36 @@ export function IncomingPageClient() {
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-400/90">Primary line</p>
                 <p className="mt-2 font-display text-3xl font-semibold tabular-nums text-white">{fmtPhone(primaryNumber)}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{stats.inbound_mode_label}</p>
+                {primaryLine && (
+                  <div className="mt-3">
+                    <NumberBillingBadge
+                      num={primaryLine}
+                      onExtend={async () => {
+                        const res = await apiFetch(`/api/numbers/${primaryLine.id}/extend`, { method: 'POST' });
+                        const data = await res.json() as { error?: string; next_billing_date?: string };
+                        if (data.error) throw new Error(data.error);
+                        setStats((prev) => {
+                          if (!prev) return prev;
+                          const numbers = prev.numbers.map((n) =>
+                            n.id === primaryLine.id
+                              ? withBillingMeta({ ...n, next_billing_date: data.next_billing_date ?? n.next_billing_date })
+                              : n,
+                          );
+                          const primary = numbers.find((n) => n.id === primaryLine.id) ?? numbers[0];
+                          return {
+                            ...prev,
+                            numbers,
+                            primary_days_label: primary?.days_label ?? null,
+                            primary_is_expired: primary?.is_expired ?? false,
+                          };
+                        });
+                      }}
+                    />
+                  </div>
+                )}
+                {stats.primary_is_expired && (
+                  <p className="mt-2 text-xs text-red-300/90">Line expired — extend to restore outbound calling.</p>
+                )}
               </div>
               <button
                 type="button"

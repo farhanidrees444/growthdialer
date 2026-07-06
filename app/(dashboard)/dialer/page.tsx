@@ -218,8 +218,10 @@ export default function DialerPage() {
     try {
       const res = await apiFetch('/api/numbers/list');
       if (!res.ok) return;
-      const data = await res.json() as { numbers?: Array<{ phone_number: string; is_default: boolean; status: string }> };
-      const nums = (data.numbers ?? []).filter((n) => n.status === 'active');
+      const data = await res.json() as {
+        numbers?: Array<{ phone_number: string; is_default: boolean; status: string; is_callable?: boolean }>;
+      };
+      const nums = (data.numbers ?? []).filter((n) => n.status === 'active' && n.is_callable !== false);
       const defaultNum = nums.find((n) => n.is_default) ?? nums[0];
       if (defaultNum?.phone_number) setFromNumber(defaultNum.phone_number);
     } catch { /* non-fatal */ }
@@ -375,7 +377,7 @@ export default function DialerPage() {
       } catch { /* non-fatal */ }
     }
     if (!callerId) {
-      toast.error('No outbound caller ID — add a number in My Numbers');
+      toast.error('No active caller ID — extend or add a number in My Numbers');
       router.push('/numbers');
       return;
     }
