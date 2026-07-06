@@ -1,5 +1,5 @@
 import type { VoiceSdkCall } from '@/lib/voice/telnyx-call-shim';
-import { extractCallSidFromSdkCall } from '@/lib/twilio/extract-call-sid';
+import { extractCallSidFromSdkCall } from '@/lib/voice/extract-call-id';
 import { eventBus } from './eventBus';
 
 export type CallDirection = 'inbound' | 'outbound';

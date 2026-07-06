@@ -13,8 +13,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => ({})) as {
-    inbound_call_id?: string;
-    call_id?: string;
+    telnyx_session_id?: string;
     call_control_id?: string;
     agent_id?: string;
     user_id?: string;
@@ -22,11 +21,11 @@ export async function POST(request: NextRequest) {
     inbound_mode?: string;
   };
 
-  const inboundCallId = body.inbound_call_id ?? body.call_id;
+  const telnyxSessionId = body.telnyx_session_id?.trim();
   const agentId = body.agent_id ?? body.user_id;
   const callControlId = body.call_control_id;
 
-  if (!inboundCallId || !callControlId || !agentId) {
+  if (!telnyxSessionId || !callControlId || !agentId) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
@@ -36,7 +35,7 @@ export async function POST(request: NextRequest) {
   }
 
   void processInboundRingTimeout(supabase, {
-    inboundCallId,
+    telnyxSessionId,
     callControlId,
     agentId,
     ringSeconds: body.ring_seconds ?? 25,

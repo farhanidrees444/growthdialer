@@ -1,7 +1,7 @@
 import { resolveVoiceAppBaseUrl } from '@/lib/voice/webhook-url';
 
 export function triggerInboundRingTimeoutAsync(
-  inboundCallId: string,
+  telnyxSessionId: string,
   callControlId: string,
   agentId: string,
   ringSeconds: number,
@@ -10,7 +10,7 @@ export function triggerInboundRingTimeoutAsync(
   const internalSecret = process.env.INTERNAL_API_SECRET?.trim();
   const baseUrl = resolveVoiceAppBaseUrl();
   if (!internalSecret || !baseUrl) {
-    console.warn('[INBOUND] Cannot schedule ring timeout — INTERNAL_API_SECRET or APP_URL missing');
+    console.warn('[INBOUND-RING] Cannot schedule ring timeout — INTERNAL_API_SECRET or APP_URL missing');
     return;
   }
 
@@ -22,7 +22,7 @@ export function triggerInboundRingTimeoutAsync(
       'x-internal-secret': internalSecret,
     },
     body: JSON.stringify({
-      inbound_call_id: inboundCallId,
+      telnyx_session_id: telnyxSessionId,
       call_control_id: callControlId,
       agent_id: agentId,
       ring_seconds: ringSeconds,
@@ -31,9 +31,9 @@ export function triggerInboundRingTimeoutAsync(
     signal: AbortSignal.timeout(120_000),
   }).then(async (res) => {
     if (!res.ok) {
-      console.error('[INBOUND] Ring timeout trigger failed:', res.status, (await res.text()).slice(0, 200));
+      console.error('[INBOUND-RING] Ring timeout trigger failed:', res.status, (await res.text()).slice(0, 200));
     }
   }).catch((err) => {
-    console.error('[INBOUND] Ring timeout trigger error:', err);
+    console.error('[INBOUND-RING] Ring timeout trigger error:', err);
   });
 }

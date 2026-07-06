@@ -27,8 +27,8 @@ import {
   extractCallSidFromSdkCall,
   extractInboundFromNumber,
   extractInboundToNumber,
-  isTwilioCallSid,
-} from '@/lib/twilio/extract-call-sid';
+  isProviderCallId,
+} from '@/lib/voice/extract-call-id';
 import { useTwilioDevice } from '@/hooks/use-twilio-device';
 import { useVoicePresence } from '@/hooks/use-voice-presence';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -346,7 +346,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         from_number: meta?.from ?? undefined,
         to_number: meta?.to ?? undefined,
       });
-      if (isTwilioCallSid(sid)) provisionalCallIdRef.current = null;
+      if (isProviderCallId(sid)) provisionalCallIdRef.current = null;
     }
 
     const resolvedId = sid ?? callId;
@@ -428,11 +428,11 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         to_number: meta?.to ?? undefined,
       });
       safeSet(setActiveCallId, sid);
-      if (isTwilioCallSid(sid)) provisionalCallIdRef.current = null;
+      if (isProviderCallId(sid)) provisionalCallIdRef.current = null;
     };
 
     const callId = getCallStableId(call);
-    provisionalCallIdRef.current = isTwilioCallSid(callId) ? null : callId;
+    provisionalCallIdRef.current = isProviderCallId(callId) ? null : callId;
 
     call.on('ringing', syncIfNeeded);
 

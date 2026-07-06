@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
-import { markInboundAccepted } from '@/lib/telephony/telnyx/inbound-router';
 import {
-  assertAgentMayActOnInbound,
-  resolveInboundCallForAgent,
-} from '@/lib/telephony/telnyx/resolve-inbound-for-agent';
+  findInboundCallBySession,
+  markInboundAccepted,
+} from '@/lib/telephony/telnyx/inbound-router';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,26 +15,33 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json().catch(() => ({})) as {
-    inbound_call_id?: string;
-    provider_call_id?: string;
-    from_number?: string;
-    to_number?: string;
+    telnyx_session_id?: string;
+    call_id?: string;
   };
+
+  const telnyxSessionId = body.telnyx_session_id?.trim();
+  if (!telnyxSessionId) {
+    return NextResponse.json({ error: 'telnyx_session_id required' }, { status: 400 });
+  }
 
   const service = createServiceClient();
   if (!service) {
     return NextResponse.json({ error: 'Service unavailable' }, { status: 503 });
   }
 
-  const inbound = await resolveInboundCallForAgent(service, user.id, body);
-  if (!inbound) {
+  const call = await findInboundCallBySession(service, telnyxSessionId);
+  if (!call) {
     return NextResponse.json({ error: 'Inbound call not found' }, { status: 404 });
   }
 
-  if (!assertAgentMayActOnInbound(inbound, user.id)) {
+  if (call.user_id && call.user_id !== user.id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  await markInboundAccepted(service, inbound.id, user.id);
-  return NextResponse.json({ ok: true, status: 'active' });
+  if (call.status !== 'ringing') {
+    return NextResponse.json({ ok: true, status: call.status });
+  }
+
+  await markInboundAccepted(service, telnyxSessionId, user.id);
+  return NextResponse.json({ ok: true, status: 'answered', call_id: call.id });
 }

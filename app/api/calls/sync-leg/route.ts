@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { parseJsonBody } from '@/lib/api/errors';
-import { linkCallLegs } from '@/lib/twilio/link-call-legs';
+import { linkCallLegs } from '@/lib/voice/link-call-legs';
 
 const syncLegSchema = z.object({
   call_sid: z.string().min(10),

@@ -6,8 +6,8 @@ import { hasPermission } from '@/lib/auth/permissions';
 import { emitCallWebhooks } from '@/lib/webhooks/outgoing';
 import { createServiceClient } from '@/lib/supabase/service';
 import { logInboundCallStep } from '@/lib/inbound/call-step-log';
-import { isTwilioCallSid } from '@/lib/twilio/extract-call-sid';
-import { hangupVoiceCall } from '@/lib/twilio/hangup-call';
+import { isProviderCallId } from '@/lib/voice/extract-call-id';
+import { hangupVoiceCall } from '@/lib/voice/hangup-call';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest, { params }: Ctx) {
       if (service && controlId) {
         await logInboundCallStep(service, controlId, 'agent_declined');
       }
-      if (isTwilioCallSid(call.telnyx_webrtc_leg_id)) {
+      if (call.telnyx_webrtc_leg_id && isProviderCallId(call.telnyx_webrtc_leg_id)) {
         await hangupVoiceCall(call.telnyx_webrtc_leg_id).catch(() => {
           /* browser leg may already be gone */
         });
@@ -65,9 +65,9 @@ export async function POST(request: NextRequest, { params }: Ctx) {
     }
 
     if (!skipHangup) {
-      if (isTwilioCallSid(controlId)) {
+      if (isProviderCallId(controlId)) {
         await hangupVoiceCall(controlId).catch((err) => {
-          console.warn('[CALL-END] Twilio hangup skipped:', err);
+          console.warn('[CALL-END] Voice hangup skipped:', err);
         });
       }
     }

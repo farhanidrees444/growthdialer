@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { apiForbidden, apiUnauthorized } from '@/lib/api/errors';
 import { userCanViewOpsHealth } from '@/lib/auth/health-access';
-import { readTwilioAccountSid, readTwilioAuthToken } from '@/lib/twilio/voice-config';
+import { readVoiceApiKey } from '@/lib/voice/read-env';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,15 +15,13 @@ interface ServiceStatus {
 async function checkVoiceNetwork(): Promise<ServiceStatus> {
   const start = Date.now();
   try {
-    const accountSid = readTwilioAccountSid();
-    const authToken = readTwilioAuthToken();
-    if (!accountSid || !authToken) {
-      return { ok: false, latency: Date.now() - start, error: 'Voice credentials missing' };
+    const apiKey = readVoiceApiKey();
+    if (!apiKey) {
+      return { ok: false, latency: Date.now() - start, error: 'Voice API key missing' };
     }
 
-    const credentials = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
-    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}.json`, {
-      headers: { Authorization: `Basic ${credentials}` },
+    const res = await fetch('https://api.telnyx.com/v2/phone_numbers?page[size]=1', {
+      headers: { Authorization: `Bearer ${apiKey}` },
       signal: AbortSignal.timeout(5000),
     });
     return { ok: res.ok, latency: Date.now() - start };
@@ -35,7 +33,6 @@ async function checkVoiceNetwork(): Promise<ServiceStatus> {
 async function checkAIEngine(): Promise<ServiceStatus> {
   const start = Date.now();
   try {
-    // GET model metadata — validates key is authorized without consuming generation quota
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash?key=${process.env.GEMINI_API_KEY ?? ''}`,
       { signal: AbortSignal.timeout(8000) },
@@ -63,7 +60,6 @@ async function checkDatabase(): Promise<ServiceStatus> {
   const start = Date.now();
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-    // service_role key is required for server-side health checks; anon key is rejected on the root endpoint
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
     const res = await fetch(`${url}/rest/v1/`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` },
@@ -77,9 +73,7 @@ async function checkDatabase(): Promise<ServiceStatus> {
 
 export async function GET() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return apiUnauthorized();
 
   const canView = await userCanViewOpsHealth(supabase, user.id);

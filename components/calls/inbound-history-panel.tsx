@@ -39,7 +39,7 @@ export function InboundHistoryPanel({ live = false }: Props) {
       .channel(`inbound-history-${userId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'inbound_calls', filter: `routed_agent_id=eq.${userId}` },
+        { event: '*', schema: 'public', table: 'calls', filter: `user_id=eq.${userId}` },
         (payload) => {
           const row = payload.new as Record<string, unknown> | undefined;
           if (row) load();

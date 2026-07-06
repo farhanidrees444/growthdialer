@@ -15,7 +15,7 @@ import { useCallContext } from '@/lib/call-context';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { DispositionModal } from '@/components/dialer/disposition-modal';
 import type { DispositionType, LeadRecord } from '@/lib/dialer/state-machine';
-import { isTwilioCallSid } from '@/lib/twilio/extract-call-sid';
+import { isProviderCallId } from '@/lib/voice/extract-call-id';
 
 const MIN_WRAP_UP_CONNECTED_SECONDS = 5;
 const WRAP_UP_STATUS_POLL_MS = 350;
@@ -261,7 +261,7 @@ export function CallOrchestratorProvider({ children }: { children: ReactNode }) 
   // When Twilio assigns a real CallSid after provisional SDK id, link it to the DB row.
   useEffect(() => {
     if (isInboundRinging && !hasOutboundSession) return;
-    if (!callDbId || !activeCallId || !isTwilioCallSid(activeCallId)) return;
+    if (!callDbId || !activeCallId || !isProviderCallId(activeCallId)) return;
 
     void apiFetch('/api/calls/sync-leg', {
       method: 'POST',

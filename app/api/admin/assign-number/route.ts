@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { isPlatformAdminEmail } from '@/lib/auth/platform-admin';
-import { assignUserNumber } from '@/lib/twilio/assign-user-number';
+import { assignUserNumber } from '@/lib/voice/assign-user-number';
 import { parseJsonBody } from '@/lib/api/errors';
 
 const assignNumberSchema = z.object({

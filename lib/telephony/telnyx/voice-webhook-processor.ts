@@ -243,7 +243,6 @@ async function processTelnyxWebhookBackground(
           callSessionId: callSessionId ?? undefined,
           fromNumber,
           toNumber,
-          direction: payload.direction,
         });
         } else {
         // ── OUTBOUND CALL — update existing row only (WebRTC dial route owns insert) ──
@@ -391,26 +390,27 @@ async function processTelnyxWebhookBackground(
         return;
       }
 
+      const legBSessionId = answeredBridgeState?.telnyx_session_id
+        ?? answeredBridgeState?.inbound_call_id;
       if (
         answeredBridgeState?.gd_inbound_leg_b
-        && answeredBridgeState.inbound_call_id
+        && legBSessionId
         && callControlId
       ) {
-        // Leg B (agent's SIP transfer target) answered — Telnyx bridges it to the
-        // original PSTN leg natively. No manual bridge command needed here.
-        const inboundCallId = String(answeredBridgeState.inbound_call_id);
+        const telnyxSessionId = String(legBSessionId);
         const agentId = String(answeredBridgeState.agent_id ?? '');
 
         await logInboundCallStep(supabase, callControlId, 'leg_b_answered');
 
-        const { data: inboundRow } = await supabase
-          .from('inbound_calls')
-          .select('id, status, provider_call_id')
-          .eq('id', inboundCallId)
-          .maybeSingle();
+        const { findInboundCallBySession } = await import('@/lib/telephony/telnyx/inbound-router');
+        const inboundRow = await findInboundCallBySession(supabase, telnyxSessionId);
 
-        if (inboundRow?.status === 'active' && agentId) {
-          const pstnId = inboundRow.provider_call_id as string;
+        if (
+          inboundRow
+          && (inboundRow.status === 'answered' || inboundRow.status === 'active')
+          && agentId
+        ) {
+          const pstnId = inboundRow.telnyx_call_id as string;
           const { data: callRow } = await supabase
             .from('calls')
             .select('id, to_number, from_number, user_id, telnyx_call_id, recording_status')
@@ -430,7 +430,7 @@ async function processTelnyxWebhookBackground(
             }
           }
         } else if (inboundRow?.status === 'ringing') {
-          console.log('[INBOUND] Leg B answered before agent accept — not marking connected:', inboundCallId);
+          console.log('[INBOUND] Leg B answered before agent accept — not marking connected:', telnyxSessionId);
         }
 
         console.log('[INBOUND] Leg B (agent) answered — inbound status:', inboundRow?.status ?? 'unknown');
@@ -521,18 +521,16 @@ async function processTelnyxWebhookBackground(
       // of treating this as the call ending. Checked by tagged client_state,
       // not the shared call_session_id, since Leg B shares that session with
       // the original leg and a heuristic match would wrongly mark it missed.
-      if (hangupBridgeState?.gd_inbound_leg_b && hangupBridgeState.inbound_call_id) {
-        const inboundCallId = String(hangupBridgeState.inbound_call_id);
-        const { data: inboundRow } = await supabase
-          .from('inbound_calls')
-          .select('id, status')
-          .eq('id', inboundCallId)
-          .maybeSingle();
+      const hangupSessionId = hangupBridgeState?.telnyx_session_id
+        ?? hangupBridgeState?.inbound_call_id;
+      if (hangupBridgeState?.gd_inbound_leg_b && hangupSessionId) {
+        const telnyxSessionId = String(hangupSessionId);
+        const { findInboundCallBySession, advanceInboundRingGroup } = await import('@/lib/telephony/telnyx/inbound-router');
+        const inboundRow = await findInboundCallBySession(supabase, telnyxSessionId);
 
         if (inboundRow?.status === 'ringing') {
-          console.log('[INBOUND] Leg B hangup while ringing — advancing ring group:', inboundCallId);
-          const { advanceInboundRingGroup } = await import('@/lib/telephony/telnyx/inbound-router');
-          await advanceInboundRingGroup(supabase, inboundCallId, 'agent_unreachable');
+          console.log('[INBOUND] Leg B hangup while ringing — advancing ring group:', telnyxSessionId);
+          await advanceInboundRingGroup(supabase, telnyxSessionId, 'agent_unreachable');
         } else {
           console.log('[INBOUND] Leg B hangup — inbound call already', inboundRow?.status ?? 'resolved');
         }

@@ -1,11 +1,12 @@
 import type { VoiceSdkCall } from '@/lib/voice/telnyx-call-shim';
 import { isValidCallerPhone, normalizeE164 } from '@/lib/inbound/phone';
 
-const TWILIO_SID_RE = /^CA[a-f0-9]{32}$/i;
+const LEGACY_TWILIO_SID_RE = /^CA[a-f0-9]{32}$/i;
 const TELNYX_CONTROL_RE = /^v\d:/;
 
+/** @deprecated Legacy Twilio CallSid detection only — voice is Telnyx. */
 export function isTwilioCallSid(value: string | null | undefined): value is string {
-  return Boolean(value && TWILIO_SID_RE.test(value.trim()));
+  return Boolean(value && LEGACY_TWILIO_SID_RE.test(value.trim()));
 }
 
 export function isTelnyxCallControlId(value: string | null | undefined): value is string {
@@ -14,10 +15,14 @@ export function isTelnyxCallControlId(value: string | null | undefined): value i
   return TELNYX_CONTROL_RE.test(trimmed) || trimmed.length >= 20;
 }
 
+export function isProviderCallId(value: string | null | undefined): boolean {
+  return isTwilioCallSid(value) || isTelnyxCallControlId(value);
+}
+
 /** Read provider call id from the browser voice SDK call object. */
 export function extractCallSidFromSdkCall(call: VoiceSdkCall): string | null {
   const fromParams = call.parameters?.CallSid?.trim();
-  if (fromParams && (isTwilioCallSid(fromParams) || isTelnyxCallControlId(fromParams))) {
+  if (fromParams && isProviderCallId(fromParams)) {
     return fromParams;
   }
 
@@ -48,20 +53,18 @@ function readCallParam(call: VoiceSdkCall, ...keys: string[]): string | null {
   return null;
 }
 
-/** PSTN caller ID from an inbound browser call, when present. */
 export function extractInboundFromNumber(call: VoiceSdkCall): string | null {
-  const fromTwiml = readCallParam(call, 'gd_from_number', 'X-GD-From-Number');
-  if (fromTwiml && isValidCallerPhone(fromTwiml)) return normalizeE164(fromTwiml);
+  const fromHeader = readCallParam(call, 'gd_from_number', 'X-GD-From-Number');
+  if (fromHeader && isValidCallerPhone(fromHeader)) return normalizeE164(fromHeader);
 
   const raw = readCallParam(call, 'From', 'from', 'Caller', 'caller');
   if (!raw || !isValidCallerPhone(raw)) return null;
   return normalizeE164(raw);
 }
 
-/** Called line (agent DID) from an inbound browser call. */
 export function extractInboundToNumber(call: VoiceSdkCall): string | null {
-  const toTwiml = readCallParam(call, 'gd_to_number', 'X-GD-To-Number');
-  if (toTwiml && isValidCallerPhone(toTwiml)) return normalizeE164(toTwiml);
+  const toHeader = readCallParam(call, 'gd_to_number', 'X-GD-To-Number');
+  if (toHeader && isValidCallerPhone(toHeader)) return normalizeE164(toHeader);
 
   const raw = readCallParam(call, 'To', 'to', 'Called', 'called');
   if (!raw) return null;
@@ -70,6 +73,6 @@ export function extractInboundToNumber(call: VoiceSdkCall): string | null {
   return normalizeE164(raw);
 }
 
-export function isTwilioCallOpen(call: VoiceSdkCall): boolean {
+export function isVoiceCallOpen(call: VoiceSdkCall): boolean {
   return call.status() === 'open';
 }

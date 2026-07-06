@@ -6,7 +6,8 @@ import { playInboundRingtone, stopInboundRingtone } from '@/lib/inbound/ringtone
 import { formatInboundCallerDisplay } from '@/lib/inbound/phone';
 
 export interface ServerInboundRing {
-  inboundCallId: string;
+  callId: string;
+  telnyxSessionId: string | null;
   providerCallId: string | null;
   fromNumber: string | null;
   toNumber: string | null;
@@ -20,21 +21,20 @@ function mapRow(row: Record<string, unknown>): ServerInboundRing | null {
   if (!id || status !== 'ringing') return null;
 
   const rawFrom = (row.from_number as string | null) ?? null;
+  const startedAt = row.started_at as string | undefined;
   return {
-    inboundCallId: id,
-    providerCallId: (row.provider_call_id as string | null) ?? null,
+    callId: id,
+    telnyxSessionId: (row.telnyx_session_id as string | null) ?? null,
+    providerCallId: (row.telnyx_call_id as string | null) ?? null,
     fromNumber: rawFrom,
     toNumber: (row.to_number as string | null) ?? null,
     displayFrom: formatInboundCallerDisplay(rawFrom),
-    ringStartedAt: Date.now(),
+    ringStartedAt: startedAt ? new Date(startedAt).getTime() : Date.now(),
   };
 }
 
-/**
- * Server-authoritative inbound ring — fires when inbound_calls is routed to this
- * agent, even if the WebRTC SDK is slow to surface the SIP leg.
- */
-export function useInboundServerRing(userId: string | null | undefined) {
+/** Server-authoritative inbound ring from `calls` (direction=inbound, status=ringing). */
+export function useInboundCallsRing(userId: string | null | undefined) {
   const [ring, setRing] = useState<ServerInboundRing | null>(null);
   const ringRef = useRef<ServerInboundRing | null>(null);
   ringRef.current = ring;
@@ -46,28 +46,48 @@ export function useInboundServerRing(userId: string | null | undefined) {
     setRing(null);
   }, []);
 
+  const applyRing = useCallback((mapped: ServerInboundRing | null) => {
+    if (mapped) {
+      setRing(mapped);
+      playInboundRingtone();
+      return;
+    }
+    clearRing();
+  }, [clearRing]);
+
   const loadActiveRing = useCallback(async () => {
     if (!userId) return;
+
+    try {
+      const res = await fetch('/api/inbound/ringing', { credentials: 'same-origin' });
+      if (!res.ok) return;
+      const data = await res.json() as { call?: Record<string, unknown> | null };
+      if (data.call) {
+        const mapped = mapRow(data.call);
+        applyRing(mapped);
+        return;
+      }
+    } catch {
+      // fall through to direct query
+    }
+
     const supabase = createClient();
     const { data } = await supabase
-      .from('inbound_calls')
-      .select('id, provider_call_id, from_number, to_number, status, started_at')
-      .eq('routed_agent_id', userId)
+      .from('calls')
+      .select('id, telnyx_session_id, telnyx_call_id, from_number, to_number, status, started_at')
+      .eq('user_id', userId)
+      .eq('direction', 'inbound')
       .eq('status', 'ringing')
       .order('started_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
     if (data?.id) {
-      const mapped = mapRow(data as Record<string, unknown>);
-      if (mapped) {
-        setRing(mapped);
-        playInboundRingtone();
-        return;
-      }
+      applyRing(mapRow(data as Record<string, unknown>));
+      return;
     }
     clearRing();
-  }, [clearRing, userId]);
+  }, [applyRing, clearRing, userId]);
 
   useEffect(() => {
     if (!userId) {
@@ -79,21 +99,22 @@ export function useInboundServerRing(userId: string | null | undefined) {
 
     const supabase = createClient();
     const channel = supabase
-      .channel(`server-inbound-ring-${userId}`)
+      .channel(`inbound-calls-ring-${userId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'inbound_calls',
-          filter: `routed_agent_id=eq.${userId}`,
+          table: 'calls',
+          filter: `user_id=eq.${userId}`,
         },
         (payload) => {
           const row = (payload.new ?? payload.old) as Record<string, unknown> | undefined;
           if (!row?.id) return;
+          if (row.direction !== 'inbound') return;
 
           if (payload.eventType === 'DELETE' || row.status !== 'ringing') {
-            if (ringRef.current?.inboundCallId === row.id) {
+            if (ringRef.current?.callId === row.id) {
               clearRing();
             }
             return;
@@ -101,9 +122,7 @@ export function useInboundServerRing(userId: string | null | undefined) {
 
           const mapped = mapRow(row);
           if (!mapped) return;
-
-          setRing(mapped);
-          playInboundRingtone();
+          applyRing(mapped);
         },
       )
       .subscribe();
@@ -112,14 +131,13 @@ export function useInboundServerRing(userId: string | null | undefined) {
       stopInboundRingtone();
       void supabase.removeChannel(channel);
     };
-  }, [clearRing, loadActiveRing, userId]);
+  }, [applyRing, clearRing, loadActiveRing, userId]);
 
-  // Fallback when Supabase Realtime is not yet enabled on inbound_calls.
   useEffect(() => {
     if (!userId) return;
     const poll = setInterval(() => {
       void loadActiveRing();
-    }, 2500);
+    }, 2000);
     return () => clearInterval(poll);
   }, [loadActiveRing, userId]);
 

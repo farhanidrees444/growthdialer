@@ -8,26 +8,35 @@ import {
   resolveNumberRouting,
   type ResolvedNumberRouting,
 } from '@/lib/voice/phone-number-settings';
-import { voiceLog } from '@/lib/voice/structured-log';
 import { resolveAgentSipUri } from '@/lib/telephony/telnyx/agent-sip';
-import {
-  createInboundCallRow,
-  listRingableAgents,
-  recordInboundTransition,
-} from '@/lib/telephony/telnyx/inbound';
+import { listRingableAgents } from '@/lib/telephony/telnyx/inbound';
 import { answerCall, hangupProviderCall, transferCall } from '@/lib/telephony/telnyx/outbound';
 import { startCallRecording } from '@/lib/telephony/telnyx/recording';
 
 export interface InboundRoutingContext {
   providerCallId: string;
-  callSessionId?: string;
+  callSessionId: string | null;
   fromNumber: string | null;
   toNumber: string;
   ownerUserId: string;
   workspaceId: string | null;
   purchasedNumberId?: string;
-  inboundCallId: string;
-  callsRowId?: string | null;
+  callsRowId: string;
+}
+
+export async function findInboundCallBySession(
+  supabase: SupabaseClient,
+  telnyxSessionId: string,
+) {
+  const { data } = await supabase
+    .from('calls')
+    .select('id, user_id, status, direction, telnyx_call_id, telnyx_session_id, from_number, to_number, answered_at, workspace_id')
+    .eq('telnyx_session_id', telnyxSessionId)
+    .eq('direction', 'inbound')
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data;
 }
 
 async function pickRoundRobinAgent(
@@ -39,16 +48,15 @@ async function pickRoundRobinAgent(
   if (candidates.length === 1) return candidates[0];
 
   const { data: lastRouted } = await supabase
-    .from('inbound_call_transitions')
-    .select('agent_id')
+    .from('calls')
+    .select('user_id')
     .eq('workspace_id', workspaceId)
-    .eq('reason', 'agent_ringing')
-    .not('agent_id', 'is', null)
-    .order('created_at', { ascending: false })
+    .eq('direction', 'inbound')
+    .order('started_at', { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  const lastAgentId = lastRouted?.agent_id as string | undefined;
+  const lastAgentId = lastRouted?.user_id as string | undefined;
   if (!lastAgentId) return candidates[0];
 
   const lastIndex = candidates.indexOf(lastAgentId);
@@ -56,11 +64,20 @@ async function pickRoundRobinAgent(
   return candidates[(lastIndex + 1) % candidates.length];
 }
 
-async function syncCallsRow(
+async function upsertInboundCallsRow(
   supabase: SupabaseClient,
-  ctx: InboundRoutingContext,
-  leadId: string | null,
+  ctx: Omit<InboundRoutingContext, 'callsRowId'> & { leadId: string | null },
 ): Promise<string | null> {
+  if (ctx.callSessionId) {
+    const { data: bySession } = await supabase
+      .from('calls')
+      .select('id')
+      .eq('telnyx_session_id', ctx.callSessionId)
+      .eq('direction', 'inbound')
+      .maybeSingle();
+    if (bySession?.id) return bySession.id;
+  }
+
   const { data: existing } = await supabase
     .from('calls')
     .select('id')
@@ -74,10 +91,10 @@ async function syncCallsRow(
     .insert({
       user_id: ctx.ownerUserId,
       workspace_id: ctx.workspaceId,
-      lead_id: leadId,
+      lead_id: ctx.leadId,
       direction: 'inbound',
       telnyx_call_id: ctx.providerCallId,
-      telnyx_session_id: ctx.callSessionId ?? null,
+      telnyx_session_id: ctx.callSessionId,
       from_number: ctx.fromNumber,
       to_number: ctx.toNumber,
       status: 'ringing',
@@ -87,6 +104,16 @@ async function syncCallsRow(
     .single();
 
   if (error) {
+    console.error('[INBOUND-DB] insert failed:', error.message);
+    if (ctx.callSessionId) {
+      const { data: raced } = await supabase
+        .from('calls')
+        .select('id')
+        .eq('telnyx_session_id', ctx.callSessionId)
+        .eq('direction', 'inbound')
+        .maybeSingle();
+      return raced?.id ?? null;
+    }
     const { data: raced } = await supabase
       .from('calls')
       .select('id')
@@ -95,7 +122,20 @@ async function syncCallsRow(
     return raced?.id ?? null;
   }
 
+  console.log('[INBOUND-DB] ringing row created', {
+    call_id: inserted?.id,
+    session: ctx.callSessionId,
+    control: ctx.providerCallId,
+  });
   return inserted?.id ?? null;
+}
+
+async function setCallStatus(
+  supabase: SupabaseClient,
+  callsRowId: string,
+  patch: Record<string, unknown>,
+): Promise<void> {
+  await supabase.from('calls').update(patch).eq('id', callsRowId);
 }
 
 async function routeToVoicemail(
@@ -104,28 +144,17 @@ async function routeToVoicemail(
   routing: ResolvedNumberRouting,
   reason: string,
 ): Promise<void> {
+  console.log('[INBOUND-ROUTE] voicemail', { reason, session: ctx.callSessionId });
   await answerCall(ctx.providerCallId);
-  await recordInboundTransition({
-    inboundCallId: ctx.inboundCallId,
-    workspaceId: ctx.workspaceId,
-    fromStatus: 'ringing',
-    toStatus: 'voicemail',
-    reason,
-    agentId: null,
-  });
-
   await startCallRecording(ctx.providerCallId, {
     format: 'mp3',
     channels: routing.inbound_mode === 'voicemail' ? 'single' : 'dual',
     playBeep: routing.inbound_mode === 'voicemail',
   });
-
-  if (ctx.callsRowId) {
-    await supabase
-      .from('calls')
-      .update({ status: 'voicemail', disposition: 'voicemail' })
-      .eq('id', ctx.callsRowId);
-  }
+  await setCallStatus(supabase, ctx.callsRowId, {
+    status: 'voicemail',
+    disposition: 'voicemail',
+  });
 }
 
 async function routeToForward(
@@ -139,25 +168,20 @@ async function routeToForward(
     return;
   }
 
+  console.log('[INBOUND-ROUTE] forward', { to: forwardTo, session: ctx.callSessionId });
   await answerCall(ctx.providerCallId);
   await transferCall(ctx.providerCallId, forwardTo);
+  await setCallStatus(supabase, ctx.callsRowId, { status: 'forwarded' });
 
-  await recordInboundTransition({
-    inboundCallId: ctx.inboundCallId,
-    workspaceId: ctx.workspaceId,
-    fromStatus: 'ringing',
-    toStatus: 'active',
-    reason: 'forwarded',
-    agentId: null,
-  });
-
-  triggerInboundRingTimeoutAsync(
-    ctx.inboundCallId,
-    ctx.providerCallId,
-    ctx.ownerUserId,
-    routing.inbound_ring_seconds,
-    'forward',
-  );
+  if (ctx.callSessionId) {
+    triggerInboundRingTimeoutAsync(
+      ctx.callSessionId,
+      ctx.providerCallId,
+      ctx.ownerUserId,
+      routing.inbound_ring_seconds,
+      'forward',
+    );
+  }
 }
 
 async function ringCurrentAgent(
@@ -165,63 +189,46 @@ async function ringCurrentAgent(
   ctx: InboundRoutingContext,
   agentId: string,
   routing: ResolvedNumberRouting,
-  agentIndex: number,
-  agentTotal: number,
 ): Promise<boolean> {
   const sip = await resolveAgentSipUri(supabase, agentId);
   if (!sip) {
-    voiceLog.warn(
-      {
-        service: 'inbound-routing',
-        agent_id: agentId,
-        inbound_call_id: ctx.inboundCallId,
-      },
-      'Agent has no voice credential — skipping',
-    );
+    console.warn('[INBOUND-RING] no credential for agent', agentId);
     return false;
   }
 
-  await supabase
-    .from('inbound_calls')
-    .update({ routed_agent_id: agentId, updated_at: new Date().toISOString() })
-    .eq('id', ctx.inboundCallId);
+  await setCallStatus(supabase, ctx.callsRowId, {
+    user_id: agentId,
+    status: 'ringing',
+  });
 
-  await recordInboundTransition({
-    inboundCallId: ctx.inboundCallId,
-    workspaceId: ctx.workspaceId,
-    fromStatus: 'ringing',
-    toStatus: 'ringing',
-    reason: 'agent_ringing',
-    agentId,
-    metadata: { agent_index: agentIndex, agent_total: agentTotal, sip_username: sip.sipUsername },
+  console.log('[INBOUND-RING] transfer to agent', {
+    agent_id: agentId,
+    session: ctx.callSessionId,
+    sip: sip.sipUsername,
   });
 
   const transferred = await transferCall(ctx.providerCallId, sip.sipUri, ctx.toNumber, {
     gd_inbound_leg_b: true,
-    inbound_call_id: ctx.inboundCallId,
+    telnyx_session_id: ctx.callSessionId,
     agent_id: agentId,
     gd_from_number: ctx.fromNumber ?? '',
     gd_to_number: ctx.toNumber,
   });
+
   if (!transferred) {
-    voiceLog.error(
-      {
-        service: 'inbound-routing',
-        agent_id: agentId,
-        inbound_call_id: ctx.inboundCallId,
-      },
-      'Transfer to agent SIP failed',
-    );
+    console.error('[INBOUND-RING] SIP transfer failed', { agent_id: agentId });
     return false;
   }
 
-  triggerInboundRingTimeoutAsync(
-    ctx.inboundCallId,
-    ctx.providerCallId,
-    agentId,
-    routing.inbound_ring_seconds,
-    'browser',
-  );
+  if (ctx.callSessionId) {
+    triggerInboundRingTimeoutAsync(
+      ctx.callSessionId,
+      ctx.providerCallId,
+      agentId,
+      routing.inbound_ring_seconds,
+      'browser',
+    );
+  }
 
   return true;
 }
@@ -248,10 +255,7 @@ export async function routeInboundToBrowserAgents(
   ];
 
   if (!ordered.length) {
-    voiceLog.info(
-      { service: 'inbound-routing', inbound_call_id: ctx.inboundCallId },
-      'No ringable agents — voicemail fallback',
-    );
+    console.log('[INBOUND-ROUTE] no ringable agents — voicemail');
     await routeToVoicemail(supabase, ctx, routing, 'no_agents_online');
     return;
   }
@@ -265,19 +269,10 @@ export async function routeInboundToBrowserAgents(
   const startIndex = ordered.indexOf(startAgentId);
   const rotated = [...ordered.slice(startIndex), ...ordered.slice(0, startIndex)];
 
-  for (let i = 0; i < rotated.length; i += 1) {
-    const agentId = rotated[i];
-    const rang = await ringCurrentAgent(supabase, ctx, agentId, routing, i, rotated.length);
+  for (const agentId of rotated) {
+    const rang = await ringCurrentAgent(supabase, ctx, agentId, routing);
     if (rang) {
-      voiceLog.info(
-        {
-          service: 'inbound-routing',
-          inbound_call_id: ctx.inboundCallId,
-          agent_id: agentId,
-          agent_index: i,
-        },
-        'Inbound ringing agent via SIP transfer',
-      );
+      console.log('[INBOUND-ROUTE] browser ring started', { agent_id: agentId });
       return;
     }
   }
@@ -287,67 +282,42 @@ export async function routeInboundToBrowserAgents(
 
 export async function advanceInboundRingGroup(
   supabase: SupabaseClient,
-  inboundCallId: string,
+  telnyxSessionId: string,
   reason: 'agent_declined' | 'ring_timeout' | 'agent_unreachable',
 ): Promise<{ ok: boolean; status: string }> {
-  const { data: inbound } = await supabase
-    .from('inbound_calls')
-    .select('id, status, workspace_id, provider_call_id, to_number, from_number, routed_agent_id, ring_timeout_seconds')
-    .eq('id', inboundCallId)
-    .maybeSingle();
-
-  if (!inbound?.provider_call_id) {
+  const call = await findInboundCallBySession(supabase, telnyxSessionId);
+  if (!call?.telnyx_call_id) {
     return { ok: false, status: 'not_found' };
   }
 
-  if (inbound.status !== 'ringing') {
-    return { ok: false, status: inbound.status ?? 'unknown' };
+  if (call.status !== 'ringing') {
+    return { ok: false, status: call.status ?? 'unknown' };
   }
 
-  const workspaceId = inbound.workspace_id as string | null;
-  const currentAgentId = inbound.routed_agent_id as string | null;
+  const workspaceId = call.workspace_id as string | null;
+  const currentAgentId = call.user_id as string;
+  const providerCallId = call.telnyx_call_id as string;
 
-  await recordInboundTransition({
-    inboundCallId,
-    workspaceId,
-    fromStatus: 'ringing',
-    toStatus: 'ringing',
-    reason,
-    agentId: currentAgentId,
-  });
+  console.log('[INBOUND-ROUTE] advance ring group', { reason, session: telnyxSessionId });
 
   if (!workspaceId) {
-    await hangupProviderCall(inbound.provider_call_id);
-    await recordInboundTransition({
-      inboundCallId,
-      workspaceId,
-      fromStatus: 'ringing',
-      toStatus: 'missed',
-      reason: 'workspace_missing',
-      agentId: null,
-    });
+    await hangupProviderCall(providerCallId);
+    await setCallStatus(supabase, call.id, { status: 'missed', disposition: 'missed' });
     return { ok: true, status: 'missed' };
   }
 
   const { data: ownerNumber } = await supabase
     .from('purchased_numbers')
     .select('user_id, id')
-    .eq('phone_number', inbound.to_number as string)
+    .eq('phone_number', call.to_number as string)
     .neq('status', 'released')
     .limit(1)
     .maybeSingle();
 
   const ownerUserId = ownerNumber?.user_id as string | undefined;
   if (!ownerUserId) {
-    await hangupProviderCall(inbound.provider_call_id);
-    await recordInboundTransition({
-      inboundCallId,
-      workspaceId,
-      fromStatus: 'ringing',
-      toStatus: 'missed',
-      reason: 'owner_missing',
-      agentId: null,
-    });
+    await hangupProviderCall(providerCallId);
+    await setCallStatus(supabase, call.id, { status: 'missed', disposition: 'missed' });
     return { ok: true, status: 'missed' };
   }
 
@@ -364,38 +334,21 @@ export async function advanceInboundRingGroup(
   ];
 
   const currentIndex = currentAgentId ? ordered.indexOf(currentAgentId) : -1;
-  const remaining = currentIndex >= 0
-    ? ordered.slice(currentIndex + 1)
-    : ordered;
+  const remaining = currentIndex >= 0 ? ordered.slice(currentIndex + 1) : ordered;
 
   const ctx: InboundRoutingContext = {
-    providerCallId: inbound.provider_call_id,
-    fromNumber: inbound.from_number as string | null,
-    toNumber: inbound.to_number as string,
+    providerCallId,
+    callSessionId: telnyxSessionId,
+    fromNumber: call.from_number as string | null,
+    toNumber: call.to_number as string,
     ownerUserId,
     workspaceId,
     purchasedNumberId: ownerNumber?.id as string | undefined,
-    inboundCallId,
-    callsRowId: null,
+    callsRowId: call.id,
   };
 
-  const { data: callsRow } = await supabase
-    .from('calls')
-    .select('id')
-    .eq('telnyx_call_id', inbound.provider_call_id)
-    .maybeSingle();
-  ctx.callsRowId = callsRow?.id ?? null;
-
-  for (let i = 0; i < remaining.length; i += 1) {
-    const agentId = remaining[i];
-    const rang = await ringCurrentAgent(
-      supabase,
-      ctx,
-      agentId,
-      routing,
-      currentIndex + 1 + i,
-      ordered.length,
-    );
+  for (const agentId of remaining) {
+    const rang = await ringCurrentAgent(supabase, ctx, agentId, routing);
     if (rang) return { ok: true, status: 'ringing' };
   }
 
@@ -410,43 +363,30 @@ export async function advanceInboundRingGroup(
 
 export async function markInboundAccepted(
   supabase: SupabaseClient,
-  inboundCallId: string,
+  telnyxSessionId: string,
   agentId: string,
 ): Promise<void> {
-  const { data: inbound } = await supabase
-    .from('inbound_calls')
-    .select('id, status, workspace_id, provider_call_id')
-    .eq('id', inboundCallId)
-    .maybeSingle();
+  const call = await findInboundCallBySession(supabase, telnyxSessionId);
+  if (!call || call.status === 'active' || call.status === 'answered') return;
 
-  if (!inbound || inbound.status === 'active') return;
+  console.log('[INBOUND-ACCEPT] agent accepted', { session: telnyxSessionId, agent_id: agentId });
 
-  await recordInboundTransition({
-    inboundCallId,
-    workspaceId: (inbound.workspace_id as string | null) ?? null,
-    fromStatus: inbound.status as string,
-    toStatus: 'active',
-    reason: 'agent_accepted',
-    agentId,
-  });
+  await supabase
+    .from('calls')
+    .update({
+      status: 'answered',
+      answered_at: new Date().toISOString(),
+      user_id: agentId,
+    })
+    .eq('id', call.id);
+}
 
-  if (inbound.provider_call_id) {
-    const { data: callRow } = await supabase
-      .from('calls')
-      .select('id')
-      .eq('telnyx_call_id', inbound.provider_call_id)
-      .maybeSingle();
-
-    if (callRow?.id) {
-      await supabase
-        .from('calls')
-        .update({
-          status: 'active',
-          answered_at: new Date().toISOString(),
-        })
-        .eq('id', callRow.id);
-    }
-  }
+export async function markInboundDeclined(
+  supabase: SupabaseClient,
+  telnyxSessionId: string,
+): Promise<void> {
+  console.log('[INBOUND-DECLINE] agent declined', { session: telnyxSessionId });
+  await advanceInboundRingGroup(supabase, telnyxSessionId, 'agent_declined');
 }
 
 export async function handleInboundCallInitiated(
@@ -456,14 +396,22 @@ export async function handleInboundCallInitiated(
     callSessionId?: string;
     fromNumber: string | null;
     toNumber: string;
-    direction?: string;
   },
 ): Promise<void> {
   const toNumber = normalizeE164(params.toNumber);
   const fromNumber = params.fromNumber;
-  const ownedNumber = await getCachedNumberOwner(supabase, toNumber);
+  const callSessionId = params.callSessionId ?? null;
 
+  console.log('[INBOUND-WEBHOOK] initiated', {
+    session: callSessionId,
+    control: params.providerCallId,
+    from: fromNumber,
+    to: toNumber,
+  });
+
+  const ownedNumber = await getCachedNumberOwner(supabase, toNumber);
   if (!ownedNumber) {
+    console.log('[INBOUND-WEBHOOK] unknown DID — reject', toNumber);
     await hangupProviderCall(params.providerCallId);
     return;
   }
@@ -473,29 +421,13 @@ export async function handleInboundCallInitiated(
     (ownedNumber.workspace_id as string | null | undefined)
     ?? await resolveUserWorkspaceId(supabase, ownerUserId);
 
-  const { data: existingInbound } = await supabase
-    .from('inbound_calls')
-    .select('id')
-    .eq('provider_call_id', params.providerCallId)
-    .maybeSingle();
-
-  if (existingInbound?.id) {
-    voiceLog.debug(
-      { service: 'inbound-routing', inbound_call_id: existingInbound.id },
-      'Duplicate call.initiated — skip routing',
-    );
-    return;
+  if (callSessionId) {
+    const existing = await findInboundCallBySession(supabase, callSessionId);
+    if (existing?.id) {
+      console.log('[INBOUND-WEBHOOK] duplicate session — skip', callSessionId);
+      return;
+    }
   }
-
-  const inboundCallId = await createInboundCallRow({
-    workspaceId: workspaceId ?? null,
-    providerCallId: params.providerCallId,
-    fromNumber: fromNumber ?? '',
-    toNumber,
-    routedAgentId: null,
-  });
-
-  if (!inboundCallId) return;
 
   const { data: ownedRows } = await supabase
     .from('purchased_numbers')
@@ -515,30 +447,35 @@ export async function handleInboundCallInitiated(
     ownedNumber.id as string | undefined,
   );
 
-  const ctx: InboundRoutingContext = {
+  console.log('[INBOUND-ROUTE] mode', routing.inbound_mode);
+
+  const callsRowId = await upsertInboundCallsRow(supabase, {
     providerCallId: params.providerCallId,
-    callSessionId: params.callSessionId,
+    callSessionId,
     fromNumber,
     toNumber,
     ownerUserId,
     workspaceId: workspaceId ?? null,
     purchasedNumberId: ownedNumber.id as string | undefined,
-    inboundCallId,
-    callsRowId: null,
-  };
+    leadId: lead?.id ?? null,
+  });
 
-  ctx.callsRowId = await syncCallsRow(supabase, ctx, lead?.id ?? null);
+  if (!callsRowId) return;
+
+  const ctx: InboundRoutingContext = {
+    providerCallId: params.providerCallId,
+    callSessionId,
+    fromNumber,
+    toNumber,
+    ownerUserId,
+    workspaceId: workspaceId ?? null,
+    purchasedNumberId: ownedNumber.id as string | undefined,
+    callsRowId,
+  };
 
   if (routing.inbound_mode === 'off') {
     await hangupProviderCall(params.providerCallId);
-    await recordInboundTransition({
-      inboundCallId,
-      workspaceId: workspaceId ?? null,
-      fromStatus: 'ringing',
-      toStatus: 'missed',
-      reason: 'inbound_off',
-      agentId: null,
-    });
+    await setCallStatus(supabase, callsRowId, { status: 'missed', disposition: 'missed' });
     return;
   }
 
@@ -559,22 +496,16 @@ export async function finalizeInboundMissed(
   supabase: SupabaseClient,
   providerCallId: string,
 ): Promise<void> {
-  const { data: inbound } = await supabase
-    .from('inbound_calls')
-    .select('id, status, workspace_id, routed_agent_id')
-    .eq('provider_call_id', providerCallId)
+  const { data: call } = await supabase
+    .from('calls')
+    .select('id, status')
+    .eq('telnyx_call_id', providerCallId)
+    .eq('direction', 'inbound')
     .maybeSingle();
 
-  if (!inbound || inbound.status !== 'ringing') return;
+  if (!call || call.status !== 'ringing') return;
 
-  await recordInboundTransition({
-    inboundCallId: inbound.id,
-    workspaceId: (inbound.workspace_id as string | null) ?? null,
-    fromStatus: 'ringing',
-    toStatus: 'missed',
-    reason: 'caller_hangup',
-    agentId: (inbound.routed_agent_id as string | null) ?? null,
-  });
+  console.log('[INBOUND-HANGUP] caller hung up while ringing', providerCallId);
 
   await supabase
     .from('calls')
@@ -583,5 +514,5 @@ export async function finalizeInboundMissed(
       disposition: 'missed',
       ended_at: new Date().toISOString(),
     })
-    .eq('telnyx_call_id', providerCallId);
+    .eq('id', call.id);
 }

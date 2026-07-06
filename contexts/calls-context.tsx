@@ -11,9 +11,9 @@ import {
 } from 'react';
 import { useWebPhone } from '@/contexts/webphone-context';
 import { useCallContext } from '@/lib/call-context';
-import { useInboundServerRing } from '@/hooks/use-inbound-server-ring';
+import { useInboundCallsRing } from '@/hooks/use-inbound-calls-ring';
 import { useSupabaseSession } from '@/lib/supabase/hooks';
-import { isAnonymousCaller } from '@/lib/twilio/caller-id-utils';
+import { isAnonymousCaller } from '@/lib/inbound/caller-id-utils';
 import { formatInboundCallerDisplay, isValidCallerPhone, normalizeE164 } from '@/lib/inbound/phone';
 
 export type CallPhase = 'idle' | 'incoming' | 'connecting' | 'ended';
@@ -80,7 +80,7 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     staleTabWarning,
   } = useWebPhone();
   const { registerCallMeta } = useCallContext();
-  const { serverRing, clearServerRing } = useInboundServerRing(userId);
+  const { serverRing, clearServerRing } = useInboundCallsRing(userId);
   const [callerContext, setCallerContext] = useState<CallerContext>(EMPTY_CALLER_CONTEXT);
   const [ringElapsedSec, setRingElapsedSec] = useState(0);
   const [connectingFromServer, setConnectingFromServer] = useState(false);
@@ -96,7 +96,8 @@ export function CallsProvider({ children }: { children: ReactNode }) {
 
   const fromNumber = incomingCall.fromNumber ?? serverRing?.fromNumber ?? null;
   const toNumber = incomingCall.toNumber ?? serverRing?.toNumber ?? null;
-  const callId = incomingCall.callId ?? serverRing?.inboundCallId ?? null;
+  const callId = incomingCall.callId ?? serverRing?.callId ?? null;
+  const telnyxSessionId = serverRing?.telnyxSessionId ?? null;
 
   const fetchCallerContext = useCallback((from: string | null) => {
     const lookup = lookupFromForContext(from);
@@ -161,17 +162,14 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     registerCallMeta(null, fromNumber ?? '');
     setConnectingFromServer(true);
 
-    await fetch('/api/inbound/accept', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        inbound_call_id: serverRing?.inboundCallId,
-        provider_call_id: serverRing?.providerCallId,
-        from_number: fromNumber,
-        to_number: toNumber,
-      }),
-    }).catch(() => undefined);
+    if (telnyxSessionId) {
+      await fetch('/api/calls/answer', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telnyx_session_id: telnyxSessionId }),
+      }).catch(() => undefined);
+    }
 
     let answered = await answerIncomingCall();
     if (!answered) {
@@ -193,27 +191,23 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     phase,
     registerCallMeta,
     requestMicPermission,
-    serverRing?.inboundCallId,
-    serverRing?.providerCallId,
+    telnyxSessionId,
     toNumber,
   ]);
 
   const decline = useCallback(() => {
-    void fetch('/api/inbound/decline', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        inbound_call_id: serverRing?.inboundCallId,
-        provider_call_id: serverRing?.providerCallId,
-        from_number: fromNumber,
-        to_number: toNumber,
-      }),
-    }).catch(() => undefined);
+    if (telnyxSessionId) {
+      void fetch('/api/calls/decline', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telnyx_session_id: telnyxSessionId }),
+      }).catch(() => undefined);
+    }
     clearServerRing();
     setConnectingFromServer(false);
     hangup();
-  }, [clearServerRing, fromNumber, hangup, serverRing?.inboundCallId, serverRing?.providerCallId, toNumber]);
+  }, [clearServerRing, fromNumber, hangup, telnyxSessionId, toNumber]);
 
   const connectError = useMemo(() => {
     if (incomingCall.error) return incomingCall.error;

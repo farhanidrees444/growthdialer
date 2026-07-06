@@ -305,7 +305,7 @@ export function IncomingPageClient() {
       .channel('incoming-page-stream')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'inbound_calls' },
+        { event: '*', schema: 'public', table: 'calls', filter: `direction=eq.inbound` },
         (payload) => {
           const row = (payload.new ?? payload.old) as Record<string, unknown>;
           const status = (row.status as string) ?? 'update';

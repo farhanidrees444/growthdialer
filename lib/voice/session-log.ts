@@ -32,7 +32,7 @@ function normalizeVoiceLogPayload(
   };
 }
 
-/** Server-side voice diagnostics compatibility shim. Inbound outcomes are now durable in `inbound_calls`. */
+/** Server-side voice diagnostics compatibility shim. Inbound outcomes are durable in `calls`. */
 export async function voiceSessionLog(
   params: VoiceSessionLogPayload | LegacyVoiceLogPayload,
 ): Promise<void> {

@@ -72,9 +72,10 @@ export async function GET(request: NextRequest) {
       .eq('status', 'active')
       .order('is_default', { ascending: false }),
     supabase
-      .from('inbound_calls')
+      .from('calls')
       .select('id, status, started_at, answered_at, ended_at, duration_seconds, to_number')
-      .eq('routed_agent_id', user.id)
+      .eq('user_id', user.id)
+      .eq('direction', 'inbound')
       .order('started_at', { ascending: false })
       .limit(1)
       .maybeSingle(),

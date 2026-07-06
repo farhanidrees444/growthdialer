@@ -1,6 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { isTwilioCallSid } from '@/lib/twilio/extract-call-sid';
-import { findCallByTwilioLegs, findRecentInboundRingingCall } from '@/lib/twilio/find-call-row';
+import { isTelnyxCallControlId } from '@/lib/voice/extract-call-id';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import { resolveUserWorkspaceId } from '@/lib/inbound/resolve-workspace';
 
@@ -16,18 +15,52 @@ export interface LinkCallLegsInput {
   leadId?: string | null;
 }
 
-/**
- * Attach real Twilio CallSids to calls rows.
- * telnyx_call_id = primary leg; telnyx_session_id = paired leg; telnyx_webrtc_leg_id = browser leg (inbound).
- */
+async function findCallByLegs(
+  supabase: SupabaseClient,
+  ids: Array<string | null | undefined>,
+) {
+  const unique = [...new Set(ids.filter(Boolean) as string[])];
+  for (const id of unique) {
+    const { data } = await supabase
+      .from('calls')
+      .select('id, user_id, direction, telnyx_call_id, telnyx_session_id, telnyx_webrtc_leg_id')
+      .or(
+        [
+          `telnyx_call_id.eq.${id}`,
+          `telnyx_session_id.eq.${id}`,
+          `telnyx_webrtc_leg_id.eq.${id}`,
+        ].join(','),
+      )
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data) return data;
+  }
+  return null;
+}
+
+async function findRecentInboundRingingCall(supabase: SupabaseClient, userId: string) {
+  const { data } = await supabase
+    .from('calls')
+    .select('id, user_id, direction, telnyx_call_id, telnyx_session_id, telnyx_webrtc_leg_id')
+    .eq('user_id', userId)
+    .eq('direction', 'inbound')
+    .eq('status', 'ringing')
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data;
+}
+
+/** Attach Telnyx leg ids to calls rows (browser leg ↔ PSTN leg). */
 export async function linkCallLegs(
   supabase: SupabaseClient,
   input: LinkCallLegsInput,
 ): Promise<{ id: string | null }> {
   const callSid = input.callSid.trim();
-  if (!isTwilioCallSid(callSid)) return { id: null };
+  if (!isTelnyxCallControlId(callSid)) return { id: null };
 
-  const parentSid = isTwilioCallSid(input.parentCallSid) ? input.parentCallSid!.trim() : null;
+  const parentSid = isTelnyxCallControlId(input.parentCallSid) ? input.parentCallSid!.trim() : null;
   const provisional = input.provisionalId?.trim() || null;
 
   let row =
@@ -38,7 +71,7 @@ export async function linkCallLegs(
           .eq('id', input.dbId)
           .maybeSingle()).data
       : null)
-    ?? await findCallByTwilioLegs(supabase, [callSid, parentSid, provisional])
+    ?? await findCallByLegs(supabase, [callSid, parentSid, provisional])
     ?? (provisional
       ? (await supabase
           .from('calls')

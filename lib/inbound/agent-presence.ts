@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { PRESENCE_HEARTBEAT_FRESH_MS } from '@/lib/twilio/resolve-inbound-ring-targets';
+const PRESENCE_HEARTBEAT_FRESH_MS = 45_000;
 
 export type AgentPhoneStatus = 'idle' | 'initializing' | 'ready' | 'error' | 'offline';
 export type AgentPresenceStatus = 'online' | 'away' | 'offline';
