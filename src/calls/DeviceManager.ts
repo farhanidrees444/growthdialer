@@ -1,6 +1,7 @@
 import { TelnyxRTC, type Call as TelnyxCall } from '@telnyx/webrtc';
 import {
   handleTelnyxCallStateChange,
+  isInboundAwaitingUserAccept,
   patchTelnyxCall,
   type VoiceSdkCall,
 } from '@/lib/voice/telnyx-call-shim';
@@ -14,7 +15,9 @@ export interface DeviceManagerInitOptions {
 const INBOUND_RING_STATES = new Set(['ringing', 'trying', 'new', 'requesting']);
 
 function shouldEmitIncoming(call: TelnyxCall): boolean {
-  return call.direction === 'inbound' && INBOUND_RING_STATES.has(call.state);
+  if (call.direction !== 'inbound') return false;
+  if (INBOUND_RING_STATES.has(call.state)) return true;
+  return isInboundAwaitingUserAccept(call);
 }
 
 class DeviceManager {

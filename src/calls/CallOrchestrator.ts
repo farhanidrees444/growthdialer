@@ -212,6 +212,8 @@ class CallOrchestrator {
     eventBus.on<ReturnType<CallSession['snapshot']>>('CALL_SESSION_UPDATED', (snapshot) => {
       if (snapshot.phase !== 'active') return;
       if (this.incomingSession?.call !== snapshot.call) return;
+      // Inbound must not auto-promote until the agent clicks Accept (shim reports open).
+      if (snapshot.direction === 'inbound' && snapshot.call.status() !== 'open') return;
       this.activeSession = this.incomingSession;
       this.incomingSession = null;
       eventBus.emit('CALL_ACTIVE', snapshot.call);

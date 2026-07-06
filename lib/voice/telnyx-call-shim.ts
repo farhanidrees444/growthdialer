@@ -20,6 +20,18 @@ type PatchedCall = VoiceSdkCall;
 const patched = new WeakSet<object>();
 const listeners = new WeakMap<object, Map<string, Set<(...args: unknown[]) => void>>>();
 const prevStates = new WeakMap<object, string>();
+/** Inbound legs the agent explicitly accepted (Accept click). */
+const userAcceptedInbound = new WeakSet<object>();
+
+export function isInboundAwaitingUserAccept(call: TelnyxCall): boolean {
+  return call.direction === 'inbound'
+    && call.state === 'active'
+    && !userAcceptedInbound.has(call);
+}
+
+export function markInboundUserAccepted(call: TelnyxCall): void {
+  userAcceptedInbound.add(call);
+}
 
 function getListenerMap(call: object): Map<string, Set<(...args: unknown[]) => void>> {
   let map = listeners.get(call);
@@ -49,6 +61,8 @@ export function emitVoiceCallEvent(
 function mapTelnyxStatus(call: TelnyxCall): string {
   switch (call.state) {
     case 'active':
+      // Telnyx may bridge a SIP transfer before the agent clicks Accept — keep UI in pre-answer state.
+      if (isInboundAwaitingUserAccept(call)) return 'pending';
       return 'open';
     case 'ringing':
       return call.direction === 'inbound' ? 'pending' : 'ringing';
@@ -99,6 +113,11 @@ export function patchTelnyxCall(call: TelnyxCall): PatchedCall {
 
   patchedCall.status = () => mapTelnyxStatus(call);
   patchedCall.accept = () => {
+    markInboundUserAccepted(call);
+    if (call.state === 'active') {
+      emitVoiceCallEvent(call, 'accept');
+      return;
+    }
     void call.answer();
   };
   patchedCall.disconnect = () => {
@@ -145,9 +164,16 @@ export function handleTelnyxCallStateChange(call: TelnyxCall): void {
   if (next === 'ringing' && prev !== 'ringing') {
     emitVoiceCallEvent(call, 'ringing');
   }
+
   if (next === 'active' && prev !== 'active') {
+    if (isInboundAwaitingUserAccept(call)) {
+      // Pre-bridged SIP transfer — surface as ring, not connected.
+      emitVoiceCallEvent(call, 'ringing');
+      return;
+    }
     emitVoiceCallEvent(call, 'accept');
   }
+
   if (next === 'hangup' || next === 'destroy') {
     emitVoiceCallEvent(call, 'disconnect');
   }

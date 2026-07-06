@@ -220,11 +220,8 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     if (staleTabWarning && phase !== 'idle') {
       return 'Another browser tab may also be registered for calls. Use one active call tab per agent.';
     }
-    if (connectingFromServer && webrtcPhase === 'idle') {
-      return 'Waiting for voice link — keep this tab open on Incoming.';
-    }
     return null;
-  }, [connectingFromServer, incomingCall.error, phase, staleTabWarning, webrtcPhase]);
+  }, [incomingCall.error, phase, staleTabWarning]);
 
   return (
     <CallsContext.Provider

@@ -437,6 +437,10 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     call.on('ringing', syncIfNeeded);
 
     call.on('accept', () => {
+      if (isIncoming && !acceptingInboundRef.current) {
+        console.log('[WebPhone] ignoring pre-bridged inbound active — waiting for Accept click');
+        return;
+      }
       console.log('[WebPhone] call connected:', getCallStableId(call));
       syncIfNeeded();
       if (isIncoming) {
@@ -586,7 +590,6 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     safeSet(setHasOutboundSession, false);
 
     incomingCallRef.current = call;
-    activeCallRef.current = call;
     deviceRef.current = twilioDevice.device;
     safeSet(setActiveCallId, callId);
 
@@ -876,12 +879,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     if (!target) {
       target = pendingTarget;
       try {
-        if (target.status() !== 'open') {
-          target.accept({ rtcConstraints: { audio: true } });
-          console.log('[Inbound] accept() called', getCallStableId(target), 'direct fallback');
-        } else {
-          console.log('[Inbound] accept() skipped — call already open', getCallStableId(target));
-        }
+        target.accept({ rtcConstraints: { audio: true } });
+        console.log('[Inbound] accept() called', getCallStableId(target), 'direct fallback');
       } catch (err) {
         acceptingInboundRef.current = false;
         console.error('[Inbound] direct accept() threw', err, {
@@ -900,7 +899,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
     try {
       console.log('[WebPhone] accepting incoming call:', callId, 'status:', target.status());
-      if (target.status() === 'open') {
+      if (target.status() === 'open' && !promotedActiveCallsRef.current.has(target)) {
         promoteCallToActive(target, true, callId, meta);
         void verifyInboundAudioAfterPromote(target);
       }
