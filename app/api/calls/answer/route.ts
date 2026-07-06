@@ -43,5 +43,10 @@ export async function POST(request: NextRequest) {
   }
 
   await markInboundAccepted(service, telnyxSessionId, user.id);
-  return NextResponse.json({ ok: true, status: 'answered', call_id: call.id });
+  return NextResponse.json({
+    ok: true,
+    status: 'answered',
+    call_id: call.id,
+    telnyx_call_id: call.telnyx_call_id,
+  });
 }

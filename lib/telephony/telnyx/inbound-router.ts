@@ -10,7 +10,7 @@ import {
 } from '@/lib/voice/phone-number-settings';
 import { resolveAgentSipUri } from '@/lib/telephony/telnyx/agent-sip';
 import { listRingableAgents } from '@/lib/telephony/telnyx/inbound';
-import { answerCall, hangupProviderCall, transferCall } from '@/lib/telephony/telnyx/outbound';
+import { answerCall, hangupProviderCall, rejectCall, transferCall } from '@/lib/telephony/telnyx/outbound';
 import { startCallRecording } from '@/lib/telephony/telnyx/recording';
 
 export interface InboundRoutingContext {
@@ -30,7 +30,7 @@ export async function findInboundCallBySession(
 ) {
   const { data } = await supabase
     .from('calls')
-    .select('id, user_id, status, direction, telnyx_call_id, telnyx_session_id, from_number, to_number, answered_at, workspace_id')
+    .select('id, user_id, status, direction, telnyx_call_id, telnyx_webrtc_leg_id, telnyx_session_id, from_number, to_number, answered_at, workspace_id')
     .eq('telnyx_session_id', telnyxSessionId)
     .eq('direction', 'inbound')
     .order('started_at', { ascending: false })
@@ -122,10 +122,12 @@ async function upsertInboundCallsRow(
     return raced?.id ?? null;
   }
 
-  console.log('[INBOUND-DB] ringing row created', {
+  console.log('[INBOUND-DB-INSERT]', {
     call_id: inserted?.id,
     session: ctx.callSessionId,
     control: ctx.providerCallId,
+    from_number: ctx.fromNumber,
+    status: 'ringing',
   });
   return inserted?.id ?? null;
 }
@@ -369,7 +371,12 @@ export async function markInboundAccepted(
   const call = await findInboundCallBySession(supabase, telnyxSessionId);
   if (!call || call.status === 'active' || call.status === 'answered') return;
 
-  console.log('[INBOUND-ACCEPT] agent accepted', { session: telnyxSessionId, agent_id: agentId });
+  const pstnControlId = call.telnyx_call_id as string | null;
+  if (pstnControlId) {
+    await answerCall(pstnControlId);
+  }
+
+  console.log('[INBOUND-ANSWERED]', { session: telnyxSessionId, agent_id: agentId, control: pstnControlId });
 
   await supabase
     .from('calls')
@@ -385,7 +392,22 @@ export async function markInboundDeclined(
   supabase: SupabaseClient,
   telnyxSessionId: string,
 ): Promise<void> {
-  console.log('[INBOUND-DECLINE] agent declined', { session: telnyxSessionId });
+  const call = await findInboundCallBySession(supabase, telnyxSessionId);
+  if (!call || call.status !== 'ringing') return;
+
+  const webrtcLegId = call.telnyx_webrtc_leg_id as string | null;
+
+  if (webrtcLegId) {
+    await rejectCall(webrtcLegId).catch(() => hangupProviderCall(webrtcLegId).catch(() => undefined));
+  }
+
+  await supabase
+    .from('calls')
+    .update({ status: 'declined', disposition: 'declined' })
+    .eq('id', call.id);
+
+  console.log('[INBOUND-DECLINED]', { session: telnyxSessionId, call_id: call.id });
+
   await advanceInboundRingGroup(supabase, telnyxSessionId, 'agent_declined');
 }
 

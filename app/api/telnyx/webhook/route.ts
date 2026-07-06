@@ -13,6 +13,7 @@ import {
   skippedAnswerResult,
   type FastAnswerResult,
 } from '@/lib/telnyx/fast-answer';
+import { isExplicitOutboundTelnyxPayload } from '@/lib/telephony/telnyx/payload-utils';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,14 +49,22 @@ export async function POST(request: NextRequest) {
   const callControlId = extractCallControlId(payload);
   let answerMeta: FastAnswerResult | null = null;
 
+  console.log('[INBOUND-WEBHOOK-RECEIVED]', eventType, callControlId ?? 'no-control-id');
+
   if (eventType === 'call.initiated' && callControlId) {
     if (isBridgeLegClientState(readClientState(payload))) {
       answerMeta = skippedAnswerResult('bridge_leg');
-    } else {
+    } else if (isExplicitOutboundTelnyxPayload(payload)) {
       answerMeta = await sendTelnyxAnswerFast(callControlId);
       console.log(
         `[telephony/webhook/voice] ANSWER_SENT +${Date.now() - handlerStartMs}ms ok=${answerMeta.ok}`,
       );
+    } else {
+      answerMeta = skippedAnswerResult('inbound_no_auto_answer');
+      console.log('[INBOUND-AUTO-ANSWER-BLOCKED]', {
+        call_control_id: callControlId,
+        direction: payload.data ? (payload.data as Record<string, unknown>).payload : null,
+      });
     }
   }
 

@@ -162,3 +162,10 @@ export async function answerCall(callControlId: string): Promise<void> {
     { method: 'POST', body: JSON.stringify({}) },
   );
 }
+
+export async function rejectCall(callControlId: string): Promise<void> {
+  await telephonyRequest(
+    `/calls/${encodeURIComponent(callControlId)}/actions/reject`,
+    { method: 'POST', body: JSON.stringify({}) },
+  );
+}

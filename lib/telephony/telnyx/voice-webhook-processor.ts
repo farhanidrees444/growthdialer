@@ -39,6 +39,8 @@ interface TelnyxEventPayload {
   call_session_id?: string;
   direction?: string;
   from?: string;
+  caller_id_number?: string;
+  from_number?: string;
   to?: string;
   state?: string;
   hangup_cause?: string;
@@ -182,6 +184,9 @@ async function processTelnyxWebhookBackground(
     const callSessionId = payload.call_session_id;
 
     console.log(`[WEBHOOK] bg ${event_type} | session=${callSessionId} | control=${callControlId} | from=${payload.from} | to=${payload.to}`);
+    if (event_type === 'call.initiated') {
+      console.log('[INBOUND-PAYLOAD]', JSON.stringify(payload, null, 2));
+    }
     voiceLog.info(
       {
         service: 'telnyx-webhook',
@@ -231,13 +236,19 @@ async function processTelnyxWebhookBackground(
         }
 
         const toNumber = normalizeE164(payload.to ?? '');
-        const fromRaw = payload.from ?? '';
-        const fromNumber = normalizeInboundCallerId(fromRaw) ?? (fromRaw.trim() || null);
+        const fromCandidates = [payload.from, payload.caller_id_number, payload.from_number];
+        let fromNumber: string | null = null;
+        for (const raw of fromCandidates) {
+          if (typeof raw !== 'string' || !raw.trim()) continue;
+          fromNumber = normalizeInboundCallerId(raw) ?? raw.trim();
+          if (fromNumber) break;
+        }
         const ownedTo = await getCachedNumberOwner(supabase, toNumber);
         const dirInbound = directionSaysInbound(payload.direction);
         const treatAsInbound = dirInbound === true || (dirInbound === null && Boolean(ownedTo));
 
         if (treatAsInbound) {
+        console.log('[INBOUND-RINGING]', { session: callSessionId, control: callControlId, from: fromNumber, to: toNumber });
         await handleInboundCallInitiated(supabase, {
           providerCallId: callControlId,
           callSessionId: callSessionId ?? undefined,
@@ -462,7 +473,7 @@ async function processTelnyxWebhookBackground(
 
       console.log('[WEBHOOK] call.answered — call id:', callRow.id);
 
-      // Inbound Leg A answered before agent accept — no hold; status stays ringing until accept.
+      // Inbound PSTN leg answered before agent accept — keep ringing until Accept API.
       if (
         callRow.direction === 'inbound'
         && (callRow.status === 'ringing' || callRow.status === null)
@@ -470,6 +481,7 @@ async function processTelnyxWebhookBackground(
         && callControlId
         && callRow.telnyx_call_id === callControlId
       ) {
+        console.log('[INBOUND-AUTO-ANSWER-BLOCKED] call.answered ignored while status=ringing', callControlId);
         await logInboundCallStep(supabase, callControlId, 'leg_a_answered');
         return;
       }
@@ -615,6 +627,14 @@ async function processTelnyxWebhookBackground(
               ...(durationSeconds !== null ? { duration_seconds: durationSeconds } : {}),
             })
             .eq('id', callRow.id);
+
+          if (callRow.direction === 'inbound' && callRow.answered_at) {
+            console.log('[INBOUND-COMPLETED]', {
+              call_id: callRow.id,
+              session: callRow.telnyx_session_id,
+              duration_seconds: durationSeconds,
+            });
+          }
         }
 
         if (callRow.lead_id) {

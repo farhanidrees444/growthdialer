@@ -48,6 +48,11 @@ export function useInboundCallsRing(userId: string | null | undefined) {
 
   const applyRing = useCallback((mapped: ServerInboundRing | null) => {
     if (mapped) {
+      console.log('[INBOUND-POPUP-TRIGGER]', {
+        call_id: mapped.callId,
+        session: mapped.telnyxSessionId,
+        from: mapped.fromNumber,
+      });
       setRing(mapped);
       playInboundRingtone();
       return;
@@ -111,9 +116,15 @@ export function useInboundCallsRing(userId: string | null | undefined) {
         (payload) => {
           const row = (payload.new ?? payload.old) as Record<string, unknown> | undefined;
           if (!row?.id) return;
-          if (row.direction !== 'inbound') return;
 
-          if (payload.eventType === 'DELETE' || row.status !== 'ringing') {
+          if (payload.eventType === 'DELETE') {
+            if (ringRef.current?.callId === row.id) {
+              clearRing();
+            }
+            return;
+          }
+
+          if (row.direction !== 'inbound' || row.status !== 'ringing') {
             if (ringRef.current?.callId === row.id) {
               clearRing();
             }
@@ -137,7 +148,7 @@ export function useInboundCallsRing(userId: string | null | undefined) {
     if (!userId) return;
     const poll = setInterval(() => {
       void loadActiveRing();
-    }, 2000);
+    }, 1000);
     return () => clearInterval(poll);
   }, [loadActiveRing, userId]);
 
