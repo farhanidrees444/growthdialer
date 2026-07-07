@@ -705,8 +705,15 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     primeVoiceAudioOnUserGesture();
     void initClient();
 
+    const onVoicePrepared = () => {
+      console.log('[WebPhone] voice account prepared — reinitializing device');
+      void initClientRef.current?.();
+    };
+    window.addEventListener('gd-voice-account-prepared', onVoicePrepared);
+
     return () => {
       mountedRef.current = false;
+      window.removeEventListener('gd-voice-account-prepared', onVoicePrepared);
       twilioDevice.destroyDevice();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

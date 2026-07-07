@@ -5,6 +5,7 @@ import {
   Phone, PhoneOff, Loader2, Clock, User, Building2, History,
 } from 'lucide-react';
 import { useCalls, useCallerDisplayName } from '@/contexts/calls-context';
+import { useWebPhone } from '@/contexts/webphone-context';
 import { formatInboundCallerDisplay } from '@/lib/inbound/phone';
 
 function fmtTime(seconds: number): string {
@@ -50,6 +51,7 @@ export default function CallsOverlay() {
     accept,
     decline,
   } = useCalls();
+  const { phoneStatus } = useWebPhone();
 
   const displayName = useCallerDisplayName(fromNumber, callerContext);
 
@@ -127,6 +129,11 @@ export default function CallsOverlay() {
             )}
             <p className="mt-1 text-xs text-white/30">To your line {fmtLine(toNumber)}</p>
 
+            {isIncoming && phoneStatus !== 'ready' && (
+              <p className="mt-4 text-center text-xs text-amber-200/85">
+                Voice link is still connecting — you can accept now and we will bridge the call.
+              </p>
+            )}
             {isConnecting && (
               <div className="mt-6 w-full">
                 <WaveBars />

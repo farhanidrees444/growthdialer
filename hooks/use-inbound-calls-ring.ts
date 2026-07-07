@@ -158,5 +158,20 @@ export function useInboundCallsRing(userId: string | null | undefined) {
     return () => clearInterval(poll);
   }, [loadActiveRing, userId]);
 
+  useEffect(() => {
+    if (!userId) return;
+    const refresh = () => {
+      if (document.visibilityState === 'visible') {
+        void loadActiveRing();
+      }
+    };
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [loadActiveRing, userId]);
+
   return { serverRing: ring, clearServerRing: clearRing, refreshServerRing: loadActiveRing };
 }

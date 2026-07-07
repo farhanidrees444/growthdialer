@@ -23,9 +23,10 @@ function mapPhoneStatus(status: PhoneStatus): 'idle' | 'initializing' | 'ready' 
   return status;
 }
 
-function mapDeviceState(device: TelnyxRTC | null): string | null {
-  if (!device) return null;
-  return 'registered';
+function mapDeviceState(device: TelnyxRTC | null, phoneStatus: PhoneStatus): string | null {
+  if (phoneStatus === 'ready') return device ? 'registered' : 'registered';
+  if (phoneStatus === 'initializing') return 'registering';
+  return null;
 }
 
 export interface UseVoicePresenceOptions {
@@ -60,7 +61,7 @@ export function useVoicePresence({
     const body = {
       presence_status: presenceStatus,
       phone_status: mapPhoneStatus(phoneStatus),
-      device_state: mapDeviceState(device),
+      device_state: mapDeviceState(device, phoneStatus),
       tab_id: tabIdRef.current,
       workspace_id: workspaceId ?? null,
     };
@@ -88,18 +89,21 @@ export function useVoicePresence({
   }, [device, enabled, phoneStatus, workspaceId]);
 
   useEffect(() => {
-    if (!enabled || phoneStatus !== 'ready') return undefined;
+    if (!enabled) return undefined;
+    if (phoneStatus !== 'ready' && phoneStatus !== 'initializing') return undefined;
 
-    void sendHeartbeat('online');
+    const presenceStatus = phoneStatus === 'ready' ? 'online' : 'away';
+    void sendHeartbeat(presenceStatus);
 
     const interval = setInterval(() => {
       const offline = typeof navigator !== 'undefined' && !navigator.onLine;
-      void sendHeartbeat(offline ? 'offline' : 'online');
+      void sendHeartbeat(offline ? 'offline' : presenceStatus);
     }, HEARTBEAT_MS);
 
     const onVisibility = () => {
       const offline = typeof navigator !== 'undefined' && !navigator.onLine;
-      void sendHeartbeat(offline ? 'offline' : 'online');
+      const presenceStatus = phoneStatus === 'ready' ? 'online' : 'away';
+      void sendHeartbeat(offline ? 'offline' : presenceStatus);
     };
 
     const onOnline = () => { void sendHeartbeat('online'); };

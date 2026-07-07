@@ -23,8 +23,8 @@ function isAgentRingable(row: {
   const age = Date.now() - new Date(row.last_heartbeat_at).getTime();
   if (age > RINGABLE_HEARTBEAT_MS) return false;
   if (row.status === 'offline') return false;
-  if (row.device_state === 'registered') return true;
-  return row.status === 'online';
+  if (row.device_state === 'registered' || row.device_state === 'registering') return true;
+  return row.status === 'online' || row.status === 'away';
 }
 
 export async function listRingableAgents(

@@ -186,22 +186,46 @@ async function routeToForward(
   }
 }
 
+async function assignInboundRingTarget(
+  supabase: SupabaseClient,
+  ctx: InboundRoutingContext,
+  agentId: string,
+  routing: ResolvedNumberRouting,
+): Promise<void> {
+  await setCallStatus(supabase, ctx.callsRowId, {
+    user_id: agentId,
+    status: 'ringing',
+  });
+
+  console.log('[INBOUND-RING] server popup target', {
+    agent_id: agentId,
+    session: ctx.callSessionId,
+  });
+
+  if (ctx.callSessionId) {
+    triggerInboundRingTimeoutAsync(
+      ctx.callSessionId,
+      ctx.providerCallId,
+      agentId,
+      routing.inbound_ring_seconds,
+      'browser',
+    );
+  }
+}
+
 async function ringCurrentAgent(
   supabase: SupabaseClient,
   ctx: InboundRoutingContext,
   agentId: string,
   routing: ResolvedNumberRouting,
 ): Promise<boolean> {
+  await assignInboundRingTarget(supabase, ctx, agentId, routing);
+
   const sip = await resolveAgentSipUri(supabase, agentId);
   if (!sip) {
-    console.warn('[INBOUND-RING] no credential for agent', agentId);
-    return false;
+    console.warn('[INBOUND-RING] no SIP credential — server popup only', agentId);
+    return true;
   }
-
-  await setCallStatus(supabase, ctx.callsRowId, {
-    user_id: agentId,
-    status: 'ringing',
-  });
 
   console.log('[INBOUND-RING] transfer to agent', {
     agent_id: agentId,
@@ -218,18 +242,8 @@ async function ringCurrentAgent(
   });
 
   if (!transferred) {
-    console.error('[INBOUND-RING] SIP transfer failed', { agent_id: agentId });
-    return false;
-  }
-
-  if (ctx.callSessionId) {
-    triggerInboundRingTimeoutAsync(
-      ctx.callSessionId,
-      ctx.providerCallId,
-      agentId,
-      routing.inbound_ring_seconds,
-      'browser',
-    );
+    console.error('[INBOUND-RING] SIP transfer failed — server popup only', { agent_id: agentId });
+    return true;
   }
 
   return true;
@@ -256,20 +270,10 @@ export async function routeInboundToBrowserAgents(
     ...candidates.filter((id) => id !== ctx.ownerUserId),
   ];
 
-  if (!ordered.length) {
-    console.log('[INBOUND-ROUTE] no ringable agents — voicemail');
-    await routeToVoicemail(supabase, ctx, routing, 'no_agents_online');
-    return;
-  }
-
-  const startAgentId = await pickRoundRobinAgent(supabase, ctx.workspaceId, ordered);
-  if (!startAgentId) {
-    await routeToVoicemail(supabase, ctx, routing, 'round_robin_empty');
-    return;
-  }
-
-  const startIndex = ordered.indexOf(startAgentId);
-  const rotated = [...ordered.slice(startIndex), ...ordered.slice(0, startIndex)];
+  const pool = ordered.length ? ordered : [ctx.ownerUserId];
+  const startAgentId = await pickRoundRobinAgent(supabase, ctx.workspaceId, pool) ?? pool[0];
+  const startIndex = pool.indexOf(startAgentId);
+  const rotated = [...pool.slice(startIndex), ...pool.slice(0, startIndex)];
 
   for (const agentId of rotated) {
     const rang = await ringCurrentAgent(supabase, ctx, agentId, routing);
@@ -279,7 +283,8 @@ export async function routeInboundToBrowserAgents(
     }
   }
 
-  await routeToVoicemail(supabase, ctx, routing, 'all_agents_unreachable');
+  await assignInboundRingTarget(supabase, ctx, ctx.ownerUserId, routing);
+  console.log('[INBOUND-ROUTE] fallback server popup for owner', { agent_id: ctx.ownerUserId });
 }
 
 async function resolveFirstRingingAgentId(
@@ -389,6 +394,22 @@ export async function markInboundAccepted(
   if (!call || call.status === 'active' || call.status === 'answered') return;
 
   const pstnControlId = call.telnyx_call_id as string | null;
+  const webrtcLegId = call.telnyx_webrtc_leg_id as string | null;
+
+  if (pstnControlId && !webrtcLegId) {
+    const sip = await resolveAgentSipUri(supabase, agentId);
+    if (sip) {
+      console.log('[INBOUND-ANSWER] bridging SIP on accept', { agent_id: agentId, session: telnyxSessionId });
+      await transferCall(pstnControlId, sip.sipUri, call.to_number as string, {
+        gd_inbound_leg_b: true,
+        telnyx_session_id: telnyxSessionId,
+        agent_id: agentId,
+        gd_from_number: (call.from_number as string | null) ?? '',
+        gd_to_number: call.to_number as string,
+      });
+    }
+  }
+
   if (pstnControlId) {
     await answerCall(pstnControlId);
   }
