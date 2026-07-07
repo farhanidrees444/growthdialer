@@ -5,9 +5,21 @@ import {
   findInboundCallBySession,
   markInboundAccepted,
 } from '@/lib/telephony/telnyx/inbound-router';
+import { findPurchasedNumberOwner } from '@/lib/inbound/lookup-number';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+async function userMayAnswerInboundCall(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  call: { user_id: string | null; to_number: string | null },
+): Promise<boolean> {
+  if (!call.user_id || call.user_id === userId) return true;
+  if (!call.to_number) return false;
+  const owned = await findPurchasedNumberOwner(supabase, call.to_number);
+  return owned?.user_id === userId;
+}
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -34,8 +46,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Inbound call not found' }, { status: 404 });
   }
 
-  if (call.user_id && call.user_id !== user.id) {
+  if (!(await userMayAnswerInboundCall(supabase, user.id, call))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  if (call.user_id !== user.id) {
+    await service
+      .from('calls')
+      .update({ user_id: user.id })
+      .eq('id', call.id);
   }
 
   if (call.status !== 'ringing') {

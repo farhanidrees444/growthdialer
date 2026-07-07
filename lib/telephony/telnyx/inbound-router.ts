@@ -260,7 +260,8 @@ export async function routeInboundToBrowserAgents(
   );
 
   if (!ctx.workspaceId) {
-    await routeToVoicemail(supabase, ctx, routing, 'workspace_missing');
+    console.warn('[INBOUND-ROUTE] workspace missing — server popup for number owner');
+    await ringCurrentAgent(supabase, ctx, ctx.ownerUserId, routing);
     return;
   }
 
@@ -287,22 +288,6 @@ export async function routeInboundToBrowserAgents(
   console.log('[INBOUND-ROUTE] fallback server popup for owner', { agent_id: ctx.ownerUserId });
 }
 
-async function resolveFirstRingingAgentId(
-  supabase: SupabaseClient,
-  ctx: InboundRoutingContext,
-): Promise<string> {
-  if (!ctx.workspaceId) return ctx.ownerUserId;
-
-  const candidates = await listRingableAgents(supabase, ctx.workspaceId);
-  const ordered = [
-    ...(candidates.includes(ctx.ownerUserId) ? [ctx.ownerUserId] : []),
-    ...candidates.filter((id) => id !== ctx.ownerUserId),
-  ];
-  if (!ordered.length) return ctx.ownerUserId;
-
-  const startAgentId = await pickRoundRobinAgent(supabase, ctx.workspaceId, ordered);
-  return startAgentId ?? ordered[0] ?? ctx.ownerUserId;
-}
 
 export async function advanceInboundRingGroup(
   supabase: SupabaseClient,
@@ -518,10 +503,7 @@ export async function handleInboundCallInitiated(
     purchasedNumberId: ownedNumber.id as string | undefined,
   };
 
-  const ringingUserId =
-    routing.inbound_mode === 'browser'
-      ? await resolveFirstRingingAgentId(supabase, preCtx as InboundRoutingContext)
-      : ownerUserId;
+  const ringingUserId = ownerUserId;
 
   const callsRowId = await upsertInboundCallsRow(supabase, {
     ...preCtx,

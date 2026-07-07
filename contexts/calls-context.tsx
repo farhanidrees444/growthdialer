@@ -56,8 +56,12 @@ const EMPTY_CALLER_CONTEXT: CallerContext = {
   lastDisposition: null,
 };
 
-function mapIncomingPhase(phase: ReturnType<typeof useWebPhone>['incomingCall']['phase']): CallPhase {
-  if (phase === 'incoming' || phase === 'failed') return 'incoming';
+function mapIncomingPhase(
+  phase: ReturnType<typeof useWebPhone>['incomingCall']['phase'],
+  callId: string | null,
+): CallPhase {
+  if (phase === 'incoming') return 'incoming';
+  if (phase === 'failed' && callId) return 'incoming';
   if (phase === 'connecting') return 'connecting';
   if (phase === 'ended') return 'ended';
   return 'idle';
@@ -85,7 +89,7 @@ export function CallsProvider({ children }: { children: ReactNode }) {
   const [ringElapsedSec, setRingElapsedSec] = useState(0);
   const [connectingFromServer, setConnectingFromServer] = useState(false);
 
-  const webrtcPhase = mapIncomingPhase(incomingCall.phase);
+  const webrtcPhase = mapIncomingPhase(incomingCall.phase, incomingCall.callId);
 
   const phase: CallPhase = useMemo(() => {
     if (webrtcPhase !== 'idle') return webrtcPhase;
@@ -139,11 +143,14 @@ export function CallsProvider({ children }: { children: ReactNode }) {
   }, [fetchCallerContext, fromNumber, phase]);
 
   useEffect(() => {
-    if (webrtcPhase === 'incoming' || webrtcPhase === 'connecting') {
+    if (
+      (webrtcPhase === 'incoming' || webrtcPhase === 'connecting')
+      && incomingCall.callId
+    ) {
       clearServerRing({ stopTone: false });
       setConnectingFromServer(false);
     }
-  }, [clearServerRing, webrtcPhase]);
+  }, [clearServerRing, incomingCall.callId, webrtcPhase]);
 
   useEffect(() => {
     if (phase !== 'incoming' && phase !== 'connecting') return;
