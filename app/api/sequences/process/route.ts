@@ -15,12 +15,13 @@ export async function POST(request: NextRequest) {
   const access = await requireWorkspaceFromRequest(request, supabase, user.id);
   if (isWorkspaceError(access)) return access;
 
+  const userId = user.id;
   const now = new Date().toISOString();
 
   const { data: due } = await supabase
     .from('sequence_enrollments')
     .select('id, sequence_id, current_step_index')
-    .eq('workspace_id', access.workspaceId)
+    .eq('user_id', userId)
     .eq('status', 'active')
     .lte('next_action_at', now)
     .limit(200);

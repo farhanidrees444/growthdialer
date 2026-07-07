@@ -34,10 +34,6 @@ export async function GET(
       return NextResponse.json({ error: 'Number not found' }, { status: 404 });
     }
 
-    if (number.workspace_id && number.workspace_id !== access.workspaceId) {
-      return NextResponse.json({ error: 'Number not in workspace' }, { status: 403 });
-    }
-
     const settings = await getPhoneNumberSettings(supabase, id);
 
     return NextResponse.json({
@@ -83,10 +79,6 @@ export async function PATCH(
       return NextResponse.json({ error: 'Number not found' }, { status: 404 });
     }
 
-    if (number.workspace_id && number.workspace_id !== access.workspaceId) {
-      return NextResponse.json({ error: 'Number not in workspace' }, { status: 403 });
-    }
-
     const patch: Record<string, unknown> = {};
     if (typeof body.recording_enabled === 'boolean') {
       patch.recording_enabled = body.recording_enabled;
@@ -119,7 +111,6 @@ export async function PATCH(
     const settings = await upsertPhoneNumberSettings(supabase, {
       purchasedNumberId: id,
       userId: user.id,
-      workspaceId: access.workspaceId,
       patch,
     });
 

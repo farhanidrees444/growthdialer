@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { apiUnauthorized, apiForbidden } from '@/lib/api/errors';
-import { assertWorkspaceCanPlaceCalls } from '@/lib/billing/workspace-billing-gate';
+import { assertUserCanPlaceCalls } from '@/lib/billing/workspace-billing-gate';
 import { dialParallelBatch } from '@/lib/parallel-dial/dial-batch';
 import type { DialerQueueConfig } from '@/lib/dialer/queue-query';
 import type { ParallelDialSession } from '@/lib/parallel-dial/types';
@@ -33,10 +33,8 @@ export async function POST(
       return NextResponse.json({ error: 'Session not ready for dialing' }, { status: 400 });
     }
 
-    if (session.workspace_id) {
-      const billingBlock = await assertWorkspaceCanPlaceCalls(supabase, session.workspace_id);
-      if (billingBlock) return billingBlock;
-    }
+    const billingBlock = await assertUserCanPlaceCalls(supabase, user.id);
+    if (billingBlock) return billingBlock;
 
     const { legs, leads } = await dialParallelBatch(
       supabase,

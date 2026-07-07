@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json() as { agent_id?: string; message?: string; call_id?: string; workspace_id?: string };
+  const userId = user.id;
   const access = await requireWorkspaceFromRequest(request, supabase, user.id, {
     permission: 'COACH_CALLS',
     body,
@@ -23,21 +24,15 @@ export async function POST(request: NextRequest) {
   if (!agentId || !message) return NextResponse.json({ error: 'agent_id and message required' }, { status: 400 });
   if (message.length > 1200) return NextResponse.json({ error: 'Message is too long' }, { status: 400 });
 
-  const { data: member } = await supabase
-    .from('workspace_members')
-    .select('user_id')
-    .eq('workspace_id', access.workspaceId)
-    .eq('user_id', agentId)
-    .eq('status', 'active')
-    .maybeSingle();
-  if (!member) return NextResponse.json({ error: 'Agent not found in workspace' }, { status: 404 });
+  if (agentId === userId) {
+    return NextResponse.json({ error: 'Cannot whisper to yourself' }, { status: 400 });
+  }
 
   if (callId) {
     const { data: call } = await supabase
       .from('calls')
       .select('id, user_id, workspace_id')
       .eq('id', callId)
-      .eq('workspace_id', access.workspaceId)
       .eq('user_id', agentId)
       .maybeSingle();
     if (!call) return NextResponse.json({ error: 'Call not found for agent' }, { status: 404 });

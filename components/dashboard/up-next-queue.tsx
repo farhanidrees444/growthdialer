@@ -35,20 +35,19 @@ function initials(name: string | null): string {
 
 export default function UpNextQueue() {
   const router = useRouter();
-  const { currentWorkspace, apiFetch } = useWorkspace();
+  const { apiFetch } = useWorkspace();
   const { setImportOpen } = useLeads();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!currentWorkspace?.id) return;
     setLoading(true);
     apiFetch('/api/leads/queue?limit=5&status=queued,new,callback')
       .then((r) => r.json())
       .then((data) => setLeads(data.leads ?? []))
       .catch(() => setLeads([]))
       .finally(() => setLoading(false));
-  }, [currentWorkspace?.id, apiFetch]);
+  }, [apiFetch]);
 
   return (
     <Card className="relative flex h-full flex-col overflow-hidden rounded-[1.5rem] border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-xl transition-all hover:border-white/[0.12] hover:shadow-[0_26px_90px_rgba(0,0,0,0.42)]">

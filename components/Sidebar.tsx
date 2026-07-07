@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   motion,
   AnimatePresence,
@@ -23,21 +23,15 @@ import {
   Sparkles,
   PhoneIncoming,
   ScrollText,
-  ChevronsUpDown,
-  Check,
   LockKeyhole,
   Headset,
-  Plus,
-  Building2,
 } from "lucide-react";
 import { useEffect, useState, Suspense } from "react";
 import { useMobileNav } from "@/contexts/mobile-nav-context";
 import { useSidebarCounts, formatSidebarCount } from "@/hooks/use-sidebar-counts";
-import { useWorkspace } from "@/contexts/workspace-context";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ROLE_LABELS } from "@/lib/auth/permissions";
 import { useCalls } from "@/contexts/calls-context";
 import { EASE_OUT, SPRING } from "@/components/marketing/live-floor/motion";
 import { BrandLogo } from "@/components/ui/brand-logo";
@@ -125,129 +119,6 @@ function isNavActive(pathname: string, searchParams: URLSearchParams, item: NavI
   if (item.href === "/dashboard") return pathname === "/dashboard";
 
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
-}
-
-function WorkspaceSwitcher({ collapsed }: { collapsed: boolean }) {
-  const router = useRouter();
-  const { workspaces, currentWorkspace, currentRole, setCurrentWorkspace, loading } = useWorkspace();
-  const [open, setOpen] = useState(false);
-
-  if (loading || !currentWorkspace) return null;
-
-  const planBadge = PLAN_BADGES[currentWorkspace.plan] ?? PLAN_BADGES.free;
-
-  const trigger = (
-    <button
-      type="button"
-      onClick={() => setOpen((p) => !p)}
-      className={cn(
-        "flex w-full items-center gap-2.5 rounded-lg border border-zinc-800/50 bg-zinc-900/50 text-left transition-colors hover:border-zinc-700/60 hover:bg-zinc-800/40",
-        collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5",
-      )}
-      aria-label={collapsed ? `Workspace: ${currentWorkspace.name}` : undefined}
-    >
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-800 text-zinc-400">
-        <Building2 className="h-3.5 w-3.5" />
-      </div>
-      {!collapsed && (
-        <>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-zinc-100">{currentWorkspace.name}</p>
-            {currentRole && (
-              <p className="truncate text-[10px] text-slate-500">{ROLE_LABELS[currentRole]}</p>
-            )}
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5">
-            <span
-              className={cn(
-                "rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider",
-                planBadge.className,
-              )}
-            >
-              {planBadge.label}
-            </span>
-            <ChevronsUpDown className="h-3 w-3 text-slate-600" />
-          </div>
-        </>
-      )}
-    </button>
-  );
-
-  return (
-    <div className={cn("relative pb-3", collapsed ? "px-2" : "px-3")}>
-      {collapsed ? (
-        <Tooltip>
-          <TooltipTrigger render={trigger} />
-          <TooltipContent side="right" sideOffset={8}>
-            {currentWorkspace.name}
-          </TooltipContent>
-        </Tooltip>
-      ) : (
-        trigger
-      )}
-
-      <AnimatePresence>
-        {open && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
-            <motion.div
-              initial={{ opacity: 0, y: -6, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.97 }}
-              transition={{ duration: 0.15 }}
-              className={cn(
-                "absolute z-50 rounded-xl border border-white/[0.10] bg-[oklch(0.1_0.006_285)] p-1.5 shadow-2xl shadow-black/60",
-                collapsed ? "left-full top-0 ml-2 w-56" : "left-3 right-3 top-[calc(100%+4px)]",
-              )}
-            >
-              <p className="mb-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
-                Workspaces
-              </p>
-              {workspaces.map((ws) => {
-                const isActive = ws.id === currentWorkspace.id;
-                return (
-                  <button
-                    key={ws.id}
-                    type="button"
-                    onClick={() => {
-                      void setCurrentWorkspace(ws);
-                      setOpen(false);
-                    }}
-                    className={cn(
-                      "flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors",
-                      isActive
-                        ? "bg-white/[0.07] text-white"
-                        : "text-slate-400 hover:bg-white/[0.05] hover:text-white",
-                    )}
-                  >
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-400">
-                      <Building2 className="h-3 w-3" />
-                    </div>
-                    <span className="flex-1 truncate text-xs font-medium">{ws.name}</span>
-                    {isActive && <Check className="h-3 w-3 shrink-0 text-emerald-400" />}
-                  </button>
-                );
-              })}
-              <div className="mx-1 my-1.5 border-t border-white/[0.06]" />
-              <button
-                type="button"
-                onClick={() => {
-                  router.push("/workspace/setup");
-                  setOpen(false);
-                }}
-                className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-slate-500 transition-colors hover:bg-white/[0.05] hover:text-white"
-              >
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-dashed border-white/[0.15]">
-                  <Plus className="h-3 w-3" />
-                </div>
-                <span className="text-xs font-medium">Create workspace</span>
-              </button>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
-  );
 }
 
 function NavCountBadge({
@@ -500,11 +371,10 @@ function SidebarInner({
   const searchParams = useSearchParams();
   const { isOpen, close } = useMobileNav();
   const sidebarCounts = useSidebarCounts();
-  const { currentRole } = useWorkspace();
   const reduceMotion = useReducedMotion();
   const [isDesktopViewport, setIsDesktopViewport] = useState(false);
 
-  const canCoach = Boolean(currentRole && ["owner", "admin", "manager"].includes(currentRole));
+  const canCoach = true;
   const isCollapsed = isDesktopCollapsed && isDesktopViewport;
   const routeAccent = resolveRouteAccent(pathname);
 
@@ -582,10 +452,6 @@ function SidebarInner({
               <X className="h-4 w-4" />
             </button>
           </div>
-        </div>
-
-        <div className={cn("shrink-0 pt-3", isCollapsed && "pt-2")}>
-          <WorkspaceSwitcher collapsed={isCollapsed} />
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">

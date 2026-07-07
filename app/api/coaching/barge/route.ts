@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json() as { call_id?: string; workspace_id?: string; muted?: boolean };
+  const userId = user.id;
   const access = await requireWorkspaceFromRequest(request, supabase, user.id, {
     permission: 'BARGE_CALLS',
     body,
@@ -26,7 +27,6 @@ export async function POST(request: NextRequest) {
     .from('calls')
     .select('id, user_id, workspace_id, status, ended_at, telnyx_call_id, telnyx_session_id, telnyx_webrtc_leg_id, from_number')
     .eq('id', callId)
-    .eq('workspace_id', access.workspaceId)
     .maybeSingle();
   if (!call) return NextResponse.json({ error: 'Call not found' }, { status: 404 });
   if (call.ended_at || ['completed', 'failed', 'missed'].includes(call.status ?? '')) {
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   const started = await startCoachOnCall(supabase, {
     call,
     coachId: user.id,
-    workspaceId: access.workspaceId,
+    workspaceId: userId,
     mode,
     fromNumber,
   });
@@ -76,7 +76,6 @@ export async function POST(request: NextRequest) {
     call_id: call.id,
     agent_id: call.user_id,
     coach_id: user.id,
-    workspace_id: access.workspaceId,
     mode,
     telnyx_conference_id: started.conferenceId,
     coach_call_control_id: started.coachCallControlId,

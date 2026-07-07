@@ -230,14 +230,13 @@ function CheckCard({ check }: { check: ConfidenceCheck }) {
 }
 
 export function CallConfidenceCenter() {
-  const { currentWorkspace, apiFetch } = useWorkspace();
+  const { apiFetch } = useWorkspace();
   const [health, setHealth] = useState<CallConfidenceHealth | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const browserCheck = useBrowserVoiceCheck();
 
   const load = useCallback(async () => {
-    if (!currentWorkspace?.id) return;
     setLoading(true);
     setError(null);
     try {
@@ -254,7 +253,7 @@ export function CallConfidenceCenter() {
     } finally {
       setLoading(false);
     }
-  }, [apiFetch, currentWorkspace?.id]);
+  }, [apiFetch]);
 
   useEffect(() => {
     void load();

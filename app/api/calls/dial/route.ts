@@ -4,7 +4,7 @@ import { normalizePhone } from '@/lib/phone';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { hasPermission } from '@/lib/auth/permissions';
-import { assertWorkspaceCanPlaceCalls } from '@/lib/billing/workspace-billing-gate';
+import { assertUserCanPlaceCalls } from '@/lib/billing/workspace-billing-gate';
 import { apiUnauthorized, parseJsonBody } from '@/lib/api/errors';
 import { dialRequestSchema } from '@/lib/validations';
 import { resolveCallerIdForLead } from '@/lib/dialer/resolve-caller-id';
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const billingBlock = await assertWorkspaceCanPlaceCalls(supabase, access.workspaceId);
+    const billingBlock = await assertUserCanPlaceCalls(supabase, userId);
     if (billingBlock) return billingBlock;
 
     let leadPhone: string | null = null;
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         .from('leads')
         .select('phone')
         .eq('id', lead_id)
-        .eq('workspace_id', access.workspaceId)
+        .eq('user_id', userId)
         .maybeSingle();
       leadPhone = leadRow?.phone ?? null;
     }
@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
     const nowIso = new Date().toISOString();
     const row = {
       user_id: userId,
-      workspace_id: access.workspaceId,
       lead_id: lead_id ?? null,
       direction: 'outbound' as const,
       to_number: e164,
@@ -104,7 +103,6 @@ export async function POST(request: NextRequest) {
           .from('calls')
           .update({
             user_id: existing.user_id ?? userId,
-            workspace_id: existing.workspace_id ?? access.workspaceId,
             lead_id: lead_id ?? null,
             direction: 'outbound',
             to_number: e164,

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useWorkspace } from '@/contexts/workspace-context';
 import { ownCallsOrFilter } from '@/lib/auth/call-access';
 
 export type ActivationStepId =
@@ -34,7 +33,6 @@ export function dismissActivationChecklist(): void {
 }
 
 export function useActivationProgress(): ActivationProgress {
-  const { currentWorkspace } = useWorkspace();
   const [loading, setLoading] = useState(true);
   const [leadCount, setLeadCount] = useState(0);
   const [numberCount, setNumberCount] = useState(0);
@@ -42,12 +40,6 @@ export function useActivationProgress(): ActivationProgress {
   const [dispositionCount, setDispositionCount] = useState(0);
 
   const refresh = useCallback(async () => {
-    const wsId = currentWorkspace?.id;
-    if (!wsId) {
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -56,13 +48,13 @@ export function useActivationProgress(): ActivationProgress {
       return;
     }
 
-    const ownFilter = ownCallsOrFilter(wsId, user.id);
+    const ownFilter = ownCallsOrFilter(null, user.id);
 
     const [leadsRes, numbersRes, callsRes, dispRes] = await Promise.all([
       supabase
         .from('leads')
         .select('id', { count: 'exact', head: true })
-        .eq('workspace_id', wsId)
+        .eq('user_id', user.id)
         .is('deleted_at', null),
       supabase
         .from('purchased_numbers')
@@ -85,7 +77,7 @@ export function useActivationProgress(): ActivationProgress {
     setCallCount(callsRes.count ?? 0);
     setDispositionCount(dispRes.count ?? 0);
     setLoading(false);
-  }, [currentWorkspace?.id]);
+  }, []);
 
   useEffect(() => {
     void refresh();

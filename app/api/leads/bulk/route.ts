@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     const { data: owned, error: ownErr } = await supabase
       .from('leads')
       .select('id')
-      .eq('workspace_id', access.workspaceId)
+      .eq('user_id', userId)
       .in('id', ids);
 
     if (ownErr) return NextResponse.json({ error: 'DB error' }, { status: 500 });
@@ -63,14 +63,14 @@ export async function POST(request: NextRequest) {
         const { error } = await supabase
           .from('leads')
           .update({ deleted_at: new Date().toISOString(), deleted_by: userId })
-          .eq('workspace_id', access.workspaceId)
+          .eq('user_id', userId)
           .in('id', ownedIds);
         if (error) {
           // Fall back to hard delete if column doesn't exist yet
           const { error: hardErr } = await supabase
             .from('leads')
             .delete()
-            .eq('workspace_id', access.workspaceId)
+            .eq('user_id', userId)
             .in('id', ownedIds);
           if (hardErr) return NextResponse.json({ error: 'Delete failed' }, { status: 500 });
         }
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         const { error } = await supabase
           .from('leads')
           .update({ deleted_at: null, deleted_by: null })
-          .eq('workspace_id', access.workspaceId)
+          .eq('user_id', userId)
           .in('id', ownedIds);
         if (error) return NextResponse.json({ error: 'Restore failed' }, { status: 500 });
         affected = ownedIds.length;
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
         const { error } = await supabase
           .from('leads')
           .update({ status: action.status, updated_at: new Date().toISOString() })
-          .eq('workspace_id', access.workspaceId)
+          .eq('user_id', userId)
           .in('id', ownedIds);
         if (error) return NextResponse.json({ error: 'Update failed' }, { status: 500 });
         affected = ownedIds.length;
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
         const { data: leads } = await supabase
           .from('leads')
           .select('id, tags')
-          .eq('workspace_id', access.workspaceId)
+          .eq('user_id', userId)
           .in('id', ownedIds);
 
         for (const lead of leads ?? []) {
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
         const { error } = await supabase
           .from('leads')
           .update({ status: 'do_not_call', dnc: true, updated_at: new Date().toISOString() })
-          .eq('workspace_id', access.workspaceId)
+          .eq('user_id', userId)
           .in('id', ownedIds);
         if (error) return NextResponse.json({ error: 'Update failed' }, { status: 500 });
         affected = ownedIds.length;
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
         const { data: leads } = await supabase
           .from('leads')
           .select('id, tags')
-          .eq('workspace_id', access.workspaceId)
+          .eq('user_id', userId)
           .in('id', ownedIds);
 
         for (const lead of leads ?? []) {
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
         const { data: leads } = await supabase
           .from('leads')
           .select('id, tags')
-          .eq('workspace_id', access.workspaceId)
+          .eq('user_id', userId)
           .in('id', ownedIds);
 
         for (const lead of leads ?? []) {

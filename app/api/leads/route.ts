@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     const { data: existing } = await supabase
       .from('leads')
       .select('id, name')
-      .eq('workspace_id', access.workspaceId)
+      .eq('user_id', userId)
       .eq('phone', phone)
       .is('deleted_at', null)
       .maybeSingle();
@@ -51,7 +51,6 @@ export async function POST(request: NextRequest) {
       .from('leads')
       .insert({
         user_id: userId,
-        workspace_id: access.workspaceId,
         name,
         first_name: firstName || undefined,
         last_name: lastName || undefined,

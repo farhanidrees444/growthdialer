@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const userId = user.id;
     const access = await requireWorkspaceFromRequest(request, supabase, user.id);
     if (isWorkspaceError(access)) return access;
 
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
       if (raw) filters = JSON.parse(raw) as DialerQueueFilters;
     } catch { /* malformed JSON — ignore */ }
 
-    const { data, error } = await fetchDialerQueueLeads(supabase, access.workspaceId, {
+    const { data, error } = await fetchDialerQueueLeads(supabase, userId, {
       tab,
       search,
       sort,
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error;
 
-    const counts = await fetchDialerQueueCounts(supabase, access.workspaceId);
+    const counts = await fetchDialerQueueCounts(supabase, userId);
 
     return NextResponse.json({
       leads: data ?? [],

@@ -3,51 +3,46 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CreditCard, ExternalLink, Loader2, Sparkles, Users, Zap } from 'lucide-react';
 import { toast } from 'sonner';
-import { useWorkspace } from '@/contexts/workspace-context';
 import { WORKSPACE_PLANS, type WorkspacePlanId } from '@/lib/billing/workspace-plans';
 import { cn } from '@/lib/utils';
 
 interface BillingPayload {
-  workspace: {
+  account: {
     plan: string;
-    max_seats: number;
     billing_status: string;
     stripe_subscription_id: string | null;
   };
   plan: { label: string; monthlyPrice: number | null; description: string };
-  seats: { activeMembers: number; pendingInvites: number; totalUsed: number };
   canManageBilling: boolean;
 }
 
 const UPGRADE_PLANS: WorkspacePlanId[] = ['pro', 'team'];
 
 export function WorkspaceBillingPanel() {
-  const { currentWorkspace, refreshWorkspaces, can } = useWorkspace();
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [billing, setBilling] = useState<BillingPayload | null>(null);
 
   const load = useCallback(async () => {
-    if (!currentWorkspace) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/workspaces/${currentWorkspace.id}/billing`);
+      const res = await fetch('/api/billing', { credentials: 'same-origin' });
       if (res.ok) setBilling(await res.json() as BillingPayload);
     } catch { /* silent */ } finally {
       setLoading(false);
     }
-  }, [currentWorkspace]);
+  }, []);
 
   useEffect(() => { void load(); }, [load]);
 
   async function startCheckout(plan: WorkspacePlanId) {
-    if (!currentWorkspace) return;
     setBusy(plan);
     try {
-      const res = await fetch(`/api/workspaces/${currentWorkspace.id}/billing/checkout`, {
+      const res = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan }),
+        credentials: 'same-origin',
       });
       const data = await res.json() as { url?: string; error?: string };
       if (!res.ok) {
@@ -63,11 +58,11 @@ export function WorkspaceBillingPanel() {
   }
 
   async function openPortal() {
-    if (!currentWorkspace) return;
     setBusy('portal');
     try {
-      const res = await fetch(`/api/workspaces/${currentWorkspace.id}/billing/portal`, {
+      const res = await fetch('/api/billing/portal', {
         method: 'POST',
+        credentials: 'same-origin',
       });
       const data = await res.json() as { url?: string; error?: string };
       if (!res.ok) {
@@ -82,10 +77,6 @@ export function WorkspaceBillingPanel() {
     }
   }
 
-  if (!currentWorkspace) {
-    return <p className="text-sm text-white/25">No workspace selected</p>;
-  }
-
   if (loading) {
     return (
       <div className="flex items-center gap-2 py-10 text-sm text-white/40">
@@ -94,10 +85,9 @@ export function WorkspaceBillingPanel() {
     );
   }
 
-  const currentPlan = (billing?.workspace.plan ?? currentWorkspace.plan) as WorkspacePlanId;
+  const currentPlan = (billing?.account.plan ?? 'free') as WorkspacePlanId;
   const planDef = WORKSPACE_PLANS[currentPlan] ?? WORKSPACE_PLANS.free;
-  const canManage = billing?.canManageBilling ?? can('MANAGE_BILLING');
-  const seats = billing?.seats ?? { activeMembers: 1, pendingInvites: 0, totalUsed: 1 };
+  const canManage = billing?.canManageBilling ?? true;
 
   return (
     <div className="space-y-4 max-w-2xl">
@@ -113,21 +103,20 @@ export function WorkspaceBillingPanel() {
               {planDef.monthlyPrice === null ? 'Custom' : planDef.monthlyPrice === 0 ? '$0' : `$${planDef.monthlyPrice}`}
             </p>
             {planDef.monthlyPrice !== null && planDef.monthlyPrice > 0 && (
-              <p className="text-xs text-slate-500">/ month · workspace</p>
+              <p className="text-xs text-slate-500">/ month</p>
             )}
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-400">
-          <span>{seats.totalUsed} / {billing?.workspace.max_seats ?? currentWorkspace.max_seats} seats used</span>
-          {billing?.workspace.billing_status && billing.workspace.billing_status !== 'active' && (
-            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-amber-300 capitalize">
-              {billing.workspace.billing_status.replace(/_/g, ' ')}
+        {billing?.account.billing_status && billing.account.billing_status !== 'active' && (
+          <div className="mt-4">
+            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs text-amber-300 capitalize">
+              {billing.account.billing_status.replace(/_/g, ' ')}
             </span>
-          )}
-        </div>
+          </div>
+        )}
 
-        {canManage && billing?.workspace.stripe_subscription_id && (
+        {canManage && billing?.account.stripe_subscription_id && (
           <button
             type="button"
             onClick={() => void openPortal()}
@@ -142,7 +131,7 @@ export function WorkspaceBillingPanel() {
 
       {canManage && (
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Upgrade workspace</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Upgrade</p>
           <div className="grid gap-3 sm:grid-cols-2">
             {UPGRADE_PLANS.map((planId) => {
               const p = WORKSPACE_PLANS[planId];
@@ -160,7 +149,7 @@ export function WorkspaceBillingPanel() {
                     <Icon className="h-4 w-4 text-violet-400" />
                     <p className="text-sm font-bold text-white">{p.label}</p>
                   </div>
-                  <p className="mt-1 text-xs text-slate-500">{p.max_seats} seats · ${p.monthlyPrice}/mo</p>
+                  <p className="mt-1 text-xs text-slate-500">${p.monthlyPrice}/mo</p>
                   <button
                     type="button"
                     disabled={isCurrent || busy === planId}
@@ -179,9 +168,6 @@ export function WorkspaceBillingPanel() {
               );
             })}
           </div>
-          <p className="text-[11px] text-slate-600">
-            14-day trial on paid plans. Seats and plan limits update automatically after checkout.
-          </p>
         </div>
       )}
 
@@ -189,14 +175,14 @@ export function WorkspaceBillingPanel() {
         <div className="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
           <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-white/25" />
           <p className="text-xs text-white/35 leading-relaxed">
-            Only workspace owners can change billing. Ask your owner to upgrade if you need more seats.
+            Billing is managed from this account only.
           </p>
         </div>
       )}
 
       <button
         type="button"
-        onClick={() => { void refreshWorkspaces(); void load(); }}
+        onClick={() => { void load(); }}
         className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300"
       >
         <Zap className="h-3 w-3" /> Refresh plan status

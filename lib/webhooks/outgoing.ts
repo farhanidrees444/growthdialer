@@ -135,7 +135,6 @@ export async function triggerGrowthDialerWebhook(
 
 export type CallWebhookPayload = {
   call_id: string;
-  workspace_id: string;
   lead_id?: string | null;
   disposition?: string | null;
   notes?: string | null;

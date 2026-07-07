@@ -576,7 +576,7 @@ const SENTIMENT_FILTERS = [
 ];
 
 export default function RecordingsPage() {
-  const { currentWorkspace, apiFetch } = useWorkspace();
+  const { apiFetch } = useWorkspace();
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(true);
   const [diagnostics, setDiagnostics] = useState<RecordingDiagnostics | null>(null);
@@ -590,7 +590,6 @@ export default function RecordingsPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchRecordings = useCallback(async (searchVal = search, sentimentVal = sentimentFilter) => {
-    if (!currentWorkspace?.id) return;
     setLoading(true);
     setLoadError(null);
     try {
@@ -615,7 +614,7 @@ export default function RecordingsPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, sentimentFilter, currentWorkspace?.id, apiFetch]);
+  }, [search, sentimentFilter, apiFetch]);
 
   const fetchDiagnostics = useCallback(async () => {
     setDiagnosticsLoading(true);

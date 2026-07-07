@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const userId = user.id;
   const access = await requireWorkspaceFromRequest(request, supabase, user.id);
   if (isWorkspaceError(access)) return access;
 
@@ -51,8 +52,7 @@ export async function GET(request: NextRequest) {
   }
 
   const teamView = canViewTeamCalls(access);
-  const workspaceId = access.workspaceId;
-  const ownScope = ownCallsOrFilter(workspaceId, user.id);
+  const ownScope = ownCallsOrFilter(null, userId);
   const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
 
   const [
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
     .from('calls')
     .select('*', { count: 'exact', head: true });
   totalCallsQuery = teamView
-    ? totalCallsQuery.eq('workspace_id', workspaceId)
+    ? totalCallsQuery.eq('user_id', userId)
     : totalCallsQuery.or(ownScope);
   const { count: totalCalls } = await totalCallsQuery;
 
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
       'id, created_at, status, direction, duration_seconds, recording_url, recording_supabase_path, was_recorded, ai_processing_status, ai_error, hangup_cause',
     );
   latestCallQuery = teamView
-    ? latestCallQuery.eq('workspace_id', workspaceId)
+    ? latestCallQuery.eq('user_id', userId)
     : latestCallQuery.or(ownScope);
   const { data: latestCall } = await latestCallQuery
     .order('created_at', { ascending: false })
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
     .not('recording_url', 'is', null)
     .or(PLAYABLE_RECORDING_DURATION_FILTER);
   capturedEligibleQuery = teamView
-    ? capturedEligibleQuery.eq('workspace_id', workspaceId)
+    ? capturedEligibleQuery.eq('user_id', userId)
     : capturedEligibleQuery.or(ownScope);
   const { count: capturedEligible } = await capturedEligibleQuery;
 
@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
     .not('recording_supabase_path', 'is', null)
     .or(PLAYABLE_RECORDING_DURATION_FILTER);
   playableQuery = teamView
-    ? playableQuery.eq('workspace_id', workspaceId)
+    ? playableQuery.eq('user_id', userId)
     : playableQuery.or(ownScope);
   const { count: playableRecordings } = await playableQuery;
 
@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
     .is('recording_supabase_path', null)
     .or(PLAYABLE_RECORDING_DURATION_FILTER);
   needsMirrorQuery = teamView
-    ? needsMirrorQuery.eq('workspace_id', workspaceId)
+    ? needsMirrorQuery.eq('user_id', userId)
     : needsMirrorQuery.or(ownScope);
   const { count: needsMirror } = await needsMirrorQuery;
 
@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
     .or(PLAYABLE_RECORDING_DURATION_FILTER)
     .in('ai_processing_status', ['pending', 'processing']);
   aiPendingQuery = teamView
-    ? aiPendingQuery.eq('workspace_id', workspaceId)
+    ? aiPendingQuery.eq('user_id', userId)
     : aiPendingQuery.or(ownScope);
   const { count: aiPending } = await aiPendingQuery;
 
@@ -167,7 +167,7 @@ export async function GET(request: NextRequest) {
     .or(PLAYABLE_RECORDING_DURATION_FILTER)
     .eq('ai_processing_status', 'failed');
   aiFailedQuery = teamView
-    ? aiFailedQuery.eq('workspace_id', workspaceId)
+    ? aiFailedQuery.eq('user_id', userId)
     : aiFailedQuery.or(ownScope);
   const { count: aiFailed } = await aiFailedQuery;
 
@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
     .eq('ai_processing_status', 'processing')
     .lt('ai_processed_at', staleBefore);
   aiStuckQuery = teamView
-    ? aiStuckQuery.eq('workspace_id', workspaceId)
+    ? aiStuckQuery.eq('user_id', userId)
     : aiStuckQuery.or(ownScope);
   const { count: aiStuck } = await aiStuckQuery;
 

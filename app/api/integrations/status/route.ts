@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   const { data: creds } = await supabase
     .from('integration_credentials')
     .select('provider, is_active, updated_at, workspace_id')
-    .or(`workspace_id.eq.${access.workspaceId},user_id.eq.${user.id}`)
+    .eq('user_id', user.id)
     .eq('is_active', true);
 
   const connected = (creds ?? []).map((c) => ({

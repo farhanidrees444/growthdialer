@@ -577,16 +577,17 @@ export default function LeadsPage() {
   }, [search]);
 
   const loadLeads = useCallback(async () => {
-    if (!currentWorkspace?.id) {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       setLoading(false);
       return;
     }
-    const supabase = createClient();
     try {
       const { data, error } = await supabase
         .from("leads")
         .select("id,name,first_name,last_name,title,company,phone,email,ai_score,status,call_attempts,last_called_at,notes,tags,linkedin,source,created_at,dnc,deleted_at")
-        .eq("workspace_id", currentWorkspace.id)
+        .eq("user_id", user.id)
         .order("ai_score", { ascending: false });
 
       if (error) { console.error("Leads load error:", error); return; }
@@ -594,9 +595,9 @@ export default function LeadsPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentWorkspace?.id]);
+  }, []);
 
-  useEffect(() => { loadLeads(); }, [loadLeads, contextLeads.length, currentWorkspace?.id]);
+  useEffect(() => { loadLeads(); }, [loadLeads, contextLeads.length]);
 
   // Real-time: reflect lead changes (status, call_attempts, dnc, deleted_at) without full reload
   useEffect(() => {

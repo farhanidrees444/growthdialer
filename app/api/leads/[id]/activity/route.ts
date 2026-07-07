@@ -24,7 +24,7 @@ export async function GET(
       .from('leads')
       .select('id, name')
       .eq('id', id)
-      .eq('workspace_id', access.workspaceId)
+      .eq('user_id', userId)
       .maybeSingle();
 
     if (leadErr || !lead) {

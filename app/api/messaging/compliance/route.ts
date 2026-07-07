@@ -17,11 +17,12 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const userId = user.id;
   const access = await requireWorkspaceFromRequest(request, supabase, user.id);
   if (isWorkspaceError(access)) return access;
 
-  const profile = await getWorkspaceMessagingProfile(supabase, access.workspaceId);
-  const gate = await checkWorkspaceSmsGate(supabase, access.workspaceId);
+  const profile = await getWorkspaceMessagingProfile(supabase, userId);
+  const gate = await checkWorkspaceSmsGate(supabase, userId);
 
   return NextResponse.json({
     env_configured: isMessagingConfigured(),
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     can_send_sms: gate.ok,
     gate_error: gate.ok ? null : gate.error,
     profile: profile ?? {
-      workspace_id: access.workspaceId,
+      user_id: userId,
       brand_status: 'draft',
       campaign_status: 'draft',
       use_case: 'sales_outbound',
@@ -54,6 +55,7 @@ export async function PATCH(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json().catch(() => ({})) as Record<string, unknown>;
+  const userId = user.id;
   const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body });
   if (isWorkspaceError(access)) return access;
 
@@ -62,7 +64,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const patch: Record<string, unknown> = {
-    workspace_id: access.workspaceId,
+    user_id: userId,
     updated_at: new Date().toISOString(),
   };
 

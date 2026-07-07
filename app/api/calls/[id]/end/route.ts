@@ -88,7 +88,6 @@ export async function POST(request: NextRequest, { params }: Ctx) {
 
     emitCallWebhooks(call.user_id, ['call_completed'], {
       call_id: call.id,
-      workspace_id: access.workspaceId,
       lead_id: call.lead_id ?? null,
       disposition: call.disposition ?? null,
     });

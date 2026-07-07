@@ -319,7 +319,7 @@ export default function LeadDetailPage() {
   }, [leadId]);
 
   useEffect(() => {
-    if (!leadId || !currentWorkspace?.id) return;
+    if (!leadId) return;
     setLoading(true);
     apiFetch(`/api/leads/${leadId}`)
       .then((r) => {
@@ -334,17 +334,17 @@ export default function LeadDetailPage() {
         router.push('/leads');
       })
       .finally(() => setLoading(false));
-  }, [leadId, currentWorkspace?.id, apiFetch, router]);
+  }, [leadId, apiFetch, router]);
 
   useEffect(() => {
-    if (!leadId || !currentWorkspace?.id) return;
+    if (!leadId) return;
     setTimelineLoading(true);
     apiFetch(`/api/leads/${leadId}/activity`)
       .then((r) => r.json())
       .then((d) => { setTimeline(d.timeline ?? []); })
       .catch(() => setTimeline([]))
       .finally(() => setTimelineLoading(false));
-  }, [leadId, currentWorkspace?.id, apiFetch]);
+  }, [leadId, apiFetch]);
 
   const patchLead = useCallback(async (updates: Partial<FullLead>) => {
     const res = await apiFetch(`/api/leads/${leadId}`, {

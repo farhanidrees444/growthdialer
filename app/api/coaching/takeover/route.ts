@@ -42,7 +42,6 @@ export async function POST(request: NextRequest) {
     .from('calls')
     .select('user_id')
     .eq('id', callId)
-    .eq('workspace_id', access.workspaceId)
     .maybeSingle();
 
   if (!call) return NextResponse.json({ error: 'Call not found' }, { status: 404 });

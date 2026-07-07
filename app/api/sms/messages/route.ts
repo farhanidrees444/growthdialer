@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const userId = user.id;
   const access = await requireWorkspaceFromRequest(request, supabase, user.id);
   if (isWorkspaceError(access)) return access;
 
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
     .from('leads')
     .select('id')
     .eq('id', leadId)
-    .eq('workspace_id', access.workspaceId)
+    .eq('user_id', userId)
     .maybeSingle();
 
   if (!lead) return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
   const { data: messages, error } = await supabase
     .from('sms_messages')
     .select('id, direction, from_number, to_number, body, status, created_at, error_message')
-    .eq('workspace_id', access.workspaceId)
+    .eq('user_id', userId)
     .eq('lead_id', leadId)
     .order('created_at', { ascending: true })
     .limit(limit);

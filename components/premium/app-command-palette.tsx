@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   BarChart3, Brain, FileText, Hash, LayoutDashboard, Phone, Settings,
   Trophy, Upload, Users, Zap, Search, Mic, Radio,
-  PhoneOff, MicOff, Pause, Play, Building2, UserPlus, Check,
+  PhoneOff, MicOff, Pause, Play,
 } from 'lucide-react';
 import {
   Command,
@@ -22,7 +22,7 @@ import { useLeads } from '@/contexts/leads-context';
 import { useOutboundCall } from '@/hooks/use-outbound-call';
 import { useWebPhone } from '@/contexts/webphone-context';
 import { createClient } from '@/lib/supabase/client';
-import { useWorkspace } from '@/contexts/workspace-context';
+import { useSupabaseSession } from '@/lib/supabase/hooks';
 import { navigateWithTransition, setLeadTransitionId } from '@/lib/ui/lead-transition';
 import { cn } from '@/lib/utils';
 
@@ -59,10 +59,9 @@ export function AppCommandPalette({ open, onOpenChange }: AppCommandPaletteProps
   const { setImportOpen } = useLeads();
   const startOutboundCall = useOutboundCall();
   const { callStatus, isMuted, isOnHold, toggleMute, toggleHold, hangup } = useWebPhone();
-  const { currentWorkspace, workspaces, setCurrentWorkspace } = useWorkspace();
-  const workspaceId = currentWorkspace?.id;
+  const session = useSupabaseSession();
+  const userId = session?.user?.id;
   const callLive = callStatus === 'active' || callStatus === 'held';
-  const otherWorkspaces = workspaces.filter((w) => w.id !== workspaceId);
   const [query, setQuery] = useState('');
   const [leadHits, setLeadHits] = useState<LeadHit[]>([]);
   const [searching, setSearching] = useState(false);
@@ -84,7 +83,7 @@ export function AppCommandPalette({ open, onOpenChange }: AppCommandPaletteProps
   }, [open]);
 
   useEffect(() => {
-    if (!open || !workspaceId || query.trim().length < 2) {
+    if (!open || !userId || query.trim().length < 2) {
       setLeadHits([]);
       return;
     }
@@ -97,7 +96,7 @@ export function AppCommandPalette({ open, onOpenChange }: AppCommandPaletteProps
         const { data } = await supabase
           .from('leads')
           .select('id, name, phone, company')
-          .eq('workspace_id', workspaceId)
+          .eq('user_id', userId)
           .is('deleted_at', null)
           .or(`name.ilike.%${q}%,phone.ilike.%${q}%,company.ilike.%${q}%`)
           .limit(8);
@@ -112,7 +111,7 @@ export function AppCommandPalette({ open, onOpenChange }: AppCommandPaletteProps
       cancelled = true;
       clearTimeout(t);
     };
-  }, [query, open, workspaceId]);
+  }, [query, open, userId]);
 
   const filteredNav = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -202,13 +201,6 @@ export function AppCommandPalette({ open, onOpenChange }: AppCommandPaletteProps
             Buy a number
           </CommandItem>
           <CommandItem
-            onSelect={() => run(() => router.push('/team'))}
-            className="gap-2 aria-selected:bg-white/[0.06]"
-          >
-            <UserPlus className="h-4 w-4 text-[#06B6D4]" />
-            Invite teammate
-          </CommandItem>
-          <CommandItem
             onSelect={() => run(() => window.dispatchEvent(new CustomEvent('gd:open-shortcuts')))}
             className="gap-2 aria-selected:bg-white/[0.06]"
           >
@@ -237,26 +229,6 @@ export function AppCommandPalette({ open, onOpenChange }: AppCommandPaletteProps
                   <Users className="h-4 w-4 text-emerald-400" />
                   <span className="flex-1 truncate">{lead.name}</span>
                   <span className="text-[10px] text-slate-500 font-mono">{lead.phone}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </>
-        )}
-
-        {otherWorkspaces.length > 0 && (
-          <>
-            <CommandSeparator className="bg-white/[0.06]" />
-            <CommandGroup heading="Switch workspace">
-              {workspaces.map((ws) => (
-                <CommandItem
-                  key={ws.id}
-                  value={`workspace ${ws.name}`}
-                  onSelect={() => run(() => { void setCurrentWorkspace(ws); })}
-                  className="gap-2 aria-selected:bg-white/[0.06]"
-                >
-                  <Building2 className="h-4 w-4 text-[#8B5CF6]" />
-                  <span className="flex-1 truncate">{ws.name}</span>
-                  {ws.id === workspaceId && <Check className="h-3.5 w-3.5 text-emerald-400" />}
                 </CommandItem>
               ))}
             </CommandGroup>

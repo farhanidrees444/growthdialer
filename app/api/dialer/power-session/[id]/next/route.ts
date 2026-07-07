@@ -57,7 +57,7 @@ export async function POST(
 
     const { data: leads, error: queueError } = await fetchDialerQueueLeads(
       supabase,
-      access.workspaceId,
+      userId,
       queueConfig,
     );
 
@@ -84,7 +84,7 @@ export async function POST(
     });
     const { count, error: countError } = await countDialerQueueLeads(
       supabase,
-      access.workspaceId,
+      userId,
       countConfig,
     );
     if (countError) throw countError;

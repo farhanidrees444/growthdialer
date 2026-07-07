@@ -24,7 +24,6 @@ export async function GET(request: NextRequest) {
     }
 
     const teamView = canViewTeamCalls(access);
-    const wsId = access.workspaceId;
 
     const { searchParams } = new URL(request.url);
     const sentiment = searchParams.get('sentiment') ?? '';
@@ -48,8 +47,8 @@ export async function GET(request: NextRequest) {
       .limit(100);
 
     recordingsQuery = teamView
-      ? recordingsQuery.eq('workspace_id', wsId)
-      : recordingsQuery.or(ownCallsOrFilter(wsId, user.id));
+      ? recordingsQuery.eq('user_id', user.id)
+      : recordingsQuery.or(ownCallsOrFilter(null, user.id));
 
     const { data: calls, error } = await recordingsQuery;
 

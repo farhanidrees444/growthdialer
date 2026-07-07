@@ -240,7 +240,6 @@ export default function DialerPage() {
 
   // ── Stats ──────────────────────────────────────────────────────────────────
   const loadStats = useCallback(async () => {
-    if (!currentWorkspace?.id) return;
     try {
       const res = await apiFetch('/api/stats/today');
       if (!res.ok) return;
@@ -252,17 +251,17 @@ export default function DialerPage() {
         meetings: data.meetingsBooked ?? 0,
       }));
     } catch { /* silent */ }
-  }, [apiFetch, currentWorkspace?.id]);
+  }, [apiFetch]);
 
   const loadTodayCalls = useCallback(async () => {
-    if (!userId || !currentWorkspace?.id) return;
+    if (!userId) return;
     try {
       const supabase = createClient();
       const today = new Date(); today.setHours(0, 0, 0, 0);
       const { data } = await supabase
         .from('calls')
         .select('id, disposition, created_at, leads(name)')
-        .or(ownCallsOrFilter(currentWorkspace.id, userId))
+        .or(ownCallsOrFilter(null, userId))
         .gte('created_at', today.toISOString())
         .order('created_at', { ascending: true })
         .limit(50);
@@ -283,7 +282,7 @@ export default function DialerPage() {
         );
       }
     } catch { /* silent */ }
-  }, [userId, currentWorkspace?.id]);
+  }, [userId]);
 
   useEffect(() => { loadStats(); }, [loadStats]);
   useEffect(() => { loadTodayCalls(); }, [loadTodayCalls]);

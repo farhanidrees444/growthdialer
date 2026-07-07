@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
   const state = Buffer.from(JSON.stringify({
     userId: user.id,
-    workspaceId: access.workspaceId,
+    workspaceId: user.id,
   })).toString('base64url');
 
   const url = buildHubspotAuthorizeUrl(state);

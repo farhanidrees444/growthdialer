@@ -27,13 +27,20 @@ export function isCallAccessError(
   return result instanceof NextResponse;
 }
 
-export function callBelongsToWorkspace(
-  call: { workspace_id: string | null; user_id: string },
-  workspaceId: string,
+export function callBelongsToUser(
+  call: { user_id: string },
   userId: string,
 ): boolean {
-  if (call.workspace_id) return call.workspace_id === workspaceId;
   return call.user_id === userId;
+}
+
+/** @deprecated Use callBelongsToUser */
+export function callBelongsToWorkspace(
+  call: { workspace_id: string | null; user_id: string },
+  _workspaceId: string | null,
+  userId: string,
+): boolean {
+  return callBelongsToUser(call, userId);
 }
 
 export function canViewTeamCalls(access: WorkspaceAccess): boolean {
@@ -44,9 +51,9 @@ export function canViewTeamCalls(access: WorkspaceAccess): boolean {
   );
 }
 
-/** PostgREST OR filter: own calls in workspace + legacy rows without workspace_id */
-export function ownCallsOrFilter(workspaceId: string, userId: string): string {
-  return `and(workspace_id.eq.${workspaceId},user_id.eq.${userId}),and(workspace_id.is.null,user_id.eq.${userId})`;
+/** PostgREST OR filter: user's own calls */
+export function ownCallsOrFilter(_workspaceId: string | null, userId: string): string {
+  return `user_id.eq.${userId}`;
 }
 
 export async function findCall(
@@ -83,7 +90,7 @@ export async function requireCallAccess(
     return NextResponse.json({ error: 'Call not found' }, { status: 404 });
   }
 
-  if (!callBelongsToWorkspace(call, access.workspaceId, userId)) {
+  if (!callBelongsToUser(call, userId)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

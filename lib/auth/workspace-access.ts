@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { hasPermission, type Permission, type Role } from '@/lib/auth/permissions';
 
+/** @deprecated Workspace header is ignored in single-user mode. */
 export const WORKSPACE_ID_HEADER = 'x-workspace-id';
 
 export interface WorkspaceAccess {
-  workspaceId: string;
+  /** Always null — workspace tenancy removed. */
+  workspaceId: null;
+  userId: string;
   role: Role;
   memberId: string;
 }
@@ -23,6 +26,7 @@ function workspaceIdFromBody(body: unknown): string | null {
   return null;
 }
 
+/** @deprecated Ignored in single-user mode. */
 export function getWorkspaceIdFromRequest(
   request: NextRequest,
   body?: unknown,
@@ -37,67 +41,33 @@ export function getWorkspaceIdFromRequest(
 }
 
 /**
- * Resolve the active workspace for an API request and verify membership.
- * Falls back to the user's first active workspace when no ID is sent.
+ * Single-user access: authenticated user is always owner of their own data.
+ * Workspace membership is no longer required.
  */
 export async function resolveWorkspaceAccess(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   userId: string,
-  workspaceId: string | null | undefined,
+  _workspaceId: string | null | undefined,
   options?: { permission?: Permission; requireExplicit?: boolean },
 ): Promise<WorkspaceAccess | NextResponse> {
-  const explicitId = workspaceId?.trim() || null;
-
-  if (explicitId) {
-    const { data: member, error } = await supabase
-      .from('workspace_members')
-      .select('id, role, workspace_id')
-      .eq('user_id', userId)
-      .eq('workspace_id', explicitId)
-      .eq('status', 'active')
-      .maybeSingle();
-
-    if (error || !member) {
-      return NextResponse.json({ error: 'Workspace access denied' }, { status: 403 });
-    }
-
-    const role = member.role as Role;
-    if (options?.permission && !hasPermission(role, options.permission)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    return { workspaceId: member.workspace_id, role, memberId: member.id };
-  }
-
   if (options?.requireExplicit) {
     return NextResponse.json(
-      { error: 'workspace_id required', code: 'NO_WORKSPACE' },
+      { error: 'workspace_id is no longer used', code: 'WORKSPACE_REMOVED' },
       { status: 400 },
     );
   }
 
-  const { data: member, error } = await supabase
-    .from('workspace_members')
-    .select('id, role, workspace_id')
-    .eq('user_id', userId)
-    .eq('status', 'active')
-    .order('joined_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (error || !member) {
-    return NextResponse.json(
-      { error: 'No workspace found', code: 'NO_WORKSPACE' },
-      { status: 403 },
-    );
-  }
-
-  const role = member.role as Role;
+  const role: Role = 'owner';
   if (options?.permission && !hasPermission(role, options.permission)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  return { workspaceId: member.workspace_id, role, memberId: member.id };
+  return {
+    workspaceId: null,
+    userId,
+    role,
+    memberId: userId,
+  };
 }
 
 export async function requireWorkspaceFromRequest(

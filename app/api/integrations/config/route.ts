@@ -107,7 +107,6 @@ export async function POST(request: NextRequest) {
 
   const row = {
     user_id: user.id,
-    workspace_id: access.workspaceId,
     provider,
     access_token: token,
     is_active: true,

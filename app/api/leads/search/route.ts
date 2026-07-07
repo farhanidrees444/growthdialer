@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     let supabaseQuery = supabase
       .from('leads')
       .select('*')
-      .eq('workspace_id', access.workspaceId)
+      .eq('user_id', userId)
       .is('deleted_at', null);
 
     if (query) {

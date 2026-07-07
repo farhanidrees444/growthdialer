@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     const { data: existing } = await supabase
       .from('leads')
       .select('phone')
-      .eq('workspace_id', access.workspaceId)
+      .eq('user_id', userId)
       .is('deleted_at', null);
 
     (existing ?? []).forEach((lead) => {
@@ -99,7 +99,6 @@ export async function POST(request: NextRequest) {
           invalidPhones += 1;
           acc.push({
             user_id: userId,
-            workspace_id: access.workspaceId,
             name: fullName,
             first_name: firstName || undefined,
             last_name: lastName || undefined,
@@ -123,7 +122,6 @@ export async function POST(request: NextRequest) {
 
       acc.push({
         user_id: userId,
-        workspace_id: access.workspaceId,
         name: fullName,
         first_name: firstName || undefined,
         last_name: lastName || undefined,

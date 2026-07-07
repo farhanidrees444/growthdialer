@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { hasPermission } from '@/lib/auth/permissions';
-import { assertWorkspaceCanPlaceCalls } from '@/lib/billing/workspace-billing-gate';
+import { assertUserCanPlaceCalls } from '@/lib/billing/workspace-billing-gate';
 import { apiUnauthorized } from '@/lib/api/errors';
 import type { DialerQueueConfig } from '@/lib/dialer/queue-query';
 import { dialParallelBatch } from '@/lib/parallel-dial/dial-batch';
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const billingBlock = await assertWorkspaceCanPlaceCalls(supabase, access.workspaceId);
+    const billingBlock = await assertUserCanPlaceCalls(supabase, user.id);
     if (billingBlock) return billingBlock;
 
     await supabase
@@ -45,7 +45,6 @@ export async function POST(request: NextRequest) {
       .from('parallel_dial_sessions')
       .insert({
         user_id: user.id,
-        workspace_id: access.workspaceId,
         lines_count,
         amd_enabled: body.amd_enabled ?? false,
         vm_drop_enabled: body.vm_drop_enabled ?? true,

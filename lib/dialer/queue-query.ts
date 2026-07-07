@@ -51,7 +51,7 @@ export function normalizeQueueConfig(config: DialerQueueConfig = {}): Required<
 
 export function buildDialerLeadsQuery(
   supabase: SupabaseClient,
-  workspaceId: string,
+  userId: string,
   rawConfig: DialerQueueConfig = {},
 ) {
   const { tab, sort, search, filters, excludeIds, limit, offset } = normalizeQueueConfig(rawConfig);
@@ -59,7 +59,7 @@ export function buildDialerLeadsQuery(
   let query = supabase
     .from('leads')
     .select(LEAD_QUEUE_SELECT)
-    .eq('workspace_id', workspaceId)
+    .eq('user_id', userId)
     .is('deleted_at', null)
     .not('status', 'in', TERMINAL_STATUSES)
     .eq('dnc', false);
@@ -115,7 +115,7 @@ export function buildDialerLeadsQuery(
 
 export function buildDialerQueueCountQuery(
   supabase: SupabaseClient,
-  workspaceId: string,
+  userId: string,
   rawConfig: DialerQueueConfig = {},
 ) {
   const { tab, search, filters, excludeIds } = normalizeQueueConfig({ ...rawConfig, limit: 1, offset: 0 });
@@ -123,7 +123,7 @@ export function buildDialerQueueCountQuery(
   let query = supabase
     .from('leads')
     .select('id', { count: 'exact', head: true })
-    .eq('workspace_id', workspaceId)
+    .eq('user_id', userId)
     .is('deleted_at', null)
     .not('status', 'in', TERMINAL_STATUSES)
     .eq('dnc', false);
@@ -172,13 +172,13 @@ type QueueLeadRow = { id: string; phone: string };
 /** Fetch queue leads; applies timezone-safe post-filter when `filters.tzSafe` is set. */
 export async function fetchDialerQueueLeads(
   supabase: SupabaseClient,
-  workspaceId: string,
+  userId: string,
   rawConfig: DialerQueueConfig = {},
 ) {
   const normalized = normalizeQueueConfig(rawConfig);
 
   if (!requiresTimezonePostFilter(normalized)) {
-    return buildDialerLeadsQuery(supabase, workspaceId, rawConfig);
+    return buildDialerLeadsQuery(supabase, userId, rawConfig);
   }
 
   const sqlConfig: DialerQueueConfig = {
@@ -191,7 +191,7 @@ export async function fetchDialerQueueLeads(
   let scanned = 0;
 
   while (scanned < TZ_SCAN_MAX && collected.length < normalized.limit) {
-    const { data, error } = await buildDialerLeadsQuery(supabase, workspaceId, {
+    const { data, error } = await buildDialerLeadsQuery(supabase, userId, {
       ...sqlConfig,
       limit: TZ_SCAN_BATCH,
       offset,
@@ -215,13 +215,13 @@ export async function fetchDialerQueueLeads(
 /** Count queue leads; paginates with timezone post-filter when `filters.tzSafe` is set. */
 export async function countDialerQueueLeads(
   supabase: SupabaseClient,
-  workspaceId: string,
+  userId: string,
   rawConfig: DialerQueueConfig = {},
 ): Promise<{ count: number; error: Error | null }> {
   const normalized = normalizeQueueConfig({ ...rawConfig, limit: 1, offset: 0 });
 
   if (!requiresTimezonePostFilter(normalized)) {
-    const result = await buildDialerQueueCountQuery(supabase, workspaceId, rawConfig);
+    const result = await buildDialerQueueCountQuery(supabase, userId, rawConfig);
     if (result.error) return { count: 0, error: result.error };
     return { count: result.count ?? 0, error: null };
   }
@@ -236,7 +236,7 @@ export async function countDialerQueueLeads(
   let scanned = 0;
 
   while (scanned < TZ_SCAN_MAX) {
-    const { data, error } = await buildDialerLeadsQuery(supabase, workspaceId, {
+    const { data, error } = await buildDialerLeadsQuery(supabase, userId, {
       ...sqlConfig,
       limit: TZ_SCAN_BATCH,
       offset,
@@ -255,13 +255,13 @@ export async function countDialerQueueLeads(
 
 export async function fetchDialerQueueCounts(
   supabase: SupabaseClient,
-  workspaceId: string,
+  userId: string,
 ) {
   const base = () =>
     supabase
       .from('leads')
       .select('id', { count: 'exact', head: true })
-      .eq('workspace_id', workspaceId)
+      .eq('user_id', userId)
       .is('deleted_at', null)
       .not('status', 'in', TERMINAL_STATUSES)
       .eq('dnc', false)
@@ -273,7 +273,7 @@ export async function fetchDialerQueueCounts(
     supabase
       .from('leads')
       .select('id', { count: 'exact', head: true })
-      .eq('workspace_id', workspaceId)
+      .eq('user_id', userId)
       .is('deleted_at', null)
       .eq('status', 'callback'),
     base(),

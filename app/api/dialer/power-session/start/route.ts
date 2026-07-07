@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
-import { assertWorkspaceCanPlaceCalls } from '@/lib/billing/workspace-billing-gate';
+import { assertUserCanPlaceCalls } from '@/lib/billing/workspace-billing-gate';
 import {
   countDialerQueueLeads,
   fetchDialerQueueLeads,
@@ -28,11 +28,10 @@ export async function POST(request: NextRequest) {
     const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body });
     if (isWorkspaceError(access)) return access;
 
-    const billingBlock = await assertWorkspaceCanPlaceCalls(supabase, access.workspaceId);
+    const billingBlock = await assertUserCanPlaceCalls(supabase, user.id);
     if (billingBlock) return billingBlock;
 
     const userId = user.id;
-    const workspaceId = access.workspaceId;
 
     await supabase
       .from('power_dial_sessions')
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     const { data: powerSession, error: sessionError } = await supabase
       .from('power_dial_sessions')
-      .insert({ user_id: userId, workspace_id: workspaceId, status: 'active' })
+      .insert({ user_id: userId, status: 'active' })
       .select('id, started_at, total_calls, connected_calls, meetings_booked, total_talk_time, status')
       .single();
 
@@ -61,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     const { data: leads, error: queueError } = await fetchDialerQueueLeads(
       supabase,
-      workspaceId,
+      userId,
       queueConfig,
     );
 
@@ -71,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     const { count: queueSize, error: countError } = await countDialerQueueLeads(
       supabase,
-      workspaceId,
+      userId,
       { ...queueConfig, limit: undefined, offset: undefined },
     );
     if (countError) throw countError;

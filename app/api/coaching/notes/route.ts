@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const userId = user.id;
   const access = await requireWorkspaceFromRequest(request, supabase, user.id);
   if (isWorkspaceError(access)) return access;
 
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from('coaching_notes')
     .select('id, call_id, agent_id, coach_id, note, visible_to_agent, created_at, updated_at')
-    .eq('workspace_id', access.workspaceId)
+    .eq('coach_id', userId)
     .order('updated_at', { ascending: false })
     .limit(50);
   if (callId) query = query.eq('call_id', callId);
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
     visible_to_agent?: boolean;
     workspace_id?: string;
   };
+  const userId = user.id;
   const access = await requireWorkspaceFromRequest(request, supabase, user.id, {
     permission: 'COACH_CALLS',
     body,
@@ -53,7 +55,6 @@ export async function POST(request: NextRequest) {
     .from('calls')
     .select('id, user_id, workspace_id')
     .eq('id', callId)
-    .eq('workspace_id', access.workspaceId)
     .maybeSingle();
   if (!call) return NextResponse.json({ error: 'Call not found' }, { status: 404 });
 
@@ -61,7 +62,6 @@ export async function POST(request: NextRequest) {
     .from('coaching_notes')
     .upsert({
       call_id: call.id,
-      workspace_id: access.workspaceId,
       agent_id: call.user_id,
       coach_id: user.id,
       note,

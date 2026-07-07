@@ -20,7 +20,6 @@ async function getCallAccess(request: NextRequest, callId: string) {
     .from('calls')
     .select('id, user_id, workspace_id')
     .eq('id', callId)
-    .eq('workspace_id', access.workspaceId)
     .maybeSingle();
   if (!call) return { response: NextResponse.json({ error: 'Call not found' }, { status: 404 }) };
   if (call.user_id !== user.id && !hasPermission(access.role, 'VIEW_ALL_RECORDINGS')) {

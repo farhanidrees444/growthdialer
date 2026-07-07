@@ -25,6 +25,7 @@ export async function PATCH(
   const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body: raw });
   if (isWorkspaceError(access)) return access;
 
+  const userId = user.id;
   if (parsed.name !== undefined) {
     const nameErr = sequenceNameError(parsed.name);
     if (nameErr) return NextResponse.json({ error: nameErr }, { status: 400 });
@@ -38,7 +39,7 @@ export async function PATCH(
     .from('sequences')
     .update(updates)
     .eq('id', id)
-    .eq('workspace_id', access.workspaceId)
+    .eq('user_id', userId)
     .select('id, name, status')
     .single();
 
@@ -62,11 +63,12 @@ export async function DELETE(
   const access = await requireWorkspaceFromRequest(request, supabase, user.id);
   if (isWorkspaceError(access)) return access;
 
+  const userId = user.id;
   const { data, error } = await supabase
     .from('sequences')
     .update({ status: 'archived', updated_at: new Date().toISOString() })
     .eq('id', id)
-    .eq('workspace_id', access.workspaceId)
+    .eq('user_id', userId)
     .neq('status', 'archived')
     .select('id, name')
     .single();
@@ -79,7 +81,7 @@ export async function DELETE(
     .from('sequence_enrollments')
     .update({ status: 'removed', updated_at: new Date().toISOString() })
     .eq('sequence_id', id)
-    .eq('workspace_id', access.workspaceId)
+    .eq('user_id', userId)
     .eq('status', 'active');
 
   return NextResponse.json({ archived: true, sequence: data });

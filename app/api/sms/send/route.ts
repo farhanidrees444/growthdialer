@@ -33,7 +33,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Phone number format is invalid' }, { status: 400 });
     }
 
-    const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body: rawBody });
+    const userId = user.id;
+  const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body: rawBody });
     if (isWorkspaceError(access)) return access;
 
     if (!hasPermission(access.role, 'SEND_SMS')) {
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
         .from('leads')
         .select('phone, sms_opt_out, dnc')
         .eq('id', lead_id)
-        .eq('workspace_id', access.workspaceId)
+        .eq('user_id', userId)
         .maybeSingle();
 
       if (!leadRow) {
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     const provider = getTelephonyProvider();
     const handle = await provider.sendSMS({
-      tenantId: access.workspaceId,
+      tenantId: userId,
       agentId: user.id,
       to: e164,
       from: fromNumber,

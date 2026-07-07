@@ -31,7 +31,6 @@ import {
 } from '@/lib/voice/extract-call-id';
 import { useTwilioDevice } from '@/hooks/use-twilio-device';
 import { useVoicePresence } from '@/hooks/use-voice-presence';
-import { useWorkspace } from '@/contexts/workspace-context';
 import { playInboundRingtone, stopInboundRingtone } from '@/lib/inbound/ringtone';
 import { callOrchestrator } from '@/src/calls';
 
@@ -208,7 +207,6 @@ function bindRemoteMediaToTwilioCall(call: Call): void {
 
 export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const handleIncomingRef = useRef<(call: Call) => void>(() => {});
-  const { currentWorkspace } = useWorkspace();
 
   const [phoneStatus, setPhoneStatus] = useState<PhoneStatus>('idle');
   const [callStatus, setCallStatus] = useState<WebRTCCallStatus>('idle');
@@ -257,7 +255,6 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const { staleTabWarning } = useVoicePresence({
     phoneStatus,
     device: twilioDevice.device,
-    workspaceId: currentWorkspace?.id ?? null,
     enabled: phoneStatus === 'ready' || phoneStatus === 'initializing',
   });
 

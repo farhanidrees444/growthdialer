@@ -24,15 +24,16 @@ export async function POST(
     if (!parsed.ok) return parsed.response;
     const { disposition, notes, callback_at, meeting_at } = parsed.data;
 
+    const userId = user.id;
     const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body: rawBody });
     if (isWorkspaceError(access)) return access;
 
-    const valid = await isValidWorkspaceDisposition(supabase, access.workspaceId, disposition);
+    const valid = await isValidWorkspaceDisposition(supabase, userId, disposition);
     if (!valid) {
       return NextResponse.json({ error: 'Invalid disposition' }, { status: 400 });
     }
 
-    const dispositions = await getWorkspaceDispositions(supabase, access.workspaceId);
+    const dispositions = await getWorkspaceDispositions(supabase, userId);
     const meta = dispositionMeta(dispositions, disposition);
 
     const call = await requireCallAccess(
@@ -74,7 +75,7 @@ export async function POST(
         .from('leads')
         .select('notes, call_attempts, name, phone')
         .eq('id', call.lead_id)
-        .eq('workspace_id', access.workspaceId)
+        .eq('user_id', userId)
         .single();
 
       leadName = currentLead?.name ?? null;
@@ -109,7 +110,7 @@ export async function POST(
         .from('leads')
         .update(leadUpdate)
         .eq('id', call.lead_id)
-        .eq('workspace_id', access.workspaceId);
+        .eq('user_id', userId);
 
       const activitySummary = buildActivitySummary(meta?.label ?? disposition, notes);
       void supabase.from('lead_activities').insert({
@@ -122,11 +123,11 @@ export async function POST(
         created_at: now,
       });
 
-      void advanceSequenceAfterCall(supabase, access.workspaceId, call.lead_id);
+      void advanceSequenceAfterCall(supabase, userId, call.lead_id);
 
       if (currentLead?.phone) {
         void logCallToHubspot(supabase, {
-          workspaceId: access.workspaceId,
+          workspaceId: userId,
           userId: user.id,
           leadPhone: currentLead.phone,
           leadName: currentLead.name ?? 'Lead',
@@ -145,7 +146,6 @@ export async function POST(
     if (meeting_at) webhookEvents.push('meeting_booked');
     emitCallWebhooks(call.user_id, webhookEvents, {
       call_id: id,
-      workspace_id: access.workspaceId,
       lead_id: call.lead_id ?? null,
       disposition,
       notes: notes ?? null,

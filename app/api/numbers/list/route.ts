@@ -94,8 +94,8 @@ export async function GET(request: NextRequest) {
       }),
     );
 
-    console.log('[NUMBERS-LIST]', user.email, 'workspace:', access.workspaceId, 'count:', withStats.length);
-    return NextResponse.json({ numbers: withStats, workspace_id: access.workspaceId });
+    console.log('[NUMBERS-LIST]', user.email, 'user:', user.id, 'count:', withStats.length);
+    return NextResponse.json({ numbers: withStats });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     console.error('[NUMBERS-LIST] Crash:', msg);

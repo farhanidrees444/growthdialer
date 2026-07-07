@@ -24,8 +24,9 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(Number(searchParams.get('limit') ?? 50), 100);
   const offset = Number(searchParams.get('offset') ?? 0);
 
+  const userId = user.id;
   const teamView = canViewTeamCalls(access);
-  const wsId = access.workspaceId;
+  const ownFilter = ownCallsOrFilter(null, userId);
 
   let query = supabase
     .from('calls')
@@ -41,8 +42,8 @@ export async function GET(request: NextRequest) {
     .range(offset, offset + limit - 1);
 
   query = teamView
-    ? query.eq('workspace_id', wsId)
-    : query.or(ownCallsOrFilter(wsId, user.id));
+    ? query.eq('user_id', userId)
+    : query.or(ownCallsOrFilter(null, user.id));
 
   if (direction === 'inbound' || direction === 'outbound') {
     query = query.eq('direction', direction);
@@ -75,8 +76,8 @@ export async function GET(request: NextRequest) {
     .select('direction, status, disposition, answered_at, duration_seconds, started_at, created_at');
 
   statsQuery = teamView
-    ? statsQuery.eq('workspace_id', wsId)
-    : statsQuery.or(ownCallsOrFilter(wsId, user.id));
+    ? statsQuery.eq('user_id', userId)
+    : statsQuery.or(ownCallsOrFilter(null, userId));
 
   const { data: statsRows } = await statsQuery.limit(500);
 

@@ -51,13 +51,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function ActivityChart() {
-  const { currentWorkspace, apiFetch } = useWorkspace();
+  const { apiFetch } = useWorkspace();
   const [range, setRange] = useState("week");
   const [data, setData] = useState<Bucket[]>(FALLBACK_WEEK);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!currentWorkspace?.id) return;
     setLoading(true);
     apiFetch(`/api/stats/activity?period=${range}`)
       .then((r) => r.json())
@@ -72,7 +71,7 @@ export default function ActivityChart() {
         console.error("ActivityChart fetch error:", err);
       })
       .finally(() => setLoading(false));
-  }, [range, currentWorkspace?.id, apiFetch]);
+  }, [range, apiFetch]);
 
   return (
     <Card className="border-white/10 bg-[oklch(0.09_0.006_285)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm">

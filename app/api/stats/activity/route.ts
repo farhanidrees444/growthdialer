@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
     if (isWorkspaceError(access)) return access;
 
     const teamView = canViewTeamCalls(access);
-    const wsId = access.workspaceId;
 
     const url = new URL(request.url);
     const period = url.searchParams.get('period') === 'month' ? 'month' : 'week';
@@ -38,8 +37,8 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: true });
 
     callsQuery = teamView
-      ? callsQuery.eq('workspace_id', wsId)
-      : callsQuery.or(ownCallsOrFilter(wsId, userId));
+      ? callsQuery.eq('user_id', userId)
+      : callsQuery.or(ownCallsOrFilter(null, userId));
 
     const { data: calls, error } = await callsQuery;
 

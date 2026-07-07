@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     let query = supabase
       .from('leads')
       .select('id,name,first_name,last_name,company,title,phone,email,status,tags,notes,call_attempts,last_called_at,created_at,ai_score,source')
-      .eq('workspace_id', access.workspaceId)
+      .eq('user_id', userId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 

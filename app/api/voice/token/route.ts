@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const access = await requireWorkspaceFromRequest(request, supabase, user.id);
     if (isWorkspaceError(access)) return access;
 
-    const token = await provider.getWebRTCToken(user.id, access.workspaceId);
+    const token = await provider.getWebRTCToken(user.id, user.id);
     return NextResponse.json({
       token: token.loginToken,
       login_token: token.loginToken,

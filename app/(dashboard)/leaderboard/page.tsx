@@ -47,7 +47,7 @@ function buildPodiumSlots(rankings: LeaderboardRow[]): (LeaderboardRow | null)[]
 }
 
 export default function LeaderboardPage() {
-  const { currentWorkspace, apiFetch } = useWorkspace();
+  const { apiFetch } = useWorkspace();
   const [days, setDays] = useState(7);
   const [rankings, setRankings] = useState<LeaderboardRow[]>([]);
   const [solo, setSolo] = useState(false);
@@ -55,12 +55,11 @@ export default function LeaderboardPage() {
   const [metric, setMetric] = useState<Metric>('calls');
 
   useEffect(() => {
-    if (!currentWorkspace?.id) return;
     let cancelled = false;
     queueMicrotask(() => {
       if (!cancelled) setLoading(true);
     });
-    void apiFetch(`/api/workspaces/${currentWorkspace.id}/leaderboard?days=${days}&metric=${metric}`)
+    void apiFetch(`/api/leaderboard?days=${days}&metric=${metric}`)
       .then((r) => r.json())
       .then((d: { rankings?: LeaderboardRow[]; solo?: boolean }) => {
         if (cancelled) return;
@@ -71,7 +70,7 @@ export default function LeaderboardPage() {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [apiFetch, currentWorkspace?.id, days, metric]);
+  }, [apiFetch, days, metric]);
 
   const rest = rankings.filter((r) => r.rank > 3);
   const podiumSlots = buildPodiumSlots(rankings);

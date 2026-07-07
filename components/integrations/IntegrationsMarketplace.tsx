@@ -9,7 +9,7 @@ import { IntegrationModal } from './IntegrationModal';
 import { useIntegrationsMarketplace } from './useIntegrationsMarketplace';
 
 export function IntegrationsMarketplace() {
-  const { currentWorkspace, apiFetch } = useWorkspace();
+  const { apiFetch } = useWorkspace();
   const marketplace = useIntegrationsMarketplace({ apiFetch });
 
   return (
@@ -71,7 +71,6 @@ export function IntegrationsMarketplace() {
             ? marketplace.requestedIds.has(marketplace.activeIntegration.id)
             : false
         }
-        workspaceId={currentWorkspace?.id}
         onSaved={() => void marketplace.refreshStatus()}
         onRequested={marketplace.markRequested}
       />

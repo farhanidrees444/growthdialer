@@ -54,7 +54,6 @@ export async function POST(request: NextRequest) {
 
     emitCallWebhooks(callRow.user_id, ['call_completed'], {
       call_id: callRow.id,
-      workspace_id: access.workspaceId,
       lead_id: callRow.lead_id ?? null,
       disposition: callRow.disposition ?? null,
     });

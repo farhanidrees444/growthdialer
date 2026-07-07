@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const canClaimOrphans =
       isOwner && (body.claim_untagged === true || (ownedCount ?? 0) === 0);
 
-    const result = await syncTelephonyNumbersForUser(supabase, userId, access.workspaceId, {
+    const result = await syncTelephonyNumbersForUser(supabase, userId, null, {
       claimOrphans: canClaimOrphans,
     });
 

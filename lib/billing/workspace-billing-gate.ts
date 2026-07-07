@@ -5,42 +5,44 @@ import { apiForbidden } from '@/lib/api/errors';
 /** Billing states that block outbound calling and power dial. */
 const BLOCKED_STATUSES = new Set(['past_due', 'canceled', 'unpaid']);
 
-export interface WorkspaceBillingRow {
-  id: string;
-  plan: string | null;
-  billing_status: string | null;
-}
-
 /**
- * Returns null when the workspace may place calls; otherwise a 403 response.
- * Free/starter workspaces are always allowed regardless of billing_status.
+ * Returns null when the user may place calls; otherwise a 403 response.
+ * Free plans are always allowed regardless of plan_status.
  */
-export async function assertWorkspaceCanPlaceCalls(
+export async function assertUserCanPlaceCalls(
   supabase: SupabaseClient,
-  workspaceId: string,
+  userId: string,
 ): Promise<NextResponse | null> {
-  const { data: workspace, error } = await supabase
-    .from('workspaces')
-    .select('id, plan, billing_status')
-    .eq('id', workspaceId)
+  const { data: settings, error } = await supabase
+    .from('user_settings')
+    .select('plan, plan_status')
+    .eq('user_id', userId)
     .maybeSingle();
 
-  if (error || !workspace) {
-    return apiForbidden('Workspace not found', 'NO_WORKSPACE');
+  if (error) {
+    return apiForbidden('Could not verify billing status', 'FORBIDDEN');
   }
 
-  const plan = workspace.plan ?? 'free';
-  if (plan === 'free') {
+  const plan = (settings?.plan as string | null) ?? 'free';
+  if (plan === 'free' || plan === 'starter') {
     return null;
   }
 
-  const status = (workspace.billing_status ?? 'active').toLowerCase();
+  const status = (settings?.plan_status ?? 'active').toLowerCase();
   if (BLOCKED_STATUSES.has(status)) {
     return apiForbidden(
-      'Calling is paused — update billing in Settings to restore your workspace.',
+      'Calling is paused — update billing in Settings to restore your account.',
       'BILLING_BLOCKED',
     );
   }
 
   return null;
+}
+
+/** @deprecated Use assertUserCanPlaceCalls — workspace billing removed. */
+export async function assertWorkspaceCanPlaceCalls(
+  supabase: SupabaseClient,
+  userIdOrWorkspaceId: string,
+): Promise<NextResponse | null> {
+  return assertUserCanPlaceCalls(supabase, userIdOrWorkspaceId);
 }

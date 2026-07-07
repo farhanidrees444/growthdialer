@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     .from('integration_credentials')
     .update({ is_active: false, updated_at: new Date().toISOString() })
     .eq('provider', 'hubspot')
-    .or(`workspace_id.eq.${access.workspaceId},user_id.eq.${user.id}`);
+    .eq('user_id', user.id);
 
   return NextResponse.json({ ok: true });
 }

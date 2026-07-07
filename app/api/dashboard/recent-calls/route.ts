@@ -16,11 +16,11 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const userId = user.id;
   const access = await requireWorkspaceFromRequest(request, supabase, user.id);
   if (isWorkspaceError(access)) return access;
 
   const teamView = canViewTeamCalls(access);
-  const wsId = access.workspaceId;
 
   let query = supabase
     .from('calls')
@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
     .limit(FETCH_LIMIT);
 
   query = teamView
-    ? query.eq('workspace_id', wsId)
-    : query.or(ownCallsOrFilter(wsId, user.id));
+    ? query.eq('user_id', userId)
+    : query.or(ownCallsOrFilter(null, user.id));
 
   const { data, error } = await query;
 

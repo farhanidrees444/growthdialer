@@ -10,13 +10,13 @@ function startOfDayUTC(date: Date) {
 
 async function countCallsInRange(
   supabase: SupabaseClient,
-  wsId: string,
+  _scopeId: string,
   userId: string,
   teamView: boolean,
   range: { gte: string; lt: string },
   answeredOnly = false,
 ) {
-  const ownFilter = ownCallsOrFilter(wsId, userId);
+  const ownFilter = ownCallsOrFilter(null, userId);
   let query = supabase
     .from('calls')
     .select('id', { count: 'exact', head: true })
@@ -28,7 +28,7 @@ async function countCallsInRange(
   }
 
   return teamView
-    ? query.eq('workspace_id', wsId)
+    ? query.eq('user_id', userId)
     : query.or(ownFilter);
 }
 
@@ -46,8 +46,7 @@ export async function GET(request: NextRequest) {
     if (isWorkspaceError(access)) return access;
 
     const teamView = canViewTeamCalls(access);
-    const wsId = access.workspaceId;
-    const ownFilter = ownCallsOrFilter(wsId, userId);
+    const ownFilter = ownCallsOrFilter(null, userId);
 
     const now = new Date();
     const todayStart = startOfDayUTC(now);
@@ -69,19 +68,19 @@ export async function GET(request: NextRequest) {
       { count: leadsCount },
       { count: meetingsBooked },
     ] = await Promise.all([
-      countCallsInRange(supabase, wsId, userId, teamView, todayRange),
-      countCallsInRange(supabase, wsId, userId, teamView, todayRange, true),
-      countCallsInRange(supabase, wsId, userId, teamView, yesterdayRange),
-      countCallsInRange(supabase, wsId, userId, teamView, yesterdayRange, true),
+      countCallsInRange(supabase, userId, userId, teamView, todayRange),
+      countCallsInRange(supabase, userId, userId, teamView, todayRange, true),
+      countCallsInRange(supabase, userId, userId, teamView, yesterdayRange),
+      countCallsInRange(supabase, userId, userId, teamView, yesterdayRange, true),
       supabase
         .from('leads')
         .select('id', { count: 'exact', head: true })
-        .eq('workspace_id', wsId)
+        .eq('user_id', userId)
         .is('deleted_at', null),
       supabase
         .from('leads')
         .select('id', { count: 'exact', head: true })
-        .eq('workspace_id', wsId)
+        .eq('user_id', userId)
         .eq('status', 'meeting_booked'),
     ]);
 
@@ -98,7 +97,7 @@ export async function GET(request: NextRequest) {
         .not('deal_value_usd', 'is', null);
 
       const { data: dealData } = teamView
-        ? await dealBase.eq('workspace_id', wsId)
+        ? await dealBase.eq('user_id', userId)
         : await dealBase.or(ownFilter);
 
       if (dealData) {

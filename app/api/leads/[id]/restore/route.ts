@@ -25,7 +25,7 @@ export async function POST(
       .from('leads')
       .update({ deleted_at: null, deleted_by: null, updated_at: restoredAt })
       .eq('id', id)
-      .eq('workspace_id', access.workspaceId)
+      .eq('user_id', userId)
       .select('id, deleted_at')
       .maybeSingle();
 

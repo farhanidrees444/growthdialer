@@ -20,14 +20,15 @@ export async function POST(
 
   const raw = await request.json();
   const { lead_ids } = enrollSchema.parse(raw);
-  const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body: raw });
+  const userId = user.id;
+  const access = await requireWorkspaceFromRequest(request, supabase, userId, { body: raw });
   if (isWorkspaceError(access)) return access;
 
   const { data: seq } = await supabase
     .from('sequences')
-    .select('id, workspace_id, status')
+    .select('id, status')
     .eq('id', sequenceId)
-    .eq('workspace_id', access.workspaceId)
+    .eq('user_id', userId)
     .single();
 
   if (!seq || seq.status !== 'active') {
@@ -38,7 +39,6 @@ export async function POST(
   const rows = lead_ids.map((lead_id) => ({
     sequence_id: sequenceId,
     lead_id,
-    workspace_id: access.workspaceId,
     current_step_index: 0,
     status: 'active' as const,
     next_action_at: now,

@@ -18,7 +18,6 @@ import { useLeads } from "@/contexts/leads-context";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { createClient } from "@/lib/supabase/client";
 import { useWorkspace } from "@/contexts/workspace-context";
-import { WORKSPACE_ID_HEADER } from "@/lib/auth/workspace-access";
 import { cn } from "@/lib/utils";
 import type { SystemMetricsData, HourlyMetricPoint } from "@/lib/dashboard-types";
 import { ActivationChecklist } from "@/components/activation/activation-checklist";
@@ -358,7 +357,7 @@ function RecentCallsList({ calls, loading }: { calls: DashboardRecentCall[] | nu
 export default function DashboardPage() {
   const session = useSupabaseSession();
   const { leads } = useLeads();
-  const { currentWorkspace, apiFetch } = useWorkspace();
+  const { apiFetch } = useWorkspace();
   void leads;
 
   const tokenRef = useRef<string | null>(null);
@@ -388,7 +387,6 @@ export default function DashboardPage() {
   const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   const fetchRecentCalls = useCallback(async () => {
-    if (!currentWorkspace?.id) return;
     try {
       const res = await apiFetch('/api/dashboard/recent-calls');
       if (res.ok) {
@@ -400,12 +398,11 @@ export default function DashboardPage() {
     } finally {
       setRecentCallsLoading(false);
     }
-  }, [apiFetch, currentWorkspace?.id]);
+  }, [apiFetch]);
 
   const fetchMetrics = useCallback(async (token: string) => {
     try {
       const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
-      if (currentWorkspace?.id) headers[WORKSPACE_ID_HEADER] = currentWorkspace.id;
       const res = await fetch('/api/dashboard/metrics', { headers });
       if (res.ok) {
         setMetrics(await res.json() as SystemMetricsData);
@@ -417,13 +414,13 @@ export default function DashboardPage() {
     } finally {
       setMetricsLoading(false);
     }
-  }, [currentWorkspace?.id]);
+  }, []);
 
   useEffect(() => {
-    if (!session?.access_token || !currentWorkspace?.id) return;
+    if (!session?.access_token) return;
     tokenRef.current = session.access_token;
     fetchMetrics(session.access_token);
-  }, [session?.access_token, currentWorkspace?.id, fetchMetrics]);
+  }, [session?.access_token, fetchMetrics]);
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -443,13 +440,12 @@ export default function DashboardPage() {
   }, [session?.user?.id, fetchMetrics, fetchRecentCalls]);
 
   useEffect(() => {
-    if (!currentWorkspace?.id) return;
+    if (!session?.user?.id) return;
     let cancelled = false;
     const supabase = createClient();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const wsId = currentWorkspace.id;
-    const userId = session?.user?.id;
+    const userId = session.user.id;
 
     apiFetch('/api/stats/today')
       .then(r => r.json())
@@ -470,17 +466,13 @@ export default function DashboardPage() {
       })
       .catch(() => { if (!cancelled) setStatsLoading(false); });
 
-    let talkQuery = supabase
+    void supabase
       .from('calls')
       .select('duration_seconds')
+      .eq('user_id', userId)
       .gte('created_at', today.toISOString())
-      .gt('duration_seconds', 0);
-    if (userId) {
-      talkQuery = talkQuery.or(`and(workspace_id.eq.${wsId},user_id.eq.${userId}),and(workspace_id.is.null,user_id.eq.${userId})`);
-    } else {
-      talkQuery = talkQuery.eq('workspace_id', wsId);
-    }
-    talkQuery.then(({ data }) => {
+      .gt('duration_seconds', 0)
+      .then(({ data }) => {
         if (!cancelled) {
           const total = (data ?? []).reduce((s, c) => s + ((c.duration_seconds as number) ?? 0), 0);
           setTalkTime(total);
@@ -490,7 +482,7 @@ export default function DashboardPage() {
     void fetchRecentCalls();
 
     return () => { cancelled = true; };
-  }, [currentWorkspace?.id, session?.user?.id, apiFetch, fetchRecentCalls]);
+  }, [session?.user?.id, apiFetch, fetchRecentCalls]);
 
   useEffect(() => {
     if (timeRange !== '7D' || weeklyLoadedRef.current) return;

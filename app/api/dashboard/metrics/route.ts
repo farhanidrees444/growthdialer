@@ -24,8 +24,7 @@ export async function GET(req: NextRequest) {
   if (isWorkspaceError(access)) return access;
 
   const teamView = canViewTeamCalls(access);
-  const wsId = access.workspaceId;
-  const ownFilter = ownCallsOrFilter(wsId, userId);
+  const ownFilter = ownCallsOrFilter(null, userId);
 
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
@@ -52,7 +51,7 @@ export async function GET(req: NextRequest) {
       .order('created_at', { ascending: true });
 
     const { data, error } = teamView
-      ? await hourlyBase.eq('workspace_id', wsId)
+      ? await hourlyBase.eq('user_id', userId)
       : await hourlyBase.or(ownFilter);
 
     if (error && /column .* does not exist/i.test(error.message)) {
@@ -63,7 +62,7 @@ export async function GET(req: NextRequest) {
         .gte('created_at', todayStart)
         .order('created_at', { ascending: true });
       const retry = teamView
-        ? await retryBase.eq('workspace_id', wsId)
+        ? await retryBase.eq('user_id', userId)
         : await retryBase.or(ownFilter);
       hourlyCalls = retry.data;
     } else {
@@ -109,7 +108,7 @@ export async function GET(req: NextRequest) {
       .gte('created_at', monthStart);
 
     const { data, error } = teamView
-      ? await aiBase.eq('workspace_id', wsId)
+      ? await aiBase.eq('user_id', userId)
       : await aiBase.or(ownFilter);
 
     if (error && /column .* does not exist/i.test(error.message)) {
@@ -119,7 +118,7 @@ export async function GET(req: NextRequest) {
         .eq('ai_processed', true)
         .gte('created_at', monthStart);
       const retry = teamView
-        ? await retryBase.eq('workspace_id', wsId)
+        ? await retryBase.eq('user_id', userId)
         : await retryBase.or(ownFilter);
       aiCalls = retry.data;
     } else {
@@ -154,7 +153,7 @@ export async function GET(req: NextRequest) {
       .eq('from_number', n.phone_number)
       .gte('created_at', sevenDaysAgo);
     const { data: ncalls } = teamView
-      ? await ncallsBase.eq('workspace_id', wsId)
+      ? await ncallsBase.eq('user_id', userId)
       : await ncallsBase.or(ownFilter);
 
     const total = ncalls?.length ?? 0;

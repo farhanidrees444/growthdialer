@@ -25,7 +25,7 @@ export async function GET(
       .from('leads')
       .select('*')
       .eq('id', id)
-      .eq('workspace_id', access.workspaceId)
+      .eq('user_id', userId)
       .single();
 
     if (error) {
@@ -62,7 +62,7 @@ export async function PATCH(
       .from('leads')
       .select('user_id')
       .eq('id', id)
-      .eq('workspace_id', access.workspaceId)
+      .eq('user_id', userId)
       .maybeSingle();
 
     if (!existingLead) {
@@ -93,7 +93,7 @@ export async function PATCH(
         .from('leads')
         .select('first_name,last_name')
         .eq('id', id)
-        .eq('workspace_id', access.workspaceId)
+        .eq('user_id', userId)
         .single();
       const firstName = (updates.first_name as string | undefined) ?? nameRow?.first_name ?? '';
       const lastName = (updates.last_name as string | undefined) ?? nameRow?.last_name ?? '';
@@ -106,7 +106,7 @@ export async function PATCH(
       .from('leads')
       .update(updates)
       .eq('id', id)
-      .eq('workspace_id', access.workspaceId)
+      .eq('user_id', userId)
       .select('*')
       .single();
 
@@ -149,7 +149,7 @@ export async function DELETE(
       .from('leads')
       .select('id, deleted_at')
       .eq('id', id)
-      .eq('workspace_id', access.workspaceId)
+      .eq('user_id', userId)
       .maybeSingle();
 
     if (fetchError) {
@@ -178,7 +178,7 @@ export async function DELETE(
         .from('leads')
         .delete()
         .eq('id', id)
-        .eq('workspace_id', access.workspaceId)
+        .eq('user_id', userId)
         .select('id')
         .maybeSingle();
 
@@ -203,7 +203,7 @@ export async function DELETE(
         updated_at: deletedAt,
       })
       .eq('id', id)
-      .eq('workspace_id', access.workspaceId)
+      .eq('user_id', userId)
       .select('id, deleted_at')
       .maybeSingle();
 

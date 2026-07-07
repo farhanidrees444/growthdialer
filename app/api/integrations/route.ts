@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   const { data: creds } = await supabase
     .from('integration_credentials')
     .select('provider, is_active, updated_at, workspace_id, metadata')
-    .or(`workspace_id.eq.${access.workspaceId},user_id.eq.${user.id}`)
+    .eq('user_id', user.id)
     .eq('is_active', true);
 
   const { data: settings } = await supabase
@@ -174,7 +174,6 @@ export async function POST(request: NextRequest) {
   const { error } = await supabase.from('integration_credentials').upsert(
     {
       user_id: user.id,
-      workspace_id: access.workspaceId,
       provider,
       access_token: token,
       is_active: true,

@@ -23,10 +23,11 @@ export async function GET(request: NextRequest) {
   const access = await requireWorkspaceFromRequest(request, supabase, user.id);
   if (isWorkspaceError(access)) return access;
 
+  const userId = user.id;
   const { data: sequences, error } = await supabase
     .from('sequences')
     .select('*, sequence_steps(*)')
-    .eq('workspace_id', access.workspaceId)
+    .eq('user_id', userId)
     .neq('status', 'archived')
     .order('updated_at', { ascending: false });
 
@@ -58,10 +59,10 @@ export async function POST(request: NextRequest) {
   const { data: seq, error } = await supabase
     .from('sequences')
     .insert({
-      workspace_id: access.workspaceId,
       name,
       description: parsed.description ?? null,
       created_by: user.id,
+      user_id: user.id,
       status: 'active',
     })
     .select('*')
