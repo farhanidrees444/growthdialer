@@ -111,7 +111,7 @@ export async function PATCH(request: NextRequest) {
 
   const { data, error } = await supabase
     .from('workspace_messaging_profiles')
-    .upsert(patch, { onConflict: 'workspace_id' })
+    .upsert(patch, { onConflict: 'user_id' })
     .select()
     .single();
 

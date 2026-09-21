@@ -32,9 +32,12 @@ export async function dialParallelBatch(
     excludeIds: options.excludeLeadIds ?? [],
   };
 
+  // Single-user mode: queue leads are scoped by user_id. (Previously this
+  // passed session.workspace_id, which is null since workspace tenancy was
+  // removed — the queue query then matched zero leads.)
   const { data: leads, error } = await fetchDialerQueueLeads(
     supabase,
-    session.workspace_id!,
+    userId,
     queueConfig,
   );
   if (error) throw error;
@@ -89,7 +92,7 @@ export async function dialParallelBatch(
 
     try {
       const handle = await provider.makeCall({
-        tenantId: workspaceId,
+        tenantId: userId,
         agentId: userId,
         to: e164,
         from: fromNumber,

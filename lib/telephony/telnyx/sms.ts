@@ -38,11 +38,12 @@ export async function sendProviderSms(
 
   const text = withComplianceFooter(normalizeSmsBody(params.body), true);
 
+  // Single-user mode: sms_messages is scoped by user_id (params.tenantId is the
+  // caller's user id). workspace_id is legacy/nullable; agent_id never existed.
   const { data: row, error: insertError } = await supabase
     .from('sms_messages')
     .insert({
-      workspace_id: params.tenantId,
-      agent_id: params.agentId,
+      user_id: params.tenantId,
       lead_id: params.leadId ?? null,
       direction: 'outbound',
       from_number: params.from,
