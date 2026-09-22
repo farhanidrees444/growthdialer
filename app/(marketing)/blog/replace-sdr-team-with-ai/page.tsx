@@ -257,7 +257,7 @@ export default function ReplaceSDRTeamWithAI() {
                 {GROWTHDIALER_PRICING.proAnnualTotal}
               </p>
               <ul className="mt-4 space-y-2 text-[14px] text-zinc-700">
-                <li>• Up to 3 seats per workspace</li>
+                <li>• Per-seat pricing, billed annually</li>
                 <li>• AI summaries on recorded calls</li>
                 <li>• Not an autonomous voice agent</li>
               </ul>
@@ -335,11 +335,11 @@ export default function ReplaceSDRTeamWithAI() {
               </div>
             </div>
             <div className="rounded-2xl border border-violet-600/25 bg-violet-600/[0.04] p-7">
-              <h3 className="text-[16px] font-bold text-violet-900">GrowthDialer Pro for 3 years (3-seat workspace)</h3>
+              <h3 className="text-[16px] font-bold text-violet-900">GrowthDialer Pro for 3 years (per seat)</h3>
               <div className="mt-5 space-y-4 text-[14px] text-zinc-700">
                 <div>
                   <p className="text-[12.5px] text-zinc-500">Year 1–3 (annual billing)</p>
-                  <p className="font-bold">{GROWTHDIALER_PRICING.proAnnualTotal} × 3 = <span className="text-violet-700">$1,404</span></p>
+                  <p className="font-bold">{GROWTHDIALER_PRICING.proAnnualTotal} × 3 yrs = <span className="text-violet-700">$3,420</span></p>
                 </div>
                 <p className="text-[12.5px] text-zinc-500">
                   Includes parallel dial, AI summaries, coaching floor, HubSpot sync — not an autonomous voice agent.

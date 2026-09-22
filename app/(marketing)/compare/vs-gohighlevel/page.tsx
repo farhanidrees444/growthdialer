@@ -9,7 +9,7 @@ const SLUG = 'gohighlevel';
 export const metadata: Metadata = {
   title: 'GrowthDialer vs GoHighLevel — AI Dialer Comparison',
   description:
-    'Compare GrowthDialer vs GoHighLevel: a voice-first AI dialer with power and parallel dialing, AI call briefs, and live transcription — versus an all-in-one marketing platform. Per-seat pricing from $49/seat/mo. 7-day free trial, no credit card.',
+    'Compare GrowthDialer vs GoHighLevel: a voice-first AI dialer with power and parallel dialing, AI call briefs, and recorded-call transcription — versus an all-in-one marketing platform. Per-seat pricing from $49/seat/mo. 7-day free trial, no credit card.',
   alternates: { canonical: `${MARKETING_SITE}/compare/vs-gohighlevel` },
   openGraph: {
     title: 'GrowthDialer vs GoHighLevel',

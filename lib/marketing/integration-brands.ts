@@ -33,7 +33,7 @@ export const INTEGRATION_BRANDS: IntegrationBrand[] = [
     color: '#FF7A59',
     category: 'crm',
     live: true,
-    description: 'Log calls, dispositions, and recordings to contact timelines after every dial.',
+    description: 'Logs the call, disposition, and notes to the matching contact\u2019s timeline automatically on every disposition.',
   },
   {
     id: 'salesforce',
@@ -103,7 +103,7 @@ export const INTEGRATION_BRANDS: IntegrationBrand[] = [
     id: 'notion',
     name: 'Notion',
     Icon: SiNotion,
-    color: '#FFFFFF',
+    color: '#171717',
     category: 'productivity',
     description: 'Push AI summaries and notes to your workspace.',
   },

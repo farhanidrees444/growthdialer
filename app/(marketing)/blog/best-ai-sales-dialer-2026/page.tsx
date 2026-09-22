@@ -113,9 +113,9 @@ export default function BestAISalesDialers2026() {
       <div className="pm-container-narrow max-w-3xl pb-24">
         <ArticleStats
           items={[
-            { value: '10', label: 'Parallel lines on GrowthDialer Pro' },
-            { value: 'Free', label: 'Starter tier — dial, record, AI summaries' },
-            { value: GROWTHDIALER_PRICING.proAnnualShort, label: 'Pro workspace (annual billing, up to 3 seats)' },
+            { value: '5', label: 'Max parallel lines in the dialer' },
+            { value: '$49', label: 'Starter (per seat/mo) — dial, record, AI summaries' },
+            { value: GROWTHDIALER_PRICING.proAnnualShort, label: 'Pro (annual billing, per seat)' },
           ]}
         />
 
@@ -214,7 +214,7 @@ export default function BestAISalesDialers2026() {
               </h2>
               <p className="pm-small mt-3">
                 Starter: {GROWTHDIALER_PRICING.starter} · Pro: {GROWTHDIALER_PRICING.proMonthly}{' '}
-                ({GROWTHDIALER_PRICING.proAnnual} annual) · Team & Enterprise on{' '}
+                ({GROWTHDIALER_PRICING.proAnnualShort} billed annually) — see{' '}
                 <Link href="/pricing" className="font-semibold text-violet-700 hover:underline">
                   pricing
                 </Link>

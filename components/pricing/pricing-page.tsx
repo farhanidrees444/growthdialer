@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Check, Minus, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Minus, ShieldCheck } from 'lucide-react';
 import { useSupabaseSession } from '@/lib/supabase/hooks';
 import { PLAN_ORDER, PLAN_LABELS, type FeatureKey, type PlanKey } from '@/lib/plan/plan-gates';
 import { usePlan } from '@/lib/plan/use-plan';
@@ -351,20 +351,13 @@ export function PricingPage() {
 
   return (
     <main>
-      {/* Hero */}
-      <section className="relative overflow-hidden px-5 pb-14 pt-36 sm:pb-16 sm:pt-44 lg:px-8">
-        <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="pm-dot-grid pm-fade-hero absolute inset-0 opacity-70" />
-          <div className="pm-glow-top absolute inset-x-0 top-0 h-[420px]" />
-        </div>
-        <div className="pm-container-narrow relative text-center">
+      {/* Hero — clean editorial, no decorative blob/grid */}
+      <section className="relative overflow-hidden border-b border-zinc-950/[0.07] px-5 pb-14 pt-36 sm:pb-16 sm:pt-44 lg:px-8">
+        <div className="pm-container-narrow relative">
           <Reveal>
-            <p className="pm-eyebrow pm-eyebrow-centered">
-              <Sparkles className="mr-2 inline h-3.5 w-3.5 text-[#6d28d9]" />
-              Pricing
-            </p>
-            <h1 className="pm-h-display">Pricing that scales with your sales floor.</h1>
-            <p className="pm-lead mx-auto mt-6 max-w-2xl">
+            <p className="pm-eyebrow font-mono">Pricing</p>
+            <h1 className="pm-h-display mt-5 max-w-2xl">Pricing that scales with your sales floor.</h1>
+            <p className="pm-lead mt-6 max-w-2xl">
               Start with core dialing, then add AI scoring, coaching, live floor controls, and platform access as your team grows. 7-day free trial — no credit card.
             </p>
           </Reveal>

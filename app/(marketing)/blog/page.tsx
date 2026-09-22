@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Metadata } from 'next';
 import { ArrowRight, Clock } from 'lucide-react';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
@@ -27,6 +28,12 @@ const POSTS = [
       'We evaluated major AI dialers on connect rate, recording quality, CRM sync, and real per-seat cost — not marketing claims.',
     category: 'Reviews',
     readTime: '18 min read',
+    thumbnail: {
+      src: '/images/product/dialer-main.webp',
+      width: 1600,
+      height: 828,
+      alt: 'Actual GrowthDialer dialer screen',
+    },
   },
   {
     slug: 'how-parallel-dialing-works',
@@ -36,6 +43,12 @@ const POSTS = [
       'Line counts, AMD behavior, and when parallel beats single-line power dial for B2B outbound teams.',
     category: 'Strategy',
     readTime: '16 min read',
+    thumbnail: {
+      src: '/images/product/dialer-banner.webp',
+      width: 1600,
+      height: 566,
+      alt: 'Actual GrowthDialer dialer session view',
+    },
   },
   {
     slug: 'replace-sdr-team-with-ai',
@@ -45,6 +58,12 @@ const POSTS = [
       'Where AI removes dial-and-log busywork versus where humans still own discovery and closing.',
     category: 'Guide',
     readTime: '19 min read',
+    thumbnail: {
+      src: '/images/product/dashboard-main.webp',
+      width: 1600,
+      height: 578,
+      alt: 'Actual GrowthDialer dashboard',
+    },
   },
 ];
 
@@ -77,23 +96,35 @@ export default function BlogPage() {
                 <Reveal key={post.slug} delay={i * 80}>
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="pm-card pm-card-hover group flex h-full flex-col p-7"
+                    className="pm-card pm-card-hover group flex h-full flex-col overflow-hidden !p-0"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="pm-chip">{post.category}</span>
-                      <span className="pm-caption inline-flex items-center gap-1.5">
-                        <Clock className="h-3.5 w-3.5" />
-                        {post.readTime}
-                      </span>
+                    <div className="relative overflow-hidden border-b border-zinc-950/[0.06]">
+                      <Image
+                        src={post.thumbnail.src}
+                        width={post.thumbnail.width}
+                        height={post.thumbnail.height}
+                        alt={post.thumbnail.alt}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="aspect-[16/9] w-full object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-[1.03]"
+                      />
                     </div>
-                    <h2 className="pm-h-card mt-5">{post.title}</h2>
-                    <p className="pm-body mt-3 flex-1 !text-[14.5px]">{post.excerpt}</p>
-                    <div className="mt-6 flex items-center justify-between border-t border-zinc-950/[0.06] pt-4">
-                      <span className="pm-caption">GrowthDialer team · {post.date}</span>
-                      <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-violet-700">
-                        Read
-                        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                      </span>
+                    <div className="flex flex-1 flex-col p-7">
+                      <div className="flex items-center justify-between">
+                        <span className="pm-chip">{post.category}</span>
+                        <span className="pm-caption inline-flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5" />
+                          {post.readTime}
+                        </span>
+                      </div>
+                      <h2 className="pm-h-card mt-5">{post.title}</h2>
+                      <p className="pm-body mt-3 flex-1 !text-[14.5px]">{post.excerpt}</p>
+                      <div className="mt-6 flex items-center justify-between border-t border-zinc-950/[0.06] pt-4">
+                        <span className="pm-caption">GrowthDialer team · {post.date}</span>
+                        <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-violet-700">
+                          Read
+                          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                        </span>
+                      </div>
                     </div>
                   </Link>
                 </Reveal>

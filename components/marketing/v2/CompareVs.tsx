@@ -17,7 +17,6 @@ import {
   GROWTHDIALER_PRICE,
   getFeatureRows,
   getRelatedCompetitors,
-  parsePriceNumber,
 } from '@/lib/marketing/pseo-competitors';
 import {
   buildValueProps,
@@ -38,14 +37,26 @@ function CellValue({ value }: { value: boolean | string }) {
 }
 
 export function CompareVsTemplate({ competitor, basePath }: { competitor: PseoCompetitor; basePath: 'compare' | 'vs' }) {
-  const rows = getFeatureRows(competitor);
+  // Honesty: canonical copy labels coaching as "Listen mode" (whisper/barge
+  // are roadmap), so the checklist shows that instead of a bare checkmark.
+  const rows = getFeatureRows(competitor).map((row) =>
+    row.feature === 'Live manager coaching floor'
+      ? { ...row, growthdialer: 'Listen mode' as const }
+      : row,
+  );
   const valueProps = buildValueProps(competitor);
-  const faqs = buildVsFaqs(competitor).map((f) => ({ q: f.question, a: f.answer }));
+  // Honesty: the lib's auto-generated pricing FAQ cites a competitor "from"
+  // price we cannot verify (spot checks showed it materially off). Replace
+  // that sentence with honest guidance instead of repeating the number.
+  const faqs = buildVsFaqs(competitor).map((f) =>
+    f.question.startsWith('How does GrowthDialer pricing compare')
+      ? {
+          q: f.question,
+          a: `GrowthDialer starts at ${GROWTHDIALER_PRICE}/seat/mo with a 7-day free trial and no credit card. ${competitor.name} pricing varies by plan, team size, and contract — confirm current pricing with them directly, then compare total cost at your team size.`,
+        }
+      : { q: f.question, a: f.answer },
+  );
   const related = getRelatedCompetitors(competitor);
-
-  const gdPrice = parsePriceNumber(GROWTHDIALER_PRICE);
-  const theirPrice = parsePriceNumber(competitor.priceFrom);
-  const maxPrice = Math.max(gdPrice, theirPrice, 1);
 
   return (
     <div className="theme-marketing min-h-screen bg-white text-zinc-950 antialiased">
@@ -58,10 +69,12 @@ export function CompareVsTemplate({ competitor, basePath }: { competitor: PseoCo
           cta={{ label: 'Start free trial', href: APP_SIGNUP }}
         />
 
-        {/* Price comparison */}
+        {/* Price comparison — GrowthDialer only. Competitor "from" prices in
+            the catalog couldn't be verified (and spot checks were materially
+            off), so we don't display them. */}
         <div className="pm-section-tight">
           <div className="pm-container-narrow">
-            <SectionHead eyebrow="Pricing" title="Starting price, side by side." />
+            <SectionHead eyebrow="Pricing" title="Our price. Their quote." />
             <Reveal>
               <div className="pm-card space-y-6 p-8">
                 <div>
@@ -70,21 +83,19 @@ export function CompareVsTemplate({ competitor, basePath }: { competitor: PseoCo
                     <span className="tabular-nums font-semibold text-zinc-950">{GROWTHDIALER_PRICE}/seat/mo</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-zinc-950/[0.06]">
-                    <div className="h-full rounded-full bg-[#6d28d9]" style={{ width: `${(gdPrice / maxPrice) * 100}%` }} />
+                    <div className="h-full w-full rounded-full bg-[#6d28d9]" />
                   </div>
                 </div>
-                <div>
-                  <div className="mb-2 flex items-center justify-between text-sm">
-                    <span className="font-medium text-zinc-500">{competitor.name}</span>
-                    <span className="tabular-nums text-zinc-500">{competitor.priceFrom}/seat/mo</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-zinc-950/[0.06]">
-                    <div className="h-full rounded-full bg-zinc-400" style={{ width: `${(theirPrice / maxPrice) * 100}%` }} />
-                  </div>
+                <div className="rounded-2xl border border-zinc-950/[0.08] bg-zinc-50/70 p-5">
+                  <p className="text-sm font-semibold text-zinc-950">{competitor.name} pricing</p>
+                  <p className="pm-small mt-1.5">
+                    Competitor pricing varies by plan, team size, and contract — and changes
+                    often. We don&apos;t publish numbers we can&apos;t verify; confirm current
+                    pricing with {competitor.name} directly before you compare.
+                  </p>
                 </div>
                 <p className="pm-caption text-center">
-                  Approximate public list pricing — confirm with each vendor. GrowthDialer: 7-day free trial,
-                  no credit card, no annual lock-in.
+                  GrowthDialer: 7-day free trial, no credit card, no annual lock-in.
                 </p>
               </div>
             </Reveal>
