@@ -28,6 +28,15 @@ import {
   PowerQueue,
   TranscriptStream,
 } from '@/components/marketing/v2/Mockups';
+import {
+  AiAgents,
+  IntentRoadmap,
+  LiveRoadmap,
+  Omnichannel,
+  ProblemSolution,
+  TrustStrip,
+  WhyGrowthDialer,
+} from '@/components/marketing/v2/HomeNew';
 import { POSITIONING } from '@/components/marketing/v2/copy';
 
 export const metadata: Metadata = {
@@ -89,7 +98,7 @@ const DIALING_ROWS: FeatureRow[] = [
 const INTEL_ROWS: FeatureRow[] = [
   {
     eyebrow: 'AI call briefs',
-    title: 'Hang up. Your notes are already written.',
+    title: 'A 30-second brief after every call.',
     body: 'Every recorded call is transcribed and distilled into a 30-second brief — summary, objections, next steps — ready before your rep reaches for the keyboard.',
     bullets: [
       'Key points, objections, and follow-ups extracted automatically',
@@ -177,6 +186,8 @@ export default function LandingPage() {
         <Hero />
         <ProofBand />
         <CapabilityMarquee />
+        <TrustStrip />
+        <ProblemSolution />
         <PositioningStrip line={POSITIONING.line} />
         <ModesBento
           eyebrow="Dialing"
@@ -190,6 +201,9 @@ export default function LandingPage() {
           lede="Transcription, summaries, and analytics run on every conversation — automatically. Your CRM has never been this honest."
           rows={INTEL_ROWS}
         />
+        <IntentRoadmap />
+        <AiAgents />
+        <Omnichannel />
         <StackBand />
         <PersonaCards />
         <DeliverabilityBand
@@ -199,6 +213,8 @@ export default function LandingPage() {
           rows={NUMBER_ROWS}
         />
         <HowItWorks />
+        <WhyGrowthDialer />
+        <LiveRoadmap />
         <PricingTeaser />
         <div className="pm-divider">
           <Faq title="Fair questions. Straight answers." />

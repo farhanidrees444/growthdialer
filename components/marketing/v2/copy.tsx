@@ -107,6 +107,11 @@ export const PERSONAS = {
       headline: 'Sell like a team of ten.',
       body: 'One founder, one list, one dialer — with the follow-up discipline of an entire ops team.',
     },
+    {
+      role: 'Lead generation agencies',
+      headline: 'Run outbound for more clients without multiplying admin work.',
+      body: 'Keep calling workflows, recordings, and conversation intelligence organized as your client roster grows.',
+    },
   ],
 } as const;
 
@@ -177,6 +182,22 @@ export const FAQS = [
   {
     q: 'How do you handle call compliance?',
     a: 'DNC flagging is built into the dialer — flagged leads leave every queue instantly. Your numbers get spam-risk and reputation scoring, and every call is logged with its recording, transcript, and disposition history.',
+  },
+  {
+    q: 'Which GrowthDialer features are live today?',
+    a: 'Power, parallel, and click-to-call dialing in your browser, call recording, AI transcription and call summaries, conversation analytics, lead management, number health scoring, and the HubSpot integration — all live, on every plan.',
+  },
+  {
+    q: 'Which features are on the roadmap?',
+    a: 'AI voice agents and the AI receptionist are in active development, followed by advanced buyer intent, more CRM integrations, connected multichannel outreach, and deeper workflow automation. The roadmap page shows what’s next and what’s already shipped.',
+  },
+  {
+    q: 'Does GrowthDialer support inbound calls?',
+    a: 'Yes — incoming calls are logged with recordings and transcripts just like outbound calls. An AI receptionist that answers when your team can’t is in active development.',
+  },
+  {
+    q: 'Which CRM integrations are currently live?',
+    a: 'HubSpot is live today with sync. Salesforce is in development, and Zapier, Slack, webhooks, and a public API are on the roadmap. Every call stays logged and exportable either way.',
   },
   {
     q: 'Is the AI receptionist included?',

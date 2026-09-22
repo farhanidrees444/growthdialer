@@ -442,3 +442,37 @@ export function Tilt3D({
     </div>
   );
 }
+
+/* ── shared loop driver ───────────────────────────────────
+   Steps 0..length-1 on a fixed interval. Pauses when off-screen
+   (IntersectionObserver), skips ticks in hidden tabs, and freezes
+   under prefers-reduced-motion (callers render a calm static state). */
+export function useCycle(length: number, ms: number) {
+  const reduced = usePrefersReducedMotion();
+  const [step, setStep] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (reduced || length < 2) return;
+    let iv: number | undefined;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && iv === undefined) {
+          iv = window.setInterval(() => {
+            if (!document.hidden) setStep((s) => (s + 1) % length);
+          }, ms);
+        } else if (!entry.isIntersecting && iv !== undefined) {
+          window.clearInterval(iv);
+          iv = undefined;
+        }
+      },
+      { threshold: 0.12 }
+    );
+    const el = ref.current;
+    if (el) io.observe(el);
+    return () => {
+      io.disconnect();
+      if (iv !== undefined) window.clearInterval(iv);
+    };
+  }, [reduced, length, ms]);
+  return { step, ref, reduced };
+}

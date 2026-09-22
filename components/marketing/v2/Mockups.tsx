@@ -1,7 +1,43 @@
 import type { ReactNode } from 'react';
 import { ArrowDownRight, ArrowUpRight, Brain, CheckCircle2, Mic, Phone, PhoneOff, ShieldCheck, Sparkles, Voicemail, Zap } from 'lucide-react';
 import { Reveal } from '@/components/ui/reveal';
+import { useCycle } from './motion';
 import { cn } from '@/lib/utils';
+
+/* ── hero micro-animation: the connected line's call state cycles
+      Ringing → Connected → Recording → Transcript → Buying signal →
+      AI brief → loop (~14s). Decorative only (aria-hidden); the static
+      "Connected" state shows under reduced motion. ─────────── */
+const CALL_STATES = [
+  { label: 'Ringing…', dot: 'bg-zinc-400', text: 'text-zinc-500' },
+  { label: 'Connected', dot: 'bg-emerald-500', text: 'text-emerald-700' },
+  { label: 'Recording', dot: 'bg-red-500', text: 'text-red-600', pulse: true },
+  { label: 'Transcript live', dot: 'bg-[#6d28d9]', text: 'text-[#6d28d9]' },
+  { label: 'Buying signal', dot: 'bg-amber-500', text: 'text-amber-700' },
+  { label: 'AI brief ready', dot: 'bg-[#6d28d9]', text: 'text-[#6d28d9]' },
+] as const;
+
+function CallStateCycle() {
+  const { step, ref, reduced } = useCycle(CALL_STATES.length, 2300);
+  const s = CALL_STATES[reduced ? 1 : step];
+  return (
+    <div
+      ref={ref}
+      aria-hidden
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full bg-zinc-950/[0.04] px-2.5 py-1 text-[11px] font-semibold',
+        s.text
+      )}
+    >
+      <span
+        className={cn('h-1.5 w-1.5 rounded-full', s.dot, 'pulse' in s && s.pulse && 'motion-safe:animate-pulse')}
+      />
+      <span key={reduced ? 'static' : step} className="pm-fade-step whitespace-nowrap">
+        {s.label}
+      </span>
+    </div>
+  );
+}
 
 /* ── Browser chrome frame ─────────────────────────────── */
 export function BrowserFrame({
@@ -550,8 +586,11 @@ export function ParallelFan({ className }: { className?: string }) {
     <figure className={cn('not-prose', className)}>
       <div className="overflow-hidden rounded-[1.6rem] border border-zinc-950/[0.08] bg-white shadow-[0_2px_4px_rgba(9,9,11,0.04),0_32px_64px_-24px_rgba(109,40,217,0.18)]">
         {/* header */}
-        <div className="flex items-center justify-between gap-3 border-b border-zinc-950/[0.06] px-5 py-4 sm:px-6">
-          <p className="text-[13px] font-semibold text-zinc-900">Parallel session</p>
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-zinc-950/[0.06] px-5 py-4 sm:px-6">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <p className="text-[13px] font-semibold text-zinc-900">Parallel session</p>
+            <CallStateCycle />
+          </div>
           <span className="pm-chip !gap-1.5 !text-[11px]">
             <span className="font-bold text-[#6d28d9]">5 lines</span>
             <span aria-hidden>→</span>

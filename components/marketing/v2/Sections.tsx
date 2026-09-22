@@ -127,7 +127,7 @@ export function PersonaCards() {
     <div className="pm-section pm-divider bg-zinc-50/60">
       <div className="pm-container">
         <SectionHead eyebrow={PERSONAS.eyebrow} title={PERSONAS.title} />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {PERSONAS.cards.map((p, i) => (
             <Reveal key={p.role} delay={i * 80} className="h-full">
               <GlowCard className="pm-card pm-card-hover flex h-full flex-col p-7">
