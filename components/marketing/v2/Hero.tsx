@@ -2,12 +2,12 @@
 
 import { useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ArrowRight, Check, ChevronDown, Play } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Reveal } from '@/components/ui/reveal';
 import { HERO, RISK_BULLETS } from './copy';
 import { Magnetic, Noise, Tilt3D, usePrefersReducedMotion } from './motion';
+import { DialerConsoleVisual } from '@/components/marketing/visuals';
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
@@ -81,25 +81,13 @@ export function Hero() {
           </Reveal>
         </motion.div>
 
-        {/* real product visual: the actual AI Dialer, with 3D tilt */}
+        {/* hero product visual: hand-crafted illustrated dialer console, 3D tilt */}
         <motion.div style={stageStyle} className="relative mx-auto mt-14 max-w-6xl sm:mt-16">
           <Reveal delay={200} variant="scale">
             <Tilt3D maxX={7} maxY={10}>
-              <figure className="not-prose">
-                <div className="overflow-hidden rounded-2xl border border-white/10 shadow-[0_60px_120px_-40px_rgba(0,0,0,0.8)]">
-                  <Image
-                    src="/images/product/dialer-main.webp"
-                    alt="The actual GrowthDialer AI Dialer — manual, power, and parallel dialing modes"
-                    width={1600}
-                    height={828}
-                    sizes="(max-width: 1024px) 100vw, 1152px"
-                    priority
-                  />
-                </div>
-                <figcaption className="pm-caption !text-zinc-500">
-                  Actual GrowthDialer product UI — the AI Dialer.
-                </figcaption>
-              </figure>
+              <div className="overflow-hidden rounded-2xl border border-white/10 shadow-[0_60px_120px_-40px_rgba(0,0,0,0.8)]">
+                <DialerConsoleVisual />
+              </div>
             </Tilt3D>
           </Reveal>
         </motion.div>
