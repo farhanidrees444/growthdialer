@@ -107,8 +107,8 @@ export const GROWTHDIALER_FEATURES: Record<FeatureKey, boolean | string> = {
   aiSummaries: true,
   conversationIntel: true,
   liveCoaching: true,
-  crmSync: 'HubSpot live',
-  freeTier: true,
+  crmSync: 'Waitlist',
+  freeTier: false,
   localPresence: true,
   callRecording: true,
 };

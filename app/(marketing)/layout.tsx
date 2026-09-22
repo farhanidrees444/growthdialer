@@ -2,7 +2,7 @@
 
 /**
  * Marketing routes use native scroll for maximum speed (no Lenis smoothing).
- * Live Floor chrome (Nav, footer) is composed per page.
+ * Premium v2 chrome (Navbar, Footer) is composed per page.
  */
 export default function MarketingLayout({
   children,

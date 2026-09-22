@@ -1,8 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { MarketingShell } from '@/components/marketing/MarketingShell';
-import { MarketingPageHero } from '@/components/marketing/live-floor/MarketingPageHero';
+import { ArrowRight, Lock } from 'lucide-react';
+import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
+import { FinalCta, PageHero, SectionHead } from '@/components/marketing/v2/Sections';
+import { Reveal } from '@/components/ui/reveal';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
+import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: 'API Reference | GrowthDialer',
@@ -21,61 +24,91 @@ const ENDPOINTS = [
 
 export default function ApiReferencePage() {
   return (
-    <MarketingShell>
-      <MarketingPageHero
-        eyebrow="API Reference"
-        title={
-          <>
-            Pipe call events
-            <br />
-            <span className="font-semibold">into your stack.</span>
-          </>
-        }
-        description="Workspace-scoped REST endpoints power the dashboard today. Webhook delivery for call.completed is on the roadmap — join the waitlist from Integrations."
-      />
+    <div className="min-h-screen bg-white text-zinc-950 antialiased">
+      <Navbar />
+      <main>
+        <PageHero
+          eyebrow="API Reference"
+          title={
+            <>
+              Pipe call events
+              <br />
+              into your stack.
+            </>
+          }
+          lede="Workspace-scoped REST endpoints power the dashboard today. Webhook delivery for call.completed is on the roadmap — join the waitlist from Integrations."
+        />
 
-      <section className="px-5 pb-20 lg:px-8">
-        <div className="mx-auto max-w-3xl">
-          <article className="mk-card p-8">
-            <h2 className="font-display text-xl font-semibold text-zinc-950">Authentication</h2>
-            <p className="mt-4 text-[15px] leading-relaxed text-zinc-600">
-              Browser sessions use secure workspace auth cookies. Server-to-server integrations should use a
-              service token from your workspace settings (Enterprise) or contact us for early API access.
-            </p>
-          </article>
+        <div className="pm-section-tight">
+          <div className="pm-container-narrow">
+            <Reveal>
+              <article className="pm-card p-7">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600/10 text-violet-700">
+                    <Lock className="h-5 w-5" />
+                  </span>
+                  <h2 className="pm-h-card">Authentication</h2>
+                </div>
+                <p className="pm-body mt-4 !text-[14.5px]">
+                  Browser sessions use secure workspace auth cookies. Server-to-server integrations
+                  should use a service token from your workspace settings (Enterprise) or contact us
+                  for early API access.
+                </p>
+              </article>
+            </Reveal>
 
-          <div className="mt-6 overflow-hidden rounded-2xl border border-zinc-950/[0.08] bg-white">
-            <h2 className="border-b border-zinc-950/[0.08] px-6 py-4 font-display text-lg font-semibold text-zinc-950">
-              Core endpoints
-            </h2>
-            <ul className="divide-y divide-zinc-950/[0.06]">
-              {ENDPOINTS.map((e) => (
-                <li key={e.path} className="px-6 py-4">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-[11px] font-bold text-emerald-700">
-                      {e.method}
-                    </span>
-                    <code className="font-mono text-[13px] text-zinc-800">{e.path}</code>
-                  </div>
-                  <p className="mt-2 text-[14px] text-zinc-600">{e.desc}</p>
-                </li>
-              ))}
-            </ul>
+            <Reveal delay={80}>
+              <div className="pm-card mt-4 overflow-hidden !p-0">
+                <h2 className="pm-h-card border-b border-zinc-950/[0.06] px-7 py-5 !text-[1.15rem]">
+                  Core endpoints
+                </h2>
+                <ul className="divide-y divide-zinc-950/[0.06]">
+                  {ENDPOINTS.map((e) => (
+                    <li key={e.path} className="px-7 py-5">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span
+                          className={cn(
+                            'rounded-md px-2.5 py-1 font-mono text-[11px] font-bold tracking-wide',
+                            e.method === 'GET'
+                              ? 'bg-emerald-500/12 text-emerald-700'
+                              : 'bg-violet-600/10 text-violet-700'
+                          )}
+                        >
+                          {e.method}
+                        </span>
+                        <code className="rounded-md bg-zinc-950/[0.04] px-2.5 py-1 font-mono text-[13px] text-zinc-800">
+                          {e.path}
+                        </code>
+                      </div>
+                      <p className="pm-body mt-2.5 !text-[14px]">{e.desc}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+
+            <Reveal delay={100}>
+              <p className="pm-body mt-8 text-center">
+                Full OpenAPI spec ships with{' '}
+                <Link href="/docs" className="font-semibold text-violet-700 hover:underline">
+                  Documentation
+                </Link>
+                . See also{' '}
+                <Link
+                  href="/integrations"
+                  className="inline-flex items-center gap-1 font-semibold text-violet-700 hover:underline"
+                >
+                  Integrations <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+                .
+              </p>
+            </Reveal>
           </div>
-
-          <p className="mt-8 text-center text-[14px] text-zinc-500">
-            Full OpenAPI spec ships with{' '}
-            <Link href="/docs" className="text-[#6D28D9] hover:underline">
-              Documentation
-            </Link>
-            . See also{' '}
-            <Link href="/integrations" className="text-[#6D28D9] hover:underline">
-              Integrations
-            </Link>
-            .
-          </p>
         </div>
-      </section>
-    </MarketingShell>
+
+        <FinalCta />
+      </main>
+      <Footer />
+    </div>
   );
 }

@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { MarketingShell } from '@/components/marketing/MarketingShell';
-import { MarketingPageHero } from '@/components/marketing/live-floor/MarketingPageHero';
+import { ArrowRight, BookMarked, Gauge, Scale } from 'lucide-react';
+import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
+import { FinalCta, PageHero, SectionHead } from '@/components/marketing/v2/Sections';
+import { Reveal } from '@/components/ui/reveal';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
@@ -13,18 +15,21 @@ export const metadata: Metadata = {
 
 const GUIDES = [
   {
+    icon: Gauge,
     title: 'How parallel dialing works',
     href: '/blog/how-parallel-dialing-works',
     description: 'Line counts, AMD, and when parallel dial beats single-line power dial for B2B.',
     readTime: '16 min',
   },
   {
+    icon: Scale,
     title: 'Best AI sales dialers in 2026',
     href: '/blog/best-ai-sales-dialer-2026',
     description: 'Honest comparison of dialer platforms — features, pricing, and fit by team size.',
     readTime: '18 min',
   },
   {
+    icon: BookMarked,
     title: 'HubSpot + dialer setup',
     href: '/integrations',
     description: 'Connect HubSpot, log calls automatically, and keep activity data clean.',
@@ -34,41 +39,60 @@ const GUIDES = [
 
 export default function GuidesPage() {
   return (
-    <MarketingShell>
-      <MarketingPageHero
-        eyebrow="Guides"
-        title={
-          <>
-            Playbooks for
-            <br />
-            <span className="font-medium">outbound that scales.</span>
-          </>
-        }
-        description="Long-form guides from the GrowthDialer team — dialing mechanics, CRM hygiene, and AI workflows that match what the product does today."
-      />
+    <div className="min-h-screen bg-white text-zinc-950 antialiased">
+      <Navbar />
+      <main>
+        <PageHero
+          eyebrow="Guides"
+          title={
+            <>
+              Playbooks for
+              <br />
+              outbound that scales.
+            </>
+          }
+          lede="Long-form guides from the GrowthDialer team — dialing mechanics, CRM hygiene, and AI workflows that match what the product does today."
+        />
 
-      <section className="px-5 pb-20 lg:px-8">
-        <div className="mx-auto grid max-w-5xl gap-4 sm:grid-cols-2">
-          {GUIDES.map((g) => (
-            <Link
-              key={g.href}
-              href={g.href}
-              className="mk-card mk-card-hover group block h-full p-6"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-medium uppercase tracking-widest text-zinc-500">
-                  Guide
-                </span>
-                <span className="text-[11px] text-zinc-500">{g.readTime}</span>
-              </div>
-              <h2 className="mt-3 font-display text-lg font-semibold text-zinc-950">
-                {g.title}
-              </h2>
-              <p className="mt-2 text-[14px] leading-relaxed text-zinc-600">{g.description}</p>
-            </Link>
-          ))}
+        <div className="pm-section-tight">
+          <div className="pm-container">
+            <SectionHead
+              eyebrow="Start here"
+              title="Read the floor before you run it."
+              align="left"
+            />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {GUIDES.map((g, i) => (
+                <Reveal key={g.href} delay={i * 80}>
+                  <Link
+                    href={g.href}
+                    className="pm-card pm-card-hover group flex h-full flex-col p-7"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600/10 text-violet-700">
+                        <g.icon className="h-5 w-5" />
+                      </span>
+                      <span className="pm-caption">{g.readTime} read</span>
+                    </div>
+                    <p className="pm-caption mt-5 !font-semibold !uppercase !tracking-[0.14em] !text-violet-700">
+                      Guide
+                    </p>
+                    <h2 className="pm-h-card mt-2">{g.title}</h2>
+                    <p className="pm-body mt-3 flex-1 !text-[14.5px]">{g.description}</p>
+                    <span className="mt-5 inline-flex items-center gap-1 text-[13px] font-semibold text-violet-700">
+                      Read the guide
+                      <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                    </span>
+                  </Link>
+                </Reveal>
+              ))}
+            </div>
+          </div>
         </div>
-      </section>
-    </MarketingShell>
+
+        <FinalCta />
+      </main>
+      <Footer />
+    </div>
   );
 }

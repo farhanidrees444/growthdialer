@@ -1,11 +1,16 @@
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
-import { MarketingShell } from '@/components/marketing/MarketingShell';
-import { MarketingPageHero } from '@/components/marketing/live-floor/MarketingPageHero';
-import { EarlyAccess } from '@/components/marketing/home/EarlyAccess';
-import { JsonLd } from '@/components/marketing/live-floor/JsonLd';
+import { ArrowRight, Check } from 'lucide-react';
+import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
+import {
+  FinalCta,
+  PageHero,
+  PricingTeaser,
+  SectionHead,
+} from '@/components/marketing/v2/Sections';
 import { Reveal } from '@/components/ui/reveal';
-import { APP_SIGNUP, MARKETING_SITE } from '@/lib/marketing/navigation';
+import { JsonLd } from '@/components/marketing/v2/JsonLd';
+import { APP_SIGNUP } from '@/components/marketing/v2/copy';
+import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export type SolutionPageData = {
   slug: string;
@@ -22,7 +27,8 @@ export function SolutionPage({ data }: { data: SolutionPageData }) {
   const url = `${MARKETING_SITE}/solutions/${data.slug}`;
 
   return (
-    <MarketingShell>
+    <div className="theme-marketing min-h-screen bg-white text-zinc-950 antialiased">
+      <Navbar />
       <JsonLd
         data={{
           '@context': 'https://schema.org',
@@ -33,60 +39,74 @@ export function SolutionPage({ data }: { data: SolutionPageData }) {
           isPartOf: { '@type': 'WebSite', name: 'GrowthDialer', url: MARKETING_SITE },
         }}
       />
-      <MarketingPageHero
-        eyebrow={data.eyebrow}
-        title={
-          data.titleAccent ? (
+      <main>
+        <PageHero
+          eyebrow={data.eyebrow}
+          title={
             <>
               {data.title}
               <br />
-              <span className="font-semibold">{data.titleAccent}</span>
+              {data.titleAccent}
             </>
-          ) : (
-            data.title
-          )
-        }
-        description={data.description}
-      >
-        <a href={APP_SIGNUP} className="mk-btn mk-btn-primary">
-          Start free <ArrowRight className="h-4 w-4" />
-        </a>
-        <Link href="/features" className="mk-btn mk-btn-secondary">
-          See features
-        </Link>
-      </MarketingPageHero>
+          }
+          lede={data.description}
+          cta={{ label: 'Start free trial', href: APP_SIGNUP }}
+        />
 
-      <section className="px-5 py-16 lg:px-8">
-        <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
-          {data.pains.map((p, i) => (
-            <Reveal key={p.title} delay={(i % 3) * 70}>
-              <article className="mk-card mk-card-hover h-full p-6">
-                <h2 className="font-display text-lg font-semibold text-zinc-950">{p.title}</h2>
-                <p className="mt-2 text-[14px] leading-relaxed text-zinc-600">{p.body}</p>
-              </article>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      <section className="px-5 pb-20 lg:px-8">
-        <Reveal className="mx-auto max-w-3xl">
-          <div className="mk-card p-8">
-            <h2 className="mk-h-section !text-[1.75rem]">What you get on day one</h2>
-            <ul className="mt-6 space-y-3">
-              {data.capabilities.map((c) => (
-                <li key={c} className="flex items-start gap-2.5 text-[15px] text-zinc-700">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                  {c}
-                </li>
+        {/* Pains */}
+        <div className="pm-section-tight">
+          <div className="pm-container">
+            <SectionHead
+              eyebrow="Why it hurts"
+              title="The problems this team actually has."
+            />
+            <div className="grid gap-4 md:grid-cols-3">
+              {data.pains.map((p, i) => (
+                <Reveal key={p.title} delay={(i % 3) * 80}>
+                  <article className="pm-card pm-card-hover h-full p-7">
+                    <h2 className="pm-h-card">{p.title}</h2>
+                    <p className="pm-body mt-3 !text-[14.5px]">{p.body}</p>
+                  </article>
+                </Reveal>
               ))}
-            </ul>
-            <p className="mt-8 text-[15px] leading-relaxed text-zinc-600">{data.outcome}</p>
+            </div>
           </div>
-        </Reveal>
-      </section>
+        </div>
 
-      <EarlyAccess />
-    </MarketingShell>
+        {/* Capabilities + outcome */}
+        <div className="pm-section-tight pm-divider bg-zinc-50/60">
+          <div className="pm-container-narrow">
+            <Reveal>
+              <div className="pm-card p-8 sm:p-10">
+                <p className="pm-eyebrow !mb-4">What you get on day one</p>
+                <ul className="space-y-3">
+                  {data.capabilities.map((c) => (
+                    <li key={c} className="pm-tick">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/12 text-emerald-700">
+                        <Check className="h-3 w-3" strokeWidth={3} />
+                      </span>
+                      {c}
+                    </li>
+                  ))}
+                </ul>
+                <p className="pm-body mt-8 border-t border-zinc-950/[0.07] pt-6 !text-[15px]">{data.outcome}</p>
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
+                    Start free trial <ArrowRight className="h-4 w-4" />
+                  </a>
+                  <Link href="/pricing" className="pm-btn pm-btn-secondary">
+                    See pricing
+                  </Link>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+
+        <PricingTeaser />
+        <FinalCta />
+      </main>
+      <Footer />
+    </div>
   );
 }

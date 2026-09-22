@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, Check } from 'lucide-react';
-import { EASE_OUT } from '@/components/marketing/live-floor/motion';
+const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
 const inputClass =
   'w-full rounded-xl border border-zinc-950/[0.10] bg-white px-4 py-3 text-sm text-zinc-950 placeholder:text-zinc-400 outline-none transition focus:border-[#7C3AED]/50 focus:ring-2 focus:ring-[#7C3AED]/20';
@@ -60,7 +60,7 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="mk-card relative overflow-hidden p-6 sm:p-8">
+    <form onSubmit={onSubmit} className="pm-card relative overflow-hidden p-6 sm:p-8">
       <div className="space-y-4">
         <div>
           <label htmlFor="name" className="mb-1.5 block text-xs font-medium text-zinc-600">Name</label>
@@ -87,7 +87,7 @@ export function ContactForm() {
         <button
           type="submit"
           disabled={loading}
-          className="mk-btn mk-btn-primary w-full justify-center disabled:opacity-60"
+          className="pm-btn pm-btn-primary w-full justify-center disabled:opacity-60"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send message'}
         </button>

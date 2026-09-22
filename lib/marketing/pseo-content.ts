@@ -5,7 +5,7 @@ import { MARKETING_SITE } from './navigation';
 
 export function buildVsPageMetadata(competitor: PseoCompetitor): Metadata {
   const title = `${competitor.name} Alternative — GrowthDialer AI Sales Dialer`;
-  const description = `Looking for a ${competitor.name} alternative? Meet GrowthDialer — the AI-native power dialer with conversation intelligence, call recording, and workspace pricing from ${GROWTHDIALER_PRICE}/mo. Compare features and pricing side-by-side.`;
+  const description = `Looking for a ${competitor.name} alternative? Meet GrowthDialer — the AI-native power dialer with conversation intelligence, call recording, and per-seat pricing from ${GROWTHDIALER_PRICE}/seat/mo. 7-day free trial, no credit card.`;
   const url = `${MARKETING_SITE}/vs/${competitor.slug}`;
 
   return {
@@ -14,7 +14,7 @@ export function buildVsPageMetadata(competitor: PseoCompetitor): Metadata {
     alternates: { canonical: url },
     openGraph: {
       title: `GrowthDialer vs ${competitor.name}`,
-      description: `Compare GrowthDialer and ${competitor.name} — AI summaries, power dialing, and transparent workspace pricing.`,
+      description: `Compare GrowthDialer and ${competitor.name} — AI summaries, power dialing, and transparent per-seat pricing.`,
       url,
       type: 'website',
     },
@@ -32,7 +32,7 @@ export function buildVsHeroTitle(competitor: PseoCompetitor): string {
 }
 
 export function buildVsHeroSubtitle(competitor: PseoCompetitor): string {
-  return `${competitor.positioning} GrowthDialer adds AI transcription, summaries, sentiment, and a live coaching floor — with workspace pricing from ${GROWTHDIALER_PRICE}/mo and a free Starter tier.`;
+  return `${competitor.positioning} GrowthDialer adds AI transcription, summaries, sentiment, and a live coaching floor — with per-seat pricing from ${GROWTHDIALER_PRICE}/seat/mo and a 7-day free trial, no credit card.`;
 }
 
 export function buildValueProps(competitor: PseoCompetitor) {
@@ -49,12 +49,12 @@ export function buildValueProps(competitor: PseoCompetitor) {
       description: `${competitor.name} is known for ${competitor.knownFor}. GrowthDialer ships AI summaries, sentiment, and a searchable recording library on every plan — no separate conversation-intelligence SKU.`,
     },
     {
-      title: 'Transparent workspace pricing',
-      description: `${priceNote} GrowthDialer Pro is ${GROWTHDIALER_PRICE}/workspace/mo with parallel dial, coaching, and HubSpot sync included.`,
+      title: 'Transparent per-seat pricing',
+      description: `${priceNote} GrowthDialer starts at ${GROWTHDIALER_PRICE}/seat/mo — AI briefs, recording, and transcription included. Sequences are coming soon; native CRM integrations are waitlist-only, labeled on the site.`,
     },
     {
-      title: 'Start free before you commit',
-      description: `Validate call quality and AI briefs on GrowthDialer Starter (free) before rolling out seats — no annual contract required.`,
+      title: 'Start with a trial, not a contract',
+      description: `Run a 7-day free trial — no credit card — and judge call quality and AI briefs on your own calls. Monthly billing, no annual lock-in.`,
     },
     {
       title: 'Built for managers who review async',
@@ -71,11 +71,11 @@ export function buildVsFaqs(competitor: PseoCompetitor) {
     },
     {
       question: `How does GrowthDialer pricing compare to ${competitor.name}?`,
-      answer: `GrowthDialer Pro starts at ${GROWTHDIALER_PRICE}/workspace/mo with a free Starter tier. ${competitor.name} public pricing starts around ${competitor.priceFrom} (${competitor.priceModel.replace('-', ' ')}). Compare total cost at your team size before switching.`,
+      answer: `GrowthDialer starts at ${GROWTHDIALER_PRICE}/seat/mo with a 7-day free trial and no credit card. ${competitor.name} public pricing starts around ${competitor.priceFrom} (${competitor.priceModel.replace('-', ' ')}). Compare total cost at your team size before switching.`,
     },
     {
       question: `Can I migrate from ${competitor.name} to GrowthDialer?`,
-      answer: `Import leads via CSV, connect HubSpot for call logging, and configure webhooks for your stack. Most teams run GrowthDialer alongside their existing CRM during a phased rollout.`,
+      answer: `Import leads via CSV, export call history the same way, and run a phased rollout alongside your current stack. Native CRM connectors are waitlist-only today.`,
     },
   ];
 }

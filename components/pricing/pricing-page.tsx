@@ -4,11 +4,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, ChevronDown, Minus, Sparkles, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Check, Minus, ShieldCheck, Sparkles } from 'lucide-react';
 import { useSupabaseSession } from '@/lib/supabase/hooks';
 import { PLAN_ORDER, PLAN_LABELS, type FeatureKey, type PlanKey } from '@/lib/plan/plan-gates';
 import { usePlan } from '@/lib/plan/use-plan';
 import { cn } from '@/lib/utils';
+import { APP_SIGNUP } from '@/components/marketing/v2/copy';
+import { Faq, RiskBullets, SectionHead } from '@/components/marketing/v2/Sections';
+import { Reveal } from '@/components/ui/reveal';
 
 type PaidPlan = 'starter' | 'growth' | 'pro';
 type Cycle = 'monthly' | 'annual';
@@ -26,19 +29,19 @@ const PLAN_COPY = {
     title: 'Starter',
     eyebrow: 'Solo reps',
     description: 'Everything needed to dial, record, transcribe, and sync calls.',
-    features: ['AI dialer', 'Unlimited calls', 'Recordings and transcripts', '1 local number', 'CRM sync'],
+    features: ['AI dialer', 'Unlimited calls', 'Recordings and transcripts', '1 local number', 'CRM sync · waitlist'],
   },
   growth: {
     title: 'Growth',
     eyebrow: 'Growing sales teams',
     description: 'Adds call scoring, summaries, sequences, and coaching dashboards.',
-    features: ['AI call scoring', 'Post-call summaries', 'Coaching dashboard', 'Sequences', 'Leaderboard'],
+    features: ['AI call scoring', 'Post-call summaries', 'Coaching dashboard', 'Sequences · coming soon', 'Leaderboard'],
   },
   pro: {
     title: 'Pro',
     eyebrow: 'High-volume teams',
     description: 'Live floor visibility, advanced coaching controls, API access, and priority support.',
-    features: ['Live monitor', 'Whisper, barge, takeover', 'Weekly coaching reports', 'API and webhooks', 'Priority support'],
+    features: ['Live monitor', 'Whisper, barge, takeover · coming soon', 'Weekly coaching reports', 'API and webhooks', 'Priority support'],
   },
 } as const;
 
@@ -99,19 +102,28 @@ const COMPETITORS = [
 ];
 
 const FAQS = [
-  ['Is there a free trial?', 'Yes. Paid plans include a 7-day free trial and do not require a credit card to start.'],
-  ['Can I pay monthly?', 'Yes. Monthly plans are available, and annual billing saves 20%.'],
-  ['Can I change seats later?', 'Yes. Choose the seat count at checkout and adjust as your team changes.'],
-  ['What happens if I downgrade?', 'Your data stays available, but premium features lock based on your current plan.'],
-  ['Do you require annual contracts?', 'No. You can choose monthly billing without an annual lock-in.'],
-  ['Which plan includes coaching?', 'Growth includes coaching dashboards and leaderboards. Pro adds live monitoring and manager controls.'],
+  { q: 'Is there a free trial?', a: 'Yes. Paid plans include a 7-day free trial and do not require a credit card to start.' },
+  { q: 'Can I pay monthly?', a: 'Yes. Monthly plans are available, and annual billing saves 20%.' },
+  { q: 'Can I change seats later?', a: 'Yes. Choose the seat count at checkout and adjust as your team changes.' },
+  { q: 'What happens if I downgrade?', a: 'Your data stays available, but premium features lock based on your current plan.' },
+  { q: 'Do you require annual contracts?', a: 'No. You can choose monthly billing without an annual lock-in.' },
+  { q: 'Which plan includes coaching?', a: 'Growth includes coaching dashboards and leaderboards. Pro adds live monitoring and manager controls. Whisper and barge coaching are coming soon.' },
+  { q: 'Are CRM integrations live?', a: 'Not yet — native CRM integrations are in development and currently waitlist-only. Recordings, transcripts, and disposition history are stored in your workspace and exportable today.' },
 ] as const;
 
 function planIndex(plan: PlanKey) {
   return PLAN_ORDER.indexOf(plan);
 }
 
+/**
+ * Honesty overrides: sequences are a placeholder (coming soon),
+ * whisper/barge coaching audio is roadmap (coming soon), and all CRM
+ * integrations are waitlist-only.
+ */
 function included(plan: PaidPlan, row: { key?: FeatureKey; values?: Record<PaidPlan, string | boolean> }) {
+  if (row.key === 'crm_sync') return 'Waitlist';
+  if (row.key === 'sequences') return plan === 'starter' ? false : 'Coming soon';
+  if (row.key === 'whisper_barge_takeover') return plan === 'pro' ? 'Coming soon' : false;
   if (row.values) return row.values[plan];
   if (!row.key) return false;
   const value = {
@@ -185,11 +197,28 @@ function included(plan: PaidPlan, row: { key?: FeatureKey; values?: Record<PaidP
   return typeof value === 'number' ? (value === -1 ? 'Unlimited' : String(value)) : value;
 }
 
+function StatusChip({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
+      {label}
+    </span>
+  );
+}
+
 function FeatureValue({ value }: { value: string | boolean }) {
-  if (typeof value === 'string') return <span className="text-sm text-zinc-300">{value}</span>;
+  if (typeof value === 'string') {
+    if (value === 'Coming soon' || value === 'Waitlist') {
+      return (
+        <div className="flex justify-center">
+          <StatusChip label={value} />
+        </div>
+      );
+    }
+    return <span className="text-sm font-medium text-zinc-700">{value}</span>;
+  }
   return value
-    ? <Check className="mx-auto h-4 w-4 text-[#06B6D4]" />
-    : <Minus className="mx-auto h-4 w-4 text-zinc-700" />;
+    ? <Check className="mx-auto h-4 w-4 text-emerald-600" strokeWidth={3} />
+    : <Minus className="mx-auto h-4 w-4 text-zinc-300" />;
 }
 
 function PlanCard({
@@ -198,14 +227,12 @@ function PlanCard({
   currentPlan,
   seats,
   setSeats,
-  authenticated,
 }: {
   plan: PaidPlan;
   cycle: Cycle;
   currentPlan: PlanKey;
   seats: number;
   setSeats: (value: number) => void;
-  authenticated: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
@@ -230,27 +257,27 @@ function PlanCard({
     <motion.div
       ref={ref}
       id={`plan-${plan}`}
-      animate={highlighted ? { boxShadow: ['0 0 0 rgba(139,92,246,0)', '0 0 44px rgba(139,92,246,0.35)', '0 0 0 rgba(139,92,246,0)'] } : undefined}
+      animate={highlighted ? { boxShadow: ['0 0 0 rgba(109,40,217,0)', '0 0 44px rgba(109,40,217,0.28)', '0 0 0 rgba(109,40,217,0)'] } : undefined}
       transition={{ duration: 1.6, repeat: highlighted ? 2 : 0 }}
       className={cn(
-        'relative flex flex-col rounded-[28px] border bg-white/[0.035] p-6 backdrop-blur-2xl',
-        plan === 'growth' ? 'border-[#8B5CF6]/45 shadow-[0_24px_80px_rgba(139,92,246,0.16)]' : 'border-white/[0.09]',
+        'pm-card relative flex h-full flex-col p-8',
+        plan === 'growth' && 'border-zinc-950/[0.16] shadow-[0_24px_56px_-20px_rgba(9,9,11,0.22)] ring-1 ring-zinc-950/[0.06]',
       )}
     >
       {plan === 'growth' && (
-        <div className="absolute -top-3 left-6 rounded-full border border-[#8B5CF6]/40 bg-[#8B5CF6] px-3 py-1 text-xs font-semibold text-white">
-          Featured
+        <div className="absolute -top-3 left-8 rounded-full bg-zinc-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
+          Most popular
         </div>
       )}
       {current && (
-        <div className="absolute right-5 top-5 rounded-full border border-[#06B6D4]/25 bg-[#06B6D4]/10 px-2.5 py-1 text-[11px] font-semibold text-[#06B6D4]">
+        <div className="absolute right-6 top-6 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-800">
           Current plan
         </div>
       )}
 
-      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#06B6D4]">{PLAN_COPY[plan].eyebrow}</p>
-      <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white">{PLAN_COPY[plan].title}</h2>
-      <p className="mt-2 min-h-12 text-sm leading-relaxed text-zinc-400">{PLAN_COPY[plan].description}</p>
+      <p className="pm-eyebrow !mb-3">{PLAN_COPY[plan].eyebrow}</p>
+      <h2 className="pm-h-card !text-2xl">{PLAN_COPY[plan].title}</h2>
+      <p className="mt-2 min-h-12 text-sm leading-relaxed text-zinc-500">{PLAN_COPY[plan].description}</p>
 
       <div className="mt-6">
         <div className="flex items-end gap-2">
@@ -260,7 +287,7 @@ function PlanCard({
               initial={{ y: 8, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -8, opacity: 0 }}
-              className="font-display text-5xl font-semibold tracking-tight text-white tabular-nums"
+              className="font-display text-5xl font-semibold tracking-tight text-zinc-950 tabular-nums"
             >
               ${unit}
             </motion.span>
@@ -272,24 +299,26 @@ function PlanCard({
         )}
       </div>
 
-      <div className="mt-6 rounded-2xl border border-white/[0.08] bg-black/25 p-3">
+      <div className="mt-6 rounded-2xl border border-zinc-950/[0.08] bg-zinc-50 p-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-zinc-300">Seats</span>
+          <span className="text-sm font-medium text-zinc-700">Seats</span>
           <div className="flex items-center gap-3">
-            <button type="button" onClick={() => setSeats(Math.max(1, seats - 1))} className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/70">-</button>
-            <span className="w-8 text-center text-sm font-semibold text-white tabular-nums">{seats}</span>
-            <button type="button" onClick={() => setSeats(seats + 1)} className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/70">+</button>
+            <button type="button" aria-label="Fewer seats" onClick={() => setSeats(Math.max(1, seats - 1))} className="flex h-7 w-7 items-center justify-center rounded-full border border-zinc-950/[0.10] bg-white text-zinc-600 transition hover:border-zinc-950/25">-</button>
+            <span className="w-8 text-center text-sm font-semibold text-zinc-950 tabular-nums">{seats}</span>
+            <button type="button" aria-label="More seats" onClick={() => setSeats(seats + 1)} className="flex h-7 w-7 items-center justify-center rounded-full border border-zinc-950/[0.10] bg-white text-zinc-600 transition hover:border-zinc-950/25">+</button>
           </div>
         </div>
         <p className="mt-2 text-xs text-zinc-500">
-          Total: <span className="font-semibold text-white tabular-nums">${total.toLocaleString()}</span> / month
+          Total: <span className="font-semibold text-zinc-950 tabular-nums">${total.toLocaleString()}</span> / month
         </p>
       </div>
 
       <ul className="mt-6 space-y-2.5">
         {PLAN_COPY[plan].features.map((feature) => (
-          <li key={feature} className="flex items-center gap-2 text-sm text-zinc-300">
-            <Check className="h-4 w-4 text-[#06B6D4]" />
+          <li key={feature} className="pm-tick">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/12 text-emerald-700">
+              <Check className="h-3 w-3" strokeWidth={3} />
+            </span>
             {feature}
           </li>
         ))}
@@ -298,14 +327,9 @@ function PlanCard({
       <Link
         href={current || lower ? '/dashboard' : signupUrl}
         aria-disabled={current}
-        className={cn(
-          'mt-auto inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold transition',
-          current || lower
-            ? 'border border-white/[0.08] bg-white/[0.04] text-zinc-400'
-            : 'bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white shadow-[0_18px_44px_rgba(139,92,246,0.28)] hover:brightness-110',
-        )}
+        className={cn('pm-btn mt-8 w-full justify-center', current || lower ? 'pm-btn-secondary pointer-events-none opacity-60' : 'pm-btn-primary')}
       >
-        {cta}
+        {cta} {!current && !lower && <ArrowRight className="h-4 w-4" />}
       </Link>
     </motion.div>
   );
@@ -316,8 +340,8 @@ export function PricingPage() {
   const { plan: currentPlan } = usePlan();
   const [cycle, setCycle] = useState<Cycle>('monthly');
   const [seats, setSeats] = useState<Record<PaidPlan, number>>({ starter: 1, growth: 1, pro: 1 });
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const authenticated = Boolean(session?.user);
+
+  void session;
 
   const seatSetter = useMemo(() => ({
     starter: (value: number) => setSeats((prev) => ({ ...prev, starter: value })),
@@ -326,107 +350,160 @@ export function PricingPage() {
   }), []);
 
   return (
-    <div className="min-h-screen bg-[#08080A] text-white">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(139,92,246,0.20),transparent_32%),radial-gradient(circle_at_80%_10%,rgba(6,182,212,0.13),transparent_30%)]" />
-      <main className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <section className="mx-auto max-w-3xl text-center">
-          <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.10] bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-zinc-300 backdrop-blur-xl">
-            <Sparkles className="h-3.5 w-3.5 text-[#8B5CF6]" />
-            7-day free trial. No credit card.
-          </div>
-          <h1 className="font-display text-4xl font-semibold tracking-tight text-white sm:text-6xl">
-            Pricing that scales with your sales floor
-          </h1>
-          <p className="mt-5 text-base leading-relaxed text-zinc-400 sm:text-lg">
-            Start with core dialing, then add AI scoring, coaching, live floor controls, and platform access as your team grows.
-          </p>
+    <main>
+      {/* Hero */}
+      <section className="relative overflow-hidden px-5 pb-14 pt-36 sm:pb-16 sm:pt-44 lg:px-8">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="pm-dot-grid pm-fade-hero absolute inset-0 opacity-70" />
+          <div className="pm-glow-top absolute inset-x-0 top-0 h-[420px]" />
+        </div>
+        <div className="pm-container-narrow relative text-center">
+          <Reveal>
+            <p className="pm-eyebrow pm-eyebrow-centered">
+              <Sparkles className="mr-2 inline h-3.5 w-3.5 text-[#6d28d9]" />
+              Pricing
+            </p>
+            <h1 className="pm-h-display">Pricing that scales with your sales floor.</h1>
+            <p className="pm-lead mx-auto mt-6 max-w-2xl">
+              Start with core dialing, then add AI scoring, coaching, live floor controls, and platform access as your team grows. 7-day free trial — no credit card.
+            </p>
+          </Reveal>
+          <Reveal delay={120}>
+            <div className="mt-8 inline-flex rounded-full border border-zinc-950/[0.10] bg-white p-1 shadow-sm">
+              {(['monthly', 'annual'] as const).map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setCycle(item)}
+                  className={cn('relative rounded-full px-5 py-2 text-sm font-semibold transition', cycle === item ? 'text-white' : 'text-zinc-500 hover:text-zinc-800')}
+                >
+                  {cycle === item && <motion.span layoutId="billing-pill" className="absolute inset-0 rounded-full bg-zinc-950" />}
+                  <span className="relative z-10 capitalize">{item}</span>
+                  {item === 'annual' && (
+                    <span className={cn('relative z-10 ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold', cycle === item ? 'bg-emerald-400/20 text-emerald-200' : 'bg-emerald-100 text-emerald-800')}>
+                      Save 20%
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+            <RiskBullets className="mt-6 justify-center" />
+          </Reveal>
+        </div>
+      </section>
 
-          <div className="mt-8 inline-flex rounded-full border border-white/[0.10] bg-white/[0.04] p-1 backdrop-blur-xl">
-            {(['monthly', 'annual'] as const).map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setCycle(item)}
-                className={cn('relative rounded-full px-5 py-2 text-sm font-semibold transition', cycle === item ? 'text-white' : 'text-zinc-500')}
-              >
-                {cycle === item && <motion.span layoutId="billing-pill" className="absolute inset-0 rounded-full bg-[#8B5CF6]" />}
-                <span className="relative z-10 capitalize">{item}</span>
-                {item === 'annual' && <span className="relative z-10 ml-2 rounded-full bg-[#06B6D4]/20 px-2 py-0.5 text-[10px] text-[#67E8F9]">Save 20%</span>}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-12 grid gap-5 lg:grid-cols-3">
-          {PAID_PLANS.map((plan) => (
-            <PlanCard
-              key={plan}
-              plan={plan}
-              cycle={cycle}
-              currentPlan={currentPlan}
-              seats={seats[plan]}
-              setSeats={seatSetter[plan]}
-              authenticated={authenticated}
-            />
+      {/* Plan cards */}
+      <section className="pm-container pb-4">
+        <div className="grid gap-5 lg:grid-cols-3">
+          {PAID_PLANS.map((plan, i) => (
+            <Reveal key={plan} delay={i * 90} className="h-full">
+              <PlanCard
+                plan={plan}
+                cycle={cycle}
+                currentPlan={currentPlan}
+                seats={seats[plan]}
+                setSeats={seatSetter[plan]}
+              />
+            </Reveal>
           ))}
-        </section>
+        </div>
+        <p className="pm-caption mt-6 text-center">
+          All prices per seat, USD. Annual plans billed once per year. Every plan includes unlimited calling workflows and AI summaries on recorded calls.
+        </p>
+      </section>
 
-        <section className="mt-16 overflow-hidden rounded-[28px] border border-white/[0.09] bg-white/[0.035] backdrop-blur-xl">
-          <div className="sticky top-0 z-10 grid grid-cols-[1.4fr_repeat(3,1fr)] border-b border-white/[0.08] bg-[#101014]/95 px-4 py-4 text-sm font-semibold text-white backdrop-blur-xl">
-            <span>Feature comparison</span>
-            {PAID_PLANS.map((plan) => <span key={plan} className="text-center">{PLAN_LABELS[plan]}</span>)}
-          </div>
-          {FEATURE_ROWS.map((group) => (
-            <div key={group.section}>
-              <div className="bg-white/[0.035] px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] text-[#06B6D4]">
-                {group.section}
+      {/* Feature comparison */}
+      <section className="pm-section-tight">
+        <div className="pm-container">
+          <SectionHead eyebrow="Compare plans" title="Everything, line by line." />
+          <Reveal>
+            <div className="pm-card overflow-hidden !p-0">
+              <div className="grid grid-cols-[1.3fr_repeat(3,1fr)] border-b border-zinc-950/[0.08] bg-zinc-50/70 px-5 py-4 text-sm font-semibold text-zinc-950">
+                <span>Feature</span>
+                {PAID_PLANS.map((plan) => <span key={plan} className="text-center">{PLAN_LABELS[plan]}</span>)}
               </div>
-              {group.rows.map((row) => (
-                <div key={row.label} className="grid grid-cols-[1.4fr_repeat(3,1fr)] border-t border-white/[0.06] px-4 py-3">
-                  <span className="text-sm text-zinc-300">{row.label}</span>
-                  {PAID_PLANS.map((plan) => <div key={plan} className="text-center"><FeatureValue value={included(plan, row)} /></div>)}
+              {FEATURE_ROWS.map((group) => (
+                <div key={group.section}>
+                  <div className="bg-zinc-50/40 px-5 py-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6d28d9]">
+                    {group.section}
+                  </div>
+                  {group.rows.map((row) => (
+                    <div key={row.label} className="grid grid-cols-[1.3fr_repeat(3,1fr)] items-center border-t border-zinc-950/[0.06] px-5 py-3.5">
+                      <span className="text-sm text-zinc-700">{row.label}</span>
+                      {PAID_PLANS.map((plan) => (
+                        <div key={plan} className="text-center">
+                          <FeatureValue value={included(plan, row)} />
+                        </div>
+                      ))}
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
-          ))}
-        </section>
+          </Reveal>
+        </div>
+      </section>
 
-        <section className="mt-12 rounded-[28px] border border-white/[0.09] bg-white/[0.035] p-5 backdrop-blur-xl">
-          <div className="mb-4 flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-[#06B6D4]" />
-            <h2 className="text-sm font-semibold text-white">How GrowthDialer compares</h2>
-          </div>
-          <div className="grid gap-2 md:grid-cols-5">
-            {COMPETITORS.map((item) => (
-              <div key={item.name} className={cn('rounded-2xl border p-4', item.highlight ? 'border-[#8B5CF6]/45 bg-[#8B5CF6]/12' : 'border-white/[0.08] bg-black/20')}>
-                <p className="font-semibold text-white">{item.name}</p>
-                <p className="mt-1 text-xs leading-relaxed text-zinc-500">{item.note}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mx-auto mt-12 max-w-3xl">
-          <h2 className="text-center text-2xl font-semibold tracking-tight text-white">Questions before you start?</h2>
-          <div className="mt-6 space-y-3">
-            {FAQS.map(([question, answer], index) => (
-              <div key={question} className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.035]">
-                <button type="button" onClick={() => setOpenFaq(openFaq === index ? null : index)} className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold text-white">
-                  {question}
-                  <ChevronDown className={cn('h-4 w-4 text-zinc-500 transition', openFaq === index && 'rotate-180')} />
-                </button>
-                <AnimatePresence initial={false}>
-                  {openFaq === index && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
-                      <p className="px-5 pb-4 text-sm leading-relaxed text-zinc-400">{answer}</p>
-                    </motion.div>
+      {/* Competitor comparison */}
+      <section className="pm-section-tight pm-divider bg-zinc-50/60">
+        <div className="pm-container">
+          <Reveal>
+            <div className="mb-8 flex items-center justify-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-[#6d28d9]" />
+              <h2 className="pm-h-group !text-[1.6rem]">How GrowthDialer compares</h2>
+            </div>
+          </Reveal>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {COMPETITORS.map((item, i) => (
+              <Reveal key={item.name} delay={i * 60}>
+                <div className={cn('pm-card h-full p-5', item.highlight && 'border-zinc-950/[0.16] shadow-[0_18px_44px_-18px_rgba(9,9,11,0.25)]')}>
+                  {item.highlight && (
+                    <span className="mb-3 inline-block rounded-full bg-zinc-950 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white">
+                      This is us
+                    </span>
                   )}
-                </AnimatePresence>
-              </div>
+                  <p className="font-semibold text-zinc-950">{item.name}</p>
+                  <p className="pm-small mt-1.5">{item.note}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
-        </section>
-      </main>
-    </div>
+          <p className="pm-caption mt-6 text-center">
+            Neutral notes on public positioning — verify pricing and features with each vendor before buying.
+          </p>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <div className="pm-divider">
+        <Faq items={FAQS} eyebrow="Pricing FAQ" title="Questions before you start?" />
+      </div>
+
+      {/* Final CTA */}
+      <section className="pm-dark">
+        <div aria-hidden className="pm-dark-grid absolute inset-0" />
+        <div aria-hidden className="pm-dark-glow absolute inset-x-0 top-0 h-[420px]" />
+        <div className="pm-container relative py-24 text-center sm:py-32">
+          <Reveal>
+            <p className="pm-eyebrow pm-eyebrow-centered !text-violet-300">Get started</p>
+            <h2 className="pm-h-section-dark mx-auto max-w-3xl">Try the dialer on your own calls.</h2>
+            <p className="pm-lead-dark mx-auto mt-5 max-w-xl">
+              Seven days, no credit card. If it doesn&apos;t earn its seat, cancel in one click.
+            </p>
+          </Reveal>
+          <Reveal delay={140}>
+            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <a href={APP_SIGNUP} className="pm-btn pm-btn-white">
+                Start free trial <ArrowRight className="h-4 w-4" />
+              </a>
+              <Link href="/demo" className="pm-btn pm-btn-ghostlight">
+                See the demo
+              </Link>
+            </div>
+            <RiskBullets dark className="mt-8 justify-center" />
+          </Reveal>
+        </div>
+      </section>
+    </main>
   );
 }

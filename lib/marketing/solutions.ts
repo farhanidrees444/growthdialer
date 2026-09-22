@@ -7,11 +7,11 @@ export const SOLUTION_PAGES: Record<string, SolutionPageData> = {
     title: 'More connects.',
     titleAccent: 'Less admin after every dial.',
     description:
-      'GrowthDialer is built for outbound reps who live in the queue: power dial, auto-record, disposition in one click, and HubSpot logging when the call ends.',
+      'GrowthDialer is built for outbound reps who live in the queue: power dial, auto-record, disposition in one click, and a full call history when the conversation ends.',
     pains: [
       {
         title: 'Queue friction',
-        body: 'Reps lose minutes between calls updating CRM fields. Dispositions push to HubSpot automatically with duration and recording link.',
+        body: 'Reps lose minutes between calls updating fields. One-click dispositions keep the rhythm unbroken — every outcome logged automatically.',
       },
       {
         title: 'No context at pickup',
@@ -26,8 +26,8 @@ export const SOLUTION_PAGES: Record<string, SolutionPageData> = {
       'Power dialer with countdown and session stats',
       'Eight dispositions with callback and meeting scheduling',
       'Call recording + AI transcription + conversation summaries',
-      'HubSpot call logging (live integration)',
-      'Local presence numbers and spam-score checks',
+      'Local presence numbers and spam-risk checks',
+      'CRM integrations on the waitlist — CSV export today',
     ],
     outcome:
       'SDR managers get connect-rate visibility in Analytics while reps spend their shift talking — not typing.',
@@ -67,7 +67,7 @@ export const SOLUTION_PAGES: Record<string, SolutionPageData> = {
     slug: 'revenue-ops',
     eyebrow: 'Revenue Ops',
     title: 'Call data that',
-    titleAccent: 'matches your CRM schema.',
+    titleAccent: 'stays clean by default.',
     description:
       'RevOps teams need clean call objects, consistent dispositions, and exportable metrics. GrowthDialer writes structured records — not free-text chaos.',
     pains: [
@@ -81,18 +81,18 @@ export const SOLUTION_PAGES: Record<string, SolutionPageData> = {
       },
       {
         title: 'Integration backlog',
-        body: 'HubSpot is live today. Salesforce and webhook exports are on the roadmap with a workspace waitlist.',
+        body: 'Native CRM integrations are waitlist-only today. Until yours ships, CSV export keeps every record portable.',
       },
     ],
     capabilities: [
-      'Disposition enum shared across API and UI',
-      'Call Logs and Recordings with workspace RLS',
+      'Disposition enum shared across the workspace',
+      'Call logs and recordings with workspace isolation',
       'Dashboard KPIs and date-range analytics',
-      'HubSpot sync for calls and outcomes',
       'CSV lead import with field mapping',
+      'CRM connectors in development — join the waitlist',
     ],
     outcome:
-      'RevOps gets one dialer that respects data hygiene — and a changelog when new CRM connectors ship.',
+      'RevOps gets one dialer that respects data hygiene — and a straight answer on what’s live versus roadmap.',
   },
   agencies: {
     slug: 'agencies',
@@ -108,7 +108,7 @@ export const SOLUTION_PAGES: Record<string, SolutionPageData> = {
       },
       {
         title: 'Per-seat pricing stacks up',
-        body: 'Workspace plans (Starter free, Pro $49, Team $99) scale by team size — not per-client platform fees.',
+        body: 'Per-seat plans (Starter $49, Growth $79, Pro $119) scale by team size — not per-client platform fees.',
       },
       {
         title: 'Proof of performance',
@@ -131,11 +131,11 @@ export const SOLUTION_PAGES: Record<string, SolutionPageData> = {
     title: 'Outbound at scale',
     titleAccent: 'with security you can audit.',
     description:
-      'Enterprise sales orgs need SSO, custom contracts, dedicated support, and honest answers about what ships today versus roadmap.',
+      'Enterprise sales orgs need custom contracts, dedicated support, and honest answers about what ships today versus roadmap.',
     pains: [
       {
         title: 'Procurement needs facts',
-        body: 'We document live features (dialer, recordings, HubSpot) separately from waitlist integrations and coaching bridge work.',
+        body: 'We document live features (dialer, recordings, AI briefs) separately from waitlist integrations and roadmap items.',
       },
       {
         title: 'Global teams',
@@ -143,15 +143,15 @@ export const SOLUTION_PAGES: Record<string, SolutionPageData> = {
       },
       {
         title: 'Compliance',
-        body: 'Call recording with consent workflows, RLS-isolated workspaces, and webhook-ready event pipeline for your SIEM.',
+        body: 'Call recording with consent workflows, isolated workspaces, DNC flagging, and a full audit trail on every lead.',
       },
     ],
     capabilities: [
-      'Team and Enterprise workspace tiers',
+      'Growth and Pro tiers with volume pricing on annual plans',
       'Browser-based voice with purchased local numbers',
-      'Monitored production infrastructure with uptime reporting',
+      'Number health and spam-risk monitoring',
       'Custom onboarding and security questionnaire support',
-      'API and webhook access (contact sales for SLAs)',
+      'API and webhooks on the roadmap — talk to us about SLAs',
     ],
     outcome:
       'Talk to us about seat volume, CRM requirements, and deployment timeline — we will not oversell what is not live.',

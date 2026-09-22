@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
-import { MarketingShell } from "@/components/marketing/MarketingShell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Clock, User, Calendar, Share2, X, Link2, ArrowRight } from "lucide-react";
+import { ArrowLeft, Share2, Link2 } from "lucide-react";
 import { GROWTHDIALER_PRICING } from "@/lib/marketing/honest-copy";
+import { BlogHonestyBanner } from "@/components/marketing/BlogHonestyBanner";
+import {
+  ArticleCta,
+  ArticleHeader,
+  ArticleJsonLd,
+  ArticleShell,
+  AuthorCard,
+  RelatedPosts,
+  Toc,
+} from "../article-shell";
 
 interface BlogPost {
   title: string;
@@ -159,9 +164,9 @@ Consider your team size, budget, and goals:
 
 ## The Future of Sales Dialing
 
-AI-powered autonomous agents like GrowthDialer represent the future. Traditional dialers that just make calls faster are becoming obsolete. The winners will be platforms that can qualify leads, handle objections, and close deals autonomously.
+AI-powered conversation intelligence is changing how outbound teams work. The winners will be platforms that remove busywork around the call — transcripts, summaries, logging — so humans spend their hours in real conversations.
 
-GrowthDialer leads this trend with its sophisticated AI that actually understands and responds to prospect conversations naturally.`,
+GrowthDialer follows this approach: humans talk, AI handles the paperwork. Autonomous voice agents are on our roadmap, labeled as such — we evaluate competitors by the same standard.`,
     date: "April 9, 2026",
     author: "GrowthDialer Team",
     category: "Reviews",
@@ -192,7 +197,19 @@ GrowthDialer leads this trend with its sophisticated AI that actually understand
   },
   "parallel-dialing-guide": {
     title: "Parallel Dialing Without Burning Your Team Out",
-    body: `Start with clear dispositions, cap parallel lines while reps ramp, and review connect rates daily. GrowthDialer is built to keep reps in flow — tune line count and voicemail drop rules to match your market.`,
+    body: `Start with clear dispositions, cap parallel lines while reps ramp, and review connect rates daily. GrowthDialer is built to keep reps in flow — tune line count and voicemail drop rules to match your market.
+
+## Set the pace before you scale
+
+The biggest mistake with parallel dialing is starting at maximum lines on day one. Reps need time to adjust to the rhythm: answer, connect, disposition, repeat.
+
+## Dispositions keep the machine honest
+
+Clear dispositions — connect, no answer, voicemail, bad number, DNC — turn a blur of calls into data you can coach on. Without them, parallel dialing is just noise at higher volume.
+
+## Watch the human cost
+
+Parallel dialing multiplies attempts, but it also multiplies rejection. Build in breaks, rotate lists, and watch connect quality — not just connect count.`,
     date: "April 2, 2026",
     author: "Sarah Chen",
     category: "Strategy",
@@ -201,7 +218,19 @@ GrowthDialer leads this trend with its sophisticated AI that actually understand
   },
   "ai-coaching": {
     title: "What Good AI Call Coaching Looks Like on Live Calls",
-    body: `The best coaching is timely and specific: objection labels, talk ratios, and next-step suggestions. Use AI as a copilot, not a script — your reps stay authentic while staying on message.`,
+    body: `The best coaching is timely and specific: objection labels, talk ratios, and next-step suggestions. Use AI as a copilot, not a script — your reps stay authentic while staying on message.
+
+## Listen mode first
+
+Before real-time suggestions, start with listen mode: managers monitor live calls and leave structured feedback after hang-up. It's the lowest-risk way to add coaching to the floor.
+
+## Specific beats generic
+
+"Talk less" is useless feedback. "You spoke 74% of the call — let the prospect finish their objection before responding" is coaching. AI summaries give managers the specifics to coach from.
+
+## Keep the rep in control
+
+AI suggestions work best as ambient context, not commands. The rep should feel like they have a cheat sheet, not an autopilot.`,
     date: "March 18, 2026",
     author: "Mike Rodriguez",
     category: "AI",
@@ -242,241 +271,144 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
+/** Lightweight markdown-ish renderer — kit-styled article typography. */
+function formatInline(text: string): string {
+  return text.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-zinc-900">$1</strong>');
+}
+
+function renderBody(body: string): string {
+  const lines = body.split("\n");
+  const out: string[] = [];
+  let inList = false;
+  const closeList = () => {
+    if (inList) {
+      out.push("</ul>");
+      inList = false;
+    }
+  };
+  for (const line of lines) {
+    if (line.startsWith("## ")) {
+      closeList();
+      const text = line.replace("## ", "");
+      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      out.push(
+        `<h2 id="${id}" class="pm-h-group mt-14 scroll-mt-28 !text-[1.55rem]">${text}</h2>`
+      );
+    } else if (line.startsWith("- ")) {
+      if (!inList) {
+        out.push('<ul class="mt-5 space-y-2.5">');
+        inList = true;
+      }
+      out.push(
+        `<li class="flex items-start gap-2.5 text-[15px] leading-relaxed text-zinc-600"><span class="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-600"></span><span>${formatInline(line.replace("- ", ""))}</span></li>`
+      );
+    } else if (line.startsWith("**") && line.endsWith("**")) {
+      closeList();
+      out.push(
+        `<p class="mt-8 text-[16.5px] font-bold text-zinc-950">${formatInline(line.replace(/\*\*/g, ""))}</p>`
+      );
+    } else if (line.startsWith("**")) {
+      closeList();
+      out.push(`<p class="mt-6 text-[16px] font-semibold text-zinc-900">${formatInline(line)}</p>`);
+    } else if (line.trim() === "") {
+      closeList();
+    } else {
+      closeList();
+      out.push(`<p class="mt-5 text-[16px] leading-[1.78] text-zinc-600">${formatInline(line)}</p>`);
+    }
+  }
+  closeList();
+  return out.join("");
+}
+
 export default function BlogPostPage({ params }: { params: { slug: string } }) {
   const post = posts[params.slug];
   if (!post) notFound();
 
   const shareUrl = `https://growthdialer.com/blog/${params.slug}`;
+  const wordCount = post.body.split(/\s+/).length;
 
   return (
-    <MarketingShell>
-      {/* JSON-LD Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Article",
-            "headline": post.title,
-            "description": post.excerpt,
-            "author": {
-              "@type": "Person",
-              "name": post.author,
-            },
-            "publisher": {
-              "@type": "Organization",
-              "name": "GrowthDialer",
-              "logo": {
-                "@type": "ImageObject",
-                "url": "https://growthdialer.com/logo.png",
-              },
-            },
-            "datePublished": new Date(post.date).toISOString(),
-            "dateModified": new Date(post.date).toISOString(),
-            "mainEntityOfPage": {
-              "@type": "WebPage",
-              "@id": shareUrl,
-            },
-          }),
-        }}
+    <ArticleShell>
+      <ArticleJsonLd
+        title={post.title}
+        description={post.excerpt}
+        slug={params.slug}
+        datePublished={new Date(post.date).toISOString()}
+      />
+      <ArticleHeader
+        category={post.category}
+        title={post.title}
+        lede={post.excerpt}
+        date={post.date}
+        readTime={post.readTime}
+        wordCount={wordCount}
+        crumb={post.title}
       />
 
-      <article className="pt-24 pb-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            {/* Back Link */}
-            <Link href="/blog" className="text-sm text-blue-400 hover:underline mb-8 inline-block">
-              ← Back to blog
-            </Link>
-
-            {/* Article Header */}
-            <header className="mb-8">
-              <div className="flex items-center gap-4 mb-4">
-                <Badge variant="secondary">{post.category}</Badge>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    {post.date}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <User className="h-4 w-4" />
-                    {post.author}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    {post.readTime}
-                  </div>
-                </div>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
-                {post.title}
-              </h1>
-              <p className="text-xl text-muted-foreground">{post.excerpt}</p>
-            </header>
-
-            <div className="grid lg:grid-cols-4 gap-8">
-              {/* Table of Contents - Desktop Sidebar */}
-              {post.toc && (
-                <aside className="lg:col-span-1 order-2 lg:order-1">
-                  <div className="sticky top-24">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg">Table of Contents</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <nav>
-                          <ul className="space-y-2">
-                            {post.toc.map((item) => (
-                              <li key={item.id} style={{ paddingLeft: `${(item.level - 2) * 16}px` }}>
-                                <a
-                                  href={`#${item.id}`}
-                                  className="text-sm text-muted-foreground hover:text-blue-400 transition-colors"
-                                >
-                                  {item.text}
-                                </a>
-                              </li>
-                            ))}
-                          </ul>
-                        </nav>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </aside>
-              )}
-
-              {/* Article Content */}
-              <div className={`${post.toc ? 'lg:col-span-3' : 'lg:col-span-4'} order-1 lg:order-2`}>
-                <div
-                  className="prose prose-lg prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{
-                    __html: post.body
-                      .split('\n')
-                      .map(line => {
-                        // Convert markdown-style headers to HTML with IDs
-                        if (line.startsWith('## ')) {
-                          const text = line.replace('## ', '');
-                          const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-                          return `<h2 id="${id}" class="text-2xl font-bold mt-8 mb-4">${text}</h2>`;
-                        }
-                        if (line.startsWith('**') && line.endsWith('**')) {
-                          return `<p class="font-bold text-lg mt-6 mb-2">${line.replace(/\*\*/g, '')}</p>`;
-                        }
-                        if (line.startsWith('- ')) {
-                          return `<li class="ml-4">${line.replace('- ', '')}</li>`;
-                        }
-                        if (line.startsWith('**') && line.includes(':**')) {
-                          return `<p class="font-semibold mt-4">${line.replace(/\*\*/g, '')}</p>`;
-                        }
-                        if (line.trim() === '') {
-                          return '<br/>';
-                        }
-                        return `<p class="mb-4 leading-relaxed">${line}</p>`;
-                      })
-                      .join('')
-                      .replace(/<li class="ml-4">/g, '<ul class="list-disc ml-6 mb-4"><li>')
-                      .replace(/<\/li>\n<li class="ml-4">/g, '</li><li>')
-                      .replace(/<\/li>\n<p/g, '</li></ul><p')
-                  }}
-                />
-
-                {/* Social Share */}
-                <div className="mt-12 pt-8 border-t border-border">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Share2 className="h-5 w-5" />
-                    Share this article
-                  </h3>
-                  <div className="flex gap-4">
-                    <a
-                      href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(shareUrl)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-2.5 py-1.5 text-sm font-medium transition-all"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      X
-                    </a>
-                    <a
-                      href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-2.5 py-1.5 text-sm font-medium transition-all"
-                    >
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Facebook
-                    </a>
-                    <a
-                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground px-2.5 py-1.5 text-sm font-medium transition-all"
-                    >
-                      <Link2 className="h-4 w-4 mr-2" />
-                      LinkedIn
-                    </a>
-                  </div>
-                </div>
-
-                {/* Related Posts */}
-                {post.relatedPosts && (
-                  <div className="mt-12 pt-8 border-t border-border">
-                    <h3 className="text-2xl font-bold mb-6">Related Articles</h3>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {post.relatedPosts.map((relatedPost) => (
-                        <Card key={relatedPost.slug}>
-                          <CardHeader>
-                            <CardTitle className="text-lg">
-                              <Link
-                                href={`/blog/${relatedPost.slug}`}
-                                className="hover:text-blue-400 transition-colors"
-                              >
-                                {relatedPost.title}
-                              </Link>
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-muted-foreground text-sm mb-4">
-                              {relatedPost.excerpt}
-                            </p>
-                            <Link
-                              href={`/blog/${relatedPost.slug}`}
-                              className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-all hover:bg-muted hover:text-foreground px-2.5 py-1.5"
-                            >
-                              Read more <ArrowRight className="h-3 w-3 ml-1" />
-                            </Link>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* CTA */}
-                <div className="mt-12 pt-8 border-t border-border text-center">
-                  <h3 className="text-2xl font-bold mb-4">Ready to Supercharge Your Sales?</h3>
-                  <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                    Try GrowthDialer free — dial from your browser, record every call, and let AI handle
-                    summaries and follow-ups so your team can focus on the conversation.
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Link
-                      href="/signup"
-                      className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 h-9 px-2.5 py-1.5 text-sm font-medium transition-all"
-                    >
-                      Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                    <Link
-                      href="/pricing"
-                      className="inline-flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground h-9 px-2.5 py-1.5 text-sm font-medium transition-all"
-                    >
-                      View Pricing
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className="pm-container-narrow max-w-3xl pb-24">
+        <div className="mt-10">
+          <BlogHonestyBanner />
         </div>
-      </article>
-    </MarketingShell>
+
+        {post.toc && (
+          <Toc items={post.toc.map((t) => ({ id: t.id, title: t.text }))} />
+        )}
+
+        <div dangerouslySetInnerHTML={{ __html: renderBody(post.body) }} />
+
+        {/* Share */}
+        <div className="mt-12 flex items-center gap-3 border-t border-zinc-950/[0.08] pt-8">
+          <span className="inline-flex items-center gap-2 text-[13px] font-semibold text-zinc-500">
+            <Share2 className="h-4 w-4" /> Share
+          </span>
+          <a
+            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(shareUrl)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pm-chip hover:border-violet-600/40 hover:text-violet-700"
+          >
+            X
+          </a>
+          <a
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pm-chip hover:border-violet-600/40 hover:text-violet-700"
+          >
+            Facebook
+          </a>
+          <a
+            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pm-chip hover:border-violet-600/40 hover:text-violet-700"
+          >
+            LinkedIn
+          </a>
+          <a
+            href={shareUrl}
+            className="pm-chip inline-flex items-center gap-1.5 hover:border-violet-600/40 hover:text-violet-700"
+          >
+            <Link2 className="h-3.5 w-3.5" /> Copy link
+          </a>
+        </div>
+
+        <AuthorCard />
+
+        {post.relatedPosts && <RelatedPosts posts={post.relatedPosts} />}
+
+        <ArticleCta />
+
+        <div className="mt-10 text-center">
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-2 text-[13.5px] font-semibold text-violet-700 hover:underline"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to all articles
+          </Link>
+        </div>
+      </div>
+    </ArticleShell>
   );
 }

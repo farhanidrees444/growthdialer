@@ -1,67 +1,25 @@
-import { Metadata } from 'next';
-import { MarketingShell } from '@/components/marketing/MarketingShell';
-import { ComparePage } from '@/components/marketing/ComparePage';
-import { JsonLd } from '@/components/marketing/live-floor/JsonLd';
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { CompareVsTemplate } from '@/components/marketing/v2/CompareVs';
+import { getCompetitorBySlug } from '@/lib/marketing/pseo-competitors';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
+const SLUG = 'nooks';
+
 export const metadata: Metadata = {
-  title: 'GrowthDialer vs Nooks — AI Sales Platform Comparison',
+  title: 'GrowthDialer vs Nooks — AI Dialer Comparison',
   description:
-    'Compare GrowthDialer and Nooks on parallel dialing, AI coaching, pricing, and time-to-value for outbound SDR teams.',
+    'Compare GrowthDialer vs Nooks: power dialing, AI call intelligence, live coaching floor, and per-seat pricing. 7-day free trial, no credit card.',
   alternates: { canonical: `${MARKETING_SITE}/compare/vs-nooks` },
+  openGraph: {
+    title: 'GrowthDialer vs Nooks',
+    description: 'Outbound AI dialer comparison for B2B sales teams.',
+    url: `${MARKETING_SITE}/compare/vs-nooks`,
+  },
 };
 
 export default function VsNooksPage() {
-  return (
-    <MarketingShell>
-      <JsonLd
-        data={{
-          '@context': 'https://schema.org',
-          '@type': 'WebPage',
-          name: 'GrowthDialer vs Nooks',
-          url: `${MARKETING_SITE}/compare/vs-nooks`,
-        }}
-      />
-      <ComparePage
-        competitor="Nooks"
-        badge="GrowthDialer vs Nooks"
-        title={
-          <>
-            Nooks built the virtual salesfloor.
-            <br />
-            <span className="font-medium">GrowthDialer ships it without the enterprise tax.</span>
-          </>
-        }
-        subtitle="Nooks combines parallel dial with live floor energy. GrowthDialer delivers power and parallel modes, AI summaries, and coaching — with Starter free and Pro at $49/mo."
-        priceGrowthdialer="$49"
-        priceCompetitor="$800+"
-        rows={[
-          { feature: 'Parallel dialing (10+ lines)', growthdialer: true, competitor: true },
-          { feature: 'Live team salesfloor', growthdialer: true, competitor: true },
-          { feature: 'AI call coaching', growthdialer: true, competitor: true },
-          { feature: 'AI voicemail detection', growthdialer: true, competitor: true },
-          { feature: 'CRM call logging', growthdialer: true, competitor: true },
-          { feature: 'Free tier', growthdialer: true, competitor: false },
-          { feature: 'Self-serve signup', growthdialer: true, competitor: false },
-        ]}
-        reasons={[
-          {
-            title: 'Fraction of the seat cost',
-            description:
-              'Nooks pricing targets large outbound orgs. GrowthDialer lets a five-person pod run production dial blocks on Pro before procurement gets involved.',
-          },
-          {
-            title: 'Parallel + power in one product',
-            description:
-              'Switch between manual focus dials and multi-line sessions without separate SKUs or add-ons.',
-          },
-          {
-            title: 'Call Logs for every rep',
-            description:
-              'Inbound and outbound history with connect stats — managers audit activity without joining the floor live.',
-          },
-        ]}
-      />
-    </MarketingShell>
-  );
+  const competitor = getCompetitorBySlug(SLUG);
+  if (!competitor) notFound();
+  return <CompareVsTemplate competitor={competitor} basePath="compare" />;
 }

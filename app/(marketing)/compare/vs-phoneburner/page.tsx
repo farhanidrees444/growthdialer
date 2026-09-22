@@ -1,67 +1,25 @@
-import { Metadata } from 'next';
-import { MarketingShell } from '@/components/marketing/MarketingShell';
-import { ComparePage } from '@/components/marketing/ComparePage';
-import { JsonLd } from '@/components/marketing/live-floor/JsonLd';
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { CompareVsTemplate } from '@/components/marketing/v2/CompareVs';
+import { getCompetitorBySlug } from '@/lib/marketing/pseo-competitors';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
+const SLUG = 'phoneburner';
+
 export const metadata: Metadata = {
-  title: 'GrowthDialer vs PhoneBurner — Power Dialer Comparison',
+  title: 'GrowthDialer vs PhoneBurner — AI Dialer Comparison',
   description:
-    'Compare GrowthDialer and PhoneBurner: AI summaries, parallel dial, conversation intelligence, and pricing for outbound sales teams.',
+    'Compare GrowthDialer vs PhoneBurner: power dialing, AI call intelligence, live coaching floor, and per-seat pricing. 7-day free trial, no credit card.',
   alternates: { canonical: `${MARKETING_SITE}/compare/vs-phoneburner` },
+  openGraph: {
+    title: 'GrowthDialer vs PhoneBurner',
+    description: 'Outbound AI dialer comparison for B2B sales teams.',
+    url: `${MARKETING_SITE}/compare/vs-phoneburner`,
+  },
 };
 
 export default function VsPhoneBurnerPage() {
-  return (
-    <MarketingShell>
-      <JsonLd
-        data={{
-          '@context': 'https://schema.org',
-          '@type': 'WebPage',
-          name: 'GrowthDialer vs PhoneBurner',
-          url: `${MARKETING_SITE}/compare/vs-phoneburner`,
-        }}
-      />
-      <ComparePage
-        competitor="PhoneBurner"
-        badge="GrowthDialer vs PhoneBurner"
-        title={
-          <>
-            PhoneBurner automates the dial.
-            <br />
-            <span className="font-medium">GrowthDialer automates the follow-through.</span>
-          </>
-        }
-        subtitle="PhoneBurner is a reliable power dialer from an earlier era of outbound. GrowthDialer adds AI transcription, summaries, parallel lines, and HubSpot logging in a modern browser dialer."
-        priceGrowthdialer="$49"
-        priceCompetitor="$149+"
-        rows={[
-          { feature: 'Power dialing', growthdialer: true, competitor: true },
-          { feature: 'Parallel dialing', growthdialer: true, competitor: false },
-          { feature: 'AI call summaries', growthdialer: true, competitor: false },
-          { feature: 'Conversation intelligence', growthdialer: true, competitor: false },
-          { feature: 'Browser WebRTC dialer', growthdialer: true, competitor: false },
-          { feature: 'HubSpot logging', growthdialer: true, competitor: true },
-          { feature: 'Free tier', growthdialer: true, competitor: false },
-        ]}
-        reasons={[
-          {
-            title: 'Intelligence after every call',
-            description:
-              'PhoneBurner stops at connection metrics. GrowthDialer transcribes, summarizes, and tags sentiment so coaches review async.',
-          },
-          {
-            title: 'Ten lines, not one',
-            description:
-              'Parallel mode with AMD and auto voicemail drop on losers — reps talk to humans, not ring trees.',
-          },
-          {
-            title: 'No desktop installer',
-            description:
-              'Reps dial from Chrome with a headset. IT ships a URL, not another fat client.',
-          },
-        ]}
-      />
-    </MarketingShell>
-  );
+  const competitor = getCompetitorBySlug(SLUG);
+  if (!competitor) notFound();
+  return <CompareVsTemplate competitor={competitor} basePath="compare" />;
 }

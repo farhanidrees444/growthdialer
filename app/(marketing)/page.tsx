@@ -1,60 +1,209 @@
 import type { Metadata } from 'next';
-import { MotionShell } from '@/components/marketing/live-floor/MotionShell';
-import { Nav } from '@/components/marketing/live-floor/Nav';
-import { ScrollProgress } from '@/components/marketing/live-floor/ScrollProgress';
-import { Hero } from '@/components/marketing/live-floor/Hero';
-import { Features } from '@/components/marketing/live-floor/Features';
-import { FinalCTA } from '@/components/marketing/live-floor/FinalCTA';
-import { IntegrationsMarquee } from '@/components/marketing/home/IntegrationsMarquee';
-import { ProductPreviewTabs } from '@/components/marketing/home/ProductPreviewTabs';
-import { StickyHowItWorks } from '@/components/marketing/home/StickyHowItWorks';
-import { StatsStrip } from '@/components/marketing/home/StatsStrip';
-import { ValueProps } from '@/components/marketing/home/ValueProps';
-import { HomePricing } from '@/components/marketing/home/HomePricing';
-import { HomeFAQ } from '@/components/marketing/home/HomeFAQ';
+import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
+import { Hero } from '@/components/marketing/v2/Hero';
+import {
+  Faq,
+  FeatureGroup,
+  FinalCta,
+  HowItWorks,
+  PersonaCards,
+  PositioningStrip,
+  PricingTeaser,
+  StackBand,
+  TrustBand,
+  type FeatureRow,
+} from '@/components/marketing/v2/Sections';
+import {
+  AiBrief,
+  AnalyticsSnap,
+  BrowserFrame,
+  ClickToCall,
+  ComplianceCard,
+  LiveBadge,
+  NumberHealth,
+  ParallelDial,
+  PowerQueue,
+  TranscriptStream,
+} from '@/components/marketing/v2/Mockups';
+import { POSITIONING } from '@/components/marketing/v2/copy';
 
 export const metadata: Metadata = {
-  title: 'AI Sales Dialer — Record, Transcribe & Analyze Every Call',
+  title: 'GrowthDialer — The AI Dialer for Teams That Close on Calls',
   description:
-    'GrowthDialer is the AI sales dialer with power + parallel dialing, AI call briefs, built-in conversation intelligence, and a manager coaching floor. Start free — upgrade when your team grows.',
+    'Power and parallel dialing, automatic transcripts, and AI-written call briefs. The voice-first sales dialer for outbound teams. Start free — 7-day trial, no credit card.',
   alternates: { canonical: 'https://growthdialer.com' },
 };
 
+const DIALING_ROWS: FeatureRow[] = [
+  {
+    eyebrow: 'Power dialer',
+    title: 'Back-to-back calls. Zero dead air.',
+    body: 'The next number loads the second you disposition. Notes, follow-ups, and logging happen between rings — not after hours.',
+    bullets: [
+      'One-click dispositions keep the rhythm unbroken',
+      'Every call logged automatically — no manual entry',
+      'Local presence dialing lifts pickup rates',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/dialer" badge={<LiveBadge label="Power session · live" />}>
+        <PowerQueue />
+      </BrowserFrame>
+    ),
+  },
+  {
+    eyebrow: 'Parallel dialer',
+    title: 'Three lines. One conversation.',
+    body: 'Dial up to three prospects at once. Answering-machine detection drops your voicemail and moves on — you only ever talk to humans.',
+    bullets: [
+      'AI answering-machine detection on every line',
+      'Automatic voicemail drop, zero effort',
+      'Connects you the instant a real person picks up',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/dialer/parallel" badge={<LiveBadge label="3 lines · live" />}>
+        <ParallelDial />
+      </BrowserFrame>
+    ),
+    flip: true,
+  },
+  {
+    eyebrow: 'Click-to-call',
+    title: 'Your browser is the phone.',
+    body: 'No desk phone. No softphone app. Click any number — in your lead list, your CRM, anywhere — and you’re talking in seconds.',
+    bullets: [
+      'WebRTC calling built into the browser',
+      'Recording on every call, automatically',
+      'Bring your own numbers or buy local ones in-app',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/leads" caption={null}>
+        <ClickToCall />
+      </BrowserFrame>
+    ),
+  },
+];
+
+const INTEL_ROWS: FeatureRow[] = [
+  {
+    eyebrow: 'AI call briefs',
+    title: 'Hang up. Your notes are already written.',
+    body: 'Every recorded call is transcribed and distilled into a 30-second brief — summary, objections, next steps — ready before your rep reaches for the keyboard.',
+    bullets: [
+      'Key points, objections, and follow-ups extracted automatically',
+      'Buying signals flagged the moment they happen',
+      'Briefs sync to your CRM with the recording attached',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/calls/rec_8f3k2" badge={<LiveBadge label="Brief ready · 8s after hang-up" />}>
+        <AiBrief />
+      </BrowserFrame>
+    ),
+  },
+  {
+    eyebrow: 'Conversation analytics',
+    title: 'See what “great” sounds like.',
+    body: 'Connect rate, talk time, sentiment, and topics — tracked across every rep and every call. Find the patterns your top performers already know.',
+    bullets: [
+      'Talk-time, sentiment, and keyword trends per rep',
+      'Call scorecards that write themselves',
+      'Leaderboards that update in real time',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/analytics" caption={null}>
+        <AnalyticsSnap />
+      </BrowserFrame>
+    ),
+    flip: true,
+  },
+  {
+    eyebrow: 'Live coaching',
+    title: 'Coach the call, not the recording.',
+    body: 'Managers listen live, read the AI brief as it forms, and take over a call mid-conversation when a deal needs saving.',
+    bullets: [
+      'Listen to any live call from the salesfloor',
+      'Take over a call without dropping the prospect',
+      'Post-call feedback tied to the transcript',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/salesfloor" badge={<LiveBadge label="Manager listening · live" />}>
+        <TranscriptStream />
+      </BrowserFrame>
+    ),
+  },
+];
+
+const NUMBER_ROWS: FeatureRow[] = [
+  {
+    eyebrow: 'Number health',
+    title: 'Know before the carriers decide.',
+    body: 'Every number you own is scored for spam risk and reputation — continuously. Rotate a number before it starts hurting your connect rate, not after.',
+    bullets: [
+      'Spam-risk score on every number you own',
+      'Carrier reputation monitoring, always on',
+      'Rotation guidance before deliverability drops',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/numbers" caption={null}>
+        <NumberHealth />
+      </BrowserFrame>
+    ),
+  },
+  {
+    eyebrow: 'Records & audit',
+    title: 'Every call, on the record.',
+    body: 'Calls, recordings, dispositions, and DNC flags are logged automatically — the audit trail your compliance review wants, without the spreadsheet.',
+    bullets: [
+      'DNC flags remove leads from every queue instantly',
+      'Recordings stored with transcripts, searchable by lead',
+      'Full disposition history on each lead’s timeline',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/leads/maya-patel" caption={null}>
+        <ComplianceCard />
+      </BrowserFrame>
+    ),
+    flip: true,
+  },
+];
+
 export default function LandingPage() {
   return (
-    <MotionShell>
-      <div className="relative min-h-screen overflow-x-clip bg-white text-zinc-950 antialiased selection:bg-[#7C3AED]/15">
-        <ScrollProgress />
-        <Nav />
-        <main className="relative z-[2]">
-          <Hero />
-          <div className="marketing-section">
-            <IntegrationsMarquee />
-          </div>
-          <div className="marketing-section">
-            <ProductPreviewTabs />
-          </div>
-          <div className="marketing-section">
-            <Features />
-          </div>
-          <div className="marketing-section">
-            <StickyHowItWorks />
-          </div>
-          <div className="marketing-section">
-            <StatsStrip />
-          </div>
-          <div className="marketing-section">
-            <ValueProps />
-          </div>
-          <div className="marketing-section">
-            <HomePricing />
-          </div>
-          <div className="marketing-section">
-            <HomeFAQ />
-          </div>
-          <FinalCTA />
-        </main>
-      </div>
-    </MotionShell>
+    <div className="theme-marketing min-h-screen bg-white text-zinc-950 antialiased">
+      <Navbar />
+      <main>
+        <Hero />
+        <PositioningStrip line={POSITIONING.line} />
+        <StackBand />
+        <FeatureGroup
+          eyebrow="Dialing"
+          title="Dial at the speed of your list."
+          lede="Three ways to call, one rhythm. Pick the mode that fits the moment — the workflow never changes."
+          rows={DIALING_ROWS}
+        />
+        <div className="pm-divider bg-zinc-50/60">
+          <FeatureGroup
+            eyebrow="Intelligence"
+            title="Every call, understood."
+            lede="Transcription, summaries, and analytics run on every conversation — automatically. Your CRM has never been this honest."
+            rows={INTEL_ROWS}
+          />
+        </div>
+        <PersonaCards />
+        <FeatureGroup
+          eyebrow="Deliverability"
+          title="Numbers that stay out of spam."
+          lede="Connect rate is a deliverability game. We watch every number like it's our own."
+          rows={NUMBER_ROWS}
+        />
+        <TrustBand />
+        <HowItWorks />
+        <PricingTeaser />
+        <div className="pm-divider">
+          <Faq />
+        </div>
+        <FinalCta />
+      </main>
+      <Footer />
+    </div>
   );
 }

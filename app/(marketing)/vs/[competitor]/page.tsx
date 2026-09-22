@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { MarketingShell } from '@/components/marketing/MarketingShell';
-import { JsonLd } from '@/components/marketing/live-floor/JsonLd';
-import { ProgrammaticVsPage } from '@/components/marketing/pseo/ProgrammaticVsPage';
+import { JsonLd } from '@/components/marketing/v2/JsonLd';
+import { CompareVsTemplate } from '@/components/marketing/v2/CompareVs';
 import {
   getAllCompetitorSlugs,
   getCompetitorBySlug,
@@ -34,11 +33,11 @@ export default async function VsCompetitorPage({ params }: PageProps) {
   const jsonLd = buildVsJsonLd(competitor);
 
   return (
-    <MarketingShell>
+    <>
       {jsonLd.map((schema) => (
         <JsonLd key={schema['@type'] as string} data={schema} />
       ))}
-      <ProgrammaticVsPage competitor={competitor} />
-    </MarketingShell>
+      <CompareVsTemplate competitor={competitor} basePath="vs" />
+    </>
   );
 }
