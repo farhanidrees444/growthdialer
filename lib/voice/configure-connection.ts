@@ -1,8 +1,5 @@
-import {
-  readCallControlAppId,
-  readConfiguredConnectionId,
-  readVoiceApiKey,
-} from '@/lib/voice/read-env';
+import { readCallControlAppId } from '@/lib/telephony/telnyx/env';
+import { readConfiguredConnectionId, readVoiceApiKey } from '@/lib/voice/read-env';
 import { resolveVoiceConnectionId } from '@/lib/voice/resolve-connection';
 import { resolveVoiceWebhookUrl } from '@/lib/voice/webhook-url';
 import {

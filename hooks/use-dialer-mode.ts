@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import type { DialerMode, LeadRecord } from '@/lib/dialer/state-machine';
+import type { DialerMode, LeadRecord } from '@/lib/dialer/dialer-types';
 
 interface DialerModeState {
   mode: DialerMode;

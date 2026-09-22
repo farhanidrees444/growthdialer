@@ -1,7 +1,7 @@
 'use client';
 
 import { Brain, Building2, Mail, Sparkles, Tag, TrendingUp, User } from 'lucide-react';
-import type { LeadRecord } from '@/lib/dialer/state-machine';
+import type { LeadRecord } from '@/lib/dialer/dialer-types';
 import { DialerSurface } from './dialer-surface';
 import { Badge } from '@/components/ui/badge';
 import { AiInsightsMaterialize } from '@/components/premium/ai-insights-materialize';

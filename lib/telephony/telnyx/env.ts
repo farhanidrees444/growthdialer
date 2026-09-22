@@ -1,4 +1,5 @@
-function readEnv(name: string): string | null {
+/** Read and normalize a server env var (trim whitespace and surrounding quotes). */
+export function readEnv(name: string): string | null {
   const raw = process.env[name];
   if (!raw) return null;
   const trimmed = raw.trim();

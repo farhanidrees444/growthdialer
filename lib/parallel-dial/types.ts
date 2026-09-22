@@ -1,5 +1,5 @@
 import type { DialerQueueConfig } from '@/lib/dialer/queue-query';
-import type { LeadRecord } from '@/lib/dialer/state-machine';
+import type { LeadRecord } from '@/lib/dialer/dialer-types';
 
 export type ParallelSessionStatus =
   | 'active'

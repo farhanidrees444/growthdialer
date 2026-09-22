@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Phone, SkipForward, Star, Ban, FileText, Globe, X, Clock3, Repeat2, AlertTriangle } from 'lucide-react';
 import { getAvatarGradient, getInitials } from '@/lib/dialer/avatar-color';
 import { getLocalTime } from '@/lib/utils/timezone';
-import type { LeadRecord } from '@/lib/dialer/state-machine';
+import type { LeadRecord } from '@/lib/dialer/dialer-types';
 
 interface PreviewStageProps {
   lead: LeadRecord;

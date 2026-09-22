@@ -38,7 +38,7 @@ import { ParallelSessionBanner } from '@/components/dialer/parallel-session-bann
 import { DialerFloatingActions } from '@/components/dialer/dialer-floating-actions';
 import { DialerStageAmbient } from '@/components/dialer/dialer-stage-ambient';
 
-import type { LeadRecord, DispositionType } from '@/lib/dialer/state-machine';
+import type { LeadRecord, DispositionType } from '@/lib/dialer/dialer-types';
 import { isInboundPreAnswer } from '@/lib/inbound/pre-answer';
 
 // ── DTMF keypad overlay ────────────────────────────────────────────────────────

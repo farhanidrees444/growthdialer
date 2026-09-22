@@ -13,7 +13,7 @@ import type {
 import { isTelephonyConfigured } from '@/lib/telephony/telnyx/env';
 import { dialOutboundCall, hangupProviderCall } from '@/lib/telephony/telnyx/outbound';
 import { sendProviderSms } from '@/lib/telephony/telnyx/sms';
-import { issueWebRtcToken } from '@/lib/telephony/telnyx/webrtc';
+import { issueUserWebRtcToken } from '@/lib/telnyx/webrtc-token-engine';
 import {
   createConferenceForCall,
   joinCallToConference,
@@ -22,6 +22,24 @@ import {
   startMediaForkRecording,
   stopCallRecording,
 } from '@/lib/telephony/telnyx/recording';
+
+/** Inlined from lib/telephony/telnyx/webrtc.ts (single-importer shim). */
+async function issueWebRtcToken(
+  supabase: SupabaseClient,
+  agentId: string,
+  _tenantId: string,
+): Promise<WebRTCTokenResult> {
+  const result = await issueUserWebRtcToken(supabase, agentId);
+  if (!result.ok) {
+    throw new Error(result.error);
+  }
+
+  return {
+    loginToken: result.login_token,
+    credentialId: result.credential_id,
+    sipUsername: result.sip_username,
+  };
+}
 
 export class TelnyxTelephonyProvider implements TelephonyProvider {
   isConfigured(): boolean {

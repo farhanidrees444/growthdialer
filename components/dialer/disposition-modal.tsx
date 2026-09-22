@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Clock3, FileText, Sparkles, X, Calendar } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import type { LeadRecord } from '@/lib/dialer/state-machine';
+import type { LeadRecord } from '@/lib/dialer/dialer-types';
 import { useWorkspaceDispositions } from '@/hooks/use-workspace-dispositions';
 import type { WorkspaceDispositionDef } from '@/lib/dispositions/defaults';
 import { emitMilestoneFromDisposition } from '@/lib/ui/milestone-events';

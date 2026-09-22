@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { toE164 } from '@/lib/phone';
 import { fetchDialerQueueLeads } from '@/lib/dialer/queue-query';
 import type { DialerQueueConfig } from '@/lib/dialer/queue-query';
-import type { LeadRecord } from '@/lib/dialer/state-machine';
+import type { LeadRecord } from '@/lib/dialer/dialer-types';
 import { prefetchUserCallerNumbers, resolveCallerIdFromCache } from '@/lib/dialer/resolve-caller-id';
 import type { ParallelDialLeg, ParallelDialSession } from './types';
 import { resolveWorkspaceOutboundTrust } from '@/lib/compliance/workspace-trust';
