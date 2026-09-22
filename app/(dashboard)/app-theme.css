@@ -653,6 +653,7 @@
 .app-root[data-theme='light'] :is(.bg-violet-600, .bg-violet-500, .bg-purple-600, .bg-emerald-600, .bg-emerald-500, .bg-red-600, .bg-red-500, .bg-rose-600, .bg-rose-500, .bg-amber-500, .bg-blue-600, .bg-cyan-600, .bg-fuchsia-600, .bg-indigo-600, .bg-green-600)[class*='text-white'],
 .app-root[data-theme='light'] :is(.bg-violet-600, .bg-violet-500, .bg-purple-600, .bg-emerald-600, .bg-emerald-500, .bg-red-600, .bg-red-500, .bg-rose-600, .bg-rose-500, .bg-amber-500, .bg-blue-600, .bg-cyan-600, .bg-fuchsia-600, .bg-indigo-600, .bg-green-600) [class*='text-white'],
 .app-root[data-theme='light'] :is(.from-emerald-500, .from-emerald-600, .from-red-500, .from-red-600, .from-violet-600, .from-amber-500, .from-slate-500, .from-slate-600)[class*='text-white'],
+.app-root[data-theme='light'] :where(.bg-\[\#09090b\])[class*='text-white'],
 .app-root[data-theme='light'] :is(.from-emerald-500, .from-emerald-600, .from-red-500, .from-red-600, .from-violet-600, .from-amber-500, .from-slate-500, .from-slate-600) [class*='text-white'] {
   color: #ffffff;
 }
@@ -797,4 +798,55 @@
 .app-root[data-theme='light'] option:where(.bg-\[\#111\]) {
   background-color: #ffffff;
   color: #18181b;
+}
+
+/* ─── Sidebar: premium active states in light mode ─── */
+.app-root[data-theme='light'] aside :where(.bg-violet-500\/\[0.07\], .bg-violet-500\/\[0.08\], .bg-violet-500\/\[0.1\], .bg-violet-500\/\[0.12\]) {
+  background-color: rgb(139 92 246 / 0.14);
+  border-color: rgb(139 92 246 / 0.30);
+}
+.app-root[data-theme='light'] aside :where(.bg-cyan-500\/\[0.07\], .bg-cyan-500\/\[0.08\], .bg-cyan-500\/\[0.1\], .bg-cyan-500\/\[0.12\]) {
+  background-color: rgb(34 211 238 / 0.14);
+  border-color: rgb(34 211 238 / 0.30);
+}
+.app-root[data-theme='light'] aside :where(.bg-emerald-500\/\[0.07\], .bg-emerald-500\/\[0.08\], .bg-emerald-500\/\[0.1\], .bg-emerald-500\/\[0.12\]) {
+  background-color: rgb(52 211 153 / 0.14);
+  border-color: rgb(52 211 153 / 0.30);
+}
+.app-root[data-theme='light'] aside :where(.bg-amber-500\/\[0.07\], .bg-amber-500\/\[0.08\], .bg-amber-500\/\[0.1\], .bg-amber-500\/\[0.12\]) {
+  background-color: rgb(245 158 11 / 0.14);
+  border-color: rgb(245 158 11 / 0.30);
+}
+.app-root[data-theme='light'] aside :where(.bg-rose-500\/\[0.07\], .bg-rose-500\/\[0.08\], .bg-rose-500\/\[0.1\], .bg-rose-500\/\[0.12\]) {
+  background-color: rgb(244 63 94 / 0.14);
+  border-color: rgb(244 63 94 / 0.30);
+}
+.app-root[data-theme='light'] aside :where(.bg-sky-500\/\[0.07\], .bg-sky-500\/\[0.08\], .bg-sky-500\/\[0.1\], .bg-sky-500\/\[0.12\]) {
+  background-color: rgb(56 189 248 / 0.14);
+  border-color: rgb(56 189 248 / 0.30);
+}
+.app-root[data-theme='light'] aside :where(.bg-indigo-500\/\[0.07\], .bg-indigo-500\/\[0.08\], .bg-indigo-500\/\[0.1\], .bg-indigo-500\/\[0.12\]) {
+  background-color: rgb(99 102 241 / 0.14);
+  border-color: rgb(99 102 241 / 0.30);
+}
+.app-root[data-theme='light'] aside :where(.text-violet-400) {
+  color: #7c3aed;
+}
+.app-root[data-theme='light'] aside :where(.text-cyan-400) {
+  color: #0891b2;
+}
+.app-root[data-theme='light'] aside :where(.text-emerald-400) {
+  color: #059669;
+}
+.app-root[data-theme='light'] aside :where(.text-amber-400) {
+  color: #d97706;
+}
+.app-root[data-theme='light'] aside :where(.text-rose-400) {
+  color: #e11d48;
+}
+.app-root[data-theme='light'] aside :where(.text-sky-400) {
+  color: #0284c7;
+}
+.app-root[data-theme='light'] aside :where(.text-indigo-400) {
+  color: #4f46e5;
 }
