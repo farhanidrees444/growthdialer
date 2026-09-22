@@ -72,7 +72,7 @@ export function ContactForm() {
         </div>
         <div>
           <label htmlFor="company" className="mb-1.5 block text-xs font-medium text-zinc-600">Company</label>
-          <input id="company" name="company" required className={inputClass} placeholder="Acme Corp" />
+          <input id="company" name="company" required className={inputClass} placeholder="Your company" />
         </div>
         <div>
           <label htmlFor="message" className="mb-1.5 block text-xs font-medium text-zinc-600">How can we help?</label>

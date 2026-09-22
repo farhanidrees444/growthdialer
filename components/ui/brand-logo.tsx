@@ -83,6 +83,9 @@ export interface BrandLogoProps {
   priority?: boolean;
   href?: string;
   onClick?: () => void;
+  /** Wordmark text color: 'onDark' (default, white text) for dark surfaces,
+   *  'onLight' (dark text) for light surfaces. Icon is unchanged. */
+  wordmarkTone?: 'onDark' | 'onLight';
 }
 
 function BrandIconFrame({
@@ -112,7 +115,7 @@ function BrandIconFrame({
   );
 }
 
-function BrandWordmarkText({ size }: { size: BrandLogoSize }) {
+function BrandWordmarkText({ size, tone = 'onDark' }: { size: BrandLogoSize; tone?: 'onDark' | 'onLight' }) {
   const { text } = LOCKUP[size];
   return (
     <span
@@ -121,7 +124,7 @@ function BrandWordmarkText({ size }: { size: BrandLogoSize }) {
         text,
       )}
     >
-      <span className="text-[#F5F5F7]">Growth</span>
+      <span className={tone === 'onLight' ? 'text-zinc-950' : 'text-[#F5F5F7]'}>Growth</span>
       <span className="bg-gradient-to-r from-[#C4B5FD] via-[#A78BFA] to-[#8B5CF6] bg-clip-text text-transparent">
         Dialer
       </span>
@@ -193,6 +196,7 @@ export function BrandLogo({
   priority = false,
   href,
   onClick,
+  wordmarkTone = 'onDark',
 }: BrandLogoProps) {
   const lockup = LOCKUP[size];
   const iconOnly = ICON_ONLY[size];
@@ -206,7 +210,7 @@ export function BrandLogo({
         framed
         glow={size === 'nav' || size === 'auth'}
       />
-      <BrandWordmarkText size={size} />
+      <BrandWordmarkText size={size} tone={wordmarkTone} />
     </span>
   ) : (
     <BrandIconImage

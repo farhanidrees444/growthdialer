@@ -8,7 +8,7 @@ import { Reveal } from '@/components/ui/reveal';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
-  title: 'Careers — Join GrowthDialer | GrowthDialer',
+  title: 'Careers — Join GrowthDialer',
   description:
     'Small remote-first team building an AI sales dialer. Open roles for engineers and GTM operators who care about product truth and outbound sales craft.',
   alternates: { canonical: `${MARKETING_SITE}/careers` },

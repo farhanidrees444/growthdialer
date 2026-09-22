@@ -8,7 +8,7 @@ import { Reveal } from '@/components/ui/reveal';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
-  title: 'Press Kit — Brand Assets & Company Info | GrowthDialer',
+  title: 'Press Kit — Brand Assets & Company Info',
   description:
     'GrowthDialer brand assets, company description, and media contact for journalists and partners.',
   alternates: { canonical: `${MARKETING_SITE}/press-kit` },
@@ -88,7 +88,7 @@ export default function PressKitPage() {
                 <article className="pm-card p-7">
                   <h2 className="pm-h-card !text-[1.25rem]">Brand assets</h2>
                   <div className="mt-6 flex flex-wrap items-center gap-10 rounded-xl bg-zinc-50/80 px-6 py-8">
-                    <BrandLogo showText size="xl" />
+                    <BrandLogo showText size="xl" wordmarkTone="onLight" />
                     <BrandLogo size="lg" variant="mark" />
                   </div>
                   <ul className="mt-6 grid gap-2 sm:grid-cols-2">

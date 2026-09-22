@@ -6,7 +6,7 @@ import { FinalCta, PageHero, PositioningStrip, SectionHead } from '@/components/
 import { Reveal } from '@/components/ui/reveal';
 
 export const metadata: Metadata = {
-  title: 'About — Building the Dialer That Understands Every Call | GrowthDialer',
+  title: 'About — Building the Dialer That Understands Every Call',
   description:
     'GrowthDialer is an early-stage team building an AI sales dialer that turns every call into searchable revenue intelligence. Our beliefs: the call is the data, software does the busywork, honest by default.',
   alternates: { canonical: 'https://growthdialer.com/about' },

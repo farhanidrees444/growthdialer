@@ -10,7 +10,7 @@ import { MARKETING_SITE } from '@/lib/marketing/navigation';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Changelog — Product updates | GrowthDialer',
+  title: 'Changelog — Product updates',
   description:
     'Shipping log for GrowthDialer: dialer improvements, HubSpot integration, Call Logs, parallel dial, and workspace features.',
   alternates: { canonical: `${MARKETING_SITE}/changelog` },

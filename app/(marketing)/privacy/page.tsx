@@ -3,7 +3,7 @@ import { Navbar, Footer } from "@/components/marketing/v2/Chrome";
 import { Reveal } from "@/components/ui/reveal";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | GrowthDialer",
+  title: "Privacy Policy",
   description: "How GrowthDialer collects, uses, and protects your data on the calling platform.",
   alternates: { canonical: "https://growthdialer.com/privacy" },
 };

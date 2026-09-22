@@ -30,7 +30,7 @@ import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
-  title: 'Features — AI Dialer, Power Dialer & Conversation Intelligence | GrowthDialer',
+  title: 'Features — AI Dialer, Power Dialer & Conversation Intelligence',
   description:
     'Everything GrowthDialer does today: power and parallel dialing, AI call briefs, conversation intelligence, live coaching floor, and number-health monitoring.',
   alternates: { canonical: `${MARKETING_SITE}/features` },
@@ -59,7 +59,7 @@ const DIALING_ROWS: FeatureRow[] = [
   },
   {
     eyebrow: 'Parallel dialer',
-    title: 'Three lines. One conversation.',
+    title: 'Five lines. One conversation.',
     body: 'Dial multiple prospects at once on Pro. Answering-machine detection drops your voicemail and moves on — you only ever talk to humans.',
     bullets: [
       'AI answering-machine detection on every line',

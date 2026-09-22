@@ -5,7 +5,7 @@ import { PricingPage as SharedPricingPage } from "@/components/pricing/pricing-p
 import { MARKETING_SITE } from "@/lib/marketing/navigation";
 
 export const metadata: Metadata = {
-  title: "Pricing — Simple plans that scale with you | GrowthDialer",
+  title: "Pricing — Simple plans that scale with you",
   description:
     "Starter $49, Growth $79, Pro $119 per seat per month. 20% off annual billing. 7-day free trial, no credit card, no annual lock-in.",
   alternates: { canonical: `${MARKETING_SITE}/pricing` },

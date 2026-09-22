@@ -22,7 +22,7 @@ import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
-  title: 'AI Platform — Conversation Intelligence, Coaching & Voice Agents | GrowthDialer',
+  title: 'AI Platform — Conversation Intelligence, Coaching & Voice Agents',
   description:
     'GrowthDialer AI: call briefs live today, conversation intelligence built in when calls are recorded, coaching listen mode on Pro, and the AI voice agent on the roadmap.',
   alternates: { canonical: `${MARKETING_SITE}/features/ai` },

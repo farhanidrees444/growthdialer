@@ -15,7 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Roadmap — What Ships Next | GrowthDialer',
+  title: 'Roadmap — What Ships Next',
   description:
     'GrowthDialer product roadmap: what’s live today, what’s in development (including the AI voice agent), and what’s planned. Labeled honestly, updated as we ship.',
   alternates: { canonical: `${MARKETING_SITE}/roadmap` },

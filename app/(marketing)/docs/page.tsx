@@ -9,7 +9,7 @@ import { Reveal } from '@/components/ui/reveal';
 import { APP_SIGNUP, MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
-  title: 'Documentation — Setup & dialer guides | GrowthDialer',
+  title: 'Documentation — Setup & dialer guides',
   description:
     'GrowthDialer docs: workspace setup, AI Dialer, power dial, lead import, HubSpot integration, recordings, and team roles.',
   alternates: { canonical: `${MARKETING_SITE}/docs` },
