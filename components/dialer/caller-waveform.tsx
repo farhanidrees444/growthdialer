@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import { useCallAudio } from '@/hooks/use-call-audio';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 interface CallerWaveformProps {
   active: boolean;
@@ -10,6 +11,8 @@ interface CallerWaveformProps {
 export function CallerWaveform({ active }: CallerWaveformProps) {
   const { bars } = useCallAudio(active);
   const reduce = useReducedMotion();
+  const { isDark } = useSiteTheme();
+  const idleBar = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(9,9,11,0.14)';
 
   return (
     <div
@@ -39,7 +42,7 @@ export function CallerWaveform({ active }: CallerWaveformProps) {
             transformOrigin: 'bottom center',
             background: active
               ? 'linear-gradient(to top, #7C3AED, #06B6D4)'
-              : 'rgba(255,255,255,0.1)',
+              : idleBar,
           }}
         />
       ))}

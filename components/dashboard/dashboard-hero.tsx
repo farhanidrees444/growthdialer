@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Phone, Sparkles, Upload, Zap } from 'lucide-react';
 import { useLeads } from '@/contexts/leads-context';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 interface DashboardHeroProps {
   greeting: string;
@@ -14,6 +15,7 @@ interface DashboardHeroProps {
 export function DashboardHero({ greeting, firstName, dateStr }: DashboardHeroProps) {
   const reduce = useReducedMotion();
   const { setImportOpen } = useLeads();
+  const { isDark } = useSiteTheme();
 
   return (
     <motion.div
@@ -61,7 +63,11 @@ export function DashboardHero({ greeting, firstName, dateStr }: DashboardHeroPro
           <div className="flex flex-wrap gap-2 lg:justify-end">
             <Link
               href="/dialer"
-              className="group inline-flex min-h-10 items-center gap-2 rounded-xl bg-white px-3.5 py-2 text-xs font-bold text-zinc-950 shadow-[0_0_30px_rgba(255,255,255,0.12)] transition hover:bg-zinc-100"
+              className={
+                isDark
+                  ? 'group inline-flex min-h-10 items-center gap-2 rounded-xl bg-white px-3.5 py-2 text-xs font-bold text-zinc-950 shadow-[0_0_30px_rgba(255,255,255,0.12)] transition hover:bg-zinc-100'
+                  : 'group inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#09090b] px-3.5 py-2 text-xs font-bold text-white shadow-[0_10px_30px_rgba(9,9,11,0.25)] transition hover:bg-[#27272a]'
+              }
             >
               <Phone className="h-4 w-4" />
               Start dialing
