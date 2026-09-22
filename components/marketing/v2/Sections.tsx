@@ -38,7 +38,7 @@ import {
   TRUST,
 } from './copy';
 import { INTEGRATION_BRANDS } from '@/lib/marketing/integration-brands';
-import { DashboardVisual, DialerConsoleVisual } from '@/components/marketing/visuals';
+import { DashboardVisual, ModesVisual } from '@/components/marketing/visuals';
 import {
   Aurora,
   Counter,
@@ -188,7 +188,7 @@ export function DialingPanel() {
       eyebrow={panel.eyebrow}
       title={panel.title}
       lede={panel.lede}
-      visual={<DialerConsoleVisual />}
+      visual={<ModesVisual />}
       caption={panel.caption}
       cards={cards}
     />

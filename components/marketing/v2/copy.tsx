@@ -162,7 +162,7 @@ export const DIALING_PANEL = {
   eyebrow: 'The AI Dialer',
   title: 'Three ways to call. One rhythm.',
   lede: 'Manual, power, or parallel — pick the mode that fits the moment. The workflow never changes: the next call starts the second the last one is dispositioned.',
-  caption: 'Illustrated preview of the AI Dialer — mode tabs, lead card, live call controls, and one-click dispositions.',
+  caption: 'Illustrated preview of the three dialing modes — manual, power, and parallel with up to five lines.',
   modes: [
     {
       title: 'Manual',

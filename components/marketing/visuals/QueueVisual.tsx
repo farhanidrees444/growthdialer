@@ -3,10 +3,10 @@ import { C, MarkerArrow, Pill, T, VisualDefs } from './parts';
 const ID = 'queue';
 
 const ROWS = [
-  { name: 'Sarah Kim', co: 'Acme Logistics', status: 'NEXT UP', tone: C.greenDeep, bg: '#e8faf0' },
-  { name: 'David Osei', co: 'Northwind Traders', status: 'QUEUED', tone: C.inkSoft, bg: '#efeaf6' },
-  { name: 'Maria Lopez', co: 'Beacon Health', status: 'CALLBACK 2:30P', tone: '#b45309', bg: '#fef3e2' },
-  { name: 'Tom Becker', co: 'Forge & Co.', status: 'QUEUED', tone: C.inkSoft, bg: '#efeaf6' },
+  { name: 'Sarah Kim', co: 'VP Sales', status: 'NEXT UP', tone: C.greenDeep, bg: '#e8faf0' },
+  { name: 'David Osei', co: 'Sales Manager', status: 'QUEUED', tone: C.inkSoft, bg: '#efeaf6' },
+  { name: 'Maria Lopez', co: 'Operations Lead', status: 'CALLBACK 2:30P', tone: '#b45309', bg: '#fef3e2' },
+  { name: 'Tom Becker', co: 'Founder', status: 'QUEUED', tone: C.inkSoft, bg: '#efeaf6' },
 ];
 
 /**

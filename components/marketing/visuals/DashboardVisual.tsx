@@ -55,7 +55,7 @@ export function DashboardVisual({ badges = true }: { badges?: boolean }) {
         return (
           <g key={s.label} filter={`url(#${ID}-lift)`}>
             <rect x={x} y={114} width={146} height={92} rx={12} fill="#fff" stroke="#e7e2f2" strokeWidth={1.5} />
-            <T x={x + 16} y={140} size={9.5} mono fill={C.inkSoft} letterSpacing={1.2}>{s.label}</T>
+            <T x={x + 16} y={140} size={9} mono fill={C.inkSoft} letterSpacing={0.8}>{s.label}</T>
             <T x={x + 16} y={176} size={27} weight={750}>{s.value}</T>
             <circle cx={x + 128} cy={132} r={5} fill={i % 2 ? C.teal : C.violet} opacity={0.85} />
           </g>
@@ -93,7 +93,7 @@ export function DashboardVisual({ badges = true }: { badges?: boolean }) {
           <g key={row.name}>
             <circle cx={464} cy={y + 8} r={13} fill={i === 0 ? C.violet : i === 1 ? C.teal : '#8b7bb0'} opacity={0.9} />
             <T x={488} y={y + 6} size={13.5}>{row.name}</T>
-            <T x={488} y={y + 24} size={11} fill={C.inkSoft} weight={500} mono>0{i + 3}:4{i} · RECORDED</T>
+            <T x={488} y={y + 24} size={11} fill={C.inkSoft} weight={500} mono>0{i + 3}:4{i}</T>
             <rect x={650 - chipW} y={y - 4} width={chipW} height={24} rx={12} fill={row.bg} />
             <T x={650 - chipW / 2} y={y + 12} size={9.5} anchor="middle" fill={row.tone} weight={700} mono letterSpacing={0.6}>
               {row.disp.toUpperCase()}
@@ -102,11 +102,11 @@ export function DashboardVisual({ badges = true }: { badges?: boolean }) {
         );
       })}
 
-      {/* marker arrow: pill → call log */}
+      {/* marker arrow: pill → stat cards (short hop between toggle and cards, never crosses) */}
       {badges && (
         <g>
-          <MarkerArrow d="M 560 62 C 580 120, 590 170, 586 218" color={C.mint} />
-          <polygon points="586,218 578,206 594,206" fill={C.mint} opacity={0.9} />
+          <MarkerArrow d="M 500 60 C 512 80, 518 96, 520 108" color={C.mint} />
+          <polygon points="520,108 512,98 528,98" fill={C.mint} opacity={0.9} />
         </g>
       )}
     </svg>

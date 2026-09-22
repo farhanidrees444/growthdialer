@@ -54,7 +54,7 @@ export function DialerConsoleVisual({ badges = true }: { badges?: boolean }) {
       <circle cx={102} cy={174} r={24} fill={C.violet} />
       <T x={102} y={181} size={14} fill="#fff" anchor="middle">SK</T>
       <T x={138} y={170} size={16}>Sarah Kim</T>
-      <T x={138} y={190} size={12} fill={C.inkSoft} weight={500}>VP Sales · Acme Logistics</T>
+      <T x={138} y={190} size={12} fill={C.inkSoft} weight={500}>VP Sales</T>
       <T x={138} y={212} size={12.5} mono fill={C.ink}>+1 (415) 555-0132</T>
       <rect x={138} y={226} width={92} height={24} rx={12} fill="#fef3e2" />
       <T x={184} y={242} size={11} anchor="middle" fill="#b45309" mono>ATTEMPT 3</T>
@@ -121,9 +121,9 @@ export function DialerConsoleVisual({ badges = true }: { badges?: boolean }) {
         );
       })}
 
-      {/* hand-drawn marker arrow: dispositions → console */}
-      <MarkerArrow d="M 300 446 C 380 430, 440 380, 500 316" />
-      <polygon points="500,316 486,312 494,302" fill={C.teal} opacity={0.9} />
+      {/* hand-drawn marker arrow: one-click wrap-up → live console (right corridor, clear of chips, stops short of the end button) */}
+      <MarkerArrow d="M 566 476 C 626 440, 640 375, 612 332" />
+      <polygon points="612,332 600,328 608,318" fill={C.teal} opacity={0.9} />
 
       {badges && (
         <g>

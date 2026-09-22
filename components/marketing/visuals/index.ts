@@ -6,6 +6,7 @@ export { QueueVisual } from './QueueVisual';
 export { AiSummaryVisual } from './AiSummaryVisual';
 export { CoachingVisual } from './CoachingVisual';
 export { IntegrationsFlowVisual } from './IntegrationsFlowVisual';
+export { ModesVisual } from './ModesVisual';
 export { SpotVisual } from './SpotVisual';
 export type { SpotKind } from './SpotVisual';
 export { VisualFigure } from './VisualFigure';
