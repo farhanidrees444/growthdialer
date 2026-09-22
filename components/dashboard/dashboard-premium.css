@@ -1,207 +1,302 @@
-/**
- * dashboard-premium.css — premium design tokens + shared dashboard utilities.
- *
- * Scoped under `.dashboard-shell` so marketing pages are untouched.
- * All motion is transform/opacity-only and respects prefers-reduced-motion.
- */
+/* ═══════════════════════════════════════════════════════════════════
+   dashboard-premium.css — Part B design-token pass (GrowthDialer app)
+   Cohesive tokens, chrome refinements, state styles and micro-interactions
+   for the in-app "command center" shell. Scoped to the dashboard layout
+   subtree via `.dashboard-shell`.
+   ═══════════════════════════════════════════════════════════════════ */
 
-/* ── Token scale ─────────────────────────────────────────────────────────── */
+/* Tailwind v4: @reference makes utilities available to @apply without
+   emitting them again (globals.css is the real stylesheet entry). */
+@reference "../../app/globals.css";
+
 .dashboard-shell {
-  --dash-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --dash-ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
-  --dash-duration-fast: 120ms;
-  --dash-duration-base: 200ms;
-  --dash-duration-slow: 400ms;
-  --dash-radius-sm: 0.625rem;
-  --dash-radius-md: 1rem;
-  --dash-radius-lg: 1.25rem;
-  --dash-radius-xl: 1.75rem;
-  --dash-border-subtle: rgba(255, 255, 255, 0.07);
-  --dash-border-strong: rgba(255, 255, 255, 0.12);
-  --dash-shadow-panel: 0 24px 90px rgba(0, 0, 0, 0.42);
-  --dash-shadow-pop: 0 10px 36px rgba(0, 0, 0, 0.45);
-  --dash-accent-violet: #8b5cf6;
-  --dash-accent-cyan: #22d3ee;
-  --dash-accent-emerald: #34d399;
-  --dash-accent-amber: #fbbf24;
-  --dash-accent-rose: #fb7185;
+  /* ── Token scale ── */
+  --dash-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --dash-ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --dash-dur-1: 120ms;
+  --dash-dur-2: 200ms;
+  --dash-dur-3: 320ms;
+
+  --dash-radius-sm: 0.5rem;
+  --dash-radius-md: 0.75rem;
+  --dash-radius-lg: 1rem;
+  --dash-radius-xl: 1.25rem;
+  --dash-radius-2xl: 1.5rem;
+
+  --dash-shadow-panel: 0 20px 70px rgba(0, 0, 0, 0.34);
+  --dash-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --dash-shadow-lift: 0 12px 32px -8px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(139, 92, 246, 0.08);
+
+  --dash-line: rgb(39 39 42 / 0.6);
+  --dash-line-soft: rgb(39 39 42 / 0.35);
+  --dash-focus-ring: 0 0 0 3px rgba(139, 92, 246, 0.22);
+
+  --dash-accent: #8b5cf6;
+  --dash-accent-cyan: #06b6d4;
 }
 
-/* ── Typography helpers ──────────────────────────────────────────────────── */
-.dashboard-shell .dash-eyebrow {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: rgb(113 113 122);
+@layer utilities {
+  /* ── Typography tokens ── */
+  .dashboard-shell .dash-eyebrow {
+    font-family: var(--font-jetbrains), ui-monospace, monospace;
+    @apply text-[10px] font-medium uppercase text-zinc-500;
+    letter-spacing: 0.22em;
+  }
+
+  .dashboard-shell .dash-display-title {
+    font-family: var(--font-bricolage), sans-serif;
+    @apply text-[22px] font-semibold tracking-[-0.01em] text-zinc-100;
+  }
+
+  /* ── Page containers ── */
+  .dashboard-shell .dash-page {
+    @apply mx-auto w-full max-w-7xl flex-1 px-4 py-5 sm:px-6 lg:px-8;
+  }
+  .dashboard-shell .dash-page-narrow {
+    @apply mx-auto w-full max-w-4xl flex-1 px-4 py-5 sm:px-6;
+  }
+
+  /* ── Panels ── */
+  .dashboard-shell .dash-panel {
+    @apply relative overflow-hidden rounded-[1.25rem] border backdrop-blur-xl;
+    border-color: var(--dash-line-soft);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015));
+    box-shadow: var(--dash-shadow-panel);
+  }
+  .dashboard-shell .dash-panel-top-line {
+    @apply pointer-events-none absolute inset-x-0 top-0 h-px;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.14), transparent);
+  }
+
+  /* ── Chips & dividers ── */
+  .dashboard-shell .dash-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium;
+    border-color: rgb(255 255 255 / 0.08);
+    background: rgb(255 255 255 / 0.04);
+    color: rgb(161 161 170);
+    transition: border-color var(--dash-dur-2) var(--dash-ease), color var(--dash-dur-2) var(--dash-ease),
+      background var(--dash-dur-2) var(--dash-ease), transform var(--dash-dur-1) var(--dash-ease);
+  }
+  .dashboard-shell .dash-divider {
+    @apply h-px w-full;
+    background: linear-gradient(to right, transparent, rgb(39 39 42 / 0.8), transparent);
+  }
+
+  /* ── Press states (icon + text buttons) ── */
+  .dashboard-shell .dash-press {
+    transition: transform var(--dash-dur-1) var(--dash-ease), background var(--dash-dur-2) var(--dash-ease),
+      color var(--dash-dur-2) var(--dash-ease), border-color var(--dash-dur-2) var(--dash-ease),
+      box-shadow var(--dash-dur-2) var(--dash-ease);
+  }
+  .dashboard-shell .dash-press:active {
+    transform: scale(0.96);
+  }
+
+  /* ── Consistent focus ring ── */
+  .dashboard-shell :where(a, button, [role="button"], input, select, textarea):focus-visible {
+    outline: none;
+    box-shadow: var(--dash-focus-ring);
+  }
+
+  /* ── Tables: sticky headers, refined rows, pagination ── */
+  .dashboard-shell .dash-table-scroll {
+    @apply relative overflow-auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(63 63 70 / 0.8) transparent;
+  }
+  .dashboard-shell .dash-table-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
+  .dashboard-shell .dash-table-scroll::-webkit-scrollbar-thumb {
+    background: rgb(63 63 70 / 0.8);
+    border-radius: 999px;
+  }
+  .dashboard-shell .dash-table-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: rgba(9, 9, 11, 0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgb(39 39 42 / 0.8);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  .dashboard-shell .dash-table-scroll tbody tr {
+    transition: background var(--dash-dur-1) var(--dash-ease);
+  }
+  .dashboard-shell .dash-table-scroll tbody tr:hover {
+    background: rgba(39, 39, 42, 0.4);
+  }
+  .dashboard-shell .dash-pagination {
+    @apply flex items-center justify-between gap-3 border-t px-4 py-3;
+    border-color: var(--dash-line-soft);
+  }
+  .dashboard-shell .dash-page-btn {
+    @apply inline-flex h-8 min-w-8 items-center justify-center gap-1 rounded-lg border px-2 text-xs font-medium text-zinc-400 transition-all duration-150;
+    border-color: rgb(39 39 42 / 0.7);
+    background: rgb(24 24 27 / 0.5);
+  }
+  .dashboard-shell .dash-page-btn:hover:not(:disabled) {
+    @apply text-zinc-100;
+    border-color: rgb(63 63 70 / 0.9);
+    background: rgb(39 39 42 / 0.6);
+    transform: translateY(-1px);
+  }
+  .dashboard-shell .dash-page-btn:active:not(:disabled) { transform: translateY(0) scale(0.97); }
+  .dashboard-shell .dash-page-btn:disabled { @apply cursor-not-allowed opacity-40; }
+  .dashboard-shell .dash-page-btn[aria-current="page"] {
+    @apply text-white;
+    border-color: rgba(139, 92, 246, 0.5);
+    background: rgba(139, 92, 246, 0.14);
+  }
+
+  /* ── Keyboard hint ── */
+  .dashboard-shell .dash-kbd {
+    @apply inline-flex min-h-5 min-w-5 items-center justify-center rounded-md border px-1.5 py-0.5;
+    font-family: var(--font-jetbrains), ui-monospace, monospace;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgb(212 212 216);
+    border-color: rgb(255 255 255 / 0.12);
+    background: rgb(255 255 255 / 0.05);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+  }
+
+  /* ── Live indicators (transform/opacity only) ── */
+  .dashboard-shell .dash-live-dot {
+    @apply relative inline-flex h-2 w-2 shrink-0 rounded-full bg-emerald-400;
+  }
+  .dashboard-shell .dash-live-dot::after {
+    content: "";
+    @apply absolute inset-0 rounded-full bg-emerald-400;
+    animation: dash-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  .dashboard-shell .dash-live-ring {
+    animation: dash-ring 2.4s ease-out infinite;
+  }
+
+  /* ── Skeleton variants ── */
+  .dashboard-shell .dash-sk-line { @apply dash-skeleton h-3 w-full; }
+  .dashboard-shell .dash-sk-title { @apply dash-skeleton h-5 w-40; }
+  .dashboard-shell .dash-sk-avatar { @apply dash-skeleton h-10 w-10 rounded-full!; }
+  .dashboard-shell .dash-sk-card { @apply dash-skeleton h-28 w-full rounded-xl!; }
 }
 
-/* ── Press + focus states ────────────────────────────────────────────────── */
-.dashboard-shell .dash-press {
-  transition: transform var(--dash-duration-fast) var(--dash-ease-out);
-  -webkit-tap-highlight-color: transparent;
-}
-.dashboard-shell .dash-press:active {
-  transform: scale(0.96);
-}
-
-.dashboard-shell .dash-focus-ring:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px rgb(9 9 11), 0 0 0 4px rgba(34, 211, 238, 0.55);
-  border-radius: var(--dash-radius-sm);
-}
-
-/* ── Keyboard key ────────────────────────────────────────────────────────── */
-.dashboard-shell .dash-kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.5rem;
-  padding: 0.15rem 0.4rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
-  font-weight: 600;
-  color: rgb(212 212 216);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom-width: 2px;
-  border-radius: 0.375rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-}
-
-/* ── Live-call dot (pulse) ───────────────────────────────────────────────── */
-@keyframes dash-live-ping {
+/* ── Keyframes (transform / opacity only) ── */
+@keyframes dash-ping {
   0% { transform: scale(1); opacity: 0.9; }
-  80%, 100% { transform: scale(2.4); opacity: 0; }
+  75%, 100% { transform: scale(2.6); opacity: 0; }
 }
-@keyframes dash-live-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.55; }
+@keyframes dash-ring {
+  0% { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(1.45); opacity: 0; }
 }
-.dashboard-shell .dash-live-dot {
-  position: relative;
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 9999px;
-  background: var(--dash-accent-emerald);
-  box-shadow: 0 0 12px rgba(52, 211, 153, 0.9);
-  animation: dash-live-pulse 1.6s ease-in-out infinite;
-  flex-shrink: 0;
+@keyframes dash-shimmer-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(240%); }
 }
-.dashboard-shell .dash-live-dot::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--dash-accent-emerald);
-  animation: dash-live-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+@keyframes dash-breathe {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.06); }
 }
-
-/* ── Dialer mission-control treatments ───────────────────────────────────── */
-.dashboard-shell .dialer-mission-live {
-  background:
-    radial-gradient(ellipse 70% 45% at 50% 0%, rgba(16, 185, 129, 0.07), transparent 65%),
-    transparent;
-}
-
-.dashboard-shell .dialer-line-live {
-  position: relative;
-  border-color: rgba(52, 211, 153, 0.35);
-  box-shadow:
-    0 0 0 1px rgba(52, 211, 153, 0.25),
-    0 0 28px rgba(16, 185, 129, 0.22),
-    0 12px 40px rgba(0, 0, 0, 0.4);
-}
-
-.dashboard-shell .dialer-queue-pos {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.375rem;
-  height: 1.375rem;
-  padding: 0 0.3rem;
-  font-size: 10px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: rgb(196 181 253);
-  background: rgba(139, 92, 246, 0.14);
-  border: 1px solid rgba(139, 92, 246, 0.35);
-  border-radius: 9999px;
-  box-shadow: 0 0 14px rgba(139, 92, 246, 0.25);
-}
-
-/* ── Power banner shimmer ────────────────────────────────────────────────── */
-@keyframes dash-shimmer-slide {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-.dashboard-shell .dash-shimmer-banner {
-  background: linear-gradient(
-    90deg,
-    rgba(124, 58, 237, 0.10) 0%,
-    rgba(6, 182, 212, 0.16) 50%,
-    rgba(124, 58, 237, 0.10) 100%
-  );
-  background-size: 200% 100%;
-  animation: dash-shimmer-slide 8s linear infinite;
-}
-
-/* ── Sparkline draw-in ───────────────────────────────────────────────────── */
 @keyframes dash-spark-draw {
   to { stroke-dashoffset: 0; }
 }
-
-/* ── Table refinements ───────────────────────────────────────────────────── */
-.dashboard-shell .dash-table-scroll thead th {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: rgba(9, 9, 11, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-.dashboard-shell .dash-table-scroll tbody tr {
-  transition: background-color var(--dash-duration-fast) var(--dash-ease-out);
-}
-.dashboard-shell .dash-table-scroll tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.025);
+@keyframes dash-shimmer-x {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 
-/* ── Sonner dark toasts ──────────────────────────────────────────────────── */
-.dashboard-shell [data-sonner-toaster] {
-  --normal-bg: rgba(24, 24, 27, 0.96);
-  --normal-border: rgba(255, 255, 255, 0.1);
-  --normal-text: rgb(244 244 245);
-  --success-bg: rgba(6, 78, 59, 0.95);
-  --success-border: rgba(52, 211, 153, 0.3);
-  --success-text: rgb(209 250 229);
-  --error-bg: rgba(76, 5, 25, 0.95);
-  --error-border: rgba(251, 113, 133, 0.3);
-  --error-text: rgb(255 228 230);
-  font-family: inherit;
-}
-.dashboard-shell [data-sonner-toast] {
-  border-radius: var(--dash-radius-md);
-  box-shadow: var(--dash-shadow-pop);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-
-/* ── Reduced motion ──────────────────────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  .dashboard-shell .dash-live-dot,
-  .dashboard-shell .dash-live-dot::after {
-    animation: none;
+@layer utilities {
+  .dashboard-shell .dash-sweep {
+    animation: dash-shimmer-sweep 2.6s linear infinite;
   }
+  .dashboard-shell .dash-breathe {
+    animation: dash-breathe 3.2s ease-in-out infinite;
+  }
+
+  /* ── Mission-control dialer treatments ── */
   .dashboard-shell .dash-shimmer-banner {
-    animation: none;
+    background: linear-gradient(
+      90deg,
+      rgba(124, 58, 237, 0.1) 0%,
+      rgba(6, 182, 212, 0.16) 50%,
+      rgba(124, 58, 237, 0.1) 100%
+    );
+    background-size: 200% 100%;
+    animation: dash-shimmer-x 8s linear infinite;
   }
+  .dashboard-shell .dialer-mission-live {
+    box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.12), inset 0 0 60px rgba(6, 182, 212, 0.05);
+    transition: box-shadow var(--dash-dur-3) var(--dash-ease);
+  }
+  .dashboard-shell .dialer-line-live {
+    position: relative;
+  }
+  .dashboard-shell .dialer-line-live::before {
+    content: "";
+    @apply pointer-events-none absolute inset-0 rounded-[inherit];
+    box-shadow: 0 0 24px rgba(16, 185, 129, 0.18), inset 0 0 0 1px rgba(16, 185, 129, 0.25);
+    animation: dash-breathe 2.8s ease-in-out infinite;
+  }
+  .dashboard-shell .dialer-queue-pos {
+    font-family: var(--font-jetbrains), ui-monospace, monospace;
+    @apply flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-[10px] font-semibold tabular-nums;
+    color: rgb(167 139 250);
+    border: 1px solid rgba(139, 92, 246, 0.28);
+    background: rgba(139, 92, 246, 0.08);
+  }
+
+  /* ── Stagger helpers for list enter (CSS-driven, no JS needed) ── */
+  .dashboard-shell .dash-stagger > * {
+    animation: dash-fade-up 0.45s var(--dash-ease) both;
+  }
+  .dashboard-shell .dash-stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .dashboard-shell .dash-stagger > *:nth-child(2) { animation-delay: 45ms; }
+  .dashboard-shell .dash-stagger > *:nth-child(3) { animation-delay: 90ms; }
+  .dashboard-shell .dash-stagger > *:nth-child(4) { animation-delay: 135ms; }
+  .dashboard-shell .dash-stagger > *:nth-child(5) { animation-delay: 180ms; }
+  .dashboard-shell .dash-stagger > *:nth-child(6) { animation-delay: 225ms; }
+  .dashboard-shell .dash-stagger > *:nth-child(7) { animation-delay: 270ms; }
+  .dashboard-shell .dash-stagger > *:nth-child(8) { animation-delay: 315ms; }
+
+  /* ── Sonner toast theme (premium dark) ── */
+  .dashboard-shell [data-sonner-toaster] {
+    font-family: var(--font-dm-sans), sans-serif;
+  }
+  .dashboard-shell [data-sonner-toast] {
+    border: 1px solid rgb(255 255 255 / 0.08) !important;
+    background: rgba(24, 24, 27, 0.92) !important;
+    backdrop-filter: blur(16px);
+    border-radius: var(--dash-radius-lg) !important;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5) !important;
+    color: rgb(244 244 245) !important;
+  }
+  .dashboard-shell [data-sonner-toast] [data-description] {
+    color: rgb(161 161 170) !important;
+  }
+  .dashboard-shell [data-sonner-toast][data-type="success"] {
+    border-color: rgba(16, 185, 129, 0.28) !important;
+  }
+  .dashboard-shell [data-sonner-toast][data-type="error"] {
+    border-color: rgba(244, 63, 94, 0.32) !important;
+  }
+}
+
+/* ── Reduced motion: everything above becomes static ── */
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-shell .dash-live-dot::after,
+  .dashboard-shell .dash-live-ring,
+  .dashboard-shell .dash-sweep,
+  .dashboard-shell .dash-breathe,
+  .dashboard-shell .dash-shimmer-banner,
+  .dashboard-shell .dialer-line-live::before {
+    animation: none !important;
+  }
+  .dashboard-shell .dash-stagger > *,
   .dashboard-shell .dash-spark-draw {
     animation: none !important;
-    stroke-dashoffset: 0 !important;
   }
-  .dashboard-shell .dash-press:active {
+  .dashboard-shell .dash-press:active,
+  .dashboard-shell .dash-chip:hover,
+  .dashboard-shell .dash-page-btn:hover:not(:disabled) {
     transform: none;
   }
 }

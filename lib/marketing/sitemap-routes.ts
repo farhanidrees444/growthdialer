@@ -47,6 +47,7 @@ export const MARKETING_ROUTES: SitemapEntry[] = [
   { path: '/compare/vs-dandydialer', priority: 0.7, changeFrequency: 'monthly' },
   { path: '/compare/vs-readymode', priority: 0.7, changeFrequency: 'monthly' },
   { path: '/compare/vs-ringcentral', priority: 0.7, changeFrequency: 'monthly' },
+  { path: '/compare/vs-gohighlevel', priority: 0.7, changeFrequency: 'monthly' },
 ];
 
 export function marketingUrl(path: string) {
