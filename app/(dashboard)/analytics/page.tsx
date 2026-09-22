@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig, useReducedMotion } from 'framer-motion';
 import {
   Phone, Clock, Activity, Zap,
   TrendingUp, TrendingDown, Minus,
@@ -219,6 +219,114 @@ function SkeletonChart({ h = 220 }: { h?: number }) {
   );
 }
 
+// ─── Conversion funnel (real data only — derived from fetched KPIs) ────────────
+
+const FUNNEL_POSITIVE = ['interested', 'callback', 'meeting_booked'];
+
+function ConversionFunnel({ stages }: { stages: { stage: string; value: number; color: string }[] }) {
+  const max = Math.max(...stages.map((s) => s.value), 1);
+  const dials = stages[0]?.value ?? 0;
+  return (
+    <div className="space-y-1">
+      {stages.map((s, i) => {
+        const prev = i === 0 ? null : stages[i - 1];
+        const conv = prev && prev.value > 0 ? (s.value / prev.value) * 100 : null;
+        return (
+          <div key={s.stage}>
+            {conv !== null && (
+              <div className="flex justify-center py-1">
+                <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 text-[10px] font-medium tabular-nums text-white/40">
+                  {conv.toFixed(1)}% conversion
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <span className="w-28 shrink-0 text-xs font-medium text-white/50">{s.stage}</span>
+              <div className="relative h-8 flex-1 overflow-hidden rounded-lg bg-white/[0.04]">
+                <motion.div
+                  className="absolute inset-y-0 left-0 w-full rounded-lg"
+                  style={{
+                    background: `linear-gradient(90deg, ${s.color}55, ${s.color}aa)`,
+                    transformOrigin: 'left center',
+                  }}
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: s.value / max }}
+                  transition={{ duration: 0.8, delay: i * 0.08, ease: 'easeOut' }}
+                />
+                <span className="absolute inset-y-0 left-2.5 flex items-center text-xs font-bold tabular-nums text-white">
+                  {s.value.toLocaleString()}
+                </span>
+              </div>
+              <span className="w-14 shrink-0 text-right text-[11px] tabular-nums text-white/30">
+                {dials > 0 ? ((s.value / dials) * 100).toFixed(1) : '0.0'}%
+              </span>
+            </div>
+          </div>
+        );
+      })}
+      <p className="pt-3 text-[11px] leading-relaxed text-white/30">
+        <span className="font-medium text-white/55">Reading the funnel:</span> bars show the count at each stage,
+        percentages on the right are share of dials, badges show stage-to-stage conversion.
+        Positive outcome = interested, callback, or meeting booked.
+      </p>
+    </div>
+  );
+}
+
+// ─── Channel breakdown (inbound vs outbound share) ───────────────────────────
+
+function ChannelBreakdown({ inbound, outbound }: { inbound: number; outbound: number }) {
+  const reduced = useReducedMotion();
+  const total = inbound + outbound;
+  const rows = [
+    { name: 'Outbound', value: outbound, color: '#8B5CF6' },
+    { name: 'Inbound',  value: inbound,  color: '#06B6D4' },
+  ];
+  return (
+    <div>
+      {total === 0 ? (
+        <EmptyChart />
+      ) : (
+        <div className="flex items-center gap-4">
+          <div className="relative shrink-0">
+            <ResponsiveContainer width={150} height={150}>
+              <PieChart>
+                <Pie
+                  data={rows} dataKey="value" nameKey="name" cx="50%" cy="50%"
+                  innerRadius={46} outerRadius={68} paddingAngle={3} strokeWidth={0}
+                  isAnimationActive={!reduced} animationDuration={900} animationEasing="ease-out"
+                >
+                  {rows.map((r) => <Cell key={r.name} fill={r.color} fillOpacity={0.88} />)}
+                </Pie>
+                <Tooltip content={<GlassTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-lg font-bold tabular-nums text-white">{total.toLocaleString()}</span>
+              <span className="text-[10px] text-white/35">calls</span>
+            </div>
+          </div>
+          <div className="flex-1 min-w-0 space-y-1.5">
+            {rows.map((r) => (
+              <div key={r.name} className="flex items-center gap-2 rounded-lg border border-white/[0.04] bg-white/[0.02] px-2.5 py-1.5">
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: r.color }} />
+                <span className="flex-1 text-xs text-white/60">{r.name}</span>
+                <span className="tabular-nums text-xs font-bold text-white">{r.value.toLocaleString()}</span>
+                <span className="tabular-nums text-[10px] text-white/30">
+                  {((r.value / total) * 100).toFixed(1)}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <p className="mt-3 border-t border-white/[0.05] pt-3 text-[11px] text-white/35">
+        Direction split for this period — calls you placed vs calls you received.
+      </p>
+    </div>
+  );
+}
+
 // ─── Empty state ─────────────────────────────────────────────────────────────
 
 function EmptyChart({ message = 'No data for this period' }: { message?: string }) {
@@ -355,12 +463,37 @@ export default function AnalyticsPage() {
     ];
   }, [data]);
 
+  // Conversion funnel stages + channel totals — derived only from fetched data
+  const funnelStages = useMemo(() => {
+    if (!data) return null;
+    const disp = data.dispositions ?? [];
+    const dispTotal = disp.reduce((s, d) => s + d.count, 0);
+    const positive = disp
+      .filter((d) => FUNNEL_POSITIVE.includes(d.disposition))
+      .reduce((s, d) => s + d.count, 0);
+    return [
+      { stage: 'Dials',             value: data.current.totalCalls,     color: '#8B5CF6' },
+      { stage: 'Connected',         value: data.current.connectedCalls, color: '#06B6D4' },
+      { stage: 'Dispositioned',      value: dispTotal,                   color: '#a78bfa' },
+      { stage: 'Positive outcome',  value: positive,                    color: '#34d399' },
+    ];
+  }, [data]);
+
+  const channelTotals = useMemo(() => {
+    const rows = data?.callsOverTime ?? [];
+    return {
+      inbound:  rows.reduce((s, r) => s + (r.inbound ?? 0), 0),
+      outbound: rows.reduce((s, r) => s + (r.outbound ?? 0), 0),
+    };
+  }, [data?.callsOverTime]);
+
   const hasAiData   = (data?.ai.totalAnalyzed ?? 0) > 0;
   const totalCurrent = data?.current.totalCalls ?? 0;
   const isEmpty     = !loading && totalCurrent === 0;
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
+    <MotionConfig reducedMotion="user">
     <main className="flex-1 overflow-y-auto px-3 py-4 space-y-4 lg:px-6 lg:py-5 lg:space-y-5">
 
       {/* ── Page title ──────────────────────────────────────────────────── */}
@@ -518,6 +651,30 @@ export default function AnalyticsPage() {
                 </ResponsiveContainer>
               )}
             </GCard>
+          )}
+
+          {/* Row: Conversion Funnel + Channel Breakdown */}
+          {loading ? (
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <SkeletonChart h={200} />
+              <SkeletonChart h={200} />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <GCard title="Conversion Funnel" subtitle="From dials to positive outcomes">
+                {funnelStages && funnelStages.every((s) => s.value === 0) ? (
+                  <EmptyChart />
+                ) : (
+                  funnelStages && <ConversionFunnel stages={funnelStages} />
+                )}
+              </GCard>
+              <GCard
+                title="Channel Breakdown"
+                subtitle={`Inbound vs outbound — ${RANGE_OPTIONS.find((r) => r.key === range)?.label}`}
+              >
+                <ChannelBreakdown inbound={channelTotals.inbound} outbound={channelTotals.outbound} />
+              </GCard>
+            </div>
           )}
 
           {/* Row: Disposition Donut + Inbound vs Outbound */}
@@ -827,5 +984,6 @@ export default function AnalyticsPage() {
         </>
       )}
     </main>
+    </MotionConfig>
   );
 }

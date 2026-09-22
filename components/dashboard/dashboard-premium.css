@@ -172,11 +172,23 @@
     animation: dash-ring 2.4s ease-out infinite;
   }
 
-  /* ── Skeleton variants ── */
-  .dashboard-shell .dash-sk-line { @apply dash-skeleton h-3 w-full; }
-  .dashboard-shell .dash-sk-title { @apply dash-skeleton h-5 w-40; }
-  .dashboard-shell .dash-sk-avatar { @apply dash-skeleton h-10 w-10 rounded-full!; }
-  .dashboard-shell .dash-sk-card { @apply dash-skeleton h-28 w-full rounded-xl!; }
+  /* ── Skeleton variants (plain CSS: @apply can't compose the plain-class
+     .dash-skeleton from the referenced stylesheet, and Tailwind v4 @reference
+     only exposes @utility/@theme — so the shimmer base is inlined here) ── */
+  .dashboard-shell .dash-sk-line,
+  .dashboard-shell .dash-sk-title,
+  .dashboard-shell .dash-sk-avatar,
+  .dashboard-shell .dash-sk-card {
+    border-radius: 0.375rem;
+    background-color: rgb(39 39 42 / 0.6);
+    background-image: linear-gradient(100deg, transparent 20%, rgba(255,255,255,0.06) 50%, transparent 80%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s linear infinite;
+  }
+  .dashboard-shell .dash-sk-line { height: 0.75rem; width: 100%; }
+  .dashboard-shell .dash-sk-title { height: 1.25rem; width: 10rem; }
+  .dashboard-shell .dash-sk-avatar { height: 2.5rem; width: 2.5rem; border-radius: 9999px; }
+  .dashboard-shell .dash-sk-card { height: 7rem; width: 100%; border-radius: 0.75rem; }
 }
 
 /* ── Keyframes (transform / opacity only) ── */
@@ -291,7 +303,11 @@
     animation: none !important;
   }
   .dashboard-shell .dash-stagger > *,
-  .dashboard-shell .dash-spark-draw {
+  .dashboard-shell .dash-spark-draw,
+  .dashboard-shell .dash-sk-line,
+  .dashboard-shell .dash-sk-title,
+  .dashboard-shell .dash-sk-avatar,
+  .dashboard-shell .dash-sk-card {
     animation: none !important;
   }
   .dashboard-shell .dash-press:active,
