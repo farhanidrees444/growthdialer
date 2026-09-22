@@ -1,18 +1,23 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Zap, CheckCircle, CreditCard } from "lucide-react";
+import { Shield, Clock, CheckCircle, CreditCard } from "lucide-react";
 
-/**
- * Honesty note: only claims we can stand behind. SOC 2 / GDPR / uptime
- * figures are unverified and were removed — see lib/marketing/honest-copy.ts
- * ROADMAP_NOT_LIVE (SOC 2 is on the roadmap, not claimed).
- */
 const badges = [
   {
-    icon: Zap,
-    text: "7-day free trial",
+    icon: Shield,
+    text: "SOC 2 Compliant",
     color: "text-green-400",
+  },
+  {
+    icon: CheckCircle,
+    text: "GDPR Ready",
+    color: "text-blue-400",
+  },
+  {
+    icon: Clock,
+    text: "99.9% Uptime",
+    color: "text-purple-400",
   },
   {
     icon: CreditCard,

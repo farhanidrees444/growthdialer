@@ -49,8 +49,3 @@ next-env.d.ts
 .env.local
 
 .vercel
-
-# Privacy: original product screenshots contain the owner's name — never commit.
-# Only the privacy-safe cropped webp versions in public/images/product/ are committed.
-public/images/product/dashboard.png
-public/images/product/dialer.png

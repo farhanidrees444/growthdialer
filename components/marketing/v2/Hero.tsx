@@ -6,14 +6,14 @@ import { ArrowRight, Check, ChevronDown, Play } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Reveal } from '@/components/ui/reveal';
 import { HERO, RISK_BULLETS } from './copy';
-import { Magnetic, Noise, Tilt3D, usePrefersReducedMotion } from './motion';
-import { DialerConsoleVisual } from '@/components/marketing/visuals';
+import { Aurora, Magnetic, Noise, usePrefersReducedMotion } from './motion';
+import { HeroConsole3D } from './Hero3d';
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
   const reduced = usePrefersReducedMotion();
 
-  /* camera-pull: as the hero scrolls away the screenshot recedes (scale + drift + tilt) */
+  /* camera-pull: as the hero scrolls away the console recedes (scale + drift + tilt) */
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
   const textY = useTransform(scrollYProgress, [0, 0.6], [0, -80]);
   const textOpacity = useTransform(scrollYProgress, [0, 0.45], [1, 0]);
@@ -25,55 +25,53 @@ export function Hero() {
   const stageStyle = reduced ? undefined : { scale: stageScale, y: stageY, rotateX: stageRotX };
 
   return (
-    <section ref={ref} className="pm-dark">
-      {/* backdrop: faint top glow + film grain — the product UI is the visual */}
+    <section ref={ref} className="relative overflow-hidden pt-36 sm:pt-44">
+      {/* backdrop: animated aurora mesh + grain + dot grid */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-x-0 top-0 h-[560px] bg-[radial-gradient(60%_100%_at_50%_0%,rgba(109,40,217,0.22),transparent_70%)]" />
-        <Noise opacity={0.05} className="mx-noise-light" />
+        <Aurora />
+        <Noise />
+        <div className="pm-dot-grid pm-fade-hero absolute inset-0" />
       </div>
 
-      <div className="pm-container relative pb-16 pt-36 sm:pb-20 sm:pt-44">
-        <motion.div style={textStyle} className="max-w-3xl">
+      <div className="pm-container relative">
+        <motion.div style={textStyle} className="mx-auto max-w-4xl text-center">
           <Reveal>
-            <Link
-              href={HERO.eyebrowHref}
-              className="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 font-mono text-[12px] font-medium text-zinc-300 backdrop-blur transition-colors hover:border-white/30"
-            >
-              <span className="pm-pulse-dot h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            <Link href={HERO.eyebrowHref} className="pm-chip transition-colors hover:border-zinc-950/25">
+              <span className="pm-pulse-dot h-1.5 w-1.5 rounded-full bg-emerald-500" />
               {HERO.eyebrow}
-              <ArrowRight className="h-3.5 w-3.5 text-zinc-500" />
+              <ArrowRight className="h-3.5 w-3.5 text-zinc-400" />
             </Link>
           </Reveal>
 
           <Reveal delay={70}>
-            <h1 className="pm-h-display mt-7 !text-white">{HERO.title}</h1>
+            <h1 className="pm-h-display mt-7">{HERO.title}</h1>
           </Reveal>
 
           <Reveal delay={150}>
-            <p className="pm-lead mt-6 !text-zinc-400">{HERO.lede}</p>
+            <p className="pm-lead mx-auto mt-6 max-w-2xl">{HERO.lede}</p>
           </Reveal>
 
           <Reveal delay={230}>
-            <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Magnetic strength={14} className="w-full sm:w-auto">
-                <a href={HERO.primaryCta.href} className="pm-btn pm-btn-white w-full sm:w-auto">
+                <a href={HERO.primaryCta.href} className="pm-btn pm-btn-primary w-full sm:w-auto">
                   {HERO.primaryCta.label}
                   <ArrowRight className="h-[18px] w-[18px]" />
                 </a>
               </Magnetic>
               <Magnetic strength={14} className="w-full sm:w-auto">
-                <Link href={HERO.secondaryCta.href} className="pm-btn pm-btn-ghostlight w-full sm:w-auto">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-zinc-950">
+                <Link href={HERO.secondaryCta.href} className="pm-btn pm-btn-secondary w-full sm:w-auto">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-950 text-white">
                     <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />
                   </span>
                   {HERO.secondaryCta.label}
                 </Link>
               </Magnetic>
             </div>
-            <ul className="mt-7 flex flex-wrap gap-x-6 gap-y-2">
+            <ul className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
               {RISK_BULLETS.map((r) => (
-                <li key={r} className="inline-flex items-center gap-2 text-[13.5px] font-medium text-zinc-400">
-                  <Check className="h-4 w-4 text-emerald-400" strokeWidth={3} />
+                <li key={r} className="inline-flex items-center gap-2 text-[13.5px] font-medium text-zinc-500">
+                  <Check className="h-4 w-4 text-emerald-500" strokeWidth={3} />
                   {r}
                 </li>
               ))}
@@ -81,19 +79,15 @@ export function Hero() {
           </Reveal>
         </motion.div>
 
-        {/* hero product visual: hand-crafted illustrated dialer console, 3D tilt */}
+        {/* 3D product visual */}
         <motion.div style={stageStyle} className="relative mx-auto mt-14 max-w-6xl sm:mt-16">
           <Reveal delay={200} variant="scale">
-            <Tilt3D maxX={7} maxY={10}>
-              <div className="overflow-hidden rounded-2xl border border-white/10 shadow-[0_60px_120px_-40px_rgba(0,0,0,0.8)]">
-                <DialerConsoleVisual />
-              </div>
-            </Tilt3D>
+            <HeroConsole3D />
           </Reveal>
         </motion.div>
 
         {!reduced && (
-          <div aria-hidden className="mx-scroll-hint pb-2 !text-zinc-500">
+          <div aria-hidden className="mx-scroll-hint pb-2">
             <span>Scroll</span>
             <ChevronDown className="h-4 w-4" />
           </div>
@@ -101,7 +95,7 @@ export function Hero() {
       </div>
 
       {/* fade into next section */}
-      <div aria-hidden className="pointer-events-none relative h-16 bg-gradient-to-b from-transparent to-white sm:h-20" />
+      <div aria-hidden className="pointer-events-none relative h-20 bg-gradient-to-b from-transparent to-white sm:h-28" />
     </section>
   );
 }

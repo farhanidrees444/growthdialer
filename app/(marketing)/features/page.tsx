@@ -4,69 +4,197 @@ import { ArrowRight, BrainCircuit, Plug2, Users } from 'lucide-react';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
 import {
   Faq,
+  FeatureGroup,
   FinalCta,
+  HowItWorks,
+  PageHero,
   PricingTeaser,
   SectionHead,
+  StackBand,
+  type FeatureRow,
 } from '@/components/marketing/v2/Sections';
-import { Reveal } from '@/components/ui/reveal';
 import {
-  AiSummaryVisual,
-  DashboardVisual,
-  DialerConsoleVisual,
-  VisualFigure,
-} from '@/components/marketing/visuals';
+  AiBrief,
+  AnalyticsSnap,
+  BrowserFrame,
+  ClickToCall,
+  ComplianceCard,
+  LiveBadge,
+  NumberHealth,
+  ParallelDial,
+  PowerQueue,
+  TranscriptStream,
+} from '@/components/marketing/v2/Mockups';
+import { Reveal } from '@/components/ui/reveal';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
-  title: 'Features — Real Dialer, AI Summaries & Team Metrics | GrowthDialer',
+  title: 'Features — AI Dialer, Power Dialer & Conversation Intelligence | GrowthDialer',
   description:
-    'Power and parallel dialing modes, AI call summaries, and the team dashboard — illustrated feature by feature.',
+    'Everything GrowthDialer does today: power and parallel dialing, AI call briefs, conversation intelligence, live coaching floor, and number-health monitoring.',
   alternates: { canonical: `${MARKETING_SITE}/features` },
   openGraph: {
     title: 'GrowthDialer Features',
-    description: 'Dialing, AI summaries, and team metrics — illustrated feature by feature.',
+    description: 'Dialing, intelligence, coaching, and deliverability — one calling layer for your team.',
     url: `${MARKETING_SITE}/features`,
   },
 };
+
+const DIALING_ROWS: FeatureRow[] = [
+  {
+    eyebrow: 'Power dialer',
+    title: 'Back-to-back calls. Zero dead air.',
+    body: 'The next number loads the second you disposition. Notes, follow-ups, and logging happen between rings — not after hours.',
+    bullets: [
+      'One-click dispositions keep the rhythm unbroken',
+      'Every call logged automatically — no manual entry',
+      'Local presence dialing lifts pickup rates',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/dialer" badge={<LiveBadge label="Power session · live" />}>
+        <PowerQueue />
+      </BrowserFrame>
+    ),
+  },
+  {
+    eyebrow: 'Parallel dialer',
+    title: 'Three lines. One conversation.',
+    body: 'Dial multiple prospects at once on Pro. Answering-machine detection drops your voicemail and moves on — you only ever talk to humans.',
+    bullets: [
+      'AI answering-machine detection on every line',
+      'Automatic voicemail drop, zero effort',
+      'Connects you the instant a real person picks up',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/dialer/parallel" badge={<LiveBadge label="Multi-line · live" />}>
+        <ParallelDial />
+      </BrowserFrame>
+    ),
+    flip: true,
+  },
+  {
+    eyebrow: 'Click-to-call',
+    title: 'Your browser is the phone.',
+    body: 'No desk phone. No softphone app. Click any number — in your lead list, anywhere — and you’re talking in seconds.',
+    bullets: [
+      'WebRTC calling built into the browser',
+      'Recording on every call, automatically',
+      'Bring your own numbers or buy local ones in-app',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/leads" caption={null}>
+        <ClickToCall />
+      </BrowserFrame>
+    ),
+  },
+];
+
+const INTEL_ROWS: FeatureRow[] = [
+  {
+    eyebrow: 'AI call briefs',
+    title: 'Hang up. Your notes are already written.',
+    body: 'Every recorded call is transcribed and distilled into a 30-second brief — summary, objections, next steps — ready before your rep reaches for the keyboard.',
+    bullets: [
+      'Key points, objections, and follow-ups extracted automatically',
+      'Buying signals flagged the moment they happen',
+      'Briefs stored on the lead timeline with the recording attached',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/calls/rec_8f3k2" badge={<LiveBadge label="Brief ready · 8s after hang-up" />}>
+        <AiBrief />
+      </BrowserFrame>
+    ),
+  },
+  {
+    eyebrow: 'Conversation analytics',
+    title: 'See what “great” sounds like.',
+    body: 'Connect rate, talk time, sentiment, and topics — tracked across every rep and every call. Find the patterns your top performers already know.',
+    bullets: [
+      'Talk-time, sentiment, and keyword trends per rep',
+      'Call scorecards that write themselves',
+      'Leaderboards that update in real time',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/analytics" caption={null}>
+        <AnalyticsSnap />
+      </BrowserFrame>
+    ),
+    flip: true,
+  },
+];
+
+const COACHING_ROWS: FeatureRow[] = [
+  {
+    eyebrow: 'Live coaching floor',
+    title: 'Coach the call, not the recording.',
+    body: 'Managers listen live, read the transcript as it forms, and leave structured feedback after hang-up. Whisper and barge audio are coming soon.',
+    bullets: [
+      'Listen to any live call from the salesfloor',
+      'Post-call feedback tied to the transcript',
+      'Whisper and barge coaching — coming soon',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/salesfloor" badge={<LiveBadge label="Manager listening · live" />}>
+        <TranscriptStream />
+      </BrowserFrame>
+    ),
+  },
+  {
+    eyebrow: 'Records & audit',
+    title: 'Every call, on the record.',
+    body: 'Calls, recordings, dispositions, and DNC flags are logged automatically — the audit trail your compliance review wants, without the spreadsheet.',
+    bullets: [
+      'DNC flags remove leads from every queue instantly',
+      'Recordings stored with transcripts, searchable by lead',
+      'Full disposition history on each lead’s timeline',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/leads/maya-patel" caption={null}>
+        <ComplianceCard />
+      </BrowserFrame>
+    ),
+    flip: true,
+  },
+];
 
 const SUBPAGES = [
   {
     icon: BrainCircuit,
     title: 'AI platform',
-    body: 'Post-call analysis, per-lead AI memory, and the voice-agent roadmap — every pillar labeled live or in development.',
+    body: 'Call briefs live today, conversation intelligence built in, coaching listen mode — and the AI voice agent roadmap.',
     href: '/features/ai',
   },
   {
     icon: Users,
     title: 'Salesfloor',
-    body: 'Coaching listen mode, call takeover, leaderboards, and the numbers your managers actually read.',
+    body: 'Live call monitoring, manager coaching modes, leaderboards, and team performance visibility.',
     href: '/features/salesfloor',
   },
   {
     icon: Plug2,
     title: 'Integrations',
-    body: 'HubSpot is live today. Every other connector is in development — join the waitlist for yours.',
+    body: 'Native CRM integrations are in development — join the waitlist and we’ll notify you when yours ships.',
     href: '/integrations',
   },
 ];
 
 const FEATURES_FAQS = [
   {
-    q: 'What do the illustrations on this page show?',
-    a: 'Hand-crafted illustrations of the real GrowthDialer features — the dialer, AI summaries, and dashboard — drawn to show exactly how each one works. Start a free trial to see the live product.',
+    q: 'Is everything on this page live today?',
+    a: 'Almost. Dialing, recordings, transcripts, AI briefs, analytics, and the coaching listen mode are live. Sequences are coming soon, whisper/barge coaching audio is on the roadmap, and native CRM integrations are waitlist-only. We label each one on the site.',
   },
   {
-    q: 'Is everything on this page live today?',
-    a: 'Almost. Dialing, recordings, transcripts, AI summaries, analytics, coaching listen mode, call takeover, and the HubSpot integration are live. Whisper and barge coaching are on the roadmap; every other CRM connector is waitlist-only.',
+    q: 'How does the AI work — is it a black box?',
+    a: 'No. The AI call brief shows you the transcript it was written from. Summaries, sentiment, and next steps are generated per recorded call, and every brief links back to the recording it came from.',
   },
   {
     q: 'Do I need a phone system to use GrowthDialer?',
-    a: 'No. Calls run in your browser over WebRTC — no desk phones, no installs. Claim a caller ID in the app and start dialing from local numbers.',
+    a: 'No. Calls run in your browser over WebRTC. Bring your own numbers or buy local ones in-app — every number gets spam-risk and reputation scoring.',
   },
   {
     q: 'What about compliance?',
-    a: 'DNC flags remove leads from every queue instantly — Do Not Call is one of the 8 built-in dispositions. Every call, recording, and disposition is logged on the lead timeline, and every number you own gets spam-risk and reputation scoring.',
+    a: 'Recording consent controls, DNC flagging, and a full audit trail are built in: flagged leads leave every queue instantly, and every call, recording, and disposition is logged on the lead timeline. Spam-risk scoring watches every number you own.',
   },
 ] as const;
 
@@ -75,135 +203,45 @@ export default function FeaturesPage() {
     <div className="theme-marketing min-h-screen bg-white text-zinc-950 antialiased">
       <Navbar />
       <main>
-        {/* Editorial hero — left-aligned, no template hero */}
-        <section className="px-5 pb-14 pt-36 sm:pb-16 sm:pt-44 lg:px-8">
-          <div className="pm-container">
-            <Reveal>
-              <p className="pm-eyebrow">Features</p>
-              <h1 className="pm-h-display mt-4 max-w-3xl !text-[clamp(2.4rem,5vw,3.9rem)]">
-                How the product works, illustrated.
-              </h1>
-              <p className="pm-lead mt-6 max-w-2xl">
-                No filler slides: illustrated walkthroughs of the dialer your reps open, the
-                dashboard your managers read, and the AI that writes the notes. Labeled honestly
-                throughout.
-              </p>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
-                  Start free trial <ArrowRight className="h-4 w-4" />
-                </a>
-                <Link href="/contact-sales" className="pm-btn pm-btn-secondary">
-                  Talk to sales
-                </Link>
-              </div>
-            </Reveal>
-          </div>
-        </section>
+        <PageHero
+          eyebrow="Features"
+          title={
+            <>
+              Every part of the call,
+              <br />
+              covered.
+            </>
+          }
+          lede="Dialing, intelligence, coaching, and number health — one calling layer for your team. Labeled honestly: live today, coming soon, or roadmap."
+          cta={{ label: 'Start free trial', href: APP_SIGNUP }}
+        />
 
-        {/* Dialing deep-dive — full-bleed dark panel, illustrated dialer */}
-        <section className="pm-dark">
-          <div aria-hidden className="pm-dark-grid absolute inset-0" />
-          <div aria-hidden className="pm-dark-glow absolute inset-0" />
-          <div className="pm-container relative py-16 sm:py-24">
-            <Reveal>
-              <p className="pm-eyebrow !text-white/60">Dialing</p>
-              <h2 className="pm-h-section-dark mt-4 max-w-2xl">Three modes. One queue. Zero dead air.</h2>
-              <p className="pm-lead-dark mt-5 max-w-2xl">
-                Manual, Power, and Parallel — the mode tabs sit at the top of the real dialer, exactly
-                as shown. Queue, Hot, and Callbacks tabs keep the next call one click away, and the
-                keyboard bar at the bottom keeps reps&apos; hands off the mouse.
-              </p>
-            </Reveal>
-            <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-center">
-              <Reveal>
-                <ul className="space-y-4">
-                  {[
-                    'Manual, Power, and Parallel modes — switch without losing the queue',
-                    'Import a CSV to fill the queue; the dialer prompts you until you do',
-                    'Claim a caller ID before outbound — no number, no dialing',
-                    '8 one-click dispositions (Interested, Meeting Booked, Callback, Voicemail, Gatekeeper, Not Interested, Wrong Number, Do Not Call) with hotkeys',
-                  ].map((t) => (
-                    <li key={t} className="pm-tick !text-zinc-300">
-                      <span aria-hidden className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#6d28d9]" />
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/features/ai"
-                  className="mt-8 inline-flex items-center gap-1.5 text-sm font-semibold text-white"
-                >
-                  How the AI writes your notes <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Reveal>
-              <Reveal delay={120}>
-                <VisualFigure dark caption="Illustrated preview of the AI Dialer — Manual, Power, and Parallel mode tabs, lead card, live call controls, and 8 one-click dispositions.">
-                  <DialerConsoleVisual />
-                </VisualFigure>
-              </Reveal>
-            </div>
-          </div>
-        </section>
+        <FeatureGroup
+          eyebrow="Dialing"
+          title="Dial at the speed of your list."
+          lede="Three ways to call, one rhythm. Pick the mode that fits the moment — the workflow never changes."
+          rows={DIALING_ROWS}
+        />
 
-        {/* AI summaries — light, image-led on desktop */}
-        <section className="pm-section">
-          <div className="pm-container">
-            <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-              <Reveal className="lg:order-2">
-                <p className="pm-eyebrow">AI summaries</p>
-                <h2 className="pm-h-group mt-4">Hang up. The notes are already written.</h2>
-                <p className="pm-body mt-5">
-                  The dashboard&apos;s AI SUMMARIES card runs automatically after calls. Every analyzed
-                  call comes back with a bullet summary, sentiment score, talking points, objections,
-                  buying signals, next steps, and a suggested disposition — and a memory is saved on
-                  the lead so the next call starts smarter.
-                </p>
-                <ul className="mt-7 space-y-3.5">
-                  {[
-                    'Summary, sentiment, objections, buying signals, next steps — per call',
-                    'Suggested disposition proposes the right outcome automatically',
-                    'Playback, transcripts, and AI analysis appear for calls over 30 seconds',
-                  ].map((t) => (
-                    <li key={t} className="pm-tick">
-                      <span aria-hidden className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#6d28d9]" />
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
-              <Reveal delay={120} className="lg:order-1">
-                <VisualFigure caption="Illustrated preview of the AI summary card — bullet notes, sentiment, buying signals, and a suggested disposition, saved to the lead's memory.">
-                  <AiSummaryVisual />
-                </VisualFigure>
-              </Reveal>
-            </div>
-          </div>
-        </section>
+        <div className="pm-divider bg-zinc-50/60">
+          <FeatureGroup
+            eyebrow="Intelligence"
+            title="Every call, understood."
+            lede="Transcription, summaries, and analytics run on every conversation — automatically."
+            rows={INTEL_ROWS}
+          />
+        </div>
 
-        {/* Dashboard & metrics — light, stacked */}
-        <section className="pm-section pm-divider bg-zinc-50/60">
-          <div className="pm-container">
-            <Reveal className="max-w-2xl">
-              <p className="pm-eyebrow">Dashboard</p>
-              <h2 className="pm-h-group mt-4">Your day, at a glance.</h2>
-              <p className="pm-body mt-5">
-                New workspaces open to an activation path — claim a caller ID, import your leads, make
-                your first call, verify the outcome — then the dashboard fills with real numbers: calls
-                today, connect rate, talk time, meetings booked.
-              </p>
-            </Reveal>
-            <Reveal delay={120} className="mt-10">
-              <VisualFigure caption="Illustrated preview of the dashboard — activation path, AI summaries, and the metric cards your day fills in.">
-                <DashboardVisual />
-              </VisualFigure>
-            </Reveal>
-          </div>
-        </section>
+        <FeatureGroup
+          eyebrow="Coaching & records"
+          title="Manage the floor from evidence."
+          lede="Live listening today, whisper and barge on the roadmap — and an audit trail that writes itself."
+          rows={COACHING_ROWS}
+        />
 
-        {/* Subpages */}
-        <div className="pm-section">
+        <div className="pm-section pm-divider bg-zinc-50/60">
           <div className="pm-container">
-            <SectionHead eyebrow="Go deeper" title="Where to next." />
+            <SectionHead eyebrow="Go deeper" title="Explore each surface." />
             <div className="grid gap-4 md:grid-cols-3">
               {SUBPAGES.map((s, i) => (
                 <Reveal key={s.title} delay={i * 80}>
@@ -223,6 +261,8 @@ export default function FeaturesPage() {
           </div>
         </div>
 
+        <StackBand />
+        <HowItWorks />
         <PricingTeaser />
         <div className="pm-divider">
           <Faq items={FEATURES_FAQS} eyebrow="FAQ" title="Straight answers." />

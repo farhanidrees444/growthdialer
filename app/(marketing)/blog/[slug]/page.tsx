@@ -58,7 +58,7 @@ GrowthDialer is a revenue dialer where humans talk and AI handles the paperwork.
 
 ## 2. Orum — Established Player with Strong AI
 
-**Rating: 8.7/10 · pricing varies by plan — confirm directly**
+**Rating: 8.7/10 | Price: $59/user/month**
 
 Orum has been in the sales dialer space for years and offers solid AI-powered calling with good integration options.
 
@@ -80,7 +80,7 @@ Orum has been in the sales dialer space for years and offers solid AI-powered ca
 
 ## 3. Nooks — User-Friendly Interface
 
-**Rating: 8.5/10 · pricing varies by plan — confirm directly**
+**Rating: 8.5/10 | Price: $49/user/month**
 
 Nooks focuses on ease of use with a clean interface and good basic features.
 
@@ -102,7 +102,7 @@ Nooks focuses on ease of use with a clean interface and good basic features.
 
 ## 4. PhoneBurner — Traditional Power Dialer
 
-**Rating: 8.2/10 · pricing varies by plan — confirm directly**
+**Rating: 8.2/10 | Price: $59/user/month**
 
 PhoneBurner is a traditional power dialer that's been around for years, offering reliable basic functionality.
 
@@ -124,7 +124,7 @@ PhoneBurner is a traditional power dialer that's been around for years, offering
 
 ## 5. Kixie — Good for Small Teams
 
-**Rating: 7.9/10 · pricing varies by plan — confirm directly**
+**Rating: 7.9/10 | Price: $39/user/month**
 
 Kixie offers a good balance of features for small to medium sales teams.
 

@@ -5,16 +5,19 @@ import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
 import {
   Faq,
   FinalCta,
+  PageHero,
   RiskBullets,
+  SectionHead,
 } from '@/components/marketing/v2/Sections';
-import { Reveal } from '@/components/ui/reveal';
 import {
-  AiSummaryVisual,
-  DashboardVisual,
-  DialerConsoleVisual,
-  QueueVisual,
-  VisualFigure,
-} from '@/components/marketing/visuals';
+  AiBrief,
+  AnalyticsSnap,
+  BrowserFrame,
+  LiveBadge,
+  ParallelDial,
+  PowerQueue,
+} from '@/components/marketing/v2/Mockups';
+import { Reveal } from '@/components/ui/reveal';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { JsonLd } from '@/components/marketing/v2/JsonLd';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
@@ -22,11 +25,11 @@ import { MARKETING_SITE } from '@/lib/marketing/navigation';
 export const metadata: Metadata = {
   title: 'Product Demo — See GrowthDialer in action | GrowthDialer',
   description:
-    'See how GrowthDialer works: the dialer, queue, AI summaries, and team metrics — illustrated step by step. Start free — 7-day trial, no credit card.',
+    'Walk through the AI Dialer, power dial sessions, call recordings, AI summaries, and team analytics. Start free — 7-day trial, no credit card.',
   alternates: { canonical: `${MARKETING_SITE}/demo` },
   openGraph: {
     title: 'GrowthDialer Demo',
-    description: 'How the product works: dial, record, analyze, and review — in four steps.',
+    description: 'See how outbound teams dial, record, and analyze calls in one workspace.',
     url: `${MARKETING_SITE}/demo`,
   },
 };
@@ -34,43 +37,54 @@ export const metadata: Metadata = {
 const DEMO_STEPS = [
   {
     title: 'Load your queue',
-    body: 'Import a CSV or add leads manually. Queue, Hot, and Callbacks tabs keep reps focused on the right calls — and the dialer prompts you to claim a caller ID before outbound.',
+    body: 'Import a CSV or add leads manually. Queue, Hot, and Callbacks tabs keep reps focused on the right calls.',
     href: '/features',
-    visual: <QueueVisual />,
-    caption:
-      'Illustrated preview of the lead queue — Queue, Hot, and Callbacks tabs with Import CSV and claim-caller-ID prompts. Your leads fill this view.',
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/leads" badge={<LiveBadge label="248 leads queued" />}>
+        <PowerQueue />
+      </BrowserFrame>
+    ),
   },
   {
     title: 'Dial your way',
-    body: 'Manual, Power, and Parallel modes sit in the tab bar — switch without losing the queue. One click and you\u2019re talking; 8 one-click dispositions close out every call.',
+    body: 'Power dial with auto-advance, or parallel lines with voicemail drop. One click and you’re talking.',
     href: '/features',
-    visual: <DialerConsoleVisual />,
-    caption: 'Illustrated preview of the dialer — Manual, Power, and Parallel mode tabs with the AI scoring toggle.',
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/dialer/parallel" badge={<LiveBadge label="3 lines · live" />}>
+        <ParallelDial />
+      </BrowserFrame>
+    ),
   },
   {
     title: 'Hang up — notes are done',
-    body: 'The AI SUMMARIES card runs automatically after calls: bullet summary, sentiment, objections, buying signals, next steps, and a suggested disposition. Playback, transcripts, and AI analysis appear for calls over 30 seconds.',
+    body: 'Eight dispositions, and the AI writes the summary: key points, objections, next steps. No typing after the call.',
     href: '/features/ai',
-    visual: <AiSummaryVisual />,
-    caption: 'Illustrated preview of the AI summary card — bullet notes, sentiment, buying signals, and a suggested disposition.',
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/calls/rec_8f3k2" badge={<LiveBadge label="Brief ready · 8s after hang-up" />}>
+        <AiBrief />
+      </BrowserFrame>
+    ),
   },
   {
     title: 'Review and coach',
-    body: 'The dashboard fills with your numbers from the first call: calls today, connect rate, talk time, meetings booked. Managers open the salesfloor to listen live and leave feedback tied to the transcript.',
+    body: 'Recordings, AI summaries, call logs, and the live sales floor for managers who review async.',
     href: '/features/salesfloor',
-    visual: <DashboardVisual />,
-    caption: 'Illustrated preview of the dashboard — calls today, connect rate, talk time, meetings booked.',
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/analytics" caption={null}>
+        <AnalyticsSnap />
+      </BrowserFrame>
+    ),
   },
 ];
 
 const DEMO_FAQS = [
   {
     q: 'Is this a real product or a staged demo?',
-    a: 'Real product, illustrated tour. The visuals on this page are hand-crafted illustrations of the actual GrowthDialer workflow — the dialer, queue, AI summaries, and dashboard. Start a free trial and you\u2019re in the same product with your own leads.',
+    a: 'Real. Start a free trial and you’re in a live workspace with your own leads — the same dialer shown here.',
   },
   {
     q: 'How fast can we be calling?',
-    a: 'Most teams run their first session within ten minutes of sign-up: claim a caller ID, import a CSV, pick a number, dial.',
+    a: 'Most teams run their first power session within ten minutes of sign-up: import a CSV, pick a number, dial.',
   },
   {
     q: 'Do we need our IT team?',
@@ -87,64 +101,45 @@ export default function DemoPage() {
           '@context': 'https://schema.org',
           '@type': 'WebPage',
           name: 'GrowthDialer Product Demo',
-          description: 'A four-step illustrated tour of how GrowthDialer works.',
+          description: 'Interactive overview of GrowthDialer dialer, AI, and integrations.',
           url: `${MARKETING_SITE}/demo`,
         }}
       />
       <main>
-        {/* Dark hero — step index instead of the old template */}
-        <section className="pm-dark">
-          <div aria-hidden className="pm-dark-grid absolute inset-0" />
-          <div aria-hidden className="pm-dark-glow absolute inset-0" />
-          <div className="pm-container relative pb-16 pt-36 sm:pb-20 sm:pt-44">
-            <Reveal>
-              <p className="pm-eyebrow !text-white/60">Demo</p>
-              <h1 className="pm-h-section-dark mt-4 max-w-3xl">
-                Ten minutes. Four steps. How it works.
-              </h1>
-              <p className="pm-lead-dark mt-5 max-w-2xl">
-                Illustrated, step by step: the queue, the dialer, the AI-written notes, and the
-                dashboard. Walk the flow here, then start a free trial and walk it with your
-                own leads.
-              </p>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
-                  <Play className="h-4 w-4" /> Start free demo
-                </a>
-                <Link href="/contact-sales" className="pm-btn pm-btn-ghostlight">
-                  Talk to sales
-                </Link>
-              </div>
-              <RiskBullets dark className="mt-8" />
-            </Reveal>
-            <Reveal delay={140}>
-              <ol className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {DEMO_STEPS.map((step, i) => (
-                  <li key={step.title} className="pm-card-dark flex items-baseline gap-4 p-5">
-                    <span
-                      aria-hidden
-                      className="pm-step-num !text-[2rem]"
-                      style={{ WebkitTextStroke: '1px rgba(255,255,255,0.35)' }}
-                    >
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    <span className="text-[14.5px] font-semibold text-white">{step.title}</span>
-                  </li>
-                ))}
-              </ol>
-            </Reveal>
-          </div>
-        </section>
+        <PageHero
+          eyebrow="Demo"
+          title={
+            <>
+              See the dialer
+              <br />
+              your reps will actually use.
+            </>
+          }
+          lede="No sandbox smoke-and-mirrors — start a free trial and run real calls with your leads. This page maps the flow first."
+        />
+        <div className="pm-container-narrow -mt-4 pb-8 text-center">
+          <Reveal delay={160}>
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
+                <Play className="h-4 w-4" /> Start free demo
+              </a>
+              <Link href="/contact-sales" className="pm-btn pm-btn-secondary">
+                Talk to sales
+              </Link>
+            </div>
+            <RiskBullets className="mt-6 justify-center" />
+          </Reveal>
+        </div>
 
-        {/* The tour — illustrated, alternating rhythm */}
         <div className="pm-section">
           <div className="pm-container">
+            <SectionHead eyebrow="The tour" title="Four steps. Ten minutes." />
             <div className="space-y-20 sm:space-y-28">
               {DEMO_STEPS.map((step, i) => (
                 <div key={step.title} className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
                   <Reveal className={i % 2 === 1 ? 'lg:order-2' : ''}>
-                    <p aria-hidden className="pm-step-num">0{i + 1}</p>
-                    <h2 className="pm-h-group mt-4">{step.title}</h2>
+                    <p className="pm-eyebrow !mb-3">Step {i + 1}</p>
+                    <h3 className="pm-h-group">{step.title}</h3>
                     <p className="pm-body mt-4 max-w-lg">{step.body}</p>
                     <Link
                       href={step.href}
@@ -153,8 +148,8 @@ export default function DemoPage() {
                       Learn more <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Reveal>
-                  <Reveal delay={120} className={i % 2 === 1 ? 'lg:order-1' : ''}>
-                    <VisualFigure caption={step.caption}>{step.visual}</VisualFigure>
+                  <Reveal delay={120} variant="scale" className={i % 2 === 1 ? 'lg:order-1' : ''}>
+                    {step.visual}
                   </Reveal>
                 </div>
               ))}

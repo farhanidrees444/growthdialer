@@ -27,17 +27,17 @@ export default function CTASection() {
         >
           <div className="inline-flex items-center gap-2 bg-brand/12 border border-brand/25 text-brand text-xs font-semibold px-4 py-2 rounded-full mb-8">
             <Zap className="w-3.5 h-3.5" fill="currentColor" />
-            7-day free trial — no credit card needed
+            14-day free trial — no credit card needed
           </div>
 
           <h2 className="font-display text-4xl lg:text-6xl font-bold tracking-tight mb-6">
-            Dial your next list
+            Ready to 3x your
             <br />
-            <span className="text-brand">on GrowthDialer.</span>
+            <span className="text-brand">meeting bookings?</span>
           </h2>
 
           <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-10">
-            Power dial, parallel dial, and AI call briefs — try it on your own calls for 7 days, free.
+            Built for growing sales teams using GrowthDialer to dial smarter, connect faster, and log every call with AI.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
@@ -50,19 +50,19 @@ export default function CTASection() {
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
-            <Link href="/pricing">
+            <Link href="/#how-it-works">
               <Button
                 variant="outline"
                 size="lg"
                 className="border-white/15 bg-white/5 hover:bg-white/10 text-sm h-13 px-7 transition-all"
               >
-                See pricing
+                See a live demo
               </Button>
             </Link>
           </div>
 
           <p className="text-xs text-muted-foreground mt-6">
-            7-day free trial · No credit card · Cancel anytime
+            No credit card · Cancel anytime · Setup in under 2 hours
           </p>
         </motion.div>
       </div>

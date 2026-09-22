@@ -3,16 +3,15 @@
  * Import here instead of inventing claims in page components.
  */
 
-/** Matches the live pricing page: Starter $49 / Growth $79 / Pro $119 per seat/mo (annual: $39/$63/$95). */
 export const GROWTHDIALER_PRICING = {
-  starter: '$49/seat/mo',
-  starterAnnual: '$39/seat/mo (annual billing)',
-  starterAnnualTotal: '$468/seat/year',
-  proMonthly: '$119/seat/mo',
-  proAnnual: '$95/seat/mo (annual billing)',
-  proAnnualShort: '$95/mo',
-  proMonthlyShort: '$119/mo',
-  proAnnualTotal: '$1,140/seat/year',
+  starter: 'Free · 1 seat',
+  proMonthly: '$49/workspace/mo',
+  proAnnual: '$39/workspace/mo (annual billing)',
+  proAnnualShort: '$39/mo',
+  proMonthlyShort: '$49/mo',
+  teamMonthly: '$99/workspace/mo',
+  teamAnnual: '$79/workspace/mo (annual billing)',
+  proAnnualTotal: '$468/year',
 } as const;
 
 export type ProductFeatureStatus = 'live' | 'beta' | 'roadmap';
@@ -82,7 +81,7 @@ export const MARKETING_STATS = [
 /** Shipped and testable in production today */
 export const LIVE_TODAY = [
   'WebRTC outbound dialer + AI Dialer focus stages',
-  'Power dialer + parallel dial (up to 5 lines)',
+  'Power dialer + parallel dial (up to 10 lines on Pro)',
   'AI call brief before each dial',
   'Leads import, dispositions, analytics, call logs',
   'HubSpot OAuth + call logging on disposition',

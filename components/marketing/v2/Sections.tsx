@@ -1,44 +1,19 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import {
-  AnimatePresence,
-  motion,
-} from 'framer-motion';
-import {
-  ArrowRight,
-  BarChart3,
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  Code2,
-  Layers,
-  MousePointerClick,
-  PhoneCall,
-  Plug2,
-  Rocket,
-  ShieldCheck,
-  Sparkles,
-  Zap,
-} from 'lucide-react';
+import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform, type MotionValue } from 'framer-motion';
+import { ArrowRight, Check, ChevronDown, PhoneCall, Plug2 } from 'lucide-react';
 import { Reveal } from '@/components/ui/reveal';
 import { APP_SIGNUP } from './copy';
+import { FAQS, FINAL_CTA, HOW_IT_WORKS, PERSONAS, PRICING_TEASER, RISK_BULLETS, STACK_BAND, TRUST } from './copy';
 import {
-  DASHBOARD_PANEL,
-  DELIVERABILITY,
-  DIALING_PANEL,
-  FAQS,
-  FINAL_CTA,
-  HOW_IT_WORKS,
-  PERSONAS,
-  PRICING_TEASER,
-  RISK_BULLETS,
-  STACK_BAND,
-  TRUST,
-} from './copy';
-import { INTEGRATION_BRANDS } from '@/lib/marketing/integration-brands';
-import { DashboardVisual, ModesVisual } from '@/components/marketing/visuals';
+  AiBrief,
+  BrowserFrame,
+  LiveBadge,
+  PowerQueue,
+  TranscriptStream,
+} from './Mockups';
 import {
   Aurora,
   Counter,
@@ -47,7 +22,7 @@ import {
   Magnetic,
   Marquee,
   Noise,
-  Tilt3D,
+  usePrefersReducedMotion,
 } from './motion';
 import { cn } from '@/lib/utils';
 
@@ -86,168 +61,7 @@ export function SectionHead({
   );
 }
 
-/* ── Dark product visual panel ──────────────────────────
-   Each feature block is anchored by a hand-crafted SVG product
-   illustration in the LGM register — crisp vector UI, dark
-   annotation pills, marker arrows. Left-aligned editorial head,
-   full-bleed dark panel, compact mode cards beneath the visual. */
-type ModeCard = { title: string; body: string; icon: ReactNode };
-
-const DIALING_ICONS = [
-  <MousePointerClick key="manual" className="h-5 w-5" />,
-  <Zap key="power" className="h-5 w-5" />,
-  <Layers key="parallel" className="h-5 w-5" />,
-];
-const DASHBOARD_ICONS = [
-  <Sparkles key="summaries" className="h-5 w-5" />,
-  <BarChart3 key="analytics" className="h-5 w-5" />,
-  <Rocket key="activation" className="h-5 w-5" />,
-];
-
-type PanelCopy = {
-  eyebrow: string;
-  title: string;
-  lede: string;
-  caption: string;
-  modes: readonly { title: string; body: string }[];
-};
-
-function panelWithIcons(
-  panel: PanelCopy,
-  icons: ReactNode[]
-): { panel: PanelCopy; cards: ModeCard[] } {
-  return {
-    panel,
-    cards: panel.modes.map((m, i) => ({ ...m, icon: icons[i] })),
-  };
-}
-
-export function VisualPanel({
-  eyebrow,
-  title,
-  lede,
-  visual,
-  caption,
-  cards,
-}: {
-  eyebrow: string;
-  title: ReactNode;
-  lede: string;
-  visual: ReactNode;
-  caption: string;
-  cards: ModeCard[];
-}) {
-  return (
-    <section className="pm-dark">
-      <div aria-hidden className="pm-dark-grid absolute inset-0" />
-      <div aria-hidden className="pm-dark-glow absolute inset-x-0 top-0 h-[480px]" />
-      <div aria-hidden className="mx-dark-sheen" />
-      <Noise opacity={0.05} className="mx-noise-light" />
-      <div className="pm-container pm-section relative">
-        <Reveal className="max-w-3xl">
-          <p className="pm-eyebrow !text-violet-300">{eyebrow}</p>
-          <h2 className="pm-h-section-dark">{title}</h2>
-          <p className="pm-lead-dark mt-5 max-w-2xl">{lede}</p>
-        </Reveal>
-
-        <Reveal delay={140} variant="scale" className="mt-12 sm:mt-14">
-          <Tilt3D maxX={5} maxY={8}>
-            <figure className="not-prose">
-              <div className="overflow-hidden rounded-2xl border border-white/10 shadow-[0_60px_120px_-40px_rgba(0,0,0,0.8)]">
-                {visual}
-              </div>
-              <figcaption className="pm-caption !text-zinc-500">{caption}</figcaption>
-            </figure>
-          </Tilt3D>
-        </Reveal>
-
-        <div className="mt-12 grid gap-4 md:grid-cols-3">
-          {cards.map((c, i) => (
-            <Reveal key={c.title} delay={i * 90} className="h-full">
-              <GlowCard className="pm-card-dark h-full p-7">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-500/15 text-violet-300">
-                  {c.icon}
-                </span>
-                <h3 className="mt-5 font-display text-[1.25rem] font-semibold tracking-tight text-white">
-                  {c.title}
-                </h3>
-                <p className="mt-3 text-[14.5px] leading-relaxed text-zinc-400">{c.body}</p>
-              </GlowCard>
-            </Reveal>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export function DialingPanel() {
-  const { panel, cards } = panelWithIcons(DIALING_PANEL, DIALING_ICONS);
-  return (
-    <VisualPanel
-      eyebrow={panel.eyebrow}
-      title={panel.title}
-      lede={panel.lede}
-      visual={<ModesVisual />}
-      caption={panel.caption}
-      cards={cards}
-    />
-  );
-}
-
-export function DashboardPanel() {
-  const { panel, cards } = panelWithIcons(DASHBOARD_PANEL, DASHBOARD_ICONS);
-  return (
-    <VisualPanel
-      eyebrow={panel.eyebrow}
-      title={panel.title}
-      lede={panel.lede}
-      visual={<DashboardVisual />}
-      caption={panel.caption}
-      cards={cards}
-    />
-  );
-}
-
-/* ── Deliverability: light editorial two-column, no fake visuals ── */
-const DELIVERABILITY_ICONS = [
-  <ShieldCheck key="health" className="h-5 w-5" />,
-  <CheckCircle2 key="audit" className="h-5 w-5" />,
-];
-
-export function DeliverabilitySplit() {
-  return (
-    <div className="pm-section">
-      <div className="pm-container grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-20">
-        <Reveal className="lg:sticky lg:top-28 lg:self-start">
-          <p className="pm-eyebrow">{DELIVERABILITY.eyebrow}</p>
-          <h2 className="pm-h-section">{DELIVERABILITY.title}</h2>
-          <p className="pm-lead mt-5 !text-[1.15rem]">{DELIVERABILITY.lede}</p>
-          <div className="mt-8">
-            <Link href="/pricing" className="pm-btn pm-btn-secondary">
-              See the plans <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </Reveal>
-        <div className="space-y-4">
-          {DELIVERABILITY.cards.map((c, i) => (
-            <Reveal key={c.title} delay={i * 100}>
-              <GlowCard className="pm-card pm-card-hover p-8">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/12 text-emerald-700">
-                  {DELIVERABILITY_ICONS[i]}
-                </span>
-                <h3 className="pm-h-card mt-5">{c.title}</h3>
-                <p className="pm-body mt-3">{c.body}</p>
-              </GlowCard>
-            </Reveal>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── LGM-pattern feature group (used by /features pages) ── */
+/* ── LGM-pattern feature group ────────────────────────── */
 export type FeatureRow = {
   eyebrow: string;
   title: string;
@@ -328,7 +142,7 @@ export function PersonaCards() {
   );
 }
 
-/* ── Dark trust band (honest claims only) ──────────────── */
+/* ── Dark trust band ──────────────────────────────────── */
 export function TrustBand() {
   return (
     <section className="pm-dark">
@@ -380,38 +194,7 @@ export function HowItWorks() {
   );
 }
 
-/* ── Stack band: real brand marks, honest statuses ──────
-   HubSpot is live in the product today; every other mark is
-   honestly labeled "In development". No partnership claims. */
-const STACK_ICON_FALLBACK: Record<string, { icon: ReactNode; color: string }> = {
-  Webhooks: { icon: <Plug2 className="h-6 w-6" />, color: '#71717a' },
-  API: { icon: <Code2 className="h-6 w-6" />, color: '#71717a' },
-};
-
-function StackBrandIcon({ name }: { name: string }) {
-  const brand = INTEGRATION_BRANDS.find((b) => b.name === name);
-  if (brand) {
-    const Icon = brand.Icon;
-    return (
-      <span
-        className="flex h-12 w-12 items-center justify-center rounded-2xl text-white"
-        style={{ backgroundColor: brand.color }}
-      >
-        <Icon className="h-6 w-6" />
-      </span>
-    );
-  }
-  const fallback = STACK_ICON_FALLBACK[name];
-  return (
-    <span
-      className="flex h-12 w-12 items-center justify-center rounded-2xl text-white"
-      style={{ backgroundColor: fallback?.color ?? '#71717a' }}
-    >
-      {fallback?.icon}
-    </span>
-  );
-}
-
+/* ── Stack band (honest integrations) ─────────────────── */
 export function StackBand() {
   return (
     <div className="pm-section-tight pm-divider">
@@ -421,31 +204,15 @@ export function StackBand() {
           <h2 className="pm-h-group">{STACK_BAND.title}</h2>
           <p className="pm-body mt-4">{STACK_BAND.lede}</p>
         </Reveal>
-        <div className="mx-auto mt-10 grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-3">
-          {STACK_BAND.items.map((item, i) => (
-            <Reveal key={item.name} delay={i * 60} className="h-full">
-              <div className="pm-card flex h-full items-center gap-4 p-5">
-                <StackBrandIcon name={item.name} />
-                <div className="min-w-0">
-                  <p className="truncate text-[15px] font-semibold text-zinc-950">{item.name}</p>
-                  <p
-                    className={cn(
-                      'mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
-                      item.status === 'live'
-                        ? 'bg-emerald-500/10 text-emerald-700'
-                        : 'bg-zinc-950/[0.05] text-zinc-500'
-                    )}
-                  >
-                    {item.status === 'live' && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
-                    )}
-                    {item.status === 'live' ? 'Live' : 'In development'}
-                  </p>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
+        <Reveal delay={120}>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+            {STACK_BAND.items.map((name) => (
+              <span key={name} className="pm-chip !px-5 !py-2.5 !text-[14px]">
+                {name}
+              </span>
+            ))}
+          </div>
+        </Reveal>
       </div>
     </div>
   );
@@ -710,5 +477,160 @@ export function StatsRow() {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ── Pinned showcase: the voice-AI story in 3 scroll steps
+   Desktop: one pinned/sticky section, visuals crossfade as you scroll.
+   Mobile + reduced-motion: calm stacked cards, no pinning. */
+type ShowcaseStep = {
+  label: string;
+  title: string;
+  body: string;
+  url: string;
+  badge: string;
+  visual: ReactNode;
+};
+
+const SHOWCASE_STEPS: ShowcaseStep[] = [
+  {
+    label: 'Talk',
+    title: 'Reps stay in conversation',
+    body: 'Power and parallel dialing keep the line moving — the next call starts the second the last one is dispositioned.',
+    url: 'app.growthdialer.com/dialer',
+    badge: 'Power session · live',
+    visual: <PowerQueue />,
+  },
+  {
+    label: 'Transcribe',
+    title: 'Every word, captured live',
+    body: 'Calls are transcribed as they happen, with buying signals and objections flagged the moment they surface.',
+    url: 'app.growthdialer.com/calls/rec_8f3k2',
+    badge: 'Transcribing · live',
+    visual: <TranscriptStream />,
+  },
+  {
+    label: 'Brief',
+    title: 'Notes write themselves',
+    body: 'A 30-second brief — summary, objections, next steps — ready before your rep reaches for the keyboard.',
+    url: 'app.growthdialer.com/calls/rec_8f3k2',
+    badge: 'Brief ready · 8s after hang-up',
+    visual: <AiBrief />,
+  },
+];
+
+function PhaseVisual({
+  index,
+  progress,
+  hidden,
+  step,
+}: {
+  index: number;
+  progress: MotionValue<number>;
+  hidden: boolean;
+  step: ShowcaseStep;
+}) {
+  const start = index / SHOWCASE_STEPS.length;
+  const end = (index + 1) / SHOWCASE_STEPS.length;
+  const opacity = useTransform(
+    progress,
+    [Math.max(0, start - 0.12), start + 0.02, end - 0.06, Math.min(1, end + 0.1)],
+    [0, 1, 1, 0]
+  );
+  const y = useTransform(progress, [start, start + 0.12, end - 0.12, end], [48, 0, 0, -48]);
+  const scale = useTransform(progress, [start, start + 0.12, end - 0.12, end], [0.96, 1, 1, 0.98]);
+  return (
+    <motion.div
+      aria-hidden={hidden}
+      className="absolute inset-0 flex items-center"
+      style={{ opacity, y, scale }}
+    >
+      <div className="w-full">
+        <BrowserFrame url={step.url} badge={<LiveBadge label={step.badge} />}>
+          {step.visual}
+        </BrowserFrame>
+      </div>
+    </motion.div>
+  );
+}
+
+function ShowcaseCopy({ active, railScale }: { active: number; railScale?: MotionValue<number> }) {
+  return (
+    <div>
+      <p className="pm-eyebrow">AI intelligence</p>
+      <h2 className="pm-h-section">The call writes its own notes.</h2>
+      <div className="mx-pinned-rail relative mt-8 space-y-7">
+        {railScale && <motion.span aria-hidden className="mx-pinned-fill" style={{ scaleY: railScale }} />}
+        {SHOWCASE_STEPS.map((s, i) => (
+          <div key={s.label} className="mx-step flex gap-5" data-active={active === i}>
+            <span className="mx-step-dot mt-1" aria-hidden />
+            <div>
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6d28d9]">
+                {String(i + 1).padStart(2, '0')} · {s.label}
+              </p>
+              <h3 className="pm-h-card mt-1.5">{s.title}</h3>
+              <p className="pm-body mt-1.5 max-w-sm !text-[14px]">{s.body}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ShowcaseStatic() {
+  return (
+    <div className="pm-section">
+      <div className="pm-container">
+        <ShowcaseCopy active={2} />
+        <div className="mt-12 grid gap-8 lg:grid-cols-3">
+          {SHOWCASE_STEPS.map((s) => (
+            <Reveal key={s.label} variant="scale">
+              <BrowserFrame url={s.url} badge={<LiveBadge label={s.badge} />}>
+                {s.visual}
+              </BrowserFrame>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function PinnedShowcase() {
+  const ref = useRef<HTMLDivElement>(null);
+  const reduced = usePrefersReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] });
+  const [active, setActive] = useState(0);
+  useMotionValueEvent(scrollYProgress, 'change', (v) => {
+    setActive(Math.min(SHOWCASE_STEPS.length - 1, Math.max(0, Math.floor(v * SHOWCASE_STEPS.length))));
+  });
+  const railScale = useTransform(scrollYProgress, [0.08, 0.92], [0, 1]);
+
+  return (
+    <section className="pm-divider relative bg-white">
+      {/* mobile / reduced-motion: calm stacked cards */}
+      <div className="lg:hidden">
+        <ShowcaseStatic />
+      </div>
+
+      {/* desktop: pinned sticky showcase */}
+      <div ref={ref} className="relative hidden lg:block" style={reduced ? undefined : { height: '340vh' }}>
+        {reduced ? (
+          <ShowcaseStatic />
+        ) : (
+          <div className="sticky top-0 flex min-h-screen items-center overflow-hidden py-16">
+            <div className="pm-container grid w-full items-center gap-14 lg:grid-cols-[0.9fr_1.1fr]">
+              <ShowcaseCopy active={active} railScale={railScale} />
+              <div className="relative h-[500px] xl:h-[560px]">
+                {SHOWCASE_STEPS.map((s, i) => (
+                  <PhaseVisual key={s.label} index={i} progress={scrollYProgress} hidden={active !== i} step={s} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

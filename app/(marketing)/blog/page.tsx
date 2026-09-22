@@ -4,7 +4,6 @@ import { ArrowRight, Clock } from 'lucide-react';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
 import { FinalCta, PageHero, SectionHead } from '@/components/marketing/v2/Sections';
 import { Reveal } from '@/components/ui/reveal';
-import { SpotVisual, type SpotKind } from '@/components/marketing/visuals';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
@@ -28,8 +27,6 @@ const POSTS = [
       'We evaluated major AI dialers on connect rate, recording quality, CRM sync, and real per-seat cost — not marketing claims.',
     category: 'Reviews',
     readTime: '18 min read',
-    spot: 'dialer' as SpotKind,
-    spotAlt: 'Illustrated spot: AI dialer call button with signal arcs',
   },
   {
     slug: 'how-parallel-dialing-works',
@@ -39,8 +36,6 @@ const POSTS = [
       'Line counts, AMD behavior, and when parallel beats single-line power dial for B2B outbound teams.',
     category: 'Strategy',
     readTime: '16 min read',
-    spot: 'parallel' as SpotKind,
-    spotAlt: 'Illustrated spot: five parallel dialing lines fanning out',
   },
   {
     slug: 'replace-sdr-team-with-ai',
@@ -50,8 +45,6 @@ const POSTS = [
       'Where AI removes dial-and-log busywork versus where humans still own discovery and closing.',
     category: 'Guide',
     readTime: '19 min read',
-    spot: 'ai' as SpotKind,
-    spotAlt: 'Illustrated spot: AI call brief with sentiment badge',
   },
 ];
 
@@ -84,32 +77,23 @@ export default function BlogPage() {
                 <Reveal key={post.slug} delay={i * 80}>
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="pm-card pm-card-hover group flex h-full flex-col overflow-hidden !p-0"
+                    className="pm-card pm-card-hover group flex h-full flex-col p-7"
                   >
-                    <div className="relative overflow-hidden border-b border-zinc-950/[0.06]">
-                      <SpotVisual
-                        kind={post.spot}
-                        label={post.spotAlt}
-                        className="aspect-[16/9] w-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-[1.03]"
-                      />
+                    <div className="flex items-center justify-between">
+                      <span className="pm-chip">{post.category}</span>
+                      <span className="pm-caption inline-flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" />
+                        {post.readTime}
+                      </span>
                     </div>
-                    <div className="flex flex-1 flex-col p-7">
-                      <div className="flex items-center justify-between">
-                        <span className="pm-chip">{post.category}</span>
-                        <span className="pm-caption inline-flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5" />
-                          {post.readTime}
-                        </span>
-                      </div>
-                      <h2 className="pm-h-card mt-5">{post.title}</h2>
-                      <p className="pm-body mt-3 flex-1 !text-[14.5px]">{post.excerpt}</p>
-                      <div className="mt-6 flex items-center justify-between border-t border-zinc-950/[0.06] pt-4">
-                        <span className="pm-caption">GrowthDialer team · {post.date}</span>
-                        <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-violet-700">
-                          Read
-                          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                        </span>
-                      </div>
+                    <h2 className="pm-h-card mt-5">{post.title}</h2>
+                    <p className="pm-body mt-3 flex-1 !text-[14.5px]">{post.excerpt}</p>
+                    <div className="mt-6 flex items-center justify-between border-t border-zinc-950/[0.06] pt-4">
+                      <span className="pm-caption">GrowthDialer team · {post.date}</span>
+                      <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-violet-700">
+                        Read
+                        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                      </span>
                     </div>
                   </Link>
                 </Reveal>
