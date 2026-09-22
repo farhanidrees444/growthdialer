@@ -214,15 +214,17 @@ function PlanCard({
   const total = unit * seats;
   const current = currentPlan === plan;
   const lower = planIndex(currentPlan) > planIndex(plan);
-  const checkoutUrl = `/api/checkout?plan=${plan}&seats=${seats}&cycle=${cycle}`;
-  const signupUrl = `/signup?plan=${plan}&seats=${seats}&cycle=${cycle}&next=${encodeURIComponent(checkoutUrl)}`;
+  // Billing bypass: checkout is disabled until BILLING_ENABLED=true — every
+  // CTA routes through signup; the plan/seat/cycle selection is preserved.
+  const signupUrl = `/signup?plan=${plan}&seats=${seats}&cycle=${cycle}`;
 
   useEffect(() => {
     if (!highlighted || !ref.current) return;
     ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [highlighted]);
 
-  const cta = current ? 'Current plan' : lower ? 'Included in your plan' : authenticated ? 'Start checkout' : 'Start free trial';
+  // Billing bypass: no checkout exists yet — every CTA starts a free trial.
+  const cta = current ? 'Current plan' : lower ? 'Included in your plan' : 'Start free trial';
 
   return (
     <motion.div
@@ -294,7 +296,7 @@ function PlanCard({
       </ul>
 
       <Link
-        href={current || lower ? '/dashboard' : authenticated ? checkoutUrl : signupUrl}
+        href={current || lower ? '/dashboard' : signupUrl}
         aria-disabled={current}
         className={cn(
           'mt-auto inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold transition',

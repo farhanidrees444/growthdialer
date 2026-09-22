@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { releaseTelephonyNumber } from '@/lib/telephony/telnyx/numbers';
+import { isBillingEnabled } from '@/lib/billing/billing-flag';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  // Billing bypass: never release real telephony numbers while billing is
+  // disabled — there is no subscription state to expire against.
+  if (!isBillingEnabled()) {
+    return NextResponse.json({ released: 0, skipped: 'billing-disabled' });
+  }
+
   const authHeader = req.headers.get('authorization');
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -996,15 +996,42 @@ export default function SettingsPage() {
   const [userEmail, setUserEmail]     = useState('');
   const [recordingStats, setRecordingStats] = useState({ count: 0, hours: 0, storageMb: 0 });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  // Billing bypass: hidden only once the server positively reports it off.
+  const [billingEnabled, setBillingEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/subscription/status', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data && typeof data.billingEnabled === 'boolean') {
+          setBillingEnabled(data.billingEnabled);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  const visibleTabs = billingEnabled === false
+    ? TABS.filter((t) => t.key !== 'billing')
+    : TABS;
+
+  // Bounce off the billing tab if billing is disabled while it's active.
+  useEffect(() => {
+    if (billingEnabled === false && activeTab === 'billing') {
+      setActiveTab('recording');
+    }
+  }, [billingEnabled, activeTab]);
 
   const isDirty = JSON.stringify(settings) !== JSON.stringify(savedSettings);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
+    if (tab === 'billing' && billingEnabled === false) return;
     if (tab === 'billing' || tab === 'security' || tab === 'profile' || tab === 'calling') {
       setActiveTab(tab as TabKey);
     }
-  }, [searchParams]);
+  }, [searchParams, billingEnabled]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -1122,7 +1149,7 @@ export default function SettingsPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* Desktop sidebar tabs */}
         <nav className="hidden w-52 shrink-0 flex-col gap-0.5 border-r border-white/[0.06] p-3 lg:flex">
-          {TABS.map(({ key, label, icon: Icon }) => (
+          {visibleTabs.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               type="button"
@@ -1142,7 +1169,7 @@ export default function SettingsPage() {
 
         {/* Mobile tab bar */}
         <div className="flex border-b border-white/[0.06] overflow-x-auto scrollbar-none lg:hidden shrink-0 absolute top-[57px] left-0 right-0 z-10 bg-[oklch(0.05_0.005_285)]/95 backdrop-blur-xl px-3 py-2 gap-1">
-          {TABS.map(({ key, label, icon: Icon }) => (
+          {visibleTabs.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               type="button"

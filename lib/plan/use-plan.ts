@@ -39,6 +39,20 @@ const CLOSED_PLAN: UsePlanResult = {
   can: () => false,
 };
 
+/**
+ * Billing bypass: while BILLING_ENABLED is off, every feature is open.
+ * Returned instead of CLOSED_PLAN so the UI never gates shut keyless.
+ */
+const OPEN_PLAN: UsePlanResult = {
+  plan: 'pro',
+  billingCycle: 'monthly',
+  seats: 1,
+  status: 'active',
+  trialEndsAt: null,
+  isTrialing: false,
+  can: () => true,
+};
+
 function normalizePlan(value: unknown): PlanKey {
   return value === 'starter' || value === 'growth' || value === 'pro' ? value : 'trial';
 }
@@ -65,8 +79,32 @@ function normalizeStatus(value: unknown): UsePlanResult['status'] {
 export function usePlan(): UsePlanResult {
   const [row, setRow] = useState<SubscriptionRow | null>(null);
   const [closed, setClosed] = useState(true);
+  const [billingDisabled, setBillingDisabled] = useState(false);
 
   const refresh = useCallback(async () => {
+    // Billing bypass: when billing is disabled server-side, everything is
+    // open — skip the subscription lookup entirely.
+    if (!billingDisabled) {
+      try {
+        const res = await fetch('/api/subscription/status', { cache: 'no-store' });
+        if (res.ok) {
+          const json = (await res.json()) as { billingEnabled?: boolean };
+          if (json && json.billingEnabled === false) {
+            setBillingDisabled(true);
+            setRow(null);
+            setClosed(false);
+            return;
+          }
+        }
+      } catch {
+        // Fall through to the subscription lookup on network errors.
+      }
+    } else {
+      setRow(null);
+      setClosed(false);
+      return;
+    }
+
     try {
       const supabase = createClient();
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -97,7 +135,7 @@ export function usePlan(): UsePlanResult {
       setRow(null);
       setClosed(true);
     }
-  }, []);
+  }, [billingDisabled]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -115,6 +153,7 @@ export function usePlan(): UsePlanResult {
   }, [refresh]);
 
   return useMemo(() => {
+    if (billingDisabled) return OPEN_PLAN;
     if (closed || !row) return CLOSED_PLAN;
 
     const plan = normalizePlan(row.plan);

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { stripe, isStripeConfigured, PLANS, type PlanKey } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
+import { isBillingEnabled } from '@/lib/billing/billing-flag';
 
 function stripeReadyForPlan(planData: (typeof PLANS)[PlanKey]) {
   if (!isStripeConfigured()) return false;
@@ -9,6 +10,10 @@ function stripeReadyForPlan(planData: (typeof PLANS)[PlanKey]) {
 }
 
 export async function POST(req: NextRequest) {
+  // Billing bypass: checkout/portal disabled until BILLING_ENABLED=true.
+  if (!isBillingEnabled()) {
+    return Response.json({ error: 'Billing is temporarily unavailable', billingEnabled: false }, { status: 410 });
+  }
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {

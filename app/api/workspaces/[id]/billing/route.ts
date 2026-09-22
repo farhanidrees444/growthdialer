@@ -3,11 +3,16 @@ import { createClient } from '@/lib/supabase/server';
 import { hasPermission, type Role } from '@/lib/auth/permissions';
 import { WORKSPACE_PLANS } from '@/lib/billing/workspace-plans';
 import { countWorkspaceSeatsUsed } from '@/lib/billing/workspace-seats';
+import { isBillingEnabled } from '@/lib/billing/billing-flag';
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  // Billing bypass: checkout/portal disabled until BILLING_ENABLED=true.
+  if (!isBillingEnabled()) {
+    return NextResponse.json({ error: 'Billing is temporarily unavailable', billingEnabled: false }, { status: 410 });
+  }
   const { id } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

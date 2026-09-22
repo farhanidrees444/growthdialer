@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { apiForbidden } from '@/lib/api/errors';
+import { isBillingEnabled } from '@/lib/billing/billing-flag';
 
 /** Billing states that block outbound calling and power dial. */
 const BLOCKED_STATUSES = new Set(['past_due', 'canceled', 'unpaid']);
@@ -13,6 +14,9 @@ export async function assertUserCanPlaceCalls(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<NextResponse | null> {
+  // Billing bypass: no gating while billing is disabled.
+  if (!isBillingEnabled()) return null;
+
   const { data: settings, error } = await supabase
     .from('user_settings')
     .select('plan, plan_status')

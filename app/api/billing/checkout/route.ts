@@ -6,8 +6,13 @@ import {
   stripeReadyForWorkspacePlan,
 } from '@/lib/billing/workspace-plans';
 import { stripe, isStripeConfigured } from '@/lib/stripe';
+import { isBillingEnabled } from '@/lib/billing/billing-flag';
 
 export async function POST(request: NextRequest) {
+  // Billing bypass: checkout/portal disabled until BILLING_ENABLED=true.
+  if (!isBillingEnabled()) {
+    return NextResponse.json({ error: 'Billing is temporarily unavailable', billingEnabled: false }, { status: 410 });
+  }
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
