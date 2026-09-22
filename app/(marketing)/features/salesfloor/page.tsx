@@ -1,59 +1,113 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { ArrowRight, Clock3, Ear, PhoneCall, TrendingUp } from 'lucide-react';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
 import {
   Faq,
+  FeatureGroup,
   FinalCta,
+  PageHero,
   PricingTeaser,
+  type FeatureRow,
 } from '@/components/marketing/v2/Sections';
-import { Reveal } from '@/components/ui/reveal';
-import { CoachingVisual, VisualFigure } from '@/components/marketing/visuals';
+import {
+  AnalyticsSnap,
+  BrowserFrame,
+  LiveBadge,
+  NumberHealth,
+  PowerQueue,
+  TranscriptStream,
+} from '@/components/marketing/v2/Mockups';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
-  title: 'Salesfloor — Live Coaching & Team Metrics | GrowthDialer',
+  title: 'Salesfloor — Live Coaching & Team Visibility | GrowthDialer',
   description:
-    'The GrowthDialer salesfloor: live coaching listen mode, call takeover, team metrics, and number health — illustrated feature by feature.',
+    'The GrowthDialer salesfloor: listen to live calls, leave post-call feedback, and review team performance from real call data. Whisper and barge coaching coming soon.',
   alternates: { canonical: `${MARKETING_SITE}/features/salesfloor` },
   openGraph: {
     title: 'GrowthDialer Salesfloor',
-    description: 'Live call coaching, team metrics, and number health — illustrated, honestly labeled.',
+    description: 'Live call monitoring, coaching feedback, and team analytics for sales managers.',
     url: `${MARKETING_SITE}/features/salesfloor`,
   },
 };
 
-const DASHBOARD_STATS = [
-  { icon: PhoneCall, label: 'Calls today', note: 'Per rep, per team' },
-  { icon: TrendingUp, label: 'Connect rate', note: 'Who is getting through' },
-  { icon: Clock3, label: 'Talk time', note: 'Conversation depth' },
-  { icon: Ear, label: 'Meetings booked', note: 'Outcomes, not dials' },
-];
-
-const COACHING_MODES = [
-  { mode: 'Listen', status: 'Live today', live: true, body: 'Hear any active call without interrupting it.' },
-  { mode: 'Takeover', status: 'Live today', live: true, body: 'Join the call and take the conversation over.' },
-  { mode: 'Whisper', status: 'On the roadmap', live: false, body: 'Coach the rep mid-call — the prospect never hears you.' },
-  { mode: 'Barge', status: 'On the roadmap', live: false, body: 'Step into the call so everyone hears you.' },
+const SALESFLOOR_ROWS: FeatureRow[] = [
+  {
+    eyebrow: 'Live floor',
+    title: 'Every rep, one glance.',
+    body: 'See who’s on a call, who’s in wrap-up, and who’s idle — live. Jump into any conversation the moment it matters.',
+    bullets: [
+      'Real-time rep status across the team',
+      'Listen to any live call with one click',
+      'Jump between calls without dropping the floor view',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/salesfloor" badge={<LiveBadge label="6 reps dialing · live" />}>
+        <TranscriptStream />
+      </BrowserFrame>
+    ),
+  },
+  {
+    eyebrow: 'Coaching',
+    title: 'Feedback that lands, tied to the moment.',
+    body: 'Leave structured feedback after hang-up — linked to the transcript and the exact minute it matters. Whisper and barge audio are coming soon.',
+    bullets: [
+      'Post-call feedback tied to the transcript',
+      'AI briefs give managers the context before they listen',
+      'Whisper and barge coaching — coming soon',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/coaching" badge={<LiveBadge label="Listen mode · live" />}>
+        <PowerQueue />
+      </BrowserFrame>
+    ),
+    flip: true,
+  },
+  {
+    eyebrow: 'Team analytics',
+    title: 'Coach from evidence, not anecdotes.',
+    body: 'Connect rate, talk time, sentiment, and dispositions — per rep, per day. Know exactly who needs help with what, and prove it.',
+    bullets: [
+      'Connect rate and talk-time trends per rep',
+      'Leaderboards that update in real time',
+      'Disposition breakdowns that show where deals stall',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/analytics" caption={null}>
+        <AnalyticsSnap />
+      </BrowserFrame>
+    ),
+  },
+  {
+    eyebrow: 'Number health',
+    title: 'Protect the floor’s connect rate.',
+    body: 'Every number the team dials from is scored for spam risk and reputation — continuously. Rotate a number before it costs you connects.',
+    bullets: [
+      'Spam-risk score on every team number',
+      'Carrier reputation monitoring, always on',
+      'Rotation guidance before deliverability drops',
+    ],
+    visual: (
+      <BrowserFrame url="app.growthdialer.com/numbers" caption={null}>
+        <NumberHealth />
+      </BrowserFrame>
+    ),
+    flip: true,
+  },
 ];
 
 const SALESFLOOR_FAQS = [
   {
     q: 'Can managers really listen live?',
-    a: 'Yes. Managers open the salesfloor, see who is on a call, and listen in one click. Post-call feedback is tied to the transcript so coaching lands on specifics. Call takeover is live today.',
+    a: 'Yes — managers on Growth and Pro open the salesfloor, see who’s on a call, and listen in one click. Post-call feedback is tied to the transcript so coaching lands on specifics.',
   },
   {
-    q: 'What is coming to coaching?',
-    a: 'Whisper and barge audio — coaching a rep mid-call without the prospect hearing (whisper), or stepping in so everyone hears you (barge). Listen mode and takeover are live now.',
+    q: 'What’s coming to coaching?',
+    a: 'Whisper and barge audio — coaching a rep mid-call without the prospect hearing — is coming soon. Today you get listen mode, takeover, and structured post-call feedback.',
   },
   {
     q: 'Does the salesfloor work for remote teams?',
-    a: 'Yes. It is all in the browser — no office, no desk phones. Managers coach from anywhere, and reps dial from anywhere.',
-  },
-  {
-    q: 'How does number health work?',
-    a: 'Every number the team dials from is scored for spam risk and reputation and graded from healthy to critical. Flagged numbers get rotation guidance before they cost you connects.',
+    a: 'Yes. It’s all in the browser — no office, no desk phones. Managers coach from anywhere, and reps dial from anywhere.',
   },
 ] as const;
 
@@ -62,154 +116,25 @@ export default function SalesfloorPage() {
     <div className="theme-marketing min-h-screen bg-white text-zinc-950 antialiased">
       <Navbar />
       <main>
-        {/* Hero — light, left-aligned, with the dashboard's real metric strip */}
-        <section className="px-5 pb-14 pt-36 sm:pb-16 sm:pt-44 lg:px-8">
-          <div className="pm-container">
-            <Reveal>
-              <p className="pm-eyebrow">Salesfloor</p>
-              <h1 className="pm-h-display mt-4 max-w-3xl !text-[clamp(2.4rem,5vw,3.9rem)]">
-                Run the floor from evidence.
-              </h1>
-              <p className="pm-lead mt-6 max-w-2xl">
-                Listen live, take over when it matters, and read the numbers that tell you who needs
-                coaching. Everything below is illustrated from the real product — and every coaching
-                mode is labeled with exactly where it stands.
-              </p>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
-                  Start free trial <ArrowRight className="h-4 w-4" />
-                </a>
-                <Link href="/features" className="pm-btn pm-btn-secondary">
-                  All features
-                </Link>
-              </div>
-            </Reveal>
-            <Reveal delay={140}>
-              <div className="mt-12 grid grid-cols-2 gap-3 lg:grid-cols-4">
-                {DASHBOARD_STATS.map((s) => (
-                  <div key={s.label} className="pm-card p-5">
-                    <s.icon className="h-5 w-5 text-[#6d28d9]" />
-                    <p className="mt-3 text-[15px] font-bold text-zinc-950">{s.label}</p>
-                    <p className="mt-1 text-[12.5px] text-zinc-500">{s.note}</p>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-4 text-[12.5px] text-zinc-400">
-                What the dashboard tracks — live on your workspace from the first call.
-              </p>
-            </Reveal>
-          </div>
-        </section>
+        <PageHero
+          eyebrow="Salesfloor"
+          title={
+            <>
+              The floor, from
+              <br />
+              anywhere.
+            </>
+          }
+          lede="Live call monitoring, coaching feedback, and team analytics — managers run the room without standing in it."
+          cta={{ label: 'Start free trial', href: APP_SIGNUP }}
+        />
 
-        {/* Manager dashboard — illustrated metrics */}
-        <section className="pm-section pm-divider bg-zinc-50/60">
-          <div className="pm-container">
-            <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-              <Reveal>
-                <p className="pm-eyebrow">Team metrics</p>
-                <h2 className="pm-h-group mt-4">The dashboard your managers open first.</h2>
-                <p className="pm-body mt-5">
-                  Calls today, connect rate, talk time, meetings booked — per rep, per day, live.
-                  The Leaderboard and Coaching sections sit in the team nav, and the activation path
-                  gets every new workspace dialing: claim a caller ID, import leads, first call.
-                </p>
-                <ul className="mt-7 space-y-3.5">
-                  {[
-                    'Metric cards that fill in from your first real call',
-                    'Leaderboard and Coaching sections in the team nav',
-                    'AI SUMMARIES card: post-call analysis runs automatically',
-                  ].map((t) => (
-                    <li key={t} className="pm-tick">
-                      <span aria-hidden className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#6d28d9]" />
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
-              <Reveal delay={120}>
-                <VisualFigure caption="Illustrated preview of the salesfloor — live rep rows with listen and take-over coaching actions. Whisper and barge are on the roadmap.">
-                  <CoachingVisual />
-                </VisualFigure>
-              </Reveal>
-            </div>
-          </div>
-        </section>
-
-        {/* Live coaching — dark editorial panel, honest mode map */}
-        <section className="pm-dark">
-          <div aria-hidden className="pm-dark-grid absolute inset-0" />
-          <div aria-hidden className="pm-dark-glow absolute inset-0" />
-          <div className="pm-container relative py-16 sm:py-24">
-            <Reveal className="max-w-2xl">
-              <p className="pm-eyebrow !text-white/60">Live coaching</p>
-              <h2 className="pm-h-section-dark mt-4">Four modes. Two live, two on the way.</h2>
-              <p className="pm-lead-dark mt-5">
-                Managers coach the call, not the recording — but only in the modes that actually
-                shipped. No asterisks, no fine print: the map below is the current state of the
-                product.
-              </p>
-            </Reveal>
-            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {COACHING_MODES.map((m, i) => (
-                <Reveal key={m.mode} delay={i * 80}>
-                  <div className="pm-card-dark h-full p-6">
-                    <span
-                      className={
-                        m.live
-                          ? 'inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-emerald-300'
-                          : 'inline-flex items-center gap-1.5 rounded-full bg-white/[0.07] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-zinc-400'
-                      }
-                    >
-                      <span
-                        aria-hidden
-                        className={m.live ? 'h-1.5 w-1.5 rounded-full bg-emerald-400' : 'h-1.5 w-1.5 rounded-full bg-zinc-500'}
-                      />
-                      {m.status}
-                    </span>
-                    <h3 className="mt-4 text-lg font-bold text-white">{m.mode}</h3>
-                    <p className="mt-2 text-[14px] leading-relaxed text-zinc-400">{m.body}</p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Number health — light, text-led with honest tier chips */}
-        <section className="pm-section">
-          <div className="pm-container-narrow">
-            <Reveal className="text-center">
-              <p className="pm-eyebrow pm-eyebrow-centered">Number health</p>
-              <h2 className="pm-h-group">Protect the floor&apos;s connect rate.</h2>
-              <p className="pm-body mx-auto mt-5 max-w-xl">
-                Every number the team dials from is scored for spam risk and reputation, graded from
-                healthy to critical — and flagged numbers get rotation guidance before they cost you
-                connects.
-              </p>
-            </Reveal>
-            <Reveal delay={120}>
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
-                {['Healthy', 'Good', 'Watch', 'At risk', 'Critical'].map((tier, i) => (
-                  <span
-                    key={tier}
-                    className={
-                      i < 2
-                        ? 'rounded-full bg-emerald-100 px-4 py-1.5 text-[13px] font-semibold text-emerald-800'
-                        : i === 2
-                          ? 'rounded-full bg-amber-100 px-4 py-1.5 text-[13px] font-semibold text-amber-800'
-                          : 'rounded-full bg-red-100 px-4 py-1.5 text-[13px] font-semibold text-red-800'
-                    }
-                  >
-                    {tier}
-                  </span>
-                ))}
-              </div>
-              <p className="mt-4 text-center text-[12.5px] text-zinc-400">
-                The real health grades a number can hold — scored continuously, calm by default.
-              </p>
-            </Reveal>
-          </div>
-        </section>
+        <FeatureGroup
+          eyebrow="For managers"
+          title="Run the room from evidence."
+          lede="Listen live today, whisper and barge on the roadmap — and analytics that show exactly where coaching pays off."
+          rows={SALESFLOOR_ROWS}
+        />
 
         <PricingTeaser />
         <div className="pm-divider">

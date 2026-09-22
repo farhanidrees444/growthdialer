@@ -58,7 +58,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     lead: 'Everything in Starter, plus',
     features: [
       { label: 'AI Dialer (Browse · Preview · Live)' },
-      { label: 'Power + Parallel Dialer (up to 5 lines)' },
+      { label: 'Power + Parallel Dialer (up to 10 lines)' },
       { label: 'Parallel dial + voicemail drop on sessions' },
       { label: 'Local presence caller ID rotation' },
       { label: 'AI brief before every call' },
@@ -121,7 +121,7 @@ export const MARKETING_ADDONS = [
   },
   {
     title: 'Extra parallel lines',
-    price: 'Up to 5 lines',
+    price: 'Up to 10 lines on Pro+',
     desc: 'AMD skip + auto VM drop on machines — included in Pro and Team plans.',
     soon: false,
   },

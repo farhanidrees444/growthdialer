@@ -4,61 +4,125 @@ import { ArrowRight } from 'lucide-react';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
 import {
   Faq,
+  FeatureGroup,
   FinalCta,
+  PageHero,
   PricingTeaser,
+  type FeatureRow,
 } from '@/components/marketing/v2/Sections';
-import { Reveal } from '@/components/ui/reveal';
 import {
-  AiSummaryVisual,
-  DialerConsoleVisual,
-  VisualFigure,
-} from '@/components/marketing/visuals';
+  AiBrief,
+  BrowserFrame,
+  LiveBadge,
+  ParallelDial,
+  TranscriptStream,
+} from '@/components/marketing/v2/Mockups';
 import { cn } from '@/lib/utils';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
-  title: 'AI Platform — Call Analysis, AI Memory & Voice Agents | GrowthDialer',
+  title: 'AI Platform — Conversation Intelligence, Coaching & Voice Agents | GrowthDialer',
   description:
-    'GrowthDialer AI: post-call analysis live today, per-lead AI memory, coaching listen mode — and the AI voice agent in development. Labeled honestly.',
+    'GrowthDialer AI: call briefs live today, conversation intelligence built in when calls are recorded, coaching listen mode on Pro, and the AI voice agent on the roadmap.',
   alternates: { canonical: `${MARKETING_SITE}/features/ai` },
   openGraph: {
     title: 'GrowthDialer AI Platform',
-    description: 'AI that works after every sales call — labeled live or in development, honestly.',
+    description: 'AI that works before, during, and after every sales call — labeled live or roadmap, honestly.',
     url: `${MARKETING_SITE}/features/ai`,
   },
 };
 
-function StatusBadge({ status }: { status: 'live' | 'in development' }) {
+function StatusBadge({ status }: { status: 'live' | 'built-in' | 'coming soon' | 'in development' }) {
   return (
     <span
       className={cn(
         'mb-4 inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em]',
         status === 'live' && 'bg-emerald-100 text-emerald-800',
+        status === 'built-in' && 'bg-[#6d28d9]/10 text-[#6d28d9]',
+        status === 'coming soon' && 'bg-amber-100 text-amber-800',
         status === 'in development' && 'bg-zinc-950/[0.06] text-zinc-600',
       )}
     >
-      {status === 'live' ? 'Live today' : 'In development'}
+      {status === 'live' ? 'Live today' : status === 'built-in' ? 'Built in' : status === 'coming soon' ? 'Coming soon' : 'In development'}
     </span>
   );
 }
 
-const AI_FAQS = [
+const AI_ROWS: FeatureRow[] = [
   {
-    q: 'Which AI features are live today?',
-    a: 'Post-call analysis (bullet summary, sentiment, objections, buying signals, next steps, suggested disposition), transcription on recorded calls, per-lead AI memory across calls, coaching listen mode, and call takeover. Whisper and barge coaching are on the roadmap; the AI voice agent is in development.',
+    eyebrow: 'Conversation intelligence',
+    title: 'The call, understood while it happens.',
+    body: 'When a call is recorded, audio is transcribed and analyzed into a bullet summary, sentiment, detected intent, and keywords — linked to the lead and the recording automatically.',
+    bullets: [
+      'Transcription on every recorded call',
+      'Sentiment, intent, and keyword extraction',
+      'Summary linked to the lead timeline',
+    ],
+    visual: (
+      <>
+        <StatusBadge status="built-in" />
+        <BrowserFrame url="app.growthdialer.com/calls/rec_8f3k2" badge={<LiveBadge label="Brief ready · 8s after hang-up" />}>
+          <AiBrief />
+        </BrowserFrame>
+      </>
+    ),
   },
   {
+    eyebrow: 'AI call brief',
+    title: 'Walk in knowing the room.',
+    body: 'Before you dial, the dialer surfaces company context, prior notes, and a one-line opener tailored to the lead — right where you call from.',
+    bullets: [
+      'Company context pulled before each dial',
+      'Prior call notes and dispositions at a glance',
+      'Suggested opener, tuned to the lead',
+    ],
+    visual: (
+      <>
+        <StatusBadge status="live" />
+        <BrowserFrame url="app.growthdialer.com/dialer" badge={<LiveBadge label="Brief loaded · live" />}>
+          <ParallelDial />
+        </BrowserFrame>
+      </>
+    ),
+    flip: true,
+  },
+  {
+    eyebrow: 'Live coaching',
+    title: 'Managers in the call — without the shoulder tap.',
+    body: 'On Growth and Pro, managers monitor active calls in listen mode and leave structured feedback after hang-up. Whisper and barge audio are coming soon.',
+    bullets: [
+      'Listen to live calls from the salesfloor',
+      'Structured post-call feedback tied to the transcript',
+      'Whisper and barge coaching — coming soon',
+    ],
+    visual: (
+      <>
+        <StatusBadge status="live" />
+        <BrowserFrame url="app.growthdialer.com/salesfloor" badge={<LiveBadge label="Manager listening · live" />}>
+          <TranscriptStream />
+        </BrowserFrame>
+      </>
+    ),
+  },
+];
+
+const AI_FAQS = [
+  {
     q: 'Is the AI voice agent available?',
-    a: 'Not yet. The inbound AI receptionist — answers, qualifies, and routes calls — is in active development. Today you get call analysis, transcription, sentiment, and coaching intelligence on every recorded call.',
+    a: 'Not yet. The inbound AI receptionist — answers, qualifies, and routes calls — is in active development. Today you get AI call briefs, transcription, summaries, sentiment, and coaching intelligence on every recorded call.',
+  },
+  {
+    q: 'Which AI features are live today?',
+    a: 'AI call briefs before each dial, transcription and summaries when calls are recorded, sentiment and keyword analysis, and coaching listen mode for managers. Whisper/barge coaching is coming soon; the voice agent is in development.',
   },
   {
     q: 'Do I have to trust the AI blindly?',
-    a: 'No. Every analysis links back to the transcript and recording it was written from. Reps read the brief; managers can always verify against the source.',
+    a: 'No. Every brief links back to the transcript and recording it was written from. Reps read the 30-second brief; managers can always verify against the source.',
   },
   {
     q: 'Does AI work on unrecorded calls?',
-    a: 'No. Transcription, summaries, and sentiment need a recording to work from. Playback, transcripts, and AI analysis appear for calls over 30 seconds; recording is automatic on browser calls.',
+    a: 'Transcription, summaries, and sentiment need a recording to work from. Recording is automatic on browser calls, with consent controls built in.',
   },
 ] as const;
 
@@ -67,125 +131,47 @@ export default function AiFeaturesPage() {
     <div className="theme-marketing min-h-screen bg-white text-zinc-950 antialiased">
       <Navbar />
       <main>
-        {/* Compact dark hero — left-aligned, with an honest status legend */}
-        <section className="pm-dark">
-          <div aria-hidden className="pm-dark-glow absolute inset-0" />
-          <div className="pm-container relative py-16 sm:py-20">
-            <Reveal>
-              <p className="pm-eyebrow !text-white/60">AI platform</p>
-              <h1 className="pm-h-section-dark mt-4 max-w-2xl">AI that does the paperwork.</h1>
-              <p className="pm-lead-dark mt-5 max-w-2xl">
-                We ship AI where it removes work — analysis after the call, memory across calls.
-                Everything on this page is labeled with exactly where it stands.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-2.5" aria-label="Feature status legend">
-                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-400/15 px-3.5 py-1.5 text-[12px] font-semibold text-emerald-300">
-                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  Live today
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/[0.07] px-3.5 py-1.5 text-[12px] font-semibold text-zinc-300">
-                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-zinc-500" />
-                  In development
-                </span>
-              </div>
-            </Reveal>
-          </div>
-        </section>
+        <PageHero
+          eyebrow="AI platform"
+          title={
+            <>
+              AI that earns its seat
+              <br />
+              on every call.
+            </>
+          }
+          lede="We ship AI where it removes work — prep before the call, analysis after, coaching for managers. Every pillar labeled: live today, coming soon, or in development."
+          cta={{ label: 'Try it free', href: APP_SIGNUP }}
+        />
 
-        {/* Post-call analysis */}
-        <section className="pm-section">
-          <div className="pm-container">
-            <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-              <Reveal>
-                <StatusBadge status="live" />
-                <h2 className="pm-h-group">The call, analyzed the second it ends.</h2>
-                <p className="pm-body mt-5">
-                  When a call is recorded, it is transcribed and analyzed into a bullet summary,
-                  sentiment score, talking points, objections, buying signals, next steps, and a
-                  suggested disposition. A memory is saved on the lead — preferences, objections,
-                  interests, facts — so the next call starts with context instead of cold.
-                </p>
-                <ul className="mt-7 space-y-3.5">
-                  {[
-                    'Bullet summary, sentiment, objections, buying signals, next steps',
-                    'Suggested disposition proposes the right outcome for the rep',
-                    'Per-lead AI memory carries context across every future call',
-                    'Every analysis links back to the transcript and recording it came from',
-                  ].map((t) => (
-                    <li key={t} className="pm-tick">
-                      <span aria-hidden className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#6d28d9]" />
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
-              <Reveal delay={120}>
-                <VisualFigure caption="Illustrated preview of the AI summary card — bullet notes, sentiment, buying signals, a suggested disposition, and per-lead memory.">
-                  <AiSummaryVisual />
-                </VisualFigure>
-              </Reveal>
-            </div>
-          </div>
-        </section>
-
-        {/* AI scoring in the dialer */}
-        <section className="pm-section pm-divider bg-zinc-50/60">
-          <div className="pm-container">
-            <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-              <Reveal className="lg:order-2">
-                <StatusBadge status="live" />
-                <h2 className="pm-h-group">Scoring, right where you dial.</h2>
-                <p className="pm-body mt-5">
-                  An AI scoring toggle sits in the dialer header, next to the Manual, Power, and
-                  Parallel mode tabs. Reps see the Queue, Hot, and Callbacks tabs under it and dial
-                  straight through — the intelligence layer never leaves the workflow.
-                </p>
-                <ul className="mt-7 space-y-3.5">
-                  {[
-                    'AI scoring toggle in the dialer header, always one glance away',
-                    'Scoring feeds the Queue, Hot, and Callbacks tab order',
-                    'No separate AI tool to open, learn, or pay for',
-                  ].map((t) => (
-                    <li key={t} className="pm-tick">
-                      <span aria-hidden className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#6d28d9]" />
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
-              <Reveal delay={120} className="lg:order-1">
-                <VisualFigure caption="Illustrated preview of the dialer header — the AI scoring toggle next to the Manual, Power, and Parallel mode tabs.">
-                  <DialerConsoleVisual badges={false} />
-                </VisualFigure>
-              </Reveal>
-            </div>
-          </div>
-        </section>
+        <FeatureGroup
+          eyebrow="What ships today"
+          title="Four pillars. Three live — one in development."
+          lede="No black-box promises. Each pillar is labeled with exactly where it stands."
+          rows={AI_ROWS}
+        />
 
         {/* Voice agent — roadmap */}
-        <section className="pm-section-tight">
+        <div className="pm-section-tight pm-divider bg-zinc-50/60">
           <div className="pm-container-narrow">
-            <Reveal>
-              <div className="pm-card p-8 text-center sm:p-12">
-                <StatusBadge status="in development" />
-                <h2 className="pm-h-group">AI Voice Agent</h2>
-                <p className="pm-body mx-auto mt-4 max-w-xl">
-                  An inbound AI receptionist that answers, qualifies, and routes calls — 24/7
-                  coverage without hiring overnight staff. In active development now; this panel will
-                  show the real thing when it ships.
-                </p>
-                <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                  <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
-                    Start free trial <ArrowRight className="h-4 w-4" />
-                  </a>
-                  <Link href="/contact-sales" className="pm-btn pm-btn-secondary">
-                    Talk to sales
-                  </Link>
-                </div>
+            <div className="pm-card p-8 text-center sm:p-12">
+              <StatusBadge status="in development" />
+              <h2 className="pm-h-group">AI Voice Agent</h2>
+              <p className="pm-body mx-auto mt-4 max-w-xl">
+                An inbound AI receptionist that answers, qualifies, and routes calls — 24/7 coverage without
+                hiring overnight staff. In active development now.
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
+                  Start free trial <ArrowRight className="h-4 w-4" />
+                </a>
+                <Link href="/contact-sales" className="pm-btn pm-btn-secondary">
+                  Talk to sales
+                </Link>
               </div>
-            </Reveal>
+            </div>
           </div>
-        </section>
+        </div>
 
         <PricingTeaser />
         <div className="pm-divider">

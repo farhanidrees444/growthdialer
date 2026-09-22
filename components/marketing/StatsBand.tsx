@@ -3,17 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 
-/**
- * Honesty note: only numbers we can verify. The lib's MARKETING_STATS strip
- * ("50+ countries", "<4s target summary") isn't in the verified set, so this
- * component defines its own honest stats instead of importing it.
- */
-const stats = [
-  { value: 3, suffix: "", prefix: "", label: "Dialing modes — AI, power, parallel" },
-  { value: 8, suffix: "", prefix: "", label: "Disposition outcomes built in" },
-  { value: 20, suffix: "%", prefix: "", label: "Off with annual billing" },
-  { value: 7, suffix: "-day", prefix: "", label: "Free trial — no credit card" },
-];
+import { MARKETING_STATS } from '@/lib/marketing/honest-copy';
+
+const stats = MARKETING_STATS.map((s) => ({
+  value: s.to,
+  suffix: s.suffix,
+  label: s.label,
+  prefix: s.prefix,
+}));
 
 function Counter({ target, suffix, prefix }: { target: number; suffix: string; prefix: string }) {
   const [count, setCount] = useState(target);

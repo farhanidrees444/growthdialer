@@ -140,9 +140,9 @@ export default function ParallelDialingGuide() {
       <div className="pm-container-narrow max-w-3xl pb-24">
         <ArticleStats
           items={[
-            { value: '5', label: 'Max parallel lines in the dialer' },
+            { value: '10', label: 'Max parallel lines on GrowthDialer Pro' },
             { value: 'AMD', label: 'Auto hang-up on machines + VM drop' },
-            { value: GROWTHDIALER_PRICING.proAnnualShort, label: 'Pro (annual, per seat) includes parallel' },
+            { value: GROWTHDIALER_PRICING.proAnnualShort, label: 'Pro workspace (annual) includes parallel' },
           ]}
         />
 

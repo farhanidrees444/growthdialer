@@ -8,11 +8,11 @@ import { HOME_FAQ_LIVE_VS_ROADMAP } from "@/lib/marketing/honest-copy";
 const faqs = [
   {
     q: "How does GrowthDialer compare to Orum and Nooks?",
-    a: "GrowthDialer pairs power and parallel dialing with built-in conversation intelligence when calls are recorded, plus a manager coaching floor. Plans start at $49/seat/mo — compare features honestly on our pricing and compare pages.",
+    a: "GrowthDialer pairs power and parallel dialing with built-in conversation intelligence when calls are recorded, plus a manager coaching floor. Pro starts at $49/workspace/mo — compare features honestly on our pricing and compare pages.",
   },
   {
     q: "How does parallel dialing work?",
-    a: "On Pro, dial up to 10 lines at once. When a prospect answers, your rep connects on that leg; other lines can be hung up or sent voicemail drop per your session settings.",
+    a: "On Pro and Team, dial up to 10 lines at once. When a prospect answers, your rep connects on that leg; other lines can be hung up or sent voicemail drop per your session settings.",
   },
   {
     q: "Will my numbers get flagged as spam?",
@@ -23,8 +23,8 @@ const faqs = [
     a: "HubSpot OAuth is available today — calls log on disposition with duration and recording link. Salesforce and other CRMs are on the waitlist; every call still lives in Call Logs with disposition and notes.",
   },
   {
-    q: "Is there a free trial?",
-    a: "Yes — every plan starts with a 7-day free trial and does not require a credit card. Paid plans start at $49/seat/mo.",
+    q: "Is there a free plan?",
+    a: "Starter is free (1 seat) with no credit card. Upgrade to Pro or Team when you need parallel dial, coaching floor, or more seats.",
   },
   {
     q: "How long does it take to get set up?",
@@ -47,8 +47,8 @@ const faqs = [
     a: "Managers on Pro and Team can use listen mode on the coaching floor and leave post-call feedback. Whisper and barge into the live audio bridge are planned — not shipped yet.",
   },
   {
-    q: "What's included in the Starter plan?",
-    a: "Starter is $49/seat/mo: the AI dialer, unlimited calls, recordings with transcripts, one local number. CRM sync is waitlist-only today. Growth adds AI call scoring, post-call summaries, the coaching dashboard, and leaderboards; sequences are coming soon.",
+    q: "What's included in the free Starter plan?",
+    a: "Starter is free (1 seat) with web dialer, leads, recording settings, and built-in AI when recordings save. Pro adds parallel dial, AI briefs, coaching floor, and up to 3 seats.",
   },
   {
     q: "Which features are live versus coming soon?",
@@ -62,15 +62,9 @@ export default function FAQSection() {
   return (
     <section className="py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4">
-          FAQ
-        </p>
-        <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4">
-          Questions, answered plainly.
+        <h2 className="font-display text-3xl sm:text-4xl font-bold text-center mb-12">
+          Frequently asked questions
         </h2>
-        <p className="text-sm text-muted-foreground mb-10 max-w-xl">
-          Live features, roadmap items, and pricing — labeled as they are, not as we wish they were.
-        </p>
         <div className="space-y-3">
           {faqs.map((faq, i) => {
             const isOpen = open === i;

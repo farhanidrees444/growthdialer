@@ -71,7 +71,7 @@ export function buildVsFaqs(competitor: PseoCompetitor) {
     },
     {
       question: `How does GrowthDialer pricing compare to ${competitor.name}?`,
-      answer: `GrowthDialer starts at ${GROWTHDIALER_PRICE}/seat/mo with a 7-day free trial and no credit card. ${competitor.name} pricing varies by plan and team size — confirm their current pricing directly before comparing total cost for your team.`,
+      answer: `GrowthDialer starts at ${GROWTHDIALER_PRICE}/seat/mo with a 7-day free trial and no credit card. ${competitor.name} public pricing starts around ${competitor.priceFrom} (${competitor.priceModel.replace('-', ' ')}). Compare total cost at your team size before switching.`,
     },
     {
       question: `Can I migrate from ${competitor.name} to GrowthDialer?`,
