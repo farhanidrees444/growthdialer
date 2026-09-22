@@ -653,3 +653,136 @@
 .app-root[data-theme='light'] :is(.bg-violet-600, .bg-violet-500, .bg-purple-600, .bg-emerald-600, .bg-emerald-500, .bg-red-600, .bg-red-500, .bg-rose-600, .bg-rose-500, .bg-amber-500, .bg-blue-600, .bg-cyan-600, .bg-fuchsia-600, .bg-indigo-600, .bg-green-600) [class*='text-white'] {
   color: #ffffff;
 }
+.app-root[data-theme='light'] :where(.text-amber-100) {
+  color: #b45309;
+}
+.app-root[data-theme='light'] :where(.text-amber-100\/75) {
+  color: color-mix(in srgb, #b45309 75%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-amber-100\/90) {
+  color: color-mix(in srgb, #b45309 90%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-amber-200) {
+  color: #b45309;
+}
+.app-root[data-theme='light'] :where(.text-amber-200\/85) {
+  color: color-mix(in srgb, #b45309 85%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-amber-300) {
+  color: #d97706;
+}
+.app-root[data-theme='light'] :where(.text-amber-300\/60) {
+  color: color-mix(in srgb, #d97706 60%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-amber-300\/80) {
+  color: color-mix(in srgb, #d97706 80%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-blue-300) {
+  color: #2563eb;
+}
+.app-root[data-theme='light'] :where(.text-cyan-100) {
+  color: #0e7490;
+}
+.app-root[data-theme='light'] :where(.text-cyan-100\/90) {
+  color: color-mix(in srgb, #0e7490 90%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-cyan-200) {
+  color: #0e7490;
+}
+.app-root[data-theme='light'] :where(.text-cyan-200\/70) {
+  color: color-mix(in srgb, #0e7490 70%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-cyan-200\/75) {
+  color: color-mix(in srgb, #0e7490 75%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-cyan-200\/80) {
+  color: color-mix(in srgb, #0e7490 80%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-cyan-300) {
+  color: #0891b2;
+}
+.app-root[data-theme='light'] :where(.text-cyan-300\/55) {
+  color: color-mix(in srgb, #0891b2 55%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-cyan-300\/80) {
+  color: color-mix(in srgb, #0891b2 80%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-emerald-100) {
+  color: #047857;
+}
+.app-root[data-theme='light'] :where(.text-emerald-100\/80) {
+  color: color-mix(in srgb, #047857 80%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-emerald-200) {
+  color: #047857;
+}
+.app-root[data-theme='light'] :where(.text-emerald-200\/60) {
+  color: color-mix(in srgb, #047857 60%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-emerald-300) {
+  color: #059669;
+}
+.app-root[data-theme='light'] :where(.text-emerald-300\/80) {
+  color: color-mix(in srgb, #059669 80%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-indigo-300) {
+  color: #4f46e5;
+}
+.app-root[data-theme='light'] :where(.text-red-200\/50) {
+  color: color-mix(in srgb, #b91c1c 50%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-red-200\/60) {
+  color: color-mix(in srgb, #b91c1c 60%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-red-200\/70) {
+  color: color-mix(in srgb, #b91c1c 70%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-red-300) {
+  color: #dc2626;
+}
+.app-root[data-theme='light'] :where(.text-red-300\/60) {
+  color: color-mix(in srgb, #dc2626 60%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-red-300\/80) {
+  color: color-mix(in srgb, #dc2626 80%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-red-300\/90) {
+  color: color-mix(in srgb, #dc2626 90%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-rose-300) {
+  color: #e11d48;
+}
+.app-root[data-theme='light'] :where(.text-rose-300\/70) {
+  color: color-mix(in srgb, #e11d48 70%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-violet-100\/70) {
+  color: color-mix(in srgb, #6d28d9 70%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-violet-100\/80) {
+  color: color-mix(in srgb, #6d28d9 80%, transparent);
+}
+.app-root[data-theme='light'] :where(.text-violet-200) {
+  color: #6d28d9;
+}
+.app-root[data-theme='light'] :where(.text-violet-300) {
+  color: #7c3aed;
+}
+.app-root[data-theme='light'] :where(.text-violet-300\/80) {
+  color: color-mix(in srgb, #7c3aed 80%, transparent);
+}
+
+/* Disposition modal: selected option gradient deepened so white text stays readable */
+.app-root[data-theme='light'] :where(.from-violet-500\/24) {
+  --tw-gradient-from: rgb(124 58 237 / 0.55);
+}
+.app-root[data-theme='light'] :where(.via-cyan-400\/16) {
+  --tw-gradient-via: rgb(34 211 238 / 0.38);
+}
+.app-root[data-theme='light'] :where(.to-emerald-400\/14) {
+  --tw-gradient-to: rgb(52 211 153 / 0.32);
+}
+
+/* Power countdown ring track (SVG presentation attribute) */
+.app-root[data-theme='light'] circle[stroke='rgba(255,255,255,0.06)'] {
+  stroke: rgb(9 9 11 / 0.08);
+}
