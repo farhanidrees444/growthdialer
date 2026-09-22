@@ -648,9 +648,12 @@
   --tw-gradient-via: color-mix(in srgb, #ffffff 60%, transparent);
 }
 
-/* ─── Accent-background exception: keep white text on solid accent fills ─── */
+/* ─── Accent-background exception: keep white text on solid accent fills
+   and strong accent gradients (exact class tokens only) ─── */
 .app-root[data-theme='light'] :is(.bg-violet-600, .bg-violet-500, .bg-purple-600, .bg-emerald-600, .bg-emerald-500, .bg-red-600, .bg-red-500, .bg-rose-600, .bg-rose-500, .bg-amber-500, .bg-blue-600, .bg-cyan-600, .bg-fuchsia-600, .bg-indigo-600, .bg-green-600)[class*='text-white'],
-.app-root[data-theme='light'] :is(.bg-violet-600, .bg-violet-500, .bg-purple-600, .bg-emerald-600, .bg-emerald-500, .bg-red-600, .bg-red-500, .bg-rose-600, .bg-rose-500, .bg-amber-500, .bg-blue-600, .bg-cyan-600, .bg-fuchsia-600, .bg-indigo-600, .bg-green-600) [class*='text-white'] {
+.app-root[data-theme='light'] :is(.bg-violet-600, .bg-violet-500, .bg-purple-600, .bg-emerald-600, .bg-emerald-500, .bg-red-600, .bg-red-500, .bg-rose-600, .bg-rose-500, .bg-amber-500, .bg-blue-600, .bg-cyan-600, .bg-fuchsia-600, .bg-indigo-600, .bg-green-600) [class*='text-white'],
+.app-root[data-theme='light'] :is(.from-emerald-500, .from-emerald-600, .from-red-500, .from-red-600, .from-violet-600, .from-amber-500, .from-slate-500, .from-slate-600)[class*='text-white'],
+.app-root[data-theme='light'] :is(.from-emerald-500, .from-emerald-600, .from-red-500, .from-red-600, .from-violet-600, .from-amber-500, .from-slate-500, .from-slate-600) [class*='text-white'] {
   color: #ffffff;
 }
 .app-root[data-theme='light'] :where(.text-amber-100) {
@@ -785,4 +788,13 @@
 /* Power countdown ring track (SVG presentation attribute) */
 .app-root[data-theme='light'] circle[stroke='rgba(255,255,255,0.06)'] {
   stroke: rgb(9 9 11 / 0.08);
+}
+
+/* Loading skeletons + native select options */
+.app-root[data-theme='light'] :where(.bg-\[\#08080A\]) {
+  background-color: #fafafa;
+}
+.app-root[data-theme='light'] option:where(.bg-\[\#111\]) {
+  background-color: #ffffff;
+  color: #18181b;
 }
