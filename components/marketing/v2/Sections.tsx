@@ -1,12 +1,29 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform, type MotionValue } from 'framer-motion';
 import { ArrowRight, Check, ChevronDown, PhoneCall, Plug2 } from 'lucide-react';
 import { Reveal } from '@/components/ui/reveal';
 import { APP_SIGNUP } from './copy';
 import { FAQS, FINAL_CTA, HOW_IT_WORKS, PERSONAS, PRICING_TEASER, RISK_BULLETS, STACK_BAND, TRUST } from './copy';
+import {
+  AiBrief,
+  BrowserFrame,
+  LiveBadge,
+  PowerQueue,
+  TranscriptStream,
+} from './Mockups';
+import {
+  Aurora,
+  Counter,
+  GlowCard,
+  GradientBorder,
+  Magnetic,
+  Marquee,
+  Noise,
+  usePrefersReducedMotion,
+} from './motion';
 import { cn } from '@/lib/utils';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -93,7 +110,7 @@ export function FeatureGroup({
                 </ul>
               </Reveal>
               <Reveal delay={120} variant="scale" className={cn(row.flip && 'lg:order-1')}>
-                {row.visual}
+                <div className="mx-visual">{row.visual}</div>
               </Reveal>
             </div>
           ))}
@@ -111,12 +128,12 @@ export function PersonaCards() {
         <SectionHead eyebrow={PERSONAS.eyebrow} title={PERSONAS.title} />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {PERSONAS.cards.map((p, i) => (
-            <Reveal key={p.role} delay={i * 80}>
-              <article className="pm-card pm-card-hover flex h-full flex-col p-7">
+            <Reveal key={p.role} delay={i * 80} className="h-full">
+              <GlowCard className="pm-card pm-card-hover flex h-full flex-col p-7">
                 <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-[#6d28d9]">{p.role}</p>
                 <h3 className="pm-h-card mt-4">{p.headline}</h3>
                 <p className="pm-body mt-3 flex-1 !text-[14.5px]">{p.body}</p>
-              </article>
+              </GlowCard>
             </Reveal>
           ))}
         </div>
@@ -131,18 +148,20 @@ export function TrustBand() {
     <section className="pm-dark">
       <div aria-hidden className="pm-dark-grid absolute inset-0" />
       <div aria-hidden className="pm-dark-glow absolute inset-x-0 top-0 h-[480px]" />
+      <div aria-hidden className="mx-dark-sheen" />
+      <Aurora dark className="opacity-70" />
       <div className="pm-container pm-section relative">
         <SectionHead dark eyebrow={TRUST.eyebrow} title={TRUST.title} lede={TRUST.lede} />
         <div className="grid gap-4 md:grid-cols-3">
           {TRUST.items.map((t, i) => (
-            <Reveal key={t.title} delay={i * 90}>
-              <article className="pm-card-dark h-full p-7">
+            <Reveal key={t.title} delay={i * 90} className="h-full">
+              <GlowCard className="pm-card-dark h-full p-7">
                 <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-500/15 text-violet-300">
                   {i === 0 ? <PhoneCall className="h-5 w-5" /> : i === 1 ? <Plug2 className="h-5 w-5" /> : <Check className="h-5 w-5" />}
                 </span>
                 <h3 className="mt-5 font-display text-[1.25rem] font-semibold tracking-tight text-white">{t.title}</h3>
                 <p className="mt-3 text-[14.5px] leading-relaxed text-zinc-400">{t.body}</p>
-              </article>
+              </GlowCard>
             </Reveal>
           ))}
         </div>
@@ -211,25 +230,31 @@ export function PricingTeaser() {
         />
         <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
           {PRICING_TEASER.plans.map((p, i) => (
-            <Reveal key={p.name} delay={i * 90}>
-              <article
-                className={cn(
-                  'pm-card h-full p-8 text-center',
-                  p.popular && 'border-zinc-950/[0.16] shadow-[0_24px_56px_-20px_rgba(9,9,11,0.22)]'
-                )}
-              >
-                {p.popular && (
-                  <span className="mb-4 inline-block rounded-full bg-zinc-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
-                    Most popular
-                  </span>
-                )}
-                <p className="text-[15px] font-semibold text-zinc-950">{p.name}</p>
-                <p className="mt-3">
-                  <span className="pm-stat-num">{p.price}</span>
-                  <span className="pm-small"> / seat / mo</span>
-                </p>
-                <p className="pm-small mt-3">{p.tag}</p>
-              </article>
+            <Reveal key={p.name} delay={i * 90} className="h-full">
+              {p.popular ? (
+                <GradientBorder className="h-full">
+                  <article className="pm-card h-full border-0 p-8 text-center shadow-none">
+                    <span className="mb-4 inline-block rounded-full bg-zinc-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
+                      Most popular
+                    </span>
+                    <p className="text-[15px] font-semibold text-zinc-950">{p.name}</p>
+                    <p className="mt-3">
+                      <span className="pm-stat-num">{p.price}</span>
+                      <span className="pm-small"> / seat / mo</span>
+                    </p>
+                    <p className="pm-small mt-3">{p.tag}</p>
+                  </article>
+                </GradientBorder>
+              ) : (
+                <article className="pm-card h-full p-8 text-center">
+                  <p className="text-[15px] font-semibold text-zinc-950">{p.name}</p>
+                  <p className="mt-3">
+                    <span className="pm-stat-num">{p.price}</span>
+                    <span className="pm-small"> / seat / mo</span>
+                  </p>
+                  <p className="pm-small mt-3">{p.tag}</p>
+                </article>
+              )}
             </Reveal>
           ))}
         </div>
@@ -322,6 +347,9 @@ export function FinalCta() {
     <section className="pm-dark">
       <div aria-hidden className="pm-dark-grid absolute inset-0" />
       <div aria-hidden className="pm-dark-glow absolute inset-x-0 top-0 h-[420px]" />
+      <div aria-hidden className="mx-dark-sheen" />
+      <Aurora dark className="opacity-70" />
+      <Noise className="mx-noise-light" opacity={0.06} />
       <div className="pm-container relative py-24 text-center sm:py-32">
         <Reveal>
           <p className="pm-eyebrow pm-eyebrow-centered !text-violet-300">Get started</p>
@@ -330,12 +358,16 @@ export function FinalCta() {
         </Reveal>
         <Reveal delay={140}>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a href={FINAL_CTA.primaryCta.href} className="pm-btn pm-btn-white">
-              {FINAL_CTA.primaryCta.label} <ArrowRight className="h-4 w-4" />
-            </a>
-            <Link href={FINAL_CTA.secondaryCta.href} className="pm-btn pm-btn-ghostlight">
-              {FINAL_CTA.secondaryCta.label}
-            </Link>
+            <Magnetic strength={14} className="w-full sm:w-auto">
+              <a href={FINAL_CTA.primaryCta.href} className="pm-btn pm-btn-white w-full sm:w-auto">
+                {FINAL_CTA.primaryCta.label} <ArrowRight className="h-4 w-4" />
+              </a>
+            </Magnetic>
+            <Magnetic strength={14} className="w-full sm:w-auto">
+              <Link href={FINAL_CTA.secondaryCta.href} className="pm-btn pm-btn-ghostlight w-full sm:w-auto">
+                {FINAL_CTA.secondaryCta.label}
+              </Link>
+            </Magnetic>
           </div>
           <RiskBullets dark className="mt-8 justify-center" />
         </Reveal>
@@ -374,6 +406,8 @@ export function PageHero({
   return (
     <section className="relative overflow-hidden px-5 pb-16 pt-36 sm:pb-20 sm:pt-44 lg:px-8">
       <div aria-hidden className="pointer-events-none absolute inset-0">
+        <Aurora />
+        <Noise />
         <div className="pm-dot-grid pm-fade-hero absolute inset-0 opacity-70" />
         <div className="pm-glow-top absolute inset-x-0 top-0 h-[420px]" />
       </div>
@@ -384,12 +418,218 @@ export function PageHero({
           {lede && <p className="pm-lead mx-auto mt-6 max-w-2xl">{lede}</p>}
           {cta && (
             <div className="mt-9">
-              <a href={cta.href} className="pm-btn pm-btn-primary">
-                {cta.label} <ArrowRight className="h-4 w-4" />
-              </a>
+              <Magnetic strength={14}>
+                <a href={cta.href} className="pm-btn pm-btn-primary">
+                  {cta.label} <ArrowRight className="h-4 w-4" />
+                </a>
+              </Magnetic>
             </div>
           )}
         </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ── Capability marquee (honest feature strip, no logos) ── */
+const CAPABILITIES = [
+  'Power dialing',
+  'Parallel dialing',
+  'Click-to-call',
+  'AI call briefs',
+  'Live transcription',
+  'Sentiment analysis',
+  'Number health scoring',
+  'Voicemail drop',
+  'Call recordings',
+  'DNC respect',
+];
+
+export function CapabilityMarquee() {
+  return (
+    <div className="border-b border-zinc-950/[0.07] bg-white py-5">
+      <Marquee items={CAPABILITIES} label="GrowthDialer capabilities" />
+    </div>
+  );
+}
+
+/* ── Honest product stats with animated counters ─────────
+   Every number is a verifiable product fact — no traction,
+   revenue, or user counts are claimed anywhere. */
+const HONEST_STATS = [
+  { to: 3, suffix: '', label: 'Dialing modes — power, parallel, click-to-call' },
+  { to: 8, suffix: '', label: 'One-click dispositions per call' },
+  { to: 20, suffix: '%', label: 'Saved with annual billing' },
+  { to: 7, suffix: '-day', label: 'Free trial — no credit card' },
+];
+
+export function StatsRow() {
+  return (
+    <div className="pm-section-tight pm-divider bg-white">
+      <div className="pm-container">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4">
+          {HONEST_STATS.map((s, i) => (
+            <Reveal key={s.label} delay={i * 80} className="text-center">
+              <Counter to={s.to} suffix={s.suffix} className="pm-stat-num" />
+              <p className="pm-stat-label mx-auto max-w-[220px]">{s.label}</p>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Pinned showcase: the voice-AI story in 3 scroll steps
+   Desktop: one pinned/sticky section, visuals crossfade as you scroll.
+   Mobile + reduced-motion: calm stacked cards, no pinning. */
+type ShowcaseStep = {
+  label: string;
+  title: string;
+  body: string;
+  url: string;
+  badge: string;
+  visual: ReactNode;
+};
+
+const SHOWCASE_STEPS: ShowcaseStep[] = [
+  {
+    label: 'Talk',
+    title: 'Reps stay in conversation',
+    body: 'Power and parallel dialing keep the line moving — the next call starts the second the last one is dispositioned.',
+    url: 'app.growthdialer.com/dialer',
+    badge: 'Power session · live',
+    visual: <PowerQueue />,
+  },
+  {
+    label: 'Transcribe',
+    title: 'Every word, captured live',
+    body: 'Calls are transcribed as they happen, with buying signals and objections flagged the moment they surface.',
+    url: 'app.growthdialer.com/calls/rec_8f3k2',
+    badge: 'Transcribing · live',
+    visual: <TranscriptStream />,
+  },
+  {
+    label: 'Brief',
+    title: 'Notes write themselves',
+    body: 'A 30-second brief — summary, objections, next steps — ready before your rep reaches for the keyboard.',
+    url: 'app.growthdialer.com/calls/rec_8f3k2',
+    badge: 'Brief ready · 8s after hang-up',
+    visual: <AiBrief />,
+  },
+];
+
+function PhaseVisual({
+  index,
+  progress,
+  hidden,
+  step,
+}: {
+  index: number;
+  progress: MotionValue<number>;
+  hidden: boolean;
+  step: ShowcaseStep;
+}) {
+  const start = index / SHOWCASE_STEPS.length;
+  const end = (index + 1) / SHOWCASE_STEPS.length;
+  const opacity = useTransform(
+    progress,
+    [Math.max(0, start - 0.12), start + 0.02, end - 0.06, Math.min(1, end + 0.1)],
+    [0, 1, 1, 0]
+  );
+  const y = useTransform(progress, [start, start + 0.12, end - 0.12, end], [48, 0, 0, -48]);
+  const scale = useTransform(progress, [start, start + 0.12, end - 0.12, end], [0.96, 1, 1, 0.98]);
+  return (
+    <motion.div
+      aria-hidden={hidden}
+      className="absolute inset-0 flex items-center"
+      style={{ opacity, y, scale }}
+    >
+      <div className="w-full">
+        <BrowserFrame url={step.url} badge={<LiveBadge label={step.badge} />}>
+          {step.visual}
+        </BrowserFrame>
+      </div>
+    </motion.div>
+  );
+}
+
+function ShowcaseCopy({ active, railScale }: { active: number; railScale?: MotionValue<number> }) {
+  return (
+    <div>
+      <p className="pm-eyebrow">AI intelligence</p>
+      <h2 className="pm-h-section">The call writes its own notes.</h2>
+      <div className="mx-pinned-rail relative mt-8 space-y-7">
+        {railScale && <motion.span aria-hidden className="mx-pinned-fill" style={{ scaleY: railScale }} />}
+        {SHOWCASE_STEPS.map((s, i) => (
+          <div key={s.label} className="mx-step flex gap-5" data-active={active === i}>
+            <span className="mx-step-dot mt-1" aria-hidden />
+            <div>
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6d28d9]">
+                {String(i + 1).padStart(2, '0')} · {s.label}
+              </p>
+              <h3 className="pm-h-card mt-1.5">{s.title}</h3>
+              <p className="pm-body mt-1.5 max-w-sm !text-[14px]">{s.body}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ShowcaseStatic() {
+  return (
+    <div className="pm-section">
+      <div className="pm-container">
+        <ShowcaseCopy active={2} />
+        <div className="mt-12 grid gap-8 lg:grid-cols-3">
+          {SHOWCASE_STEPS.map((s) => (
+            <Reveal key={s.label} variant="scale">
+              <BrowserFrame url={s.url} badge={<LiveBadge label={s.badge} />}>
+                {s.visual}
+              </BrowserFrame>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function PinnedShowcase() {
+  const ref = useRef<HTMLDivElement>(null);
+  const reduced = usePrefersReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] });
+  const [active, setActive] = useState(0);
+  useMotionValueEvent(scrollYProgress, 'change', (v) => {
+    setActive(Math.min(SHOWCASE_STEPS.length - 1, Math.max(0, Math.floor(v * SHOWCASE_STEPS.length))));
+  });
+  const railScale = useTransform(scrollYProgress, [0.08, 0.92], [0, 1]);
+
+  return (
+    <section className="pm-divider relative bg-white">
+      {/* mobile / reduced-motion: calm stacked cards */}
+      <div className="lg:hidden">
+        <ShowcaseStatic />
+      </div>
+
+      {/* desktop: pinned sticky showcase */}
+      <div ref={ref} className="relative hidden lg:block" style={reduced ? undefined : { height: '340vh' }}>
+        {reduced ? (
+          <ShowcaseStatic />
+        ) : (
+          <div className="sticky top-0 flex min-h-screen items-center overflow-hidden py-16">
+            <div className="pm-container grid w-full items-center gap-14 lg:grid-cols-[0.9fr_1.1fr]">
+              <ShowcaseCopy active={active} railScale={railScale} />
+              <div className="relative h-[500px] xl:h-[560px]">
+                {SHOWCASE_STEPS.map((s, i) => (
+                  <PhaseVisual key={s.label} index={i} progress={scrollYProgress} hidden={active !== i} step={s} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

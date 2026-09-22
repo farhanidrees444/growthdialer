@@ -176,6 +176,16 @@ function SocialIcon({ label }: { label: string }) {
 }
 
 export function Footer() {
+  // GoHighLevel is the founder's named competitor: surface it first in the
+  // Compare column (the column renders its first 6 links).
+  const footerColumns = FOOTER_COLUMNS.map((col) =>
+    col.heading === 'Compare'
+      ? {
+          ...col,
+          links: [{ label: 'vs GoHighLevel', href: '/compare/vs-gohighlevel' }, ...col.links],
+        }
+      : col
+  );
   return (
     <footer className="pm-divider relative overflow-hidden bg-white px-5 pb-10 pt-16 lg:px-8 lg:pt-20">
       <div className="pm-container">
@@ -206,7 +216,7 @@ export function Footer() {
           </div>
 
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">
-            {FOOTER_COLUMNS.map((col) => (
+            {footerColumns.map((col) => (
               <div key={col.heading}>
                 <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
                   {col.heading}

@@ -116,6 +116,18 @@ export const GROWTHDIALER_FEATURES: Record<FeatureKey, boolean | string> = {
 /** Competitors indexed by programmatic /vs/[slug] routes */
 export const PSEO_COMPETITORS: PseoCompetitor[] = [
   {
+    slug: 'gohighlevel',
+    name: 'GoHighLevel',
+    domain: 'gohighlevel.com',
+    category: 'power-dialer',
+    priceFrom: '$97+',
+    priceModel: 'workspace',
+    positioning:
+      'All-in-one marketing platform — funnels, email, SMS, and CRM — where the dialer is one feature among many.',
+    knownFor: 'all-in-one marketing automation',
+    featureOverrides: { aiSummaries: 'Limited', conversationIntel: 'Limited', liveCoaching: false },
+  },
+  {
     slug: 'orum',
     name: 'Orum',
     domain: 'orum.com',

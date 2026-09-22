@@ -305,7 +305,7 @@ export function AnalyticsSnap() {
       <div className="grid grid-cols-3 gap-3">
         {kpis.map((k) => (
           <div key={k.label} className="rounded-2xl border border-zinc-950/[0.06] bg-zinc-50/70 p-3.5">
-            <p className="pm-stat-num !text-[1.7rem]">{k.value}</p>
+            <p className="pm-stat-num !text-[1.4rem] sm:!text-[1.7rem]">{k.value}</p>
             <p className="pm-stat-label !mt-1.5 !text-[10px]">{k.label}</p>
             <p className="mt-1 inline-flex items-center gap-1 text-[11.5px] font-semibold text-emerald-700">
               {k.up ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
@@ -315,14 +315,19 @@ export function AnalyticsSnap() {
         ))}
       </div>
       <p className="mt-5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-zinc-400">Connects per day</p>
-      <div className="mt-2 flex h-28 items-end gap-2">
-        {days.map((x) => (
-          <div key={x.d + x.v} className="flex flex-1 flex-col items-center gap-1.5">
-            <div
-              className="w-full rounded-t-lg bg-gradient-to-t from-[#6d28d9]/25 to-[#6d28d9]"
-              style={{ height: `${x.v}%` }}
-            />
-            <span className="text-[10px] font-medium text-zinc-400">{x.d}</span>
+      {/* NOTE: the inner bar-track wrapper has a definite height (flex-1 of the
+          stretched h-28 column) so the percentage bar heights resolve. A bare %
+          height against an auto-height column collapses to zero. */}
+      <div className="mt-2 flex h-28 items-stretch gap-2">
+        {days.map((x, i) => (
+          <div key={`${x.d}-${i}`} className="flex flex-1 flex-col items-center">
+            <div className="flex w-full flex-1 items-end">
+              <div
+                className="w-full rounded-t-lg bg-gradient-to-t from-[#6d28d9]/25 to-[#6d28d9]"
+                style={{ height: `${x.v}%` }}
+              />
+            </div>
+            <span className="mt-1.5 text-[10px] font-medium text-zinc-400">{x.d}</span>
           </div>
         ))}
       </div>

@@ -2,14 +2,17 @@ import type { Metadata } from 'next';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
 import { Hero } from '@/components/marketing/v2/Hero';
 import {
+  CapabilityMarquee,
   Faq,
   FeatureGroup,
   FinalCta,
   HowItWorks,
   PersonaCards,
+  PinnedShowcase,
   PositioningStrip,
   PricingTeaser,
   StackBand,
+  StatsRow,
   TrustBand,
   type FeatureRow,
 } from '@/components/marketing/v2/Sections';
@@ -172,6 +175,7 @@ export default function LandingPage() {
       <Navbar />
       <main>
         <Hero />
+        <CapabilityMarquee />
         <PositioningStrip line={POSITIONING.line} />
         <StackBand />
         <FeatureGroup
@@ -195,8 +199,10 @@ export default function LandingPage() {
           lede="Connect rate is a deliverability game. We watch every number like it's our own."
           rows={NUMBER_ROWS}
         />
+        <PinnedShowcase />
         <TrustBand />
         <HowItWorks />
+        <StatsRow />
         <PricingTeaser />
         <div className="pm-divider">
           <Faq />
