@@ -34,7 +34,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCalls } from "@/contexts/calls-context";
 import { EASE_OUT, SPRING } from "@/components/marketing/live-floor/motion";
-import { BrandLogo } from "@/components/ui/brand-logo";
+import { BrandLogo, type BrandLogoVariant } from "@/components/ui/brand-logo";
+import { useSiteTheme } from "@/components/theme/site-theme";
 import { SidebarSkeleton } from "@/components/layout/sidebar-skeleton";
 import { getNavItemAccent, resolveRouteAccent } from "@/lib/ui/route-accents";
 import { usePlan } from "@/lib/plan/use-plan";
@@ -371,6 +372,9 @@ function SidebarInner({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isOpen, close } = useMobileNav();
+  const { isDark } = useSiteTheme();
+  const logoVariant: BrandLogoVariant = isDark ? 'icon-dark' : 'icon-light';
+  const logoTone: 'onDark' | 'onLight' = isDark ? 'onDark' : 'onLight';
   const sidebarCounts = useSidebarCounts();
   const reduceMotion = useReducedMotion();
   const [isDesktopViewport, setIsDesktopViewport] = useState(false);
@@ -432,7 +436,8 @@ function SidebarInner({
             onClick={close}
             showText={!isCollapsed}
             size="sidebar"
-            variant="icon-dark"
+            variant={logoVariant}
+            wordmarkTone={logoTone}
             framed={isCollapsed}
             priority
             className={cn(

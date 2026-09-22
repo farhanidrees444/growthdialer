@@ -30,6 +30,8 @@ import { PostHogIdentify } from "@/components/PostHogIdentify";
 import { VoiceAccountBootstrap } from "@/components/voice/voice-account-bootstrap";
 import { VoiceAudioUnlock } from "@/components/voice/voice-audio-unlock";
 import { TrialBanner } from "@/components/layout/trial-banner";
+import { SiteTheme } from "@/components/theme/site-theme";
+import "@/app/(dashboard)/app-theme.css";
 
 function DashboardOverlays({ userId }: { userId: string | undefined }) {
   const { showSaveAsLead, activePhone, dismissSaveAsLead } = useCallContext();
@@ -58,6 +60,7 @@ export default function DashboardLayout({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
+    <SiteTheme className="app-root">
     <WorkspaceProvider>
       <PostHogIdentify />
       <VoiceAccountBootstrap />
@@ -112,5 +115,6 @@ export default function DashboardLayout({
         </CallProvider>
       </WebPhoneProvider>
     </WorkspaceProvider>
+    </SiteTheme>
   );
 }

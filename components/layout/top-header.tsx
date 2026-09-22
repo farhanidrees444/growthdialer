@@ -1,7 +1,8 @@
 'use client';
 
 import { Bell, HelpCircle, Menu, Sparkles } from 'lucide-react';
-import { BrandLogo } from '@/components/ui/brand-logo';
+import { BrandLogo, type BrandLogoVariant } from '@/components/ui/brand-logo';
+import { ThemeSwitch, useSiteTheme } from '@/components/theme/site-theme';
 import { UserMenu } from './user-menu';
 import { useMobileNav } from '@/contexts/mobile-nav-context';
 
@@ -13,6 +14,9 @@ export function TopHeader({
   onSidebarCollapseToggle?: () => void;
 }) {
   const { toggle } = useMobileNav();
+  const { isDark } = useSiteTheme();
+  const logoVariant: BrandLogoVariant = isDark ? 'icon-dark' : 'icon-light';
+  const logoTone: 'onDark' | 'onLight' = isDark ? 'onDark' : 'onLight';
 
   return (
     <>
@@ -34,7 +38,8 @@ export function TopHeader({
             href="/dashboard"
             showText
             size="sm"
-            variant="icon-dark"
+            variant={logoVariant}
+            wordmarkTone={logoTone}
             framed
             priority
             className="hidden shrink-0 sm:inline-flex"
@@ -42,7 +47,8 @@ export function TopHeader({
           <BrandLogo
             href="/dashboard"
             size="xs"
-            variant="icon-dark"
+            variant={logoVariant}
+            wordmarkTone={logoTone}
             framed
             priority
             className="shrink-0 sm:hidden"
@@ -59,6 +65,7 @@ export function TopHeader({
         </div>
 
         <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+        <ThemeSwitch className="mr-0.5" />
         <button
           type="button"
           className="dash-press group relative flex min-h-9 items-center gap-1.5 overflow-hidden rounded-xl border border-violet-500/25 bg-gradient-to-r from-violet-600/20 via-fuchsia-500/10 to-cyan-500/15 px-3 py-2 text-xs font-semibold text-white/85 shadow-[0_0_28px_rgba(124,58,237,0.14)] transition-all hover:border-violet-400/50 hover:text-white"

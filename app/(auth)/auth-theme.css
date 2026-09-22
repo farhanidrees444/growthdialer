@@ -278,3 +278,9 @@
 .auth-theme-switch[data-on='true'] .auth-sw-knob {
   transform: translate(1.5rem, -50%);
 }
+
+/* ─── Light-mode logo visibility: brand wordmark "Growth" is near-white
+   in dark; render it in ink on the white combination. ─── */
+.auth-root[data-theme='light'] .text-\[\#F5F5F7\] {
+  color: #18181b;
+}
