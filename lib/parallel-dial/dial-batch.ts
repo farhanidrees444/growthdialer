@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { toE164 } from '@/lib/telnyx';
+import { toE164 } from '@/lib/phone';
 import { fetchDialerQueueLeads } from '@/lib/dialer/queue-query';
 import type { DialerQueueConfig } from '@/lib/dialer/queue-query';
 import type { LeadRecord } from '@/lib/dialer/state-machine';
