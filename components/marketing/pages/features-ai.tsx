@@ -9,7 +9,7 @@ import { ArrowRight, AudioLines, Ban, FileSearch, Link2, ScanSearch, Sparkles } 
 import { Reveal } from '@/components/ui/reveal';
 import { SectionHead } from '@/components/marketing/v2/Sections';
 import { AiBrief, BrowserFrame, LiveBadge } from '@/components/marketing/v2/Mockups';
-import { Aurora, Noise } from '@/components/marketing/v2/motion';
+import { Aurora, Magnetic, Noise, Tilt3D } from '@/components/marketing/v2/motion';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { cn } from '@/lib/utils';
 import { StatusDot } from './features-floorplan';
@@ -65,32 +65,42 @@ export function AiHero() {
           <div>
             <Reveal>
               <p className="pm-eyebrow !text-violet-300">AI platform · The intelligence issue</p>
+            </Reveal>
+            <Reveal delay={80}>
               <h1 className="pm-h-section-dark mt-4 !text-[clamp(2.6rem,5.4vw,4.2rem)]">
                 AI that earns its seat on every call.
               </h1>
+            </Reveal>
+            <Reveal delay={160}>
               <p className="pm-lead-dark mt-6 max-w-lg">
                 We ship AI where it removes work: preparation before the call, analysis after it,
                 coaching intelligence for managers. Nothing decorative — every pillar below is labeled
                 live, built in, or in development.
               </p>
             </Reveal>
-            <Reveal delay={140}>
+            <Reveal delay={240}>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <a href={APP_SIGNUP} className="pm-btn pm-btn-white">
-                  Try it free <ArrowRight className="h-4 w-4" />
-                </a>
+                <Magnetic strength={14} className="w-full sm:w-auto">
+                  <a href={APP_SIGNUP} className="pm-btn pm-btn-white w-full sm:w-auto">
+                    Try it free <ArrowRight className="h-4 w-4" />
+                  </a>
+                </Magnetic>
                 <Link href="/demo" className="pm-btn pm-btn-ghostlight">
                   See it in action
                 </Link>
               </div>
+            </Reveal>
+            <Reveal delay={320}>
               <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2">
                 <span className="text-[12.5px] text-zinc-500">Three pillars live — voice agents</span>
                 <StatusDot status="dev" dark />
               </div>
             </Reveal>
           </div>
-          <Reveal delay={200} variant="scale">
-            <BriefDocument />
+          <Reveal delay={400} variant="scale">
+            <Tilt3D maxX={7} maxY={10}>
+              <BriefDocument />
+            </Tilt3D>
             <p className="mt-4 text-center text-[12.5px] text-zinc-500">
               Illustrative brief with sample call data — not a real customer.
             </p>
@@ -197,7 +207,7 @@ export function AiHonesty() {
         <div className="mx-auto grid max-w-5xl gap-4 sm:gap-5 md:grid-cols-3">
           {items.map((it, i) => (
             <Reveal key={it.title} delay={i * 100}>
-              <article className="flex h-full flex-col rounded-[1.4rem] border border-zinc-950/[0.08] bg-white p-7">
+              <article className="flex h-full flex-col rounded-[1.4rem] border border-zinc-950/[0.08] bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                 <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-zinc-950 text-white">
                   <it.icon className="h-5 w-5" />
                 </span>
@@ -219,7 +229,7 @@ export function AiRoadmap() {
       <div className="pm-container">
         <div className="grid gap-4 sm:gap-5 lg:grid-cols-5">
           <Reveal className="lg:col-span-3">
-            <article className="pm-card flex h-full flex-col overflow-hidden p-7 sm:p-9">
+            <article className="pm-card flex h-full flex-col overflow-hidden p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-9">
               <div className="flex items-center justify-between">
                 <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-zinc-500">Coaching intelligence</p>
                 <StatusDot status="live" />
@@ -240,7 +250,7 @@ export function AiRoadmap() {
             </article>
           </Reveal>
           <Reveal delay={120} className="lg:col-span-2">
-            <article className="relative flex h-full flex-col overflow-hidden rounded-[1.4rem] border border-zinc-950/[0.08] bg-zinc-950 p-7 text-white sm:p-9">
+            <article className="relative flex h-full flex-col overflow-hidden rounded-[1.4rem] border border-zinc-950/[0.08] bg-zinc-950 p-7 text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-9">
               <div aria-hidden className="pm-dark-glow absolute inset-x-0 top-0 h-[280px]" />
               <div className="relative flex h-full flex-col">
                 <StatusDot status="dev" dark />
@@ -254,9 +264,11 @@ export function AiRoadmap() {
                   <span className="h-1.5 w-1.5 rounded-full bg-zinc-500" />
                   Roadmap — not available yet
                 </div>
-                <Link href="/contact-sales" className="pm-btn pm-btn-ghostlight mt-6 w-full">
-                  Talk to sales <ArrowRight className="h-4 w-4" />
-                </Link>
+                <Magnetic strength={14} className="w-full">
+                  <Link href="/contact-sales" className="pm-btn pm-btn-ghostlight mt-6 w-full">
+                    Talk to sales <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Magnetic>
               </div>
             </article>
           </Reveal>

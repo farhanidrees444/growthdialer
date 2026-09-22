@@ -5,6 +5,7 @@ import { ArrowRight, ArrowUpRight, Check, Minus, Scale } from 'lucide-react';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
 import { Faq, SectionHead } from '@/components/marketing/v2/Sections';
 import { Reveal } from '@/components/ui/reveal';
+import { GlowCard } from '@/components/marketing/v2/motion';
 import { cn } from '@/lib/utils';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import type { PseoCompetitor } from '@/lib/marketing/pseo-competitors';
@@ -141,13 +142,19 @@ export function CompareVsTemplate({
       <main>
         {/* ── Editorial header ─────────────────────────── */}
         <header className="pm-container pt-36 sm:pt-44">
-          <Reveal>
+          <Reveal delay={0}>
             <Breadcrumb competitorName={competitor.name} />
             <p className="pm-eyebrow">The honest comparison</p>
+          </Reveal>
+          <Reveal delay={80}>
             <h1 className="pm-h-display mt-5 max-w-3xl">
               GrowthDialer vs {competitor.name}
             </h1>
+          </Reveal>
+          <Reveal delay={160}>
             <p className="pm-lead mt-6 max-w-2xl">{competitor.positioning}</p>
+          </Reveal>
+          <Reveal delay={240}>
             <p className="mt-5 max-w-2xl text-[14px] leading-relaxed text-zinc-500">
               We built this page from public product information — and we&apos;ll tell you when{' '}
               {competitor.name} is the better pick. Where we&apos;re unsure, we say so.
@@ -165,39 +172,43 @@ export function CompareVsTemplate({
             />
             <div className="grid gap-4 md:grid-cols-2">
               <Reveal>
-                <article className="flex h-full flex-col rounded-3xl border border-zinc-950/[0.08] bg-white p-7 sm:p-8">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-950/[0.05]">
-                      <Scale className="h-5 w-5 text-zinc-600" />
-                    </span>
-                    <h2 className="font-display text-[1.15rem] font-semibold tracking-tight text-zinc-950">
-                      Pick {competitor.name} if…
-                    </h2>
-                  </div>
-                  <p className="pm-body mt-4 flex-1 !text-[15px]">{v.pickThem}</p>
-                  <p className="pm-caption mt-5 border-t border-zinc-950/[0.06] pt-4">
-                    No hard feelings — the wrong tool costs more than the subscription.
-                  </p>
-                </article>
+                <GlowCard>
+                  <article className="flex h-full flex-col rounded-3xl border border-zinc-950/[0.08] bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-8">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-950/[0.05]">
+                        <Scale className="h-5 w-5 text-zinc-600" />
+                      </span>
+                      <h2 className="font-display text-[1.15rem] font-semibold tracking-tight text-zinc-950">
+                        Pick {competitor.name} if…
+                      </h2>
+                    </div>
+                    <p className="pm-body mt-4 flex-1 !text-[15px]">{v.pickThem}</p>
+                    <p className="pm-caption mt-5 border-t border-zinc-950/[0.06] pt-4">
+                      No hard feelings — the wrong tool costs more than the subscription.
+                    </p>
+                  </article>
+                </GlowCard>
               </Reveal>
               <Reveal delay={90}>
-                <article className="flex h-full flex-col rounded-3xl border border-violet-600/25 bg-violet-600/[0.04] p-7 sm:p-8">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-600/15">
-                      <Check className="h-5 w-5 text-violet-700" strokeWidth={3} />
-                    </span>
-                    <h2 className="font-display text-[1.15rem] font-semibold tracking-tight text-zinc-950">
-                      Pick GrowthDialer if…
-                    </h2>
-                  </div>
-                  <p className="pm-body mt-4 flex-1 !text-[15px]">{v.pickUs}</p>
-                  <a
-                    href={APP_SIGNUP}
-                    className="mt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold text-violet-700 hover:underline"
-                  >
-                    Start the 7-day trial <ArrowRight className="h-4 w-4" />
-                  </a>
-                </article>
+                <GlowCard>
+                  <article className="flex h-full flex-col rounded-3xl border border-violet-600/25 bg-violet-600/[0.04] p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-8">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-600/15">
+                        <Check className="h-5 w-5 text-violet-700" strokeWidth={3} />
+                      </span>
+                      <h2 className="font-display text-[1.15rem] font-semibold tracking-tight text-zinc-950">
+                        Pick GrowthDialer if…
+                      </h2>
+                    </div>
+                    <p className="pm-body mt-4 flex-1 !text-[15px]">{v.pickUs}</p>
+                    <a
+                      href={APP_SIGNUP}
+                      className="mt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold text-violet-700 hover:underline"
+                    >
+                      Start the 7-day trial <ArrowRight className="h-4 w-4" />
+                    </a>
+                  </article>
+                </GlowCard>
               </Reveal>
             </div>
           </div>
@@ -215,23 +226,24 @@ export function CompareVsTemplate({
                   <span className="text-zinc-500">{competitor.name}</span>
                 </div>
                 {rows.map((row, i) => (
-                  <div
-                    key={row.feature}
-                    className={cn(
-                      'grid grid-cols-3 items-center px-4 py-3.5 sm:px-5',
-                      i % 2 === 1 && 'bg-zinc-50/50'
-                    )}
-                  >
-                    <span className="pr-2 text-left text-[13px] text-zinc-600 sm:text-sm">
-                      {row.feature}
-                    </span>
-                    <div className="flex justify-center">
-                      <CellValue value={row.growthdialer} />
+                  <Reveal key={row.feature} delay={i * 40} variant="up">
+                    <div
+                      className={cn(
+                        'grid grid-cols-3 items-center px-4 py-3.5 sm:px-5',
+                        i % 2 === 1 && 'bg-zinc-50/50'
+                      )}
+                    >
+                      <span className="pr-2 text-left text-[13px] text-zinc-600 sm:text-sm">
+                        {row.feature}
+                      </span>
+                      <div className="flex justify-center">
+                        <CellValue value={row.growthdialer} />
+                      </div>
+                      <div className="flex justify-center">
+                        <CellValue value={row.competitor} />
+                      </div>
                     </div>
-                    <div className="flex justify-center">
-                      <CellValue value={row.competitor} />
-                    </div>
-                  </div>
+                  </Reveal>
                 ))}
               </div>
             </Reveal>
@@ -266,7 +278,7 @@ export function CompareVsTemplate({
               <Reveal delay={120}>
                 <a
                   href={APP_SIGNUP}
-                  className="group flex h-full min-h-[180px] flex-col justify-between rounded-3xl bg-zinc-950 p-7 text-white transition-shadow hover:shadow-[0_24px_64px_-24px_rgba(9,9,11,0.5)]"
+                  className="group flex h-full min-h-[180px] flex-col justify-between rounded-3xl bg-zinc-950 p-7 text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_64px_-24px_rgba(9,9,11,0.5)]"
                 >
                   <p className="font-display text-[1.25rem] font-semibold leading-snug tracking-tight">
                     Verify all five on your own calls.
@@ -368,10 +380,11 @@ export function CompareVsTemplate({
         <section className="pm-section-tight">
           <div className="pm-container-narrow">
             <Reveal>
-              <div className="overflow-hidden rounded-3xl bg-zinc-950 p-8 text-center text-white sm:p-12">
-                <p className="pm-eyebrow pm-eyebrow-centered !text-violet-300">
-                  GrowthDialer vs {competitor.name}
-                </p>
+              <GlowCard>
+                <div className="overflow-hidden rounded-3xl bg-zinc-950 p-8 text-center text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-12">
+                  <p className="pm-eyebrow pm-eyebrow-centered !text-violet-300">
+                    GrowthDialer vs {competitor.name}
+                  </p>
                 <h2 className="mx-auto mt-4 max-w-xl font-display text-[clamp(1.6rem,3.5vw,2.4rem)] font-semibold leading-[1.12] tracking-tight">
                   Try the dialer this comparison is about.
                 </h2>
@@ -396,6 +409,7 @@ export function CompareVsTemplate({
                   7-day free trial · No credit card · Cancel anytime
                 </p>
               </div>
+              </GlowCard>
             </Reveal>
           </div>
         </section>

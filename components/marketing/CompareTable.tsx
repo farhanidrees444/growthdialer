@@ -97,8 +97,12 @@ export default function CompareTable() {
 
           {/* Rows */}
           {rows.map((row, i) => (
-            <div
+            <motion.div
               key={row.feature}
+              initial={{ opacity: 0, x: -12 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.35, delay: i * 0.04 }}
               className={cn(
                 "grid grid-cols-4 border-b border-white/6 last:border-0 transition-colors",
                 i % 2 === 0 ? "bg-[oklch(0.09_0.006_285)]" : "bg-[oklch(0.080_0.006_285)]"
@@ -114,7 +118,7 @@ export default function CompareTable() {
               <div className="col-span-1 px-6 py-4">
                 <Cell val={row.comp2} />
               </div>
-            </div>
+            </motion.div>
           ))}
         </motion.div>
 

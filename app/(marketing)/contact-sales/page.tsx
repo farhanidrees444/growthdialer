@@ -29,11 +29,17 @@ export default function ContactSalesPage() {
             <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
               <Reveal>
                 <p className="pm-eyebrow">Contact sales</p>
+              </Reveal>
+              <Reveal delay={80}>
                 <h1 className="pm-h-display !text-[clamp(2.2rem,4.5vw,3.25rem)]">Let&apos;s talk.</h1>
+              </Reveal>
+              <Reveal delay={160}>
                 <p className="pm-lead mt-5 max-w-md">
                   Questions about GrowthDialer, a larger team, or custom needs? Send a
                   note and we&apos;ll reply within one business day.
                 </p>
+              </Reveal>
+              <Reveal delay={240}>
                 <ul className="mt-8 space-y-4">
                   <li>
                     <p className="pm-small font-semibold uppercase tracking-[0.14em]">Prefer email?</p>
@@ -49,6 +55,8 @@ export default function ContactSalesPage() {
                     <span className="pm-small"> — no credit card.</span>
                   </li>
                 </ul>
+              </Reveal>
+              <Reveal delay={320}>
                 <RiskBullets className="mt-10" />
               </Reveal>
               <Reveal delay={140}>
@@ -85,7 +93,7 @@ export default function ContactSalesPage() {
                 },
               ].map((s, i) => (
                 <Reveal key={s.n} delay={i * 80}>
-                  <article className="pm-card h-full p-7">
+                  <article className="pm-card h-full p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                     <span className="pm-h-display !text-[clamp(1.75rem,3.5vw,2.25rem)] !leading-none text-violet-600/80">
                       {s.n}
                     </span>

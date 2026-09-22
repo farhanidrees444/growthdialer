@@ -344,9 +344,9 @@ export function TranscriptStream() {
   ];
   return (
     <div className="space-y-2.5 p-5 sm:p-6">
-      {lines.map((l) => (
+      {lines.map((l, i) => (
+        <Reveal key={l.text} delay={i * 160}>
         <div
-          key={l.text}
           className={cn(
             'rounded-2xl border p-3.5',
             l.ai ? 'border-[#6d28d9]/20 bg-[#6d28d9]/[0.05]' : 'border-zinc-950/[0.06] bg-zinc-50/70'
@@ -360,6 +360,7 @@ export function TranscriptStream() {
           </p>
           <p className="mt-1 text-[13px] leading-relaxed text-zinc-700">{l.text}</p>
         </div>
+        </Reveal>
       ))}
     </div>
   );
@@ -566,7 +567,8 @@ export function ParallelFan({ className }: { className?: string }) {
               <span className="text-[10px] font-bold tracking-[0.28em] [writing-mode:vertical-rl]">YOU</span>
             </div>
             {FAN_LEGS.map((leg, i) => (
-              <div key={leg.line} className="flex items-center gap-3 py-[6px]">
+              <Reveal key={leg.line} delay={i * 90} className="pm-leg-in">
+              <div className="flex items-center gap-3 py-[6px]">
                 <svg viewBox="0 0 300 76" preserveAspectRatio="none" className="h-[62px] min-w-0 flex-1" aria-hidden="true">
                   <path
                     d={fanPath(i)}
@@ -575,10 +577,22 @@ export function ParallelFan({ className }: { className?: string }) {
                     strokeWidth={leg.tone === 'live' ? 5 : 2.5}
                     strokeLinecap="round"
                     opacity={leg.tone === 'live' ? 1 : 0.9}
+                    className={cn(leg.tone === 'live' && 'pm-live-glow')}
+                  />
+                  {/* flowing signal overlay — data traveling down the line */}
+                  <path
+                    d={fanPath(i)}
+                    fill="none"
+                    stroke={leg.tone === 'live' ? '#a78bfa' : leg.tone === 'amber' ? '#fbbf24' : '#a1a1aa'}
+                    strokeWidth={leg.tone === 'live' ? 2.5 : 1.5}
+                    strokeLinecap="round"
+                    className={cn(leg.tone === 'live' ? 'pm-flow' : 'pm-flow-slow')}
+                    style={leg.tone !== 'live' ? { animationDelay: `${i * 0.5}s` } : undefined}
                   />
                 </svg>
                 <FanLegCard leg={leg} />
               </div>
+              </Reveal>
             ))}
           </div>
         </div>

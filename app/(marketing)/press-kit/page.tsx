@@ -65,7 +65,7 @@ export default function PressKitPage() {
             />
             <div className="space-y-4">
               <Reveal>
-                <article className="pm-card p-7 sm:p-8">
+                <article className="pm-card p-7 sm:p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                   <h2 className="pm-h-card !text-[1.25rem]">Boilerplate</h2>
                   <p className="pm-body mt-4 !text-[14.5px]">
                     GrowthDialer is an AI sales dialer for B2B sales teams. It combines three
@@ -78,7 +78,7 @@ export default function PressKitPage() {
               </Reveal>
 
               <Reveal delay={60}>
-                <article className="pm-card p-7 sm:p-8">
+                <article className="pm-card p-7 sm:p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                   <h2 className="pm-h-card !text-[1.25rem]">Quick facts</h2>
                   <dl className="mt-5 space-y-3">
                     {FACTS.map((f) => (
@@ -95,7 +95,7 @@ export default function PressKitPage() {
               </Reveal>
 
               <Reveal delay={80}>
-                <article className="pm-card p-7 sm:p-8">
+                <article className="pm-card p-7 sm:p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                   <h2 className="pm-h-card !text-[1.25rem]">Brand assets</h2>
                   <div className="mt-6 flex flex-wrap items-center gap-10 rounded-xl bg-zinc-50/80 px-6 py-8">
                     <BrandLogo showText size="xl" wordmarkTone="onLight" />
@@ -118,7 +118,7 @@ export default function PressKitPage() {
               </Reveal>
 
               <Reveal delay={100}>
-                <article className="pm-card p-7 sm:p-8">
+                <article className="pm-card p-7 sm:p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                   <div className="flex items-center gap-3">
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600/10 text-violet-700">
                       <Palette className="h-5 w-5" />
@@ -143,7 +143,7 @@ export default function PressKitPage() {
               </Reveal>
 
               <Reveal delay={120}>
-                <article className="pm-card p-7 sm:p-8">
+                <article className="pm-card p-7 sm:p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                   <div className="flex items-center gap-3">
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600/10 text-violet-700">
                       <Mail className="h-5 w-5" />

@@ -4,6 +4,7 @@ import { ArrowRight, ArrowUpRight, Clock } from 'lucide-react';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
 import { SectionHead } from '@/components/marketing/v2/Sections';
 import { Reveal } from '@/components/ui/reveal';
+import { Counter } from '@/components/marketing/v2/motion';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
@@ -115,26 +116,32 @@ export default function BlogPage() {
       <main>
         {/* ── Editorial masthead ─────────────────────────────── */}
         <header className="pm-container pt-36 sm:pt-44">
-          <Reveal>
-            <div className="border-t-2 border-zinc-950 pt-6">
-              <p className="pm-eyebrow">The Outbound Journal</p>
-              <h1 className="pm-h-display mt-5 max-w-3xl">
-                Notes from the sales floor.
-              </h1>
-              <p className="pm-lead mt-6 max-w-2xl">
-                Long-form essays on dialer mechanics, outbound strategy, and what we&apos;re
-                shipping — written by the team that builds the dialer, labeled honestly
-                throughout.
-              </p>
-              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-zinc-500">
-                <span className="font-semibold text-zinc-700">By the GrowthDialer team</span>
-                <span aria-hidden className="text-zinc-300">·</span>
-                <span>{POSTS.length} essays</span>
-                <span aria-hidden className="text-zinc-300">·</span>
-                <span>No fake authors, no borrowed testimonials</span>
-              </div>
+          <div className="border-t-2 border-zinc-950 pt-6">
+              <Reveal delay={0}>
+                <p className="pm-eyebrow">The Outbound Journal</p>
+              </Reveal>
+              <Reveal delay={80}>
+                <h1 className="pm-h-display mt-5 max-w-3xl">
+                  Notes from the sales floor.
+                </h1>
+              </Reveal>
+              <Reveal delay={160}>
+                <p className="pm-lead mt-6 max-w-2xl">
+                  Long-form essays on dialer mechanics, outbound strategy, and what we&apos;re
+                  shipping — written by the team that builds the dialer, labeled honestly
+                  throughout.
+                </p>
+              </Reveal>
+              <Reveal delay={240}>
+                <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-zinc-500">
+                  <span className="font-semibold text-zinc-700">By the GrowthDialer team</span>
+                  <span aria-hidden className="text-zinc-300">·</span>
+                  <span>{POSTS.length} essays</span>
+                  <span aria-hidden className="text-zinc-300">·</span>
+                  <span>No fake authors, no borrowed testimonials</span>
+                </div>
+              </Reveal>
             </div>
-          </Reveal>
         </header>
 
         {/* ── Featured essay ─────────────────────────────────── */}
@@ -143,7 +150,7 @@ export default function BlogPage() {
             <Reveal>
               <Link
                 href={`/blog/${featured.slug}`}
-                className="group relative block overflow-hidden rounded-3xl border border-zinc-950/[0.08] bg-zinc-950 p-8 text-white transition-shadow hover:shadow-[0_24px_64px_-24px_rgba(109,40,217,0.45)] sm:p-12 lg:p-16"
+                className="group relative block overflow-hidden rounded-3xl border border-zinc-950/[0.08] bg-zinc-950 p-8 text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_64px_-24px_rgba(109,40,217,0.45)] sm:p-12 lg:p-16"
               >
                 <div
                   aria-hidden
@@ -188,7 +195,7 @@ export default function BlogPage() {
                 const topicPosts = POSTS.filter((p) => p.topic === topic.name);
                 return (
                   <Reveal key={topic.name} delay={ti * 80}>
-                    <div className="pm-card flex h-full flex-col p-7">
+                    <div className="pm-card flex h-full flex-col p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                       <p className="font-display text-[1.05rem] font-semibold tracking-tight text-zinc-950">
                         {topic.name}
                       </p>
@@ -257,17 +264,26 @@ export default function BlogPage() {
         <section className="pm-section-tight">
           <div className="pm-container-narrow">
             <Reveal>
-              <div className="rounded-3xl border border-zinc-950/[0.08] bg-white p-8 sm:p-10">
+              <div className="rounded-3xl border border-zinc-950/[0.08] bg-white p-8 sm:p-10 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                 <p className="pm-eyebrow pm-eyebrow-centered">The facts we build on</p>
                 <div className="mt-8 grid grid-cols-2 gap-8 lg:grid-cols-4">
-                  {FACTS.map((f) => (
-                    <div key={f.label} className="text-center">
-                      <p className="font-display text-[2rem] font-semibold tracking-tight text-violet-700">
-                        {f.value}
-                      </p>
-                      <p className="pm-small mt-1.5">{f.label}</p>
-                    </div>
-                  ))}
+                  {FACTS.map((f, fi) => {
+                    const m = f.value.match(/^(\d+)(.*)$/);
+                    return (
+                      <Reveal key={f.label} delay={fi * 80}>
+                        <div className="text-center">
+                          <p className="font-display text-[2rem] font-semibold tracking-tight text-violet-700">
+                            {m ? (
+                              <Counter to={Number(m[1])} suffix={m[2]} />
+                            ) : (
+                              f.value
+                            )}
+                          </p>
+                          <p className="pm-small mt-1.5">{f.label}</p>
+                        </div>
+                      </Reveal>
+                    );
+                  })}
                 </div>
                 <p className="pm-caption mt-8 text-center">
                   Shipped and verifiable in the product today — not marketing projections.

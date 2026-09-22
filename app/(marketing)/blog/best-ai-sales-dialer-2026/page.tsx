@@ -60,28 +60,32 @@ const TOC = [
 function ProsCons({ pros, cons }: { pros: string[]; cons: string[] }) {
   return (
     <div className="mt-8 grid gap-4 sm:grid-cols-2">
-      <div className="rounded-2xl border border-zinc-950/[0.08] bg-white p-6">
-        <h3 className="text-[15px] font-bold text-zinc-950">Pros</h3>
-        <ul className="mt-4 space-y-3">
-          {pros.map((pro) => (
-            <li key={pro} className="flex items-start gap-2.5 text-[14px] leading-relaxed text-zinc-700">
-              <CheckCircle2 className="mt-0.5 h-4.5 w-4.5 shrink-0 text-emerald-600" />
-              {pro}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="rounded-2xl border border-zinc-950/[0.08] bg-white p-6">
-        <h3 className="text-[15px] font-bold text-zinc-950">Cons</h3>
-        <ul className="mt-4 space-y-3">
-          {cons.map((con) => (
-            <li key={con} className="flex items-start gap-2.5 text-[14px] leading-relaxed text-zinc-700">
-              <XCircle className="mt-0.5 h-4.5 w-4.5 shrink-0 text-zinc-400" />
-              {con}
-            </li>
-          ))}
-        </ul>
-      </div>
+      <Reveal delay={0}>
+        <div className="h-full rounded-2xl border border-zinc-950/[0.08] bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+          <h3 className="text-[15px] font-bold text-zinc-950">Pros</h3>
+          <ul className="mt-4 space-y-3">
+            {pros.map((pro) => (
+              <li key={pro} className="flex items-start gap-2.5 text-[14px] leading-relaxed text-zinc-700">
+                <CheckCircle2 className="mt-0.5 h-4.5 w-4.5 shrink-0 text-emerald-600" />
+                {pro}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Reveal>
+      <Reveal delay={80}>
+        <div className="h-full rounded-2xl border border-zinc-950/[0.08] bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+          <h3 className="text-[15px] font-bold text-zinc-950">Cons</h3>
+          <ul className="mt-4 space-y-3">
+            {cons.map((con) => (
+              <li key={con} className="flex items-start gap-2.5 text-[14px] leading-relaxed text-zinc-700">
+                <XCircle className="mt-0.5 h-4.5 w-4.5 shrink-0 text-zinc-400" />
+                {con}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Reveal>
     </div>
   );
 }

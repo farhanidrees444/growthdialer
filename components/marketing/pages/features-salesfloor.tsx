@@ -9,7 +9,7 @@ import { ArrowRight, ClipboardCheck, Ear, Hand, MoonStar, Phone, Sunrise, Trophy
 import { Reveal } from '@/components/ui/reveal';
 import { SectionHead } from '@/components/marketing/v2/Sections';
 import { AnalyticsSnap, BrowserFrame, LiveBadge, NumberHealth, TranscriptStream } from '@/components/marketing/v2/Mockups';
-import { Aurora, Noise } from '@/components/marketing/v2/motion';
+import { Aurora, Magnetic, Noise } from '@/components/marketing/v2/motion';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { cn } from '@/lib/utils';
 import { StatusDot } from './features-floorplan';
@@ -27,15 +27,23 @@ export function SalesfloorHero() {
       <div className="pm-container-narrow relative text-center">
         <Reveal>
           <p className="pm-eyebrow pm-eyebrow-centered">Salesfloor · The manager’s view</p>
+        </Reveal>
+        <Reveal delay={80}>
           <h1 className="pm-h-display">Run the room from anywhere.</h1>
+        </Reveal>
+        <Reveal delay={160}>
           <p className="pm-lead mx-auto mt-6 max-w-2xl">
             Live call monitoring, coaching feedback, and team analytics — managers run the floor
             without standing in it. No office required; it’s all in the browser.
           </p>
+        </Reveal>
+        <Reveal delay={240}>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
-              Start free trial <ArrowRight className="h-4 w-4" />
-            </a>
+            <Magnetic strength={14}>
+              <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
+                Start free trial <ArrowRight className="h-4 w-4" />
+              </a>
+            </Magnetic>
             <Link href="/demo" className="pm-btn pm-btn-secondary">
               See it in action
             </Link>
@@ -87,7 +95,7 @@ export function FloorBoard() {
             <div className="grid gap-3 p-6 sm:grid-cols-2 sm:p-8 lg:grid-cols-3">
               {REPS.map((r, i) => (
                 <Reveal key={`${r.role}-${i}`} delay={i * 70}>
-                  <div className="flex items-center gap-4 rounded-2xl border border-zinc-950/[0.07] bg-white p-4 transition-colors hover:border-[#6d28d9]/30">
+                  <div className="flex items-center gap-4 rounded-2xl border border-zinc-950/[0.07] bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-[#6d28d9]/30 hover:shadow-lg">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-950/[0.05] text-zinc-600">
                       <Phone className="h-4 w-4" />
                     </span>
@@ -170,7 +178,7 @@ export function FloorDay() {
                   <div className="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-zinc-950 text-white shadow-lg sm:h-16 sm:w-16">
                     <d.icon className="h-6 w-6" />
                   </div>
-                  <div className="pm-card flex-1 p-6 sm:p-7">
+                  <div className="pm-card flex-1 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-7">
                     <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                       <span className="font-mono text-[13px] font-bold tabular-nums text-[#6d28d9]">{d.time}</span>
                       <h3 className="pm-h-card">{d.title}</h3>

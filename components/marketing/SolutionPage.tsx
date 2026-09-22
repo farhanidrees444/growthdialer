@@ -80,13 +80,13 @@ export function SolutionPage({ data }: { data: SolutionPageData }) {
               <div className="pm-card p-8 sm:p-10">
                 <p className="pm-eyebrow !mb-4">What you get on day one</p>
                 <ul className="space-y-3">
-                  {data.capabilities.map((c) => (
-                    <li key={c} className="pm-tick">
+                  {data.capabilities.map((c, i) => (
+                    <Reveal as="li" key={c} delay={i * 60} className="pm-tick">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/12 text-emerald-700">
                         <Check className="h-3 w-3" strokeWidth={3} />
                       </span>
                       {c}
-                    </li>
+                    </Reveal>
                   ))}
                 </ul>
                 <p className="pm-body mt-8 border-t border-zinc-950/[0.07] pt-6 !text-[15px]">{data.outcome}</p>

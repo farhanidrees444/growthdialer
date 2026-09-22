@@ -88,21 +88,22 @@ export function ComparePage({
             <span className="text-zinc-500">{competitor}</span>
           </div>
           {rows.map((row, i) => (
-            <div
-              key={row.feature}
-              className={cn(
-                'grid grid-cols-3 items-center px-4 py-3.5 text-sm',
-                i % 2 === 1 && 'bg-zinc-50/60'
-              )}
-            >
-              <span className="text-zinc-600">{row.feature}</span>
-              <div className="text-center">
-                <CellValue value={row.growthdialer} />
+            <Reveal key={row.feature} delay={i * 40} variant="up">
+              <div
+                className={cn(
+                  'grid grid-cols-3 items-center px-4 py-3.5 text-sm',
+                  i % 2 === 1 && 'bg-zinc-50/60'
+                )}
+              >
+                <span className="text-zinc-600">{row.feature}</span>
+                <div className="text-center">
+                  <CellValue value={row.growthdialer} />
+                </div>
+                <div className="text-center">
+                  <CellValue value={row.competitor} />
+                </div>
               </div>
-              <div className="text-center">
-                <CellValue value={row.competitor} />
-              </div>
-            </div>
+            </Reveal>
           ))}
         </Reveal>
       </section>

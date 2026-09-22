@@ -184,7 +184,7 @@ export default function AboutPage() {
             <div className="grid gap-4 md:grid-cols-3">
               {PRINCIPLES.map((p, i) => (
                 <Reveal key={p.title} delay={i * 80}>
-                  <article className="pm-card h-full p-7">
+                  <article className="pm-card h-full p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                     <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-600/10 text-violet-700">
                       <p.icon className="h-5 w-5" />
                     </span>

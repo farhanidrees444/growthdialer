@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { GROWTHDIALER_PRICING, ROADMAP_NOT_LIVE, SHIPPED_TODAY } from "@/lib/marketing/honest-copy";
+import { Reveal } from "@/components/ui/reveal";
 import {
   ArticleCta,
   ArticleHeader,
@@ -242,26 +243,30 @@ export default function ReplaceSDRTeamWithAI() {
 
           <h3 className={artH3}>Dialer software vs loaded SDR cost</h3>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-zinc-950/[0.08] bg-white p-7">
-              <h4 className="text-[15px] font-bold text-zinc-950">Traditional SDR (loaded, illustrative)</h4>
-              <p className="mt-3 font-display text-[2rem] font-bold tracking-tight">~$89K/yr</p>
-              <ul className="mt-4 space-y-2 text-[14px] text-zinc-600">
-                <li>• Salary, benefits, manager time</li>
-                <li>• Ramp and turnover</li>
-                <li>• Humans still required to sell</li>
-              </ul>
-            </div>
-            <div className="rounded-2xl border border-violet-600/25 bg-violet-600/[0.04] p-7">
-              <h4 className="text-[15px] font-bold text-violet-900">GrowthDialer Pro (annual)</h4>
-              <p className="mt-3 font-display text-[2rem] font-bold tracking-tight text-violet-700">
-                {GROWTHDIALER_PRICING.proAnnualTotal}
-              </p>
-              <ul className="mt-4 space-y-2 text-[14px] text-zinc-700">
-                <li>• Up to 3 seats per workspace</li>
-                <li>• AI summaries on recorded calls</li>
-                <li>• Not an autonomous voice agent</li>
-              </ul>
-            </div>
+            <Reveal delay={0}>
+              <div className="h-full rounded-2xl border border-zinc-950/[0.08] bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                <h4 className="text-[15px] font-bold text-zinc-950">Traditional SDR (loaded, illustrative)</h4>
+                <p className="mt-3 font-display text-[2rem] font-bold tracking-tight">~$89K/yr</p>
+                <ul className="mt-4 space-y-2 text-[14px] text-zinc-600">
+                  <li>• Salary, benefits, manager time</li>
+                  <li>• Ramp and turnover</li>
+                  <li>• Humans still required to sell</li>
+                </ul>
+              </div>
+            </Reveal>
+            <Reveal delay={80}>
+              <div className="h-full rounded-2xl border border-violet-600/25 bg-violet-600/[0.04] p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                <h4 className="text-[15px] font-bold text-violet-900">GrowthDialer Pro (annual)</h4>
+                <p className="mt-3 font-display text-[2rem] font-bold tracking-tight text-violet-700">
+                  {GROWTHDIALER_PRICING.proAnnualTotal}
+                </p>
+                <ul className="mt-4 space-y-2 text-[14px] text-zinc-700">
+                  <li>• Up to 3 seats per workspace</li>
+                  <li>• AI summaries on recorded calls</li>
+                  <li>• Not an autonomous voice agent</li>
+                </ul>
+              </div>
+            </Reveal>
           </div>
 
           <Callout tone="amber" title="The honest truth">
@@ -314,7 +319,8 @@ export default function ReplaceSDRTeamWithAI() {
           </p>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-zinc-950/[0.08] bg-white p-7">
+            <Reveal delay={0}>
+            <div className="h-full rounded-2xl border border-zinc-950/[0.08] bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
               <h3 className="text-[16px] font-bold text-zinc-950">Hiring 1 SDR for 3 years</h3>
               <div className="mt-5 space-y-4 text-[14px] text-zinc-700">
                 <div>
@@ -335,7 +341,9 @@ export default function ReplaceSDRTeamWithAI() {
                 </div>
               </div>
             </div>
-            <div className="rounded-2xl border border-violet-600/25 bg-violet-600/[0.04] p-7">
+            </Reveal>
+            <Reveal delay={80}>
+            <div className="h-full rounded-2xl border border-violet-600/25 bg-violet-600/[0.04] p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
               <h3 className="text-[16px] font-bold text-violet-900">GrowthDialer Pro for 3 years (3-seat workspace)</h3>
               <div className="mt-5 space-y-4 text-[14px] text-zinc-700">
                 <div>
@@ -351,6 +359,7 @@ export default function ReplaceSDRTeamWithAI() {
                 </div>
               </div>
             </div>
+            </Reveal>
           </div>
 
           <div className="mt-6 rounded-2xl border border-violet-600/25 bg-gradient-to-br from-violet-600/[0.07] to-transparent p-8 text-center">
@@ -468,7 +477,8 @@ export default function ReplaceSDRTeamWithAI() {
           </p>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-zinc-950/[0.08] bg-white p-6">
+            <Reveal delay={0}>
+            <div className="h-full rounded-2xl border border-zinc-950/[0.08] bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
               <h3 className="text-[15px] font-bold text-violet-700">Software handles</h3>
               <ul className="mt-4 space-y-2.5 text-[14px] text-zinc-700">
                 {[
@@ -485,7 +495,9 @@ export default function ReplaceSDRTeamWithAI() {
                 ))}
               </ul>
             </div>
-            <div className="rounded-2xl border border-violet-600/25 bg-violet-600/[0.04] p-6">
+            </Reveal>
+            <Reveal delay={80}>
+            <div className="h-full rounded-2xl border border-violet-600/25 bg-violet-600/[0.04] p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
               <h3 className="text-[15px] font-bold text-violet-800">Humans still own</h3>
               <ul className="mt-4 space-y-2.5 text-[14px] text-zinc-700">
                 {[
@@ -502,6 +514,7 @@ export default function ReplaceSDRTeamWithAI() {
                 ))}
               </ul>
             </div>
+            </Reveal>
           </div>
 
           <h3 className={artH3}>Realistic scenarios</h3>

@@ -83,10 +83,16 @@ export default function StatusPage() {
                   <p className="text-[15px] font-semibold tracking-[-0.01em] text-zinc-950">
                     All systems operational
                   </p>
+                  <span className="pm-pulse-dot h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
                 </div>
                 <ul className="divide-y divide-zinc-950/[0.06]">
-                  {SERVICES.map((s) => (
-                    <li key={s.name} className="flex items-start justify-between gap-4 px-6 py-4 sm:px-7">
+                  {SERVICES.map((s, i) => (
+                    <Reveal
+                      as="li"
+                      key={s.name}
+                      delay={i * 60}
+                      className="flex items-start justify-between gap-4 px-6 py-4 sm:px-7"
+                    >
                       <div>
                         <p className="text-[15px] font-medium tracking-[-0.01em] text-zinc-950">
                           {s.name}
@@ -98,8 +104,12 @@ export default function StatusPage() {
                         <span className="text-[12px] font-semibold capitalize text-emerald-700">
                           {s.status}
                         </span>
+                        <span
+                          className="pm-pulse-dot h-2 w-2 rounded-full bg-emerald-500"
+                          aria-hidden
+                        />
                       </div>
-                    </li>
+                    </Reveal>
                   ))}
                 </ul>
               </div>

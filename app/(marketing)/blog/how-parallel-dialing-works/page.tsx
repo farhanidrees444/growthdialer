@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { CheckCircle2 } from "lucide-react";
 import { GROWTHDIALER_PRICING } from "@/lib/marketing/honest-copy";
+import { Reveal } from "@/components/ui/reveal";
 import {
   ArticleCta,
   ArticleHeader,
@@ -245,23 +246,27 @@ export default function ParallelDialingGuide() {
           <p className={artP}>The mathematics behind parallel dialing is surprisingly simple. Here’s a worked example — placeholder numbers, not a benchmark. Plug in your own list’s connect rate:</p>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-zinc-950/[0.08] bg-white p-6">
-              <h3 className="text-[15px] font-bold text-zinc-950">Single-line dialing (example)</h3>
+            <Reveal delay={0}>
+              <div className="h-full rounded-2xl border border-zinc-950/[0.08] bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                <h3 className="text-[15px] font-bold text-zinc-950">Single-line dialing (example)</h3>
               <div className="mt-4 space-y-2.5 font-mono text-[13px] text-zinc-700">
                 <p>Calls per hour: <span className="font-bold text-violet-700">60</span></p>
                 <p>Example connect rate: <span className="font-bold text-violet-700">25%</span></p>
                 <p className="pt-1 text-zinc-950">Connects per hour: 60 × 0.25 = <strong>15</strong></p>
               </div>
-            </div>
-            <div className="rounded-2xl border border-violet-600/25 bg-violet-600/[0.04] p-6">
-              <h3 className="text-[15px] font-bold text-violet-900">Parallel dialing, 5 lines (same example)</h3>
-              <div className="mt-4 space-y-2.5 font-mono text-[13px] text-zinc-700">
-                <p>Calls per hour: <span className="font-bold text-violet-700">~300</span></p>
-                <p>Example connect rate (slightly lower): <span className="font-bold text-violet-700">22%</span></p>
-                <p className="pt-1 text-zinc-950">Connects per hour: 300 × 0.22 = <strong>66</strong></p>
-                <p className="font-bold text-violet-700">~4.4× more connects — in this example</p>
               </div>
-            </div>
+            </Reveal>
+            <Reveal delay={80}>
+              <div className="h-full rounded-2xl border border-violet-600/25 bg-violet-600/[0.04] p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                <h3 className="text-[15px] font-bold text-violet-900">Parallel dialing, 5 lines (same example)</h3>
+                <div className="mt-4 space-y-2.5 font-mono text-[13px] text-zinc-700">
+                  <p>Calls per hour: <span className="font-bold text-violet-700">~300</span></p>
+                  <p>Example connect rate (slightly lower): <span className="font-bold text-violet-700">22%</span></p>
+                  <p className="pt-1 text-zinc-950">Connects per hour: 300 × 0.22 = <strong>66</strong></p>
+                  <p className="font-bold text-violet-700">~4.4× more connects — in this example</p>
+                </div>
+              </div>
+            </Reveal>
           </div>
           <p className="pm-small mt-4">
             Illustrative math with assumed rates. Your real multiplier comes from your own list —
@@ -328,11 +333,13 @@ export default function ParallelDialingGuide() {
               { title: 'Conversations per rep-hour', body: 'Count human connects divided by dial time. Parallel dial should raise attempts and often raises absolute connects even if connect rate % dips slightly on broader lists.' },
               { title: 'Meetings set per session', body: 'Compare the same rep on power vs parallel with identical lists — that A/B is the only honest benchmark for your ICP.' },
               { title: 'Cost per connect', body: 'Include dialer workspace cost, numbers, and talk time. GrowthDialer Pro is a fixed workspace fee — not per-minute surprise bills.' },
-            ].map((item) => (
-              <div key={item.title} className="rounded-2xl border border-zinc-950/[0.08] bg-white p-6">
-                <h3 className="text-[15px] font-bold text-zinc-950">{item.title}</h3>
-                <p className="pm-body mt-2 !text-[14px]">{item.body}</p>
-              </div>
+            ].map((item, gi) => (
+              <Reveal key={item.title} delay={gi * 80}>
+                <div className="h-full rounded-2xl border border-zinc-950/[0.08] bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                  <h3 className="text-[15px] font-bold text-zinc-950">{item.title}</h3>
+                  <p className="pm-body mt-2 !text-[14px]">{item.body}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </section>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Reveal } from "@/components/ui/reveal";
 
 const competitors = [
   {
@@ -29,21 +30,21 @@ export default function CompareSection() {
   return (
     <section className="py-24 bg-[oklch(0.05_0.005_285)] border-t border-white/8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
+        <Reveal className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
             See How We Compare
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Discover why leading B2B sales teams choose GrowthDialer over the competition
           </p>
-        </div>
+        </Reveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {competitors.map((competitor) => (
-            <div
-              key={competitor.name}
-              className="group relative p-6 rounded-2xl bg-[oklch(0.09_0.006_285)] border border-white/10 hover:border-brand/30 transition-all duration-300 hover:shadow-xl hover:shadow-brand/10"
-            >
+          {competitors.map((competitor, i) => (
+            <Reveal key={competitor.name} delay={i * 80}>
+              <div
+                className="group relative h-full p-6 rounded-2xl bg-[oklch(0.09_0.006_285)] border border-white/10 hover:border-brand/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand/10"
+              >
               <div className="mb-4">
                 <h3 className="text-xl font-semibold text-foreground mb-2">
                   vs {competitor.name}
@@ -64,10 +65,11 @@ export default function CompareSection() {
                 </Button>
               </Link>
             </div>
+            </Reveal>
           ))}
         </div>
 
-        <div className="text-center mt-12">
+        <Reveal className="text-center mt-12">
           <p className="text-muted-foreground mb-6">
             Ready to see the difference for yourself?
           </p>
@@ -80,7 +82,7 @@ export default function CompareSection() {
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Link>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

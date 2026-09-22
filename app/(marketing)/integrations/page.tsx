@@ -4,6 +4,7 @@ import { ArrowRight, BellPlus, Check, Mail } from 'lucide-react';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
 import { Faq, RiskBullets } from '@/components/marketing/v2/Sections';
 import { Reveal } from '@/components/ui/reveal';
+import { Counter } from '@/components/marketing/v2/motion';
 import {
   INTEGRATION_BRANDS,
   type IntegrationBrand,
@@ -75,10 +76,7 @@ function StatusChip({ status }: { status: 'live' | 'dev' | 'roadmap' }) {
   if (status === 'live') {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-emerald-800">
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-600" />
-        </span>
+        <span className="pm-pulse-dot h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
         Live
       </span>
     );
@@ -143,26 +141,30 @@ export default function IntegrationsMarketingPage() {
           <div className="pm-container-narrow relative text-center">
             <Reveal>
               <p className="pm-eyebrow pm-eyebrow-centered">Integrations · Live status</p>
+            </Reveal>
+            <Reveal delay={80}>
               <h1 className="pm-h-display">
                 Every connector,
                 <br />
                 honestly labeled.
               </h1>
+            </Reveal>
+            <Reveal delay={160}>
               <p className="pm-lead mx-auto mt-6 max-w-2xl">
                 One integration is live today. Nine more are in development and
                 waitlist-only. This page is the board of record — no live badges
                 on things that aren&apos;t.
               </p>
             </Reveal>
-            <Reveal delay={120}>
+            <Reveal delay={240}>
               <div className="mx-auto mt-8 flex max-w-lg flex-wrap items-center justify-center gap-2.5">
                 <span className="inline-flex items-center gap-2 rounded-full border border-emerald-600/20 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  {live.length} live
+                  <span className="pm-pulse-dot h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+                  <Counter to={live.length} /> live
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full border border-amber-600/20 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800">
                   <span className="h-2 w-2 rounded-full bg-amber-500" />
-                  {inDev.length} in development
+                  <Counter to={inDev.length} /> in development
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full border border-zinc-950/[0.10] bg-zinc-50 px-4 py-2 text-sm font-semibold text-zinc-600">
                   <span className="h-2 w-2 rounded-full bg-zinc-400" />0 pretending
@@ -300,7 +302,7 @@ export default function IntegrationsMarketingPage() {
                 },
               ].map((item, i) => (
                 <Reveal key={item.title} delay={i * 70} className="h-full">
-                  <article className="pm-card flex h-full flex-col p-6 opacity-90">
+                  <article className="pm-card flex h-full flex-col p-6 opacity-90 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                     <div className="flex items-start justify-between gap-3">
                       <h4 className="pm-h-card">{item.title}</h4>
                       <StatusChip status="roadmap" />
@@ -320,7 +322,7 @@ export default function IntegrationsMarketingPage() {
                   href={requestHref('Integration request')}
                   className={cn(
                     'group flex h-full flex-col justify-between rounded-2xl border-2 border-dashed',
-                    'border-[#6d28d9]/30 bg-[#6d28d9]/[0.04] p-6 transition hover:border-[#6d28d9]/60 hover:bg-[#6d28d9]/[0.07]',
+                    'border-[#6d28d9]/30 bg-[#6d28d9]/[0.04] p-6 transition hover:-translate-y-1 hover:border-[#6d28d9]/60 hover:bg-[#6d28d9]/[0.07] hover:shadow-xl',
                   )}
                 >
                   <div>
@@ -352,7 +354,7 @@ export default function IntegrationsMarketingPage() {
             <div className="mt-10 grid gap-4 md:grid-cols-3">
               {WAITLIST_STEPS.map((step, i) => (
                 <Reveal key={step.num} delay={i * 90} className="h-full">
-                  <div className="pm-card h-full p-7">
+                  <div className="pm-card h-full p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                     <p className="font-display text-sm font-bold tracking-[0.18em] text-[#6d28d9]">
                       {step.num}
                     </p>

@@ -90,7 +90,7 @@ export default function RoadmapPage() {
             <div className="grid gap-4 lg:grid-cols-3">
               {COLUMNS.map((col, ci) => (
                 <Reveal key={col.title} delay={ci * 80}>
-                  <article className="pm-card flex h-full flex-col p-7 sm:p-8">
+                  <article className="pm-card flex h-full flex-col p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-8">
                     <div className="flex items-center justify-between gap-3">
                       <span
                         className={cn(
@@ -145,7 +145,7 @@ export default function RoadmapPage() {
 
             {/* Later */}
             <Reveal delay={100}>
-              <div className="pm-card mt-4 p-7 sm:p-8">
+              <div className="pm-card mt-4 p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-8">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <h2 className="pm-h-card !text-[1.5rem]">
                     <span className="pm-small mr-3 font-bold uppercase tracking-[0.1em] !text-zinc-400">

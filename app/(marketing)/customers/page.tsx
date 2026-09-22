@@ -163,7 +163,7 @@ export default function CustomersPage() {
                     {AGENCY_POINTS.map((point, i) => (
                       <li
                         key={point}
-                        className="pm-card flex items-start gap-4 p-5 lg:ml-10"
+                        className="pm-card flex items-start gap-4 p-5 lg:ml-10 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                         style={i === 1 ? { marginLeft: 0 } : undefined}
                       >
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-600/10 font-semibold text-[13px] text-violet-700">

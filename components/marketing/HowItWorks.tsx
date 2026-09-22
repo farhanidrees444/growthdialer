@@ -86,7 +86,7 @@ export default function HowItWorks() {
               initial={{ opacity: 0, y: 32 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.55, delay: 0.1 }}
+              transition={{ duration: 0.55, delay: i * 0.1 }}
               className={`grid lg:grid-cols-2 gap-12 items-center ${
                 i % 2 === 1 ? "lg:[&>*:first-child]:order-last" : ""
               }`}

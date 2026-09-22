@@ -389,3 +389,92 @@
   }
   .theme-marketing .mx-glow-card::before { display: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ANIMATED PASS — signature motion utilities (transform/opacity only)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── flowing dashes along SVG connector lines ───────────── */
+.theme-marketing .pm-flow {
+  stroke-dasharray: 9 13;
+  animation: pm-flow 1.4s linear infinite;
+  pointer-events: none;
+}
+.theme-marketing .pm-flow-slow {
+  stroke-dasharray: 7 16;
+  animation: pm-flow 3.2s linear infinite;
+  opacity: 0.55;
+  pointer-events: none;
+}
+@keyframes pm-flow {
+  to { stroke-dashoffset: -44; }
+}
+
+/* ── live-line glow pulse (parallel fan) ─────────────────── */
+.theme-marketing .pm-live-glow {
+  animation: pm-live-glow 2.6s ease-in-out infinite;
+}
+@keyframes pm-live-glow {
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(109, 40, 217, 0)); }
+  50% { filter: drop-shadow(0 0 10px rgba(109, 40, 217, 0.55)); }
+}
+
+/* ── shimmer sweep for primary CTAs ─────────────────────── */
+.theme-marketing .pm-shimmer {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.theme-marketing .pm-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.35) 50%, transparent 60%);
+  transform: translateX(-120%);
+  animation: pm-shimmer 4.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes pm-shimmer {
+  0%, 55% { transform: translateX(-120%); }
+  85%, 100% { transform: translateX(120%); }
+}
+
+/* ── premium card hover lift ────────────────────────────── */
+.theme-marketing .pm-lift {
+  transition: transform 0.35s var(--mx-ease), box-shadow 0.35s var(--mx-ease), border-color 0.35s var(--mx-ease);
+  will-change: transform;
+}
+.theme-marketing .pm-lift:hover {
+  transform: translateY(-5px);
+}
+
+/* ── headline mask lines (JS-driven via framer-motion) ───── */
+.theme-marketing .pm-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.theme-marketing .pm-mask > span {
+  display: block;
+  will-change: transform;
+}
+
+/* ── staggered leg entrance helper ──────────────────────── */
+.theme-marketing .pm-leg-in {
+  transform-origin: left center;
+}
+
+/* ── reduced motion: kill animated-pass motion ──────────── */
+@media (prefers-reduced-motion: reduce) {
+  .theme-marketing .pm-flow,
+  .theme-marketing .pm-flow-slow,
+  .theme-marketing .pm-live-glow,
+  .theme-marketing .pm-shimmer::after {
+    animation: none !important;
+  }
+  .theme-marketing .pm-lift:hover {
+    transform: none;
+  }
+}

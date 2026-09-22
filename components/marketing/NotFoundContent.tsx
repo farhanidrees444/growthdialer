@@ -31,7 +31,9 @@ export function NotFoundContent() {
         transition={{ duration: 0.6, ease: EASE_OUT }}
         className="relative mb-8 flex justify-center"
       >
-        <LiveWaveform bars={24} height={32} barWidth={2.5} gap={3} color="#7C3AED" />
+        <div className="pm-float">
+          <LiveWaveform bars={24} height={32} barWidth={2.5} gap={3} color="#7C3AED" />
+        </div>
       </motion.div>
 
       <motion.p

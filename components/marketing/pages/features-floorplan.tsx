@@ -32,7 +32,7 @@ import {
   TranscriptStream,
   Waveform,
 } from '@/components/marketing/v2/Mockups';
-import { Aurora, Noise } from '@/components/marketing/v2/motion';
+import { Aurora, Counter, Magnetic, Noise, Tilt3D } from '@/components/marketing/v2/motion';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { cn } from '@/lib/utils';
 
@@ -64,9 +64,11 @@ export function FeaturePageCta({
         </Reveal>
         <Reveal delay={140}>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a href={APP_SIGNUP} className="pm-btn pm-btn-white w-full sm:w-auto">
-              {primaryLabel} <ArrowRight className="h-4 w-4" />
-            </a>
+            <Magnetic strength={14} className="w-full sm:w-auto">
+              <a href={APP_SIGNUP} className="pm-btn pm-btn-white w-full sm:w-auto">
+                {primaryLabel} <ArrowRight className="h-4 w-4" />
+              </a>
+            </Magnetic>
             {secondary && (
               <Link href={secondary.href} className="pm-btn pm-btn-ghostlight w-full sm:w-auto">
                 {secondary.label}
@@ -127,16 +129,22 @@ export function FloorplanHero() {
         <div className="pm-glow-top absolute inset-x-0 top-0 h-[420px]" />
       </div>
       <div className="pm-container relative">
-        <Reveal className="mx-auto max-w-3xl text-center">
-          <p className="pm-eyebrow pm-eyebrow-centered">Features · The floor plan</p>
-          <h1 className="pm-h-display">Every part of the call, under one roof.</h1>
-          <p className="pm-lead mx-auto mt-6 max-w-2xl">
-            Dialing, intelligence, coaching, and number health — one calling layer for your team.
-            Every capability below is labeled exactly as it ships.
-          </p>
-        </Reveal>
+        <div className="mx-auto max-w-3xl text-center">
+          <Reveal>
+            <p className="pm-eyebrow pm-eyebrow-centered">Features · The floor plan</p>
+          </Reveal>
+          <Reveal delay={80}>
+            <h1 className="pm-h-display">Every part of the call, under one roof.</h1>
+          </Reveal>
+          <Reveal delay={160}>
+            <p className="pm-lead mx-auto mt-6 max-w-2xl">
+              Dialing, intelligence, coaching, and number health — one calling layer for your team.
+              Every capability below is labeled exactly as it ships.
+            </p>
+          </Reveal>
+        </div>
 
-        <Reveal delay={140} className="mx-auto mt-10 max-w-3xl">
+        <Reveal delay={240} className="mx-auto mt-10 max-w-3xl">
           <div className="pm-card overflow-hidden">
             <div className="flex items-center justify-between border-b border-zinc-950/[0.07] px-6 py-4">
               <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-zinc-500">Platform map</p>
@@ -162,10 +170,12 @@ export function FloorplanHero() {
           </div>
         </Reveal>
 
-        <Reveal delay={220} className="mt-9 text-center">
-          <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
-            Start free trial <ArrowRight className="h-4 w-4" />
-          </a>
+        <Reveal delay={320} className="mt-9 text-center">
+          <Magnetic strength={14} className="inline-block">
+            <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
+              Start free trial <ArrowRight className="h-4 w-4" />
+            </a>
+          </Magnetic>
         </Reveal>
       </div>
     </section>
@@ -196,7 +206,7 @@ export function ChapterNav() {
             <span
               className={cn(
                 'h-1.5 w-1.5 rounded-full',
-                c.status === 'live' ? 'bg-emerald-500' : 'bg-zinc-300'
+                c.status === 'live' ? 'bg-emerald-500 pm-pulse-dot' : 'bg-zinc-300'
               )}
             />
           </a>
@@ -226,7 +236,7 @@ export function DialingBento() {
         <div className="grid gap-4 sm:gap-5 lg:grid-cols-6">
           {/* Power dialer — hero cell */}
           <Reveal className="lg:col-span-4">
-            <article className="pm-card group flex h-full flex-col overflow-hidden p-7 sm:p-8">
+            <article className="pm-card group flex h-full flex-col overflow-hidden p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-8">
               <div className="flex items-center justify-between">
                 <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#6d28d9]/10 text-[#6d28d9]">
                   <PhoneCall className="h-5 w-5" />
@@ -245,17 +255,17 @@ export function DialingBento() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-7 flex-1">
+              <Tilt3D maxX={7} maxY={10} className="mt-7 flex-1">
                 <BrowserFrame url="app.growthdialer.com/dialer" badge={<LiveBadge label="Power session · live" />}>
                   <PowerQueue />
                 </BrowserFrame>
-              </div>
+              </Tilt3D>
             </article>
           </Reveal>
 
           {/* Parallel dialer — tall cell */}
           <Reveal delay={100} className="lg:col-span-2">
-            <article className="pm-card flex h-full flex-col overflow-hidden p-7">
+            <article className="pm-card flex h-full flex-col overflow-hidden p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
               <div className="flex items-center justify-between">
                 <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#6d28d9]/10 text-[#6d28d9]">
                   <Waves className="h-5 w-5" />
@@ -263,7 +273,9 @@ export function DialingBento() {
                 <StatusDot status="live" />
               </div>
               <h3 className="pm-h-card mt-5">Parallel dialer</h3>
-              <p className="pm-h-display mt-2 !text-[3.2rem] text-[#6d28d9]">5</p>
+              <p className="pm-h-display mt-2 !text-[3.2rem] text-[#6d28d9]">
+                <Counter to={5} />
+              </p>
               <p className="pm-body mt-1">lines, one conversation. On Pro, five prospects ring at once — AI answering-machine detection drops your voicemail and moves on. You only ever talk to humans.</p>
               <div className="mt-6 flex-1 rounded-2xl border border-zinc-950/[0.07] bg-zinc-50/70 p-5">
                 <BrowserFrame url="app.growthdialer.com/dialer/parallel" badge={<LiveBadge label="Multi-line · live" />} caption={null}>
@@ -275,7 +287,7 @@ export function DialingBento() {
 
           {/* Click-to-call */}
           <Reveal className="lg:col-span-3">
-            <article className="pm-card flex h-full flex-col overflow-hidden p-7 sm:p-8">
+            <article className="pm-card flex h-full flex-col overflow-hidden p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-8">
               <div className="flex items-center justify-between">
                 <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#6d28d9]/10 text-[#6d28d9]">
                   <MousePointerClick className="h-5 w-5" />
@@ -294,11 +306,13 @@ export function DialingBento() {
 
           {/* Dispositions stat cell */}
           <Reveal delay={100} className="lg:col-span-3">
-            <article className="relative flex h-full flex-col overflow-hidden rounded-[1.4rem] border border-[#6d28d9]/20 bg-gradient-to-br from-[#6d28d9]/[0.07] via-white to-white p-7 sm:p-8">
+            <article className="relative flex h-full flex-col overflow-hidden rounded-[1.4rem] border border-[#6d28d9]/20 bg-gradient-to-br from-[#6d28d9]/[0.07] via-white to-white p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-8">
               <div className="pm-glow-violet pointer-events-none absolute inset-0" aria-hidden />
               <div className="relative">
                 <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-[#6d28d9]">Dispositions</p>
-                <p className="pm-stat-num mt-4">08</p>
+                <p className="pm-stat-num mt-4">
+                  <Counter to={8} prefix="0" />
+                </p>
                 <p className="pm-body mt-3 max-w-sm">One-click outcomes end every call — connected, voicemail, callback, DNC, and more. The next number is already ringing before the note is finished.</p>
                 <p className="pm-caption mt-6 !text-left">Every disposition is written to the lead timeline automatically.</p>
               </div>
@@ -365,11 +379,13 @@ export function IntelligenceBand() {
             </Reveal>
           </Reveal>
           <Reveal delay={120} variant="scale">
-            <div className="rounded-[1.6rem] border border-white/10 bg-white p-2 shadow-[0_40px_120px_-40px_rgba(124,58,237,0.45)]">
-              <BrowserFrame url="app.growthdialer.com/calls/rec_8f3k2" badge={<LiveBadge label="Brief ready · 8s after hang-up" />}>
-                <AiBrief />
-              </BrowserFrame>
-            </div>
+            <Tilt3D maxX={7} maxY={10}>
+              <div className="rounded-[1.6rem] border border-white/10 bg-white p-2 shadow-[0_40px_120px_-40px_rgba(124,58,237,0.45)]">
+                <BrowserFrame url="app.growthdialer.com/calls/rec_8f3k2" badge={<LiveBadge label="Brief ready · 8s after hang-up" />}>
+                  <AiBrief />
+                </BrowserFrame>
+              </div>
+            </Tilt3D>
             <p className="mt-5 text-center text-[12.5px] text-zinc-500">Live transcription, as the manager sees it:</p>
             <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
               <TranscriptStream />
@@ -396,7 +412,7 @@ export function DeliverabilityRail() {
       <Reveal>
         <div className="overflow-x-auto pb-4 [scrollbar-width:thin]">
           <div className="flex w-max snap-x snap-mandatory gap-5 px-5 sm:px-8 lg:px-[max(2rem,calc((100vw-80rem)/2+2rem))]">
-            <article className="pm-card w-[86vw] max-w-[520px] shrink-0 snap-start overflow-hidden p-6 sm:w-[480px]">
+            <article className="pm-card w-[86vw] max-w-[520px] shrink-0 snap-start overflow-hidden p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:w-[480px]">
               <div className="flex items-center justify-between">
                 <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-zinc-500">Number health</p>
                 <StatusDot status="live" />
@@ -406,7 +422,7 @@ export function DeliverabilityRail() {
                 <NumberHealth />
               </div>
             </article>
-            <article className="pm-card w-[86vw] max-w-[520px] shrink-0 snap-start overflow-hidden p-6 sm:w-[480px]">
+            <article className="pm-card w-[86vw] max-w-[520px] shrink-0 snap-start overflow-hidden p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:w-[480px]">
               <div className="flex items-center justify-between">
                 <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-zinc-500">DNC & records</p>
                 <StatusDot status="live" />
@@ -419,7 +435,7 @@ export function DeliverabilityRail() {
                 </BrowserFrame>
               </div>
             </article>
-            <article className="pm-card w-[86vw] max-w-[380px] shrink-0 snap-start p-6 sm:w-[380px]">
+            <article className="pm-card w-[86vw] max-w-[380px] shrink-0 snap-start p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:w-[380px]">
               <div className="flex items-center justify-between">
                 <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-zinc-500">Recording vault</p>
                 <StatusDot status="live" />
@@ -443,7 +459,7 @@ export function DeliverabilityRail() {
                 ))}
               </ul>
             </article>
-            <article className="flex w-[86vw] max-w-[380px] shrink-0 snap-start flex-col justify-between rounded-[1.4rem] bg-zinc-950 p-7 text-white sm:w-[380px]">
+            <article className="flex w-[86vw] max-w-[380px] shrink-0 snap-start flex-col justify-between rounded-[1.4rem] bg-zinc-950 p-7 text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:w-[380px]">
               <div>
                 <div className="flex items-center justify-between">
                   <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-zinc-500">Spam-risk watch</p>
@@ -493,13 +509,13 @@ export function CoachingStrip() {
               hang-up — tied to the exact minute it matters. Whisper and barge audio are coming soon.
             </p>
             <ul className="mt-6 space-y-3">
-              {['Listen to any live call from the salesfloor', 'Post-call feedback tied to the transcript', 'Take over a call mid-conversation when it counts'].map((b) => (
-                <li key={b} className="pm-tick">
+              {['Listen to any live call from the salesfloor', 'Post-call feedback tied to the transcript', 'Take over a call mid-conversation when it counts'].map((b, i) => (
+                <Reveal as="li" key={b} delay={i * 70} className="pm-tick">
                   <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/12 text-emerald-700">
                     <Check className="h-3 w-3" strokeWidth={3} />
                   </span>
                   {b}
-                </li>
+                </Reveal>
               ))}
             </ul>
             <Link href="/features/salesfloor" className="mt-8 inline-flex items-center gap-2 text-[15px] font-semibold text-[#6d28d9] transition-colors hover:text-zinc-950">
@@ -529,9 +545,11 @@ export function VoiceAgentRoadmap() {
                 sell it until it’s ready.
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
-                  Start free trial <ArrowRight className="h-4 w-4" />
-                </a>
+                <Magnetic strength={14}>
+                  <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
+                    Start free trial <ArrowRight className="h-4 w-4" />
+                  </a>
+                </Magnetic>
                 <Link href="/contact-sales" className="pm-btn pm-btn-secondary">
                   Talk to sales
                 </Link>

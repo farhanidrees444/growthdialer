@@ -9,6 +9,25 @@ import { HERO, RISK_BULLETS } from './copy';
 import { Magnetic, Noise, usePrefersReducedMotion } from './motion';
 import { ParallelFan } from './Mockups';
 
+const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
+/* ── headline mask-line reveal: each line rises out of its mask ── */
+function MaskLine({ children, delay }: { children: React.ReactNode; delay: number }) {
+  const reduced = usePrefersReducedMotion();
+  if (reduced) return <span className="pm-mask"><span>{children}</span></span>;
+  return (
+    <span className="pm-mask" aria-hidden={false}>
+      <motion.span
+        initial={{ y: '112%' }}
+        animate={{ y: '0%' }}
+        transition={{ duration: 1, ease: EASE, delay }}
+      >
+        {children}
+      </motion.span>
+    </span>
+  );
+}
+
 /**
  * Editorial, asymmetric hero: the point of view is the headline —
  * "Your reps were hired to talk. Not to type." — set large on the left,
@@ -49,9 +68,12 @@ export function Hero() {
               </Link>
             </Reveal>
 
-            <Reveal delay={70}>
-              <h1 className="pm-h-display mt-7 !text-[clamp(2.6rem,5.2vw,4.3rem)]">{HERO.title}</h1>
-            </Reveal>
+            <h1 className="pm-h-display mt-7 !text-[clamp(2.6rem,5.2vw,4.3rem)]">
+              <MaskLine delay={0.1}>
+                Your reps were hired to <span className="text-[#6d28d9]">talk.</span>
+              </MaskLine>
+              <MaskLine delay={0.22}>Not to type.</MaskLine>
+            </h1>
 
             <Reveal delay={150}>
               <p className="pm-lead mt-6 max-w-md">{HERO.lede}</p>
@@ -60,7 +82,7 @@ export function Hero() {
             <Reveal delay={230}>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Magnetic strength={14} className="w-full sm:w-auto">
-                  <a href={HERO.primaryCta.href} className="pm-btn pm-btn-brand w-full sm:w-auto">
+                  <a href={HERO.primaryCta.href} className="pm-btn pm-btn-brand pm-shimmer w-full sm:w-auto">
                     {HERO.primaryCta.label}
                     <ArrowRight className="h-[18px] w-[18px]" />
                   </a>

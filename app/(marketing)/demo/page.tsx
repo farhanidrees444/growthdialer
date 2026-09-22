@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { ArrowRight, Check, Clock3 } from 'lucide-react';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
 import { Faq, RiskBullets } from '@/components/marketing/v2/Sections';
@@ -12,6 +13,7 @@ import {
   PowerQueue,
 } from '@/components/marketing/v2/Mockups';
 import { Reveal } from '@/components/ui/reveal';
+import { Counter } from '@/components/marketing/v2/motion';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { JsonLd } from '@/components/marketing/v2/JsonLd';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
@@ -68,7 +70,7 @@ const DEMO_FAQS = [
   },
 ] as const;
 
-function ChapterKicker({ num, time }: { num: string; time: string }) {
+function ChapterKicker({ num, time }: { num: string; time: ReactNode }) {
   return (
     <div className="flex items-center gap-3">
       <span className="font-display text-sm font-semibold tracking-[0.18em] text-[#6d28d9]">
@@ -115,21 +117,25 @@ export default function DemoPage() {
           </div>
           <div className="pm-container-narrow relative text-center">
             <Reveal>
-              <p className="pm-eyebrow pm-eyebrow-centered">Product tour · 4 minutes</p>
+              <p className="pm-eyebrow pm-eyebrow-centered">Product tour · <Counter to={4} /> minutes</p>
+            </Reveal>
+            <Reveal delay={80}>
               <h1 className="pm-h-display">
                 Walk the floor
                 <br />
                 in four minutes.
               </h1>
+            </Reveal>
+            <Reveal delay={160}>
               <p className="pm-lead mx-auto mt-6 max-w-2xl">
                 No video. No 2x speed. Four chapters through the real product — the same
                 dialer, briefs, and live floor you open the moment your trial starts.
               </p>
             </Reveal>
-            <Reveal delay={120}>
+            <Reveal delay={240}>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
-                  Start your 7-day trial <ArrowRight className="h-4 w-4" />
+                  Start your <Counter to={7} suffix="-day" /> trial <ArrowRight className="h-4 w-4" />
                 </a>
                 <Link href="/contact-sales" className="pm-btn pm-btn-secondary">
                   Talk to sales
@@ -137,7 +143,7 @@ export default function DemoPage() {
               </div>
               <RiskBullets className="mt-6 justify-center" />
             </Reveal>
-            <Reveal delay={200}>
+            <Reveal delay={320}>
               <nav aria-label="Tour chapters" className="mx-auto mt-10 flex max-w-xl flex-wrap items-center justify-center gap-2">
                 {CHAPTERS.map((c) => (
                   <a
@@ -158,7 +164,7 @@ export default function DemoPage() {
           <div className="pm-container">
             <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
               <Reveal>
-                <ChapterKicker num="01" time="~60 seconds" />
+                <ChapterKicker num="01" time={<>~<Counter to={60} /> seconds</>} />
                 <h2 className="pm-h-section mt-4">Load your queue.</h2>
                 <p className="pm-body mt-4 max-w-lg">
                   Import a CSV and your list is a working queue in seconds — not a
@@ -182,7 +188,7 @@ export default function DemoPage() {
           <div className="pm-container relative py-20 sm:py-28">
             <Reveal className="mx-auto max-w-2xl text-center">
               <div className="flex justify-center">
-                <ChapterKicker num="02" time="~60 seconds" />
+                <ChapterKicker num="02" time={<>~<Counter to={60} /> seconds</>} />
               </div>
               <h2 className="pm-h-section mt-4">Dial your way.</h2>
               <p className="pm-body mx-auto mt-4 max-w-xl">
@@ -215,7 +221,7 @@ export default function DemoPage() {
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-zinc-300">
                     <Clock3 className="h-3 w-3" />
-                    ~45 seconds
+                    ~<Counter to={45} /> seconds
                   </span>
                 </div>
                 <h2 className="pm-h-section-dark mt-4">Hang up — notes are done.</h2>
@@ -258,7 +264,7 @@ export default function DemoPage() {
           <div className="pm-container">
             <Reveal className="mx-auto max-w-2xl text-center">
               <div className="flex justify-center">
-                <ChapterKicker num="04" time="~60 seconds" />
+                <ChapterKicker num="04" time={<>~<Counter to={60} /> seconds</>} />
               </div>
               <h2 className="pm-h-section mt-4">Review and coach.</h2>
               <p className="pm-body mx-auto mt-4 max-w-xl">
@@ -272,19 +278,26 @@ export default function DemoPage() {
                   <AnalyticsSnap />
                 </BrowserFrame>
               </Reveal>
-              <Reveal delay={120} className="lg:col-span-2">
+              <div className="lg:col-span-2">
                 <ul className="space-y-4">
                   {COACH_POINTS.map((point, i) => (
-                    <li key={point} className="flex items-start gap-4 rounded-2xl border border-zinc-950/[0.07] bg-white p-5 shadow-[0_10px_30px_-18px_rgba(9,9,11,0.25)]">
+                    <Reveal
+                      as="li"
+                      key={point}
+                      delay={i * 80}
+                      className="flex items-start gap-4 rounded-2xl border border-zinc-950/[0.07] bg-white p-5 shadow-[0_10px_30px_-18px_rgba(9,9,11,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                    >
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#6d28d9]/10 font-display text-[13px] font-bold text-[#6d28d9]">
                         {String(i + 1).padStart(2, '0')}
                       </span>
                       <span className="pt-1 text-[15px] leading-relaxed text-zinc-700">{point}</span>
-                    </li>
+                    </Reveal>
                   ))}
                 </ul>
-                <ChapterCta label="Open the live sales floor" href="/features/salesfloor" />
-              </Reveal>
+                <Reveal delay={340}>
+                  <ChapterCta label="Open the live sales floor" href="/features/salesfloor" />
+                </Reveal>
+              </div>
             </div>
           </div>
         </section>
@@ -300,7 +313,7 @@ export default function DemoPage() {
           <div aria-hidden className="pm-dark-glow absolute inset-x-0 top-0 h-[420px]" />
           <div className="pm-container relative py-24 text-center sm:py-32">
             <Reveal>
-              <p className="pm-eyebrow pm-eyebrow-centered !text-violet-300">End of tour · 4:00</p>
+              <p className="pm-eyebrow pm-eyebrow-centered !text-violet-300">End of tour · <Counter to={4} suffix=":00" /></p>
               <h2 className="pm-h-section-dark mx-auto max-w-3xl">
                 That was the slow version.
               </h2>
@@ -312,7 +325,7 @@ export default function DemoPage() {
             <Reveal delay={140}>
               <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <a href={APP_SIGNUP} className="pm-btn pm-btn-white">
-                  Start your 7-day trial — no credit card <ArrowRight className="h-4 w-4" />
+                  Start your <Counter to={7} suffix="-day" /> trial — no credit card <ArrowRight className="h-4 w-4" />
                 </a>
                 <Link href="/contact-sales" className="pm-btn pm-btn-ghostlight">
                   Talk to sales

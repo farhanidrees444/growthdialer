@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Check, ShieldCheck, X } from "lucide-react";
 import { Navbar, Footer } from "@/components/marketing/v2/Chrome";
 import { PricingPage as SharedPricingPage } from "@/components/pricing/pricing-page";
 import { RiskBullets } from "@/components/marketing/v2/Sections";
 import { Reveal } from "@/components/ui/reveal";
+import { Counter } from "@/components/marketing/v2/motion";
 import { MARKETING_SITE } from "@/lib/marketing/navigation";
 
 export const metadata: Metadata = {
@@ -20,10 +21,12 @@ export const metadata: Metadata = {
   },
 };
 
-const ON_EVERY_PLAN = [
+const ON_EVERY_PLAN: ReactNode[] = [
   "Unlimited calls — dial all day, every plan",
   "Recordings and transcripts included",
-  "5-line parallel dialing — no add-on fee",
+  <>
+    <Counter to={5} suffix="-line" /> parallel dialing — no add-on fee
+  </>,
 ];
 
 const NEVER_ON_INVOICE = [
@@ -55,32 +58,38 @@ function HonestContractHero() {
   return (
     <div className="border-b border-zinc-950/[0.06] bg-zinc-50/60 pt-28 sm:pt-32">
       <div className="pm-container py-12 sm:py-16">
-        <Reveal className="text-center">
+        <Reveal delay={0} className="text-center">
           <p className="pm-eyebrow pm-eyebrow-centered">
             <ShieldCheck className="mr-2 inline h-3.5 w-3.5 text-[#6d28d9]" />
             Pricing · The honest contract
           </p>
+        </Reveal>
+        <Reveal delay={80} className="text-center">
           <h1 className="pm-h-display mx-auto mt-5 max-w-3xl">
             Priced like a tool, <span className="text-[#6d28d9]">not a tax.</span>
           </h1>
+        </Reveal>
+        <Reveal delay={160} className="text-center">
           <p className="pm-lead mx-auto mt-6 max-w-2xl">
             One price per seat. The dialer, recordings, and transcripts on every
             plan — no per-minute metering, no seat minimums, no annual lock-in.
-            Annual prices are per month, billed annually, and the 20% saving is
+            Annual prices are per month, billed annually, and the <Counter to={20} suffix="%" /> saving is
             printed right on the card.
           </p>
+        </Reveal>
+        <Reveal delay={240}>
           <RiskBullets className="mt-7 justify-center" />
         </Reveal>
 
-        <Reveal delay={120}>
-          <div className="mx-auto mt-10 grid max-w-3xl gap-4 text-left sm:grid-cols-2">
-            <div className="rounded-2xl border border-zinc-950/[0.08] bg-white p-6">
+        <div className="mx-auto mt-10 grid max-w-3xl gap-4 text-left sm:grid-cols-2">
+          <Reveal delay={120} className="h-full">
+            <div className="h-full rounded-2xl border border-zinc-950/[0.08] bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-700">
                 On every plan
               </p>
               <ul className="mt-4 space-y-3">
-                {ON_EVERY_PLAN.map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm text-zinc-700">
+                {ON_EVERY_PLAN.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-sm text-zinc-700">
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/12 text-emerald-700">
                       <Check className="h-3 w-3" strokeWidth={3} />
                     </span>
@@ -89,7 +98,9 @@ function HonestContractHero() {
                 ))}
               </ul>
             </div>
-            <div className="rounded-2xl border border-zinc-950/[0.08] bg-white p-6">
+          </Reveal>
+          <Reveal delay={200} className="h-full">
+            <div className="h-full rounded-2xl border border-zinc-950/[0.08] bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">
                 Never on your invoice
               </p>
@@ -104,8 +115,8 @@ function HonestContractHero() {
                 ))}
               </ul>
             </div>
-          </div>
-        </Reveal>
+          </Reveal>
+        </div>
 
         <Reveal delay={180}>
           <div className="mx-auto mt-10 max-w-3xl text-left">

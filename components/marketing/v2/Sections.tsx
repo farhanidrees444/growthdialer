@@ -391,7 +391,7 @@ export function FinalCta({
         <Reveal delay={140}>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Magnetic strength={14} className="w-full sm:w-auto">
-              <a href={primaryCta.href} className="pm-btn pm-btn-white w-full sm:w-auto">
+              <a href={primaryCta.href} className="pm-btn pm-btn-white pm-shimmer w-full sm:w-auto">
                 {primaryCta.label} <ArrowRight className="h-4 w-4" />
               </a>
             </Magnetic>
@@ -446,18 +446,26 @@ export function PageHero({
       <div className="pm-container-narrow relative text-center">
         <Reveal>
           <p className="pm-eyebrow pm-eyebrow-centered">{eyebrow}</p>
+        </Reveal>
+        <Reveal delay={90}>
           <h1 className="pm-h-display !text-[clamp(2.4rem,5vw,3.9rem)]">{title}</h1>
-          {lede && <p className="pm-lead mx-auto mt-6 max-w-2xl">{lede}</p>}
-          {cta && (
+        </Reveal>
+        {lede && (
+          <Reveal delay={170}>
+            <p className="pm-lead mx-auto mt-6 max-w-2xl">{lede}</p>
+          </Reveal>
+        )}
+        {cta && (
+          <Reveal delay={250}>
             <div className="mt-9">
               <Magnetic strength={14}>
-                <a href={cta.href} className="pm-btn pm-btn-primary">
+                <a href={cta.href} className="pm-btn pm-btn-primary pm-shimmer">
                   {cta.label} <ArrowRight className="h-4 w-4" />
                 </a>
               </Magnetic>
             </div>
-          )}
-        </Reveal>
+          </Reveal>
+        )}
       </div>
     </section>
   );
@@ -692,7 +700,7 @@ export function ProofBand() {
               <Reveal key={p.name} delay={i * 80} className="h-full">
                 <article
                   className={cn(
-                    'h-full rounded-[1.4rem] border p-6',
+                    'pm-lift h-full rounded-[1.4rem] border p-6',
                     live
                       ? 'pm-card'
                       : 'border-dashed border-[#6d28d9]/40 bg-[#6d28d9]/[0.03]'
