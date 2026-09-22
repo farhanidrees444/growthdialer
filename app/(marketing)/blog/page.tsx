@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import type { Metadata } from 'next';
 import { ArrowRight, Clock } from 'lucide-react';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
 import { FinalCta, PageHero, SectionHead } from '@/components/marketing/v2/Sections';
 import { Reveal } from '@/components/ui/reveal';
+import { SpotVisual, type SpotKind } from '@/components/marketing/visuals';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
@@ -28,12 +28,8 @@ const POSTS = [
       'We evaluated major AI dialers on connect rate, recording quality, CRM sync, and real per-seat cost — not marketing claims.',
     category: 'Reviews',
     readTime: '18 min read',
-    thumbnail: {
-      src: '/images/product/dialer-main.webp',
-      width: 1600,
-      height: 828,
-      alt: 'Actual GrowthDialer dialer screen',
-    },
+    spot: 'dialer' as SpotKind,
+    spotAlt: 'Illustrated spot: AI dialer call button with signal arcs',
   },
   {
     slug: 'how-parallel-dialing-works',
@@ -43,12 +39,8 @@ const POSTS = [
       'Line counts, AMD behavior, and when parallel beats single-line power dial for B2B outbound teams.',
     category: 'Strategy',
     readTime: '16 min read',
-    thumbnail: {
-      src: '/images/product/dialer-banner.webp',
-      width: 1600,
-      height: 566,
-      alt: 'Actual GrowthDialer dialer session view',
-    },
+    spot: 'parallel' as SpotKind,
+    spotAlt: 'Illustrated spot: five parallel dialing lines fanning out',
   },
   {
     slug: 'replace-sdr-team-with-ai',
@@ -58,12 +50,8 @@ const POSTS = [
       'Where AI removes dial-and-log busywork versus where humans still own discovery and closing.',
     category: 'Guide',
     readTime: '19 min read',
-    thumbnail: {
-      src: '/images/product/dashboard-main.webp',
-      width: 1600,
-      height: 578,
-      alt: 'Actual GrowthDialer dashboard',
-    },
+    spot: 'ai' as SpotKind,
+    spotAlt: 'Illustrated spot: AI call brief with sentiment badge',
   },
 ];
 
@@ -99,13 +87,10 @@ export default function BlogPage() {
                     className="pm-card pm-card-hover group flex h-full flex-col overflow-hidden !p-0"
                   >
                     <div className="relative overflow-hidden border-b border-zinc-950/[0.06]">
-                      <Image
-                        src={post.thumbnail.src}
-                        width={post.thumbnail.width}
-                        height={post.thumbnail.height}
-                        alt={post.thumbnail.alt}
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="aspect-[16/9] w-full object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-[1.03]"
+                      <SpotVisual
+                        kind={post.spot}
+                        label={post.spotAlt}
+                        className="aspect-[16/9] w-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-[1.03]"
                       />
                     </div>
                     <div className="flex flex-1 flex-col p-7">

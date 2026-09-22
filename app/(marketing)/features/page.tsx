@@ -9,18 +9,23 @@ import {
   SectionHead,
 } from '@/components/marketing/v2/Sections';
 import { Reveal } from '@/components/ui/reveal';
-import { RealShot } from './_components/real-shot';
+import {
+  AiSummaryVisual,
+  DashboardVisual,
+  DialerConsoleVisual,
+  VisualFigure,
+} from '@/components/marketing/visuals';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
   title: 'Features — Real Dialer, AI Summaries & Team Metrics | GrowthDialer',
   description:
-    'The real GrowthDialer UI: power and parallel dialing modes, AI call summaries, and the team dashboard. Every screenshot is the actual product.',
+    'Power and parallel dialing modes, AI call summaries, and the team dashboard — illustrated feature by feature.',
   alternates: { canonical: `${MARKETING_SITE}/features` },
   openGraph: {
     title: 'GrowthDialer Features',
-    description: 'Dialing, AI summaries, and team metrics — shown as they actually look in the app.',
+    description: 'Dialing, AI summaries, and team metrics — illustrated feature by feature.',
     url: `${MARKETING_SITE}/features`,
   },
 };
@@ -48,8 +53,8 @@ const SUBPAGES = [
 
 const FEATURES_FAQS = [
   {
-    q: 'Are the screenshots on this page real?',
-    a: 'Yes. Every screenshot is the actual GrowthDialer UI — including the empty queue and the 0-of-4 activation path, which is exactly what a fresh account looks like. We would rather show a real empty state than a staged full one.',
+    q: 'What do the illustrations on this page show?',
+    a: 'Hand-crafted illustrations of the real GrowthDialer features — the dialer, AI summaries, and dashboard — drawn to show exactly how each one works. Start a free trial to see the live product.',
   },
   {
     q: 'Is everything on this page live today?',
@@ -76,12 +81,12 @@ export default function FeaturesPage() {
             <Reveal>
               <p className="pm-eyebrow">Features</p>
               <h1 className="pm-h-display mt-4 max-w-3xl !text-[clamp(2.4rem,5vw,3.9rem)]">
-                Every screenshot here is the product.
+                How the product works, illustrated.
               </h1>
               <p className="pm-lead mt-6 max-w-2xl">
-                No staged mockups, no filler slides. This is the actual GrowthDialer UI — the dialer
-                your reps open, the dashboard your managers read, the AI that writes the notes.
-                Labeled honestly throughout.
+                No filler slides: illustrated walkthroughs of the dialer your reps open, the
+                dashboard your managers read, and the AI that writes the notes. Labeled honestly
+                throughout.
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
@@ -95,7 +100,7 @@ export default function FeaturesPage() {
           </div>
         </section>
 
-        {/* Dialing deep-dive — full-bleed dark panel, real dialer screenshot */}
+        {/* Dialing deep-dive — full-bleed dark panel, illustrated dialer */}
         <section className="pm-dark">
           <div aria-hidden className="pm-dark-grid absolute inset-0" />
           <div aria-hidden className="pm-dark-glow absolute inset-0" />
@@ -132,12 +137,9 @@ export default function FeaturesPage() {
                 </Link>
               </Reveal>
               <Reveal delay={120}>
-                <RealShot
-                  shot="dialerMain"
-                  priority
-                  alt="The real GrowthDialer AI Dialer: Manual, Power, and Parallel mode tabs above an empty lead queue"
-                  caption="The AI Dialer with Manual, Power, and Parallel mode tabs. This shot is a fresh account, so the queue is empty — Import CSV and Claim caller ID are the first steps."
-                />
+                <VisualFigure dark caption="Illustrated preview of the AI Dialer — Manual, Power, and Parallel mode tabs, lead card, live call controls, and 8 one-click dispositions.">
+                  <DialerConsoleVisual />
+                </VisualFigure>
               </Reveal>
             </div>
           </div>
@@ -170,11 +172,9 @@ export default function FeaturesPage() {
                 </ul>
               </Reveal>
               <Reveal delay={120} className="lg:order-1">
-                <RealShot
-                  shot="dashboardBanner"
-                  alt="The real GrowthDialer dashboard: AI SUMMARIES, Power Dialer, and Inbound status cards above the activation path"
-                  caption="The dashboard's AI SUMMARIES status card — analysis runs automatically after calls."
-                />
+                <VisualFigure caption="Illustrated preview of the AI summary card — bullet notes, sentiment, buying signals, and a suggested disposition, saved to the lead's memory.">
+                  <AiSummaryVisual />
+                </VisualFigure>
               </Reveal>
             </div>
           </div>
@@ -193,11 +193,9 @@ export default function FeaturesPage() {
               </p>
             </Reveal>
             <Reveal delay={120} className="mt-10">
-              <RealShot
-                shot="dashboardMain"
-                alt="The real GrowthDialer dashboard: activation path checklist and metric cards for calls today, connect rate, talk time, and meetings booked"
-                caption="The dashboard on a new workspace: the 0-of-4 activation path, status cards for AI summaries, the power dialer, and inbound — and the metric cards your day fills in."
-              />
+              <VisualFigure caption="Illustrated preview of the dashboard — activation path, AI summaries, and the metric cards your day fills in.">
+                <DashboardVisual />
+              </VisualFigure>
             </Reveal>
           </div>
         </section>

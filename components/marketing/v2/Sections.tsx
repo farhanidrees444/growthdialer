@@ -2,8 +2,10 @@
 
 import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { AnimatePresence, motion } from 'framer-motion';
+import {
+  AnimatePresence,
+  motion,
+} from 'framer-motion';
 import {
   ArrowRight,
   BarChart3,
@@ -36,6 +38,7 @@ import {
   TRUST,
 } from './copy';
 import { INTEGRATION_BRANDS } from '@/lib/marketing/integration-brands';
+import { DashboardVisual, ModesVisual } from '@/components/marketing/visuals';
 import {
   Aurora,
   Counter,
@@ -83,11 +86,11 @@ export function SectionHead({
   );
 }
 
-/* ── Dark screenshot panel ──────────────────────────────
-   Each feature block is anchored by a REAL product screenshot.
-   Left-aligned editorial head, full-bleed dark panel, compact
-   mode cards beneath the shot. */
-type PanelImage = { src: string; alt: string; width: number; height: number };
+/* ── Dark product visual panel ──────────────────────────
+   Each feature block is anchored by a hand-crafted SVG product
+   illustration in the LGM register — crisp vector UI, dark
+   annotation pills, marker arrows. Left-aligned editorial head,
+   full-bleed dark panel, compact mode cards beneath the visual. */
 type ModeCard = { title: string; body: string; icon: ReactNode };
 
 const DIALING_ICONS = [
@@ -111,28 +114,26 @@ type PanelCopy = {
 
 function panelWithIcons(
   panel: PanelCopy,
-  icons: ReactNode[],
-  image: PanelImage
-): { panel: PanelCopy; image: PanelImage; cards: ModeCard[] } {
+  icons: ReactNode[]
+): { panel: PanelCopy; cards: ModeCard[] } {
   return {
     panel,
-    image,
     cards: panel.modes.map((m, i) => ({ ...m, icon: icons[i] })),
   };
 }
 
-export function ScreenshotPanel({
+export function VisualPanel({
   eyebrow,
   title,
   lede,
-  image,
+  visual,
   caption,
   cards,
 }: {
   eyebrow: string;
   title: ReactNode;
   lede: string;
-  image: PanelImage;
+  visual: ReactNode;
   caption: string;
   cards: ModeCard[];
 }) {
@@ -153,13 +154,7 @@ export function ScreenshotPanel({
           <Tilt3D maxX={5} maxY={8}>
             <figure className="not-prose">
               <div className="overflow-hidden rounded-2xl border border-white/10 shadow-[0_60px_120px_-40px_rgba(0,0,0,0.8)]">
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  width={image.width}
-                  height={image.height}
-                  sizes="(max-width: 1024px) 100vw, 1152px"
-                />
+                {visual}
               </div>
               <figcaption className="pm-caption !text-zinc-500">{caption}</figcaption>
             </figure>
@@ -187,18 +182,13 @@ export function ScreenshotPanel({
 }
 
 export function DialingPanel() {
-  const { panel, image, cards } = panelWithIcons(DIALING_PANEL, DIALING_ICONS, {
-    src: '/images/product/dialer-banner.webp',
-    alt: 'The actual GrowthDialer AI Dialer — manual, power, and parallel dialing modes',
-    width: 1600,
-    height: 566,
-  });
+  const { panel, cards } = panelWithIcons(DIALING_PANEL, DIALING_ICONS);
   return (
-    <ScreenshotPanel
+    <VisualPanel
       eyebrow={panel.eyebrow}
       title={panel.title}
       lede={panel.lede}
-      image={image}
+      visual={<ModesVisual />}
       caption={panel.caption}
       cards={cards}
     />
@@ -206,18 +196,13 @@ export function DialingPanel() {
 }
 
 export function DashboardPanel() {
-  const { panel, image, cards } = panelWithIcons(DASHBOARD_PANEL, DASHBOARD_ICONS, {
-    src: '/images/product/dashboard-main.webp',
-    alt: 'The actual GrowthDialer dashboard — AI summaries, activation path, and team analytics',
-    width: 1600,
-    height: 578,
-  });
+  const { panel, cards } = panelWithIcons(DASHBOARD_PANEL, DASHBOARD_ICONS);
   return (
-    <ScreenshotPanel
+    <VisualPanel
       eyebrow={panel.eyebrow}
       title={panel.title}
       lede={panel.lede}
-      image={image}
+      visual={<DashboardVisual />}
       caption={panel.caption}
       cards={cards}
     />
