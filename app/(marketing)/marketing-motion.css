@@ -362,6 +362,17 @@
 /* ── parallax ─────────────────────────────────────────── */
 .theme-marketing .mx-parallax { will-change: transform; }
 
+/* ── svg product visuals: subtle live-dot pulse ───────── */
+@keyframes mx-svg-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.theme-marketing .mx-svg-pulse {
+  animation: mx-svg-pulse 2.2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 /* ── reduced motion: kill all mx animation ────────────── */
 @media (prefers-reduced-motion: reduce) {
   .theme-marketing .mx-blob,
@@ -369,7 +380,8 @@
   .theme-marketing .mx-caret,
   .theme-marketing .mx-marquee-track,
   .theme-marketing .mx-scroll-hint svg,
-  .theme-marketing .mx-dark-sheen {
+  .theme-marketing .mx-dark-sheen,
+  .theme-marketing .mx-svg-pulse {
     animation: none !important;
   }
   .theme-marketing .mx-marquee-track { transform: none; }

@@ -162,7 +162,7 @@ export const DIALING_PANEL = {
   eyebrow: 'The AI Dialer',
   title: 'Three ways to call. One rhythm.',
   lede: 'Manual, power, or parallel — pick the mode that fits the moment. The workflow never changes: the next call starts the second the last one is dispositioned.',
-  caption: 'Actual GrowthDialer product UI — the AI Dialer.',
+  caption: 'Illustrated preview of the AI Dialer — mode tabs, lead card, live call controls, and one-click dispositions.',
   modes: [
     {
       title: 'Manual',
@@ -183,7 +183,7 @@ export const DASHBOARD_PANEL = {
   eyebrow: 'Command center',
   title: 'Every call, understood.',
   lede: 'The dashboard tracks what the phones are doing — and turns every recorded conversation into insight your team can actually use.',
-  caption: 'Actual GrowthDialer product UI — the dashboard.',
+  caption: 'Illustrated preview of the command-center dashboard — call stats, connects chart, and the call log.',
   modes: [
     {
       title: 'AI summaries',

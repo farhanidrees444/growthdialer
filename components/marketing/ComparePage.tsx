@@ -6,6 +6,7 @@ import { ArrowRight, CheckCircle2, MinusCircle } from 'lucide-react';
 import { MarketingPageHero } from '@/components/marketing/live-floor/MarketingPageHero';
 import { APP_SIGNUP } from '@/lib/marketing/navigation';
 import { Reveal } from '@/components/ui/reveal';
+import { SpotVisual } from '@/components/marketing/visuals';
 import { cn } from '@/lib/utils';
 
 export type CompareRow = {
@@ -77,6 +78,14 @@ export function ComparePage({
             <div className="font-display text-4xl font-semibold text-zinc-400">{priceCompetitor}</div>
             <div className="mt-1 text-sm text-zinc-500">{competitor}</div>
           </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mx-auto mt-6 max-w-2xl overflow-hidden rounded-2xl border border-zinc-950/[0.08]"
+        >
+          <SpotVisual kind="versus" label={`Illustrated comparison: GrowthDialer versus ${competitor}`} />
         </motion.div>
       </section>
 
