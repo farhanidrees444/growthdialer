@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Play, Pause, Clock, Sparkles, FileText, Search, Phone,
+  Play, Pause, Clock, Sparkles, FileText, Search, Phone, Headphones,
   TrendingUp, TrendingDown, Minus, RefreshCw, ChevronDown,
   ChevronRight, Volume2, X, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
@@ -12,6 +12,8 @@ import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { toast } from 'sonner';
 import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
+import { DashErrorState } from '@/components/dashboard/dash-error-state';
+import { PageHeader } from '@/components/ui/page-header';
 import { RecordingsStatsStrip } from '@/components/recordings/recordings-stats-strip';
 import { RecordingQAStatusPill } from '@/components/recordings/recording-qa-scorecard';
 import { cn } from '@/lib/utils';
@@ -712,10 +714,12 @@ export default function RecordingsPage() {
   return (
     <main className="flex-1 overflow-y-auto px-3 py-4 lg:px-6 lg:py-5">
         <div className="mx-auto max-w-4xl">
-          <div className="dash-enter mb-5">
-            <h1 className="dash-page-title">Recordings</h1>
-            <p className="dash-muted mt-1">Playback, transcripts, and AI analysis for your calls.</p>
-          </div>
+          <PageHeader
+            title="Recordings"
+            description="Playback, transcripts, and AI analysis for your calls."
+            icon={Headphones}
+            className="dash-enter"
+          />
 
           <RecordingPipelinePanel
             diagnostics={diagnostics}
@@ -784,16 +788,13 @@ export default function RecordingsPage() {
           )}
 
           {loadError && !loading && (
-            <div className="mb-5 rounded-2xl border border-red-500/30 bg-red-500/[0.06] p-4">
-              <p className="text-sm font-semibold text-red-300">Couldn&apos;t load recordings</p>
-              <p className="mt-1 text-xs text-red-300/70 break-all">{loadError}</p>
-              <button
-                type="button"
-                onClick={() => void fetchRecordings()}
-                className="mt-3 rounded-lg border border-red-500/30 bg-red-500/[0.08] px-3 py-1.5 text-[11px] font-semibold text-red-300 hover:bg-red-500/15"
-              >
-                Retry
-              </button>
+            <div className="mb-5">
+              <DashErrorState
+                compact
+                title="Couldn't load recordings"
+                description={loadError}
+                onRetry={() => void fetchRecordings()}
+              />
             </div>
           )}
 

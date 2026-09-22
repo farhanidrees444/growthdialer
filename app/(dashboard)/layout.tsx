@@ -23,6 +23,7 @@ import { FloatingEdgeProvider } from "@/components/layout/floating-edge-provider
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { AmbientShell } from "@/components/dashboard/ambient-shell";
+import "@/components/dashboard/dashboard-premium.css";
 import { PageEnter } from "@/components/layout/page-enter";
 import { resolveRouteAccent } from "@/lib/ui/route-accents";
 import { PostHogIdentify } from "@/components/PostHogIdentify";

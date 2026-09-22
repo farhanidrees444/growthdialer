@@ -12,6 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/ui/page-header';
 import { SurfaceCard } from '@/components/ui/surface-card';
 import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
+import { DashErrorState } from '@/components/dashboard/dash-error-state';
+import { ShimmerSkeleton } from '@/components/ui/shimmer-skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { SequenceTimeline } from '@/components/sequences/sequence-timeline';
 import { sequenceNameError } from '@/lib/sequences/cleanup';
@@ -36,6 +38,7 @@ export default function SequencesPage() {
   const { apiFetch } = useWorkspace();
   const [sequences, setSequences] = useState<Sequence[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
   const [waitDays, setWaitDays] = useState(2);
@@ -44,12 +47,17 @@ export default function SequencesPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await apiFetch('/api/sequences');
       if (res.ok) {
         const data = await res.json() as { sequences: Sequence[] };
         setSequences(data.sequences ?? []);
+      } else {
+        setLoadError('Sequences could not be loaded.');
       }
+    } catch {
+      setLoadError('Sequences could not be loaded.');
     } finally {
       setLoading(false);
     }
@@ -165,10 +173,20 @@ export default function SequencesPage() {
         </SurfaceCard>
 
         {loading && (
-          <p className="text-sm text-muted-foreground py-8 text-center">Loading sequences…</p>
+          <div className="space-y-4" aria-hidden>
+            {[1, 2].map((i) => (
+              <ShimmerSkeleton key={i} className="h-32 rounded-2xl" rounded="rounded-2xl" />
+            ))}
+          </div>
         )}
 
-        {!loading && sequences.length === 0 && (
+        {!loading && loadError && sequences.length === 0 ? (
+          <DashErrorState
+            title="Sequences unavailable"
+            description={loadError}
+            onRetry={() => void load()}
+          />
+        ) : !loading && sequences.length === 0 ? (
           <PremiumEmptyState
             icon={Zap}
             scene="sequences"
@@ -177,7 +195,7 @@ export default function SequencesPage() {
             primaryAction={{ label: 'Go to leads', href: '/leads' }}
             accent="violet"
           />
-        )}
+        ) : null}
 
         <div className="space-y-4">
           {sequences.map((seq) => (

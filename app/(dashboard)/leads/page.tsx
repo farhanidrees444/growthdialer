@@ -914,6 +914,19 @@ export default function LeadsPage() {
 
         {/* Toolbar */}
         <div className="border-b border-white/[0.06] bg-zinc-950/40 px-4 py-3 space-y-3 backdrop-blur-sm lg:px-6">
+          {/* Title row */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="dash-page-title">Leads</h1>
+              <p className="dash-muted mt-0.5 hidden sm:block">Import, organize, and call your prospects.</p>
+            </div>
+            {!loading && (
+              <span className="dash-chip shrink-0 tabular-nums" aria-label={`${tabCounts.all} leads`}>
+                {tabCounts.all} leads
+              </span>
+            )}
+          </div>
+
           {/* Top row: search + actions */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Search */}
@@ -1134,12 +1147,14 @@ export default function LeadsPage() {
               </p>
               <div className="flex items-center gap-2">
                 <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30">
+                  aria-label="Previous page"
+                  className="dash-press flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30">
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="text-xs text-slate-500">Page {page} / {totalPages}</span>
+                <span className="text-xs text-slate-500 tabular-nums" aria-current="page">Page {page} / {totalPages}</span>
                 <button type="button" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30">
+                  aria-label="Next page"
+                  className="dash-press flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30">
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>

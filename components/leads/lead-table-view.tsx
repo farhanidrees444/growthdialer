@@ -123,7 +123,7 @@ export function LeadTableView({
   const reduce = useReducedMotion();
 
   return (
-    <div className="relative w-full overflow-x-auto rounded-2xl border border-white/[0.07] bg-zinc-900/30 backdrop-blur-sm">
+    <div className="dash-table-scroll relative w-full overflow-x-auto rounded-2xl border border-white/[0.07] bg-zinc-900/30 backdrop-blur-sm">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" aria-hidden />
       <table className="w-full border-collapse text-sm">
         <thead className="sticky top-0 z-10">

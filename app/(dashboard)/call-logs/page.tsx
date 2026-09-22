@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -20,6 +20,7 @@ import { useWorkspace } from '@/contexts/workspace-context';
 import { PageHeader } from '@/components/ui/page-header';
 import { CallLogsStatsStrip } from '@/components/calls/call-logs-stats-strip';
 import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
+import { DashErrorState } from '@/components/dashboard/dash-error-state';
 import { Input } from '@/components/ui/input';
 import { CallLogRowCard } from '@/components/calls/call-log-row';
 import type { CallLogRow, CallDateGroup } from '@/lib/calls/display';
@@ -60,6 +61,9 @@ export default function CallLogsPage() {
   const [stats, setStats] = useState<CallStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const callsRef = useRef<CallLogRow[]>([]);
+  callsRef.current = calls;
 
   useEffect(() => {
     const f = searchParams.get('filter');
@@ -76,13 +80,20 @@ export default function CallLogsPage() {
       const res = await apiFetch(`/api/calls/logs?${params}`);
       const data = await res.json() as { calls?: CallLogRow[]; stats?: CallStats; error?: string };
       if (!res.ok) {
-        toast.error(data.error ?? 'Could not load call logs');
+        const msg = data.error ?? 'Could not load call logs';
+        // Show the branded error panel on empty initial loads; toast when
+        // stale data is already on screen.
+        if (callsRef.current.length === 0) setLoadError(msg);
+        else toast.error(msg);
         return;
       }
       setCalls(data.calls ?? []);
       setStats(data.stats ?? null);
+      setLoadError(null);
     } catch {
-      toast.error('Could not load call logs');
+      const msg = 'Could not load call logs';
+      if (callsRef.current.length === 0) setLoadError(msg);
+      else toast.error(msg);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -216,9 +227,16 @@ export default function CallLogsPage() {
           </div>
         )}
 
-        {!loading && filtered.length === 0 && (
+        {!loading && loadError && filtered.length === 0 ? (
+          <DashErrorState
+            title="Call logs unavailable"
+            description={loadError}
+            onRetry={() => { setLoadError(null); void load(); }}
+            retrying={refreshing}
+          />
+        ) : !loading && filtered.length === 0 ? (
           <EmptyState direction={direction} />
-        )}
+        ) : null}
 
         <div className="space-y-6">
           {grouped.map(({ group, calls: sectionCalls }) => (

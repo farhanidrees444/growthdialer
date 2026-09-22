@@ -63,25 +63,6 @@ export function PowerBanner({
   const elapsed = useElapsed(session?.started_at, isPaused);
 
   return (
-    <>
-      {/* Shimmer keyframe */}
-      <style>{`
-        @keyframes pd-shimmer {
-          0%   { background-position: -200% center; }
-          100% { background-position:  200% center; }
-        }
-        .pd-shimmer {
-          background: linear-gradient(
-            90deg,
-            rgba(124,58,237,0.10) 0%,
-            rgba(6,182,212,0.16)  50%,
-            rgba(124,58,237,0.10) 100%
-          );
-          background-size: 200% 100%;
-          animation: pd-shimmer 8s linear infinite;
-        }
-      `}</style>
-
       <motion.div
         initial={{ height: 0, opacity: 0 }}
         animate={{ height: 'auto', opacity: 1 }}
@@ -90,7 +71,7 @@ export function PowerBanner({
         className="flex-shrink-0 overflow-hidden border-b border-purple-500/20"
       >
         {/* ── Desktop banner (≥1024px) ── */}
-        <div className="pd-shimmer hidden lg:flex items-center gap-4 px-4 h-12">
+        <div className="dash-shimmer-banner hidden lg:flex items-center gap-4 px-4 h-12">
           {/* Mode pill */}
           <div className="flex items-center gap-1.5 shrink-0">
             <motion.div
@@ -153,7 +134,7 @@ export function PowerBanner({
         </div>
 
         {/* ── Mobile banner (<1024px) ── */}
-        <div className="pd-shimmer lg:hidden">
+        <div className="dash-shimmer-banner lg:hidden">
           <div className="flex items-center gap-2 px-3 h-11">
             {/* Power pill + timer */}
             <button
@@ -209,7 +190,6 @@ export function PowerBanner({
           </AnimatePresence>
         </div>
       </motion.div>
-    </>
   );
 }
 

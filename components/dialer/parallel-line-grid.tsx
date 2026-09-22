@@ -63,6 +63,7 @@ function LineCard({ leg, index }: { leg: ParallelDialLeg | null; index: number }
           'min-h-[108px] p-4 ring-1',
           meta.ring,
           isWinner && 'shadow-emerald-500/15',
+          isWinner && 'dialer-line-live',
         )}
       >
         {isLive && !isWinner && (

@@ -172,6 +172,7 @@ function SidebarNavItem({
       onClick={onNavigate}
       className={cn(
         "relative flex items-center rounded-lg text-sm font-medium transition-all duration-200",
+        "dash-press focus:outline-none",
         collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
         active ? "text-white" : "text-zinc-400 hover:text-zinc-100",
         locked && "text-white/30 hover:text-white/50",
@@ -318,7 +319,7 @@ function NavSection({
       className={cn(showDivider && "mt-1 border-t border-zinc-800/50 pt-3")}
     >
       {title && !collapsed && (
-        <p className="mb-1.5 px-3 text-[10px] font-normal uppercase tracking-[0.2em] text-zinc-500">
+        <p className="dash-eyebrow mb-1.5 px-3">
           {title}
         </p>
       )}

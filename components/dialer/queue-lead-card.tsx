@@ -68,6 +68,13 @@ export function QueueLeadCard({ lead, selected, lastDisposition, onClick, index 
         </span>
       </motion.div>
 
+      {/* Mission-control queue position — top of the queue gets a numbered badge */}
+      {index < 5 && (
+        <span className="dialer-queue-pos shrink-0" title={index === 0 ? 'Next up' : `Position ${index + 1} in queue`}>
+          {index + 1}
+        </span>
+      )}
+
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <span className="truncate text-sm font-medium text-white">{lead.name}</span>

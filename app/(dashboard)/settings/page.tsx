@@ -73,6 +73,17 @@ const TABS: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: 'security',      label: 'Security',       icon: Shield },
 ];
 
+const TAB_DESCRIPTIONS: Record<TabKey, string> = {
+  profile: 'Your name, email, and account details.',
+  recording: 'How calls are recorded and stored.',
+  ai: 'AI call intelligence and automation preferences.',
+  calling: 'Caller ID, routing, and inbound call preferences.',
+  voicemails: 'Your voicemail drops and greetings library.',
+  notifications: 'Email and in-app notification preferences.',
+  billing: 'Plan, usage, and payment details.',
+  security: 'Password, sessions, and account safety.',
+};
+
 // ─── Shared UI ────────────────────────────────────────────────────────────────
 
 function SectionCard({ title, description, children }: {
@@ -1195,6 +1206,11 @@ export default function SettingsPage() {
               <div className="dash-skeleton h-32" />
             </div>
           ) : (
+            <>
+              <div className="dash-enter mb-5 max-w-2xl">
+                <h1 className="dash-page-title">{TABS.find((t) => t.key === activeTab)?.label ?? 'Settings'}</h1>
+                <p className="dash-muted mt-1">{TAB_DESCRIPTIONS[activeTab]}</p>
+              </div>
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
@@ -1229,6 +1245,7 @@ export default function SettingsPage() {
                 )}
               </motion.div>
             </AnimatePresence>
+            </>
           )}
         </main>
       </div>

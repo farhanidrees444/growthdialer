@@ -7,6 +7,7 @@ import { getAvatarGradient, getInitials } from '@/lib/dialer/avatar-color';
 import { CallerWaveform } from './caller-waveform';
 import { ActionDock } from './action-dock';
 import { DialerStageAmbient } from './dialer-stage-ambient';
+import { cn } from '@/lib/utils';
 import type { LeadRecord } from '@/lib/dialer/dialer-types';
 import { useWorkspace } from '@/contexts/workspace-context';
 
@@ -79,9 +80,21 @@ export function LiveCallStage({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-      className="relative flex h-full flex-col items-center gap-5 px-6 pb-6 pt-8"
+      className="dialer-mission-live relative flex h-full flex-col items-center gap-5 px-6 pb-16 pt-8 lg:pb-24"
     >
       <DialerStageAmbient variant="live" />
+
+      {/* Mission-control LIVE banner */}
+      <div className="relative z-10 flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1.5 shadow-[0_0_24px_rgba(16,185,129,0.18)]">
+        <span className="dash-live-dot" aria-hidden />
+        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-300">
+          {isOnHold ? 'On hold' : isConnected ? 'Live' : callStatus === 'connecting' ? 'Connecting' : 'Ringing'}
+        </span>
+      </div>
+      {/* Screen-reader call-phase announcer (updates only on phase change) */}
+      <span className="sr-only" role="status">
+        {isOnHold ? 'Call on hold' : isConnected ? 'Call connected' : `Call ${callStatus}`}
+      </span>
 
       {/* Avatar */}
       <div className="relative z-10">
@@ -125,9 +138,15 @@ export function LiveCallStage({
           {lead.name}
         </h1>
         <p className="text-base text-white/50">{[lead.title, lead.company].filter(Boolean).join(' · ')}</p>
-        <div className="flex items-center justify-center gap-2 mt-1">
-          <span className={`text-sm ${isOnHold ? 'text-yellow-400' : isConnected ? 'text-green-400' : 'text-white/40'}`}>
-            {isOnHold ? '⏸ On Hold' : isConnected ? '● Connected' : callStatus === 'connecting' ? 'Connecting...' : 'Ringing...'}
+        <div className="mt-1 flex items-center justify-center gap-2">
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 text-sm font-medium',
+              isOnHold ? 'text-amber-400' : isConnected ? 'text-emerald-400' : 'text-white/40',
+            )}
+          >
+            {isConnected && !isOnHold && <span className="dash-live-dot" aria-hidden />}
+            {isOnHold ? 'On hold' : isConnected ? 'Connected' : callStatus === 'connecting' ? 'Connecting…' : 'Ringing…'}
           </span>
         </div>
       </div>

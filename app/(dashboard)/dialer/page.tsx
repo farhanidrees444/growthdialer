@@ -29,6 +29,7 @@ import { AiBriefPanel } from '@/components/dialer/ai-brief-panel';
 import { LiveInsightsPanel } from '@/components/dialer/live-insights-panel';
 import { ManualDialpadOverlay } from '@/components/dialer/manual-dialpad-overlay';
 import { ShortcutsHelpModal } from '@/components/dialer/shortcuts-help-modal';
+import { ShortcutHints } from '@/components/dialer/shortcut-hints';
 import { PowerBanner } from '@/components/dialer/power-banner';
 import { PowerCountdownStage } from '@/components/dialer/power-countdown';
 import DialModeSegmented, { type DialMode } from '@/components/dialer/DialModeSegmented';
@@ -697,6 +698,12 @@ export default function DialerPage() {
               </motion.div>
             )}
           </AnimatePresence>
+          {/* Contextual keyboard shortcut rail — mission-control hints */}
+          <ShortcutHints
+            isLive={isLive}
+            powerActive={powerDialer.isActive}
+            onOpenShortcuts={() => setShortcutsOpen(true)}
+          />
         </div>
 
         {/* Right AI panel */}

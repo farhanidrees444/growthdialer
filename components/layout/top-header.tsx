@@ -24,7 +24,7 @@ export function TopHeader({
               onClick={onSidebarCollapseToggle}
               aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               aria-pressed={isSidebarCollapsed}
-              className="hidden min-h-10 min-w-10 flex-shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-800/40 hover:text-zinc-100 lg:flex"
+              className="dash-press hidden min-h-10 min-w-10 flex-shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-800/40 hover:text-zinc-100 lg:flex"
             >
               <Menu size={18} />
             </button>
@@ -52,7 +52,7 @@ export function TopHeader({
             type="button"
             onClick={toggle}
             aria-label="Toggle navigation"
-            className="flex min-h-10 min-w-10 flex-shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-800/40 hover:text-zinc-100 lg:hidden"
+            className="dash-press flex min-h-10 min-w-10 flex-shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-800/40 hover:text-zinc-100 lg:hidden"
           >
             <Menu size={18} />
           </button>
@@ -61,7 +61,7 @@ export function TopHeader({
         <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
         <button
           type="button"
-          className="group relative flex min-h-9 items-center gap-1.5 overflow-hidden rounded-xl border border-violet-500/25 bg-gradient-to-r from-violet-600/20 via-fuchsia-500/10 to-cyan-500/15 px-3 py-2 text-xs font-semibold text-white/85 shadow-[0_0_28px_rgba(124,58,237,0.14)] transition-all hover:border-violet-400/50 hover:text-white"
+          className="dash-press group relative flex min-h-9 items-center gap-1.5 overflow-hidden rounded-xl border border-violet-500/25 bg-gradient-to-r from-violet-600/20 via-fuchsia-500/10 to-cyan-500/15 px-3 py-2 text-xs font-semibold text-white/85 shadow-[0_0_28px_rgba(124,58,237,0.14)] transition-all hover:border-violet-400/50 hover:text-white"
           aria-label="Ask AI"
         >
           <span className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 skew-x-[-18deg] bg-white/15 opacity-0 blur-sm transition-all duration-500 group-hover:left-full group-hover:opacity-100" />
@@ -71,7 +71,7 @@ export function TopHeader({
 
         <button
           type="button"
-          className="hidden min-h-9 items-center gap-1.5 rounded-xl px-2.5 text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-100 md:flex"
+          className="dash-press hidden min-h-9 items-center gap-1.5 rounded-xl px-2.5 text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-100 md:flex"
           aria-label="Help"
         >
           <HelpCircle className="h-4 w-4" />
@@ -80,7 +80,7 @@ export function TopHeader({
 
         <button
           type="button"
-          className="relative flex min-h-9 min-w-9 items-center justify-center rounded-xl text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-100"
+          className="dash-press relative flex min-h-9 min-w-9 items-center justify-center rounded-xl text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-100"
           aria-label="Notifications"
         >
           <Bell className="h-4 w-4" />

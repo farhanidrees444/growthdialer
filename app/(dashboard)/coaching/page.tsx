@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { hasPermission, type Role } from '@/lib/auth/permissions';
 import { CoachingDashboard } from '@/components/coaching/CoachingDashboard';
+import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
+import { ShieldAlert, LogIn } from 'lucide-react';
 import type { AgentRosterRow, CoachingCall, CoachingNote, CoachingScore } from '@/components/coaching/types';
 import { PlanGate } from '@/lib/plan/plan-guard';
 import { UpgradePrompt } from '@/lib/plan/upgrade-prompt';
@@ -25,7 +27,19 @@ export default async function CoachingPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    return <main className="flex-1 p-6 text-sm text-slate-400">Sign in to view coaching.</main>;
+    return (
+      <main className="flex-1 overflow-y-auto px-4 py-10 lg:px-6">
+        <PremiumEmptyState
+          icon={LogIn}
+          scene="generic"
+          accent="violet"
+          title="Sign in to view coaching"
+          description="Coaching dashboards are available to signed-in workspace members with a manager role or above."
+          primaryAction={{ label: 'Sign in', href: '/login' }}
+          secondaryAction={{ label: 'Back to dashboard', href: '/dashboard' }}
+        />
+      </main>
+    );
   }
 
   const { data: member } = await supabase
@@ -38,7 +52,19 @@ export default async function CoachingPage() {
     .maybeSingle();
 
   if (!member || !hasPermission(member.role as Role, 'COACH_CALLS')) {
-    return <main className="flex-1 p-6 text-sm text-slate-400">Manager role or above is required for coaching dashboards.</main>;
+    return (
+      <main className="flex-1 overflow-y-auto px-4 py-10 lg:px-6">
+        <PremiumEmptyState
+          icon={ShieldAlert}
+          scene="generic"
+          accent="violet"
+          title="Managers and above"
+          description="Coaching dashboards are available to workspace members with a manager role or above. Ask your workspace owner to upgrade your role."
+          primaryAction={{ label: 'Back to dashboard', href: '/dashboard' }}
+          secondaryAction={{ label: 'View leaderboard', href: '/leaderboard' }}
+        />
+      </main>
+    );
   }
 
   const workspaceId = member.workspace_id as string;

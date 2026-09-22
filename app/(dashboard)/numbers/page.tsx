@@ -389,7 +389,7 @@ export default function NumbersPage() {
               key={key}
               type="button"
               onClick={() => setTab(key)}
-              className={`rounded-lg px-5 py-2 text-sm font-semibold transition-all ${
+              className={`dash-press rounded-lg px-5 py-2 text-sm font-semibold transition-all ${
                 tab === key
                   ? 'bg-violet-500/20 text-violet-100 shadow-sm'
                   : 'text-slate-500 hover:text-slate-300'

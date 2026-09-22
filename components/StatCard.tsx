@@ -5,6 +5,7 @@ import { LucideIcon, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { AnimatedKpiValue } from "@/components/premium/animated-number";
 import { SpotlightCard } from "@/components/premium/spotlight-card";
+import { DashSparkline } from "@/components/dashboard/dash-sparkline";
 import { SPRING } from "@/lib/ui/premium-motion";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,9 @@ interface StatCardProps {
   iconColor: string;
   iconBg: string;
   delay?: number;
+  /** Optional inline SVG sparkline data (renders under the trend row). */
+  sparkline?: number[];
+  sparklineColor?: string;
 }
 
 export default function StatCard({
@@ -30,6 +34,8 @@ export default function StatCard({
   iconColor,
   iconBg,
   delay = 0,
+  sparkline,
+  sparklineColor = "#8b5cf6",
 }: StatCardProps) {
   const isNeutral = neutral || change === "—";
 
@@ -42,7 +48,7 @@ export default function StatCard({
       <SpotlightCard>
       <Card className="border-white/10 bg-[oklch(0.09_0.006_285)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm transition-shadow hover:shadow-xl hover:shadow-black/30">
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="dash-muted text-sm! font-medium">{title}</p>
             <p className="mt-1 font-display text-2xl font-bold tracking-tight">
               <AnimatedKpiValue value={value} />
@@ -72,6 +78,15 @@ export default function StatCard({
             <Icon className={cn("h-5 w-5", iconColor)} />
           </div>
         </div>
+        {sparkline && sparkline.length > 0 && (
+          <div className="mt-3 border-t border-white/[0.06] pt-3">
+            <DashSparkline
+              data={sparkline}
+              color={sparklineColor}
+              label={`${title} trend`}
+            />
+          </div>
+        )}
       </Card>
       </SpotlightCard>
     </motion.div>
