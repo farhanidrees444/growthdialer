@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { useCallAudio } from '@/hooks/use-call-audio';
 import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 
 interface CallerWaveformProps {
   active: boolean;
@@ -16,7 +17,10 @@ export function CallerWaveform({ active }: CallerWaveformProps) {
 
   return (
     <div
-      className="relative flex w-full items-end justify-center gap-[3px] rounded-2xl border border-white/[0.06] bg-black/20 px-4 py-3"
+      className={cn(
+        'relative flex w-full items-end justify-center gap-[3px] rounded-2xl border px-4 py-3',
+        isDark ? 'border-white/[0.06] bg-black/20' : 'border-zinc-950/[0.08] bg-zinc-950/[0.04]',
+      )}
       style={{ height: 88 }}
       aria-label="Audio waveform"
     >

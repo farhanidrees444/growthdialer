@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { X, Phone, Mail, Building2, Briefcase, User, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 
 interface LeadToEdit {
   id: string;
@@ -27,6 +29,7 @@ interface Props {
 
 export function LeadEditModal({ lead, onClose, onSaved }: Props) {
   const { apiFetch } = useWorkspace();
+  const { isDark } = useSiteTheme();
   const [form, setForm] = useState({
     first_name: lead.first_name ?? '',
     last_name: lead.last_name ?? '',
@@ -93,13 +96,23 @@ export function LeadEditModal({ lead, onClose, onSaved }: Props) {
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.96, opacity: 0, y: 12 }}
         transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-        className="relative z-10 w-full max-w-md rounded-3xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] shadow-2xl shadow-black/70 overflow-hidden"
+        className={cn(
+          'relative z-10 w-full max-w-md rounded-3xl border overflow-hidden',
+          isDark
+            ? 'border-white/[0.10] bg-[oklch(0.09_0.006_285)] shadow-2xl shadow-black/70'
+            : 'border-zinc-950/[0.08] bg-white shadow-[0_24px_70px_rgba(76,29,149,0.12),0_2px_8px_rgba(9,9,11,0.06)]',
+        )}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 pt-6 pb-4">
-          <h2 className="text-base font-bold text-white">Edit Lead</h2>
+          <h2 className={cn('text-base font-bold', isDark ? 'text-white' : 'text-zinc-950')}>Edit Lead</h2>
           <button type="button" onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.08] text-slate-500 hover:text-white transition">
+            className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-xl border transition',
+              isDark
+                ? 'border-white/[0.08] text-slate-500 hover:text-white'
+                : 'border-zinc-950/10 bg-white text-zinc-400 shadow-sm hover:text-zinc-700',
+            )}>
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -120,7 +133,12 @@ export function LeadEditModal({ lead, onClose, onSaved }: Props) {
             <select
               value={form.status}
               onChange={set('status')}
-              className="dash-input w-full appearance-none px-3 py-2.5"
+              className={cn(
+                'w-full appearance-none rounded-lg border px-3 py-2.5 text-[14px] transition-all duration-150',
+                isDark
+                  ? 'dash-input'
+                  : 'border-zinc-950/10 bg-white text-zinc-900 shadow-sm focus:border-violet-500/50 focus:outline-none focus:ring-[0_0_0_3px_rgba(139,92,246,0.15)]',
+              )}
             >
               {['new','queued','contacted','connected','callback','meeting_booked','not_interested','do_not_call','wrong_number'].map((s) => (
                 <option key={s} value={s} className="bg-[#111] capitalize">{s.replace(/_/g, ' ')}</option>
@@ -135,17 +153,32 @@ export function LeadEditModal({ lead, onClose, onSaved }: Props) {
               onChange={set('notes')}
               rows={3}
               placeholder="Notes…"
-              className="dash-input w-full resize-none px-3 py-2.5"
+              className={cn(
+                'w-full resize-none rounded-lg border px-3 py-2.5 text-[14px] transition-all duration-150',
+                isDark
+                  ? 'dash-input'
+                  : 'border-zinc-950/10 bg-white text-zinc-900 placeholder:text-zinc-400 shadow-sm focus:border-violet-500/50 focus:outline-none focus:ring-[0_0_0_3px_rgba(139,92,246,0.15)]',
+              )}
             />
           </div>
 
           <div className="flex gap-2 pt-1">
             <button type="button" onClick={onClose}
-              className="dash-btn-ghost flex-1">
+              className={cn(
+                'flex-1',
+                isDark
+                  ? 'dash-btn-ghost'
+                  : 'inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-950/10 bg-white px-4 py-2 text-[14px] font-medium text-zinc-700 shadow-[0_1px_2px_rgba(9,9,11,0.05)] transition-all duration-150 select-none hover:border-violet-500/30 hover:bg-violet-50/60 hover:text-zinc-900',
+              )}>
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="dash-btn-primary flex-1">
+              className={cn(
+                'flex-1',
+                isDark
+                  ? 'dash-btn-primary'
+                  : 'inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-[14px] font-medium text-white shadow-[0_8px_20px_-6px_rgba(124,58,237,0.5)] transition-all duration-150 select-none hover:bg-violet-500 disabled:opacity-50',
+              )}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Changes'}
             </button>
           </div>
@@ -164,6 +197,7 @@ function ModalField({ label, value, onChange, placeholder, type = 'text', error,
   error?: string;
   icon?: React.ReactNode;
 }) {
+  const { isDark } = useSiteTheme();
   return (
     <div>
       <label className="mb-1 block text-[10px] font-semibold uppercase tracking-widest text-slate-600">{label}</label>
@@ -174,11 +208,14 @@ function ModalField({ label, value, onChange, placeholder, type = 'text', error,
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className={[
-            'dash-input w-full py-2.5',
-            icon ? 'pl-9! pr-3' : '',
-            error ? 'border-red-500/40!' : '',
-          ].join(' ')}
+          className={cn(
+            'w-full rounded-lg border py-2.5 text-[14px] transition-all duration-150',
+            isDark
+              ? 'dash-input'
+              : 'border-zinc-950/10 bg-white text-zinc-900 placeholder:text-zinc-400 shadow-sm focus:border-violet-500/50 focus:outline-none focus:ring-[0_0_0_3px_rgba(139,92,246,0.15)]',
+            icon ? 'pl-9! pr-3' : 'px-3',
+            error && 'border-red-500/40!',
+          )}
         />
       </div>
       {error && <p className="mt-1 text-[11px] text-red-400">{error}</p>}

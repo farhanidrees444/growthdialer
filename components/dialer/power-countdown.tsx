@@ -3,6 +3,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, Phone, Zap, Square, SkipForward, Pause, Play } from 'lucide-react';
 import type { LeadRecord } from '@/lib/dialer/dialer-types';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 
 interface PowerCountdownStageProps {
   lead: LeadRecord;
@@ -25,6 +27,7 @@ export function PowerCountdownStage({
   onResume,
   onStop,
 }: PowerCountdownStageProps) {
+  const { isDark } = useSiteTheme();
   const circumference = 2 * Math.PI * 45;
   const safeDelay = Math.max(delaySeconds, 1);
   const progress = countdown / safeDelay;
@@ -57,14 +60,14 @@ export function PowerCountdownStage({
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
       >
-        <h2 className="text-2xl font-light text-white">{lead.name}</h2>
+        <h2 className={cn('text-2xl font-light', isDark ? 'text-white' : 'text-zinc-950')}>{lead.name}</h2>
         {(lead.title || lead.company) && (
-          <p className="text-sm text-white/40 flex items-center justify-center gap-1.5">
+          <p className={cn('text-sm flex items-center justify-center gap-1.5', isDark ? 'text-white/40' : 'text-zinc-500')}>
             {lead.company && <Building2 className="w-3.5 h-3.5" />}
             {[lead.title, lead.company].filter(Boolean).join(' · ')}
           </p>
         )}
-        <p className="text-sm text-white/30 flex items-center justify-center gap-1.5 font-mono">
+        <p className={cn('text-sm flex items-center justify-center gap-1.5 font-mono', isDark ? 'text-white/30' : 'text-zinc-400')}>
           <Phone className="w-3 h-3" />
           {lead.phone}
         </p>
@@ -86,7 +89,7 @@ export function PowerCountdownStage({
           {/* Track */}
           <circle
             cx="50" cy="50" r="45"
-            stroke="rgba(255,255,255,0.06)"
+            stroke={isDark ? "rgba(255,255,255,0.06)" : "rgba(9,9,11,0.10)"}
             strokeWidth="5"
             fill="none"
           />
@@ -123,7 +126,7 @@ export function PowerCountdownStage({
                 animate={{ scale: 1.0, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 transition={{ duration: 0.35 }}
-                className="text-6xl font-thin text-white tabular-nums select-none"
+                className={cn('text-6xl font-thin tabular-nums select-none', isDark ? 'text-white' : 'text-zinc-950')}
               >
                 {countdown}
               </motion.span>
@@ -146,7 +149,7 @@ export function PowerCountdownStage({
 
       {/* Label */}
       <motion.p
-        className={`text-sm z-10 tracking-wide ${isPaused ? 'text-yellow-400/70' : 'text-white/35'}`}
+        className={cn('text-sm z-10 tracking-wide', isPaused ? 'text-yellow-400/70' : isDark ? 'text-white/35' : 'text-zinc-500')}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
@@ -177,7 +180,8 @@ export function PowerCountdownStage({
           <>
             <button
               onClick={onSkip}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm text-cyan-400 hover:text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/15 border border-cyan-500/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+              className={cn('flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400',
+                isDark ? 'text-cyan-400 hover:text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/15 border-cyan-500/20' : 'text-cyan-700 bg-cyan-500/[0.08] hover:bg-cyan-500/[0.12] border-cyan-600/20 shadow-sm')}
             >
               <SkipForward className="w-3.5 h-3.5" />
               Call now
@@ -186,7 +190,8 @@ export function PowerCountdownStage({
             {onPause && (
               <button
                 onClick={onPause}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm text-white/60 hover:text-white bg-white/[0.05] hover:bg-white/[0.10] border border-white/[0.07] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                className={cn('flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30',
+                isDark ? 'text-white/60 hover:text-white bg-white/[0.05] hover:bg-white/[0.10] border-white/[0.07]' : 'text-zinc-600 hover:text-zinc-900 bg-white border-zinc-950/10 shadow-sm')}
               >
                 <Pause className="w-3.5 h-3.5" />
                 Pause

@@ -6,6 +6,8 @@ import { Star, Trash2, Loader2, AlertTriangle } from 'lucide-react';
 import CountryFlag from './country-flag';
 import { NUMBER_TYPE_LABELS } from '@/lib/telnyx-countries';
 import { calculateRetailPrice } from '@/lib/pricing/calculate-price';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 
 interface PurchasedNumber {
   id: string;
@@ -57,6 +59,7 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
   const [settingDefault, setSettingDefault] = useState(false);
   const [releasing, setReleasing] = useState(false);
   const [confirmRelease, setConfirmRelease] = useState(false);
+  const { isDark } = useSiteTheme();
 
   const countryCode = num.country_code ?? num.country;
   const countryName = num.country_name ?? num.country;
@@ -84,11 +87,14 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
     <motion.div
       variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
-      className={`group relative rounded-2xl border p-4 shadow-lg shadow-black/20 transition-all ${
+      className={cn(
+        'group relative rounded-2xl border p-4 shadow-lg transition-all',
         isExpiringSoon
           ? 'border-amber-500/30 bg-amber-500/[0.04] hover:border-amber-500/50'
-          : 'border-white/[0.07] bg-[oklch(0.09_0.006_285)] hover:border-emerald-500/20'
-      }`}
+          : isDark
+            ? 'border-white/[0.07] bg-[oklch(0.09_0.006_285)] shadow-black/20 hover:border-emerald-500/20'
+            : 'border-zinc-950/[0.07] bg-white shadow-[0_8px_30px_rgba(9,9,11,0.06)] hover:border-emerald-600/25',
+      )}
     >
       <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 [background:radial-gradient(ellipse_at_top_left,oklch(0.5_0.2_145_/_0.06),transparent_60%)]" />
 

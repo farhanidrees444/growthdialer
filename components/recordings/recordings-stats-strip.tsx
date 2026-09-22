@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { Mic, Sparkles, TrendingUp, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 export interface RecordingsStats {
   total: number;
@@ -35,8 +36,15 @@ const ACCENT_ICON: Record<string, string> = {
   amber: 'text-amber-400',
 };
 
+const ACCENT_ICON_LIGHT: Record<string, string> = {
+  emerald: 'text-emerald-600',
+  teal: 'text-teal-600',
+  amber: 'text-amber-600',
+};
+
 export function RecordingsStatsStrip({ stats, className }: RecordingsStatsStripProps) {
   const reduce = useReducedMotion();
+  const { isDark } = useSiteTheme();
 
   const values: Record<string, string | number> = {
     total: stats.total,
@@ -59,19 +67,27 @@ export function RecordingsStatsStrip({ stats, className }: RecordingsStatsStripP
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
           whileHover={reduce ? undefined : { y: -2 }}
-          className="dash-card relative overflow-hidden px-3 py-3"
+          className={cn(
+            'relative overflow-hidden px-3 py-3',
+            isDark
+              ? 'dash-card'
+              : 'rounded-xl border border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.05)]',
+          )}
         >
           <div className={cn('pointer-events-none absolute inset-0 bg-gradient-to-b', ACCENT_RING[accent])} aria-hidden />
           <div className="relative flex items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.03]">
-              <Icon className={cn('h-3.5 w-3.5', ACCENT_ICON[accent])} />
+            <div className={cn(
+                'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border',
+                isDark ? 'border-white/[0.06] bg-white/[0.03]' : 'border-zinc-950/[0.06] bg-zinc-950/[0.03]',
+              )}>
+              <Icon className={cn('h-3.5 w-3.5', isDark ? ACCENT_ICON[accent] : ACCENT_ICON_LIGHT[accent])} />
             </div>
             <div className="min-w-0">
               <motion.p
                 key={String(values[key])}
                 initial={reduce ? false : { scale: 0.92, opacity: 0.6 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="text-lg font-bold tabular-nums leading-none text-white"
+                className={cn('text-lg font-bold tabular-nums leading-none', isDark ? 'text-white' : 'text-zinc-900')}
               >
                 {values[key]}
               </motion.p>

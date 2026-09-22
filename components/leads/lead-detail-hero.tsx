@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, Phone, Trash2, Building2 } from 'lucide-react';
+import { useSiteTheme } from '@/components/theme/site-theme';
 import { cn } from '@/lib/utils';
 
 interface LeadDetailHeroProps {
@@ -34,6 +35,7 @@ export function LeadDetailHero({
   onDelete,
 }: LeadDetailHeroProps) {
   const reduce = useReducedMotion();
+  const { isDark } = useSiteTheme();
 
   return (
     <div className="relative shrink-0 overflow-hidden border-b border-white/[0.06]">
@@ -70,7 +72,12 @@ export function LeadDetailHero({
             <div className="min-w-0">
               <motion.h1
                 layoutId={`lead-name-${leadId}`}
-                className="truncate bg-gradient-to-r from-white via-zinc-100 to-emerald-200/80 bg-clip-text text-xl font-semibold text-transparent sm:text-2xl"
+                className={cn(
+                  'truncate bg-gradient-to-r bg-clip-text text-xl font-semibold text-transparent sm:text-2xl',
+                  isDark
+                    ? 'from-white via-zinc-100 to-emerald-200/80'
+                    : 'from-zinc-950 via-zinc-700 to-emerald-600',
+                )}
               >
                 {name}
               </motion.h1>

@@ -31,6 +31,7 @@ import { InboundHealthPanel } from '@/components/inbound/inbound-health-panel';
 import { LiveWaveform } from '@/components/marketing/live-floor/LiveWaveform';
 import { NumberBillingBadge } from '@/components/numbers/number-billing-badge';
 import { withBillingMeta } from '@/lib/numbers/billing-lifecycle';
+import { useSiteTheme } from '@/components/theme/site-theme';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import type { CallLogRow } from '@/lib/calls/display';
@@ -78,14 +79,14 @@ function fmtPhone(phone: string | null | undefined): string {
   return phone;
 }
 
-function phoneStatusLabel(status: string): { label: string; color: string; pulse: boolean } {
+function phoneStatusLabel(status: string, isDark: boolean): { label: string; color: string; pulse: boolean } {
   switch (status) {
     case 'ready':
-      return { label: 'Ready - line live', color: 'text-emerald-400', pulse: true };
+      return { label: 'Ready - line live', color: isDark ? 'text-emerald-400' : 'text-emerald-600', pulse: true };
     case 'initializing':
-      return { label: 'Connecting voice node...', color: 'text-amber-400', pulse: true };
+      return { label: 'Connecting voice node...', color: isDark ? 'text-amber-400' : 'text-amber-600', pulse: true };
     case 'error':
-      return { label: 'Offline', color: 'text-red-400', pulse: false };
+      return { label: 'Offline', color: isDark ? 'text-red-400' : 'text-red-600', pulse: false };
     default:
       return { label: 'Starting...', color: 'text-muted-foreground', pulse: true };
   }
@@ -96,7 +97,8 @@ function AgentVoiceNode({ phoneStatus, voiceError, onReconnect }: {
   voiceError: string | null;
   onReconnect: () => void;
 }) {
-  const live = phoneStatusLabel(phoneStatus);
+  const { isDark } = useSiteTheme();
+  const live = phoneStatusLabel(phoneStatus, isDark);
   const ready = phoneStatus === 'ready';
 
   return (
@@ -104,14 +106,23 @@ function AgentVoiceNode({ phoneStatus, voiceError, onReconnect }: {
       <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl" />
       <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-cyan-400/90">
+          <p className={cn(
+            'text-[10px] font-bold uppercase tracking-[0.22em]',
+            isDark ? 'text-cyan-400/90' : 'text-cyan-700',
+          )}>
             Agent voice node
           </p>
           <div className="mt-3 flex items-center gap-3">
             <span
               className={cn(
                 'relative flex h-4 w-4 rounded-full',
-                ready ? 'bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.85)]' : 'bg-amber-400',
+                ready
+                  ? isDark
+                    ? 'bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.85)]'
+                    : 'bg-emerald-500 shadow-[0_0_14px_rgba(16,185,129,0.5)]'
+                  : isDark
+                    ? 'bg-amber-400'
+                    : 'bg-amber-500',
                 live.pulse && ready && 'animate-pulse',
               )}
             />
@@ -140,16 +151,17 @@ function AgentVoiceNode({ phoneStatus, voiceError, onReconnect }: {
 }
 
 function FloorMatrix({ stats, activeRings }: { stats: InboundStats; activeRings: number }) {
+  const { isDark } = useSiteTheme();
   const ahtSec =
     stats.answered_today > 0
       ? Math.round((stats.today_inbound > 0 ? 180 : 0) / Math.max(stats.answered_today, 1))
       : 0;
 
   const tiles = [
-    { label: 'Queue load', value: activeRings, icon: Radio, accent: 'text-cyan-400', sub: 'live rings' },
-    { label: 'Concurrent', value: stats.today_inbound, icon: Users, accent: 'text-violet-400', sub: 'today inbound' },
-    { label: 'AHT est.', value: ahtSec ? `${Math.floor(ahtSec / 60)}:${String(ahtSec % 60).padStart(2, '0')}` : '—', icon: Clock, accent: 'text-emerald-400', sub: 'avg handle' },
-    { label: 'Answer rate', value: stats.today_inbound ? `${Math.round((stats.answered_today / stats.today_inbound) * 100)}%` : '—', icon: Activity, accent: 'text-amber-400', sub: 'today' },
+    { label: 'Queue load', value: activeRings, icon: Radio, accent: 'text-cyan-400', lightAccent: 'text-cyan-700', sub: 'live rings' },
+    { label: 'Concurrent', value: stats.today_inbound, icon: Users, accent: 'text-violet-400', lightAccent: 'text-violet-700', sub: 'today inbound' },
+    { label: 'AHT est.', value: ahtSec ? `${Math.floor(ahtSec / 60)}:${String(ahtSec % 60).padStart(2, '0')}` : '—', icon: Clock, accent: 'text-emerald-400', lightAccent: 'text-emerald-700', sub: 'avg handle' },
+    { label: 'Answer rate', value: stats.today_inbound ? `${Math.round((stats.answered_today / stats.today_inbound) * 100)}%` : '—', icon: Activity, accent: 'text-amber-400', lightAccent: 'text-amber-700', sub: 'today' },
   ];
 
   return (
@@ -164,7 +176,7 @@ function FloorMatrix({ stats, activeRings }: { stats: InboundStats; activeRings:
           <SurfaceCard className="border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-transparent p-4">
             <div className="flex items-center justify-between">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t.label}</p>
-              <t.icon className={cn('h-4 w-4', t.accent)} />
+              <t.icon className={cn('h-4 w-4', isDark ? t.accent : t.lightAccent)} />
             </div>
             <p className="mt-2 font-display text-2xl font-semibold tabular-nums text-white">{t.value}</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground">{t.sub}</p>
@@ -216,6 +228,7 @@ function TrafficFeed({ logs }: { logs: FloorLogEntry[] }) {
 
 export function IncomingPageClient() {
   const { apiFetch } = useWorkspace();
+  const { isDark } = useSiteTheme();
   const { isRinging } = useCalls();
   const { phoneStatus, reconnect, voiceError, callStatus, voiceQuality, hasInboundActiveSession } = useWebPhone();
 
@@ -400,7 +413,7 @@ export function IncomingPageClient() {
     return (
       <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-3 py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-cyan-400/50" />
+          <Loader2 className={cn('h-8 w-8 animate-spin', isDark ? 'text-cyan-400/50' : 'text-cyan-600/60')} />
           <p className="text-sm text-muted-foreground">Initializing Incoming...</p>
         </div>
       </main>
@@ -448,7 +461,10 @@ export function IncomingPageClient() {
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/settings?tab=calling"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-semibold text-muted-foreground transition hover:border-cyan-500/30 hover:text-cyan-400"
+              className={cn(
+                'inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-semibold text-muted-foreground transition',
+                isDark ? 'hover:border-cyan-500/30 hover:text-cyan-400' : 'hover:border-cyan-600/30 hover:text-cyan-700',
+              )}
             >
               <Settings className="h-3.5 w-3.5" />
               Routing
@@ -456,7 +472,10 @@ export function IncomingPageClient() {
             <button
               type="button"
               onClick={() => { loadStats(); pushLog('Manual stats refresh', 'violet'); }}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-semibold text-muted-foreground transition hover:text-white"
+              className={cn(
+                'inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs font-semibold text-muted-foreground transition',
+                isDark ? 'hover:text-white' : 'hover:text-zinc-900',
+              )}
             >
               <RefreshCw className="h-3.5 w-3.5" />
               Refresh
@@ -553,7 +572,10 @@ export function IncomingPageClient() {
                       setLastWrapUpAt(null);
                       setLastWrapUpCall(null);
                     }}
-                    className="inline-flex items-center rounded-xl border border-white/[0.08] px-3.5 py-2 text-xs font-semibold text-muted-foreground transition hover:text-white"
+                    className={cn(
+                      'inline-flex items-center rounded-xl border border-white/[0.08] px-3.5 py-2 text-xs font-semibold text-muted-foreground transition',
+                      isDark ? 'hover:text-white' : 'hover:text-zinc-900',
+                    )}
                   >
                     Dismiss
                   </button>
@@ -572,7 +594,10 @@ export function IncomingPageClient() {
             <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-violet-500/[0.08] blur-3xl" />
             <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-400/90">Primary line</p>
+                <p className={cn(
+                  'text-[10px] font-bold uppercase tracking-[0.2em]',
+                  isDark ? 'text-violet-400/90' : 'text-violet-700',
+                )}>Primary line</p>
                 <p className="mt-2 font-display text-3xl font-semibold tabular-nums text-white">{fmtPhone(primaryNumber)}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{stats.inbound_mode_label}</p>
                 {primaryLine && (
@@ -627,7 +652,10 @@ export function IncomingPageClient() {
                   <p className="text-sm font-semibold text-white">Call activity</p>
                   <p className="text-xs text-muted-foreground">Streaming from workspace</p>
                 </div>
-                <Link href="/call-logs?filter=inbound" className="text-xs font-semibold text-cyan-400 hover:underline">
+                <Link href="/call-logs?filter=inbound" className={cn(
+                  'text-xs font-semibold hover:underline',
+                  isDark ? 'text-cyan-400' : 'text-cyan-700',
+                )}>
                   All logs →
                 </Link>
               </div>
@@ -645,7 +673,7 @@ export function IncomingPageClient() {
                   { label: 'Missed', value: stats.missed_count, icon: PhoneMissed },
                 ].map((k) => (
                   <div key={k.label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center">
-                    <k.icon className="mx-auto h-4 w-4 text-cyan-400/80" />
+                    <k.icon className={cn('mx-auto h-4 w-4', isDark ? 'text-cyan-400/80' : 'text-cyan-700')} />
                     <p className="mt-2 font-display text-lg font-semibold text-white">{k.value}</p>
                     <p className="text-[10px] text-muted-foreground">{k.label}</p>
                   </div>
@@ -654,11 +682,11 @@ export function IncomingPageClient() {
             </SurfaceCard>
             <SurfaceCard className="p-5">
               <div className="flex items-center gap-2">
-                <Signal className="h-4 w-4 text-emerald-400" />
+                <Signal className={cn('h-4 w-4', isDark ? 'text-emerald-400' : 'text-emerald-700')} />
                 <p className="text-sm font-semibold text-white">Network posture</p>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                Connection recovery and edge routing are active on voice sessions. Quality: <span className="text-emerald-400">{voiceQuality}</span>
+                Connection recovery and edge routing are active on voice sessions. Quality: <span className={isDark ? 'text-emerald-400' : 'text-emerald-700'}>{voiceQuality}</span>
               </p>
               <p className="mt-2 flex items-center gap-1.5 text-[11px] text-violet-300/80">
                 <Zap className="h-3 w-3" />

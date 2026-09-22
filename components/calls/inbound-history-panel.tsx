@@ -10,6 +10,7 @@ import { useSupabaseSession } from '@/lib/supabase/hooks';
 import type { CallLogRow } from '@/lib/calls/display';
 import { fmtCallDuration, fmtCallTime, getCounterparty, isMissedCall } from '@/lib/calls/display';
 import { cn } from '@/lib/utils';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 interface Props {
   /** Subscribe to realtime inserts for live refresh */
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function InboundHistoryPanel({ live = false }: Props) {
+  const { isDark } = useSiteTheme();
   const session = useSupabaseSession();
   const userId = session?.user?.id;
   const { apiFetch } = useWorkspace();
@@ -59,11 +61,19 @@ export function InboundHistoryPanel({ live = false }: Props) {
 
   if (calls.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.01] p-8 text-center">
-        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10">
-          <PhoneIncoming className="h-7 w-7 text-cyan-400/60" />
+      <div className={cn(
+        'rounded-2xl border border-dashed p-8 text-center',
+        isDark ? 'border-white/[0.1] bg-white/[0.01]' : 'border-zinc-950/[0.12] bg-white',
+      )}>
+        <div className={cn(
+          'mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl',
+          isDark ? 'bg-cyan-500/10' : 'bg-cyan-500/[0.08]',
+        )}>
+          <PhoneIncoming className={cn('h-7 w-7', isDark ? 'text-cyan-400/60' : 'text-cyan-600/70')} />
         </div>
-        <p className="text-sm font-medium text-white/80">Waiting for your first inbound call</p>
+        <p className={cn('text-sm font-medium', isDark ? 'text-white/80' : 'text-zinc-900')}>
+          Waiting for your first inbound call
+        </p>
         <p className="text-xs text-muted-foreground mt-1.5 max-w-sm mx-auto">
           Share your inbound number. When someone calls, it appears here instantly — with lead screen-pop if they&apos;re in your CRM.
         </p>
@@ -84,17 +94,21 @@ export function InboundHistoryPanel({ live = false }: Props) {
             className={cn(
               'flex items-center gap-3 rounded-xl border px-3.5 py-3 transition',
               missed
-                ? 'border-red-500/20 bg-red-500/[0.05]'
-                : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.1]',
+                ? isDark
+                  ? 'border-red-500/20 bg-red-500/[0.05]'
+                  : 'border-red-500/25 bg-red-500/[0.06]'
+                : isDark
+                  ? 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.1]'
+                  : 'border-zinc-950/[0.06] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.04)] hover:border-zinc-950/[0.12]',
             )}
           >
             {missed ? (
-              <PhoneMissed className="h-4 w-4 shrink-0 text-red-400" />
+              <PhoneMissed className={cn('h-4 w-4 shrink-0', isDark ? 'text-red-400' : 'text-red-600')} />
             ) : (
-              <PhoneIncoming className="h-4 w-4 shrink-0 text-cyan-400" />
+              <PhoneIncoming className={cn('h-4 w-4 shrink-0', isDark ? 'text-cyan-400' : 'text-cyan-600')} />
             )}
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-white truncate">
+              <p className={cn('truncate text-sm font-medium', isDark ? 'text-white' : 'text-zinc-900')}>
                 {getCounterparty(call)}
               </p>
               <p className="text-[11px] text-muted-foreground">
@@ -109,7 +123,12 @@ export function InboundHistoryPanel({ live = false }: Props) {
       })}
       <Link
         href="/call-logs?filter=inbound"
-        className="mt-2 flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.02] py-2.5 text-xs font-semibold text-cyan-400 hover:bg-cyan-500/10 transition"
+        className={cn(
+          'mt-2 flex items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-semibold transition',
+          isDark
+            ? 'border-white/[0.08] bg-white/[0.02] text-cyan-400 hover:bg-cyan-500/10'
+            : 'border-zinc-950/10 bg-white text-cyan-700 shadow-sm hover:bg-cyan-50',
+        )}
       >
         View all inbound logs
         <ArrowRight className="h-3.5 w-3.5" />

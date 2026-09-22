@@ -4,6 +4,8 @@ import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'rec
 import { Award, TrendingDown, TrendingUp } from 'lucide-react';
 import { CoachableMomentsFeed } from './CoachableMomentsFeed';
 import { WeeklyReportCard } from './WeeklyReportCard';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 import type { CoachingCall, CoachingMoment, CoachingScore, WeeklyReport } from './types';
 
 export function AgentSelfView({
@@ -23,11 +25,17 @@ export function AgentSelfView({
   const best = [...scoredCalls].sort((a, b) => Number(b.score) - Number(a.score))[0] ?? null;
   const worst = [...scoredCalls].sort((a, b) => Number(a.score) - Number(b.score))[0] ?? null;
   const moments: CoachingMoment[] = scores.flatMap((score) => score.coachable_moments ?? []).slice(0, 10);
+  const { isDark } = useSiteTheme();
 
   return (
     <main className="flex-1 overflow-y-auto bg-zinc-950 px-4 py-5 text-white lg:px-6">
       <div className="mx-auto max-w-5xl space-y-5">
-        <div className="rounded-3xl border border-white/10 bg-black/40 p-6 backdrop-blur">
+        <div className={cn(
+          'rounded-3xl border p-6 backdrop-blur',
+          isDark
+            ? 'border-white/10 bg-black/40'
+            : 'border-zinc-950/[0.07] bg-white shadow-[0_12px_40px_rgba(9,9,11,0.07)]',
+        )}>
           <p className="text-xs uppercase tracking-widest text-[#06B6D4]">My coaching</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight">Your call score trend</h1>
           <p className="mt-2 text-sm text-slate-400">Review your recent calls, coachable moments, and weekly practice drill.</p>

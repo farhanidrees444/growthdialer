@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 type AiStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'skipped_short' | string | null;
 
@@ -83,6 +84,15 @@ const DISPOSITION_CLASS: Record<string, string> = {
   red: 'border-red-500/35 bg-red-500/[0.08] text-red-200 hover:bg-red-500/[0.13]',
 };
 
+const DISPOSITION_CLASS_LIGHT: Record<string, string> = {
+  emerald: 'border-emerald-600/30 bg-emerald-500/[0.08] text-emerald-700 hover:bg-emerald-500/[0.14]',
+  violet: 'border-violet-500/30 bg-violet-500/[0.08] text-violet-700 hover:bg-violet-500/[0.14]',
+  amber: 'border-amber-500/30 bg-amber-500/[0.08] text-amber-700 hover:bg-amber-500/[0.14]',
+  blue: 'border-blue-500/30 bg-blue-500/[0.08] text-blue-700 hover:bg-blue-500/[0.14]',
+  slate: 'border-zinc-950/10 bg-zinc-950/[0.03] text-zinc-600 hover:bg-zinc-950/[0.06]',
+  red: 'border-red-500/30 bg-red-500/[0.08] text-red-700 hover:bg-red-500/[0.14]',
+};
+
 function formatDuration(seconds?: number | null): string {
   if (!seconds || seconds <= 0) return 'Unknown duration';
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
@@ -121,13 +131,15 @@ function getNextSteps(nextSteps: unknown): string[] {
   return [];
 }
 
-function aiStatusCopy(status: AiStatus, hasAnalytics: boolean, aiError?: string | null) {
+function aiStatusCopy(status: AiStatus, hasAnalytics: boolean, aiError: string | null | undefined, isDark: boolean) {
   if (aiError || status === 'failed') {
     return {
       icon: Unplug,
       label: 'AI analysis needs attention',
       body: aiError ?? 'The analysis service could not complete this call.',
-      className: 'border-amber-500/25 bg-amber-500/[0.07] text-amber-200',
+      className: isDark
+        ? 'border-amber-500/25 bg-amber-500/[0.07] text-amber-200'
+        : 'border-amber-500/30 bg-amber-500/[0.08] text-amber-700',
     };
   }
   if (hasAnalytics || status === 'completed') {
@@ -135,7 +147,9 @@ function aiStatusCopy(status: AiStatus, hasAnalytics: boolean, aiError?: string 
       icon: Sparkles,
       label: 'AI analysis ready',
       body: 'Summary, sentiment, and next-step signals are available from saved call data.',
-      className: 'border-emerald-500/25 bg-emerald-500/[0.07] text-emerald-200',
+      className: isDark
+        ? 'border-emerald-500/25 bg-emerald-500/[0.07] text-emerald-200'
+        : 'border-emerald-600/25 bg-emerald-500/[0.08] text-emerald-700',
     };
   }
   if (status === 'processing' || status === 'pending') {
@@ -143,7 +157,9 @@ function aiStatusCopy(status: AiStatus, hasAnalytics: boolean, aiError?: string 
       icon: Loader2,
       label: 'AI analysis is processing',
       body: 'Transcript and summary appear automatically after the recorded call is analyzed.',
-      className: 'border-cyan-500/25 bg-cyan-500/[0.07] text-cyan-200',
+      className: isDark
+        ? 'border-cyan-500/25 bg-cyan-500/[0.07] text-cyan-200'
+        : 'border-cyan-600/25 bg-cyan-500/[0.08] text-cyan-700',
       spin: true,
     };
   }
@@ -152,14 +168,18 @@ function aiStatusCopy(status: AiStatus, hasAnalytics: boolean, aiError?: string 
       icon: Headphones,
       label: 'Short call',
       body: 'This call was too short for a useful recording analysis.',
-      className: 'border-white/[0.09] bg-white/[0.035] text-slate-300',
+      className: isDark
+        ? 'border-white/[0.09] bg-white/[0.035] text-slate-300'
+        : 'border-zinc-950/10 bg-zinc-950/[0.03] text-zinc-600',
     };
   }
   return {
     icon: RefreshCw,
     label: 'Waiting for post-call data',
     body: 'Recording, transcript, and AI analysis will fill in here when available.',
-    className: 'border-white/[0.09] bg-white/[0.035] text-slate-300',
+    className: isDark
+      ? 'border-white/[0.09] bg-white/[0.035] text-slate-300'
+      : 'border-zinc-950/10 bg-zinc-950/[0.03] text-zinc-600',
   };
 }
 
@@ -172,11 +192,12 @@ export function PostCallCommandCenter({
   onSaveNotes,
   onSaveDisposition,
 }: PostCallCommandCenterProps) {
+  const { isDark } = useSiteTheme();
   const analytics = call.analytics;
   const summaryBullets = useMemo(() => getSummaryBullets(analytics?.summary), [analytics?.summary]);
   const nextSteps = useMemo(() => getNextSteps(analytics?.next_steps), [analytics?.next_steps]);
   const hasAnalytics = Boolean(analytics && !analytics.error && (summaryBullets.length > 0 || nextSteps.length > 0 || analytics.sentiment));
-  const status = aiStatusCopy(call.aiProcessingStatus ?? null, hasAnalytics, analytics?.error ?? call.aiError);
+  const status = aiStatusCopy(call.aiProcessingStatus ?? null, hasAnalytics, analytics?.error ?? call.aiError, isDark);
   const StatusIcon = status.icon;
   const statusSpins = 'spin' in status && status.spin;
 
@@ -230,11 +251,28 @@ export function PostCallCommandCenter({
 
   return (
     <section className={cn(
-      'relative overflow-hidden rounded-[28px] border border-white/[0.08] bg-[oklch(0.085_0.008_285)] shadow-2xl shadow-black/30',
+      'relative overflow-hidden rounded-[28px] border shadow-2xl',
       compact ? 'p-4' : 'p-5 sm:p-6',
+      isDark
+        ? 'border-white/[0.08] bg-[oklch(0.085_0.008_285)] shadow-black/30'
+        : 'border-zinc-950/[0.08] bg-[linear-gradient(135deg,#ffffff_0%,#fbfbff_55%,#f2fbf7_100%)] shadow-[0_24px_70px_rgba(16,185,129,0.10),0_2px_8px_rgba(9,9,11,0.05)]',
     )}>
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_120%_at_0%_0%,rgba(52,211,153,0.12),transparent_55%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_90%_at_100%_30%,rgba(34,211,238,0.09),transparent_50%)]" />
+      <div
+        className={cn(
+          'pointer-events-none absolute inset-0',
+          isDark
+            ? 'bg-[radial-gradient(ellipse_80%_120%_at_0%_0%,rgba(52,211,153,0.12),transparent_55%)]'
+            : 'bg-[radial-gradient(ellipse_80%_120%_at_0%_0%,rgba(16,185,129,0.08),transparent_55%)]',
+        )}
+      />
+      <div
+        className={cn(
+          'pointer-events-none absolute inset-0',
+          isDark
+            ? 'bg-[radial-gradient(ellipse_70%_90%_at_100%_30%,rgba(34,211,238,0.09),transparent_50%)]'
+            : 'bg-[radial-gradient(ellipse_70%_90%_at_100%_30%,rgba(34,211,238,0.07),transparent_50%)]',
+        )}
+      />
       <div className="relative space-y-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -263,7 +301,12 @@ export function PostCallCommandCenter({
 
         <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-4">
-            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4">
+            <div className={cn(
+                'rounded-2xl border p-4',
+                isDark
+                  ? 'border-white/[0.07] bg-white/[0.03]'
+                  : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.04)]',
+              )}>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-emerald-300" />
@@ -283,7 +326,10 @@ export function PostCallCommandCenter({
                   ))}
                 </ul>
               ) : (
-                <div className="rounded-xl border border-dashed border-white/[0.08] bg-black/15 p-4 text-sm text-slate-500">
+                <div className={cn(
+                    'rounded-xl border border-dashed p-4 text-sm text-slate-500',
+                    isDark ? 'border-white/[0.08] bg-black/15' : 'border-zinc-950/[0.08] bg-zinc-950/[0.03]',
+                  )}>
                   No AI summary is available yet. This panel will populate from real transcript analysis when processing completes.
                 </div>
               )}
@@ -304,7 +350,12 @@ export function PostCallCommandCenter({
               )}
             </div>
 
-            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4">
+            <div className={cn(
+                'rounded-2xl border p-4',
+                isDark
+                  ? 'border-white/[0.07] bg-white/[0.03]'
+                  : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.04)]',
+              )}>
               <div className="mb-3 flex items-center gap-2">
                 <BadgeCheck className="h-4 w-4 text-cyan-300" />
                 <p className="text-sm font-semibold text-white">Evidence and review links</p>
@@ -340,7 +391,12 @@ export function PostCallCommandCenter({
                 )}
                 <Link
                   href={integrationsHref}
-                  className="flex items-center justify-between rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 py-3 text-xs font-semibold text-slate-400 transition hover:border-violet-500/25 hover:text-violet-200"
+                  className={cn(
+                      'flex items-center justify-between rounded-xl border px-3 py-3 text-xs font-semibold text-slate-400 transition',
+                      isDark
+                        ? 'border-white/[0.07] bg-white/[0.025] hover:border-violet-500/25 hover:text-violet-200'
+                        : 'border-zinc-950/[0.07] bg-white shadow-sm hover:border-violet-500/30 hover:text-violet-700',
+                    )}
                 >
                   CRM setup
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -350,7 +406,12 @@ export function PostCallCommandCenter({
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4">
+            <div className={cn(
+                'rounded-2xl border p-4',
+                isDark
+                  ? 'border-white/[0.07] bg-white/[0.03]'
+                  : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.04)]',
+              )}>
               <div className="mb-3 flex items-center gap-2">
                 <MessageSquareText className="h-4 w-4 text-emerald-300" />
                 <p className="text-sm font-semibold text-white">Rep wrap-up</p>
@@ -363,7 +424,7 @@ export function PostCallCommandCenter({
                     onClick={() => setSelectedDisposition(disp.key)}
                     className={cn(
                       'min-h-11 rounded-xl border px-2.5 py-2 text-left text-[11px] font-semibold capitalize transition focus:outline-none focus:ring-2 focus:ring-emerald-400/40',
-                      DISPOSITION_CLASS[disp.tone],
+                      isDark ? DISPOSITION_CLASS[disp.tone] : DISPOSITION_CLASS_LIGHT[disp.tone],
                       selectedDisposition === disp.key && 'ring-2 ring-emerald-400/45',
                     )}
                     aria-pressed={selectedDisposition === disp.key}
@@ -386,7 +447,12 @@ export function PostCallCommandCenter({
                       if (selectedDisposition === 'callback') setCallbackAt(e.target.value);
                       else setMeetingAt(e.target.value);
                     }}
-                    className="w-full rounded-xl border border-white/[0.08] bg-black/20 px-3 py-2.5 text-sm text-white outline-none transition focus:border-emerald-500/30"
+                    className={cn(
+                      'w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition',
+                      isDark
+                        ? 'border-white/[0.08] bg-black/20 text-white focus:border-emerald-500/30'
+                        : 'border-zinc-950/10 bg-zinc-950/[0.03] text-zinc-900 focus:border-emerald-600/40',
+                    )}
                   />
                 </label>
               )}
@@ -398,7 +464,12 @@ export function PostCallCommandCenter({
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Add the recap, objections, commitments, and anything the next rep needs."
-                  className="w-full resize-none rounded-xl border border-white/[0.08] bg-black/20 px-3 py-3 text-sm leading-relaxed text-white placeholder:text-slate-600 outline-none transition focus:border-emerald-500/30"
+                  className={cn(
+                    'w-full resize-none rounded-xl border px-3 py-3 text-sm leading-relaxed outline-none transition',
+                    isDark
+                      ? 'border-white/[0.08] bg-black/20 text-white placeholder:text-slate-600 focus:border-emerald-500/30'
+                      : 'border-zinc-950/10 bg-zinc-950/[0.03] text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-600/40',
+                  )}
                 />
               </label>
 
@@ -413,7 +484,12 @@ export function PostCallCommandCenter({
               </button>
             </div>
 
-            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4">
+            <div className={cn(
+                'rounded-2xl border p-4',
+                isDark
+                  ? 'border-white/[0.07] bg-white/[0.03]'
+                  : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.04)]',
+              )}>
               <p className="text-sm font-semibold text-white">Next best action</p>
               {nextSteps.length > 0 ? (
                 <ul className="mt-3 space-y-2">
@@ -439,10 +515,18 @@ export function PostCallCommandCenter({
                   value={followUpDraft}
                   onChange={(e) => setFollowUpDraft(e.target.value)}
                   placeholder="Draft the next step or reminder. CRM sync is not enabled from this panel yet."
-                  className="w-full resize-none rounded-xl border border-white/[0.08] bg-black/20 px-3 py-3 text-sm leading-relaxed text-white placeholder:text-slate-600 outline-none transition focus:border-cyan-500/30"
+                  className={cn(
+                    'w-full resize-none rounded-xl border px-3 py-3 text-sm leading-relaxed outline-none transition',
+                    isDark
+                      ? 'border-white/[0.08] bg-black/20 text-white placeholder:text-slate-600 focus:border-cyan-500/30'
+                      : 'border-zinc-950/10 bg-zinc-950/[0.03] text-zinc-900 placeholder:text-zinc-400 focus:border-cyan-600/40',
+                  )}
                 />
               </label>
-              <div className="mt-3 rounded-xl border border-dashed border-white/[0.08] bg-black/15 p-3">
+              <div className={cn(
+                  'mt-3 rounded-xl border border-dashed p-3',
+                  isDark ? 'border-white/[0.08] bg-black/15' : 'border-zinc-950/[0.08] bg-zinc-950/[0.03]',
+                )}>
                 <div className="flex items-start gap-2">
                   <Unplug className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
                   <p className="text-xs leading-relaxed text-slate-500">

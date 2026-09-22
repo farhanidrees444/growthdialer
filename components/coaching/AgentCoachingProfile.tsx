@@ -6,6 +6,8 @@ import { Line, LineChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { FileText, Save } from 'lucide-react';
 import { CoachableMomentsFeed } from './CoachableMomentsFeed';
 import { ScoreRadarChart } from './ScoreRadarChart';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 import type { CoachingCall, CoachingMoment, CoachingNote, CoachingScore, RubricBreakdown } from './types';
 
 const SPRING = { type: 'spring', stiffness: 200, damping: 25 } as const;
@@ -26,6 +28,14 @@ export function AgentCoachingProfile({
   const [noteDraft, setNoteDraft] = useState('');
   const [selectedCallId, setSelectedCallId] = useState(calls[0]?.id ?? '');
   const [saving, setSaving] = useState(false);
+  const { isDark } = useSiteTheme();
+
+  const panelClass = cn(
+    'rounded-3xl border p-5 backdrop-blur',
+    isDark
+      ? 'border-white/10 bg-black/40'
+      : 'border-zinc-950/[0.07] bg-white shadow-[0_8px_30px_rgba(9,9,11,0.06)]',
+  );
 
   const latestScore = scores[0] ?? null;
   const moments = useMemo<CoachingMoment[]>(
@@ -54,7 +64,7 @@ export function AgentCoachingProfile({
 
   return (
     <motion.div layout transition={SPRING} className="space-y-4">
-      <div className="rounded-3xl border border-white/10 bg-black/40 p-5 backdrop-blur">
+      <div className={panelClass}>
         <div className="mb-4 flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-widest text-slate-500">Agent profile</p>
@@ -85,7 +95,7 @@ export function AgentCoachingProfile({
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
-        <div className="rounded-3xl border border-white/10 bg-black/40 p-5 backdrop-blur">
+        <div className={panelClass}>
           <p className="mb-3 text-sm font-semibold text-white">Last 10 calls</p>
           <div className="space-y-2">
             {calls.slice(0, 10).map((call) => (
@@ -106,7 +116,7 @@ export function AgentCoachingProfile({
           </div>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-black/40 p-5 backdrop-blur">
+        <div className={panelClass}>
           <div className="mb-3 flex items-center gap-2">
             <FileText className="h-4 w-4 text-[#8B5CF6]" />
             <p className="text-sm font-semibold text-white">Coaching note</p>
@@ -115,7 +125,12 @@ export function AgentCoachingProfile({
             value={noteDraft}
             onChange={(event) => setNoteDraft(event.target.value)}
             placeholder={agentId ? 'Write a note visible to the agent...' : 'Select an agent first'}
-            className="h-32 w-full resize-none rounded-xl border border-white/10 bg-black/40 p-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-[#8B5CF6]/60"
+            className={cn(
+              'h-32 w-full resize-none rounded-xl border p-3 text-sm outline-none focus:border-[#8B5CF6]/60',
+              isDark
+                ? 'border-white/10 bg-black/40 text-white placeholder:text-slate-600'
+                : 'border-zinc-950/[0.08] bg-zinc-950/[0.02] text-zinc-900 placeholder:text-zinc-400',
+            )}
           />
           <button
             type="button"

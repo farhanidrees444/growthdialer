@@ -6,6 +6,7 @@ import { Zap, Grid3x3, TrendingUp, Users, PhoneCall, Upload } from 'lucide-react
 import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
 import { WorkflowIllustration } from '@/components/ui/workflow-illustration';
 import { useLeads } from '@/contexts/leads-context';
+import { useSiteTheme } from '@/components/theme/site-theme';
 import { cn } from '@/lib/utils';
 
 interface BrowseStageProps {
@@ -47,6 +48,7 @@ export function BrowseStage({
 }: BrowseStageProps) {
   const subtitle = useMemo(() => getContextualSubtitle(), []);
   const { setImportOpen } = useLeads();
+  const { isDark } = useSiteTheme();
   const reduce = useReducedMotion();
 
   if (queueCount === 0) {
@@ -86,7 +88,14 @@ export function BrowseStage({
       >
         <motion.div variants={ITEM} className="flex flex-col items-center">
           <WorkflowIllustration scene="dialer" accent="violet" className="mb-5" />
-          <h2 className="bg-gradient-to-r from-white via-zinc-100 to-zinc-400 bg-clip-text text-xl font-semibold tracking-tight text-transparent sm:text-2xl">
+          <h2
+            className={cn(
+              'text-xl font-semibold tracking-tight sm:text-2xl',
+              isDark
+                ? 'bg-gradient-to-r from-white via-zinc-100 to-zinc-400 bg-clip-text text-transparent'
+                : 'text-zinc-950',
+            )}
+          >
             Ready to dial
           </h2>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-zinc-500">{subtitle}</p>
@@ -115,9 +124,14 @@ export function BrowseStage({
               onClick={onStartParallelDial}
               whileHover={reduce ? undefined : { scale: 1.02, y: -1 }}
               whileTap={reduce ? undefined : { scale: 0.98 }}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/[0.08] bg-zinc-900/80 px-6 py-3 text-sm font-medium text-zinc-200 backdrop-blur-sm transition-colors hover:border-cyan-500/25 hover:bg-zinc-800/80"
+              className={cn(
+                'inline-flex items-center justify-center gap-2 rounded-full border px-6 py-3 text-sm font-medium backdrop-blur-sm transition-colors',
+                isDark
+                  ? 'border-white/[0.08] bg-zinc-900/80 text-zinc-200 hover:border-cyan-500/25 hover:bg-zinc-800/80'
+                  : 'border-zinc-950/10 bg-white text-zinc-700 shadow-sm hover:border-cyan-600/30 hover:bg-cyan-500/[0.06]',
+              )}
             >
-              <Grid3x3 className="h-4 w-4 text-cyan-400/80" />
+              <Grid3x3 className={cn('h-4 w-4', isDark ? 'text-cyan-400/80' : 'text-cyan-600')} />
               Parallel dial
             </motion.button>
           )}
@@ -139,6 +153,7 @@ function StatTile({
   accent: 'violet' | 'amber' | 'cyan';
 }) {
   const reduce = useReducedMotion();
+  const { isDark } = useSiteTheme();
   const ring =
     accent === 'violet'
       ? 'from-violet-500/20 to-transparent'
@@ -146,12 +161,21 @@ function StatTile({
         ? 'from-amber-500/20 to-transparent'
         : 'from-cyan-500/20 to-transparent';
   const iconColor =
-    accent === 'violet' ? 'text-violet-400' : accent === 'amber' ? 'text-amber-400' : 'text-cyan-400';
+    accent === 'violet'
+      ? isDark ? 'text-violet-400' : 'text-violet-600'
+      : accent === 'amber'
+        ? isDark ? 'text-amber-400' : 'text-amber-600'
+        : isDark ? 'text-cyan-400' : 'text-cyan-600';
 
   return (
     <motion.div
       whileHover={reduce ? undefined : { y: -2 }}
-      className="relative overflow-hidden rounded-xl border border-white/[0.06] bg-zinc-900/60 px-3 py-3.5 text-center backdrop-blur-sm"
+      className={cn(
+        'relative overflow-hidden rounded-xl border px-3 py-3.5 text-center backdrop-blur-sm',
+        isDark
+          ? 'border-white/[0.06] bg-zinc-900/60'
+          : 'border-zinc-950/[0.07] bg-white/80 shadow-[0_2px_10px_rgba(9,9,11,0.05)]',
+      )}
     >
       <div className={cn('pointer-events-none absolute inset-0 bg-gradient-to-b', ring)} aria-hidden />
       <Icon className={cn('relative mx-auto mb-1.5 h-4 w-4', iconColor)} />
@@ -159,7 +183,7 @@ function StatTile({
         key={value}
         initial={reduce ? false : { scale: 0.9, opacity: 0.5 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="relative text-2xl font-semibold tabular-nums text-zinc-50"
+        className={cn('relative text-2xl font-semibold tabular-nums', isDark ? 'text-zinc-50' : 'text-zinc-950')}
       >
         {value}
       </motion.p>

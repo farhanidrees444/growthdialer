@@ -31,6 +31,7 @@ import { SpotlightCard } from "@/components/premium/spotlight-card";
 import { LeadsStatsStrip } from "@/components/leads/leads-stats-strip";
 import { navigateWithTransition, setLeadTransitionId } from "@/lib/ui/lead-transition";
 import { LeadActionsMenu } from "@/components/leads/lead-actions-menu";
+import { useSiteTheme } from "@/components/theme/site-theme";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -199,22 +200,33 @@ function DeleteConfirmModal({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const { isDark } = useSiteTheme();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { if (!loading) onCancel(); }} />
       <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
-        className="relative z-10 w-full max-w-sm rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] p-6 shadow-2xl">
+        className={cn(
+          "relative z-10 w-full max-w-sm rounded-2xl border p-6 shadow-2xl",
+          isDark
+            ? "border-white/[0.10] bg-[oklch(0.09_0.006_285)]"
+            : "border-zinc-950/[0.08] bg-white shadow-[0_24px_70px_rgba(76,29,149,0.12),0_2px_8px_rgba(9,9,11,0.06)]",
+        )}>
         <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-red-500/15">
           <Trash2 className="h-5 w-5 text-red-400" />
         </div>
-        <h3 className="text-base font-bold text-white mb-1.5">Delete {name}?</h3>
-        <p className="text-sm text-slate-400 mb-5 leading-relaxed">
+        <h3 className={cn("text-base font-bold mb-1.5", isDark ? "text-white" : "text-zinc-950")}>Delete {name}?</h3>
+        <p className={cn("text-sm mb-5 leading-relaxed", isDark ? "text-slate-400" : "text-zinc-500")}>
           This lead will be moved to trash and automatically deleted after 7 days. Restore from the Trash tab.
         </p>
         <div className="flex gap-2">
           <button type="button" onClick={onCancel} disabled={loading}
-            className="flex-1 rounded-xl border border-white/[0.08] py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.04] transition">
+            className={cn(
+              "flex-1 rounded-xl border py-2.5 text-sm font-semibold transition",
+              isDark
+                ? "border-white/[0.08] text-slate-300 hover:bg-white/[0.04]"
+                : "border-zinc-950/10 bg-white text-zinc-700 shadow-sm hover:border-violet-500/30 hover:bg-violet-50/60",
+            )}>
             Cancel
           </button>
           <button type="button" onClick={onConfirm} disabled={loading}
@@ -247,6 +259,7 @@ function LeadCard({
   const grad = avatarGradient(lead.name);
   const scoreGrad = scoreGradient(lead.ai_score);
   const isHot = (lead.tags ?? []).includes("hot") || lead.status === "callback" || lead.status === "meeting_booked";
+  const { isDark } = useSiteTheme();
 
   return (
     <motion.div variants={cardVariants} transition={{ duration: 0.18, ease: "easeOut" }}>
@@ -255,10 +268,18 @@ function LeadCard({
       onClick={onView}
       className={cn(
         "group relative flex h-full cursor-pointer flex-col gap-4 overflow-hidden rounded-2xl border p-4 transition-all",
-        "border-white/[0.07] bg-[oklch(0.09_0.006_285)] hover:border-emerald-500/20 hover:bg-emerald-500/[0.03] hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(52,211,153,0.08)]",
-        isHot && "border-amber-500/25 hover:border-amber-500/40 hover:shadow-[0_8px_32px_rgba(245,158,11,0.1)]",
-        selected && "border-emerald-500/35 bg-emerald-500/5 shadow-[0_0_24px_rgba(52,211,153,0.1)]",
-        focused && "ring-2 ring-[#8B5CF6]/40 ring-offset-2 ring-offset-[oklch(0.09_0.006_285)]",
+        isDark
+          ? "border-white/[0.07] bg-[oklch(0.09_0.006_285)] hover:border-emerald-500/20 hover:bg-emerald-500/[0.03] hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(52,211,153,0.08)]"
+          : "border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.04)] hover:border-emerald-600/25 hover:bg-emerald-50/40 hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(16,185,129,0.10)]",
+        isHot && (isDark
+          ? "border-amber-500/25 hover:border-amber-500/40 hover:shadow-[0_8px_32px_rgba(245,158,11,0.1)]"
+          : "border-amber-600/30 hover:border-amber-600/45 hover:shadow-[0_8px_32px_rgba(217,119,6,0.12)]"),
+        selected && (isDark
+          ? "border-emerald-500/35 bg-emerald-500/5 shadow-[0_0_24px_rgba(52,211,153,0.1)]"
+          : "border-emerald-600/40 bg-emerald-50/60 shadow-[0_0_24px_rgba(16,185,129,0.12)]"),
+        focused && (isDark
+          ? "ring-2 ring-[#8B5CF6]/40 ring-offset-2 ring-offset-[oklch(0.09_0.006_285)]"
+          : "ring-2 ring-violet-600/40 ring-offset-2 ring-offset-white"),
       )}
     >
       <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/35 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
@@ -545,6 +566,7 @@ export default function LeadsPage() {
   const { leads: contextLeads, setImportOpen } = useLeads();
   const { currentWorkspace, apiFetch } = useWorkspace();
   const startOutboundCall = useOutboundCall();
+  const { isDark } = useSiteTheme();
 
   const [leads, setLeads] = useState<FullLead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -917,8 +939,8 @@ export default function LeadsPage() {
           {/* Title row */}
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="dash-page-title">Leads</h1>
-              <p className="dash-muted mt-0.5 hidden sm:block">Import, organize, and call your prospects.</p>
+              <h1 className={cn("dash-page-title", !isDark && "text-zinc-950")}>Leads</h1>
+              <p className={cn("dash-muted mt-0.5 hidden sm:block", !isDark && "text-zinc-500")}>Import, organize, and call your prospects.</p>
             </div>
             {!loading && (
               <span className="dash-chip shrink-0 tabular-nums" aria-label={`${tabCounts.all} leads`}>
@@ -936,7 +958,12 @@ export default function LeadsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by name, company, phone…"
-                className="dash-input w-full py-2.5 pl-9 pr-3"
+                className={cn(
+                  "w-full rounded-lg border py-2.5 pl-9 pr-3 text-[14px] transition-all duration-150",
+                  isDark
+                    ? "dash-input"
+                    : "border-zinc-950/10 bg-white text-zinc-900 placeholder:text-zinc-400 shadow-sm focus:border-violet-500/50 focus:outline-none focus:ring-[0_0_0_3px_rgba(139,92,246,0.15)]",
+                )}
               />
               {search && (
                 <button type="button" onClick={() => setSearch("")}
@@ -952,8 +979,13 @@ export default function LeadsPage() {
                 type="button"
                 onClick={() => setFilterDrawerOpen(true)}
                 className={cn(
-                  "dash-btn-ghost relative",
-                  isFilterActive(filters) && "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+                  "relative",
+                  isDark
+                    ? "dash-btn-ghost"
+                    : "inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-950/10 bg-white px-4 py-2 text-[14px] font-medium text-zinc-700 shadow-[0_1px_2px_rgba(9,9,11,0.05)] transition-all duration-150 select-none hover:border-violet-500/30 hover:bg-violet-50/60 hover:text-zinc-900",
+                  isFilterActive(filters) && (isDark
+                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                    : "border-emerald-600/30 bg-emerald-500/10 text-emerald-700"),
                 )}
               >
                 <Filter className="h-3.5 w-3.5" />
@@ -969,7 +1001,11 @@ export default function LeadsPage() {
               <button
                 type="button"
                 onClick={() => setShowExport(true)}
-                className="dash-btn-ghost"
+                className={cn(
+                  isDark
+                    ? "dash-btn-ghost"
+                    : "inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-950/10 bg-white px-4 py-2 text-[14px] font-medium text-zinc-700 shadow-[0_1px_2px_rgba(9,9,11,0.05)] transition-all duration-150 select-none hover:border-violet-500/30 hover:bg-violet-50/60 hover:text-zinc-900",
+                )}
               >
                 <Download className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Export</span>
@@ -979,7 +1015,11 @@ export default function LeadsPage() {
               <button
                 type="button"
                 onClick={() => setImportOpen(true)}
-                className="dash-btn-ghost"
+                className={cn(
+                  isDark
+                    ? "dash-btn-ghost"
+                    : "inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-950/10 bg-white px-4 py-2 text-[14px] font-medium text-zinc-700 shadow-[0_1px_2px_rgba(9,9,11,0.05)] transition-all duration-150 select-none hover:border-violet-500/30 hover:bg-violet-50/60 hover:text-zinc-900",
+                )}
               >
                 <Upload className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Import leads</span>
@@ -992,7 +1032,11 @@ export default function LeadsPage() {
               <button
                 type="button"
                 onClick={() => setShowAddModal(true)}
-                className="dash-btn-primary"
+                className={cn(
+                  isDark
+                    ? "dash-btn-primary"
+                    : "inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-[14px] font-medium text-white shadow-[0_8px_20px_-6px_rgba(124,58,237,0.5)] transition-all duration-150 select-none hover:bg-violet-500",
+                )}
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Add Lead</span>
@@ -1064,7 +1108,7 @@ export default function LeadsPage() {
           {loading ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="dash-skeleton h-52" aria-hidden />
+                <div key={i} className={cn("h-52 rounded-md", isDark ? "dash-skeleton" : "bg-zinc-950/[0.06]")} aria-hidden />
               ))}
             </div>
           ) : paginated.length === 0 ? (
@@ -1148,13 +1192,23 @@ export default function LeadsPage() {
               <div className="flex items-center gap-2">
                 <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
                   aria-label="Previous page"
-                  className="dash-press flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30">
+                  className={cn(
+                    "dash-press flex h-8 w-8 items-center justify-center rounded-xl border transition disabled:opacity-30",
+                    isDark
+                      ? "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:bg-white/[0.06] hover:text-white"
+                      : "border-zinc-950/10 bg-white text-zinc-500 shadow-sm hover:border-violet-500/30 hover:text-zinc-800",
+                  )}>
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <span className="text-xs text-slate-500 tabular-nums" aria-current="page">Page {page} / {totalPages}</span>
                 <button type="button" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
                   aria-label="Next page"
-                  className="dash-press flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30">
+                  className={cn(
+                    "dash-press flex h-8 w-8 items-center justify-center rounded-xl border transition disabled:opacity-30",
+                    isDark
+                      ? "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:bg-white/[0.06] hover:text-white"
+                      : "border-zinc-950/10 bg-white text-zinc-500 shadow-sm hover:border-violet-500/30 hover:text-zinc-800",
+                  )}>
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>

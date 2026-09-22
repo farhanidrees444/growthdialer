@@ -1,20 +1,29 @@
 'use client';
 
 import { Dumbbell, TrendingUp } from 'lucide-react';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 import type { WeeklyReport } from './types';
 
 export function WeeklyReportCard({ report }: { report: WeeklyReport | null }) {
+  const { isDark } = useSiteTheme();
+  const cardClass = cn(
+    'rounded-2xl border p-5 backdrop-blur',
+    isDark
+      ? 'border-white/10 bg-black/40'
+      : 'border-zinc-950/[0.07] bg-white shadow-[0_8px_30px_rgba(9,9,11,0.06)]',
+  );
   if (!report) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-black/40 p-5 backdrop-blur">
-        <p className="text-sm font-semibold text-white">Weekly report pending</p>
-        <p className="mt-1 text-sm text-slate-400">Reports appear after scored calls are available for the week.</p>
+      <div className={cardClass}>
+        <p className={cn('text-sm font-semibold', isDark ? 'text-white' : 'text-zinc-900')}>Weekly report pending</p>
+        <p className={cn('mt-1 text-sm', isDark ? 'text-slate-400' : 'text-zinc-500')}>Reports appear after scored calls are available for the week.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/40 p-5 backdrop-blur">
+    <div className={cardClass}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">Weekly coaching report</p>

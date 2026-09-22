@@ -18,6 +18,7 @@ import { useSearchParams } from "next/navigation";
 import { WorkspaceBillingPanel } from "@/components/billing/workspace-billing-panel";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { useSiteTheme } from "@/components/theme/site-theme";
 import { SoundDesignToggle } from "@/components/premium/sound-design-toggle";
 import {
   MIN_PLAYABLE_RECORDING_SECONDS,
@@ -908,6 +909,7 @@ function DeleteAccountModal({ onClose, userEmail }: { onClose: () => void; userE
   const [input, setInput]     = useState('');
   const [deleting, setDeleting] = useState(false);
   const [error, setError]     = useState('');
+  const { isDark } = useSiteTheme();
 
   async function handleDelete() {
     if (input !== 'DELETE') { setError('Type DELETE exactly'); return; }
@@ -938,7 +940,10 @@ function DeleteAccountModal({ onClose, userEmail }: { onClose: () => void; userE
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 8 }}
         transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-        className="relative z-10 w-full max-w-md rounded-2xl border border-red-500/20 bg-[oklch(0.09_0.006_285)] p-6 shadow-2xl"
+        className={cn(
+          "relative z-10 w-full max-w-md rounded-2xl border border-red-500/20 p-6 shadow-2xl",
+          isDark ? "bg-[oklch(0.09_0.006_285)]" : "bg-white shadow-[0_24px_70px_rgba(9,9,11,0.18)]",
+        )}
       >
         <div className="mb-5 flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/10">
@@ -1008,6 +1013,7 @@ export default function SettingsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   // Billing bypass: hidden only once the server positively reports it off.
   const [billingEnabled, setBillingEnabled] = useState<boolean | null>(null);
+  const { isDark } = useSiteTheme();
 
   useEffect(() => {
     let cancelled = false;
@@ -1259,7 +1265,12 @@ export default function SettingsPage() {
             exit={{ opacity: 0, y: 16 }}
             className="fixed left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 px-2 bottom-[calc(var(--bottom-nav-height)+env(safe-area-inset-bottom,0px)+1rem)] lg:w-auto lg:max-w-none lg:px-0 lg:bottom-6"
           >
-            <div className="flex items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-[oklch(0.09_0.006_285)]/95 px-4 py-2.5 shadow-2xl backdrop-blur-xl">
+            <div className={cn(
+              "flex items-center justify-center gap-3 rounded-2xl border px-4 py-2.5 shadow-2xl backdrop-blur-xl",
+              isDark
+                ? "border-white/[0.08] bg-[oklch(0.09_0.006_285)]/95"
+                : "border-zinc-950/[0.08] bg-white/95 shadow-[0_16px_50px_rgba(9,9,11,0.16)]",
+            )}>
               {saveError && <p className="text-xs text-red-400">{saveError}</p>}
               <button
                 type="button"

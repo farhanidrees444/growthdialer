@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Headset } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 
 type WhisperPayload = {
   call_id?: string | null;
@@ -12,6 +14,7 @@ type WhisperPayload = {
 
 export function AgentWhisperListener({ callId }: { callId: string | null }) {
   const [message, setMessage] = useState<string | null>(null);
+  const { isDark } = useSiteTheme();
 
   useEffect(() => {
     const supabase = createClient();
@@ -44,8 +47,16 @@ export function AgentWhisperListener({ callId }: { callId: string | null }) {
   if (!message) return null;
 
   return (
-    <div className="mx-5 mb-3 rounded-2xl border border-[#8B5CF6]/30 bg-[#8B5CF6]/15 p-3 text-sm text-violet-50">
-      <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-violet-200">
+    <div className={cn(
+      'mx-5 mb-3 rounded-2xl border p-3 text-sm',
+      isDark
+        ? 'border-[#8B5CF6]/30 bg-[#8B5CF6]/15 text-violet-50'
+        : 'border-violet-500/25 bg-violet-500/[0.07] text-violet-800',
+    )}>
+      <div className={cn(
+        'mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest',
+        isDark ? 'text-violet-200' : 'text-violet-600',
+      )}>
         <Headset className="h-3.5 w-3.5" />
         Coach whisper
       </div>

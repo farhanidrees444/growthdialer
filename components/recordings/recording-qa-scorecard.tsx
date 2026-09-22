@@ -17,6 +17,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 type AiStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'skipped_short' | string | null;
 
@@ -417,9 +418,10 @@ function getChecklist(call: RecordingQACall, analytics?: RecordingQAAnalytics | 
 }
 
 function StatusIcon({ tone }: { tone: QAStatus['tone'] }) {
-  if (tone === 'ready') return <CheckCircle2 className="h-4 w-4 text-emerald-300" />;
-  if (tone === 'processing') return <Loader2 className="h-4 w-4 animate-spin text-cyan-300" />;
-  if (tone === 'attention') return <AlertTriangle className="h-4 w-4 text-amber-300" />;
+  const { isDark } = useSiteTheme();
+  if (tone === 'ready') return <CheckCircle2 className={cn('h-4 w-4', isDark ? 'text-emerald-300' : 'text-emerald-600')} />;
+  if (tone === 'processing') return <Loader2 className={cn('h-4 w-4 animate-spin', isDark ? 'text-cyan-300' : 'text-cyan-600')} />;
+  if (tone === 'attention') return <AlertTriangle className={cn('h-4 w-4', isDark ? 'text-amber-300' : 'text-amber-600')} />;
   return <Minus className="h-4 w-4 text-slate-500" />;
 }
 
@@ -428,15 +430,16 @@ export function RecordingQAStatusPill({
   analytics,
   className,
 }: Pick<RecordingQAScorecardProps, 'call' | 'analytics' | 'className'>) {
+  const { isDark } = useSiteTheme();
   const status = getRecordingQAStatus(call, analytics);
 
   return (
     <span className={cn(
       'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold',
-      status.tone === 'ready' && 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300',
-      status.tone === 'processing' && 'border-cyan-500/25 bg-cyan-500/10 text-cyan-300',
-      status.tone === 'attention' && 'border-amber-500/25 bg-amber-500/10 text-amber-300',
-      status.tone === 'muted' && 'border-white/[0.08] bg-white/[0.035] text-slate-500',
+      status.tone === 'ready' && (isDark ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300' : 'border-emerald-600/25 bg-emerald-500/[0.08] text-emerald-700'),
+      status.tone === 'processing' && (isDark ? 'border-cyan-500/25 bg-cyan-500/10 text-cyan-300' : 'border-cyan-600/25 bg-cyan-500/[0.08] text-cyan-700'),
+      status.tone === 'attention' && (isDark ? 'border-amber-500/25 bg-amber-500/10 text-amber-300' : 'border-amber-500/30 bg-amber-500/[0.08] text-amber-700'),
+      status.tone === 'muted' && (isDark ? 'border-white/[0.08] bg-white/[0.035] text-slate-500' : 'border-zinc-950/10 bg-zinc-950/[0.03] text-zinc-500'),
       className,
     )}>
       <StatusIcon tone={status.tone} />
@@ -451,6 +454,7 @@ export function RecordingQAScorecard({
   compact = false,
   className,
 }: RecordingQAScorecardProps) {
+  const { isDark } = useSiteTheme();
   const status = getRecordingQAStatus(call, analytics);
   const scoreInputs = canScore(call, analytics) ? getScoreInputs(call, analytics) : [];
   const checklist = getChecklist(call, analytics);
@@ -462,12 +466,25 @@ export function RecordingQAScorecard({
 
   return (
     <section className={cn(
-      'relative overflow-hidden rounded-[28px] border border-white/[0.08] bg-[oklch(0.085_0.008_285)] shadow-2xl shadow-black/30',
+      'relative overflow-hidden rounded-[28px] border shadow-2xl',
       compact ? 'p-4' : 'p-5 sm:p-6',
+      isDark
+        ? 'border-white/[0.08] bg-[oklch(0.085_0.008_285)] shadow-black/30'
+        : 'border-zinc-950/[0.08] bg-[linear-gradient(135deg,#ffffff_0%,#fbfbff_55%,#f3fdf7_100%)] shadow-[0_24px_70px_rgba(16,185,129,0.10),0_2px_8px_rgba(9,9,11,0.05)]',
       className,
     )}>
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_120%_at_0%_0%,rgba(16,185,129,0.13),transparent_55%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_90%_at_100%_15%,rgba(168,85,247,0.10),transparent_52%)]" />
+      <div className={cn(
+        'pointer-events-none absolute inset-0',
+        isDark
+          ? 'bg-[radial-gradient(ellipse_80%_120%_at_0%_0%,rgba(16,185,129,0.13),transparent_55%)]'
+          : 'bg-[radial-gradient(ellipse_80%_120%_at_0%_0%,rgba(16,185,129,0.08),transparent_55%)]',
+      )} />
+      <div className={cn(
+        'pointer-events-none absolute inset-0',
+        isDark
+          ? 'bg-[radial-gradient(ellipse_70%_90%_at_100%_15%,rgba(168,85,247,0.10),transparent_52%)]'
+          : 'bg-[radial-gradient(ellipse_70%_90%_at_100%_15%,rgba(168,85,247,0.07),transparent_52%)]',
+      )} />
       <div className="relative space-y-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -488,7 +505,7 @@ export function RecordingQAScorecard({
             status.tone === 'ready' && 'border-emerald-500/25 bg-emerald-500/[0.08]',
             status.tone === 'processing' && 'border-cyan-500/25 bg-cyan-500/[0.08]',
             status.tone === 'attention' && 'border-amber-500/25 bg-amber-500/[0.08]',
-            status.tone === 'muted' && 'border-white/[0.08] bg-white/[0.035]',
+            status.tone === 'muted' && (isDark ? 'border-white/[0.08] bg-white/[0.035]' : 'border-zinc-950/10 bg-white shadow-sm'),
           )}>
             <div className="flex items-center gap-2 text-sm font-semibold text-white">
               <StatusIcon tone={status.tone} />
@@ -499,7 +516,10 @@ export function RecordingQAScorecard({
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
-          <div className="rounded-3xl border border-white/[0.07] bg-black/20 p-5">
+          <div className={cn(
+              'rounded-3xl border p-5',
+              isDark ? 'border-white/[0.07] bg-black/20' : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.04)]',
+            )}>
             <div className="flex items-end justify-between gap-4">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Overall</p>
@@ -510,7 +530,10 @@ export function RecordingQAScorecard({
                   <span className="text-sm font-semibold text-slate-500">/ 100</span>
                 </div>
               </div>
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03]">
+              <div className={cn(
+                  'flex h-20 w-20 items-center justify-center rounded-full border',
+                  isDark ? 'border-white/[0.08] bg-white/[0.03]' : 'border-zinc-950/[0.08] bg-zinc-950/[0.03]',
+                )}>
                 <Sparkles className={cn(
                   'h-7 w-7',
                   status.score !== null ? 'text-emerald-300' : 'text-slate-600',
@@ -525,7 +548,10 @@ export function RecordingQAScorecard({
             {scoreInputs.length > 0 ? (
               <div className="mt-5 space-y-2">
                 {scoreInputs.map((input) => (
-                  <div key={input.label} className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3">
+                  <div key={input.label} className={cn(
+                        'rounded-2xl border p-3',
+                        isDark ? 'border-white/[0.06] bg-white/[0.025]' : 'border-zinc-950/[0.06] bg-zinc-950/[0.02]',
+                      )}>
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs font-semibold text-white">{input.label}</p>
                       <span className={cn(
@@ -542,7 +568,10 @@ export function RecordingQAScorecard({
                 ))}
               </div>
             ) : (
-              <div className="mt-5 rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.025] p-4">
+              <div className={cn(
+                'mt-5 rounded-2xl border border-dashed p-4',
+                isDark ? 'border-white/[0.08] bg-white/[0.025]' : 'border-zinc-950/[0.08] bg-zinc-950/[0.02]',
+              )}>
                 <p className="text-sm font-semibold text-slate-300">{status.label}</p>
                 <p className="mt-1 text-xs leading-relaxed text-slate-500">{status.detail}</p>
               </div>
@@ -581,14 +610,20 @@ export function RecordingQAScorecard({
               />
             </div>
 
-            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4">
+            <div className={cn(
+                'rounded-2xl border p-4',
+                isDark ? 'border-white/[0.07] bg-white/[0.03]' : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.04)]',
+              )}>
               <div className="mb-3 flex items-center gap-2">
                 <BadgeCheck className="h-4 w-4 text-cyan-300" />
                 <p className="text-sm font-semibold text-white">Structured QA checklist</p>
               </div>
               <div className="space-y-2">
                 {checklist.map((item) => (
-                  <div key={item.label} className="rounded-xl border border-white/[0.06] bg-black/15 px-3 py-2.5">
+                  <div key={item.label} className={cn(
+                        'rounded-xl border px-3 py-2.5',
+                        isDark ? 'border-white/[0.06] bg-black/15' : 'border-zinc-950/[0.06] bg-zinc-950/[0.02]',
+                      )}>
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs font-semibold text-slate-200">{item.label}</p>
                       <span className={cn(
@@ -638,19 +673,20 @@ function MetricCard({
   body: string;
   tone: 'good' | 'warn' | 'muted';
 }) {
+  const { isDark } = useSiteTheme();
   return (
     <div className={cn(
       'rounded-2xl border p-4',
       tone === 'good' && 'border-emerald-500/20 bg-emerald-500/[0.055]',
       tone === 'warn' && 'border-amber-500/20 bg-amber-500/[0.055]',
-      tone === 'muted' && 'border-white/[0.07] bg-white/[0.03]',
+      tone === 'muted' && (isDark ? 'border-white/[0.07] bg-white/[0.03]' : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.04)]'),
     )}>
       <div className="mb-3 flex items-center justify-between gap-3">
         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{label}</p>
         <Icon className={cn(
           'h-4 w-4',
-          tone === 'good' && 'text-emerald-300',
-          tone === 'warn' && 'text-amber-300',
+          tone === 'good' && (isDark ? 'text-emerald-300' : 'text-emerald-600'),
+          tone === 'warn' && (isDark ? 'text-amber-300' : 'text-amber-600'),
           tone === 'muted' && 'text-slate-600',
         )} />
       </div>

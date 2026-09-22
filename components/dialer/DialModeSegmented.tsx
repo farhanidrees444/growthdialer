@@ -1,6 +1,7 @@
 'use client';
 
 import { motion, useReducedMotion } from 'framer-motion';
+import { useSiteTheme } from '@/components/theme/site-theme';
 import { Phone, Zap, Grid3x3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -39,6 +40,7 @@ export default function DialModeSegmented({
   className,
 }: DialModeSegmentedProps) {
   const reduce = useReducedMotion();
+  const { isDark } = useSiteTheme();
 
   const handleClick = (id: DialMode) => {
     if (disabled) return;
@@ -50,7 +52,10 @@ export default function DialModeSegmented({
   return (
     <div
       className={cn(
-        'relative inline-flex w-full max-w-md rounded-2xl border border-white/[0.06] bg-white/[0.02] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl',
+        'relative inline-flex w-full max-w-md rounded-2xl border p-1 backdrop-blur-xl',
+        isDark
+          ? 'border-white/[0.06] bg-white/[0.02] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_18px_50px_rgba(0,0,0,0.28)]'
+          : 'border-zinc-950/[0.08] bg-white shadow-[0_2px_12px_rgba(9,9,11,0.06)]',
         className,
       )}
       role="tablist"
@@ -77,7 +82,7 @@ export default function DialModeSegmented({
             className={cn(
               'relative flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-xs font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70',
               disabled && 'cursor-not-allowed opacity-50',
-              !disabled && !isActive && 'cursor-pointer text-zinc-500 hover:text-zinc-200',
+              !disabled && !isActive && (isDark ? 'cursor-pointer text-zinc-500 hover:text-zinc-200' : 'cursor-pointer text-zinc-500 hover:text-zinc-900'),
               isActive && 'text-white',
             )}
           >

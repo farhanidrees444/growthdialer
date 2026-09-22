@@ -19,6 +19,8 @@ import {
 } from '@/components/leaderboard/solo-floor';
 import { PlanGate } from '@/lib/plan/plan-guard';
 import { UpgradePrompt } from '@/lib/plan/upgrade-prompt';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 
 const PERIODS = [
   { days: 1, label: 'Today' },
@@ -53,6 +55,7 @@ export default function LeaderboardPage() {
   const [solo, setSolo] = useState(false);
   const [loading, setLoading] = useState(true);
   const [metric, setMetric] = useState<Metric>('calls');
+  const { isDark } = useSiteTheme();
 
   useEffect(() => {
     let cancelled = false;
@@ -113,11 +116,16 @@ export default function LeaderboardPage() {
               key={item.value}
               type="button"
               onClick={() => setMetric(item.value)}
-              className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+              className={cn(
+                'rounded-xl border px-3 py-2 text-xs font-semibold transition',
                 metric === item.value
-                  ? 'border-violet-500/40 bg-violet-500/15 text-violet-100'
-                  : 'border-white/10 bg-black/30 text-slate-400 hover:bg-white/[0.04]'
-              }`}
+                  ? isDark
+                    ? 'border-violet-500/40 bg-violet-500/15 text-violet-100'
+                    : 'border-violet-500/30 bg-violet-500/[0.08] text-violet-700 shadow-sm'
+                  : isDark
+                    ? 'border-white/10 bg-black/30 text-slate-400 hover:bg-white/[0.04]'
+                    : 'border-zinc-950/[0.08] bg-white text-zinc-500 shadow-sm hover:border-violet-500/25 hover:text-zinc-700',
+              )}
             >
               {item.label}
             </button>

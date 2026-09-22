@@ -9,6 +9,7 @@ import {
   type SceneAccent,
 } from '@/lib/ui/workflow-scenes';
 import { WorkflowSceneMotion } from '@/components/ui/workflow-scene-motion';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 interface WorkflowIllustrationProps {
   scene?: WorkflowScene;
@@ -26,6 +27,7 @@ export function WorkflowIllustration({
   className,
 }: WorkflowIllustrationProps) {
   const reduce = useReducedMotion();
+  const { isDark } = useSiteTheme();
   const config = resolveSceneConfig(scene, accent);
 
   const boxSize = compact ? 'h-[80px] w-[80px]' : 'h-[128px] w-[128px]';
@@ -71,7 +73,9 @@ export function WorkflowIllustration({
             aria-hidden
             className="pointer-events-none absolute -inset-[1px] rounded-[18px] opacity-70"
             style={{
-              background: 'linear-gradient(135deg, rgba(139,92,246,0.5), rgba(34,211,238,0.2), rgba(139,92,246,0.1))',
+              background: isDark
+                ? 'linear-gradient(135deg, rgba(139,92,246,0.5), rgba(34,211,238,0.2), rgba(139,92,246,0.1))'
+                : 'linear-gradient(135deg, rgba(139,92,246,0.38), rgba(34,211,238,0.28), rgba(139,92,246,0.10))',
             }}
             animate={{ opacity: [0.4, 0.75, 0.4] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
@@ -81,13 +85,19 @@ export function WorkflowIllustration({
         <div
           className={cn(
             'relative flex items-center justify-center overflow-hidden rounded-[17px]',
-            'border border-white/[0.1] bg-gradient-to-b from-zinc-800/80 to-zinc-950',
-            'shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_8px_32px_rgba(0,0,0,0.4)]',
+            isDark
+              ? 'border border-white/[0.1] bg-gradient-to-b from-zinc-800/80 to-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_8px_32px_rgba(0,0,0,0.4)]'
+              : 'border border-zinc-950/[0.09] bg-gradient-to-b from-white to-[#f1f1f6] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_30px_rgba(76,29,149,0.14)]',
             boxSize,
           )}
         >
           <div
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.12),transparent_55%)]"
+            className={cn(
+              'pointer-events-none absolute inset-0',
+              isDark
+                ? 'bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.12),transparent_55%)]'
+                : 'bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,0.16),transparent_60%)]',
+            )}
             aria-hidden
           />
 
@@ -96,7 +106,7 @@ export function WorkflowIllustration({
               <WorkflowSceneMotion scene={scene} />
             </div>
           ) : Icon ? (
-            <Icon className={cn('text-zinc-400', compact ? 'h-7 w-7' : 'h-10 w-10')} />
+            <Icon className={cn(compact ? 'h-7 w-7' : 'h-10 w-10', isDark ? 'text-zinc-400' : 'text-violet-600')} />
           ) : (
             <div
               className={cn(

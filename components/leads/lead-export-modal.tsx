@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { X, Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 
 type Format = 'csv' | 'json';
 type Scope = 'all' | 'selected' | 'filtered';
@@ -28,6 +30,7 @@ const FIELD_OPTIONS = [
 
 export function LeadExportModal({ onClose, selectedCount, filteredCount, selectedIds }: Props) {
   const { apiFetch } = useWorkspace();
+  const { isDark } = useSiteTheme();
   const [format, setFormat] = useState<Format>('csv');
   const [scope, setScope] = useState<Scope>(selectedCount > 0 ? 'selected' : 'all');
   const [fields, setFields] = useState<string[]>(
@@ -86,16 +89,26 @@ export function LeadExportModal({ onClose, selectedCount, filteredCount, selecte
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.96, opacity: 0, y: 12 }}
         transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-        className="relative z-10 w-full max-w-sm rounded-3xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] shadow-2xl shadow-black/70 overflow-hidden"
+        className={cn(
+          'relative z-10 w-full max-w-sm rounded-3xl border overflow-hidden',
+          isDark
+            ? 'border-white/[0.10] bg-[oklch(0.09_0.006_285)] shadow-2xl shadow-black/70'
+            : 'border-zinc-950/[0.08] bg-white shadow-[0_24px_70px_rgba(76,29,149,0.12),0_2px_8px_rgba(9,9,11,0.06)]',
+        )}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 pt-6 pb-4">
           <div className="flex items-center gap-2">
-            <Download className="h-4 w-4 text-slate-500" />
-            <h2 className="text-base font-bold text-white">Export Leads</h2>
+            <Download className={cn('h-4 w-4', isDark ? 'text-slate-500' : 'text-zinc-400')} />
+            <h2 className={cn('text-base font-bold', isDark ? 'text-white' : 'text-zinc-950')}>Export Leads</h2>
           </div>
           <button type="button" onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.08] text-slate-500 hover:text-white transition">
+            className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-xl border transition',
+              isDark
+                ? 'border-white/[0.08] text-slate-500 hover:text-white'
+                : 'border-zinc-950/10 bg-white text-zinc-400 shadow-sm hover:text-zinc-700',
+            )}>
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -107,12 +120,16 @@ export function LeadExportModal({ onClose, selectedCount, filteredCount, selecte
             <div className="grid grid-cols-2 gap-2">
               {(['csv', 'json'] as Format[]).map((f) => (
                 <button key={f} type="button" onClick={() => setFormat(f)}
-                  className={[
+                  className={cn(
                     'rounded-xl border py-2.5 text-sm font-semibold uppercase tracking-wide transition',
                     format === f
-                      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                      : 'border-white/[0.07] text-slate-500 hover:text-slate-300',
-                  ].join(' ')}>
+                      ? isDark
+                        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                        : 'border-emerald-600/30 bg-emerald-500/10 text-emerald-700'
+                      : isDark
+                        ? 'border-white/[0.07] text-slate-500 hover:text-slate-300'
+                        : 'border-zinc-950/10 text-zinc-500 hover:text-zinc-800',
+                  )}>
                   {f}
                 </button>
               ))}
@@ -129,12 +146,16 @@ export function LeadExportModal({ onClose, selectedCount, filteredCount, selecte
                 ...(filteredCount > 0 ? [{ value: 'filtered' as Scope, label: 'Current filter view', count: filteredCount }] : []),
               ].map(({ value, label, count }) => (
                 <button key={value} type="button" onClick={() => setScope(value)}
-                  className={[
+                  className={cn(
                     'flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-sm font-semibold transition',
                     scope === value
-                      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                      : 'border-white/[0.07] text-slate-400 hover:text-white',
-                  ].join(' ')}>
+                      ? isDark
+                        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                        : 'border-emerald-600/30 bg-emerald-500/10 text-emerald-700'
+                      : isDark
+                        ? 'border-white/[0.07] text-slate-400 hover:text-white'
+                        : 'border-zinc-950/10 text-zinc-500 hover:text-zinc-800',
+                  )}>
                   <span>{label}</span>
                   {count != null && (
                     <span className="text-xs text-slate-600 tabular-nums">{count} leads</span>
@@ -152,15 +173,28 @@ export function LeadExportModal({ onClose, selectedCount, filteredCount, selecte
                 const active = fields.includes(id);
                 return (
                   <label key={id}
-                    className={[
+                    className={cn(
                       'flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2 transition',
-                      active ? 'border-white/[0.10] bg-white/[0.04]' : 'border-white/[0.05]',
-                    ].join(' ')}>
+                      active
+                        ? isDark
+                          ? 'border-white/[0.10] bg-white/[0.04]'
+                          : 'border-zinc-950/10 bg-zinc-950/[0.03]'
+                        : isDark
+                          ? 'border-white/[0.05]'
+                          : 'border-zinc-950/[0.06]',
+                    )}>
                     <div>
-                      <p className="text-xs font-semibold text-white">{label}</p>
+                      <p className={cn('text-xs font-semibold', isDark ? 'text-white' : 'text-zinc-900')}>{label}</p>
                       <p className="text-[10px] text-slate-600">{sublabel}</p>
                     </div>
-                    <div className={`h-4 w-4 rounded border transition ${active ? 'border-emerald-500 bg-emerald-500' : 'border-white/[0.15]'}`}>
+                    <div className={cn(
+                      'h-4 w-4 rounded border transition',
+                      active
+                        ? 'border-emerald-500 bg-emerald-500'
+                        : isDark
+                          ? 'border-white/[0.15]'
+                          : 'border-zinc-950/20',
+                    )}>
                       {active && (
                         <svg viewBox="0 0 12 12" className="h-4 w-4 p-0.5 text-black">
                           <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
@@ -178,7 +212,12 @@ export function LeadExportModal({ onClose, selectedCount, filteredCount, selecte
             type="button"
             onClick={handleExport}
             disabled={exporting || fields.length === 0}
-            className="dash-btn-primary w-full"
+            className={cn(
+              'w-full',
+              isDark
+                ? 'dash-btn-primary'
+                : 'inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-[14px] font-medium text-white shadow-[0_8px_20px_-6px_rgba(124,58,237,0.5)] transition-all duration-150 select-none hover:bg-violet-500 disabled:opacity-50',
+            )}
           >
             {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             {exporting ? 'Exporting…' : 'Download'}

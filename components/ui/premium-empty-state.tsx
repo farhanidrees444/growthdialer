@@ -6,6 +6,7 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WorkflowIllustration } from '@/components/ui/workflow-illustration';
 import type { WorkflowScene, SceneAccent } from '@/lib/ui/workflow-scenes';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 interface Action {
   label: string;
@@ -34,11 +35,16 @@ interface PremiumEmptyStateProps {
 }
 
 function ActionButton({ action, primary }: { action: Action; primary?: boolean }) {
+  const { isDark } = useSiteTheme();
   const className = cn(
     'inline-flex cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60',
     primary
-      ? 'bg-zinc-100 text-zinc-950 shadow-[0_1px_0_rgba(255,255,255,0.2)] hover:bg-white hover:shadow-lg hover:shadow-violet-500/15 hover:-translate-y-px'
-      : 'border border-zinc-700/60 bg-zinc-900/40 text-zinc-400 hover:border-zinc-500 hover:bg-zinc-800/60 hover:text-zinc-200',
+      ? isDark
+        ? 'bg-zinc-100 text-zinc-950 shadow-[0_1px_0_rgba(255,255,255,0.2)] hover:bg-white hover:shadow-lg hover:shadow-violet-500/15 hover:-translate-y-px'
+        : 'bg-zinc-950 text-white shadow-[0_8px_20px_rgba(9,9,11,0.18)] hover:bg-zinc-800 hover:shadow-lg hover:-translate-y-px'
+      : isDark
+        ? 'border border-zinc-700/60 bg-zinc-900/40 text-zinc-400 hover:border-zinc-500 hover:bg-zinc-800/60 hover:text-zinc-200'
+        : 'border border-zinc-950/10 bg-white text-zinc-600 shadow-sm hover:border-zinc-950/20 hover:bg-zinc-50 hover:text-zinc-900',
   );
 
   if (action.href) {
@@ -70,6 +76,7 @@ export function PremiumEmptyState({
   scene,
 }: PremiumEmptyStateProps) {
   const reduce = useReducedMotion();
+  const { isDark } = useSiteTheme();
 
   return (
     <motion.div
@@ -78,24 +85,40 @@ export function PremiumEmptyState({
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
         'relative mx-auto flex w-full flex-col items-center justify-center overflow-hidden rounded-2xl',
-        'border border-white/[0.06] bg-zinc-900/50 px-6 text-center backdrop-blur-md',
+        'px-6 text-center backdrop-blur-md',
+        isDark
+          ? 'border border-white/[0.06] bg-zinc-900/50'
+          : 'border border-zinc-950/[0.07] bg-[linear-gradient(135deg,#ffffff_0%,#fbfbff_60%,#f2fbfd_100%)] shadow-[0_24px_70px_rgba(76,29,149,0.10),0_2px_8px_rgba(9,9,11,0.05)]',
         compact ? 'max-w-md py-10' : 'max-w-2xl py-16 sm:py-20',
         className,
       )}
     >
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_50%_-10%,rgba(139,92,246,0.14),transparent_65%)]"
+        className={cn(
+          'pointer-events-none absolute inset-0',
+          isDark
+            ? 'bg-[radial-gradient(ellipse_90%_70%_at_50%_-10%,rgba(139,92,246,0.14),transparent_65%)]'
+            : 'bg-[radial-gradient(ellipse_90%_70%_at_50%_-10%,rgba(139,92,246,0.10),transparent_65%)]',
+        )}
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_80%_100%,rgba(34,211,238,0.06),transparent_50%)]"
+        className={cn(
+          'pointer-events-none absolute inset-0',
+          isDark
+            ? 'bg-[radial-gradient(ellipse_50%_40%_at_80%_100%,rgba(34,211,238,0.06),transparent_50%)]'
+            : 'bg-[radial-gradient(ellipse_50%_40%_at_80%_100%,rgba(34,211,238,0.08),transparent_50%)]',
+        )}
         aria-hidden
       />
 
       {!reduce && (
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/40 to-transparent"
+          className={cn(
+            'pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent to-transparent',
+            isDark ? 'via-violet-400/40' : 'via-violet-500/50',
+          )}
           animate={{ opacity: [0.3, 0.8, 0.3] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         />
@@ -111,7 +134,8 @@ export function PremiumEmptyState({
 
       <h2
         className={cn(
-          'relative font-semibold tracking-tight text-zinc-50',
+          'relative font-semibold tracking-tight',
+          isDark ? 'text-zinc-50' : 'text-zinc-950',
           compact ? 'text-sm' : 'text-xl sm:text-2xl',
         )}
       >
@@ -131,9 +155,14 @@ export function PremiumEmptyState({
           {features.map(({ icon: FIcon, label }) => (
             <span
               key={label}
-              className="flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-black/30 px-3 py-1.5 text-xs text-zinc-500"
+              className={cn(
+                'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs text-zinc-500',
+                isDark
+                  ? 'border-white/[0.06] bg-black/30'
+                  : 'border-zinc-950/[0.08] bg-white shadow-sm',
+              )}
             >
-              <FIcon className="h-3 w-3 text-zinc-400" />
+              <FIcon className={cn('h-3 w-3', isDark ? 'text-zinc-400' : 'text-violet-600')} />
               {label}
             </span>
           ))}

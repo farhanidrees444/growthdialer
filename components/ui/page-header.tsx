@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSiteTheme } from '@/components/theme/site-theme';
 import { Badge } from '@/components/ui/badge';
 
 interface PageHeaderProps {
@@ -23,13 +24,19 @@ export function PageHeader({
   className,
 }: PageHeaderProps) {
   const reduce = useReducedMotion();
+  const { isDark } = useSiteTheme();
 
   return (
     <div className={cn('mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between', className)}>
       <div className="min-w-0 relative">
-        <h1 className="font-display text-xl font-semibold tracking-tight text-white flex items-center gap-2 flex-wrap">
+        <h1 className={cn('font-display text-xl font-semibold tracking-tight flex items-center gap-2 flex-wrap', isDark ? 'text-white' : 'text-zinc-950')}>
           {Icon && <Icon className="h-5 w-5 shrink-0 text-primary" />}
-          <span className="bg-gradient-to-r from-white via-zinc-100 to-zinc-400 bg-clip-text text-transparent">
+          <span className={cn(
+            'bg-clip-text text-transparent bg-gradient-to-r',
+            isDark
+              ? 'from-white via-zinc-100 to-zinc-400'
+              : 'from-zinc-950 via-zinc-700 to-violet-700',
+          )}>
             {title}
           </span>
           {badge && (
@@ -65,10 +72,14 @@ interface PeriodToggleProps {
 }
 
 export function PeriodToggle({ value, onChange, periods, className }: PeriodToggleProps) {
+  const { isDark } = useSiteTheme();
   return (
     <div
       className={cn(
-        'inline-flex gap-1 rounded-xl border border-white/[0.08] bg-black/20 p-1 backdrop-blur-xl',
+        'inline-flex gap-1 rounded-xl border p-1 backdrop-blur-xl',
+        isDark
+          ? 'border-white/[0.08] bg-black/20'
+          : 'border-zinc-950/[0.08] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.05)]',
         className,
       )}
     >
@@ -80,8 +91,12 @@ export function PeriodToggle({ value, onChange, periods, className }: PeriodTogg
           className={cn(
             'rounded-lg px-3 py-1.5 text-xs font-semibold transition-all',
             value === p.days
-              ? 'bg-primary/20 text-primary shadow-sm'
-              : 'text-muted-foreground hover:text-white hover:bg-white/[0.04]',
+              ? isDark
+                ? 'bg-primary/20 text-primary shadow-sm'
+                : 'bg-violet-600/10 text-violet-700 shadow-sm'
+              : isDark
+                ? 'text-muted-foreground hover:text-white hover:bg-white/[0.04]'
+                : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-950/[0.04]',
           )}
         >
           {p.label}

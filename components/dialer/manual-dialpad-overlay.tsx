@@ -7,6 +7,8 @@ import { parsePhoneNumberFromString, getCountries, getCountryCallingCode, type C
 import * as Flags from 'country-flag-icons/react/3x2';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 
 // ── Dialpad key layout ─────────────────────────────────────────────────────────
 const KEYS = [
@@ -98,6 +100,7 @@ interface ManualDialpadOverlayProps {
 }
 
 export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOverlayProps) {
+  const { isDark } = useSiteTheme();
   const [raw, setRaw] = useState('');
   const [country, setCountry] = useState<CountryCode>('US');
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -311,7 +314,7 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
           <motion.div
             ref={overlayRef}
             tabIndex={-1}
-            className="fixed right-0 top-0 bottom-0 z-50 flex flex-col w-full max-w-[400px] bg-zinc-950 border-l border-white/[0.08] outline-none"
+            className={cn('fixed right-0 top-0 bottom-0 z-50 flex flex-col w-full max-w-[400px] border-l outline-none', isDark ? 'bg-zinc-950 border-white/[0.08]' : 'bg-white border-zinc-950/[0.08]')}
             style={{ boxShadow: '-8px 0 48px rgba(0,0,0,0.6)' }}
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
@@ -321,10 +324,10 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
 
             {/* ── Header ───────────────────────────────────────────────────── */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] flex-shrink-0">
-              <span className="text-sm font-semibold text-white tracking-wide">Manual Dial</span>
+              <span className={cn('text-sm font-semibold tracking-wide', isDark ? 'text-white' : 'text-zinc-950')}>Manual Dial</span>
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.07] transition-colors"
+                className={cn('p-1.5 rounded-lg transition-colors', isDark ? 'text-white/40 hover:text-white hover:bg-white/[0.07]' : 'text-zinc-400 hover:text-zinc-900 hover:bg-zinc-950/[0.05]')}
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
@@ -334,7 +337,7 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
             {noPurchasedNumbers ? (
               <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center">
                 <div className="text-4xl">📞</div>
-                <p className="text-sm text-white/60">You need a phone number to make calls.</p>
+                <p className={cn('text-sm', isDark ? 'text-white/60' : 'text-zinc-500')}>You need a phone number to make calls.</p>
                 <a
                   href="/numbers"
                   className="px-4 py-2 rounded-xl text-sm font-semibold text-white"
@@ -350,14 +353,14 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
                 <div className="relative">
                   <button
                     onClick={() => { setPickerOpen((p) => !p); setSearch(''); }}
-                    className="flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.07] hover:border-white/[0.14] transition-all text-left"
+                    className={cn('flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl border transition-all text-left', isDark ? 'bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.07] hover:border-white/[0.14]' : 'bg-zinc-950/[0.03] border-zinc-950/[0.08] hover:bg-zinc-950/[0.05] hover:border-zinc-950/[0.14]')}
                     aria-label="Select country"
                   >
                     <FlagIcon code={selected.code} className="w-6 h-[18px] flex-shrink-0 rounded-[2px]" />
-                    <span className="flex-1 text-sm text-white/80 font-medium">{selected.label}</span>
-                    <span className="text-sm text-white/40 tabular-nums font-mono">{selected.dialCode}</span>
+                    <span className={cn('flex-1 text-sm font-medium', isDark ? 'text-white/80' : 'text-zinc-800')}>{selected.label}</span>
+                    <span className={cn('text-sm tabular-nums font-mono', isDark ? 'text-white/40' : 'text-zinc-500')}>{selected.dialCode}</span>
                     <ChevronDown
-                      className={`w-3.5 h-3.5 text-white/30 transition-transform ${pickerOpen ? 'rotate-180' : ''}`}
+                      className={cn('w-3.5 h-3.5 transition-transform', isDark ? 'text-white/30' : 'text-zinc-400', pickerOpen && 'rotate-180')}
                     />
                   </button>
 
@@ -368,19 +371,19 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.98 }}
                         transition={{ duration: 0.14 }}
-                        className="absolute top-full left-0 right-0 z-20 mt-1.5 rounded-xl bg-zinc-900 border border-white/[0.08] shadow-2xl overflow-hidden"
+                        className={cn('absolute top-full left-0 right-0 z-20 mt-1.5 rounded-xl border shadow-2xl overflow-hidden', isDark ? 'bg-zinc-900 border-white/[0.08]' : 'bg-white border-zinc-950/[0.08]')}
                         style={{ maxHeight: 240 }}
                       >
                         {/* Search */}
-                        <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06]">
-                          <Search className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
+                        <div className={cn('flex items-center gap-2 px-3 py-2 border-b', isDark ? 'border-white/[0.06]' : 'border-zinc-950/[0.06]')}>
+                          <Search className={cn('w-3.5 h-3.5 flex-shrink-0', isDark ? 'text-white/30' : 'text-zinc-400')} />
                           <input
                             ref={searchRef}
                             type="text"
                             placeholder="Search country or code…"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="flex-1 bg-transparent text-sm text-white placeholder:text-white/25 outline-none"
+                            className={cn('flex-1 bg-transparent text-sm outline-none', isDark ? 'text-white placeholder:text-white/25' : 'text-zinc-900 placeholder:text-zinc-400')}
                             autoComplete="off"
                           />
                         </div>
@@ -388,19 +391,17 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
                         {/* Country list */}
                         <div className="overflow-y-auto scrollbar-hide" style={{ maxHeight: 196 }}>
                           {filteredCountries.length === 0 && (
-                            <div className="px-3 py-4 text-sm text-white/30 text-center">No matches</div>
+                            <div className={cn('px-3 py-4 text-sm text-center', isDark ? 'text-white/30' : 'text-zinc-400')}>No matches</div>
                           )}
                           {filteredCountries.map((opt) => (
                             <button
                               key={opt.code}
                               onClick={() => { setCountry(opt.code); setPickerOpen(false); setSearch(''); }}
-                              className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-white/[0.06] transition-colors text-left ${
-                                opt.code === country ? 'bg-cyan-500/10' : ''
-                              }`}
+                              className={cn('w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors text-left', isDark ? 'hover:bg-white/[0.06]' : 'hover:bg-zinc-950/[0.04]', opt.code === country && 'bg-cyan-500/10')}
                             >
                               <FlagIcon code={opt.code} className="w-5 h-[15px] flex-shrink-0 rounded-[2px]" />
-                              <span className="flex-1 text-white/80 truncate">{opt.label}</span>
-                              <span className="text-white/30 tabular-nums text-xs font-mono">{opt.dialCode}</span>
+                              <span className={cn('flex-1 truncate', isDark ? 'text-white/80' : 'text-zinc-800')}>{opt.label}</span>
+                              <span className={cn('tabular-nums text-xs font-mono', isDark ? 'text-white/30' : 'text-zinc-400')}>{opt.dialCode}</span>
                               {opt.code === country && (
                                 <span className="text-cyan-400 text-xs font-bold">✓</span>
                               )}
@@ -414,20 +415,20 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
 
                 {/* ── Phone input display ─────────────────────────────────── */}
                 <div
-                  className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 focus-within:border-cyan-500/40 focus-within:bg-white/[0.05] transition-all"
+                  className={cn('rounded-xl border px-4 py-3 transition-all focus-within:border-cyan-500/40', isDark ? 'border-white/[0.08] bg-white/[0.03] focus-within:bg-white/[0.05]' : 'border-zinc-950/[0.10] bg-zinc-950/[0.02] focus-within:bg-white shadow-sm')}
                   style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)' }}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-xl font-mono text-white/35 flex-shrink-0 tabular-nums">
+                    <span className={cn('text-xl font-mono flex-shrink-0 tabular-nums', isDark ? 'text-white/35' : 'text-zinc-400')}>
                       {dialCode}
                     </span>
                     <div className="flex-1 min-w-0">
                       {displayText ? (
-                        <span className="text-2xl font-light text-white tabular-nums tracking-wider">
+                        <span className={cn('text-2xl font-light tabular-nums tracking-wider', isDark ? 'text-white' : 'text-zinc-950')}>
                           {displayText}
                         </span>
                       ) : (
-                        <span className="text-2xl font-light text-white/15 tabular-nums tracking-wider select-none">
+                        <span className={cn('text-2xl font-light tabular-nums tracking-wider select-none', isDark ? 'text-white/15' : 'text-zinc-300')}>
                           555 123 4567
                         </span>
                       )}
@@ -441,7 +442,7 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
                       onTouchEnd={onBackspaceUp}
                       disabled={!raw}
                       whileTap={{ scale: 0.88 }}
-                      className="p-2 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.07] disabled:opacity-20 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+                      className={cn('p-2 rounded-lg disabled:opacity-20 disabled:cursor-not-allowed transition-colors flex-shrink-0', isDark ? 'text-white/30 hover:text-white hover:bg-white/[0.07]' : 'text-zinc-400 hover:text-zinc-900 hover:bg-zinc-950/[0.05]')}
                       aria-label="Backspace (long-press to clear)"
                     >
                       <Delete className="w-4.5 h-4.5" style={{ width: 18, height: 18 }} />
@@ -465,7 +466,7 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
                 <div className="flex gap-2">
                   <button
                     onClick={handlePaste}
-                    className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl text-sm text-white/50 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] transition-all"
+                    className={cn('flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl text-sm border transition-all', isDark ? 'text-white/50 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.06] hover:border-white/[0.12]' : 'text-zinc-600 hover:text-zinc-900 bg-white hover:bg-zinc-50 border-zinc-950/[0.08] hover:border-zinc-950/[0.14] shadow-sm')}
                   >
                     <ClipboardPaste className="w-3.5 h-3.5" />
                     Paste
@@ -473,7 +474,7 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
                   <button
                     onClick={() => setRaw('')}
                     disabled={!raw}
-                    className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl text-sm text-white/50 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] disabled:opacity-25 disabled:cursor-not-allowed transition-all"
+                    className={cn('flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl text-sm border transition-all disabled:opacity-25 disabled:cursor-not-allowed', isDark ? 'text-white/50 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.06] hover:border-white/[0.12]' : 'text-zinc-600 hover:text-zinc-900 bg-white hover:bg-zinc-50 border-zinc-950/[0.08] hover:border-zinc-950/[0.14] shadow-sm')}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Clear
@@ -490,15 +491,18 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
                       whileTap={{ scale: 0.93, backgroundColor: 'rgba(255,255,255,0.12)' }}
                       className="relative rounded-2xl flex flex-col items-center justify-center py-4 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 transition-colors"
                       style={{
-                        background: 'linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))',
-                        border: '1px solid rgba(255,255,255,0.08)',
+                        background: isDark
+                          ? 'linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))'
+                          : 'linear-gradient(145deg, #ffffff, #f4f4f5)',
+                        border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(9,9,11,0.10)',
+                        boxShadow: isDark ? undefined : '0 1px 3px rgba(9,9,11,0.06)',
                         minHeight: 64,
                       }}
                       aria-label={digit}
                     >
-                      <span className="text-[26px] font-light text-white leading-none tabular-nums">{digit}</span>
+                      <span className={cn('text-[26px] font-light leading-none tabular-nums', isDark ? 'text-white' : 'text-zinc-950')}>{digit}</span>
                       {sub && (
-                        <span className="text-[9px] uppercase tracking-widest text-white/30 mt-1 leading-none">
+                        <span className={cn('text-[9px] uppercase tracking-widest mt-1 leading-none', isDark ? 'text-white/30' : 'text-zinc-400')}>
                           {sub}
                         </span>
                       )}
@@ -526,9 +530,9 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
                 {recents.length > 0 && (
                   <div className="pb-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="h-px flex-1 bg-white/[0.06]" />
-                      <span className="text-[11px] text-white/25 uppercase tracking-widest">Recent</span>
-                      <div className="h-px flex-1 bg-white/[0.06]" />
+                      <div className={cn('h-px flex-1', isDark ? 'bg-white/[0.06]' : 'bg-zinc-950/[0.08]')} />
+                      <span className={cn('text-[11px] uppercase tracking-widest', isDark ? 'text-white/25' : 'text-zinc-400')}>Recent</span>
+                      <div className={cn('h-px flex-1', isDark ? 'bg-white/[0.06]' : 'bg-zinc-950/[0.08]')} />
                     </div>
                     <div className="space-y-1">
                       {recents.map((num) => {
@@ -551,11 +555,11 @@ export function ManualDialpadOverlay({ open, onClose, onDial }: ManualDialpadOve
                               setCountry(cc);
                               setRaw(stripped);
                             }}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-white/60 hover:text-white hover:bg-white/[0.05] transition-colors"
+                            className={cn('w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors', isDark ? 'text-white/60 hover:text-white hover:bg-white/[0.05]' : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-950/[0.04]')}
                           >
                             <FlagIcon code={cc} className="w-5 h-[15px] flex-shrink-0 rounded-[2px]" />
                             <span className="flex-1 text-left font-mono tabular-nums">{displayNum}</span>
-                            <span className="text-white/20 text-xs">{opt.dialCode}</span>
+                            <span className={cn('text-xs', isDark ? 'text-white/20' : 'text-zinc-400')}>{opt.dialCode}</span>
                           </button>
                         );
                       })}

@@ -17,6 +17,7 @@ import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/lib/utils';
 import { clearLeadTransitionId } from '@/lib/ui/lead-transition';
 import { LeadDetailHero } from '@/components/leads/lead-detail-hero';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -265,25 +266,36 @@ function DeleteConfirmModal({ name, onConfirm, onCancel }: {
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const { isDark } = useSiteTheme();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
       <motion.div
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="relative z-10 w-full max-w-sm rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] p-6 shadow-2xl"
+        className={cn(
+          'relative z-10 w-full max-w-sm rounded-2xl border p-6 shadow-2xl',
+          isDark
+            ? 'border-white/[0.10] bg-[oklch(0.09_0.006_285)]'
+            : 'border-zinc-950/[0.08] bg-white shadow-[0_24px_70px_rgba(76,29,149,0.12),0_2px_8px_rgba(9,9,11,0.06)]',
+        )}
       >
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/15">
           <Trash2 className="h-5 w-5 text-red-400" />
         </div>
-        <h3 className="text-base font-bold text-white mb-2">Delete {name}?</h3>
-        <p className="text-sm text-slate-400 mb-5 leading-relaxed">
+        <h3 className={cn('text-base font-bold mb-2', isDark ? 'text-white' : 'text-zinc-950')}>Delete {name}?</h3>
+        <p className={cn('text-sm mb-5 leading-relaxed', isDark ? 'text-slate-400' : 'text-zinc-500')}>
           This lead will be moved to trash and automatically deleted after 30 days.
           You can restore it from the Trash tab on the Leads page.
         </p>
         <div className="flex gap-2">
           <button type="button" onClick={onCancel}
-            className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.03] py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.06] transition">
+            className={cn(
+              'flex-1 rounded-xl border py-2.5 text-sm font-semibold transition',
+              isDark
+                ? 'border-white/[0.08] bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]'
+                : 'border-zinc-950/10 bg-white text-zinc-700 shadow-sm hover:border-violet-500/30 hover:bg-violet-50/60',
+            )}>
             Cancel
           </button>
           <button type="button" onClick={onConfirm}

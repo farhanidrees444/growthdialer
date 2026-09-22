@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, MessageSquare, PhoneCall, Shield, UserRound } from 'lucide-react';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 import type { LiveCall } from './types';
 
 const SPRING = { type: 'spring', stiffness: 200, damping: 25 } as const;
@@ -40,6 +42,7 @@ export function AgentCallCard({
   }, [call.lead_first_name, call.lead_last_name, call.prospect_name, call.to_number]);
   const sentiment = call.ai_sentiment_score == null ? null : Math.round(Number(call.ai_sentiment_score));
   const talkRatio = Math.max(0, Math.min(100, Number(call.talk_listen_ratio ?? 52)));
+  const { isDark } = useSiteTheme();
 
   useEffect(() => {
     queueMicrotask(() => setTime(elapsed(anchor)));
@@ -53,7 +56,12 @@ export function AgentCallCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={SPRING}
-      className="rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur"
+      className={cn(
+        'rounded-2xl border p-4 backdrop-blur',
+        isDark
+          ? 'border-white/10 bg-black/40'
+          : 'border-zinc-950/[0.07] bg-white shadow-[0_8px_30px_rgba(9,9,11,0.06)]',
+      )}
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">

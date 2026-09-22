@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import { TrendingUp, Users, Phone, Target } from 'lucide-react';
+import { useSiteTheme } from '@/components/theme/site-theme';
 import { cn } from '@/lib/utils';
 
 interface LeadsStats {
@@ -35,8 +36,15 @@ const ACCENT_ICON: Record<string, string> = {
   teal: 'text-teal-400',
 };
 
+const ACCENT_ICON_LIGHT: Record<string, string> = {
+  emerald: 'text-emerald-700',
+  amber: 'text-amber-700',
+  teal: 'text-teal-700',
+};
+
 export function LeadsStatsStrip({ stats, className }: LeadsStatsStripProps) {
   const reduce = useReducedMotion();
+  const { isDark } = useSiteTheme();
 
   const values: Record<string, string | number> = {
     total: stats.total,
@@ -59,12 +67,17 @@ export function LeadsStatsStrip({ stats, className }: LeadsStatsStripProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
           whileHover={reduce ? undefined : { y: -2 }}
-          className="dash-card relative overflow-hidden px-3 py-3"
+          className={cn(
+            'relative overflow-hidden rounded-xl border px-3 py-3 transition-all duration-200',
+            isDark
+              ? 'dash-card'
+              : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.04)]',
+          )}
         >
           <div className={cn('pointer-events-none absolute inset-0 bg-gradient-to-b', ACCENT_RING[accent])} aria-hidden />
           <div className="relative flex items-center gap-2.5">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.03]">
-              <Icon className={cn('h-3.5 w-3.5', ACCENT_ICON[accent])} />
+              <Icon className={cn('h-3.5 w-3.5', isDark ? ACCENT_ICON[accent] : ACCENT_ICON_LIGHT[accent])} />
             </div>
             <div className="min-w-0">
               <motion.p

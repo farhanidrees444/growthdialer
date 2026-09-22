@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/lib/utils';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -103,6 +104,7 @@ function CoachingPanel({ call, sessionId, currentMode, onModeChange, onEnd, busy
   const [feedback, setFeedback] = useState('');
   const [ending, setEnding] = useState(false);
   const [elapsed, setElapsed] = useState('00:00');
+  const { isDark } = useSiteTheme();
 
   useEffect(() => {
     const anchor = callTimerAnchor(call);
@@ -132,7 +134,12 @@ function CoachingPanel({ call, sessionId, currentMode, onModeChange, onEnd, busy
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 40 }}
       transition={{ type: 'spring', damping: 26, stiffness: 280 }}
-      className="fixed inset-x-4 top-20 bottom-4 z-50 flex flex-col overflow-hidden rounded-2xl border border-white/[0.10] bg-[oklch(0.09_0.006_285)] shadow-2xl shadow-black/60 sm:left-auto sm:right-4 sm:w-80"
+      className={cn(
+        'fixed inset-x-4 top-20 bottom-4 z-50 flex flex-col overflow-hidden rounded-2xl border shadow-2xl sm:left-auto sm:right-4 sm:w-80',
+        isDark
+          ? 'border-white/[0.10] bg-[oklch(0.09_0.006_285)] shadow-black/60'
+          : 'border-zinc-950/[0.08] bg-white shadow-[0_24px_70px_rgba(9,9,11,0.18)]',
+      )}
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3">
@@ -261,12 +268,18 @@ function CallCard({
 
   const isBeingCoached = !!call.coaching;
   const isBusy = busy === call.id;
+  const { isDark } = useSiteTheme();
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-white/[0.08] bg-[oklch(0.09_0.006_285)] p-5 shadow-lg"
+      className={cn(
+        'rounded-2xl border p-5 shadow-lg',
+        isDark
+          ? 'border-white/[0.08] bg-[oklch(0.09_0.006_285)]'
+          : 'border-zinc-950/[0.07] bg-white shadow-[0_8px_30px_rgba(9,9,11,0.07)]',
+      )}
     >
       {/* Header row */}
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -275,7 +288,7 @@ function CallCard({
             {getInitials(agentName)}
             <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-[oklch(0.09_0.006_285)] bg-emerald-500" />
+              <span className={cn('relative inline-flex h-3 w-3 rounded-full border-2 bg-emerald-500', isDark ? 'border-[oklch(0.09_0.006_285)]' : 'border-white')} />
             </span>
           </div>
           <div>

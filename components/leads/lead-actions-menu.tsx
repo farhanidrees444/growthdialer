@@ -10,6 +10,7 @@ import {
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { MoreHorizontal } from "lucide-react";
+import { useSiteTheme } from "@/components/theme/site-theme";
 import { cn } from "@/lib/utils";
 
 type MenuTone = "default" | "success" | "danger";
@@ -32,14 +33,20 @@ interface LeadActionsMenuProps {
 const MENU_WIDTH = 232;
 const VIEWPORT_GUTTER = 12;
 
-function actionToneClasses(tone: MenuTone = "default") {
+function actionToneClasses(tone: MenuTone = "default", isDark: boolean) {
   if (tone === "success") {
-    return "text-emerald-300 hover:border-emerald-500/20 hover:bg-emerald-500/10 focus-visible:bg-emerald-500/10 [&_svg]:text-emerald-400";
+    return isDark
+      ? "text-emerald-300 hover:border-emerald-500/20 hover:bg-emerald-500/10 focus-visible:bg-emerald-500/10 [&_svg]:text-emerald-400"
+      : "text-emerald-700 hover:border-emerald-600/25 hover:bg-emerald-500/10 focus-visible:bg-emerald-500/10 [&_svg]:text-emerald-700";
   }
   if (tone === "danger") {
-    return "text-red-300 hover:border-red-500/20 hover:bg-red-500/10 focus-visible:bg-red-500/10 [&_svg]:text-red-400";
+    return isDark
+      ? "text-red-300 hover:border-red-500/20 hover:bg-red-500/10 focus-visible:bg-red-500/10 [&_svg]:text-red-400"
+      : "text-red-600 hover:border-red-600/25 hover:bg-red-500/10 focus-visible:bg-red-500/10 [&_svg]:text-red-600";
   }
-  return "text-slate-300 hover:border-white/[0.08] hover:bg-white/[0.05] focus-visible:bg-white/[0.06] [&_svg]:text-slate-500";
+  return isDark
+    ? "text-slate-300 hover:border-white/[0.08] hover:bg-white/[0.05] focus-visible:bg-white/[0.06] [&_svg]:text-slate-500"
+    : "text-zinc-700 hover:border-zinc-950/10 hover:bg-zinc-950/[0.04] focus-visible:bg-zinc-950/[0.05] [&_svg]:text-zinc-500";
 }
 
 export function LeadActionsMenu({
@@ -56,6 +63,7 @@ export function LeadActionsMenu({
     originY: -6,
   });
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const { isDark } = useSiteTheme();
 
   useEffect(() => setMounted(true), []);
 
@@ -122,7 +130,9 @@ export function LeadActionsMenu({
         }}
         className={cn(
           "flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.035] text-slate-400 shadow-sm transition",
-          "hover:border-emerald-500/25 hover:bg-emerald-500/10 hover:text-white",
+          isDark
+            ? "hover:border-emerald-500/25 hover:bg-emerald-500/10 hover:text-white"
+            : "hover:border-emerald-600/30 hover:bg-emerald-500/10 hover:text-emerald-700",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40",
           triggerClassName,
         )}
@@ -153,11 +163,16 @@ export function LeadActionsMenu({
                     left: coords.left,
                     width: coords.width,
                   }}
-                  className="z-[100] overflow-hidden rounded-2xl border border-white/[0.12] bg-[oklch(0.09_0.006_285)]/98 shadow-2xl shadow-black/60 backdrop-blur-xl"
+                  className={cn(
+                    "z-[100] overflow-hidden rounded-2xl border backdrop-blur-xl",
+                    isDark
+                      ? "border-white/[0.12] bg-[oklch(0.09_0.006_285)]/98 shadow-2xl shadow-black/60"
+                      : "border-zinc-950/[0.08] bg-white/98 shadow-[0_24px_60px_rgba(76,29,149,0.14),0_2px_8px_rgba(9,9,11,0.06)]",
+                  )}
                   onClick={(event) => event.stopPropagation()}
                 >
                   <div className="border-b border-white/[0.07] px-4 py-3">
-                    <p className="truncate text-sm font-semibold text-white">{leadName}</p>
+                    <p className={cn('truncate text-sm font-semibold', isDark ? 'text-white' : 'text-zinc-950')}>{leadName}</p>
                     <p className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-600">
                       Lead actions
                     </p>
@@ -176,10 +191,13 @@ export function LeadActionsMenu({
                         className={cn(
                           "flex w-full items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-left text-sm transition",
                           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/35",
-                          actionToneClasses(action.tone),
+                          actionToneClasses(action.tone, isDark),
                         )}
                       >
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04]">
+                        <span className={cn(
+                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                          isDark ? 'bg-white/[0.04]' : 'bg-zinc-950/[0.04]',
+                        )}>
                           {action.icon}
                         </span>
                         <span className="min-w-0 flex-1">

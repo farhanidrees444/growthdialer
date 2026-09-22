@@ -19,6 +19,7 @@ import { RecordingQAStatusPill } from '@/components/recordings/recording-qa-scor
 import { cn } from '@/lib/utils';
 import { PlanGate } from '@/lib/plan/plan-guard';
 import { UpgradePrompt } from '@/lib/plan/upgrade-prompt';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -125,6 +126,12 @@ const SENTIMENT = {
   negative: { icon: TrendingDown, color: 'text-red-400',   bg: 'bg-red-500/10',     border: 'border-red-500/20',      label: 'Negative' },
 } as const;
 
+const SENTIMENT_LIGHT = {
+  positive: { icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-500/[0.08]', border: 'border-emerald-600/25', label: 'Positive' },
+  neutral:  { icon: Minus,      color: 'text-zinc-500',   bg: 'bg-zinc-950/[0.03]',    border: 'border-zinc-950/10',     label: 'Neutral'  },
+  negative: { icon: TrendingDown, color: 'text-red-600',   bg: 'bg-red-500/[0.08]',     border: 'border-red-600/25',      label: 'Negative' },
+} as const;
+
 type SentimentKey = keyof typeof SENTIMENT;
 
 // ─── MiniPlayer ───────────────────────────────────────────────────────────────
@@ -134,6 +141,7 @@ function MiniPlayer({ url, id, activeId, onActivate }: {
   activeId: string | null;
   onActivate: (id: string | null) => void;
 }) {
+  const { isDark } = useSiteTheme();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [progress, setProgress] = useState(0);
   const isPlaying = activeId === id;
@@ -170,15 +178,19 @@ function MiniPlayer({ url, id, activeId, onActivate }: {
         type="button"
         onClick={toggle}
         aria-label={isPlaying ? 'Pause' : 'Play'}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-all
-                   border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 to-teal-500/15
-                   hover:from-emerald-500/25 hover:to-teal-500/25 hover:shadow-[0_0_16px_rgba(52,211,153,0.15)] active:scale-95"
+        className={cn(
+          'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-all',
+          isDark
+            ? 'border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 to-teal-500/15 hover:from-emerald-500/25 hover:to-teal-500/25 hover:shadow-[0_0_16px_rgba(52,211,153,0.15)]'
+            : 'border-emerald-600/30 bg-gradient-to-br from-emerald-500/[0.08] to-teal-500/[0.08] hover:from-emerald-500/[0.14] hover:to-teal-500/[0.14] hover:shadow-[0_6px_20px_rgba(16,185,129,0.15)]',
+          'active:scale-95',
+        )}
       >
         {isPlaying
-          ? <Pause className="h-4 w-4 text-emerald-400" />
-          : <Play className="h-4 w-4 translate-x-0.5 text-emerald-400" />}
+          ? <Pause className={cn('h-4 w-4', isDark ? 'text-emerald-400' : 'text-emerald-600')} />
+          : <Play className={cn('h-4 w-4 translate-x-0.5', isDark ? 'text-emerald-400' : 'text-emerald-600')} />}
       </button>
-      <div className="h-1 w-16 overflow-hidden rounded-full bg-white/[0.07] sm:w-24">
+      <div className={cn('h-1 w-16 overflow-hidden rounded-full sm:w-24', isDark ? 'bg-white/[0.07]' : 'bg-zinc-950/[0.07]')}>
         <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all"
           style={{ width: `${progress}%` }} />
       </div>
@@ -199,10 +211,22 @@ const DISP_COLORS: Record<string, string> = {
   dnc:           'bg-red-600/15 text-red-500',
 };
 
+const DISP_COLORS_LIGHT: Record<string, string> = {
+  interested:    'bg-emerald-500/[0.08] text-emerald-700',
+  callback:      'bg-amber-500/[0.08] text-amber-700',
+  meeting_booked:'bg-violet-500/[0.08] text-violet-700',
+  not_interested:'bg-zinc-500/[0.08] text-zinc-600',
+  voicemail:     'bg-blue-500/[0.08] text-blue-700',
+  no_answer:     'bg-zinc-500/[0.07] text-zinc-500',
+  wrong_number:  'bg-red-500/[0.08] text-red-700',
+  dnc:           'bg-red-600/[0.08] text-red-700',
+};
+
 function DispositionBadge({ disp }: { disp: string | null }) {
+  const { isDark } = useSiteTheme();
   if (!disp) return null;
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${DISP_COLORS[disp] ?? 'bg-white/[0.05] text-slate-500'}`}>
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${isDark ? (DISP_COLORS[disp] ?? 'bg-white/[0.05] text-slate-500') : (DISP_COLORS_LIGHT[disp] ?? 'bg-zinc-950/[0.04] text-zinc-500')}`}>
       {disp.replace(/_/g, ' ')}
     </span>
   );
@@ -218,11 +242,12 @@ function RecordingCard({
   onActivatePlay: (id: string | null) => void;
   onReprocess: (id: string) => void;
 }) {
+  const { isDark } = useSiteTheme();
   const [expanded, setExpanded] = useState(false);
 
   const name = getLeadName(rec.leads, rec.to_number);
   const sentKey = (rec.ai_sentiment ?? '') as SentimentKey;
-  const sent = SENTIMENT[sentKey];
+  const sent = isDark ? SENTIMENT[sentKey] : SENTIMENT_LIGHT[sentKey];
   const summaryBullets = getSummaryBullets(rec.ai_summary_raw);
   const nextSteps = getNextSteps(rec.ai_next_steps_raw);
   const isProcessing = rec.ai_processing_status === 'processing';
@@ -233,7 +258,12 @@ function RecordingCard({
     <motion.div
       variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}
       transition={{ duration: 0.2 }}
-      className="group relative overflow-hidden rounded-2xl border border-white/[0.07] bg-[oklch(0.09_0.006_285)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500/20 hover:shadow-[0_8px_32px_rgba(52,211,153,0.08)]"
+      className={cn(
+        'group relative overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-0.5',
+        isDark
+          ? 'border-white/[0.07] bg-[oklch(0.09_0.006_285)] hover:border-emerald-500/20 hover:shadow-[0_8px_32px_rgba(52,211,153,0.08)]'
+          : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.05)] hover:border-emerald-600/25 hover:shadow-[0_12px_32px_rgba(16,185,129,0.12)]',
+      )}
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/25 to-transparent opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
       {/* ── Main row ── */}
@@ -298,7 +328,12 @@ function RecordingCard({
           <Link
             href={`/recordings/${rec.id}`}
             onClick={(e) => e.stopPropagation()}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.07] text-slate-600 transition hover:border-white/[0.12] hover:text-slate-300"
+            className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-lg border transition',
+              isDark
+                ? 'border-white/[0.07] text-slate-600 hover:border-white/[0.12] hover:text-slate-300'
+                : 'border-zinc-950/[0.08] bg-white text-zinc-500 shadow-sm hover:border-zinc-950/20 hover:text-zinc-800',
+            )}
             title="View full recording"
           >
             <ChevronRight className="h-3.5 w-3.5" />
@@ -306,7 +341,12 @@ function RecordingCard({
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.07] text-slate-600 transition hover:border-white/[0.12] hover:text-slate-300"
+            className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-lg border transition',
+              isDark
+                ? 'border-white/[0.07] text-slate-600 hover:border-white/[0.12] hover:text-slate-300'
+                : 'border-zinc-950/[0.08] bg-white text-zinc-500 shadow-sm hover:border-zinc-950/20 hover:text-zinc-800',
+            )}
             aria-label={expanded ? 'Collapse' : 'Expand'}
           >
             <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
@@ -322,7 +362,7 @@ function RecordingCard({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="overflow-hidden border-t border-white/[0.06]"
+            className={cn('overflow-hidden border-t', isDark ? 'border-white/[0.06]' : 'border-zinc-950/[0.06]')}
           >
             <div className="space-y-4 p-4">
 
@@ -348,15 +388,20 @@ function RecordingCard({
                     />
                   }
                 >
-                  <div className="rounded-xl border border-emerald-500/15 bg-gradient-to-br from-emerald-500/[0.07] to-teal-500/[0.05] p-4">
+                  <div className={cn(
+                      'rounded-xl border p-4',
+                      isDark
+                        ? 'border-emerald-500/15 bg-gradient-to-br from-emerald-500/[0.07] to-teal-500/[0.05]'
+                        : 'border-emerald-600/20 bg-gradient-to-br from-emerald-500/[0.06] to-teal-500/[0.04]',
+                    )}>
                     <div className="mb-2.5 flex items-center gap-2">
                       <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">AI Summary</span>
+                      <span className={cn('text-[11px] font-bold uppercase tracking-wider', isDark ? 'text-emerald-300' : 'text-emerald-700')}>AI Summary</span>
                     </div>
                     <ul className="space-y-1.5">
                       {summaryBullets.map((b, i) => (
                         <li key={i} className="flex gap-2 text-sm text-white/75 leading-relaxed">
-                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400/60" />
+                          <span className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', isDark ? 'bg-emerald-400/60' : 'bg-emerald-600/60')} />
                           {b}
                         </li>
                       ))}
@@ -366,7 +411,10 @@ function RecordingCard({
                     {rec.ai_keywords && rec.ai_keywords.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {rec.ai_keywords.slice(0, 6).map((kw, i) => (
-                          <span key={i} className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[11px] text-slate-400">
+                          <span key={i} className={cn(
+                            'rounded-full border px-2 py-0.5 text-[11px]',
+                            isDark ? 'border-white/[0.08] bg-white/[0.04] text-slate-400' : 'border-zinc-950/[0.08] bg-zinc-950/[0.03] text-zinc-600',
+                          )}>
                             {kw}
                           </span>
                         ))}
@@ -375,12 +423,12 @@ function RecordingCard({
 
                     {/* Next steps */}
                     {nextSteps.length > 0 && (
-                      <div className="mt-3 border-t border-white/[0.06] pt-3">
+                      <div className={cn('mt-3 border-t pt-3', isDark ? 'border-white/[0.06]' : 'border-zinc-950/[0.06]')}>
                         <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Next Steps</p>
                         <ul className="space-y-1">
                           {nextSteps.map((s, i) => (
                             <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
-                              <span className="mt-0.5 shrink-0 text-teal-400">-&gt;</span>{s}
+                              <span className={cn('mt-0.5 shrink-0', isDark ? 'text-teal-400' : 'text-teal-600')}>-&gt;</span>{s}
                             </li>
                           ))}
                         </ul>
@@ -392,7 +440,10 @@ function RecordingCard({
 
               {/* Processing indicator */}
               {isProcessing && (
-                <div className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-sm text-slate-500">
+                <div className={cn(
+                    'flex items-center gap-2 rounded-xl border p-3 text-sm text-slate-500',
+                    isDark ? 'border-white/[0.06] bg-white/[0.02]' : 'border-zinc-950/[0.06] bg-zinc-950/[0.02]',
+                  )}>
                   <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                   AI is transcribing and analyzing this call…
                 </div>
@@ -403,7 +454,12 @@ function RecordingCard({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onReprocess(rec.id); }}
-                  className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.08] px-4 py-2.5 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/15 hover:shadow-[0_0_20px_rgba(52,211,153,0.1)]"
+                  className={cn(
+                    'flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition',
+                    isDark
+                      ? 'border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-300 hover:bg-emerald-500/15 hover:shadow-[0_0_20px_rgba(52,211,153,0.1)]'
+                      : 'border-emerald-600/30 bg-emerald-500/[0.08] text-emerald-700 hover:bg-emerald-500/[0.14]',
+                  )}
                 >
                   <Sparkles className="h-4 w-4" /> Transcribe & Analyze with AI
                 </button>
@@ -416,7 +472,10 @@ function RecordingCard({
                     <FileText className="h-3.5 w-3.5 text-slate-500" />
                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Transcript</span>
                   </div>
-                  <div className="max-h-52 overflow-y-auto rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <div className={cn(
+                      'max-h-52 overflow-y-auto rounded-xl border p-3',
+                      isDark ? 'border-white/[0.06] bg-white/[0.02]' : 'border-zinc-950/[0.08] bg-zinc-950/[0.02]',
+                    )}>
                     <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-400">
                       {rec.transcript}
                     </p>
@@ -480,13 +539,19 @@ function RecordingPipelinePanel({
   onBackfillAi: () => void;
   onBackfillStorage: () => void;
 }) {
+  const { isDark } = useSiteTheme();
   const summary = diagnostics?.summary;
   const hasIssues = Boolean(diagnostics && !diagnostics.ok);
   const pendingAi = (summary?.ai_pending_or_processing ?? 0) + (summary?.ai_failed ?? 0);
   const pendingStorage = summary?.pending_storage_mirror ?? 0;
 
   return (
-    <div className="mb-5 overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-emerald-500/[0.06] via-zinc-950/60 to-cyan-500/[0.04] p-4">
+    <div className={cn(
+      'mb-5 overflow-hidden rounded-2xl border p-4',
+      isDark
+        ? 'border-white/[0.06] bg-gradient-to-br from-emerald-500/[0.06] via-zinc-950/60 to-cyan-500/[0.04]'
+        : 'border-zinc-950/[0.06] bg-gradient-to-br from-emerald-500/[0.05] via-white to-cyan-500/[0.05] shadow-[0_1px_2px_rgba(9,9,11,0.05)]',
+    )}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -523,7 +588,10 @@ function RecordingPipelinePanel({
             { label: 'AI pending', value: pendingAi },
             { label: 'Storage pending', value: pendingStorage },
           ].map((item) => (
-            <div key={item.label} className="rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2">
+            <div key={item.label} className={cn(
+                'rounded-xl border px-3 py-2',
+                isDark ? 'border-white/[0.06] bg-white/[0.025]' : 'border-zinc-950/[0.06] bg-zinc-950/[0.02]',
+              )}>
               <p className="font-display text-xl font-semibold text-white">{item.value}</p>
               <p className="text-[10px] uppercase tracking-wider text-slate-500">{item.label}</p>
             </div>
@@ -579,6 +647,7 @@ const SENTIMENT_FILTERS = [
 
 export default function RecordingsPage() {
   const { apiFetch } = useWorkspace();
+  const { isDark } = useSiteTheme();
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(true);
   const [diagnostics, setDiagnostics] = useState<RecordingDiagnostics | null>(null);
@@ -738,7 +807,12 @@ export default function RecordingsPage() {
           )}
 
           {(!loading || recordings.length > 0) && (
-            <div className="mb-5 space-y-3 rounded-2xl border border-white/[0.06] bg-zinc-950/40 p-3 backdrop-blur-sm sm:p-4">
+            <div className={cn(
+              'mb-5 space-y-3 rounded-2xl border p-3 backdrop-blur-sm sm:p-4',
+              isDark
+                ? 'border-white/[0.06] bg-zinc-950/40'
+                : 'border-zinc-950/[0.06] bg-white/85 shadow-[0_8px_28px_rgba(9,9,11,0.07)]',
+            )}>
               {/* Search */}
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
@@ -748,7 +822,12 @@ export default function RecordingsPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
-                  className="dash-input w-full py-2.5 pl-9 pr-10"
+                  className={cn(
+                    'w-full py-2.5 pl-9 pr-10',
+                    isDark
+                      ? 'dash-input'
+                      : 'rounded-lg border border-zinc-950/10 bg-white text-[14px] text-zinc-900 placeholder:text-zinc-400 shadow-sm',
+                  )}
                 />
                 {search && (
                   <button type="button" onClick={() => { setSearch(''); void fetchRecordings('', sentimentFilter); }}
@@ -769,8 +848,12 @@ export default function RecordingsPage() {
                     className={cn(
                       'rounded-full border px-3 py-1 text-[11px] font-semibold transition-all',
                       sentimentFilter === key
-                        ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.1)]'
-                        : 'border-white/[0.07] bg-white/[0.03] text-slate-500 hover:text-slate-300',
+                        ? isDark
+                          ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.1)]'
+                          : 'border-emerald-600/30 bg-emerald-500/[0.08] text-emerald-700 shadow-[0_4px_14px_rgba(16,185,129,0.12)]'
+                        : isDark
+                          ? 'border-white/[0.07] bg-white/[0.03] text-slate-500 hover:text-slate-300'
+                          : 'border-zinc-950/[0.08] bg-white text-zinc-500 shadow-sm hover:text-zinc-900',
                     )}
                   >
                     {label}
@@ -801,7 +884,7 @@ export default function RecordingsPage() {
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="dash-skeleton h-[72px] rounded-2xl!" aria-hidden />
+                <div key={i} className={cn('h-[72px] rounded-2xl', isDark ? 'dash-skeleton' : 'animate-pulse bg-zinc-950/[0.05]')} aria-hidden />
               ))}
             </div>
           ) : recordings.length === 0 ? (

@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { useCalls, useCallerDisplayName } from '@/contexts/calls-context';
 import { useWebPhone } from '@/contexts/webphone-context';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 import { formatInboundCallerDisplay } from '@/lib/inbound/phone';
 
 function fmtTime(seconds: number): string {
@@ -40,6 +42,7 @@ function WaveBars() {
  * Pre-accept inbound surface only. Connected calls use ActiveCallOverlay (shared with outbound).
  */
 export default function CallsOverlay() {
+  const { isDark } = useSiteTheme();
   const {
     phase,
     fromNumber,
@@ -71,10 +74,24 @@ export default function CallsOverlay() {
       aria-label="Incoming call"
     >
       {/* Backdrop is purely visual — it must never intercept clicks meant for the card. */}
-      <div className="pointer-events-none absolute inset-0 bg-black/75 backdrop-blur-md" />
+      <div
+        className={cn(
+          'pointer-events-none absolute inset-0 backdrop-blur-md',
+          isDark ? 'bg-black/75' : 'bg-zinc-950/50',
+        )}
+      />
       <motion.div
-        className="pointer-events-auto relative isolate w-full max-w-lg overflow-hidden rounded-[28px] border border-white/[0.08] shadow-[0_0_120px_rgba(6,182,212,0.25)]"
-        style={{ background: 'linear-gradient(165deg, rgba(10,14,24,0.98) 0%, rgba(6,10,18,0.99) 100%)' }}
+        className={cn(
+          'pointer-events-auto relative isolate w-full max-w-lg overflow-hidden rounded-[28px] border',
+          isDark
+            ? 'border-white/[0.08] shadow-[0_0_120px_rgba(6,182,212,0.25)]'
+            : 'border-zinc-950/[0.08] shadow-[0_32px_90px_rgba(8,145,178,0.18),0_2px_8px_rgba(9,9,11,0.06)]',
+        )}
+        style={
+          isDark
+            ? { background: 'linear-gradient(165deg, rgba(10,14,24,0.98) 0%, rgba(6,10,18,0.99) 100%)' }
+            : { background: 'linear-gradient(165deg, #ffffff 0%, #fbfbff 55%, #f0f7ff 100%)' }
+        }
       >
         {isIncoming && (
           <>
@@ -93,7 +110,12 @@ export default function CallsOverlay() {
 
         <div className="relative px-6 py-8 sm:px-8 sm:py-10">
           <div className="mb-6 flex items-center justify-between">
-            <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400">
+            <p
+              className={cn(
+                'flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em]',
+                isDark ? 'text-cyan-400' : 'text-cyan-600',
+              )}
+            >
               <motion.span
                 animate={{ opacity: isConnecting ? 1 : [1, 0.35, 1] }}
                 transition={{ duration: 1.2, repeat: isConnecting ? 0 : Infinity }}
@@ -101,7 +123,12 @@ export default function CallsOverlay() {
               />
               {isConnecting ? 'Connecting' : isEnded ? 'Call ended' : 'Incoming call'}
             </p>
-            <span className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] text-white/45">
+            <span className={cn(
+                'flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px]',
+                isDark
+                  ? 'border-white/[0.08] bg-white/[0.04] text-white/45'
+                  : 'border-zinc-950/10 bg-zinc-950/[0.03] text-zinc-500',
+              )}>
               <Clock className="h-3 w-3" />
               {fmtTime(ringElapsedSec)}
             </span>
@@ -152,13 +179,23 @@ export default function CallsOverlay() {
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-left"
+              className={cn(
+                'mb-6 rounded-2xl border p-4 text-left',
+                isDark ? 'border-white/[0.08] bg-white/[0.03]' : 'border-zinc-950/[0.08] bg-zinc-950/[0.02]',
+              )}
             >
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-violet-400/90">Caller context</p>
+              <p
+                className={cn(
+                  'mb-2 text-[10px] font-bold uppercase tracking-widest',
+                  isDark ? 'text-violet-400/90' : 'text-violet-600',
+                )}
+              >
+                Caller context
+              </p>
               <div className="space-y-1.5 text-sm text-white/70">
                 {callerContext.company && (
                   <p className="flex items-center gap-2">
-                    <Building2 className="h-3.5 w-3.5 text-cyan-400/80" />
+                    <Building2 className={cn('h-3.5 w-3.5', isDark ? 'text-cyan-400/80' : 'text-cyan-600')} />
                     {callerContext.company}
                   </p>
                 )}
@@ -167,7 +204,7 @@ export default function CallsOverlay() {
                 )}
                 {callerContext.pastCallCount > 0 && (
                   <p className="flex items-center gap-2 text-xs">
-                    <History className="h-3.5 w-3.5 text-violet-400/80" />
+                    <History className={cn('h-3.5 w-3.5', isDark ? 'text-violet-400/80' : 'text-violet-600')} />
                     {callerContext.pastCallCount} prior call{callerContext.pastCallCount === 1 ? '' : 's'}
                     {callerContext.lastDisposition ? ` · last: ${callerContext.lastDisposition}` : ''}
                   </p>

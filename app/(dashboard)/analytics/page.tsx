@@ -18,6 +18,7 @@ import {
 } from 'recharts';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+import { useSiteTheme } from '@/components/theme/site-theme';
 import { AnimatedKpiValue } from '@/components/premium/animated-number';
 import type { KpiSet } from '@/app/api/analytics/calls/route';
 
@@ -102,16 +103,22 @@ function rangeToParams(range: RangeKey, cStart: string, cEnd: string) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function GlassTooltip({ active, payload, label }: any) {
+  const { isDark } = useSiteTheme();
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-white/[0.1] bg-[oklch(0.09_0.006_285)] px-4 py-3 text-xs shadow-2xl">
-      {label && <p className="mb-1.5 font-semibold text-white/70">{label}</p>}
+    <div className={cn(
+      'rounded-xl border px-4 py-3 text-xs',
+      isDark
+        ? 'border-white/[0.1] bg-[oklch(0.09_0.006_285)] shadow-2xl'
+        : 'border-zinc-950/[0.08] bg-white shadow-[0_12px_32px_rgba(9,9,11,0.12)]',
+    )}>
+      {label && <p className={cn('mb-1.5 font-semibold', isDark ? 'text-white/70' : 'text-zinc-700')}>{label}</p>}
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       {payload.map((p: any) => (
         <div key={p.name} className="flex items-center gap-2 leading-5">
           <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: p.color ?? p.fill }} />
-          <span className="text-white/50 capitalize">{p.name}:</span>
-          <span className="font-semibold tabular-nums text-white">{p.value}</span>
+          <span className={cn("capitalize", isDark ? "text-white/50" : "text-zinc-500")}>{p.name}:</span>
+          <span className={cn("font-semibold tabular-nums", isDark ? "text-white" : "text-zinc-900")}>{p.value}</span>
         </div>
       ))}
     </div>
@@ -154,12 +161,18 @@ interface KpiCardProps {
 }
 
 function KpiCard({ title, value, deltaLabel, deltaUp, deltaNeutral, spark, color, icon: Icon, delay = 0 }: KpiCardProps) {
+  const { isDark } = useSiteTheme();
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 200, damping: 25, delay }}
-      className="dash-card dash-card-hover relative overflow-hidden p-5"
+      className={cn(
+        'relative overflow-hidden p-5',
+        isDark
+          ? 'dash-card dash-card-hover'
+          : 'rounded-xl border border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(9,9,11,0.10)]',
+      )}
     >
       {/* Background sparkline */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 opacity-40">
@@ -168,18 +181,23 @@ function KpiCard({ title, value, deltaLabel, deltaUp, deltaNeutral, spark, color
 
       <div className="relative z-10">
         <div className="mb-3 flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.06]"
+          <div className={cn(
+            'flex h-8 w-8 items-center justify-center rounded-xl border',
+            isDark ? 'border-white/[0.06]' : 'border-zinc-950/[0.06]',
+          )}
             style={{ background: `${color}18` }}>
             <Icon className="h-4 w-4" style={{ color }} />
           </div>
           <p className="dash-muted font-medium">{title}</p>
         </div>
-        <p className="text-2xl font-bold tabular-nums tracking-tight text-white">
+        <p className={cn('text-2xl font-bold tabular-nums tracking-tight', isDark ? 'text-white' : 'text-zinc-900')}>
           <AnimatedKpiValue value={value} />
         </p>
         <div className={cn(
           'mt-2 flex items-center gap-1 text-[11px] font-medium',
-          deltaNeutral ? 'text-white/30' : deltaUp ? 'text-emerald-400' : 'text-red-400',
+          isDark
+            ? deltaNeutral ? 'text-white/30' : deltaUp ? 'text-emerald-400' : 'text-red-400'
+            : deltaNeutral ? 'text-zinc-400' : deltaUp ? 'text-emerald-600' : 'text-red-600',
         )}>
           {deltaNeutral ? <Minus className="h-3 w-3" /> : deltaUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
           <span>{deltaLabel} vs prev period</span>
@@ -192,7 +210,8 @@ function KpiCard({ title, value, deltaLabel, deltaUp, deltaNeutral, spark, color
 // ─── Skeleton KPI ─────────────────────────────────────────────────────────────
 
 function SkeletonKpi() {
-  return <div className="dash-skeleton h-[112px]" aria-hidden />;
+  const { isDark } = useSiteTheme();
+  return <div className={cn('h-[112px]', isDark ? 'dash-skeleton' : 'animate-pulse rounded-xl bg-zinc-950/[0.05]')} aria-hidden />;
 }
 
 // ─── Glass card wrapper ───────────────────────────────────────────────────────
@@ -200,8 +219,15 @@ function SkeletonKpi() {
 function GCard({ title, subtitle, children, className = '' }: {
   title: string; subtitle?: string; children: React.ReactNode; className?: string;
 }) {
+  const { isDark } = useSiteTheme();
   return (
-    <div className={cn('dash-card p-5', className)}>
+    <div className={cn(
+      'p-5',
+      isDark
+        ? 'dash-card'
+        : 'rounded-xl border border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.05)]',
+      className,
+    )}>
       <div className="mb-4">
         <p className="dash-section-title">{title}</p>
         {subtitle && <p className="dash-muted mt-0.5">{subtitle}</p>}
@@ -214,8 +240,9 @@ function GCard({ title, subtitle, children, className = '' }: {
 // ─── Skeleton chart ───────────────────────────────────────────────────────────
 
 function SkeletonChart({ h = 220 }: { h?: number }) {
+  const { isDark } = useSiteTheme();
   return (
-    <div className="dash-skeleton" style={{ height: h + 56 }} aria-hidden />
+    <div className={cn(isDark ? 'dash-skeleton' : 'animate-pulse rounded-xl bg-zinc-950/[0.05]')} style={{ height: h + 56 }} aria-hidden />
   );
 }
 
@@ -224,6 +251,7 @@ function SkeletonChart({ h = 220 }: { h?: number }) {
 const FUNNEL_POSITIVE = ['interested', 'callback', 'meeting_booked'];
 
 function ConversionFunnel({ stages }: { stages: { stage: string; value: number; color: string }[] }) {
+  const { isDark } = useSiteTheme();
   const max = Math.max(...stages.map((s) => s.value), 1);
   const dials = stages[0]?.value ?? 0;
   return (
@@ -235,14 +263,22 @@ function ConversionFunnel({ stages }: { stages: { stage: string; value: number; 
           <div key={s.stage}>
             {conv !== null && (
               <div className="flex justify-center py-1">
-                <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 text-[10px] font-medium tabular-nums text-white/40">
+                <span className={cn(
+                    'rounded-full border px-2 py-0.5 text-[10px] font-medium tabular-nums',
+                    isDark
+                      ? 'border-white/[0.08] bg-white/[0.03] text-white/40'
+                      : 'border-zinc-950/[0.08] bg-zinc-950/[0.03] text-zinc-600',
+                  )}>
                   {conv.toFixed(1)}% conversion
                 </span>
               </div>
             )}
             <div className="flex items-center gap-3">
               <span className="w-28 shrink-0 text-xs font-medium text-white/50">{s.stage}</span>
-              <div className="relative h-8 flex-1 overflow-hidden rounded-lg bg-white/[0.04]">
+              <div className={cn(
+                    'relative h-8 flex-1 overflow-hidden rounded-lg',
+                    isDark ? 'bg-white/[0.04]' : 'bg-zinc-950/[0.05]',
+                  )}>
                 <motion.div
                   className="absolute inset-y-0 left-0 w-full rounded-lg"
                   style={{
@@ -277,6 +313,7 @@ function ConversionFunnel({ stages }: { stages: { stage: string; value: number; 
 
 function ChannelBreakdown({ inbound, outbound }: { inbound: number; outbound: number }) {
   const reduced = useReducedMotion();
+  const { isDark } = useSiteTheme();
   const total = inbound + outbound;
   const rows = [
     { name: 'Outbound', value: outbound, color: '#8B5CF6' },
@@ -308,7 +345,10 @@ function ChannelBreakdown({ inbound, outbound }: { inbound: number; outbound: nu
           </div>
           <div className="flex-1 min-w-0 space-y-1.5">
             {rows.map((r) => (
-              <div key={r.name} className="flex items-center gap-2 rounded-lg border border-white/[0.04] bg-white/[0.02] px-2.5 py-1.5">
+              <div key={r.name} className={cn(
+                'flex items-center gap-2 rounded-lg border px-2.5 py-1.5',
+                isDark ? 'border-white/[0.04] bg-white/[0.02]' : 'border-zinc-950/[0.06] bg-zinc-950/[0.02]',
+              )}>
                 <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: r.color }} />
                 <span className="flex-1 text-xs text-white/60">{r.name}</span>
                 <span className="tabular-nums text-xs font-bold text-white">{r.value.toLocaleString()}</span>
@@ -320,7 +360,10 @@ function ChannelBreakdown({ inbound, outbound }: { inbound: number; outbound: nu
           </div>
         </div>
       )}
-      <p className="mt-3 border-t border-white/[0.05] pt-3 text-[11px] text-white/35">
+      <p className={cn(
+        'mt-3 border-t pt-3 text-[11px]',
+        isDark ? 'border-white/[0.05] text-white/35' : 'border-zinc-950/[0.06] text-zinc-500',
+      )}>
         Direction split for this period — calls you placed vs calls you received.
       </p>
     </div>
@@ -362,6 +405,12 @@ const KNOWN_DISPS = [
 ];
 
 export default function AnalyticsPage() {
+  const { isDark } = useSiteTheme();
+  const axisFill = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(9,9,11,0.45)';
+  const gridStroke = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(9,9,11,0.06)';
+  const cursorLine = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(9,9,11,0.10)';
+  const cursorFill = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(9,9,11,0.04)';
+  const legendColor = isDark ? 'rgba(255,255,255,0.45)' : 'rgba(9,9,11,0.55)';
   const [range, setRange]       = useState<RangeKey>('30d');
   const [cStart, setCStart]     = useState('');
   const [cEnd, setCEnd]         = useState('');
@@ -505,7 +554,10 @@ export default function AnalyticsPage() {
       {/* ── Controls ──────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         {/* Date range pills */}
-        <div className="flex flex-wrap gap-1 rounded-xl border border-white/[0.06] bg-white/[0.02] p-1">
+        <div className={cn(
+            'flex flex-wrap gap-1 rounded-xl border p-1',
+            isDark ? 'border-white/[0.06] bg-white/[0.02]' : 'border-zinc-950/[0.08] bg-white shadow-sm',
+          )}>
           {RANGE_OPTIONS.map(({ key, label }) => (
             <button
               key={key}
@@ -514,8 +566,12 @@ export default function AnalyticsPage() {
               className={cn(
                 'rounded-lg px-3 py-1.5 text-xs font-medium transition-all',
                 range === key
-                  ? 'bg-[#8B5CF6] text-white shadow-lg shadow-purple-500/20'
-                  : 'text-white/40 hover:text-white/70',
+                  ? isDark
+                    ? 'bg-[#8B5CF6] text-white shadow-lg shadow-purple-500/20'
+                    : 'border border-[#8B5CF6]/30 bg-[#8B5CF6]/[0.10] text-[#7c3aed] shadow-lg shadow-purple-500/10'
+                  : isDark
+                    ? 'text-white/40 hover:text-white/70'
+                    : 'text-zinc-500 hover:text-zinc-900',
               )}
             >
               {label}
@@ -533,10 +589,20 @@ export default function AnalyticsPage() {
               className="flex items-center gap-2 overflow-hidden"
             >
               <input type="date" value={cStart} onChange={(e) => setCStart(e.target.value)}
-                className="dash-input px-3 py-1.5" />
+                className={cn(
+                  'px-3 py-1.5',
+                  isDark
+                    ? 'dash-input'
+                    : 'rounded-lg border border-zinc-950/10 bg-white text-[14px] text-zinc-900 shadow-sm',
+                )} />
               <span className="text-xs text-white/30">to</span>
               <input type="date" value={cEnd} onChange={(e) => setCEnd(e.target.value)}
-                className="dash-input px-3 py-1.5" />
+                className={cn(
+                  'px-3 py-1.5',
+                  isDark
+                    ? 'dash-input'
+                    : 'rounded-lg border border-zinc-950/10 bg-white text-[14px] text-zinc-900 shadow-sm',
+                )} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -559,10 +625,15 @@ export default function AnalyticsPage() {
               <select
                 value={sel.value}
                 onChange={(e) => sel.onChange(e.target.value)}
-                className="dash-input appearance-none cursor-pointer py-1.5 pl-3 pr-8 text-white/60!"
+                className={cn(
+                  'appearance-none cursor-pointer py-1.5 pl-3 pr-8',
+                  isDark
+                    ? 'dash-input text-white/60!'
+                    : 'rounded-lg border border-zinc-950/10 bg-white text-[14px] text-zinc-700 shadow-sm',
+                )}
               >
                 {sel.opts.map((o) => (
-                  <option key={o.value} value={o.value} className="bg-[oklch(0.09_0.006_285)] text-white">
+                  <option key={o.value} value={o.value} className={cn(isDark ? 'bg-[oklch(0.09_0.006_285)] text-white' : 'bg-white text-zinc-900')}>
                     {o.label}
                   </option>
                 ))}
@@ -577,11 +648,16 @@ export default function AnalyticsPage() {
               <select
                 value={numFilter}
                 onChange={(e) => setNum(e.target.value)}
-                className="dash-input appearance-none cursor-pointer py-1.5 pl-3 pr-8 text-white/60!"
+                className={cn(
+                  'appearance-none cursor-pointer py-1.5 pl-3 pr-8',
+                  isDark
+                    ? 'dash-input text-white/60!'
+                    : 'rounded-lg border border-zinc-950/10 bg-white text-[14px] text-zinc-700 shadow-sm',
+                )}
               >
-                <option value="" className="bg-[oklch(0.09_0.006_285)] text-white">All Numbers</option>
+                <option value="" className={cn(isDark ? 'bg-[oklch(0.09_0.006_285)] text-white' : 'bg-white text-zinc-900')}>All Numbers</option>
                 {data!.perNumber.map((n) => (
-                  <option key={n.number} value={n.number} className="bg-[oklch(0.09_0.006_285)] text-white">
+                  <option key={n.number} value={n.number} className={cn(isDark ? 'bg-[oklch(0.09_0.006_285)] text-white' : 'bg-white text-zinc-900')}>
                     {n.number}
                   </option>
                 ))}
@@ -608,7 +684,12 @@ export default function AnalyticsPage() {
       {isEmpty && (
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02] py-20 text-center"
+          className={cn(
+            'flex flex-col items-center justify-center rounded-2xl border py-20 text-center',
+            isDark
+              ? 'border-white/[0.06] bg-white/[0.02]'
+              : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.05)]',
+          )}
         >
           <Phone className="mb-4 h-10 w-10 text-white/10" />
           <p className="text-base font-semibold text-white/50">No calls in this period</p>
@@ -640,11 +721,11 @@ export default function AnalyticsPage() {
                         <stop offset="100%" stopColor="#06B6D4" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                    <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                    <Tooltip content={<GlassTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.07)', strokeWidth: 1 }} />
-                    <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 12, color: 'rgba(255,255,255,0.45)' }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                    <YAxis tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip content={<GlassTooltip />} cursor={{ stroke: cursorLine, strokeWidth: 1 }} />
+                    <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 12, color: legendColor }} />
                     <Area type="monotone" dataKey="outbound" name="Outbound" stroke="#8B5CF6" strokeWidth={2} fill="url(#gOut)" dot={false} isAnimationActive animationDuration={1000} animationEasing="ease-out" />
                     <Area type="monotone" dataKey="inbound"  name="Inbound"  stroke="#06B6D4" strokeWidth={2} fill="url(#gIn)"  dot={false} isAnimationActive animationDuration={1000} animationEasing="ease-out" />
                   </AreaChart>
@@ -708,7 +789,10 @@ export default function AnalyticsPage() {
                             const tot = data!.dispositions.reduce((s, x) => s + x.count, 0);
                             const pct = tot > 0 ? ((d.count / tot) * 100).toFixed(0) : '0';
                             return (
-                              <div key={d.disposition} className="flex items-center gap-2 rounded-lg border border-white/[0.04] bg-white/[0.02] px-2.5 py-1.5">
+                              <div key={d.disposition} className={cn(
+                              'flex items-center gap-2 rounded-lg border px-2.5 py-1.5',
+                              isDark ? 'border-white/[0.04] bg-white/[0.02]' : 'border-zinc-950/[0.06] bg-zinc-950/[0.02]',
+                            )}>
                                 <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: d.color }} />
                                 <span className="min-w-0 flex-1 truncate text-xs text-white/60">{d.label}</span>
                                 <span className="tabular-nums text-xs font-bold text-white">{d.count}</span>
@@ -719,7 +803,10 @@ export default function AnalyticsPage() {
                         </div>
                       </div>
                       {/* Clarify the denominator: % above is of dispositioned calls, not all calls */}
-                      <p className="mt-3 border-t border-white/[0.05] pt-3 text-[11px] text-white/35">
+                      <p className={cn(
+                        'mt-3 border-t pt-3 text-[11px]',
+                        isDark ? 'border-white/[0.05] text-white/35' : 'border-zinc-950/[0.06] text-zinc-500',
+                      )}>
                         <span className="tabular-nums text-white/60">
                           {data!.dispositions.reduce((s, x) => s + x.count, 0)}
                         </span>{' '}
@@ -737,11 +824,11 @@ export default function AnalyticsPage() {
                   ) : (
                     <ResponsiveContainer width="100%" height={200}>
                       <BarChart data={timeData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                        <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                        <Tooltip content={<GlassTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-                        <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 10, color: 'rgba(255,255,255,0.45)' }} />
+                        <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                        <XAxis dataKey="label" tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                        <YAxis tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} allowDecimals={false} />
+                        <Tooltip content={<GlassTooltip />} cursor={{ fill: cursorFill }} />
+                        <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 10, color: legendColor }} />
                         <Bar dataKey="outbound" name="Outbound" stackId="a" fill="#8B5CF6" fillOpacity={0.75} radius={[0, 0, 0, 0]} isAnimationActive animationDuration={900} animationEasing="ease-out" />
                         <Bar dataKey="inbound"  name="Inbound"  stackId="a" fill="#06B6D4" fillOpacity={0.75} radius={[3, 3, 0, 0]} isAnimationActive animationDuration={900} animationEasing="ease-out" />
                       </BarChart>
@@ -765,10 +852,10 @@ export default function AnalyticsPage() {
                   ) : (
                     <ResponsiveContainer width="100%" height={180}>
                       <BarChart data={hourData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="label" tick={{ fontSize: 9, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                        <Tooltip content={<GlassTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+                        <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                        <XAxis dataKey="label" tick={{ fontSize: 9, fill: axisFill }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} allowDecimals={false} />
+                        <Tooltip content={<GlassTooltip />} cursor={{ fill: cursorFill }} />
                         <Bar dataKey="total" name="Total" fill="#8B5CF6" fillOpacity={0.5} radius={[3, 3, 0, 0]} isAnimationActive animationDuration={900} animationEasing="ease-out" />
                         <Bar dataKey="connected" name="Connected" fill="#06B6D4" fillOpacity={0.85} radius={[3, 3, 0, 0]} isAnimationActive animationDuration={900} animationEasing="ease-out" />
                       </BarChart>
@@ -783,10 +870,10 @@ export default function AnalyticsPage() {
                   ) : (
                     <ResponsiveContainer width="100%" height={180}>
                       <BarChart data={data?.dayOfWeek ?? []} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.35)' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                        <Tooltip content={<GlassTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+                        <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                        <XAxis dataKey="day" tick={{ fontSize: 11, fill: axisFill }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 10, fill: axisFill }} axisLine={false} tickLine={false} allowDecimals={false} />
+                        <Tooltip content={<GlassTooltip />} cursor={{ fill: cursorFill }} />
                         <Bar dataKey="calls" name="Calls"
                           radius={[4, 4, 0, 0]}
                           fill="url(#gOut)"
@@ -810,7 +897,7 @@ export default function AnalyticsPage() {
                 <div className="overflow-x-auto -mx-1">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-b border-white/[0.05]">
+                      <tr className={cn('border-b', isDark ? 'border-white/[0.05]' : 'border-zinc-950/[0.06]')}>
                         {(
                           [
                             { col: null,          label: 'Number' },
@@ -824,7 +911,7 @@ export default function AnalyticsPage() {
                             key={label}
                             className={cn(
                               'px-3 py-2 text-left font-medium text-white/30 select-none',
-                              col ? 'cursor-pointer hover:text-white/60 transition-colors' : '',
+                              col ? (isDark ? 'cursor-pointer hover:text-white/60 transition-colors' : 'cursor-pointer hover:text-zinc-700 transition-colors') : '',
                             )}
                             onClick={() => {
                               if (!col) return;
@@ -840,17 +927,17 @@ export default function AnalyticsPage() {
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/[0.04]">
+                    <tbody className={cn('divide-y', isDark ? 'divide-white/[0.04]' : 'divide-zinc-950/[0.05]')}>
                       {sortedNumbers.map((row) => (
-                        <tr key={row.number} className="group hover:bg-white/[0.02] transition-colors">
+                        <tr key={row.number} className={cn('group transition-colors', isDark ? 'hover:bg-white/[0.02]' : 'hover:bg-zinc-950/[0.02]')}>
                           <td className="px-3 py-2.5 font-mono text-white/70">{row.number}</td>
                           <td className="px-3 py-2.5 tabular-nums font-semibold text-white">{row.total}</td>
                           <td className="px-3 py-2.5 tabular-nums text-white/70">{row.connected}</td>
                           <td className="px-3 py-2.5 tabular-nums">
                             <span className={cn('font-medium',
-                              row.connectRate >= 60 ? 'text-emerald-400'
-                              : row.connectRate >= 30 ? 'text-amber-400'
-                              : 'text-red-400/80'
+                              row.connectRate >= 60 ? (isDark ? 'text-emerald-400' : 'text-emerald-600')
+                              : row.connectRate >= 30 ? (isDark ? 'text-amber-400' : 'text-amber-600')
+                              : (isDark ? 'text-red-400/80' : 'text-red-600')
                             )}>
                               {row.connectRate}%
                             </span>
@@ -884,7 +971,12 @@ export default function AnalyticsPage() {
                 <SkeletonChart h={120} />
               </div>
             ) : !hasAiData ? (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02] py-12 text-center">
+              <div className={cn(
+                'flex flex-col items-center justify-center rounded-2xl border py-12 text-center',
+                isDark
+                  ? 'border-white/[0.06] bg-white/[0.02]'
+                  : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.05)]',
+              )}>
                 <Sparkles className="mb-3 h-8 w-8 text-[#8B5CF6]/30" />
                 <p className="text-sm font-medium text-white/40">AI analysis in progress</p>
                 <p className="mt-1 text-xs text-white/20">

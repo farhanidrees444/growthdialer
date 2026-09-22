@@ -37,6 +37,8 @@ import { ParallelDialConfigModal } from '@/components/dialer/parallel-dial-confi
 import { ParallelDialStage } from '@/components/dialer/parallel-dial-stage';
 import { ParallelSessionBanner } from '@/components/dialer/parallel-session-banner';
 import { DialerFloatingActions } from '@/components/dialer/dialer-floating-actions';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 import { DialerStageAmbient } from '@/components/dialer/dialer-stage-ambient';
 
 import type { LeadRecord, DispositionType } from '@/lib/dialer/dialer-types';
@@ -46,20 +48,21 @@ import { isInboundPreAnswer } from '@/lib/inbound/pre-answer';
 const DTMF_KEYS = ['1','2','3','4','5','6','7','8','9','*','0','#'];
 
 function DtmfKeypad({ onSend, onClose }: { onSend: (d: string) => void; onClose: () => void }) {
+  const { isDark } = useSiteTheme();
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95, y: 8 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 8 }}
-      className="fixed right-4 z-[var(--z-drawer)] w-[min(16rem,calc(100vw-2rem))] rounded-2xl border border-white/[0.10] p-4 shadow-2xl backdrop-blur-2xl bg-zinc-900/95 lg:right-6"
+      className={cn('fixed right-4 z-[var(--z-drawer)] w-[min(16rem,calc(100vw-2rem))] rounded-2xl border p-4 shadow-2xl backdrop-blur-2xl lg:right-6', isDark ? 'border-white/[0.10] bg-zinc-900/95' : 'border-zinc-950/[0.08] bg-white/95')}
       style={{
         bottom:
           'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 5rem + var(--gd-dock-call-height, 0px))',
       }}
     >
       <div className="flex justify-between items-center mb-3">
-        <span className="text-xs text-white/40 uppercase tracking-widest">Keypad</span>
-        <button onClick={onClose} className="min-h-11 px-2 text-sm text-white/50 hover:text-white">Done</button>
+        <span className={cn('text-xs uppercase tracking-widest', isDark ? 'text-white/40' : 'text-zinc-500')}>Keypad</span>
+        <button onClick={onClose} className={cn('min-h-11 px-2 text-sm', isDark ? 'text-white/50 hover:text-white' : 'text-zinc-500 hover:text-zinc-900')}>Done</button>
       </div>
       <div className="grid grid-cols-3 gap-2">
         {DTMF_KEYS.map((k) => (
@@ -67,7 +70,7 @@ function DtmfKeypad({ onSend, onClose }: { onSend: (d: string) => void; onClose:
             key={k}
             onClick={() => onSend(k)}
             whileTap={{ scale: 0.88 }}
-            className="h-12 rounded-xl bg-white/[0.06] border border-white/[0.08] text-xl font-light text-white hover:bg-white/[0.12] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400"
+            className={cn('h-12 rounded-xl border text-xl font-light transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400', isDark ? 'bg-white/[0.06] border-white/[0.08] text-white hover:bg-white/[0.12]' : 'bg-zinc-950/[0.04] border-zinc-950/[0.08] text-zinc-950 hover:bg-zinc-950/[0.08]')}
           >
             {k}
           </motion.button>
@@ -105,12 +108,17 @@ function SummaryCell({
   value: number;
   color?: 'white' | 'cyan' | 'green';
 }) {
+  const { isDark } = useSiteTheme();
   const textColor =
-    color === 'cyan' ? 'text-cyan-400' : color === 'green' ? 'text-emerald-400' : 'text-white';
+    color === 'cyan'
+      ? isDark ? 'text-cyan-400' : 'text-cyan-600'
+      : color === 'green'
+        ? isDark ? 'text-emerald-400' : 'text-emerald-600'
+        : isDark ? 'text-white' : 'text-zinc-950';
   return (
-    <div className="flex flex-col items-center gap-0.5 p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+    <div className={cn('flex flex-col items-center gap-0.5 p-3 rounded-xl border', isDark ? 'bg-white/[0.04] border-white/[0.06]' : 'bg-zinc-950/[0.03] border-zinc-950/[0.08]')}>
       <span className={`text-2xl font-light tabular-nums ${textColor}`}>{value}</span>
-      <span className="text-xs text-white/40">{label}</span>
+      <span className={cn('text-xs', isDark ? 'text-white/40' : 'text-zinc-500')}>{label}</span>
     </div>
   );
 }
@@ -122,6 +130,7 @@ interface TodayStats { calls: number; connects: number; meetings: number; streak
 // ══════════════════════════════════════════════════════════════════════════════
 export default function DialerPage() {
   const router = useRouter();
+  const { isDark } = useSiteTheme();
   const {
     callStatus, isMuted, isOnHold, phoneStatus, activeCallId,
     isInboundRinging, hasOutboundSession,
@@ -736,17 +745,17 @@ export default function DialerPage() {
             animate={{ y: 0 }}
             exit={{ y: 80 }}
             className="lg:hidden flex-shrink-0 flex items-center gap-2 px-4 py-3 border-t border-white/[0.06]"
-            style={{ background: 'rgba(9,9,11,0.9)' }}
+            style={{ background: isDark ? 'rgba(9,9,11,0.9)' : 'rgba(255,255,255,0.94)' }}
           >
             <button
               onClick={() => setDialpadOpen(true)}
-              className="dash-btn-ghost flex-1 h-11"
+              className={isDark ? "dash-btn-ghost flex-1 h-11" : cn('inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-950/10 bg-white px-4 py-2 text-[14px] font-medium text-zinc-600 shadow-sm transition-all duration-150 select-none hover:bg-zinc-50 hover:text-zinc-900', "flex-1 h-11")}
             >
               <Phone className="w-4 h-4" />
               Manual Dial
             </button>
             <button
-              className="dash-btn-ghost flex-1 h-11"
+              className={isDark ? "dash-btn-ghost flex-1 h-11" : cn('inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-950/10 bg-white px-4 py-2 text-[14px] font-medium text-zinc-600 shadow-sm transition-all duration-150 select-none hover:bg-zinc-50 hover:text-zinc-900', "flex-1 h-11")}
               onClick={() => setMobileQueueOpen(true)}
             >
               Filters
@@ -789,11 +798,11 @@ export default function DialerPage() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.94, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm rounded-2xl border border-white/[0.10] p-6 bg-zinc-900 shadow-2xl space-y-4"
+              className={cn('w-full max-w-sm rounded-2xl border p-6 shadow-2xl space-y-4', isDark ? 'border-white/[0.10] bg-zinc-900' : 'border-zinc-950/[0.08] bg-white')}
             >
               <div>
-                <h2 className="text-base font-semibold text-white">Mark as Do Not Call?</h2>
-                <p className="text-sm text-white/50 mt-1">
+                <h2 className={cn('text-base font-semibold', isDark ? 'text-white' : 'text-zinc-950')}>Mark as Do Not Call?</h2>
+                <p className={cn('text-sm mt-1', isDark ? 'text-white/50' : 'text-zinc-500')}>
                   {selectedLead.name} will be removed from your queue and flagged DNC.
                 </p>
               </div>
@@ -801,7 +810,7 @@ export default function DialerPage() {
                 <button
                   type="button"
                   onClick={() => setDncConfirmOpen(false)}
-                  className="dash-btn-ghost flex-1 min-h-11"
+                  className={isDark ? "dash-btn-ghost flex-1 min-h-11" : cn('inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-950/10 bg-white px-4 py-2 text-[14px] font-medium text-zinc-600 shadow-sm transition-all duration-150 select-none hover:bg-zinc-50 hover:text-zinc-900', "flex-1 min-h-11")}
                 >
                   Cancel
                 </button>
@@ -834,17 +843,17 @@ export default function DialerPage() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.94, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm rounded-2xl border border-white/[0.10] p-6 bg-zinc-900 shadow-2xl space-y-4"
+              className={cn('w-full max-w-sm rounded-2xl border p-6 shadow-2xl space-y-4', isDark ? 'border-white/[0.10] bg-zinc-900' : 'border-zinc-950/[0.08] bg-white')}
             >
               <div>
-                <h2 className="text-base font-semibold text-white">Switch to {switchLeadTarget.name}?</h2>
-                <p className="text-sm text-white/50 mt-1">Your current call will end before switching leads.</p>
+                <h2 className={cn('text-base font-semibold', isDark ? 'text-white' : 'text-zinc-950')}>Switch to {switchLeadTarget.name}?</h2>
+                <p className={cn('text-sm mt-1', isDark ? 'text-white/50' : 'text-zinc-500')}>Your current call will end before switching leads.</p>
               </div>
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => setSwitchLeadTarget(null)}
-                  className="dash-btn-ghost flex-1 min-h-11"
+                  className={isDark ? "dash-btn-ghost flex-1 min-h-11" : cn('inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-950/10 bg-white px-4 py-2 text-[14px] font-medium text-zinc-600 shadow-sm transition-all duration-150 select-none hover:bg-zinc-50 hover:text-zinc-900', "flex-1 min-h-11")}
                 >
                   Cancel
                 </button>
@@ -887,11 +896,11 @@ export default function DialerPage() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.94, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm rounded-2xl border border-white/[0.10] p-6 bg-zinc-900 shadow-2xl space-y-4"
+              className={cn('w-full max-w-sm rounded-2xl border p-6 shadow-2xl space-y-4', isDark ? 'border-white/[0.10] bg-zinc-900' : 'border-zinc-950/[0.08] bg-white')}
             >
               <div>
-                <h2 className="text-base font-semibold text-white">Start AI Power Dial</h2>
-                <p className="text-sm text-white/50 mt-1">
+                <h2 className={cn('text-base font-semibold', isDark ? 'text-white' : 'text-zinc-950')}>Start AI Power Dial</h2>
+                <p className={cn('text-sm mt-1', isDark ? 'text-white/50' : 'text-zinc-500')}>
                   {queueCounts.queue > 0
                     ? `Auto-dial ${queueCounts.queue} leads in queue. You'll review each before the call connects.`
                     : 'No leads in queue. Import leads first.'}
@@ -900,7 +909,7 @@ export default function DialerPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setPowerConfirmOpen(false)}
-                  className="dash-btn-ghost flex-1 h-10"
+                  className={isDark ? "dash-btn-ghost flex-1 h-10" : cn('inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-950/10 bg-white px-4 py-2 text-[14px] font-medium text-zinc-600 shadow-sm transition-all duration-150 select-none hover:bg-zinc-50 hover:text-zinc-900', "flex-1 h-10")}
                 >
                   Cancel
                 </button>
@@ -946,11 +955,11 @@ export default function DialerPage() {
             <motion.div
               initial={{ scale: 0.92, opacity: 0, y: 16 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              className="w-full max-w-sm rounded-2xl border border-white/[0.10] p-6 bg-zinc-900 shadow-2xl space-y-5"
+              className={cn('w-full max-w-sm rounded-2xl border p-6 shadow-2xl space-y-5', isDark ? 'border-white/[0.10] bg-zinc-900' : 'border-zinc-950/[0.08] bg-white')}
             >
               <div className="text-center space-y-1">
-                <h2 className="text-lg font-semibold text-white">Parallel session complete</h2>
-                <p className="text-sm text-white/40">
+                <h2 className={cn('text-lg font-semibold', isDark ? 'text-white' : 'text-zinc-950')}>Parallel session complete</h2>
+                <p className={cn('text-sm', isDark ? 'text-white/40' : 'text-zinc-500')}>
                   {Math.floor(parallelDialer.summary.duration_seconds / 60)}m{' '}
                   {parallelDialer.summary.duration_seconds % 60}s ·{' '}
                   {parallelDialer.summary.connect_rate}% connect rate
@@ -987,12 +996,12 @@ export default function DialerPage() {
               initial={{ scale: 0.92, opacity: 0, y: 16 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.92, opacity: 0 }}
-              className="w-full max-w-sm rounded-2xl border border-white/[0.10] p-6 bg-zinc-900 shadow-2xl space-y-5"
+              className={cn('w-full max-w-sm rounded-2xl border p-6 shadow-2xl space-y-5', isDark ? 'border-white/[0.10] bg-zinc-900' : 'border-zinc-950/[0.08] bg-white')}
             >
               <div className="text-center space-y-1">
                 <div className="text-4xl mb-1">⚡</div>
-                <h2 className="text-lg font-semibold text-white">Session Complete</h2>
-                <p className="text-sm text-white/40">
+                <h2 className={cn('text-lg font-semibold', isDark ? 'text-white' : 'text-zinc-950')}>Session Complete</h2>
+                <p className={cn('text-sm', isDark ? 'text-white/40' : 'text-zinc-500')}>
                   {Math.floor((powerDialer.summary.duration ?? 0) / 60)}m{' '}
                   {(powerDialer.summary.duration ?? 0) % 60}s total
                 </p>
@@ -1051,15 +1060,15 @@ export default function DialerPage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="md:hidden fixed bottom-0 left-0 right-0 z-[var(--z-drawer)] flex flex-col rounded-t-3xl border-t border-white/[0.10] bg-zinc-900 overflow-hidden"
+              className={cn('md:hidden fixed bottom-0 left-0 right-0 z-[var(--z-drawer)] flex flex-col rounded-t-3xl border-t overflow-hidden', isDark ? 'border-white/[0.10] bg-zinc-900' : 'border-zinc-950/[0.08] bg-white')}
               style={{ height: '80vh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             >
-              <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
-                <span className="text-sm font-semibold text-white">Call Queue</span>
+              <div className={cn('flex items-center justify-between border-b px-5 py-4', isDark ? 'border-white/[0.06]' : 'border-zinc-950/[0.06]')}>
+                <span className={cn('text-sm font-semibold', isDark ? 'text-white' : 'text-zinc-950')}>Call Queue</span>
                 <button
                   type="button"
                   onClick={() => setMobileQueueOpen(false)}
-                  className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 hover:text-white"
+                  className={cn('flex min-h-11 min-w-11 items-center justify-center rounded-full', isDark ? 'bg-white/[0.06] text-slate-400 hover:text-white' : 'bg-zinc-950/[0.05] text-zinc-500 hover:text-zinc-900')}
                 >
                   <XIcon className="h-4 w-4" />
                 </button>
@@ -1096,15 +1105,15 @@ export default function DialerPage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="md:hidden fixed bottom-0 left-0 right-0 z-[var(--z-drawer)] flex flex-col rounded-t-3xl border-t border-white/[0.10] bg-zinc-900 overflow-hidden"
+              className={cn('md:hidden fixed bottom-0 left-0 right-0 z-[var(--z-drawer)] flex flex-col rounded-t-3xl border-t overflow-hidden', isDark ? 'border-white/[0.10] bg-zinc-900' : 'border-zinc-950/[0.08] bg-white')}
               style={{ height: '80vh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             >
-              <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
-                <span className="text-sm font-semibold text-white">AI Brief</span>
+              <div className={cn('flex items-center justify-between border-b px-5 py-4', isDark ? 'border-white/[0.06]' : 'border-zinc-950/[0.06]')}>
+                <span className={cn('text-sm font-semibold', isDark ? 'text-white' : 'text-zinc-950')}>AI Brief</span>
                 <button
                   type="button"
                   onClick={() => setMobileAiBriefOpen(false)}
-                  className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 hover:text-white"
+                  className={cn('flex min-h-11 min-w-11 items-center justify-center rounded-full', isDark ? 'bg-white/[0.06] text-slate-400 hover:text-white' : 'bg-zinc-950/[0.05] text-zinc-500 hover:text-zinc-900')}
                 >
                   <XIcon className="h-4 w-4" />
                 </button>
@@ -1135,15 +1144,15 @@ export default function DialerPage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="md:hidden fixed bottom-0 left-0 right-0 z-[var(--z-drawer)] flex flex-col rounded-t-3xl border-t border-white/[0.10] bg-zinc-900 overflow-hidden"
+              className={cn('md:hidden fixed bottom-0 left-0 right-0 z-[var(--z-drawer)] flex flex-col rounded-t-3xl border-t overflow-hidden', isDark ? 'border-white/[0.10] bg-zinc-900' : 'border-zinc-950/[0.08] bg-white')}
               style={{ height: '80vh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             >
-              <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
-                <span className="text-sm font-semibold text-white">Live insights</span>
+              <div className={cn('flex items-center justify-between border-b px-5 py-4', isDark ? 'border-white/[0.06]' : 'border-zinc-950/[0.06]')}>
+                <span className={cn('text-sm font-semibold', isDark ? 'text-white' : 'text-zinc-950')}>Live insights</span>
                 <button
                   type="button"
                   onClick={() => setMobileLiveInsightsOpen(false)}
-                  className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 hover:text-white"
+                  className={cn('flex min-h-11 min-w-11 items-center justify-center rounded-full', isDark ? 'bg-white/[0.06] text-slate-400 hover:text-white' : 'bg-zinc-950/[0.05] text-zinc-500 hover:text-zinc-900')}
                 >
                   <XIcon className="h-4 w-4" />
                 </button>

@@ -2,6 +2,7 @@
 
 import { Phone, Mail, ExternalLink, Clock, Pencil, Trash2, Eye } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { useSiteTheme } from '@/components/theme/site-theme';
 import { cn } from '@/lib/utils';
 import { LeadActionsMenu } from '@/components/leads/lead-actions-menu';
 
@@ -28,6 +29,13 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   not_interested: { bg: 'bg-red-500/15',     text: 'text-red-400' },
   do_not_call:    { bg: 'bg-rose-900/40',    text: 'text-rose-400' },
   wrong_number:   { bg: 'bg-red-500/15',     text: 'text-red-400' },
+};
+
+/** Light-mode overrides for status pills whose dark text washes out on white */
+const STATUS_COLORS_LIGHT: Record<string, { bg: string; text: string }> = {
+  not_interested: { bg: 'bg-red-500/15',  text: 'text-red-600' },
+  do_not_call:    { bg: 'bg-rose-500/12', text: 'text-rose-700' },
+  wrong_number:   { bg: 'bg-red-500/15',  text: 'text-red-600' },
 };
 
 const AVATAR_GRADIENTS = [
@@ -121,9 +129,15 @@ export function LeadTableView({
   onCall, onView, onEdit, onDelete,
 }: Props) {
   const reduce = useReducedMotion();
+  const { isDark } = useSiteTheme();
 
   return (
-    <div className="dash-table-scroll relative w-full overflow-x-auto rounded-2xl border border-white/[0.07] bg-zinc-900/30 backdrop-blur-sm">
+    <div className={cn(
+      'dash-table-scroll relative w-full overflow-x-auto rounded-2xl border border-white/[0.07] backdrop-blur-sm',
+      isDark
+        ? 'bg-zinc-900/30'
+        : 'bg-white shadow-[0_1px_2px_rgba(9,9,11,0.04)]',
+    )}>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" aria-hidden />
       <table className="w-full border-collapse text-sm">
         <thead className="sticky top-0 z-10">
@@ -147,6 +161,7 @@ export function LeadTableView({
           {leads.map((lead, idx) => {
             const selected = selectedIds.has(lead.id);
             const { bg: sBg, text: sText } = STATUS_COLORS[lead.status] ?? { bg: 'bg-slate-500/15', text: 'text-slate-300' };
+            const lightOverride = !isDark ? STATUS_COLORS_LIGHT[lead.status] : undefined;
             const grad = avatarGradient(lead.name);
             return (
               <motion.tr
@@ -192,7 +207,7 @@ export function LeadTableView({
                   <p className="font-mono text-xs text-slate-400">{lead.phone}</p>
                 </td>
                 <td className="px-4 py-3">
-                  <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize', sBg, sText)}>
+                  <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize', lightOverride?.bg ?? sBg, lightOverride?.text ?? sText)}>
                     {lead.status.replace(/_/g, ' ')}
                   </span>
                 </td>
@@ -224,7 +239,12 @@ export function LeadTableView({
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); onCall(lead); }}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 transition hover:bg-emerald-500/20 active:scale-95"
+                      className={cn(
+                        'flex h-7 w-7 items-center justify-center rounded-lg border transition active:scale-95',
+                        isDark
+                          ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+                          : 'border-emerald-600/25 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20',
+                      )}
                       aria-label="Call lead"
                     >
                       <Phone className="h-3 w-3" />
@@ -235,7 +255,10 @@ export function LeadTableView({
                         target="_blank"
                         rel="noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.06] text-slate-600 transition hover:text-blue-400"
+                        className={cn(
+                          'flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.06] text-slate-600 transition',
+                          isDark ? 'hover:text-blue-400' : 'hover:text-blue-700',
+                        )}
                       >
                         <ExternalLink className="h-3 w-3" />
                       </a>

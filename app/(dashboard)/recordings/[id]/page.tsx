@@ -17,6 +17,8 @@ import { RecordingDetailHero } from '@/components/recordings/recording-detail-he
 import { RecordingQAScorecard } from '@/components/recordings/recording-qa-scorecard';
 import { isPlayableRecordingDuration } from '@/lib/recordings/eligibility';
 import { PlanGate } from '@/lib/plan/plan-guard';
+import { cn } from '@/lib/utils';
+import { useSiteTheme } from '@/components/theme/site-theme';
 import { UpgradePrompt } from '@/lib/plan/upgrade-prompt';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -99,20 +101,24 @@ function getWords(summary: unknown): WordTimestamp[] {
   return [];
 }
 
-function memoryTypeColor(type: string) {
+function memoryTypeColor(type: string, isDark: boolean) {
   switch (type) {
-    case 'objection': return 'border-red-500/20 bg-red-500/[0.06] text-red-400';
-    case 'interest': return 'border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-400';
-    case 'preference': return 'border-violet-500/20 bg-violet-500/[0.06] text-violet-400';
-    default: return 'border-blue-500/20 bg-blue-500/[0.06] text-blue-400';
+    case 'objection':
+      return isDark ? 'border-red-500/20 bg-red-500/[0.06] text-red-400' : 'border-red-600/25 bg-red-500/[0.07] text-red-700';
+    case 'interest':
+      return isDark ? 'border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-400' : 'border-emerald-600/25 bg-emerald-500/[0.07] text-emerald-700';
+    case 'preference':
+      return isDark ? 'border-violet-500/20 bg-violet-500/[0.06] text-violet-400' : 'border-violet-500/25 bg-violet-500/[0.07] text-violet-700';
+    default:
+      return isDark ? 'border-blue-500/20 bg-blue-500/[0.06] text-blue-400' : 'border-blue-500/25 bg-blue-500/[0.07] text-blue-700';
   }
 }
 
-function sentimentColor(score: number | null) {
+function sentimentColor(score: number | null, isDark: boolean) {
   if (score === null) return 'text-slate-500';
-  if (score > 0.2) return 'text-emerald-400';
-  if (score < -0.2) return 'text-red-400';
-  return 'text-amber-400';
+  if (score > 0.2) return isDark ? 'text-emerald-400' : 'text-emerald-600';
+  if (score < -0.2) return isDark ? 'text-red-400' : 'text-red-600';
+  return isDark ? 'text-amber-400' : 'text-amber-600';
 }
 
 // ─── Audio player ─────────────────────────────────────────────────────────────
@@ -128,6 +134,7 @@ function AudioPlayer({
   onTimeUpdate?: (t: number) => void;
   seekTo?: number | null;
 }) {
+  const { isDark } = useSiteTheme();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
@@ -151,7 +158,10 @@ function AudioPlayer({
   const pct = total > 0 ? (current / total) * 100 : 0;
 
   return (
-    <div className="flex items-center gap-2.5 rounded-2xl border border-white/[0.07] bg-white/[0.02] px-3 py-4 sm:gap-4 sm:px-5">
+    <div className={cn(
+      'flex items-center gap-2.5 rounded-2xl border px-3 py-4 sm:gap-4 sm:px-5',
+      isDark ? 'border-white/[0.07] bg-white/[0.02]' : 'border-zinc-950/[0.08] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.05)]',
+    )}>
       <audio
         ref={audioRef}
         src={url}
@@ -166,7 +176,12 @@ function AudioPlayer({
         onEnded={() => { setPlaying(false); setCurrent(0); }}
       />
       <button type="button" onClick={toggle}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-400 transition hover:bg-emerald-500/15"
+        className={cn(
+        'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition',
+        isDark
+          ? 'border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-400 hover:bg-emerald-500/15'
+          : 'border-emerald-600/30 bg-emerald-500/[0.08] text-emerald-600 hover:bg-emerald-500/[0.14]',
+      )}
       >
         {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 translate-x-px" />}
       </button>
@@ -185,7 +200,7 @@ function AudioPlayer({
           const height = 20 + Math.sin(i * 0.6) * 12 + Math.sin(i * 1.3) * 8;
           return (
             <div key={i} style={{ height: `${height}px` }}
-              className={`flex-1 rounded-sm transition-colors ${active ? 'bg-emerald-500' : 'bg-white/[0.08]'}`}
+              className={`flex-1 rounded-sm transition-colors ${active ? 'bg-emerald-500' : (isDark ? 'bg-white/[0.08]' : 'bg-zinc-950/[0.08]')}`}
             />
           );
         })}
@@ -196,7 +211,12 @@ function AudioPlayer({
       </div>
 
       <a href={url} download target="_blank" rel="noreferrer"
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] text-slate-600 transition hover:bg-white/[0.04] hover:text-slate-300"
+        className={cn(
+        'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition',
+        isDark
+          ? 'border-white/[0.06] text-slate-600 hover:bg-white/[0.04] hover:text-slate-300'
+          : 'border-zinc-950/[0.08] bg-white text-zinc-500 shadow-sm hover:bg-zinc-950/[0.04] hover:text-zinc-800',
+      )}
         title="Download"
       >
         <Download className="h-3.5 w-3.5" />
@@ -208,6 +228,7 @@ function AudioPlayer({
 // ─── Tab: AI Insights ─────────────────────────────────────────────────────────
 
 function InsightsTab({ analytics }: { analytics: CallAnalytics }) {
+  const { isDark } = useSiteTheme();
   const bullets = getSummaryBullets(analytics.summary);
   const score = analytics.sentiment_score;
   const absScore = Math.abs(score ?? 0);
@@ -229,11 +250,11 @@ function InsightsTab({ analytics }: { analytics: CallAnalytics }) {
       {/* Summary */}
       {bullets.length > 0 && (
         <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
-          className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
+          className={cn('rounded-2xl border p-4', isDark ? 'border-white/[0.06] bg-white/[0.02]' : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.04)]')}
         >
           <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/80">Summary</span>
+            <Sparkles className={cn('h-3.5 w-3.5', isDark ? 'text-amber-400' : 'text-amber-600')} />
+            <span className={cn('text-[10px] font-bold uppercase tracking-widest', isDark ? 'text-amber-400/80' : 'text-amber-600')}>Summary</span>
           </div>
           <ul className="space-y-2">
             {bullets.map((b, i) => (
@@ -248,18 +269,18 @@ function InsightsTab({ analytics }: { analytics: CallAnalytics }) {
 
       {/* Sentiment */}
       <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
-        className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
+        className={cn('rounded-2xl border p-4', isDark ? 'border-white/[0.06] bg-white/[0.02]' : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.04)]')}
       >
         <div className="flex items-center justify-between mb-3">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Sentiment</span>
-          <span className={`text-sm font-bold capitalize ${sentimentColor(score)}`}>
+          <span className={`text-sm font-bold capitalize ${sentimentColor(score, isDark)}`}>
             {score !== null && score > 0.2 && <TrendingUp className="inline h-3.5 w-3.5 mr-1" />}
             {score !== null && score < -0.2 && <TrendingDown className="inline h-3.5 w-3.5 mr-1" />}
             {score !== null && Math.abs(score) <= 0.2 && <Minus className="inline h-3.5 w-3.5 mr-1" />}
             {analytics.sentiment ?? '—'}
           </span>
         </div>
-        <div className="h-2 w-full rounded-full bg-white/[0.05] overflow-hidden">
+        <div className={cn('h-2 w-full rounded-full overflow-hidden', isDark ? 'bg-white/[0.05]' : 'bg-zinc-950/[0.06]')}>
           <div
             className={`h-full rounded-full transition-all ${score !== null && score > 0 ? 'bg-emerald-500' : score !== null && score < 0 ? 'bg-red-500' : 'bg-amber-500'}`}
             style={{ width: `${Math.round(absScore * 100)}%` }}
@@ -331,12 +352,18 @@ function InsightsTab({ analytics }: { analytics: CallAnalytics }) {
       {/* Talking Points */}
       {(analytics.talking_points ?? []).length > 0 && (
         <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
-          className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
+          className={cn(
+            'rounded-2xl border p-4',
+            isDark ? 'border-white/[0.06] bg-white/[0.02]' : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.04)]',
+          )}
         >
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3 block">Topics Discussed</span>
           <div className="flex flex-wrap gap-2">
             {analytics.talking_points!.map((pt) => (
-              <span key={pt} className="rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1 text-xs text-slate-400">{pt}</span>
+              <span key={pt} className={cn(
+                'rounded-full border px-3 py-1 text-xs',
+                isDark ? 'border-white/[0.06] bg-white/[0.03] text-slate-400' : 'border-zinc-950/[0.08] bg-zinc-950/[0.03] text-zinc-600',
+              )}>{pt}</span>
             ))}
           </div>
         </motion.div>
@@ -358,6 +385,7 @@ function TranscriptTab({
   analytics: CallAnalytics;
   onSeek: (t: number) => void;
 }) {
+  const { isDark } = useSiteTheme();
   const [query, setQuery] = useState('');
   const words = getWords(analytics.summary);
   const transcript = analytics.transcript ?? '';
@@ -385,7 +413,12 @@ function TranscriptTab({
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-600" />
         <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
           placeholder="Search transcript…"
-          className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] py-2 pl-9 pr-8 text-sm text-white placeholder:text-slate-600 outline-none focus:border-emerald-500/25"
+          className={cn(
+            'w-full rounded-xl border py-2 pl-9 pr-8 text-sm outline-none',
+            isDark
+              ? 'border-white/[0.06] bg-white/[0.02] text-white placeholder:text-slate-600 focus:border-emerald-500/25'
+              : 'border-zinc-950/10 bg-white text-zinc-900 placeholder:text-zinc-400 shadow-sm focus:border-emerald-600/40',
+          )}
         />
         {query && (
           <button type="button" onClick={() => setQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400">
@@ -394,17 +427,25 @@ function TranscriptTab({
         )}
       </div>
 
-      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+      <div className={cn(
+          'rounded-2xl border p-4 space-y-3 max-h-[60vh] overflow-y-auto',
+          isDark ? 'border-white/[0.06] bg-white/[0.02]' : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.04)]',
+        )}>
         {filtered.map((seg, i) => (
           <div key={i} className="flex items-start gap-3">
             {seg.start !== null && (
               <button type="button" onClick={() => onSeek(seg.start!)}
-                className="shrink-0 mt-0.5 rounded-md bg-white/[0.04] px-2 py-0.5 text-[10px] font-mono text-slate-600 hover:text-emerald-400 hover:bg-emerald-500/[0.08] transition"
+                className={cn(
+                  'shrink-0 mt-0.5 rounded-md px-2 py-0.5 text-[10px] font-mono transition',
+                  isDark
+                    ? 'bg-white/[0.04] text-slate-600 hover:text-emerald-400 hover:bg-emerald-500/[0.08]'
+                    : 'bg-zinc-950/[0.04] text-zinc-500 hover:text-emerald-700 hover:bg-emerald-500/[0.10]',
+                )}
               >
                 {fmtTimestamp(seg.start)}
               </button>
             )}
-            <p className={`text-sm leading-relaxed ${query && seg.text.toLowerCase().includes(query.toLowerCase()) ? 'text-white' : 'text-slate-400'}`}>
+            <p className={`text-sm leading-relaxed ${query && seg.text.toLowerCase().includes(query.toLowerCase()) ? (isDark ? 'text-white' : 'text-zinc-900') : (isDark ? 'text-slate-400' : 'text-zinc-600')}`}>
               {highlightText(seg.text, query)}
             </p>
           </div>
@@ -449,6 +490,7 @@ function highlightText(text: string, query: string) {
 // ─── Tab: Memory ──────────────────────────────────────────────────────────────
 
 function MemoryTab({ memories, leadName }: { memories: LeadMemory[]; leadName: string | null }) {
+  const { isDark } = useSiteTheme();
   if (memories.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -466,7 +508,7 @@ function MemoryTab({ memories, leadName }: { memories: LeadMemory[]; leadName: s
         <span className="font-semibold text-slate-300">{leadName ?? 'this lead'}</span>:
       </p>
       {memories.map((m) => (
-        <div key={m.id} className={`rounded-2xl border px-4 py-3.5 ${memoryTypeColor(m.memory_type)}`}>
+        <div key={m.id} className={`rounded-2xl border px-4 py-3.5 ${memoryTypeColor(m.memory_type, isDark)}`}>
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-bold uppercase tracking-wider opacity-70 capitalize">{m.memory_type}</span>
             <span className="text-[10px] text-slate-600">
@@ -483,6 +525,7 @@ function MemoryTab({ memories, leadName }: { memories: LeadMemory[]; leadName: s
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function RecordingDetailPage() {
+  const { isDark } = useSiteTheme();
   const params = useParams();
   const router = useRouter();
   const { apiFetch } = useWorkspace();
@@ -557,9 +600,9 @@ export default function RecordingDetailPage() {
     return (
       <div className="flex-1 px-4 py-6 lg:px-8">
         <div className="max-w-3xl space-y-4">
-          <div className="h-8 w-48 animate-pulse rounded-xl bg-white/[0.04]" />
-          <div className="h-16 animate-pulse rounded-2xl bg-white/[0.03]" />
-          <div className="h-64 animate-pulse rounded-2xl bg-white/[0.03]" />
+          <div className={cn('h-8 w-48 animate-pulse rounded-xl', isDark ? 'bg-white/[0.04]' : 'bg-zinc-950/[0.05]')} />
+          <div className={cn('h-16 animate-pulse rounded-2xl', isDark ? 'bg-white/[0.03]' : 'bg-zinc-950/[0.05]')} />
+          <div className={cn('h-64 animate-pulse rounded-2xl', isDark ? 'bg-white/[0.03]' : 'bg-zinc-950/[0.05]')} />
         </div>
       </div>
     );
@@ -570,7 +613,7 @@ export default function RecordingDetailPage() {
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <p className="text-sm text-slate-500">Recording not found.</p>
-          <button type="button" onClick={() => router.push('/recordings')} className="mt-3 text-sm text-emerald-400 hover:text-emerald-300">
+          <button type="button" onClick={() => router.push('/recordings')} className={cn('mt-3 text-sm', isDark ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-600 hover:text-emerald-700')}>
             ← Back to Recordings
           </button>
         </div>
@@ -687,16 +730,25 @@ export default function RecordingDetailPage() {
         </PlanGate>
 
         {/* Tabs */}
-        <div className="flex gap-1 border-b border-white/[0.07]">
+        <div className={cn('flex gap-1 border-b', isDark ? 'border-white/[0.07]' : 'border-zinc-950/[0.08]')}>
           {TABS.map(({ key, label, count }) => (
             <button key={key} type="button" onClick={() => setTab(key)}
               className={`px-4 py-2.5 text-sm font-medium transition border-b-2 -mb-px flex items-center gap-1.5 ${
-                tab === key ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-300'
+                tab === key
+                  ? isDark
+                    ? 'border-emerald-500 text-emerald-400'
+                    : 'border-emerald-600 text-emerald-700'
+                  : isDark
+                    ? 'border-transparent text-slate-500 hover:text-slate-300'
+                    : 'border-transparent text-zinc-500 hover:text-zinc-800'
               }`}
             >
               {label}
               {count !== undefined && count > 0 && (
-                <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] text-emerald-400">{count}</span>
+                <span className={cn(
+                    'rounded-full px-1.5 py-0.5 text-[10px]',
+                    isDark ? 'bg-emerald-500/15 text-emerald-400' : 'bg-emerald-500/[0.10] text-emerald-700',
+                  )}>{count}</span>
               )}
             </button>
           ))}

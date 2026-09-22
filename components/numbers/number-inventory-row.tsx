@@ -25,6 +25,7 @@ import {
 } from '@/lib/numbers/health';
 import type { PurchasedNumberRecord } from '@/lib/numbers/inventory';
 import { cn } from '@/lib/utils';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 function fmtPhone(phone: string): string {
   const m = phone.match(/^\+1(\d{3})(\d{3})(\d{4})$/);
@@ -68,6 +69,7 @@ export function NumberInventoryRow({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { isDark } = useSiteTheme();
   const [confirmRelease, setConfirmRelease] = useState(false);
   const [busy, setBusy] = useState<'default' | 'spam' | 'release' | null>(null);
   const [copied, setCopied] = useState(false);
@@ -249,7 +251,12 @@ export function NumberInventoryRow({
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} aria-hidden />
-                <div className="absolute right-0 top-full z-50 mt-1.5 w-44 rounded-xl border border-white/10 bg-zinc-950/95 p-1 shadow-2xl backdrop-blur-xl">
+                <div className={cn(
+                  'absolute right-0 top-full z-50 mt-1.5 w-44 rounded-xl border p-1 shadow-2xl backdrop-blur-xl',
+                  isDark
+                    ? 'border-white/10 bg-zinc-950/95'
+                    : 'border-zinc-950/[0.08] bg-white shadow-[0_16px_50px_rgba(9,9,11,0.14)]',
+                )}>
                   <button
                     type="button"
                     onClick={() => {
@@ -294,7 +301,10 @@ export function NumberInventoryRow({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden border-t border-white/[0.06] bg-black/20"
+            className={cn(
+              'overflow-hidden border-t',
+              isDark ? 'border-white/[0.06] bg-black/20' : 'border-zinc-950/[0.06] bg-zinc-950/[0.02]',
+            )}
           >
             <div className="space-y-4 px-5 py-4">
               <p className="text-sm leading-relaxed text-slate-400">{num.health_insight}</p>
@@ -397,8 +407,12 @@ function MetricPill({
   sub?: string;
   highlight?: boolean;
 }) {
+  const { isDark } = useSiteTheme();
   return (
-    <div className="rounded-lg border border-white/[0.06] bg-black/20 px-2.5 py-1.5">
+    <div className={cn(
+      'rounded-lg border px-2.5 py-1.5',
+      isDark ? 'border-white/[0.06] bg-black/20' : 'border-zinc-950/[0.07] bg-white shadow-sm',
+    )}>
       <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-600">{label}</p>
       <p className={cn('mt-0.5 text-xs font-semibold tabular-nums', highlight ? 'text-emerald-400' : 'text-slate-300')}>
         {value}

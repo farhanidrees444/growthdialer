@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { useSiteTheme } from '@/components/theme/site-theme';
 import { cn } from '@/lib/utils';
 
 interface ConfirmDialogProps {
@@ -39,10 +40,16 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const isDestructive = variant === 'destructive';
   const Icon = isDestructive ? Trash2 : AlertTriangle;
+  const { isDark } = useSiteTheme();
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="border-white/10 bg-[oklch(0.09_0.006_285)] sm:max-w-md">
+      <AlertDialogContent className={cn(
+        'sm:max-w-md',
+        isDark
+          ? 'border-white/10 bg-[oklch(0.09_0.006_285)]'
+          : 'border-zinc-950/[0.08] bg-white shadow-[0_24px_70px_rgba(76,29,149,0.12)]',
+      )}>
         <AlertDialogHeader className="items-center text-center sm:text-center">
           <div
             className={cn(
@@ -52,13 +59,13 @@ export function ConfirmDialog({
           >
             <Icon className="h-5 w-5" />
           </div>
-          <AlertDialogTitle className="text-base font-semibold text-white">{title}</AlertDialogTitle>
+          <AlertDialogTitle className={cn('text-base font-semibold', isDark ? 'text-white' : 'text-zinc-950')}>{title}</AlertDialogTitle>
           <AlertDialogDescription className="text-muted-foreground leading-relaxed">
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="sm:justify-center gap-2">
-          <AlertDialogCancel disabled={loading} className="border-white/10">
+          <AlertDialogCancel disabled={loading} className={isDark ? 'border-white/10' : 'border-zinc-950/10'}>
             {cancelLabel}
           </AlertDialogCancel>
           <Button

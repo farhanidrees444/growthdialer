@@ -1,6 +1,7 @@
 'use client';
 
 import { Phone, Clock, ChevronRight } from 'lucide-react';
+import { useSiteTheme } from '@/components/theme/site-theme';
 import { cn } from '@/lib/utils';
 
 interface Step {
@@ -10,6 +11,7 @@ interface Step {
 }
 
 export function SequenceTimeline({ steps }: { steps: Step[] }) {
+  const { isDark } = useSiteTheme();
   const sorted = [...steps].sort((a, b) => a.step_order - b.step_order);
 
   return (
@@ -20,8 +22,12 @@ export function SequenceTimeline({ steps }: { steps: Step[] }) {
             className={cn(
               'inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium',
               step.step_type === 'call'
-                ? 'border-cyan-500/25 bg-cyan-500/10 text-cyan-200'
-                : 'border-amber-500/25 bg-amber-500/10 text-amber-200',
+                ? isDark
+                  ? 'border-cyan-500/25 bg-cyan-500/10 text-cyan-200'
+                  : 'border-cyan-600/30 bg-cyan-500/10 text-cyan-700'
+                : isDark
+                  ? 'border-amber-500/25 bg-amber-500/10 text-amber-200'
+                  : 'border-amber-600/30 bg-amber-500/10 text-amber-700',
             )}
           >
             {step.step_type === 'call' ? (

@@ -32,6 +32,7 @@ import {
 } from '@/lib/calls/display';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 type DirectionFilter = 'all' | 'inbound' | 'outbound';
 type StatusFilter = 'all' | 'missed' | 'connected';
@@ -62,6 +63,7 @@ export default function CallLogsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const { isDark } = useSiteTheme();
   const callsRef = useRef<CallLogRow[]>([]);
   callsRef.current = calls;
 
@@ -158,9 +160,17 @@ export default function CallLogsPage() {
           <CallLogsStatsStrip stats={stats} className="dash-enter dash-enter-1 mb-6" />
         )}
 
-        <div className="dash-enter dash-enter-2 sticky top-0 z-10 -mx-1 mb-4 space-y-3 rounded-2xl border border-white/[0.06] bg-zinc-950/80 p-3 backdrop-blur-md">
+        <div className={cn(
+            'dash-enter dash-enter-2 sticky top-0 z-10 -mx-1 mb-4 space-y-3 rounded-2xl border p-3 backdrop-blur-md',
+            isDark
+              ? 'border-white/[0.06] bg-zinc-950/80'
+              : 'border-zinc-950/[0.06] bg-white/85 shadow-[0_8px_28px_rgba(9,9,11,0.07)]',
+          )}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-1 rounded-xl border border-white/[0.08] bg-black/30 p-1">
+            <div className={cn(
+                    'flex gap-1 rounded-xl border p-1',
+                    isDark ? 'border-white/[0.08] bg-black/30' : 'border-zinc-950/[0.08] bg-zinc-950/[0.03]',
+                  )}>
               {TABS.map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
@@ -169,8 +179,12 @@ export default function CallLogsPage() {
                   className={cn(
                     'flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-all',
                     direction === id
-                      ? 'border border-sky-500/25 bg-sky-500/10 text-sky-200 shadow-[0_0_16px_rgba(56,189,248,0.12)]'
-                      : 'text-slate-500 hover:text-white',
+                      ? isDark
+                        ? 'border border-sky-500/25 bg-sky-500/10 text-sky-200 shadow-[0_0_16px_rgba(56,189,248,0.12)]'
+                        : 'border border-sky-600/30 bg-sky-500/[0.08] text-sky-700 shadow-[0_4px_14px_rgba(2,132,199,0.12)]'
+                      : isDark
+                        ? 'text-slate-500 hover:text-white'
+                        : 'text-zinc-500 hover:text-zinc-900',
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -187,8 +201,12 @@ export default function CallLogsPage() {
                   className={cn(
                     'rounded-lg px-2.5 py-1.5 text-[11px] font-semibold capitalize border transition',
                     statusFilter === f
-                      ? 'border-sky-500/30 bg-sky-500/10 text-sky-300'
-                      : 'border-white/[0.08] text-slate-500 hover:text-white',
+                      ? isDark
+                        ? 'border-sky-500/30 bg-sky-500/10 text-sky-300'
+                        : 'border-sky-600/30 bg-sky-500/[0.08] text-sky-700'
+                      : isDark
+                        ? 'border-white/[0.08] text-slate-500 hover:text-white'
+                        : 'border-zinc-950/[0.08] text-zinc-500 hover:text-zinc-900',
                   )}
                 >
                   {f === 'all' ? 'Any status' : f}
@@ -203,7 +221,12 @@ export default function CallLogsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search name, number, or company…"
-              className="dash-input h-10 pl-9"
+              className={cn(
+                'h-10 pl-9',
+                isDark
+                  ? 'dash-input'
+                  : 'rounded-lg border border-zinc-950/10 bg-white text-[14px] text-zinc-900 placeholder:text-zinc-400 shadow-sm',
+              )}
             />
           </div>
         </div>
@@ -220,7 +243,10 @@ export default function CallLogsPage() {
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="dash-skeleton h-[76px] rounded-2xl!"
+                className={cn(
+                  'h-[76px] rounded-2xl',
+                  isDark ? 'dash-skeleton' : 'animate-pulse bg-zinc-950/[0.05]',
+                )}
                 aria-hidden
               />
             ))}
@@ -244,7 +270,10 @@ export default function CallLogsPage() {
               <h2 className="mb-2.5 flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-500">
                 <span className="h-px flex-1 bg-gradient-to-r from-sky-500/20 to-transparent" />
                 {DATE_GROUP_LABELS[group]}
-                <span className="rounded-full border border-sky-500/15 bg-sky-500/10 px-2 py-0.5 text-[10px] tabular-nums text-sky-400/80">
+                <span className={cn(
+                    'rounded-full border border-sky-500/15 bg-sky-500/10 px-2 py-0.5 text-[10px] tabular-nums',
+                    isDark ? 'text-sky-400/80' : 'text-sky-600',
+                  )}>
                   {sectionCalls.length}
                 </span>
                 <span className="h-px flex-1 bg-gradient-to-l from-sky-500/20 to-transparent" />

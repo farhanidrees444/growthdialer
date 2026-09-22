@@ -6,6 +6,8 @@ import { Line, LineChart, ResponsiveContainer } from 'recharts';
 import { Brain, Phone, Target } from 'lucide-react';
 import { AgentCoachingProfile } from './AgentCoachingProfile';
 import { LiveMonitorGrid } from './LiveMonitorGrid';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 import type { AgentRosterRow, CoachingCall, CoachingNote, CoachingScore } from './types';
 
 const SPRING = { type: 'spring', stiffness: 200, damping: 25 } as const;
@@ -24,6 +26,7 @@ export function CoachingDashboard({
   notesByAgent: Record<string, CoachingNote[]>;
 }) {
   const [selectedAgentId, setSelectedAgentId] = useState(roster[0]?.agent_id ?? '');
+  const { isDark } = useSiteTheme();
   const selected = roster.find((row) => row.agent_id === selectedAgentId) ?? roster[0] ?? null;
   const teamAvg = useMemo(
     () => Math.round(roster.reduce((sum, row) => sum + row.avg_score, 0) / Math.max(1, roster.length)),
@@ -33,7 +36,12 @@ export function CoachingDashboard({
   return (
     <main className="flex-1 overflow-y-auto bg-zinc-950 px-4 py-5 text-white lg:px-6">
       <div className="mx-auto max-w-7xl space-y-5">
-        <div className="rounded-3xl border border-white/10 bg-black/40 p-6 backdrop-blur">
+        <div className={cn(
+          'rounded-3xl border p-6 backdrop-blur',
+          isDark
+            ? 'border-white/10 bg-black/40'
+            : 'border-zinc-950/[0.07] bg-white shadow-[0_12px_40px_rgba(9,9,11,0.07)]',
+        )}>
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#8B5CF6]/25 bg-[#8B5CF6]/10 px-3 py-1 text-xs text-violet-100">
@@ -69,11 +77,14 @@ export function CoachingDashboard({
                 layout
                 transition={SPRING}
                 onClick={() => setSelectedAgentId(agent.agent_id)}
-                className={`w-full rounded-2xl border p-4 text-left backdrop-blur transition ${
+                className={cn(
+                  'w-full rounded-2xl border p-4 text-left backdrop-blur transition',
                   selectedAgentId === agent.agent_id
                     ? 'border-[#8B5CF6]/50 bg-[#8B5CF6]/15'
-                    : 'border-white/10 bg-black/40 hover:bg-white/[0.04]'
-                }`}
+                    : isDark
+                      ? 'border-white/10 bg-black/40 hover:bg-white/[0.04]'
+                      : 'border-zinc-950/[0.07] bg-white shadow-[0_4px_16px_rgba(9,9,11,0.05)] hover:border-violet-500/25',
+                )}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -98,7 +109,12 @@ export function CoachingDashboard({
               </motion.button>
             ))}
             {!roster.length && (
-              <div className="rounded-2xl border border-white/10 bg-black/40 p-5 text-sm text-slate-400 backdrop-blur">
+              <div className={cn(
+                'rounded-2xl border p-5 text-sm backdrop-blur',
+                isDark
+                  ? 'border-white/10 bg-black/40 text-slate-400'
+                  : 'border-zinc-950/[0.07] bg-white text-zinc-500 shadow-[0_4px_16px_rgba(9,9,11,0.05)]',
+              )}>
                 No team members found in this workspace.
               </div>
             )}
@@ -113,7 +129,12 @@ export function CoachingDashboard({
               notes={notesByAgent[selected.agent_id] ?? []}
             />
           ) : (
-            <div className="rounded-3xl border border-white/10 bg-black/40 p-8 text-center text-sm text-slate-400 backdrop-blur">
+            <div className={cn(
+              'rounded-3xl border p-8 text-center text-sm backdrop-blur',
+              isDark
+                ? 'border-white/10 bg-black/40 text-slate-400'
+                : 'border-zinc-950/[0.07] bg-white text-zinc-500 shadow-[0_8px_30px_rgba(9,9,11,0.06)]',
+            )}>
               Select an agent to review coaching intelligence.
             </div>
           )}

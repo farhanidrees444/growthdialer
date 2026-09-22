@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { LockKeyhole, ArrowRight } from 'lucide-react';
 import { PLAN_LABELS, requiredPlanForFeature, type FeatureKey } from './plan-gates';
 import { cn } from '@/lib/utils';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 interface UpgradePromptProps {
   feature: FeatureKey;
@@ -19,6 +20,7 @@ export function UpgradePrompt({
   className,
 }: UpgradePromptProps) {
   const requiredPlan = requiredPlanForFeature(feature);
+  const { isDark } = useSiteTheme();
 
   return (
     <div
@@ -28,7 +30,12 @@ export function UpgradePrompt({
       )}
     >
       <div className="flex items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.10] bg-black/30 text-white/55">
+        <span className={cn(
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border',
+          isDark
+            ? 'border-white/[0.10] bg-black/30 text-white/55'
+            : 'border-violet-500/20 bg-violet-500/[0.08] text-violet-600',
+        )}>
           <LockKeyhole className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">

@@ -850,3 +850,41 @@
 .app-root[data-theme='light'] aside :where(.text-indigo-400) {
   color: #4f46e5;
 }
+
+/* ─── dash-* elevation utilities: @apply inlines dark values, so the generic
+   class remaps can't see them. Give them premium light treatments. ─── */
+.app-root[data-theme='light'] :where(.dash-card) {
+  background-color: #ffffff;
+  border-color: rgb(9 9 11 / 0.07);
+  box-shadow: 0 1px 2px rgba(9, 9, 11, 0.04), 0 10px 28px -16px rgba(9, 9, 11, 0.10);
+}
+.app-root[data-theme='light'] :where(.dash-card-hover):hover {
+  border-color: rgb(9 9 11 / 0.12);
+  box-shadow: 0 12px 32px -8px rgba(9, 9, 11, 0.12), 0 0 0 1px rgba(139, 92, 246, 0.08);
+}
+.app-root[data-theme='light'] :where(.dash-input) {
+  background-color: #ffffff;
+  border-color: rgb(9 9 11 / 0.10);
+  color: #18181b;
+}
+.app-root[data-theme='light'] :where(.dash-input)::placeholder { color: #a1a1aa; }
+.app-root[data-theme='light'] :where(.dash-input):hover { border-color: rgb(9 9 11 / 0.18); }
+.app-root[data-theme='light'] :where(.dash-btn-ghost) {
+  border-color: rgb(9 9 11 / 0.10);
+  background: #ffffff;
+  color: #3f3f46;
+  box-shadow: 0 1px 2px rgba(9, 9, 11, 0.04);
+}
+.app-root[data-theme='light'] :where(.dash-btn-ghost):hover {
+  border-color: rgb(9 9 11 / 0.16);
+  background: #fafafa;
+  color: #18181b;
+}
+.app-root[data-theme='light'] :where(.dash-table-row):hover { background: rgb(9 9 11 / 0.03); }
+.app-root[data-theme='light'] :where(.dash-page-title) { color: #09090b; }
+.app-root[data-theme='light'] :where(.dash-section-title) { color: #09090b; }
+.app-root[data-theme='light'] :where(.dash-muted) { color: #71717a; }
+.app-root[data-theme='light'] :where(.dash-skeleton) {
+  background-color: rgb(9 9 11 / 0.05);
+  background-image: linear-gradient(100deg, transparent 20%, rgba(255,255,255,0.65) 50%, transparent 80%);
+}

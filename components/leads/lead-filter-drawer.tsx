@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Filter, RotateCcw } from 'lucide-react';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 
 export interface LeadFilters {
   statuses: string[];
@@ -74,6 +76,7 @@ interface Props {
 
 export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
   const [draft, setDraft] = useState<LeadFilters>(filters);
+  const { isDark } = useSiteTheme();
 
   const toggleStatus = (v: string) => {
     setDraft((p) => ({
@@ -127,13 +130,21 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 26, stiffness: 280 }}
-            className="fixed right-0 top-0 bottom-0 z-50 flex w-full max-w-sm flex-col border-l border-white/[0.08] bg-[oklch(0.085_0.006_285)] shadow-2xl"
+            className={cn(
+              'fixed right-0 top-0 bottom-0 z-50 flex w-full max-w-sm flex-col border-l shadow-2xl',
+              isDark
+                ? 'border-white/[0.08] bg-[oklch(0.085_0.006_285)]'
+                : 'border-zinc-950/[0.08] bg-white shadow-[0_24px_70px_rgba(76,29,149,0.10)]',
+            )}
           >
             {/* Header */}
-            <div className="flex shrink-0 items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+            <div className={cn(
+              'flex shrink-0 items-center justify-between px-5 py-4 border-b',
+              isDark ? 'border-white/[0.06]' : 'border-zinc-950/[0.06]',
+            )}>
               <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-slate-500" />
-                <h2 className="text-sm font-bold text-white">Filter Leads</h2>
+                <Filter className={cn('h-4 w-4', isDark ? 'text-slate-500' : 'text-zinc-400')} />
+                <h2 className={cn('text-sm font-bold', isDark ? 'text-white' : 'text-zinc-950')}>Filter Leads</h2>
                 {filterActive && (
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-black">
                     {[draft.statuses.length > 0, draft.sources.length > 0, !!draft.lastContact, draft.hasPhone !== null, draft.hasEmail !== null, draft.hasNotes !== null].filter(Boolean).length}
@@ -141,7 +152,12 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
                 )}
               </div>
               <button type="button" onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.07] text-slate-500 hover:text-white transition">
+                className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-xl border transition',
+                  isDark
+                    ? 'border-white/[0.07] text-slate-500 hover:text-white'
+                    : 'border-zinc-950/10 bg-white text-zinc-400 shadow-sm hover:text-zinc-700',
+                )}>
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -156,12 +172,16 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
                       key={value}
                       type="button"
                       onClick={() => toggleStatus(value)}
-                      className={[
+                      className={cn(
                         'rounded-full px-3 py-1.5 text-xs font-semibold transition',
                         draft.statuses.includes(value)
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                          : 'border border-white/[0.07] text-slate-500 hover:text-slate-300 hover:border-white/10',
-                      ].join(' ')}
+                          ? isDark
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                            : 'bg-emerald-500/12 text-emerald-700 border border-emerald-600/30'
+                          : isDark
+                            ? 'border border-white/[0.07] text-slate-500 hover:text-slate-300 hover:border-white/10'
+                            : 'border border-zinc-950/10 text-zinc-500 hover:text-zinc-800 hover:border-zinc-950/20',
+                      )}
                     >
                       {label}
                     </button>
@@ -177,12 +197,16 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
                       key={value}
                       type="button"
                       onClick={() => toggleSource(value)}
-                      className={[
+                      className={cn(
                         'rounded-full px-3 py-1.5 text-xs font-semibold transition',
                         draft.sources.includes(value)
-                          ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                          : 'border border-white/[0.07] text-slate-500 hover:text-slate-300 hover:border-white/10',
-                      ].join(' ')}
+                          ? isDark
+                            ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                            : 'bg-blue-500/12 text-blue-700 border border-blue-600/30'
+                          : isDark
+                            ? 'border border-white/[0.07] text-slate-500 hover:text-slate-300 hover:border-white/10'
+                            : 'border border-zinc-950/10 text-zinc-500 hover:text-zinc-800 hover:border-zinc-950/20',
+                      )}
                     >
                       {label}
                     </button>
@@ -198,12 +222,16 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
                       key={value}
                       type="button"
                       onClick={() => setDraft((p) => ({ ...p, lastContact: value }))}
-                      className={[
+                      className={cn(
                         'rounded-xl px-3 py-2 text-xs font-semibold text-left transition',
                         draft.lastContact === value
-                          ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
-                          : 'border border-white/[0.06] text-slate-500 hover:text-slate-300 hover:border-white/10',
-                      ].join(' ')}
+                          ? isDark
+                            ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+                            : 'bg-violet-500/12 text-violet-700 border border-violet-600/30'
+                          : isDark
+                            ? 'border border-white/[0.06] text-slate-500 hover:text-slate-300 hover:border-white/10'
+                            : 'border border-zinc-950/10 text-zinc-500 hover:text-zinc-800 hover:border-zinc-950/20',
+                      )}
                     >
                       {label}
                     </button>
@@ -219,7 +247,7 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
                     { label: 'Has notes', field: 'hasNotes' as const },
                   ].map(({ label, field }) => (
                     <div key={field} className="flex items-center justify-between">
-                      <span className="text-sm text-slate-400">{label}</span>
+                      <span className={cn('text-sm', isDark ? 'text-slate-400' : 'text-zinc-600')}>{label}</span>
                       <div className="flex gap-1.5">
                         {(['Any', 'Yes', 'No'] as const).map((opt) => {
                           const val = opt === 'Any' ? null : opt === 'Yes';
@@ -229,12 +257,16 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
                               key={opt}
                               type="button"
                               onClick={() => setDraft((p) => ({ ...p, [field]: val }))}
-                              className={[
+                              className={cn(
                                 'rounded-lg px-2.5 py-1 text-xs font-semibold transition',
                                 active
-                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                  : 'border border-white/[0.06] text-slate-600 hover:text-slate-300',
-                              ].join(' ')}
+                                  ? isDark
+                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                    : 'bg-emerald-500/12 text-emerald-700 border border-emerald-600/30'
+                                  : isDark
+                                    ? 'border border-white/[0.06] text-slate-600 hover:text-slate-300'
+                                    : 'border border-zinc-950/10 text-zinc-500 hover:text-zinc-800',
+                              )}
                             >
                               {opt}
                             </button>
@@ -257,7 +289,12 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
                       max={50}
                       value={draft.minAttempts}
                       onChange={(e) => setDraft((p) => ({ ...p, minAttempts: Number(e.target.value) }))}
-                      className="dash-input w-full px-3 py-2"
+                      className={cn(
+                        'w-full rounded-lg border px-3 py-2 text-[14px] transition-all duration-150',
+                        isDark
+                          ? 'dash-input'
+                          : 'border-zinc-950/10 bg-white text-zinc-900 shadow-sm focus:border-violet-500/50 focus:outline-none focus:ring-[0_0_0_3px_rgba(139,92,246,0.15)]',
+                      )}
                     />
                   </div>
                   <span className="mt-4 text-slate-600">–</span>
@@ -270,7 +307,12 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
                       value={draft.maxAttempts === 999 ? '' : draft.maxAttempts}
                       placeholder="Any"
                       onChange={(e) => setDraft((p) => ({ ...p, maxAttempts: e.target.value ? Number(e.target.value) : 999 }))}
-                      className="dash-input w-full px-3 py-2"
+                      className={cn(
+                        'w-full rounded-lg border px-3 py-2 text-[14px] transition-all duration-150 placeholder:text-zinc-400',
+                        isDark
+                          ? 'dash-input'
+                          : 'border-zinc-950/10 bg-white text-zinc-900 shadow-sm focus:border-violet-500/50 focus:outline-none focus:ring-[0_0_0_3px_rgba(139,92,246,0.15)]',
+                      )}
                     />
                   </div>
                 </div>
@@ -278,11 +320,19 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
             </div>
 
             {/* Footer */}
-            <div className="shrink-0 flex gap-2 border-t border-white/[0.06] px-5 py-4">
+            <div className={cn(
+              'shrink-0 flex gap-2 border-t px-5 py-4',
+              isDark ? 'border-white/[0.06]' : 'border-zinc-950/[0.06]',
+            )}>
               <button
                 type="button"
                 onClick={reset}
-                className="dash-btn-ghost px-4"
+                className={cn(
+                  'px-4',
+                  isDark
+                    ? 'dash-btn-ghost'
+                    : 'inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-950/10 bg-white py-2 text-[14px] font-medium text-zinc-700 shadow-[0_1px_2px_rgba(9,9,11,0.05)] transition-all duration-150 select-none hover:border-violet-500/30 hover:bg-violet-50/60 hover:text-zinc-900',
+                )}
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 Reset
@@ -291,7 +341,12 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
                 type="button"
                 onClick={apply}
                 disabled={!hasChanges}
-                className="dash-btn-primary flex-1"
+                className={cn(
+                  'flex-1',
+                  isDark
+                    ? 'dash-btn-primary'
+                    : 'inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-[14px] font-medium text-white shadow-[0_8px_20px_-6px_rgba(124,58,237,0.5)] transition-all duration-150 select-none hover:bg-violet-500 disabled:opacity-50',
+                )}
               >
                 Apply Filters
               </button>

@@ -28,13 +28,42 @@ import {
   isVoicemailCall,
 } from '@/lib/calls/display';
 import { cn } from '@/lib/utils';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 interface CallLogRowCardProps {
   call: CallLogRow;
   index?: number;
 }
 
+const LIGHT_DISP_COLORS: Record<string, string> = {
+  interested: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/25',
+  callback: 'bg-amber-500/10 text-amber-700 border-amber-500/25',
+  meeting_booked: 'bg-violet-500/10 text-violet-700 border-violet-500/25',
+  voicemail: 'bg-blue-500/10 text-blue-700 border-blue-500/25',
+  not_interested: 'bg-zinc-500/10 text-zinc-600 border-zinc-500/20',
+  wrong_number: 'bg-red-500/10 text-red-700 border-red-500/25',
+  gatekeeper: 'bg-purple-500/10 text-purple-700 border-purple-500/25',
+  dnc: 'bg-red-600/10 text-red-700 border-red-600/25',
+  missed: 'bg-red-500/10 text-red-700 border-red-500/20',
+  no_answer: 'bg-zinc-500/10 text-zinc-600 border-zinc-500/20',
+};
+
+const LIGHT_STATUS_PILL: Record<string, string> = {
+  Voicemail: 'bg-blue-500/10 text-blue-700 border-blue-500/25',
+  Missed: 'bg-red-500/10 text-red-700 border-red-500/25',
+  Connected: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/25',
+  'No answer': 'bg-zinc-500/10 text-zinc-600 border-zinc-500/20',
+};
+
+const LIGHT_ICON_COLOR: Record<string, string> = {
+  'text-red-400': 'text-red-600',
+  'text-blue-400': 'text-blue-600',
+  'text-sky-400': 'text-sky-600',
+  'text-cyan-400': 'text-cyan-600',
+};
+
 export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
+  const { isDark } = useSiteTheme();
   const missed = isMissedCall(call);
   const connected = isConnected(call);
   const voicemail = isVoicemailCall(call);
@@ -77,7 +106,7 @@ export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
           iconWrap,
         )}
       >
-        <DirectionIcon className={cn('h-4 w-4', iconColor)} />
+        <DirectionIcon className={cn('h-4 w-4', isDark ? iconColor : (LIGHT_ICON_COLOR[iconColor] ?? iconColor))} />
       </div>
 
       <div className="min-w-0 flex-1">
@@ -86,7 +115,7 @@ export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
           <span
             className={cn(
               'rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider',
-              statusPill.className,
+              isDark ? statusPill.className : (LIGHT_STATUS_PILL[statusPill.label] ?? statusPill.className),
             )}
           >
             {statusPill.label}
@@ -95,14 +124,20 @@ export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
             <span
               className={cn(
                 'rounded-full border px-2 py-0.5 text-[9px] font-semibold capitalize',
-                DISP_COLORS[call.disposition] ?? 'bg-white/[0.05] text-slate-400 border-white/[0.08]',
+                isDark
+                  ? (DISP_COLORS[call.disposition] ?? 'bg-white/[0.05] text-slate-400 border-white/[0.08]')
+                  : (LIGHT_DISP_COLORS[call.disposition] ??
+                    'bg-zinc-950/[0.04] text-zinc-500 border-zinc-950/[0.08]'),
               )}
             >
               {disp}
             </span>
           )}
           {(call.was_recorded || call.recording_url) && (
-            <span className="flex items-center gap-0.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-400">
+            <span className={cn(
+              'flex items-center gap-0.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-semibold',
+              isDark ? 'text-emerald-400' : 'text-emerald-600',
+            )}>
               <Mic className="h-2.5 w-2.5" />
               Rec
             </span>
@@ -147,7 +182,12 @@ export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
           <Link
             href={`/leads/${call.lead_id}`}
             onClick={(e) => e.stopPropagation()}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-400 transition hover:border-white/20 hover:text-white"
+            className={cn(
+              'flex h-10 w-10 items-center justify-center rounded-xl border transition',
+              isDark
+                ? 'border-white/10 bg-white/[0.04] text-slate-400 hover:border-white/20 hover:text-white'
+                : 'border-zinc-950/10 bg-white text-zinc-500 shadow-sm hover:border-zinc-950/20 hover:text-zinc-900',
+            )}
             title="View lead"
             aria-label="View lead"
           >
@@ -163,7 +203,9 @@ export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
 
   const cardClass = cn(
     'group relative flex items-center gap-3 rounded-2xl border p-3.5 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.99] sm:p-4',
-    'border-white/[0.07] bg-[oklch(0.09_0.006_285)]',
+    isDark
+      ? 'border-white/[0.07] bg-[oklch(0.09_0.006_285)]'
+      : 'border-zinc-950/[0.07] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.05)]',
     missed && 'hover:border-red-500/25 hover:shadow-[0_8px_24px_rgba(239,68,68,0.08)]',
     connected && !missed && 'hover:border-emerald-500/20 hover:shadow-[0_8px_24px_rgba(52,211,153,0.08)]',
     !missed && !connected && inbound && 'hover:border-sky-500/20 hover:shadow-[0_8px_24px_rgba(56,189,248,0.08)]',

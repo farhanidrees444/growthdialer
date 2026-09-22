@@ -1,12 +1,21 @@
 'use client';
 
 import { Lightbulb, Quote } from 'lucide-react';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 import type { CoachingMoment } from './types';
 
 export function CoachableMomentsFeed({ moments }: { moments: CoachingMoment[] }) {
+  const { isDark } = useSiteTheme();
+  const panelClass = cn(
+    'rounded-2xl border p-4 backdrop-blur',
+    isDark
+      ? 'border-white/10 bg-black/40'
+      : 'border-zinc-950/[0.07] bg-white shadow-[0_4px_16px_rgba(9,9,11,0.05)]',
+  );
   if (!moments.length) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-black/40 p-5 text-sm text-slate-400 backdrop-blur">
+      <div className={cn(panelClass, 'p-5 text-sm', isDark ? 'text-slate-400' : 'text-zinc-500')}>
         No coachable moments yet. Score a call to generate targeted coaching prompts.
       </div>
     );
@@ -15,7 +24,7 @@ export function CoachableMomentsFeed({ moments }: { moments: CoachingMoment[] })
   return (
     <div className="space-y-3">
       {moments.map((moment, index) => (
-        <div key={`${moment.title ?? 'moment'}-${index}`} className="rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur">
+        <div key={`${moment.title ?? 'moment'}-${index}`} className={panelClass}>
           <div className="mb-2 flex items-center gap-2">
             <Lightbulb className="h-4 w-4 text-[#06B6D4]" />
             <p className="text-sm font-semibold text-white">{moment.title ?? 'Coachable moment'}</p>

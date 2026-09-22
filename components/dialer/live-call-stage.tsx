@@ -10,6 +10,7 @@ import { DialerStageAmbient } from './dialer-stage-ambient';
 import { cn } from '@/lib/utils';
 import type { LeadRecord } from '@/lib/dialer/dialer-types';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 interface LiveCallStageProps {
   lead: LeadRecord;
@@ -48,6 +49,7 @@ export function LiveCallStage({
   onDropVoicemail, onOpenKeypad, onEndCall, callDbId,
 }: LiveCallStageProps) {
   const { apiFetch } = useWorkspace();
+  const { isDark } = useSiteTheme();
   const isConnected = callStatus === 'active';
   const { formatted } = useCallTimer(isConnected);
   const gradient = getAvatarGradient(lead.id);
@@ -134,15 +136,22 @@ export function LiveCallStage({
 
       {/* Name & status */}
       <div className="relative z-10 space-y-1 text-center">
-        <h1 className="bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-4xl font-light text-transparent">
+        <h1
+          className={cn(
+            'text-4xl font-light',
+            isDark
+              ? 'bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent'
+              : 'text-zinc-950',
+          )}
+        >
           {lead.name}
         </h1>
-        <p className="text-base text-white/50">{[lead.title, lead.company].filter(Boolean).join(' · ')}</p>
+        <p className={cn('text-base', isDark ? 'text-white/50' : 'text-zinc-500')}>{[lead.title, lead.company].filter(Boolean).join(' · ')}</p>
         <div className="mt-1 flex items-center justify-center gap-2">
           <span
             className={cn(
               'inline-flex items-center gap-1.5 text-sm font-medium',
-              isOnHold ? 'text-amber-400' : isConnected ? 'text-emerald-400' : 'text-white/40',
+              isOnHold ? 'text-amber-400' : isConnected ? 'text-emerald-400' : isDark ? 'text-white/40' : 'text-zinc-400',
             )}
           >
             {isConnected && !isOnHold && <span className="dash-live-dot" aria-hidden />}
@@ -158,7 +167,7 @@ export function LiveCallStage({
 
       {/* Timer */}
       <div
-        className="relative z-10 font-mono text-2xl tabular-nums text-white/80"
+        className={cn('relative z-10 font-mono text-2xl tabular-nums', isDark ? 'text-white/80' : 'text-zinc-800')}
         aria-live="polite"
         aria-label={`Call duration ${formatted}`}
       >
@@ -181,10 +190,10 @@ export function LiveCallStage({
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Notes... (auto-saved)"
                 rows={4}
-                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/25 resize-none focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                className={cn('w-full border rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-cyan-400', isDark ? 'bg-white/[0.05] border-white/[0.08] text-white placeholder:text-white/25' : 'bg-white border-zinc-950/[0.10] text-zinc-900 placeholder:text-zinc-400 shadow-sm')}
               />
               {savedAt && (
-                <span className="absolute bottom-3 right-3 text-[10px] text-white/25">Saved {savedAt}</span>
+                <span className={cn('absolute bottom-3 right-3 text-[10px]', isDark ? 'text-white/25' : 'text-zinc-400')}>Saved {savedAt}</span>
               )}
             </div>
           </motion.div>

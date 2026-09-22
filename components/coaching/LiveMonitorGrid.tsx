@@ -6,6 +6,8 @@ import { Loader2, Radio } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { AgentCallCard } from './AgentCallCard';
 import { WhisperDrawer } from './WhisperDrawer';
+import { useSiteTheme } from '@/components/theme/site-theme';
+import { cn } from '@/lib/utils';
 import type { LiveCall } from './types';
 
 export function LiveMonitorGrid({ workspaceId }: { workspaceId: string | null }) {
@@ -14,6 +16,7 @@ export function LiveMonitorGrid({ workspaceId }: { workspaceId: string | null })
   const [drawerCall, setDrawerCall] = useState<LiveCall | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { isDark } = useSiteTheme();
 
   const fetchCalls = useCallback(async () => {
     try {
@@ -62,7 +65,12 @@ export function LiveMonitorGrid({ workspaceId }: { workspaceId: string | null })
   }
 
   return (
-    <section className="rounded-3xl border border-white/10 bg-black/30 p-4 backdrop-blur">
+    <section className={cn(
+      'rounded-3xl border p-4 backdrop-blur',
+      isDark
+        ? 'border-white/10 bg-black/30'
+        : 'border-zinc-950/[0.07] bg-white shadow-[0_12px_40px_rgba(9,9,11,0.07)]',
+    )}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
@@ -87,7 +95,12 @@ export function LiveMonitorGrid({ workspaceId }: { workspaceId: string | null })
           <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
         </div>
       ) : calls.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-black/40 p-8 text-center text-sm text-slate-400">
+        <div className={cn(
+          'rounded-2xl border p-8 text-center text-sm',
+          isDark
+            ? 'border-white/10 bg-black/40 text-slate-400'
+            : 'border-zinc-950/[0.07] bg-zinc-950/[0.015] text-zinc-500',
+        )}>
           No live calls right now.
         </div>
       ) : (

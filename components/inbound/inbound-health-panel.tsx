@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CheckCircle2, Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { useSiteTheme } from '@/components/theme/site-theme';
 import { cn } from '@/lib/utils';
 
 type InboundStatus = 'live' | 'almost_ready' | 'needs_setup' | 'offline';
@@ -34,6 +35,7 @@ interface Props {
 
 export function InboundHealthPanel({ phoneReady }: Props) {
   const { apiFetch } = useWorkspace();
+  const { isDark } = useSiteTheme();
   const [health, setHealth] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState(false);
@@ -148,11 +150,16 @@ export function InboundHealthPanel({ phoneReady }: Props) {
       </div>
 
       {(health.blockers?.length ?? 0) > 0 && (
-        <ul className="relative mt-3 space-y-2 rounded-xl border border-white/[0.06] bg-black/25 px-4 py-3">
+        <ul className={cn(
+          'relative mt-3 space-y-2 rounded-xl border px-4 py-3',
+          isDark
+            ? 'border-white/[0.06] bg-black/25'
+            : 'border-amber-600/15 bg-amber-500/[0.06]',
+        )}>
           {health.blockers!.slice(0, 3).map((b) => (
             <li key={b.code} className="text-xs leading-relaxed">
-              <span className="font-medium text-amber-100/90">{b.label}</span>
-              <span className="text-white/45"> — {b.fix}</span>
+              <span className={cn('font-medium', isDark ? 'text-amber-100/90' : 'text-amber-700')}>{b.label}</span>
+              <span className={isDark ? 'text-white/45' : 'text-zinc-500'}> — {b.fix}</span>
             </li>
           ))}
         </ul>

@@ -20,6 +20,7 @@ import {
 } from '@/lib/numbers/inventory';
 import { sortNumbersByPriority } from '@/lib/numbers/health';
 import { cn } from '@/lib/utils';
+import { useSiteTheme } from '@/components/theme/site-theme';
 
 const FILTERS: { key: NumberFilter; label: string }[] = [
   { key: 'all', label: 'All lines' },
@@ -42,6 +43,7 @@ export function MyNumbersPanel({
   const [filter, setFilter] = useState<NumberFilter>('all');
   const [view, setView] = useState<'list' | 'grid'>('list');
   const [bulkChecking, setBulkChecking] = useState(false);
+  const { isDark } = useSiteTheme();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -338,13 +340,18 @@ export function MyNumbersPanel({
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex rounded-xl border border-white/10 bg-black/20 p-0.5">
+          <div className={cn(
+              'flex rounded-xl border p-0.5',
+              isDark ? 'border-white/10 bg-black/20' : 'border-zinc-950/[0.08] bg-zinc-950/[0.03]',
+            )}>
             <button
               type="button"
               onClick={() => setView('list')}
               className={cn(
                 'flex h-9 w-9 items-center justify-center rounded-lg transition',
-                view === 'list' ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-slate-300',
+                view === 'list'
+                  ? isDark ? 'bg-white/10 text-white' : 'bg-white text-zinc-900 shadow-sm'
+                  : isDark ? 'text-slate-500 hover:text-slate-300' : 'text-zinc-400 hover:text-zinc-600',
               )}
               aria-label="List view"
             >
@@ -355,7 +362,9 @@ export function MyNumbersPanel({
               onClick={() => setView('grid')}
               className={cn(
                 'flex h-9 w-9 items-center justify-center rounded-lg transition',
-                view === 'grid' ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-slate-300',
+                view === 'grid'
+                  ? isDark ? 'bg-white/10 text-white' : 'bg-white text-zinc-900 shadow-sm'
+                  : isDark ? 'text-slate-500 hover:text-slate-300' : 'text-zinc-400 hover:text-zinc-600',
               )}
               aria-label="Grid view"
             >
