@@ -8,7 +8,6 @@ import {
 } from '@/components/marketing/v2/Sections';
 import { Reveal } from '@/components/ui/reveal';
 import { INTEGRATION_BRANDS } from '@/lib/marketing/integration-brands';
-import { IntegrationsFlowVisual } from '@/components/marketing/visuals';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
@@ -88,15 +87,6 @@ export default function IntegrationsMarketingPage() {
                   {devCount} in development
                 </span>
               </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* Integration flow — illustrated hub-and-spoke */}
-        <section className="pm-section-tight">
-          <div className="pm-container">
-            <Reveal delay={120}>
-              <IntegrationsFlowVisual />
             </Reveal>
           </div>
         </section>

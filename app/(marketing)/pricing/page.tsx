@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import Image from "next/image";
 import { Check } from "lucide-react";
 import { Navbar, Footer } from "@/components/marketing/v2/Chrome";
 import { PricingPage as SharedPricingPage } from "@/components/pricing/pricing-page";
 import { Reveal } from "@/components/ui/reveal";
-import { DashboardVisual } from "@/components/marketing/visuals";
 import { MARKETING_SITE } from "@/lib/marketing/navigation";
 
 export const metadata: Metadata = {
@@ -35,12 +35,12 @@ export default function PricingPage() {
         <SharedPricingPage />
       </Suspense>
 
-      {/* Product proof — an illustrated look at what the money buys */}
+      {/* Actual product proof — anchored with a real screenshot, not a mockup */}
       <section className="pm-section-tight pm-divider">
         <div className="pm-container grid items-center gap-10 lg:grid-cols-[1fr_1.5fr] lg:gap-14">
           <Reveal>
             <p className="pm-eyebrow">What the money buys</p>
-            <h2 className="pm-h-section mt-4">See what the money buys.</h2>
+            <h2 className="pm-h-section mt-4">The actual product, not a rendering.</h2>
             <ul className="mt-6 space-y-3">
               {PROOF_POINTS.map((point) => (
                 <li key={point} className="pm-tick">
@@ -62,9 +62,16 @@ export default function PricingPage() {
                 </span>
                 <span className="text-[12.5px] font-medium text-zinc-500">GrowthDialer dashboard</span>
               </div>
-              <DashboardVisual badges={false} />
+              <Image
+                src="/images/product/dashboard-main.webp"
+                width={1600}
+                height={578}
+                alt="Actual GrowthDialer dashboard screenshot"
+                sizes="(max-width: 1024px) 100vw, 58vw"
+                className="block h-auto w-full"
+              />
               <figcaption className="border-t border-zinc-950/[0.07] bg-zinc-50/70 px-5 py-3.5 text-[12.5px] text-zinc-500">
-                Illustrated preview of the command-center dashboard.
+                Actual GrowthDialer product UI — screenshot from the live app.
               </figcaption>
             </figure>
           </Reveal>
