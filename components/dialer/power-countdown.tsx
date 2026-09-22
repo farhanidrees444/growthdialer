@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, Phone, Zap, Square, SkipForward, Pause, Play } from 'lucide-react';
-import type { LeadRecord } from '@/lib/dialer/state-machine';
+import type { LeadRecord } from '@/lib/dialer/dialer-types';
 
 interface PowerCountdownStageProps {
   lead: LeadRecord;

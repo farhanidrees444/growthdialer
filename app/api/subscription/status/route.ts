@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isBillingEnabled } from '@/lib/billing/billing-flag';
 
 export async function GET() {
   const supabase = await createClient();
@@ -31,5 +32,6 @@ export async function GET() {
     trialEndsAt: data?.trial_ends_at ?? null,
     currentPeriodEnd: data?.current_period_end ?? null,
     active: data?.status === 'active' || data?.status === 'trialing',
+    billingEnabled: isBillingEnabled(),
   });
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Phone, Clock, Activity, Zap,
@@ -158,7 +159,7 @@ function KpiCard({ title, value, deltaLabel, deltaUp, deltaNeutral, spark, color
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 200, damping: 25, delay }}
-      className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl p-5"
+      className="dash-card dash-card-hover relative overflow-hidden p-5"
     >
       {/* Background sparkline */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 opacity-40">
@@ -171,7 +172,7 @@ function KpiCard({ title, value, deltaLabel, deltaUp, deltaNeutral, spark, color
             style={{ background: `${color}18` }}>
             <Icon className="h-4 w-4" style={{ color }} />
           </div>
-          <p className="text-xs font-medium text-white/50">{title}</p>
+          <p className="dash-muted font-medium">{title}</p>
         </div>
         <p className="text-2xl font-bold tabular-nums tracking-tight text-white">
           <AnimatedKpiValue value={value} />
@@ -191,7 +192,7 @@ function KpiCard({ title, value, deltaLabel, deltaUp, deltaNeutral, spark, color
 // ─── Skeleton KPI ─────────────────────────────────────────────────────────────
 
 function SkeletonKpi() {
-  return <div className="h-[112px] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.02]" />;
+  return <div className="dash-skeleton h-[112px]" aria-hidden />;
 }
 
 // ─── Glass card wrapper ───────────────────────────────────────────────────────
@@ -200,10 +201,10 @@ function GCard({ title, subtitle, children, className = '' }: {
   title: string; subtitle?: string; children: React.ReactNode; className?: string;
 }) {
   return (
-    <div className={cn('rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl p-5', className)}>
+    <div className={cn('dash-card p-5', className)}>
       <div className="mb-4">
-        <p className="text-sm font-semibold text-white">{title}</p>
-        {subtitle && <p className="mt-0.5 text-xs text-white/40">{subtitle}</p>}
+        <p className="dash-section-title">{title}</p>
+        {subtitle && <p className="dash-muted mt-0.5">{subtitle}</p>}
       </div>
       {children}
     </div>
@@ -214,7 +215,7 @@ function GCard({ title, subtitle, children, className = '' }: {
 
 function SkeletonChart({ h = 220 }: { h?: number }) {
   return (
-    <div className="animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.02]" style={{ height: h + 56 }} />
+    <div className="dash-skeleton" style={{ height: h + 56 }} aria-hidden />
   );
 }
 
@@ -362,6 +363,12 @@ export default function AnalyticsPage() {
   return (
     <main className="flex-1 overflow-y-auto px-3 py-4 space-y-4 lg:px-6 lg:py-5 lg:space-y-5">
 
+      {/* ── Page title ──────────────────────────────────────────────────── */}
+      <div className="dash-enter">
+        <h1 className="dash-page-title">Analytics</h1>
+        <p className="dash-muted mt-1">Call performance, trends, and AI insights.</p>
+      </div>
+
       {/* ── Controls ──────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         {/* Date range pills */}
@@ -393,10 +400,10 @@ export default function AnalyticsPage() {
               className="flex items-center gap-2 overflow-hidden"
             >
               <input type="date" value={cStart} onChange={(e) => setCStart(e.target.value)}
-                className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs text-white/70 outline-none focus:border-[#8B5CF6]/50 backdrop-blur-xl" />
+                className="dash-input px-3 py-1.5" />
               <span className="text-xs text-white/30">to</span>
               <input type="date" value={cEnd} onChange={(e) => setCEnd(e.target.value)}
-                className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs text-white/70 outline-none focus:border-[#8B5CF6]/50 backdrop-blur-xl" />
+                className="dash-input px-3 py-1.5" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -419,7 +426,7 @@ export default function AnalyticsPage() {
               <select
                 value={sel.value}
                 onChange={(e) => sel.onChange(e.target.value)}
-                className="appearance-none cursor-pointer rounded-xl border border-white/[0.06] bg-white/[0.02] py-1.5 pl-3 pr-8 text-xs text-white/60 outline-none hover:border-white/[0.12] focus:border-[#8B5CF6]/50 backdrop-blur-xl transition-colors"
+                className="dash-input appearance-none cursor-pointer py-1.5 pl-3 pr-8 text-white/60!"
               >
                 {sel.opts.map((o) => (
                   <option key={o.value} value={o.value} className="bg-[oklch(0.09_0.006_285)] text-white">
@@ -437,7 +444,7 @@ export default function AnalyticsPage() {
               <select
                 value={numFilter}
                 onChange={(e) => setNum(e.target.value)}
-                className="appearance-none cursor-pointer rounded-xl border border-white/[0.06] bg-white/[0.02] py-1.5 pl-3 pr-8 text-xs text-white/60 outline-none hover:border-white/[0.12] focus:border-[#8B5CF6]/50 backdrop-blur-xl transition-colors"
+                className="dash-input appearance-none cursor-pointer py-1.5 pl-3 pr-8 text-white/60!"
               >
                 <option value="" className="bg-[oklch(0.09_0.006_285)] text-white">All Numbers</option>
                 {data!.perNumber.map((n) => (
@@ -475,6 +482,9 @@ export default function AnalyticsPage() {
           <p className="mt-1 text-xs text-white/25">
             Adjust the date range or start making calls to see analytics here.
           </p>
+          <Link href="/dialer" className="dash-btn-primary mt-5">
+            Open dialer
+          </Link>
         </motion.div>
       )}
 

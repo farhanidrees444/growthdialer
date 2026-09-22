@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import type { LeadRecord } from '@/lib/dialer/state-machine';
+import type { LeadRecord } from '@/lib/dialer/dialer-types';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { getSavedQueueConfig } from '@/lib/dialer/queue-config';
 import { setParallelAutoAnswer } from '@/lib/parallel-dial/auto-answer-flag';

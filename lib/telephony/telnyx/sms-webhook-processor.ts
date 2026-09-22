@@ -1,6 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import { markWebhookProcessed } from '@/lib/telephony/telnyx/webhook-log';
-import { resolveWorkspaceForDid } from '@/lib/telephony/telnyx/inbound';
+import { resolveOwnerForDid } from '@/lib/telephony/telnyx/inbound';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import {
   isSmsOptOutKeyword,
@@ -73,29 +73,36 @@ async function handleInboundMessage(
     return;
   }
 
-  const workspaceId = await resolveWorkspaceForDid(supabase, toNumber);
-  if (!workspaceId) return;
+  // Single-user mode: the message belongs to the DID owner's user_id.
+  // workspace_id is legacy (nullable) and only used for compliance lookups.
+  const owner = await resolveOwnerForDid(supabase, toNumber);
+  if (!owner) return;
+  const { userId: ownerUserId, workspaceId } = owner;
 
-  const profile = await getWorkspaceMessagingProfile(supabase, workspaceId);
+  const profile = await getWorkspaceMessagingProfile(supabase, ownerUserId);
   const keywords = profile?.opt_out_keywords ?? undefined;
-
-  if (isSmsOptOutKeyword(body, keywords)) {
-    await recordSmsOptOut(supabase, workspaceId, fromNumber, 'keyword');
-    console.log('[telephony/sms] opt-out recorded:', fromNumber, 'workspace:', workspaceId);
-  }
 
   const { data: lead } = await supabase
     .from('leads')
     .select('id')
-    .eq('workspace_id', workspaceId)
+    .eq('user_id', ownerUserId)
     .eq('phone', fromNumber)
     .maybeSingle();
+  const leadId = lead?.id ?? null;
+
+  if (isSmsOptOutKeyword(body, keywords)) {
+    // User-keyed opt-out ledger + lead-level flag (both checked by the send
+    // path's opt-out gate).
+    await recordSmsOptOut(supabase, ownerUserId, fromNumber, 'keyword');
+    console.log('[telephony/sms] opt-out recorded:', fromNumber, 'owner:', ownerUserId);
+  }
 
   if (!messageId) return;
 
   await supabase.from('sms_messages').upsert({
+    user_id: ownerUserId,
     workspace_id: workspaceId,
-    lead_id: lead?.id ?? null,
+    lead_id: leadId,
     direction: 'inbound',
     from_number: fromNumber,
     to_number: toNumber,

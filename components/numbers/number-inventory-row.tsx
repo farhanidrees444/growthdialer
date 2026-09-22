@@ -141,7 +141,7 @@ export function NumberInventoryRow({
                       if (e.key === 'Enter') void onLabelSave(labelVal).then(() => setEditingLabel(false));
                       if (e.key === 'Escape') setEditingLabel(false);
                     }}
-                    className="h-8 w-40 rounded-lg border border-white/10 bg-black/30 px-2.5 text-xs text-white outline-none focus:border-violet-500/40"
+                    className="dash-input h-8 w-40 px-2.5 text-xs!"
                     placeholder="e.g. Sales line"
                   />
                   <button type="button" onClick={() => void onLabelSave(labelVal).then(() => setEditingLabel(false))} className="text-emerald-400">
@@ -310,7 +310,7 @@ export function NumberInventoryRow({
                 />
               </div>
 
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-3">
+              <div className="dash-card space-y-3 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Line settings</p>
                 <label className="flex items-center justify-between gap-3 text-sm text-slate-300">
                   <span>Enable recording</span>
@@ -328,7 +328,7 @@ export function NumberInventoryRow({
                     onChange={(e) => void onSettingsPatch({
                       inbound_mode: e.target.value || null,
                     })}
-                    className="rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 text-xs text-white"
+                    className="dash-input px-3 py-2 text-xs!"
                   >
                     <option value="">Use account default</option>
                     <option value="browser">Ring in browser</option>
@@ -350,7 +350,7 @@ export function NumberInventoryRow({
                         void onSettingsPatch({ cnam_presentation: v || null });
                       }
                     }}
-                    className="rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 text-xs text-white placeholder:text-slate-600"
+                    className="dash-input px-3 py-2 text-xs!"
                   />
                 </label>
               </div>

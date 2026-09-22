@@ -38,97 +38,88 @@ const SOCIAL_ICONS = [TwitterIcon, LinkedinIcon, GithubIcon, YoutubeIcon];
 
 export function SiteFooter() {
   return (
-    <footer className="relative overflow-hidden px-5 pb-10 pt-16 lg:px-8">
-      <div
-        aria-hidden
-        className="mb-12 h-px w-full bg-gradient-to-r from-transparent via-[#7C3AED]/40 to-transparent"
-      />
-
-      <p
-        aria-hidden
-        className="pointer-events-none absolute bottom-8 left-1/2 -translate-x-1/2 select-none font-display text-[clamp(4rem,14vw,11rem)] font-semibold leading-none tracking-tighter text-white/[0.03]"
-      >
-        GrowthDialer
-      </p>
-
-      <div className="marketing-glass relative mx-auto grid max-w-7xl gap-10 rounded-[2rem] p-6 sm:grid-cols-2 lg:grid-cols-6 lg:p-8">
-        <div className="sm:col-span-2 lg:col-span-1">
-          <BrandLogo href="/" showText size="footer" />
-          <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-zinc-500">
-            The AI sales dialer that turns every conversation into searchable revenue intelligence.
-          </p>
-          <div className="mt-5 flex items-center gap-2">
-            {SOCIAL_LINKS.map((social, i) => {
-              const Icon = SOCIAL_ICONS[i];
-              return (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={social.label}
-                  className="marketing-hover-lift flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.02] text-zinc-500 hover:text-[#F5F5F7]"
-                >
-                  <Icon />
-                </a>
-              );
-            })}
+    <footer className="relative overflow-hidden border-t border-zinc-950/[0.06] px-5 pb-10 pt-14 lg:px-8 lg:pt-16">
+      <div className="mx-auto max-w-7xl">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
+          <div>
+            <BrandLogo href="/" showText size="footer" />
+            <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-zinc-500">
+              The AI sales dialer that turns every conversation into searchable revenue intelligence.
+            </p>
+            <div className="mt-5 flex items-center gap-2">
+              {SOCIAL_LINKS.map((social, i) => {
+                const Icon = SOCIAL_ICONS[i];
+                return (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={social.label}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-950/[0.08] bg-white text-zinc-500 transition-colors hover:border-zinc-950/[0.16] hover:text-zinc-950"
+                  >
+                    <Icon />
+                  </a>
+                );
+              })}
+            </div>
+            <a
+              href={APP_SIGNUP}
+              className="mt-5 inline-flex text-[13px] font-medium text-[#6D28D9] transition-colors hover:text-[#7C3AED]"
+            >
+              Start free →
+            </a>
           </div>
-          <a
-            href={APP_SIGNUP}
-            className="mt-5 inline-flex text-[13px] font-medium text-[#A78BFA] transition-colors hover:text-[#C4B5FD]"
-          >
-            Start free →
-          </a>
+
+          {FOOTER_COLUMNS.map((col) => (
+            <div key={col.heading}>
+              <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-500">
+                {col.heading}
+              </p>
+              <ul className="space-y-2.5">
+                {col.links.map((l) => (
+                  <li key={l.label}>
+                    <Link
+                      href={l.href}
+                      className="inline-block text-[13px] text-zinc-600 transition-colors hover:text-zinc-950"
+                    >
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        {FOOTER_COLUMNS.map((col) => (
-          <div key={col.heading}>
-            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-600">
-              {col.heading}
-            </p>
-            <ul className="space-y-2.5">
-              {col.links.map((l) => (
-                <li key={l.label}>
-                  <Link
-                    href={l.href}
-                    className="group inline-block text-[13px] text-zinc-400 transition-all hover:translate-x-0.5 hover:text-[#F5F5F7]"
-                  >
-                    <span className="bg-gradient-to-r from-[#A78BFA] to-[#67E8F9] bg-[length:0%_1px] bg-left-bottom bg-no-repeat transition-[background-size] duration-300 group-hover:bg-[length:100%_1px]">
-                    {l.label}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-
-      <div className="relative mx-auto mt-12 flex max-w-7xl flex-col items-center justify-between gap-4 border-t border-white/[0.05] pt-7 sm:flex-row">
-        <p className="text-[12px] text-zinc-600">
-          © {new Date().getFullYear()} GrowthDialer. All rights reserved.
-        </p>
-        <Link
-          href={STATUS_URL}
-          className="inline-flex items-center gap-2 text-[12px] text-zinc-500 transition-colors hover:text-zinc-300"
+        <p
+          aria-hidden
+          className="pointer-events-none mt-12 select-none text-center font-display text-[clamp(3rem,12vw,9rem)] font-semibold leading-none tracking-tighter text-zinc-950/[0.04]"
         >
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-40" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-          </span>
-          All systems operational
-        </Link>
-        <div className="flex flex-wrap items-center justify-center gap-4 text-[12px]">
-          <Link href="/privacy" className="text-zinc-500 transition-colors hover:text-[#F5F5F7]">
-            Privacy
+          GrowthDialer
+        </p>
+
+        <div className="mt-6 flex flex-col items-center justify-between gap-4 border-t border-zinc-950/[0.06] pt-7 sm:flex-row">
+          <p className="text-[12px] text-zinc-500">
+            © {new Date().getFullYear()} GrowthDialer. All rights reserved.
+          </p>
+          <Link
+            href={STATUS_URL}
+            className="inline-flex items-center gap-2 text-[12px] text-zinc-500 transition-colors hover:text-zinc-800"
+          >
+            System status
           </Link>
-          <Link href="/terms" className="text-zinc-500 transition-colors hover:text-[#F5F5F7]">
-            Terms
-          </Link>
-          <Link href="/status" className="text-zinc-500 transition-colors hover:text-[#F5F5F7]">
-            Status
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-4 text-[12px]">
+            <Link href="/privacy" className="text-zinc-500 transition-colors hover:text-zinc-950">
+              Privacy
+            </Link>
+            <Link href="/terms" className="text-zinc-500 transition-colors hover:text-zinc-950">
+              Terms
+            </Link>
+            <Link href="/status" className="text-zinc-500 transition-colors hover:text-zinc-950">
+              Status
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

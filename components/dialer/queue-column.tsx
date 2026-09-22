@@ -10,7 +10,7 @@ import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
 import { useLeads } from '@/contexts/leads-context';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { QueueLeadCard } from './queue-lead-card';
-import type { LeadRecord } from '@/lib/dialer/state-machine';
+import type { LeadRecord } from '@/lib/dialer/dialer-types';
 import { useWorkspace } from '@/contexts/workspace-context';
 
 type QueueTab = 'queue' | 'hot' | 'callbacks';

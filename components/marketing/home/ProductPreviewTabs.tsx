@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Phone, BarChart3, Headphones, Zap, TrendingUp, Check } from 'lucide-react';
 import { LiveWaveform } from '@/components/marketing/live-floor/LiveWaveform';
-import { Spotlight } from '@/components/marketing/live-floor/Spotlight';
-import { Reveal } from '@/components/marketing/live-floor/Reveal';
+import { Reveal } from '@/components/ui/reveal';
 import { CountUp } from './CountUp';
 import { useMarketingMotionReduced, EASE_OUT } from '@/components/marketing/live-floor/motion';
 import { cn } from '@/lib/utils';
@@ -39,12 +38,12 @@ function AiDialerView({ active }: { active: boolean }) {
   const seconds = useTimer(active, reduce);
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-black/40 p-4">
+      <div className="flex items-center justify-between rounded-xl border border-zinc-950/[0.08] bg-zinc-50 p-4">
         <div>
-          <p className="text-sm font-medium text-[#F5F5F7]">Jordan Chen · Acme Co.</p>
+          <p className="text-sm font-medium text-zinc-950">Jordan Chen · Acme Co.</p>
           <p className="font-mono text-xs tabular-nums text-zinc-500">{fmt(seconds)}</p>
         </div>
-        <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-400">
+        <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
           Live
         </span>
       </div>
@@ -57,9 +56,9 @@ function AiDialerView({ active }: { active: boolean }) {
               initial={{ opacity: 0, x: 12 }}
               animate={active ? { opacity: 1, x: 0 } : {}}
               transition={{ delay: i * 0.15, duration: 0.4, ease: EASE_OUT }}
-              className="flex items-center gap-2 rounded-lg border border-[#7C3AED]/15 bg-[#7C3AED]/[0.06] px-3 py-2 text-[13px] text-zinc-300"
+              className="flex items-center gap-2 rounded-lg border border-[#7C3AED]/15 bg-[#7C3AED]/[0.06] px-3 py-2 text-[13px] text-zinc-700"
             >
-              <Check className="h-3.5 w-3.5 text-[#A78BFA]" />
+              <Check className="h-3.5 w-3.5 text-[#6D28D9]" />
               {t}
             </motion.div>
           )
@@ -71,18 +70,18 @@ function AiDialerView({ active }: { active: boolean }) {
 
 function PowerDialerView({ active }: { active: boolean }) {
   const queue = [
-    { name: 'Jordan · Acme', status: 'On call', tone: 'text-emerald-400' },
+    { name: 'Jordan · Acme', status: 'On call', tone: 'text-emerald-700' },
     { name: 'Sam · Nova', status: 'Queued', tone: 'text-zinc-500' },
-    { name: 'Alex · Bolt', status: 'Callback', tone: 'text-amber-400' },
+    { name: 'Alex · Bolt', status: 'Callback', tone: 'text-amber-700' },
     { name: 'Riley · Peak', status: 'Queued', tone: 'text-zinc-500' },
   ];
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between text-[13px]">
-        <span className="text-zinc-400">12 of 47 complete today</span>
-        <span className="font-medium text-[#A78BFA]">3.4× faster</span>
+        <span className="text-zinc-600">12 of 47 complete today</span>
+        <span className="text-[12px] text-zinc-400">sample data</span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+      <div className="h-1.5 overflow-hidden rounded-full bg-zinc-950/[0.06]">
         <motion.div
           className="h-full rounded-full bg-[#7C3AED]"
           initial={{ width: '0%' }}
@@ -97,11 +96,11 @@ function PowerDialerView({ active }: { active: boolean }) {
             className={cn(
               'flex items-center justify-between rounded-xl border px-3 py-2.5 text-[13px]',
               i === 0
-                ? 'border-[#7C3AED]/30 bg-[#7C3AED]/[0.08] ring-1 ring-[#7C3AED]/20'
-                : 'border-white/[0.06] bg-white/[0.02]'
+                ? 'border-[#7C3AED]/30 bg-[#7C3AED]/[0.06]'
+                : 'border-zinc-950/[0.06] bg-white'
             )}
           >
-            <span className="text-zinc-300">{q.name}</span>
+            <span className="text-zinc-800">{q.name}</span>
             <span className={cn('text-[11px] font-medium', q.tone)}>{q.status}</span>
           </li>
         ))}
@@ -121,16 +120,16 @@ function AnalyticsView({ active }: { active: boolean }) {
           { v: 68, l: 'Answer %', suffix: '%' },
           { v: 72, l: 'Talk min', suffix: '' },
         ].map((s) => (
-          <div key={s.l} className="rounded-xl border border-white/[0.06] bg-black/30 p-3 text-center">
-            <p className="font-display text-xl font-light text-[#F5F5F7]">
+          <div key={s.l} className="rounded-xl border border-zinc-950/[0.08] bg-zinc-50 p-3 text-center">
+            <p className="font-display text-xl font-semibold text-zinc-950">
               {active ? <CountUp to={s.v} suffix={s.suffix} /> : `${s.v}${s.suffix}`}
             </p>
-            <p className="mt-0.5 text-[10px] uppercase tracking-wider text-zinc-600">{s.l}</p>
+            <p className="mt-0.5 text-[10px] uppercase tracking-wider text-zinc-500">{s.l}</p>
           </div>
         ))}
       </div>
-      <div className="rounded-xl border border-white/[0.06] bg-black/30 p-4">
-        <p className="mb-3 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-zinc-600">
+      <div className="rounded-xl border border-zinc-950/[0.08] bg-zinc-50 p-4">
+        <p className="mb-3 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-zinc-500">
           <TrendingUp className="h-3 w-3" /> Connect rate · 30d
         </p>
         <div className="flex h-24 items-end gap-1">
@@ -151,9 +150,9 @@ function AnalyticsView({ active }: { active: boolean }) {
 
 function CoachingView({ active }: { active: boolean }) {
   const reps = [
-    { name: 'Jordan', state: 'Live · whisper on', color: 'bg-emerald-500' },
+    { name: 'Jordan', state: 'Live · listening', color: 'bg-emerald-500' },
     { name: 'Sam', state: 'On hold', color: 'bg-amber-400' },
-    { name: 'Alex', state: 'Ready', color: 'bg-zinc-600' },
+    { name: 'Alex', state: 'Ready', color: 'bg-zinc-300' },
   ];
   return (
     <div className="space-y-3">
@@ -163,15 +162,15 @@ function CoachingView({ active }: { active: boolean }) {
           initial={{ opacity: 0, y: 8 }}
           animate={active ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: i * 0.1, duration: 0.4 }}
-          className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3"
+          className="flex items-center gap-3 rounded-xl border border-zinc-950/[0.08] bg-white p-3"
         >
           <span className={cn('h-2 w-2 rounded-full', r.color, i === 0 && active && 'animate-pulse')} />
           <div>
-            <p className="text-sm font-medium text-[#F5F5F7]">{r.name}</p>
+            <p className="text-sm font-medium text-zinc-950">{r.name}</p>
             <p className="text-[12px] text-zinc-500">{r.state}</p>
           </div>
           {i === 0 && (
-            <Headphones className="ml-auto h-4 w-4 text-[#A78BFA]" aria-hidden />
+            <Headphones className="ml-auto h-4 w-4 text-[#6D28D9]" aria-hidden />
           )}
         </motion.div>
       ))}
@@ -193,19 +192,18 @@ export function ProductPreviewTabs() {
   return (
     <section className="relative px-5 py-20 lg:px-8 lg:py-28">
       <Reveal className="mx-auto max-w-2xl text-center">
-        <p className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
-          Product preview
-        </p>
-        <h2 className="font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.05] tracking-tight text-[#F5F5F7]">
-          One platform. <span className="font-medium">Four modes.</span>
+        <p className="mk-eyebrow justify-center">Product preview</p>
+        <h2 className="mk-h-section">
+          One platform. <span className="font-semibold">Four modes.</span>
         </h2>
-        <p className="mx-auto mt-4 max-w-md text-[16px] leading-relaxed text-zinc-400">
-          Switch between dial, queue, analytics and coaching — every view is the real product, not a screenshot.
+        <p className="mx-auto mt-4 max-w-md text-[16px] leading-relaxed text-zinc-600">
+          Switch between dial, queue, analytics and coaching — an illustrative preview with sample
+          data, not a screenshot of your calls.
         </p>
       </Reveal>
 
       <div className="mx-auto mt-14 grid max-w-6xl gap-8 lg:grid-cols-[240px_1fr]">
-        <nav className="flex flex-row gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
+        <nav className="flex flex-row gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0" aria-label="Product views">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
@@ -214,21 +212,22 @@ export function ProductPreviewTabs() {
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
+                aria-pressed={active}
                 className={cn(
-                  'marketing-hover-lift flex shrink-0 items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-all duration-200',
+                  'flex shrink-0 items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-all duration-200',
                   active
-                    ? 'border-[#7C3AED]/30 bg-[#7C3AED]/[0.08] text-[#F5F5F7]'
-                    : 'border-white/[0.06] bg-white/[0.02] text-zinc-400 hover:border-white/[0.12] hover:text-zinc-200'
+                    ? 'border-zinc-950 bg-zinc-950 text-white shadow-[0_8px_24px_rgba(9,9,11,0.18)]'
+                    : 'border-zinc-950/[0.08] bg-white text-zinc-600 hover:border-zinc-950/[0.16] hover:text-zinc-950'
                 )}
               >
                 <span className="relative flex h-2 w-2 shrink-0">
                   {active && (
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#7C3AED] opacity-40" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-40" />
                   )}
                   <span
                     className={cn(
                       'relative inline-flex h-2 w-2 rounded-full',
-                      active ? 'bg-[#7C3AED]' : 'bg-zinc-600'
+                      active ? 'bg-emerald-400' : 'bg-zinc-300'
                     )}
                   />
                 </span>
@@ -239,9 +238,8 @@ export function ProductPreviewTabs() {
           })}
         </nav>
 
-        <div className="marketing-glass relative overflow-hidden rounded-[1.75rem] p-6 lg:p-8">
-          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(124,58,237,0.2),transparent_36%),radial-gradient(circle_at_90%_8%,rgba(6,182,212,0.14),transparent_30%)]" />
-          <Spotlight />
+        <div className="mk-card relative overflow-hidden p-6 lg:p-8">
+          <div aria-hidden className="mk-glow-brand pointer-events-none absolute inset-0" />
           <AnimatePresence mode="wait">
             <motion.div
               key={tab}

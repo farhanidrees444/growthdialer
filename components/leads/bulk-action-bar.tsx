@@ -146,11 +146,11 @@ export function BulkActionBar({ selectedIds, onClear, onBulkDone }: Props) {
               </p>
               <div className="flex gap-2">
                 <button type="button" onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 rounded-xl border border-white/[0.08] py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.04] transition">
+                  className="dash-btn-ghost flex-1">
                   Cancel
                 </button>
                 <button type="button" onClick={handleDelete} disabled={busy === 'delete'}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white hover:bg-red-500 disabled:opacity-60 transition">
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white transition-all hover:bg-red-500 active:scale-[0.98] disabled:opacity-60">
                   {busy === 'delete' ? <Loader2 className="h-4 w-4 animate-spin" /> : `Delete ${count}`}
                 </button>
               </div>

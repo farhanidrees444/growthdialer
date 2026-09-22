@@ -79,10 +79,10 @@ function SectionCard({ title, description, children }: {
   title: string; description?: string; children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl p-5">
+    <div className="dash-card p-5">
       <div className="mb-4">
-        <p className="text-sm font-bold text-white">{title}</p>
-        {description && <p className="mt-0.5 text-xs text-white/35 leading-relaxed">{description}</p>}
+        <p className="dash-section-title">{title}</p>
+        {description && <p className="dash-muted mt-0.5 leading-relaxed">{description}</p>}
       </div>
       {children}
     </div>
@@ -177,7 +177,7 @@ function ProfileTab({ userName, userEmail }: { userName: string; userEmail: stri
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-[#8B5CF6]/50 transition"
+              className="dash-input w-full px-3 py-2.5"
             />
           </div>
           <div>
@@ -187,7 +187,7 @@ function ProfileTab({ userName, userEmail }: { userName: string; userEmail: stri
             <input
               value={userEmail}
               disabled
-              className="w-full rounded-xl border border-white/[0.04] bg-white/[0.01] px-3 py-2.5 text-sm text-white/35 outline-none cursor-not-allowed"
+              className="dash-input w-full cursor-not-allowed px-3 py-2.5 opacity-60"
             />
             <p className="mt-1 text-[11px] text-white/25">Managed by your identity provider</p>
           </div>
@@ -198,15 +198,14 @@ function ProfileTab({ userName, userEmail }: { userName: string; userEmail: stri
             <input
               defaultValue={Intl.DateTimeFormat().resolvedOptions().timeZone}
               disabled
-              className="w-full rounded-xl border border-white/[0.04] bg-white/[0.01] px-3 py-2.5 text-sm text-white/35 outline-none cursor-not-allowed"
+              className="dash-input w-full cursor-not-allowed px-3 py-2.5 opacity-60"
             />
           </div>
           <button
             type="button"
             onClick={save}
             disabled={saving}
-            className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-50"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)' }}
+            className="dash-btn-primary"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <CheckCircle2 className="h-4 w-4" /> : <Save className="h-4 w-4" />}
             {saved ? "Saved!" : "Save Profile"}
@@ -545,8 +544,8 @@ function CallingTab({ settings, onChange }: { settings: UserSettings; onChange: 
               onChange={onFwdChange}
               placeholder="+15551234567"
               className={cn(
-                "w-full rounded-xl border bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-white/20 outline-none transition",
-                fwdError ? "border-red-500/40" : "border-white/[0.07] focus:border-[#06B6D4]/40",
+                "dash-input w-full px-4 py-2.5",
+                fwdError ? "border-red-500/40!" : "",
               )}
             />
             {fwdError
@@ -961,7 +960,7 @@ function DeleteAccountModal({ onClose, userEmail }: { onClose: () => void; userE
               type="button"
               onClick={onClose}
               disabled={deleting}
-              className="flex-1 rounded-xl border border-white/[0.08] py-2.5 text-sm font-semibold text-white/40 transition hover:text-white disabled:opacity-50"
+              className="dash-btn-ghost flex-1"
             >
               Cancel
             </button>
@@ -969,7 +968,7 @@ function DeleteAccountModal({ onClose, userEmail }: { onClose: () => void; userE
               type="button"
               onClick={handleDelete}
               disabled={deleting || input !== 'DELETE'}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white transition hover:bg-red-500 disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white transition-all hover:bg-red-500 active:scale-[0.98] disabled:opacity-50"
             >
               {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
               {deleting ? 'Deleting…' : 'Delete Forever'}
@@ -996,15 +995,42 @@ export default function SettingsPage() {
   const [userEmail, setUserEmail]     = useState('');
   const [recordingStats, setRecordingStats] = useState({ count: 0, hours: 0, storageMb: 0 });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  // Billing bypass: hidden only once the server positively reports it off.
+  const [billingEnabled, setBillingEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/subscription/status', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data && typeof data.billingEnabled === 'boolean') {
+          setBillingEnabled(data.billingEnabled);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  const visibleTabs = billingEnabled === false
+    ? TABS.filter((t) => t.key !== 'billing')
+    : TABS;
+
+  // Bounce off the billing tab if billing is disabled while it's active.
+  useEffect(() => {
+    if (billingEnabled === false && activeTab === 'billing') {
+      setActiveTab('recording');
+    }
+  }, [billingEnabled, activeTab]);
 
   const isDirty = JSON.stringify(settings) !== JSON.stringify(savedSettings);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
+    if (tab === 'billing' && billingEnabled === false) return;
     if (tab === 'billing' || tab === 'security' || tab === 'profile' || tab === 'calling') {
       setActiveTab(tab as TabKey);
     }
-  }, [searchParams]);
+  }, [searchParams, billingEnabled]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -1122,7 +1148,7 @@ export default function SettingsPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* Desktop sidebar tabs */}
         <nav className="hidden w-52 shrink-0 flex-col gap-0.5 border-r border-white/[0.06] p-3 lg:flex">
-          {TABS.map(({ key, label, icon: Icon }) => (
+          {visibleTabs.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               type="button"
@@ -1142,7 +1168,7 @@ export default function SettingsPage() {
 
         {/* Mobile tab bar */}
         <div className="flex border-b border-white/[0.06] overflow-x-auto scrollbar-none lg:hidden shrink-0 absolute top-[57px] left-0 right-0 z-10 bg-[oklch(0.05_0.005_285)]/95 backdrop-blur-xl px-3 py-2 gap-1">
-          {TABS.map(({ key, label, icon: Icon }) => (
+          {visibleTabs.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               type="button"
@@ -1163,8 +1189,10 @@ export default function SettingsPage() {
         {/* Content area */}
         <main data-page-scroll className="flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6 mt-10 lg:mt-0">
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-6 w-6 animate-spin text-white/25" />
+            <div className="space-y-4" aria-hidden>
+              <div className="dash-skeleton h-8 w-48" />
+              <div className="dash-skeleton h-40" />
+              <div className="dash-skeleton h-32" />
             </div>
           ) : (
             <AnimatePresence mode="wait">
@@ -1220,8 +1248,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={saveSettings}
                 disabled={saving}
-                className="flex items-center gap-2.5 rounded-xl px-6 py-2.5 text-sm font-bold text-white transition disabled:opacity-70"
-                style={{ background: saving || saveSuccess ? undefined : 'linear-gradient(135deg, #8B5CF6, #06B6D4)' }}
+                className="dash-btn-primary px-6!"
               >
                 {saving
                   ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</>

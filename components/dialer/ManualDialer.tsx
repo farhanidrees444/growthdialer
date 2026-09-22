@@ -78,7 +78,7 @@ export default function ManualDialer({
           <select
             value={countryCode}
             onChange={(e) => onCountryChange(e.target.value)}
-            className="appearance-none rounded-xl border border-white/[0.06] bg-white/[0.04] py-3 pl-3 pr-7 text-sm text-white outline-none transition focus:border-emerald-500/30"
+            className="dash-input appearance-none py-3 pl-3 pr-7"
           >
             {COUNTRY_OPTIONS.map((opt) => (
               <option key={opt.code} value={opt.code} className="bg-slate-900">
@@ -105,7 +105,7 @@ export default function ManualDialer({
             }
           }}
           placeholder="(555) 123-4567"
-          className="flex-1 rounded-xl border border-white/[0.06] bg-white/[0.04] px-4 py-3 text-lg font-semibold tracking-wider text-white placeholder:text-slate-600 outline-none transition focus:border-emerald-500/30"
+          className="dash-input flex-1 px-4 py-3 text-lg! font-semibold! tracking-wider"
         />
       </div>
 

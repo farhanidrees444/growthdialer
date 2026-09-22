@@ -1,6 +1,7 @@
 import { getTelephonyProvider } from '@/lib/telephony';
 import { readTelephonyPublicKey } from '@/lib/telephony/telnyx/env';
-import { readCallControlAppId, readConfiguredConnectionId, readVoiceApiKey } from '@/lib/voice/read-env';
+import { readCallControlAppId } from '@/lib/telephony/telnyx/env';
+import { readConfiguredConnectionId, readVoiceApiKey } from '@/lib/voice/read-env';
 
 /** True when the active telephony provider has minimum server env for voice. */
 export function isVoiceServiceConfigured(): boolean {

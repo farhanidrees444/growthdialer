@@ -7,7 +7,7 @@ import { getAvatarGradient, getInitials } from '@/lib/dialer/avatar-color';
 import { CallerWaveform } from './caller-waveform';
 import { ActionDock } from './action-dock';
 import { DialerStageAmbient } from './dialer-stage-ambient';
-import type { LeadRecord } from '@/lib/dialer/state-machine';
+import type { LeadRecord } from '@/lib/dialer/dialer-types';
 import { useWorkspace } from '@/contexts/workspace-context';
 
 interface LiveCallStageProps {

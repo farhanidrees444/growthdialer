@@ -60,7 +60,7 @@ export function CallLogsStatsStrip({ stats, className }: CallLogsStatsStripProps
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
           whileHover={reduce ? undefined : { y: -2 }}
-          className="relative overflow-hidden rounded-xl border border-white/[0.06] bg-zinc-900/50 px-3 py-3 backdrop-blur-sm"
+          className="dash-card relative overflow-hidden px-3 py-3"
         >
           <div className={cn('pointer-events-none absolute inset-0 bg-gradient-to-b', ACCENT_RING[accent])} aria-hidden />
           <div className="relative flex items-center gap-2.5">

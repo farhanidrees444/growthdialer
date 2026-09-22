@@ -145,7 +145,7 @@ export default function CallNotesPanel({
               placeholder="Type notes… auto-saves as you write"
               rows={4}
               maxLength={MAX_CHARS}
-              className="w-full resize-none rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-emerald-500/30 focus:bg-white/[0.04]"
+              className="dash-input w-full resize-none px-3 py-2.5"
             />
 
             {/* Character counter */}

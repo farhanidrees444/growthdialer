@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import type { DialerMode } from '@/lib/dialer/state-machine';
+import type { DialerMode } from '@/lib/dialer/dialer-types';
 
 interface HotkeyHandlers {
   mode: DialerMode;

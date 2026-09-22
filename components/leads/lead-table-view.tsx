@@ -126,8 +126,8 @@ export function LeadTableView({
     <div className="relative w-full overflow-x-auto rounded-2xl border border-white/[0.07] bg-zinc-900/30 backdrop-blur-sm">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" aria-hidden />
       <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-white/[0.06] bg-white/[0.02]">
+        <thead className="sticky top-0 z-10">
+          <tr className="border-b border-white/[0.06] bg-zinc-950">
             <th className="w-10 px-4 py-3">
               <input
                 type="checkbox"
@@ -156,8 +156,7 @@ export function LeadTableView({
                 transition={{ duration: 0.25, delay: Math.min(idx * 0.03, 0.3) }}
                 onClick={() => onView(lead)}
                 className={cn(
-                  'group cursor-pointer border-b border-white/[0.04] transition-colors',
-                  'hover:bg-emerald-500/[0.04]',
+                  'dash-table-row group cursor-pointer border-b border-white/[0.04]',
                   selected && 'bg-emerald-500/[0.06]',
                 )}
               >
@@ -225,7 +224,7 @@ export function LeadTableView({
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); onCall(lead); }}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 transition hover:bg-emerald-500/20"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 transition hover:bg-emerald-500/20 active:scale-95"
                       aria-label="Call lead"
                     >
                       <Phone className="h-3 w-3" />

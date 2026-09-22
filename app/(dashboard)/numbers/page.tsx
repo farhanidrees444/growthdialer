@@ -159,7 +159,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
       </AnimatePresence>
 
       {/* Step 1: Country */}
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5">
+      <div className="dash-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500/15 text-[11px] font-bold text-violet-400">1</div>
@@ -178,7 +178,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
             type="text" value={countrySearch}
             onChange={(e) => { setCountrySearch(e.target.value); if (e.target.value) setShowAllCountries(true); }}
             placeholder="Search countries…"
-            className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] py-2 pl-9 pr-3 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-violet-500/25"
+            className="dash-input w-full py-2 pl-9 pr-3"
           />
           {countrySearch && (
             <button type="button" onClick={() => setCountrySearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">
@@ -222,7 +222,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
       </div>
 
       {/* Step 2: Number Type */}
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5">
+      <div className="dash-card p-5">
         <div className="flex items-center gap-2 mb-4">
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500/15 text-[11px] font-bold text-violet-400">2</div>
           <span className="text-sm font-semibold text-white">Number Type</span>
@@ -250,7 +250,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
       </div>
 
       {/* Step 3: Filters */}
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5">
+      <div className="dash-card p-5">
         <div className="flex items-center gap-2 mb-4">
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/[0.06] text-[11px] font-bold text-white/40">3</div>
           <span className="text-sm font-semibold text-white">Filters</span>
@@ -264,7 +264,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
                 type="text" value={areaCode}
                 onChange={(e) => setAreaCode(e.target.value.replace(/\D/g, '').slice(0, 3))}
                 placeholder="e.g. 415" maxLength={3}
-                className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-violet-500/25"
+                className="dash-input w-full px-3 py-2"
               />
             </div>
           )}
@@ -272,7 +272,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
             <label className="text-[11px] font-medium text-white/40">City / Region</label>
             <input
               type="text" value={locality} onChange={(e) => setLocality(e.target.value)} placeholder="e.g. New York"
-              className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-violet-500/25"
+              className="dash-input w-full px-3 py-2"
             />
           </div>
           <div className="space-y-1.5">
@@ -281,7 +281,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
               type="text" value={numberContains}
               onChange={(e) => setNumberContains(e.target.value.replace(/\D/g, ''))}
               placeholder="e.g. 777"
-              className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-violet-500/25"
+              className="dash-input w-full px-3 py-2"
             />
           </div>
         </div>
@@ -289,8 +289,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
 
       {/* Search button */}
       <button type="button" onClick={() => void handleSearch()} disabled={searching}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
-        style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.5),rgba(6,182,212,0.4))', border: '1px solid rgba(139,92,246,0.3)' }}>
+        className="dash-btn-primary w-full">
         {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
         <span className="flex items-center gap-1.5">
           Search Available Numbers in
@@ -314,7 +313,7 @@ function BuyNew({ onPurchased }: { onPurchased: () => void }) {
       {searching && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.02]" />
+            <div key={i} className="dash-skeleton h-24" aria-hidden />
           ))}
         </div>
       )}
@@ -374,7 +373,7 @@ export default function NumbersPage() {
             <button
               type="button"
               onClick={() => setTab('buy')}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-900/25 transition hover:from-violet-500 hover:to-violet-400"
+              className="dash-btn-primary"
             >
               <Plus className="h-4 w-4" /> Add number
             </button>

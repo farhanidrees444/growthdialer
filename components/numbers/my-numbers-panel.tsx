@@ -239,16 +239,16 @@ export function MyNumbersPanel({
 
   if (loading) {
     return (
-      <div className="space-y-5">
+      <div className="space-y-5" aria-hidden>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-[108px] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.02]" />
+            <div key={i} className="dash-skeleton h-[108px] rounded-2xl!" />
           ))}
         </div>
-        <div className="h-14 animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.02]" />
+        <div className="dash-skeleton h-14 rounded-2xl!" />
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.02]" />
+            <div key={i} className="dash-skeleton h-32 rounded-2xl!" />
           ))}
         </div>
       </div>
@@ -303,7 +303,7 @@ export function MyNumbersPanel({
             type="button"
             disabled={bulkChecking}
             onClick={() => void handleBulkSpamCheck()}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-violet-400/30 bg-violet-500/15 px-4 py-2 text-xs font-semibold text-violet-200 transition hover:bg-violet-500/25 disabled:opacity-50"
+            className="dash-btn-ghost shrink-0 px-4! py-2! text-xs!"
           >
             {bulkChecking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Shield className="h-3.5 w-3.5" />}
             Verify all ({unchecked.length})
@@ -371,7 +371,7 @@ export function MyNumbersPanel({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search numbers or labels…"
-          className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.025] py-3 pl-11 pr-11 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-violet-500/35 focus:bg-white/[0.04]"
+          className="dash-input w-full py-3 pl-11! pr-11"
         />
         {search && (
           <button

@@ -53,18 +53,18 @@ export default function GuidesPage() {
             <Link
               key={g.href}
               href={g.href}
-              className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12] hover:bg-white/[0.04]"
+              className="mk-card mk-card-hover group block h-full p-6"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-medium uppercase tracking-widest text-zinc-600">
+                <span className="text-[11px] font-medium uppercase tracking-widest text-zinc-500">
                   Guide
                 </span>
-                <span className="text-[11px] text-zinc-600">{g.readTime}</span>
+                <span className="text-[11px] text-zinc-500">{g.readTime}</span>
               </div>
-              <h2 className="mt-3 font-display text-lg font-medium text-[#F5F5F7] group-hover:text-[#A78BFA]">
+              <h2 className="mt-3 font-display text-lg font-semibold text-zinc-950">
                 {g.title}
               </h2>
-              <p className="mt-2 text-[14px] leading-relaxed text-zinc-500">{g.description}</p>
+              <p className="mt-2 text-[14px] leading-relaxed text-zinc-600">{g.description}</p>
             </Link>
           ))}
         </div>

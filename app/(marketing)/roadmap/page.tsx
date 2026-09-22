@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
 import { MarketingPageHero } from '@/components/marketing/live-floor/MarketingPageHero';
 import { JsonLd } from '@/components/marketing/live-floor/JsonLd';
+import { Reveal } from '@/components/ui/reveal';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 import { BETA_TODAY, IN_PROGRESS, LIVE_TODAY, ROADMAP_NOT_LIVE } from '@/lib/marketing/honest-copy';
 
@@ -30,7 +31,7 @@ export default function RoadmapPage() {
           <>
             What is live.
             <br />
-            <span className="font-medium">What is next.</span>
+            <span className="font-semibold">What is next.</span>
           </>
         }
         description="We ship in the open. Live features match the product today — waitlist and roadmap items stay labeled until they land in your workspace."
@@ -39,29 +40,28 @@ export default function RoadmapPage() {
       <section className="px-5 pb-20 lg:px-8">
         <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-2 lg:grid-cols-4">
           {[
-            { title: 'Live today', items: LIVE_TODAY, accent: 'text-emerald-400' },
-            { title: 'Built-in', items: BETA_TODAY, accent: 'text-cyan-400' },
-            { title: 'In progress', items: IN_PROGRESS, accent: 'text-[#A78BFA]' },
+            { title: 'Live today', items: LIVE_TODAY, accent: 'text-emerald-700' },
+            { title: 'Built-in', items: BETA_TODAY, accent: 'text-cyan-700' },
+            { title: 'In progress', items: IN_PROGRESS, accent: 'text-[#6D28D9]' },
             { title: 'Roadmap', items: ROADMAP_NOT_LIVE, accent: 'text-zinc-500' },
-          ].map((col) => (
-            <article
-              key={col.title}
-              className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl"
-            >
-              <h2 className={`font-display text-lg font-medium ${col.accent}`}>{col.title}</h2>
-              <ul className="mt-4 space-y-2.5">
-                {col.items.map((item) => (
-                  <li key={item} className="text-[14px] leading-relaxed text-zinc-400">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </article>
+          ].map((col, ci) => (
+            <Reveal key={col.title} delay={ci * 60}>
+              <article className="mk-card h-full p-6">
+                <h2 className={`font-display text-lg font-semibold ${col.accent}`}>{col.title}</h2>
+                <ul className="mt-4 space-y-2.5">
+                  {col.items.map((item) => (
+                    <li key={item} className="text-[14px] leading-relaxed text-zinc-600">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            </Reveal>
           ))}
         </div>
         <p className="mx-auto mt-10 max-w-2xl text-center text-[14px] text-zinc-500">
           Shipped updates also post to{' '}
-          <Link href="/changelog" className="text-[#A78BFA] hover:underline">
+          <Link href="/changelog" className="font-medium text-[#6D28D9] hover:underline">
             Changelog
           </Link>
           . Join the integration waitlist from your workspace Integrations tab.

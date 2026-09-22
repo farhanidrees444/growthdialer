@@ -1,5 +1,7 @@
 /** Minimal Telnyx answer — no heavy imports (critical webhook path). */
 
+import { readTelephonyApiKey } from '@/lib/telephony/telnyx/env';
+
 export interface FastAnswerResult {
   ok: boolean;
   status: number | null;
@@ -9,13 +11,6 @@ export interface FastAnswerResult {
   answerSentAt: string;
   skipped: boolean;
   skipReason: string | null;
-}
-
-function readApiKey(): string | null {
-  const raw = process.env.TELNYX_API_KEY;
-  if (!raw) return null;
-  const trimmed = raw.trim().replace(/^["']|["']$/g, '');
-  return trimmed || null;
 }
 
 /**
@@ -38,7 +33,7 @@ export function isBridgeLegClientState(raw: string | undefined): boolean {
 export async function sendTelnyxAnswerFast(callControlId: string): Promise<FastAnswerResult> {
   const answerSentAt = new Date().toISOString();
   const start = Date.now();
-  const apiKey = readApiKey();
+  const apiKey = readTelephonyApiKey();
 
   if (!apiKey) {
     return {

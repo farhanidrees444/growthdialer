@@ -67,19 +67,19 @@ export default function BlogPage() {
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
-              className="group flex h-full flex-col rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12] hover:bg-white/[0.04]"
+              className="mk-card mk-card-hover group flex h-full flex-col p-6"
             >
               <div className="flex items-center justify-between">
-                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-400">
+                <span className="rounded-full border border-emerald-600/20 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700">
                   {post.category}
                 </span>
-                <span className="text-[11px] text-zinc-600">{post.readTime}</span>
+                <span className="text-[11px] text-zinc-500">{post.readTime}</span>
               </div>
-              <h2 className="mt-4 font-display text-lg font-medium text-[#F5F5F7] group-hover:text-[#A78BFA]">
+              <h2 className="mt-4 font-display text-lg font-semibold text-zinc-950">
                 {post.title}
               </h2>
-              <p className="mt-2 flex-1 text-[14px] leading-relaxed text-zinc-500">{post.excerpt}</p>
-              <div className="mt-4 flex items-center justify-between border-t border-white/[0.06] pt-4 text-[11px] text-zinc-600">
+              <p className="mt-2 flex-1 text-[14px] leading-relaxed text-zinc-600">{post.excerpt}</p>
+              <div className="mt-4 flex items-center justify-between border-t border-zinc-950/[0.08] pt-4 text-[11px] text-zinc-500">
                 <span>GrowthDialer team</span>
                 <span>{post.date}</span>
               </div>

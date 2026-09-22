@@ -1,9 +1,20 @@
 import Groq from 'groq-sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-export const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+// Lazy singleton: constructing the Groq client at module load throws when
+// GROQ_API_KEY is unset, which breaks Next.js build-time page collection and
+// any route import in an unconfigured environment. Instantiate on first use.
+let groqInstance: Groq | null = null;
+export function getGroq(): Groq {
+  if (!groqInstance) {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      throw new Error('GROQ_API_KEY is not configured');
+    }
+    groqInstance = new Groq({ apiKey });
+  }
+  return groqInstance;
+}
 
 export const geminiAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -102,7 +113,7 @@ export async function analyzeCallWithGroq(
   previousMemories: string,
 ): Promise<AIAnalysis> {
   const prompt = ANALYSIS_PROMPT(transcript, companyName, industry, jobTitle, previousMemories);
-  const response = await groq.chat.completions.create({
+  const response = await getGroq().chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.3,

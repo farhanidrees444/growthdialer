@@ -64,13 +64,13 @@ export default function IntegrationsContent() {
       >
         <a
           href={APP_SIGNUP}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#8B5CF6] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#7C3AED]"
+          className="mk-btn mk-btn-primary"
         >
           Start free <ArrowRight className="h-4 w-4" />
         </a>
         <Link
           href="/docs/api"
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.03] px-6 py-3 text-sm font-semibold text-zinc-200 hover:bg-white/[0.06]"
+          className="mk-btn mk-btn-secondary"
         >
           API reference
         </Link>
@@ -85,11 +85,11 @@ export default function IntegrationsContent() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.08 }}
-              className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl"
+              className="mk-card mk-card-hover p-5"
             >
-              <b.icon className="mb-3 h-5 w-5 text-[#A78BFA]" />
-              <h3 className="mb-1 text-sm font-semibold text-white">{b.title}</h3>
-              <p className="text-xs leading-relaxed text-zinc-500">{b.description}</p>
+              <b.icon className="mb-3 h-5 w-5 text-[#6D28D9]" />
+              <h3 className="mb-1 text-sm font-semibold text-zinc-950">{b.title}</h3>
+              <p className="text-xs leading-relaxed text-zinc-600">{b.description}</p>
             </motion.div>
           ))}
         </div>
@@ -114,20 +114,20 @@ export default function IntegrationsContent() {
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.05 }}
                     whileHover={{ y: -3 }}
-                    className="group relative rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 backdrop-blur-xl transition-colors hover:border-white/[0.14]"
+                    className="mk-card mk-card-hover group relative p-5"
                   >
                     <div className="mb-3 flex items-center gap-3">
                       <span
-                        className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.05] p-2.5"
+                        className="flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-950/[0.08] bg-zinc-950/[0.04] p-2.5"
                         style={{ color: item.color }}
                       >
                         <Icon className="h-full w-full" aria-hidden />
                       </span>
-                      <h3 className="font-semibold text-white">{item.name}</h3>
+                      <h3 className="font-semibold text-zinc-950">{item.name}</h3>
                     </div>
-                    <p className="text-sm leading-relaxed text-zinc-500">{item.description}</p>
+                    <p className="text-sm leading-relaxed text-zinc-600">{item.description}</p>
                     {!item.live && (
-                      <p className={cn('mt-3 text-[11px] font-medium text-zinc-600')}>
+                      <p className={cn('mt-3 text-[11px] font-medium text-zinc-500')}>
                         Waitlist — notify from app
                       </p>
                     )}
@@ -146,29 +146,29 @@ export default function IntegrationsContent() {
         variants={revealContainer}
         className="mx-auto mb-20 mt-16 max-w-3xl px-5 lg:px-8"
       >
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8 text-center backdrop-blur-xl sm:p-10">
-          <motion.h2 variants={reveal} className="mb-3 font-display text-2xl font-light text-white">
+        <div className="mk-card p-8 text-center sm:p-10">
+          <motion.h2 variants={reveal} className="mb-3 font-display text-2xl font-semibold tracking-tight text-zinc-950">
             REST API &amp; webhooks
           </motion.h2>
-          <motion.p variants={reveal} className="mb-6 text-sm leading-relaxed text-zinc-500">
+          <motion.p variants={reveal} className="mb-6 text-sm leading-relaxed text-zinc-600">
             Engineering team? Pipe call events to your data warehouse or internal tools. Same pipeline
             that powers Call Logs and AI analysis.
           </motion.p>
           <motion.div variants={reveal}>
             <Link
               href="/docs/api"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-[#A78BFA] hover:underline"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#6D28D9] hover:underline"
             >
               Read API reference <ArrowRight className="h-4 w-4" />
             </Link>
           </motion.div>
           <motion.div
             variants={reveal}
-            className="mt-8 flex flex-wrap justify-center gap-4 text-xs text-zinc-600"
+            className="mt-8 flex flex-wrap justify-center gap-4 text-xs text-zinc-500"
           >
             {['HubSpot live now', 'No credit card to start', 'Call Logs for every dial'].map((t) => (
               <span key={t} className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                 {t}
               </span>
             ))}

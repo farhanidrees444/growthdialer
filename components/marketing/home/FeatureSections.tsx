@@ -6,7 +6,6 @@ import {
   Target, Zap, Brain, Users, BarChart3, ShieldCheck, Check, TrendingUp, Phone,
 } from 'lucide-react';
 import { LiveWaveform } from '@/components/marketing/live-floor/LiveWaveform';
-import { Spotlight } from '@/components/marketing/live-floor/Spotlight';
 import { CountUp } from './CountUp';
 import { useMarketingMotionReduced, EASE_OUT } from '@/components/marketing/live-floor/motion';
 
@@ -40,20 +39,20 @@ function DialerVisual() {
             {i === idx && (
               <motion.span
                 layoutId="dialer-mode"
-                className="absolute inset-0 rounded-lg border border-[#8B5CF6]/40 bg-[#8B5CF6]/10"
+                className="absolute inset-0 rounded-lg border border-[#7C3AED]/30 bg-[#7C3AED]/10"
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               />
             )}
-            <span className={`relative ${i === idx ? 'text-[#8B5CF6]' : 'text-zinc-500'}`}>{m}</span>
+            <span className={`relative ${i === idx ? 'text-[#6D28D9]' : 'text-zinc-500'}`}>{m}</span>
           </div>
         ))}
       </div>
-      <div className="rounded-xl border border-white/[0.05] bg-black/30 p-4">
+      <div className="rounded-xl border border-zinc-950/[0.08] bg-zinc-50 p-4">
         <div className="mb-2 flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-[11px] font-medium text-[#06B6D4]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#06B6D4]" /> On call
+          <span className="flex items-center gap-1.5 text-[11px] font-medium text-[#6D28D9]">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> On call
           </span>
-          <span className="font-mono text-[11px] tabular-nums text-zinc-600">01:24</span>
+          <span className="font-mono text-[11px] tabular-nums text-zinc-500">01:24</span>
         </div>
         <LiveWaveform bars={44} height={44} barWidth={2.5} gap={2.5} />
       </div>
@@ -74,25 +73,25 @@ function PowerVisual() {
           <div
             key={r}
             className={`flex items-center justify-between rounded-lg border px-3 py-2.5 transition-colors duration-300 ${
-              isActive ? 'border-[#8B5CF6]/40 bg-[#8B5CF6]/[0.06]' : 'border-white/[0.06]'
+              isActive ? 'border-[#7C3AED]/30 bg-[#7C3AED]/[0.06]' : 'border-zinc-950/[0.08]'
             }`}
           >
             <div className="flex items-center gap-2.5">
               <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold ${
-                done ? 'bg-emerald-500/15 text-emerald-400' : 'bg-white/[0.05] text-zinc-400'
+                done ? 'bg-emerald-500/15 text-emerald-700' : 'bg-zinc-950/[0.05] text-zinc-500'
               }`}>
                 {done ? <Check className="h-3 w-3" /> : r.split(' ').map((w) => w[0]).join('')}
               </span>
-              <span className={`text-[13px] ${isActive ? 'text-[#F5F5F7]' : 'text-zinc-400'}`}>{r}</span>
+              <span className={`text-[13px] ${isActive ? 'text-zinc-950' : 'text-zinc-600'}`}>{r}</span>
             </div>
             {isActive ? (
-              <span className="flex items-center gap-1.5 text-[11px] font-medium text-[#8B5CF6]">
+              <span className="flex items-center gap-1.5 text-[11px] font-medium text-[#6D28D9]">
                 <Phone className="h-3 w-3" /> Dialing…
               </span>
             ) : done ? (
-              <span className="text-[11px] text-emerald-400/70">Connected</span>
+              <span className="text-[11px] text-emerald-700/70">Connected</span>
             ) : (
-              <span className="text-[11px] text-zinc-600">Queued</span>
+              <span className="text-[11px] text-zinc-500">Queued</span>
             )}
           </div>
         );
@@ -112,9 +111,9 @@ function IntelVisual() {
   return (
     <div ref={ref} className="space-y-3" aria-hidden>
       {/* Streaming transcript */}
-      <div className="rounded-xl border border-white/[0.05] bg-black/30 p-3">
-        <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-widest text-zinc-600">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#06B6D4]" /> Transcribing
+      <div className="rounded-xl border border-zinc-950/[0.08] bg-zinc-50 p-3">
+        <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-widest text-zinc-500">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#6D28D9]" /> Transcribing
         </p>
         <div className="h-5 overflow-hidden">
           <motion.p
@@ -122,22 +121,22 @@ function IntelVisual() {
             initial={{ y: 12, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.4, ease: EASE_OUT }}
-            className="text-[13px] leading-5 text-zinc-300"
+            className="text-[13px] leading-5 text-zinc-700"
           >
             {lines[i]}
           </motion.p>
         </div>
       </div>
       {/* Summary materializing */}
-      <div className="flex items-center justify-between rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2">
-        <span className="text-xs text-zinc-400">Sentiment</span>
-        <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-400">
+      <div className="flex items-center justify-between rounded-lg border border-zinc-950/[0.06] bg-white px-3 py-2">
+        <span className="text-xs text-zinc-500">Sentiment</span>
+        <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-700">
           <TrendingUp className="h-3.5 w-3.5" /> Positive
         </span>
       </div>
-      <div className="flex items-center justify-between rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2">
-        <span className="text-xs text-zinc-400">Intent</span>
-        <span className="text-xs font-medium text-[#8B5CF6]">Pricing + demo</span>
+      <div className="flex items-center justify-between rounded-lg border border-zinc-950/[0.06] bg-white px-3 py-2">
+        <span className="text-xs text-zinc-500">Intent</span>
+        <span className="text-xs font-medium text-[#6D28D9]">Pricing + demo</span>
       </div>
     </div>
   );
@@ -146,10 +145,10 @@ function IntelVisual() {
 // ── Smart Leads — pipeline with dispositions ────────────────────────────────
 function LeadsVisual() {
   const leads = [
-    { n: 'Acme Co.', s: 'Interested', c: 'text-emerald-400' },
-    { n: 'Globex', s: 'Callback', c: 'text-amber-400' },
-    { n: 'Initech', s: 'Meeting booked', c: 'text-[#8B5CF6]' },
-    { n: 'Umbrella', s: 'New', c: 'text-zinc-400' },
+    { n: 'Acme Co.', s: 'Interested', c: 'text-emerald-700' },
+    { n: 'Globex', s: 'Callback', c: 'text-amber-700' },
+    { n: 'Initech', s: 'Meeting booked', c: 'text-[#6D28D9]' },
+    { n: 'Umbrella', s: 'New', c: 'text-zinc-500' },
   ];
   return (
     <div className="space-y-2" aria-hidden>
@@ -160,13 +159,13 @@ function LeadsVisual() {
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.45, delay: idx * 0.1, ease: EASE_OUT }}
-          className="flex items-center justify-between rounded-lg border border-white/[0.06] px-3 py-2.5"
+          className="flex items-center justify-between rounded-lg border border-zinc-950/[0.08] px-3 py-2.5"
         >
           <div className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/[0.05] text-[10px] font-semibold text-zinc-400">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-950/[0.05] text-[10px] font-semibold text-zinc-600">
               {l.n[0]}
             </span>
-            <span className="text-[13px] text-zinc-300">{l.n}</span>
+            <span className="text-[13px] text-zinc-800">{l.n}</span>
           </div>
           <span className={`text-[11px] font-medium ${l.c}`}>{l.s}</span>
         </motion.div>
@@ -182,12 +181,12 @@ function AnalyticsVisual() {
     <div aria-hidden>
       <div className="mb-4 flex items-end justify-between">
         <div>
-          <p className="font-display text-3xl font-light tracking-tight text-[#F5F5F7]">
+          <p className="font-display text-3xl font-semibold tracking-tight text-zinc-950">
             <CountUp to={68} suffix="%" />
           </p>
-          <p className="text-[11px] text-zinc-600">Connect rate</p>
+          <p className="text-[11px] text-zinc-500">Connect rate</p>
         </div>
-        <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-[11px] font-medium text-emerald-400">
+        <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-[11px] font-medium text-emerald-700">
           <TrendingUp className="h-3 w-3" /> Trending up
         </span>
       </div>
@@ -200,7 +199,7 @@ function AnalyticsVisual() {
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: i * 0.07, ease: EASE_OUT }}
             className="flex-1 rounded-t-md"
-            style={{ background: i === 5 ? 'linear-gradient(to top,#8B5CF6,#06B6D4)' : 'rgba(255,255,255,0.08)' }}
+            style={{ background: i === 5 ? 'linear-gradient(to top,#7C3AED,#06B6D4)' : 'rgba(9,9,11,0.08)' }}
           />
         ))}
       </div>
@@ -213,27 +212,27 @@ function HealthVisual() {
   return (
     <div className="space-y-4" aria-hidden>
       <div className="flex items-center justify-between">
-        <span className="font-mono text-[13px] tabular-nums text-zinc-300">+1 (415) 555‑0148</span>
-        <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-400">Healthy</span>
+        <span className="font-mono text-[13px] tabular-nums text-zinc-700">+1 (415) 555‑0148</span>
+        <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-700">Healthy</span>
       </div>
       <div>
-        <div className="mb-1.5 flex items-center justify-between text-[11px] text-zinc-600">
+        <div className="mb-1.5 flex items-center justify-between text-[11px] text-zinc-500">
           <span>Reputation</span>
-          <span className="tabular-nums text-zinc-400"><CountUp to={92} suffix="/100" /></span>
+          <span className="tabular-nums text-zinc-700"><CountUp to={92} suffix="/100" /></span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+        <div className="h-2 overflow-hidden rounded-full bg-zinc-950/[0.06]">
           <motion.div
             initial={{ width: 0 }}
             whileInView={{ width: '92%' }}
             viewport={{ once: true }}
             transition={{ duration: 0.9, ease: EASE_OUT }}
-            className="h-full rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4]"
+            className="h-full rounded-full bg-gradient-to-r from-[#7C3AED] to-[#06B6D4]"
           />
         </div>
       </div>
-      <div className="flex items-center justify-between rounded-lg border border-white/[0.05] bg-black/30 px-3 py-2">
-        <span className="text-xs text-zinc-400">Spam risk</span>
-        <span className="text-xs font-medium text-emerald-400">Low</span>
+      <div className="flex items-center justify-between rounded-lg border border-zinc-950/[0.08] bg-zinc-50 px-3 py-2">
+        <span className="text-xs text-zinc-500">Spam risk</span>
+        <span className="text-xs font-medium text-emerald-700">Low</span>
       </div>
     </div>
   );
@@ -267,16 +266,16 @@ export function FeatureSections() {
                 transition={{ duration: 0.7, ease: EASE_OUT }}
                 className={reverse ? 'lg:order-2' : ''}
               >
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] py-1 pl-1.5 pr-3">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#8B5CF6]/15 text-[#8B5CF6]">
+                <div className="mk-chip mb-4">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#7C3AED]/10 text-[#6D28D9]">
                     <Icon className="h-3 w-3" />
                   </span>
-                  <span className="text-[12px] font-medium text-zinc-400">{f.eyebrow}</span>
+                  <span>{f.eyebrow}</span>
                 </div>
-                <h3 className="font-display text-[clamp(1.6rem,3vw,2.4rem)] font-light leading-[1.1] tracking-tight text-[#F5F5F7]">
+                <h3 className="font-display text-[clamp(1.6rem,3vw,2.4rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-zinc-950">
                   {f.title}
                 </h3>
-                <p className="mt-4 max-w-md text-[15px] leading-relaxed text-zinc-400">{f.body}</p>
+                <p className="mt-4 max-w-md text-[15px] leading-relaxed text-zinc-600">{f.body}</p>
               </motion.div>
 
               {/* Visual */}
@@ -287,9 +286,11 @@ export function FeatureSections() {
                 transition={{ duration: 0.8, ease: EASE_OUT }}
                 className={reverse ? 'lg:order-1' : ''}
               >
-                <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl">
-                  <Spotlight />
-                  <Visual />
+                <div className="mk-card relative overflow-hidden p-6">
+                  <div aria-hidden className="mk-glow-brand pointer-events-none absolute inset-0" />
+                  <div className="relative">
+                    <Visual />
+                  </div>
                 </div>
               </motion.div>
             </article>

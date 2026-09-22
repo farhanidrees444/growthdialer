@@ -7,6 +7,7 @@ import {
   isPaidPlan,
   polarHeaders,
 } from '@/lib/plan/polar';
+import { isBillingEnabled } from '@/lib/billing/billing-flag';
 
 interface PolarCustomer {
   id: string;
@@ -67,6 +68,10 @@ async function getOrCreateCustomer(token: string, user: { id: string; email?: st
 }
 
 export async function GET(request: NextRequest) {
+  // Billing bypass: checkout/portal disabled until BILLING_ENABLED=true.
+  if (!isBillingEnabled()) {
+    return NextResponse.json({ error: 'Billing is temporarily unavailable', billingEnabled: false }, { status: 410 });
+  }
   const { searchParams } = request.nextUrl;
   const plan = searchParams.get('plan');
   const cycle = searchParams.get('cycle');

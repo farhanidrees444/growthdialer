@@ -55,6 +55,19 @@ export function isE164(phone: string): boolean {
   return /^\+[1-9]\d{6,14}$/.test(phone);
 }
 
+/**
+ * Legacy E.164 shaping (moved from lib/telnyx.ts).
+ * Prefer normalizePhone() for new code; kept for existing callers.
+ */
+export function toE164(raw: string): string | null {
+  const digits = raw.replace(/[^\d+]/g, '');
+  if (/^\+[1-9]\d{1,14}$/.test(digits)) return digits;
+  const bare = digits.replace(/^\+/, '');
+  if (bare.length === 10) return `+1${bare}`;
+  if (bare.length === 11 && bare.startsWith('1')) return `+${bare}`;
+  return null;
+}
+
 /** Last-resort E.164 shaping when strict normalization fails. */
 export function bestEffortE164(raw: string): string | null {
   const normalized = normalizePhone(raw) ?? (isE164(raw) ? raw : null);

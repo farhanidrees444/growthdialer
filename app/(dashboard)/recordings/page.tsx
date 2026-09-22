@@ -231,7 +231,7 @@ function RecordingCard({
     <motion.div
       variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}
       transition={{ duration: 0.2 }}
-      className="group relative overflow-hidden rounded-2xl border border-white/[0.07] bg-[oklch(0.09_0.006_285)] transition-all hover:border-emerald-500/20 hover:shadow-[0_8px_32px_rgba(52,211,153,0.08)]"
+      className="group relative overflow-hidden rounded-2xl border border-white/[0.07] bg-[oklch(0.09_0.006_285)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500/20 hover:shadow-[0_8px_32px_rgba(52,211,153,0.08)]"
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/25 to-transparent opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
       {/* ── Main row ── */}
@@ -503,14 +503,14 @@ function RecordingPipelinePanel({
                 : 'A few checks need attention before eligible recordings and AI analysis are ready.'}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onRefresh}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-[11px] font-semibold text-slate-400 transition hover:text-white"
-        >
-          <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
-          Recheck
-        </button>
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="dash-btn-ghost shrink-0"
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
+            Recheck
+          </button>
       </div>
 
       {summary && (
@@ -547,7 +547,7 @@ function RecordingPipelinePanel({
           type="button"
           onClick={onBackfillAi}
           disabled={busyAction !== null}
-          className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.08] px-3.5 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/15 disabled:opacity-50"
+          className="dash-btn-ghost"
         >
           <Sparkles className={cn('h-3.5 w-3.5', busyAction === 'ai' && 'animate-pulse')} />
           Retry AI queue
@@ -556,7 +556,7 @@ function RecordingPipelinePanel({
           type="button"
           onClick={onBackfillStorage}
           disabled={busyAction !== null}
-          className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/[0.08] px-3.5 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-500/15 disabled:opacity-50"
+          className="dash-btn-ghost"
         >
           <FileText className={cn('h-3.5 w-3.5', busyAction === 'storage' && 'animate-pulse')} />
           Secure saved audio
@@ -712,6 +712,10 @@ export default function RecordingsPage() {
   return (
     <main className="flex-1 overflow-y-auto px-3 py-4 lg:px-6 lg:py-5">
         <div className="mx-auto max-w-4xl">
+          <div className="dash-enter mb-5">
+            <h1 className="dash-page-title">Recordings</h1>
+            <p className="dash-muted mt-1">Playback, transcripts, and AI analysis for your calls.</p>
+          </div>
 
           <RecordingPipelinePanel
             diagnostics={diagnostics}
@@ -740,7 +744,7 @@ export default function RecordingsPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
-                  className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] py-2.5 pl-9 pr-10 text-sm text-white placeholder-slate-600 outline-none transition focus:border-emerald-500/30 focus:shadow-[0_0_0_3px_rgba(52,211,153,0.08)]"
+                  className="dash-input w-full py-2.5 pl-9 pr-10"
                 />
                 {search && (
                   <button type="button" onClick={() => { setSearch(''); void fetchRecordings('', sentimentFilter); }}
@@ -771,7 +775,7 @@ export default function RecordingsPage() {
                 <button
                   type="button"
                   onClick={() => void fetchRecordings()}
-                  className="ml-auto flex items-center gap-1.5 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 text-[11px] font-semibold text-slate-500 transition hover:text-slate-300"
+                  className="dash-btn-ghost ml-auto"
                 >
                   <RefreshCw className="h-3 w-3" /> Refresh
                 </button>
@@ -796,7 +800,7 @@ export default function RecordingsPage() {
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-[72px] animate-pulse rounded-2xl border border-white/[0.07] bg-white/[0.03]" />
+                <div key={i} className="dash-skeleton h-[72px] rounded-2xl!" aria-hidden />
               ))}
             </div>
           ) : recordings.length === 0 ? (

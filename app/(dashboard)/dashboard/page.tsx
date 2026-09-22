@@ -129,7 +129,7 @@ function avatarGradient(name: string): string {
 }
 
 function Skeleton({ className }: { className?: string }) {
-  return <ShimmerSkeleton className={className} />;
+  return <div className={cn("dash-skeleton", className)} aria-hidden />;
 }
 
 const premiumPanel =
@@ -284,12 +284,12 @@ function RecentCallsList({ calls, loading }: { calls: DashboardRecentCall[] | nu
         <div className="space-y-px">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3 px-5 py-3">
-              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-8 w-8 rounded-full!" />
               <div className="flex-1 space-y-1.5">
                 <Skeleton className="h-3 w-28" />
                 <Skeleton className="h-2.5 w-20" />
               </div>
-              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-5 w-16 rounded-full!" />
             </div>
           ))}
         </div>
@@ -554,7 +554,7 @@ export default function DashboardPage() {
         <ActivationChecklist />
 
         {/* KPI Grid — 2×2 mobile, 4×1 desktop */}
-        <div className="grid grid-cols-2 gap-3.5 px-4 pt-1 lg:grid-cols-4 lg:gap-4 lg:px-6 lg:pt-0 xl:gap-5">
+        <div className="dash-enter dash-enter-1 grid grid-cols-2 gap-3.5 px-4 pt-1 lg:grid-cols-4 lg:gap-4 lg:px-6 lg:pt-0 xl:gap-5">
           <KpiCard
             title="Calls Today"
             displayValue={String(stats?.callsToday ?? 0)}
@@ -613,11 +613,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Call Activity Chart */}
-        <div className="mt-4 px-4 lg:mt-5 lg:px-6">
+        <div className="dash-enter dash-enter-2 mt-4 px-4 lg:mt-5 lg:px-6">
           <Suspense
             fallback={
               <SkeletonGlassPanel className="h-[300px] overflow-hidden rounded-[1.5rem]">
-                <ShimmerSkeleton className="h-full w-full" rounded="rounded-[1.5rem]" />
+                <div className="dash-skeleton h-full w-full rounded-[1.5rem]!" aria-hidden />
               </SkeletonGlassPanel>
             }
           >
@@ -634,16 +634,16 @@ export default function DashboardPage() {
         {/* Bottom Row — Recent · Up Next · Number Health */}
         <div
           data-gsap-reveal
-          className="mt-4 grid grid-cols-1 gap-4 px-4 pb-6 lg:mt-5 lg:grid-cols-2 xl:grid-cols-3 lg:px-6"
+          className="dash-enter dash-enter-3 mt-4 grid grid-cols-1 gap-4 px-4 pb-6 lg:mt-5 lg:grid-cols-2 xl:grid-cols-3 lg:px-6"
         >
           <RecentCallsList calls={recentCalls} loading={recentCallsLoading} />
           <Suspense
             fallback={
               <SkeletonGlassPanel className="min-h-[320px] overflow-hidden rounded-[1.5rem] p-5">
-                <ShimmerSkeleton className="mb-4 h-4 w-24" rounded="rounded-md" />
+                <div className="dash-skeleton mb-4 h-4 w-24" aria-hidden />
                 <div className="space-y-3">
                   {Array.from({ length: 3 }).map((_, i) => (
-                    <ShimmerSkeleton key={i} className="h-12 w-full" rounded="rounded-xl" />
+                    <div key={i} className="dash-skeleton h-12 w-full" aria-hidden />
                   ))}
                 </div>
               </SkeletonGlassPanel>
@@ -654,11 +654,11 @@ export default function DashboardPage() {
           <Suspense
             fallback={
               <SkeletonGlassPanel className="min-h-[320px] overflow-hidden rounded-[1.5rem] p-5 lg:col-span-2 xl:col-span-1">
-                <ShimmerSkeleton className="mb-4 h-4 w-28" rounded="rounded-md" />
-                <ShimmerSkeleton className="mb-3 h-10 w-full" rounded="rounded-xl" />
+                <div className="dash-skeleton mb-4 h-4 w-28" aria-hidden />
+                <div className="dash-skeleton mb-3 h-10 w-full" aria-hidden />
                 <div className="space-y-3">
                   {Array.from({ length: 3 }).map((_, i) => (
-                    <ShimmerSkeleton key={i} className="h-10 w-full" rounded="rounded-lg" />
+                    <div key={i} className="dash-skeleton h-10 w-full" aria-hidden />
                   ))}
                 </div>
               </SkeletonGlassPanel>

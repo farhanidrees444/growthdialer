@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
 import { MarketingPageHero } from '@/components/marketing/live-floor/MarketingPageHero';
 import { JsonLd } from '@/components/marketing/live-floor/JsonLd';
+import { Reveal } from '@/components/ui/reveal';
 import { APP_SIGNUP, MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
@@ -16,23 +17,23 @@ export const metadata: Metadata = {
 const USE_CASES = [
   {
     team: 'Boutique SDR agencies',
-    metric: '3 workspaces · 12 seats',
+    tag: 'Multi-workspace',
     story:
-      'Agencies run isolated workspaces per client — separate numbers, leads, and Call Logs — while managers switch accounts from one login.',
+      'Agencies run isolated workspaces per client — separate numbers, leads, and call logs — while managers switch accounts from one login.',
     href: '/solutions/agencies',
   },
   {
     team: 'In-house SDR pods',
-    metric: 'Power dial + HubSpot',
+    tag: 'Power dial + HubSpot',
     story:
-      'Reps run morning power sessions with auto-advance and disposition sync. Managers review connect rate in Analytics instead of shadowing every dial.',
+      'Reps run morning power sessions with auto-advance and disposition sync. Managers review connect rate in analytics instead of shadowing every dial.',
     href: '/solutions/sdr-teams',
   },
   {
     team: 'Revenue operations',
-    metric: 'Clean call objects',
+    tag: 'Clean call data',
     story:
-      'RevOps standardized eight dispositions across the org. Call duration and recording URLs land on HubSpot timelines without rep data entry.',
+      'RevOps teams standardize eight dispositions across the org. Call duration and recordings land on HubSpot timelines without rep data entry.',
     href: '/solutions/revenue-ops',
   },
 ];
@@ -55,46 +56,42 @@ export default function CustomersPage() {
           <>
             Real workflows,
             <br />
-            <span className="font-medium">not logo walls.</span>
+            <span className="font-semibold">not logo walls.</span>
           </>
         }
         description="We're onboarding our first production teams now. These are the use cases we built for — detailed stories publish as customers opt in."
       >
-        <a
-          href={APP_SIGNUP}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#8B5CF6] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#7C3AED]"
-        >
+        <a href={APP_SIGNUP} className="mk-btn mk-btn-primary">
           Start your pilot <ArrowRight className="h-4 w-4" />
         </a>
-        <Link
-          href="/contact-sales"
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.03] px-6 py-3 text-sm font-semibold text-zinc-200 hover:bg-white/[0.06]"
-        >
+        <Link href="/contact-sales" className="mk-btn mk-btn-secondary">
           Share your story
         </Link>
       </MarketingPageHero>
 
       <section className="mx-auto max-w-5xl px-5 pb-20 lg:px-8">
         <div className="grid gap-4 md:grid-cols-3">
-          {USE_CASES.map((c) => (
-            <Link
-              key={c.team}
-              href={c.href}
-              className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12]"
-            >
-              <p className="text-[11px] font-medium uppercase tracking-widest text-[#A78BFA]">
-                {c.metric}
-              </p>
-              <h2 className="mt-2 font-display text-lg font-medium text-[#F5F5F7] group-hover:text-[#A78BFA]">
-                {c.team}
-              </h2>
-              <p className="mt-3 text-[14px] leading-relaxed text-zinc-500">{c.story}</p>
-            </Link>
+          {USE_CASES.map((c, i) => (
+            <Reveal key={c.team} delay={(i % 3) * 70}>
+              <Link
+                href={c.href}
+                className="mk-card mk-card-hover group block h-full p-6"
+              >
+                <span className="mk-chip !text-[#6D28D9]">{c.tag}</span>
+                <h2 className="mt-3 font-display text-lg font-semibold text-zinc-950">
+                  {c.team}
+                </h2>
+                <p className="mt-2 text-[14px] leading-relaxed text-zinc-600">{c.story}</p>
+                <span className="mt-4 inline-block text-[13px] font-medium text-[#6D28D9]">
+                  Explore the solution →
+                </span>
+              </Link>
+            </Reveal>
           ))}
         </div>
         <p className="mx-auto mt-10 max-w-xl text-center text-[14px] text-zinc-500">
           Want to be featured when we publish full case studies?{' '}
-          <Link href="/contact-sales" className="text-[#A78BFA] hover:underline">
+          <Link href="/contact-sales" className="font-medium text-[#6D28D9] hover:underline">
             Contact us
           </Link>{' '}
           with your team size and stack.

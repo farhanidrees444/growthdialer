@@ -15,6 +15,27 @@ export async function resolveWorkspaceForDid(
   return data?.workspace_id ?? null;
 }
 
+/**
+ * Single-user mode: resolve the owning user (and legacy workspace, if any)
+ * for an inbound DID from the purchased-numbers table.
+ */
+export async function resolveOwnerForDid(
+  supabase: SupabaseClient,
+  did: string,
+): Promise<{ userId: string; workspaceId: string | null } | null> {
+  const { data } = await supabase
+    .from('purchased_numbers')
+    .select('user_id, workspace_id')
+    .eq('phone_number', did)
+    .eq('status', 'active')
+    .maybeSingle();
+  if (!data?.user_id) return null;
+  return {
+    userId: data.user_id as string,
+    workspaceId: (data.workspace_id as string | null) ?? null,
+  };
+}
+
 function isAgentRingable(row: {
   status: string;
   device_state: string | null;

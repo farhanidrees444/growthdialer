@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
 import { coachingConferenceName, startCoachOnCall } from '@/lib/coaching/telnyx-conference';
 import { normalizeE164 } from '@/lib/inbound/phone';
-import { readEnv } from '@/lib/voice/read-env';
+import { readEnv } from '@/lib/telephony/telnyx/env';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import {
-  groq, generateEmbedding,
+  getGroq, generateEmbedding,
   analyzeCallWithGemini, analyzeCallWithGroq,
 } from '@/lib/ai/clients';
 import { checkAIRateLimit } from '@/lib/ai/rate-limiter';
@@ -152,13 +152,13 @@ export async function POST(request: NextRequest) {
   if (call.lead_id) {
     const { data: lead } = await supabase
       .from('leads')
-      .select('name, company, industry, job_title')
+      .select('name, company, industry, title')
       .eq('id', call.lead_id)
       .single();
     if (lead) {
       companyName = lead.company ?? 'Unknown';
       industry = (lead as { industry?: string }).industry ?? 'Unknown';
-      jobTitle = (lead as { job_title?: string }).job_title ?? 'Unknown';
+      jobTitle = (lead as { title?: string }).title ?? 'Unknown';
     }
   }
 
@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
         throw new Error('Downloaded audio is 0 bytes — recording URL may be invalid or expired');
       }
 
-      const transcription = await groq.audio.transcriptions.create({
+      const transcription = await getGroq().audio.transcriptions.create({
         file: audioFile,
         model: 'whisper-large-v3',
         response_format: 'verbose_json',

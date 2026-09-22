@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Upload, PhoneCall, Sparkles } from 'lucide-react';
-import { Reveal } from '@/components/marketing/live-floor/Reveal';
+import { Reveal } from '@/components/ui/reveal';
 import { useMarketingMotionReduced, EASE_OUT } from '@/components/marketing/live-floor/motion';
 
 const STEPS = [
@@ -19,14 +19,14 @@ const STEPS = [
     icon: PhoneCall,
     title: 'Dial & talk',
     body: 'AI Dialer or Power Dialer. Recording starts the moment you connect.',
-    accent: '#06B6D4',
+    accent: '#0d9488',
   },
   {
     n: '3',
     icon: Sparkles,
     title: 'AI handles the rest',
     body: 'Transcripts, summaries, sentiment and next steps — logged automatically.',
-    accent: '#A78BFA',
+    accent: '#6D28D9',
   },
 ];
 
@@ -55,11 +55,9 @@ export function StickyHowItWorks() {
       <div className={reduce ? 'px-5 py-16 lg:px-8 lg:py-24' : 'sticky top-0 flex min-h-screen items-center px-5 py-24 lg:px-8'}>
         <div className="mx-auto w-full max-w-6xl">
           <Reveal className="mb-14 max-w-xl">
-            <p className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
-              How it works
-            </p>
-            <h2 className="font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.05] tracking-tight text-[#F5F5F7]">
-              Live in <span className="font-medium">three steps</span>.
+            <p className="mk-eyebrow">How it works</p>
+            <h2 className="mk-h-section">
+              Live in <span className="font-semibold">three steps</span>.
             </h2>
           </Reveal>
 
@@ -82,7 +80,7 @@ export function StickyHowItWorks() {
                     className="relative pl-12"
                   >
                     <span
-                      className="absolute left-0 top-1 flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-[#0F0F12] font-display text-lg font-light text-white/20"
+                      className="absolute left-0 top-1 flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-950/[0.08] bg-white font-display text-lg font-semibold text-zinc-300"
                       aria-hidden
                     >
                       {s.n}
@@ -95,8 +93,8 @@ export function StickyHowItWorks() {
                         <Icon className="h-5 w-5" />
                       </span>
                       <div>
-                        <h3 className="text-lg font-medium text-[#F5F5F7]">{s.title}</h3>
-                        <p className="mt-2 text-[15px] leading-relaxed text-zinc-400">{s.body}</p>
+                        <h3 className="text-lg font-semibold text-zinc-950">{s.title}</h3>
+                        <p className="mt-2 text-[15px] leading-relaxed text-zinc-600">{s.body}</p>
                       </div>
                     </div>
                   </motion.div>
@@ -109,30 +107,26 @@ export function StickyHowItWorks() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.7, ease: EASE_OUT }}
-              className="marketing-glass relative overflow-hidden rounded-[1.75rem] p-8"
+              className="mk-card relative overflow-hidden p-8"
             >
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-0 opacity-30"
-                style={{
-                  background:
-                    'radial-gradient(circle at 30% 20%, rgba(124,58,237,0.25), transparent 55%)',
-                }}
+                className="mk-glow-brand pointer-events-none absolute inset-0"
               />
               <div className="relative space-y-4">
-                <div className="rounded-xl border border-white/[0.06] bg-black/40 p-4">
-                  <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-600">
+                <div className="rounded-xl border border-zinc-950/[0.08] bg-zinc-50 p-4">
+                  <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500">
                     Step in motion
                   </p>
-                  <p className="mt-2 font-mono text-sm text-zinc-400">
+                  <p className="mt-2 font-mono text-sm text-zinc-600">
                     import.csv → 847 leads queued → dial session started
                   </p>
                 </div>
                 <div className="rounded-xl border border-[#7C3AED]/20 bg-[#7C3AED]/[0.06] p-4">
-                  <p className="text-[13px] text-zinc-300">
+                  <p className="text-[13px] text-zinc-700">
                     &ldquo;Send pricing for twelve seats — let&apos;s reconnect Thursday.&rdquo;
                   </p>
-                  <p className="mt-2 text-[12px] text-[#A78BFA]">→ Summary ready in 4s</p>
+                  <p className="mt-2 text-[12px] font-medium text-[#6D28D9]">→ Summary ready in seconds</p>
                 </div>
               </div>
             </motion.div>

@@ -156,7 +156,7 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
           {!num.is_default && (
             <button
               type="button"
-              className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-medium text-slate-400 transition hover:border-white/20 hover:text-white disabled:opacity-50"
+              className="dash-btn-ghost flex items-center gap-1.5 px-3! py-1.5! text-[11px]!"
               onClick={handleSetDefault}
               disabled={settingDefault}
             >
@@ -166,7 +166,7 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
           )}
           <button
             type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-600 transition hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-600 transition-all hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400 active:scale-95 disabled:opacity-50"
             onClick={() => setConfirmRelease(true)}
             disabled={releasing}
             title="Release number"
@@ -214,7 +214,7 @@ export default function OwnedNumberCard({ num, isOnlyNumber, onSetDefault, onRel
                 <button
                   type="button"
                   onClick={handleRelease}
-                  className="rounded-lg border border-red-500/30 bg-red-500/15 px-3 py-1.5 text-[11px] font-semibold text-red-400 hover:bg-red-500/25"
+                  className="rounded-lg border border-red-500/30 bg-red-500/15 px-3 py-1.5 text-[11px] font-semibold text-red-400 transition-all hover:bg-red-500/25 active:scale-95"
                 >
                   Release
                 </button>

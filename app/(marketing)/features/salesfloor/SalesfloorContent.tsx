@@ -12,16 +12,19 @@ const COACHING_MODES = [
   {
     icon: Eye,
     title: 'Listen',
+    status: 'Live today',
     body: 'Managers hear the live call without the prospect knowing — useful for QA and shadowing new reps.',
   },
   {
     icon: MessageSquare,
     title: 'Whisper',
-    body: 'Coach the rep in real time. Only the rep hears you; the prospect stays on a normal conversation.',
+    status: 'Roadmap',
+    body: 'Coach the rep in real time — only the rep hears you. Landing soon after listen mode.',
   },
   {
     icon: Headphones,
     title: 'Barge',
+    status: 'Roadmap',
     body: 'Join the call when a deal needs a leader in the room — escalation without switching tools.',
   },
 ];
@@ -47,7 +50,7 @@ const FEATURES = [
 const WORKFLOWS = [
   {
     title: 'Morning power block',
-    body: 'Reps run a power session while a manager monitors connect rate from the floor — whisper on tough objections only.',
+    body: 'Reps run a power session while a manager monitors connect rate from the floor — structured feedback after hang-up.',
   },
   {
     title: 'New rep ramp',
@@ -55,7 +58,7 @@ const WORKFLOWS = [
   },
   {
     title: 'Deal rescue',
-    body: 'When a rep flags a live call, a lead can barge in with pricing authority without losing recording continuity.',
+    body: 'When a rep flags a live call, a lead can take over the call context with full recording continuity.',
   },
 ];
 
@@ -68,21 +71,15 @@ export default function SalesfloorContent() {
           <>
             Coach live calls
             <br />
-            <span className="font-medium">without leaving the floor.</span>
+            <span className="font-semibold">without leaving the floor.</span>
           </>
         }
-        description="Listen, whisper, and barge on active calls from the coaching dashboard. Available on Pro and Team workspaces — built for managers who want visibility, not vanity metrics."
+        description="Listen in on active calls from the coaching dashboard — with whisper and barge on the roadmap. Available on Pro and Team workspaces — built for managers who want visibility, not vanity metrics."
       >
-        <a
-          href={APP_SIGNUP}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#8B5CF6] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#7C3AED]"
-        >
+        <a href={APP_SIGNUP} className="mk-btn mk-btn-primary">
           Start free <ArrowRight className="h-4 w-4" />
         </a>
-        <Link
-          href="/pricing"
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.03] px-6 py-3 text-sm font-semibold text-zinc-200 hover:bg-white/[0.06]"
-        >
+        <Link href="/pricing" className="mk-btn mk-btn-secondary">
           View plans
         </Link>
       </MarketingPageHero>
@@ -97,28 +94,38 @@ export default function SalesfloorContent() {
         >
           {COACHING_MODES.map((mode) => {
             const Icon = mode.icon;
+            const live = mode.status === 'Live today';
             return (
               <motion.div
                 key={mode.title}
                 variants={reveal}
-                className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl"
+                className="mk-card mk-card-hover p-6"
               >
-                <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#8B5CF6]/10 text-[#A78BFA]">
+                <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#7C3AED]/10 text-[#6D28D9]">
                   <Icon className="h-5 w-5" />
                 </span>
-                <h2 className="font-display text-lg font-medium text-[#F5F5F7]">{mode.title}</h2>
-                <p className="mt-2 text-[14px] leading-relaxed text-zinc-500">{mode.body}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="font-display text-lg font-semibold text-zinc-950">{mode.title}</h2>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                      live
+                        ? 'bg-emerald-500/10 text-emerald-700'
+                        : 'bg-amber-500/10 text-amber-700'
+                    }`}
+                  >
+                    {mode.status}
+                  </span>
+                </div>
+                <p className="mt-2 text-[14px] leading-relaxed text-zinc-600">{mode.body}</p>
               </motion.div>
             );
           })}
         </motion.div>
       </section>
 
-      <section className="border-t border-white/[0.06] px-5 py-20 lg:px-8 lg:py-24">
+      <section className="border-t border-zinc-950/[0.06] px-5 py-20 lg:px-8 lg:py-24">
         <div className="mx-auto max-w-5xl">
-          <p className="mb-10 text-center text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
-            What ships today
-          </p>
+          <p className="mk-eyebrow justify-center mb-10">What ships today</p>
           <motion.div
             initial="hidden"
             whileInView="show"
@@ -132,13 +139,13 @@ export default function SalesfloorContent() {
                 <motion.div
                   key={f.title}
                   variants={reveal}
-                  className="rounded-2xl border border-white/[0.06] bg-[#0F0F12] p-6"
+                  className="mk-card mk-card-hover p-6"
                 >
-                  <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.04] text-zinc-300">
+                  <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-950/[0.05] text-zinc-700">
                     <Icon className="h-4 w-4" />
                   </span>
-                  <h3 className="text-[15px] font-medium text-[#F5F5F7]">{f.title}</h3>
-                  <p className="mt-2 text-[14px] leading-relaxed text-zinc-500">{f.body}</p>
+                  <h3 className="text-[15px] font-semibold text-zinc-950">{f.title}</h3>
+                  <p className="mt-2 text-[14px] leading-relaxed text-zinc-600">{f.body}</p>
                 </motion.div>
               );
             })}
@@ -147,21 +154,18 @@ export default function SalesfloorContent() {
       </section>
 
       <section className="mx-auto max-w-3xl px-5 pb-20 lg:px-8">
-        <h2 className="text-center font-display text-2xl font-light tracking-tight text-[#F5F5F7]">
-          Common <span className="font-medium">manager workflows</span>
+        <h2 className="text-center font-display text-2xl font-semibold tracking-tight text-zinc-950">
+          Common <span className="font-semibold">manager workflows</span>
         </h2>
-        <div className="mt-10 space-y-6">
+        <div className="mt-10 space-y-4">
           {WORKFLOWS.map((w) => (
-            <article
-              key={w.title}
-              className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl"
-            >
-              <h3 className="font-medium text-[#F5F5F7]">{w.title}</h3>
-              <p className="mt-2 text-[14px] leading-relaxed text-zinc-500">{w.body}</p>
+            <article key={w.title} className="mk-card p-6">
+              <h3 className="font-semibold text-zinc-950">{w.title}</h3>
+              <p className="mt-2 text-[14px] leading-relaxed text-zinc-600">{w.body}</p>
             </article>
           ))}
         </div>
-        <p className="mx-auto mt-10 max-w-lg text-center text-[13px] leading-relaxed text-zinc-600">
+        <p className="mx-auto mt-10 max-w-lg text-center text-[13px] leading-relaxed text-zinc-500">
           We do not publish team performance guarantees or customer counts we cannot verify. Try the
           coaching floor on your own calls and judge whether it fits your process.
         </p>

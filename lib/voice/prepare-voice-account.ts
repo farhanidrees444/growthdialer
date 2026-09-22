@@ -5,7 +5,7 @@ import { prepareInboundAccount, type PrepareInboundResult } from '@/lib/inbound/
 import { invalidateNumberOwnerCache } from '@/lib/inbound/number-owner-cache';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import { ensureVoiceConnectionConfigured } from '@/lib/voice/configure-connection';
-import { readCallControlAppId } from '@/lib/voice/read-env';
+import { readCallControlAppId } from '@/lib/telephony/telnyx/env';
 import {
   activateRoutingForNumbers,
   auditNumberRouting,

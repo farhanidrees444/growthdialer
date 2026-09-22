@@ -49,23 +49,23 @@ export default function StatusPage() {
           <>
             All systems
             <br />
-            <span className="font-medium">operational.</span>
+            <span className="font-semibold">operational.</span>
           </>
         }
         description="High-level health for GrowthDialer product surfaces. We post updates here when customers may be affected."
       />
 
       <section className="mx-auto max-w-2xl px-5 pb-12 lg:px-8">
-        <ul className="divide-y divide-white/[0.06] overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02]">
+        <ul className="divide-y divide-zinc-950/[0.06] overflow-hidden rounded-2xl border border-zinc-950/[0.08] bg-white">
           {SERVICES.map((s) => (
             <li key={s.name} className="flex items-start justify-between gap-4 px-5 py-4">
               <div>
-                <p className="text-[15px] font-medium text-[#F5F5F7]">{s.name}</p>
+                <p className="text-[15px] font-medium text-zinc-950">{s.name}</p>
                 <p className="mt-0.5 text-[13px] text-zinc-500">{s.note}</p>
               </div>
               <div className="flex shrink-0 items-center gap-2 pt-0.5">
                 <StatusDot status={s.status} />
-                <span className="text-[12px] capitalize text-emerald-400">{s.status}</span>
+                <span className="text-[12px] capitalize text-emerald-700">{s.status}</span>
               </div>
             </li>
           ))}
@@ -73,10 +73,10 @@ export default function StatusPage() {
 
         <div className="mt-8 flex flex-col items-center gap-3 text-center">
           <p className="flex items-center gap-2 text-[13px] text-zinc-500">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
             Last checked: page load
           </p>
-          <Link href="/contact-sales" className="text-[13px] font-medium text-[#A78BFA] hover:underline">
+          <Link href="/contact-sales" className="text-[13px] font-medium text-[#6D28D9] hover:underline">
             Report an issue → contact support
           </Link>
         </div>

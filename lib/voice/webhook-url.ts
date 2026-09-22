@@ -1,4 +1,4 @@
-import { readEnv } from '@/lib/voice/read-env';
+import { readEnv } from '@/lib/telephony/telnyx/env';
 
 /** Resolve the public app base URL for voice webhooks and internal callbacks. */
 export function resolveVoiceAppBaseUrl(): string {

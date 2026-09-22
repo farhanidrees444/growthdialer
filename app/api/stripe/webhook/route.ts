@@ -4,6 +4,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { getWorkspacePlanLimits } from "@/lib/billing/workspace-plans";
 import { claimWebhookEvent } from "@/lib/webhooks/dedup";
 import Stripe from "stripe";
+import { isBillingEnabled } from '@/lib/billing/billing-flag';
 
 async function syncWorkspaceBilling(
   supabase: NonNullable<ReturnType<typeof createServiceClient>>,
@@ -27,6 +28,10 @@ async function syncWorkspaceBilling(
 }
 
 export async function POST(req: NextRequest) {
+  // Billing bypass: acknowledge without processing (avoids provider retry storms).
+  if (!isBillingEnabled()) {
+    return Response.json({ received: true, billingEnabled: false });
+  }
   if (!isStripeConfigured()) {
     return Response.json(
       { error: "Billing is not configured on this deployment" },

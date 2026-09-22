@@ -126,7 +126,7 @@ export default function CallLogsPage() {
         >
           <Link
             href="/analytics"
-            className="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-xs font-semibold text-slate-400 transition hover:border-primary/30 hover:text-white"
+            className="dash-btn-ghost"
           >
             <BarChart2 className="h-3.5 w-3.5" />
             Analytics
@@ -135,7 +135,7 @@ export default function CallLogsPage() {
             type="button"
             onClick={() => void load(true)}
             disabled={refreshing}
-            className="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-xs font-semibold text-slate-400 transition hover:border-primary/30 hover:text-white disabled:opacity-50"
+            className="dash-btn-ghost disabled:opacity-50"
             aria-label="Refresh call logs"
           >
             <RefreshCw className={cn('h-3.5 w-3.5', refreshing && 'animate-spin')} />
@@ -144,10 +144,10 @@ export default function CallLogsPage() {
         </PageHeader>
 
         {stats && (
-          <CallLogsStatsStrip stats={stats} className="mb-6" />
+          <CallLogsStatsStrip stats={stats} className="dash-enter dash-enter-1 mb-6" />
         )}
 
-        <div className="sticky top-0 z-10 -mx-1 mb-4 space-y-3 rounded-2xl border border-white/[0.06] bg-zinc-950/80 p-3 backdrop-blur-md">
+        <div className="dash-enter dash-enter-2 sticky top-0 z-10 -mx-1 mb-4 space-y-3 rounded-2xl border border-white/[0.06] bg-zinc-950/80 p-3 backdrop-blur-md">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex gap-1 rounded-xl border border-white/[0.08] bg-black/30 p-1">
               {TABS.map(({ id, label, icon: Icon }) => (
@@ -192,7 +192,7 @@ export default function CallLogsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search name, number, or company…"
-              className="h-10 pl-9 border-white/[0.08] bg-white/[0.04] focus-visible:ring-sky-500/30"
+              className="dash-input h-10 pl-9"
             />
           </div>
         </div>
@@ -209,7 +209,8 @@ export default function CallLogsPage() {
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="h-[76px] animate-pulse rounded-2xl border border-white/[0.05] bg-white/[0.03]"
+                className="dash-skeleton h-[76px] rounded-2xl!"
+                aria-hidden
               />
             ))}
           </div>

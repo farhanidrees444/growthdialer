@@ -56,17 +56,11 @@ export default function AiFeaturesPage() {
         }
         description="We ship AI where it removes work — prep, notes, coaching, and eventually inbound coverage. No black-box promises; each pillar is labeled live or roadmap."
       >
-        <a
-          href={APP_SIGNUP}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#8B5CF6] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#7C3AED]"
-        >
+        <a href={APP_SIGNUP} className="mk-btn mk-btn-primary">
           Try it free
           <ArrowRight className="h-4 w-4" />
         </a>
-        <Link
-          href="/features/salesfloor"
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.03] px-6 py-3 text-sm font-semibold text-zinc-200 hover:bg-white/[0.06]"
-        >
+        <Link href="/features/salesfloor" className="mk-btn mk-btn-secondary">
           Live coaching floor
         </Link>
       </MarketingPageHero>
@@ -76,9 +70,9 @@ export default function AiFeaturesPage() {
       <section className="px-5 pb-8 lg:px-8">
         <div className="mx-auto max-w-3xl space-y-10">
           {SECTIONS.map((s) => (
-            <article key={s.id} id={s.id} className="scroll-mt-28 border-t border-white/[0.06] pt-8">
-              <h2 className="font-display text-2xl font-medium text-white">{s.title}</h2>
-              <p className="mt-3 text-[15px] leading-relaxed text-zinc-400">{s.body}</p>
+            <article key={s.id} id={s.id} className="scroll-mt-28 border-t border-zinc-950/[0.08] pt-8">
+              <h2 className="font-display text-2xl font-semibold text-zinc-950">{s.title}</h2>
+              <p className="mt-3 text-[15px] leading-relaxed text-zinc-600">{s.body}</p>
             </article>
           ))}
         </div>

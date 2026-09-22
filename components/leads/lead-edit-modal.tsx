@@ -120,7 +120,7 @@ export function LeadEditModal({ lead, onClose, onSaved }: Props) {
             <select
               value={form.status}
               onChange={set('status')}
-              className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-500/25 transition appearance-none"
+              className="dash-input w-full appearance-none px-3 py-2.5"
             >
               {['new','queued','contacted','connected','callback','meeting_booked','not_interested','do_not_call','wrong_number'].map((s) => (
                 <option key={s} value={s} className="bg-[#111] capitalize">{s.replace(/_/g, ' ')}</option>
@@ -135,17 +135,17 @@ export function LeadEditModal({ lead, onClose, onSaved }: Props) {
               onChange={set('notes')}
               rows={3}
               placeholder="Notes…"
-              className="w-full resize-none rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-emerald-500/25 transition"
+              className="dash-input w-full resize-none px-3 py-2.5"
             />
           </div>
 
           <div className="flex gap-2 pt-1">
             <button type="button" onClick={onClose}
-              className="flex-1 rounded-xl border border-white/[0.08] py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.04] transition">
+              className="dash-btn-ghost flex-1">
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-50 transition">
+              className="dash-btn-primary flex-1">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Changes'}
             </button>
           </div>
@@ -175,9 +175,9 @@ function ModalField({ label, value, onChange, placeholder, type = 'text', error,
           onChange={onChange}
           placeholder={placeholder}
           className={[
-            'w-full rounded-xl border bg-white/[0.03] py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition',
-            icon ? 'pl-9 pr-3' : 'px-3',
-            error ? 'border-red-500/40' : 'border-white/[0.07] focus:border-emerald-500/25',
+            'dash-input w-full py-2.5',
+            icon ? 'pl-9! pr-3' : '',
+            error ? 'border-red-500/40!' : '',
           ].join(' ')}
         />
       </div>

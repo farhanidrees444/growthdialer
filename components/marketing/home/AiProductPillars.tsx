@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Brain, Sparkles, Headphones, Bot, ArrowRight, type LucideIcon } from 'lucide-react';
-import { Spotlight } from '@/components/marketing/live-floor/Spotlight';
 import { EASE_OUT, reveal, revealContainer } from '@/components/marketing/live-floor/motion';
+import { Reveal } from '@/components/ui/reveal';
 import {
   AI_PILLARS,
   AI_PILLARS_SUBHEAD,
@@ -19,9 +19,9 @@ const PILLAR_ICONS: Record<string, LucideIcon> = {
 };
 
 const STATUS_STYLES: Record<ProductFeatureStatus, string> = {
-  live: 'border border-emerald-500/25 bg-emerald-500/10 text-emerald-400',
-  beta: 'border border-cyan-500/25 bg-cyan-500/10 text-cyan-400',
-  roadmap: 'border border-amber-500/25 bg-amber-500/10 text-amber-400',
+  live: 'border border-emerald-600/20 bg-emerald-500/10 text-emerald-700',
+  beta: 'border border-cyan-600/20 bg-cyan-500/10 text-cyan-700',
+  roadmap: 'border border-amber-600/20 bg-amber-500/10 text-amber-700',
 };
 
 const STATUS_LABELS: Record<ProductFeatureStatus, string> = {
@@ -41,15 +41,18 @@ export function AiProductPillars() {
           variants={revealContainer}
           className="mb-12 max-w-2xl"
         >
-          <motion.p variants={reveal} className="mb-3 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-600">
+          <motion.p variants={reveal} className="mk-eyebrow">
             AI platform
           </motion.p>
-          <motion.h2 variants={reveal} className="font-display text-[clamp(2rem,4vw,3.25rem)] font-light leading-[1.05] tracking-tight text-[#F5F5F7]">
+          <motion.h2
+            variants={reveal}
+            className="font-display text-[clamp(2rem,4vw,3.25rem)] font-semibold leading-[1.05] tracking-[-0.02em] text-zinc-950"
+          >
             Four pillars.
             <br />
-            <span className="font-medium">Two live · one built-in · one roadmap.</span>
+            <span className="font-semibold">Two live · one built-in · one roadmap.</span>
           </motion.h2>
-          <motion.p variants={reveal} className="mt-4 text-[16px] leading-relaxed text-zinc-400">
+          <motion.p variants={reveal} className="mt-4 text-[16px] leading-relaxed text-zinc-600">
             {AI_PILLARS_SUBHEAD}
           </motion.p>
         </motion.div>
@@ -68,9 +71,8 @@ export function AiProductPillars() {
               <motion.article
                 key={p.id}
                 variants={reveal}
-                className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12]"
+                className="mk-card mk-card-hover group relative overflow-hidden p-6"
               >
-                <Spotlight color={p.accent} />
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <span
                     className="flex h-10 w-10 items-center justify-center rounded-xl"
@@ -84,11 +86,11 @@ export function AiProductPillars() {
                     {badge}
                   </span>
                 </div>
-                <h3 className="text-lg font-semibold text-[#F5F5F7]">{p.title}</h3>
-                <p className="mt-2 text-[14px] leading-relaxed text-zinc-400">{p.body}</p>
+                <h3 className="text-lg font-semibold text-zinc-950">{p.title}</h3>
+                <p className="mt-2 text-[14px] leading-relaxed text-zinc-600">{p.body}</p>
                 <Link
                   href={p.href}
-                  className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-zinc-300 transition group-hover:text-white"
+                  className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-zinc-950"
                 >
                   Learn more
                   <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -98,21 +100,12 @@ export function AiProductPillars() {
           })}
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: EASE_OUT }}
-          className="mt-8 text-center"
-        >
-          <Link
-            href="/features/ai"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.03] px-5 py-2.5 text-sm font-medium text-zinc-200 transition hover:border-[#8B5CF6]/40 hover:text-white"
-          >
+        <Reveal delay={80} className="mt-10 text-center">
+          <Link href="/features/ai" className="mk-btn mk-btn-secondary">
             Explore the full AI platform
             <ArrowRight className="h-4 w-4" />
           </Link>
-        </motion.div>
+        </Reveal>
       </div>
     </section>
   );

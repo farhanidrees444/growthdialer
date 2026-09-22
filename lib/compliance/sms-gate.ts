@@ -6,7 +6,8 @@ import type { WorkspaceTenDlcCampaignProfile } from '@/lib/compliance/ten-dlc-pr
 export const DEFAULT_SMS_OPT_OUT_KEYWORDS = ['STOP', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT'] as const;
 
 export interface WorkspaceMessagingProfileRow {
-  workspace_id: string;
+  workspace_id: string | null;
+  user_id: string | null;
   legal_business_name: string | null;
   brand_status: string;
   campaign_status: string;
@@ -35,12 +36,13 @@ export async function getWorkspaceMessagingProfile(
   supabase: SupabaseClient,
   workspaceId: string,
 ): Promise<WorkspaceMessagingProfileRow | null> {
+  // Single-user mode: profiles are keyed by user_id (callers pass the user id).
   const { data } = await supabase
     .from('workspace_messaging_profiles')
     .select(
-      'workspace_id, legal_business_name, brand_status, campaign_status, campaign_id, messaging_profile_id, opt_out_keywords, daily_volume_cap, use_case, sample_messages, opt_in_description',
+      'workspace_id, user_id, legal_business_name, brand_status, campaign_status, campaign_id, messaging_profile_id, opt_out_keywords, daily_volume_cap, use_case, sample_messages, opt_in_description',
     )
-    .eq('workspace_id', workspaceId)
+    .eq('user_id', workspaceId)
     .maybeSingle();
 
   return (data as WorkspaceMessagingProfileRow | null) ?? null;
@@ -61,7 +63,7 @@ export async function countOutboundSmsToday(
   const { count } = await supabase
     .from('sms_messages')
     .select('*', { count: 'exact', head: true })
-    .eq('workspace_id', workspaceId)
+    .eq('user_id', workspaceId)
     .eq('direction', 'outbound')
     .gte('created_at', start.toISOString());
 
@@ -130,7 +132,7 @@ export async function isPhoneSmsOptedOut(
   const { data: optOut } = await supabase
     .from('sms_opt_outs')
     .select('id')
-    .eq('workspace_id', workspaceId)
+    .eq('user_id', workspaceId)
     .eq('phone_e164', phoneE164)
     .maybeSingle();
 
@@ -139,7 +141,7 @@ export async function isPhoneSmsOptedOut(
   const { data: lead } = await supabase
     .from('leads')
     .select('id, sms_opt_out, dnc')
-    .eq('workspace_id', workspaceId)
+    .eq('user_id', workspaceId)
     .eq('phone', phoneE164)
     .maybeSingle();
 
@@ -153,16 +155,16 @@ export async function recordSmsOptOut(
   source: 'keyword' | 'manual' | 'import' | 'api' = 'keyword',
 ): Promise<void> {
   await supabase.from('sms_opt_outs').upsert({
-    workspace_id: workspaceId,
+    user_id: workspaceId,
     phone_e164: phoneE164,
     source,
     opted_out_at: new Date().toISOString(),
-  }, { onConflict: 'workspace_id,phone_e164' });
+  }, { onConflict: 'user_id,phone_e164' });
 
   await supabase
     .from('leads')
     .update({ sms_opt_out: true, updated_at: new Date().toISOString() })
-    .eq('workspace_id', workspaceId)
+    .eq('user_id', workspaceId)
     .eq('phone', phoneE164);
 }
 
@@ -171,7 +173,7 @@ export function toCampaignProfileSnapshot(
 ): Partial<WorkspaceTenDlcCampaignProfile> | null {
   if (!row) return null;
   return {
-    workspace_id: row.workspace_id,
+    workspace_id: (row.user_id ?? row.workspace_id) ?? undefined,
     campaign_id: row.campaign_id,
     use_case: row.use_case as WorkspaceTenDlcCampaignProfile['use_case'],
     sample_messages: Array.isArray(row.sample_messages)

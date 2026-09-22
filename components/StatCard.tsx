@@ -43,7 +43,7 @@ export default function StatCard({
       <Card className="border-white/10 bg-[oklch(0.09_0.006_285)]/95 p-5 shadow-lg shadow-black/25 backdrop-blur-sm transition-shadow hover:shadow-xl hover:shadow-black/30">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <p className="dash-muted text-sm! font-medium">{title}</p>
             <p className="mt-1 font-display text-2xl font-bold tracking-tight">
               <AnimatedKpiValue value={value} />
             </p>

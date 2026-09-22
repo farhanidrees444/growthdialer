@@ -1,4 +1,5 @@
-import { readCallControlAppId, readVoiceApiKey } from '@/lib/voice/read-env';
+import { readCallControlAppId } from '@/lib/telephony/telnyx/env';
+import { readVoiceApiKey } from '@/lib/voice/read-env';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import { calculateRetailPrice } from '@/lib/pricing/calculate-price';
 import { telephonyRequest } from '@/lib/telephony/telnyx/http';

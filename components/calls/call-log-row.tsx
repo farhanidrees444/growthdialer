@@ -162,7 +162,7 @@ export function CallLogRowCard({ call, index = 0 }: CallLogRowCardProps) {
   );
 
   const cardClass = cn(
-    'group relative flex items-center gap-3 rounded-2xl border p-3.5 transition-all duration-200 sm:p-4',
+    'group relative flex items-center gap-3 rounded-2xl border p-3.5 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.99] sm:p-4',
     'border-white/[0.07] bg-[oklch(0.09_0.006_285)]',
     missed && 'hover:border-red-500/25 hover:shadow-[0_8px_24px_rgba(239,68,68,0.08)]',
     connected && !missed && 'hover:border-emerald-500/20 hover:shadow-[0_8px_24px_rgba(52,211,153,0.08)]',

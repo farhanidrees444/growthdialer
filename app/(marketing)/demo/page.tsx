@@ -4,6 +4,7 @@ import { ArrowRight, Play } from 'lucide-react';
 import { MarketingShell } from '@/components/marketing/MarketingShell';
 import { MarketingPageHero } from '@/components/marketing/live-floor/MarketingPageHero';
 import { JsonLd } from '@/components/marketing/live-floor/JsonLd';
+import { Reveal } from '@/components/ui/reveal';
 import { APP_SIGNUP, MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ const DEMO_STEPS = [
   },
   {
     title: 'Dial your way',
-    body: 'Manual one-off calls, power dial with auto-advance, or parallel lines with AMD and voicemail drop on losers.',
+    body: 'Manual one-off calls, power dial with auto-advance, or parallel lines with voicemail drop.',
     href: '/features/ai',
   },
   {
@@ -36,7 +37,7 @@ const DEMO_STEPS = [
   },
   {
     title: 'Review and coach',
-    body: 'Recordings, AI summaries, Call Logs, and the live salesfloor for managers who review async.',
+    body: 'Recordings, AI summaries, call logs, and the live sales floor for managers who review async.',
     href: '/features/salesfloor',
   },
 ];
@@ -59,22 +60,16 @@ export default function DemoPage() {
           <>
             See the dialer
             <br />
-            <span className="font-medium">your reps will actually use.</span>
+            <span className="font-semibold">your reps will actually use.</span>
           </>
         }
         description="No sandbox smoke-and-mirrors — create a free workspace and run real calls with your leads. This page maps the flow before you sign up."
       >
-        <a
-          href={APP_SIGNUP}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#8B5CF6] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#7C3AED]"
-        >
+        <a href={APP_SIGNUP} className="mk-btn mk-btn-primary">
           <Play className="h-4 w-4" />
           Start free demo
         </a>
-        <Link
-          href="/contact-sales"
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.03] px-6 py-3 text-sm font-semibold text-zinc-200 hover:bg-white/[0.06]"
-        >
+        <Link href="/contact-sales" className="mk-btn mk-btn-secondary">
           Talk to sales
         </Link>
       </MarketingPageHero>
@@ -82,37 +77,37 @@ export default function DemoPage() {
       <section className="mx-auto max-w-5xl px-5 pb-20 lg:px-8">
         <div className="grid gap-4 sm:grid-cols-2">
           {DEMO_STEPS.map((step, i) => (
-            <Link
-              key={step.title}
-              href={step.href}
-              className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 backdrop-blur-xl transition-colors hover:border-white/[0.12] hover:bg-white/[0.04]"
-            >
-              <span className="text-[11px] font-bold uppercase tracking-widest text-[#A78BFA]">
-                Step {i + 1}
-              </span>
-              <h2 className="mt-2 font-display text-lg font-medium text-[#F5F5F7] group-hover:text-[#A78BFA]">
-                {step.title}
-              </h2>
-              <p className="mt-2 text-[14px] leading-relaxed text-zinc-500">{step.body}</p>
-              <span className="mt-4 inline-flex items-center gap-1 text-[13px] font-medium text-zinc-400 group-hover:text-[#F5F5F7]">
-                Learn more <ArrowRight className="h-3.5 w-3.5" />
-              </span>
-            </Link>
+            <Reveal key={step.title} delay={(i % 2) * 70}>
+              <Link
+                href={step.href}
+                className="mk-card mk-card-hover group block h-full p-6"
+              >
+                <span className="text-[11px] font-bold uppercase tracking-widest text-[#6D28D9]">
+                  Step {i + 1}
+                </span>
+                <h2 className="mt-2 font-display text-lg font-semibold text-zinc-950">
+                  {step.title}
+                </h2>
+                <p className="mt-2 text-[14px] leading-relaxed text-zinc-600">{step.body}</p>
+                <span className="mt-4 inline-flex items-center gap-1 text-[13px] font-medium text-zinc-950">
+                  Learn more <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </Link>
+            </Reveal>
           ))}
         </div>
 
-        <div className="mt-10 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8 text-center backdrop-blur-xl">
-          <p className="text-[15px] leading-relaxed text-zinc-400">
-            Starter is free — one seat, full dialer, recordings, and analytics. Pro ($49/mo) adds AI
-            briefs and coaching. Most teams are calling within ten minutes of sign-up.
-          </p>
-          <a
-            href={APP_SIGNUP}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#8B5CF6] px-6 py-3 text-sm font-semibold text-white hover:bg-[#7C3AED]"
-          >
-            Open live demo workspace <ArrowRight className="h-4 w-4" />
-          </a>
-        </div>
+        <Reveal delay={100}>
+          <div className="mk-card mt-10 p-8 text-center">
+            <p className="text-[15px] leading-relaxed text-zinc-600">
+              Starter is free — one seat, full dialer, recordings, and analytics. Pro ($49/mo) adds AI
+              briefs and coaching. Most teams are calling within ten minutes of sign-up.
+            </p>
+            <a href={APP_SIGNUP} className="mk-btn mk-btn-primary mt-6">
+              Open live demo workspace <ArrowRight className="h-4 w-4" />
+            </a>
+          </div>
+        </Reveal>
       </section>
     </MarketingShell>
   );

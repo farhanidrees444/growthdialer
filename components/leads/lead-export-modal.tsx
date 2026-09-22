@@ -178,7 +178,7 @@ export function LeadExportModal({ onClose, selectedCount, filteredCount, selecte
             type="button"
             onClick={handleExport}
             disabled={exporting || fields.length === 0}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-50 transition active:scale-[0.98]"
+            className="dash-btn-primary w-full"
           >
             {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             {exporting ? 'Exporting…' : 'Download'}

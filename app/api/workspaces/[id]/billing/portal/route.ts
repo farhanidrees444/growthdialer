@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { hasPermission, type Role } from '@/lib/auth/permissions';
 import { stripe, isStripeConfigured } from '@/lib/stripe';
+import { isBillingEnabled } from '@/lib/billing/billing-flag';
 
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  // Billing bypass: checkout/portal disabled until BILLING_ENABLED=true.
+  if (!isBillingEnabled()) {
+    return NextResponse.json({ error: 'Billing is temporarily unavailable', billingEnabled: false }, { status: 410 });
+  }
   const { id } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

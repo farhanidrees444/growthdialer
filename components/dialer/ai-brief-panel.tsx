@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, RefreshCw, Clock, Lock, Brain, MessageCircle, Orbit } from 'lucide-react';
-import type { LeadRecord } from '@/lib/dialer/state-machine';
+import type { LeadRecord } from '@/lib/dialer/dialer-types';
 
 interface AiBrief {
   bestTime: { text: string; confidence: number; basis: string };

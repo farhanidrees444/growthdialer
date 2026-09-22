@@ -923,7 +923,7 @@ export default function LeadsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by name, company, phone…"
-                className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-emerald-500/30 focus:shadow-[0_0_0_3px_rgba(52,211,153,0.08)]"
+                className="dash-input w-full py-2.5 pl-9 pr-3"
               />
               {search && (
                 <button type="button" onClick={() => setSearch("")}
@@ -939,10 +939,8 @@ export default function LeadsPage() {
                 type="button"
                 onClick={() => setFilterDrawerOpen(true)}
                 className={cn(
-                  "relative flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition",
-                  isFilterActive(filters)
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                    : "border-white/[0.07] text-slate-500 hover:text-slate-300",
+                  "dash-btn-ghost relative",
+                  isFilterActive(filters) && "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
                 )}
               >
                 <Filter className="h-3.5 w-3.5" />
@@ -958,7 +956,7 @@ export default function LeadsPage() {
               <button
                 type="button"
                 onClick={() => setShowExport(true)}
-                className="flex items-center gap-1.5 rounded-xl border border-white/[0.07] px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-300 transition"
+                className="dash-btn-ghost"
               >
                 <Download className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Export</span>
@@ -968,7 +966,7 @@ export default function LeadsPage() {
               <button
                 type="button"
                 onClick={() => setImportOpen(true)}
-                className="flex items-center gap-1.5 rounded-xl border border-white/[0.07] px-3 py-2 text-xs font-semibold text-slate-500 transition hover:text-slate-300"
+                className="dash-btn-ghost"
               >
                 <Upload className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Import leads</span>
@@ -981,7 +979,7 @@ export default function LeadsPage() {
               <button
                 type="button"
                 onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-1.5 rounded-xl border border-emerald-500/25 bg-gradient-to-r from-emerald-600 to-teal-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-emerald-500/15 transition hover:shadow-emerald-500/25"
+                className="dash-btn-primary"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Add Lead</span>
@@ -1053,7 +1051,7 @@ export default function LeadsPage() {
           {loading ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-52 animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.02]" />
+                <div key={i} className="dash-skeleton h-52" aria-hidden />
               ))}
             </div>
           ) : paginated.length === 0 ? (

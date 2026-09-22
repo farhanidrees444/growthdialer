@@ -4,7 +4,6 @@ import { useState } from "react";
 import type React from "react";
 import { motion } from "framer-motion";
 import { Search, Upload, Sparkles, HelpCircle, Bell } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { LeadSearchDialog } from "@/components/LeadSearchDialog";
 import { useLeads } from "@/contexts/leads-context";
 import { usePathname } from "next/navigation";
@@ -60,28 +59,25 @@ export function DashboardHeader({
 
           {/* Context-aware Import button */}
           {showImportButton && (
-            <Button
+            <button
               type="button"
-              size="sm"
-              className="hidden sm:flex h-8 gap-1.5 bg-brand px-3 text-xs font-semibold text-[oklch(0.08_0.04_153)] hover:bg-[oklch(0.76_0.27_153)]"
+              className="dash-btn-primary h-8! gap-1.5 px-3! text-xs! max-sm:hidden!"
               onClick={() => setImportOpen(true)}
             >
               <Upload className="h-3.5 w-3.5" />
               Import leads
-            </Button>
+            </button>
           )}
 
           {/* Search — desktop */}
-          <Button
+          <button
             type="button"
-            variant="outline"
-            size="sm"
-            className="hidden sm:flex h-8 gap-1.5 border-white/15 bg-white/5 text-xs hover:bg-white/10"
+            className="dash-btn-ghost h-8! gap-1.5 px-3! text-xs! max-sm:hidden!"
             onClick={() => setSearchOpen(true)}
           >
             <Search className="h-3.5 w-3.5" />
             Search
-          </Button>
+          </button>
 
           {/* Search — mobile icon only */}
           <button

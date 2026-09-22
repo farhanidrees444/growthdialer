@@ -523,3 +523,182 @@ html {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESEND-INSPIRED LIGHT MARKETING THEME  (design/resend-refresh)
+   Scope: wrap marketing pages in `.theme-marketing`.
+   Light canvas, near-black type, dotted grids, light rays, tight type.
+   ═══════════════════════════════════════════════════════════════════ */
+.theme-marketing {
+  color-scheme: light;
+  --mk-bg: #ffffff;
+  --mk-bg-subtle: #fafafa;
+  --mk-bg-sunken: #f4f4f5;
+  --mk-text: #09090b;
+  --mk-text-2: #27272a;
+  --mk-muted: #52525b;
+  --mk-faint: #a1a1aa;
+  --mk-line: rgba(9, 9, 11, 0.08);
+  --mk-line-soft: rgba(9, 9, 11, 0.05);
+  --mk-brand: #7c3aed;
+  --mk-brand-deep: #6d28d9;
+  --mk-ink: #09090b;
+  --mk-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--mk-bg);
+  color: var(--mk-text);
+}
+
+@layer utilities {
+  /* layout */
+  .theme-marketing .mk-container { @apply mx-auto w-full max-w-6xl px-6; }
+  .theme-marketing .mk-section { @apply py-24 sm:py-32; }
+  .theme-marketing .mk-eyebrow {
+    @apply mb-4 inline-flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.14em] text-zinc-500;
+  }
+  .theme-marketing .mk-h-display {
+    font-family: var(--font-bricolage), sans-serif;
+    @apply text-balance font-semibold tracking-[-0.03em] text-zinc-950;
+    font-size: clamp(2.6rem, 5.6vw, 4.4rem);
+    line-height: 1.04;
+  }
+  .theme-marketing .mk-h-section {
+    font-family: var(--font-bricolage), sans-serif;
+    @apply text-balance font-semibold tracking-[-0.025em] text-zinc-950;
+    font-size: clamp(1.75rem, 3.4vw, 2.6rem);
+    line-height: 1.1;
+  }
+  .theme-marketing .mk-lead { @apply text-pretty text-lg leading-relaxed text-zinc-600 sm:text-xl; }
+  .theme-marketing .mk-body { @apply text-[15px] leading-relaxed text-zinc-600; }
+
+  /* buttons — Resend language: black primary, quiet secondary */
+  .theme-marketing .mk-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-[15px] font-medium transition-all duration-200 select-none;
+  }
+  .theme-marketing .mk-btn-primary {
+    @apply bg-zinc-950 text-white shadow-[0_1px_2px_rgba(0,0,0,0.12)];
+  }
+  .theme-marketing .mk-btn-primary:hover { @apply bg-zinc-800 -translate-y-px shadow-[0_8px_24px_rgba(0,0,0,0.16)]; }
+  .theme-marketing .mk-btn-primary:active { @apply translate-y-0 scale-[0.98]; }
+  .theme-marketing .mk-btn-secondary {
+    @apply border text-zinc-900 bg-white;
+    border-color: rgba(9, 9, 11, 0.12);
+  }
+  .theme-marketing .mk-btn-secondary:hover { @apply -translate-y-px border-zinc-950/25 shadow-[0_8px_24px_rgba(0,0,0,0.08)]; }
+  .theme-marketing .mk-btn-secondary:active { @apply translate-y-0 scale-[0.98]; }
+  .theme-marketing .mk-btn-brand { @apply bg-[#7c3aed] text-white shadow-[0_1px_2px_rgba(124,58,237,0.4)]; }
+  .theme-marketing .mk-btn-brand:hover { @apply bg-[#6d28d9] -translate-y-px shadow-[0_8px_24px_rgba(124,58,237,0.35)]; }
+
+  /* cards & chrome */
+  .theme-marketing .mk-card {
+    @apply rounded-2xl border bg-white transition-all duration-300;
+    border-color: rgba(9, 9, 11, 0.08);
+    box-shadow: 0 1px 2px rgba(9, 9, 11, 0.04);
+  }
+  .theme-marketing .mk-card-hover:hover {
+    transform: translateY(-4px);
+    border-color: rgba(9, 9, 11, 0.14);
+    box-shadow: 0 20px 48px -16px rgba(9, 9, 11, 0.16);
+  }
+  .theme-marketing .mk-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[13px] font-medium text-zinc-700 bg-white;
+    border-color: rgba(9, 9, 11, 0.1);
+  }
+  .theme-marketing .mk-browser {
+    @apply overflow-hidden rounded-xl border bg-white text-left;
+    border-color: rgba(9, 9, 11, 0.1);
+    box-shadow: 0 32px 80px -24px rgba(9, 9, 11, 0.22), 0 2px 6px rgba(9, 9, 11, 0.06);
+  }
+
+  /* backgrounds — dotted grid + light rays (Resend signatures) */
+  .theme-marketing .mk-dot-grid {
+    background-image: radial-gradient(rgba(9, 9, 11, 0.14) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .theme-marketing .mk-grid-light {
+    background-image:
+      linear-gradient(rgba(9, 9, 11, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(9, 9, 11, 0.045) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+  .theme-marketing .mk-fade-grid {
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, black 30%, transparent 75%);
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, black 30%, transparent 75%);
+  }
+  .theme-marketing .mk-light-rays {
+    background:
+      conic-gradient(from 180deg at 50% -10%, transparent 0deg, rgba(124, 58, 237, 0.10) 18deg, transparent 36deg, transparent 140deg, rgba(124, 58, 237, 0.07) 160deg, transparent 180deg);
+  }
+  .theme-marketing .mk-glow-brand {
+    background: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(124, 58, 237, 0.12), transparent 70%);
+  }
+
+  /* nav */
+  .theme-marketing .mk-nav-link { @apply text-[14px] font-medium text-zinc-600 transition-colors hover:text-zinc-950; }
+}
+
+/* ─── Scroll reveal (shared; JS toggles .is-visible via <Reveal/>) ─── */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.9s var(--mk-ease, cubic-bezier(0.16,1,0.3,1)), transform 0.9s var(--mk-ease, cubic-bezier(0.16,1,0.3,1)); transition-delay: var(--reveal-delay, 0ms); will-change: opacity, transform; }
+.reveal-scale { transform: translateY(20px) scale(0.97); }
+.reveal.is-visible { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .ticker-track, .marquee-track, .marquee-track-reverse, .animate-float, .animate-beam { animation: none !important; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DASHBOARD ELEVATION (matte-black command center, refined)
+   ═══════════════════════════════════════════════════════════════════ */
+@layer utilities {
+  .dash-card {
+    @apply rounded-xl border bg-zinc-900/60 backdrop-blur-sm transition-all duration-200;
+    border-color: rgb(39 39 42 / 0.6);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+  .dash-card-hover:hover {
+    transform: translateY(-2px);
+    border-color: rgb(63 63 70 / 0.8);
+    box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(139, 92, 246, 0.08);
+  }
+  .dash-input {
+    @apply rounded-lg border bg-zinc-900/80 text-[14px] text-zinc-100 placeholder:text-zinc-500 transition-all duration-150;
+    border-color: rgb(39 39 42 / 0.7);
+  }
+  .dash-input:hover { border-color: rgb(63 63 70 / 0.9); }
+  .dash-input:focus-visible { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18); }
+  .dash-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-[#8b5cf6] px-4 py-2 text-[14px] font-medium text-white transition-all duration-150 select-none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+  .dash-btn-primary:hover { @apply bg-[#7c3aed] -translate-y-px; box-shadow: 0 8px 20px -6px rgba(139,92,246,0.5); }
+  .dash-btn-primary:active { @apply translate-y-0 scale-[0.98]; }
+  .dash-btn-primary:disabled { @apply opacity-50 cursor-not-allowed translate-y-0; box-shadow: none; }
+  .dash-btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2 text-[14px] font-medium text-zinc-300 transition-all duration-150 select-none;
+    border-color: rgb(39 39 42 / 0.7); background: rgb(24 24 27 / 0.5);
+  }
+  .dash-btn-ghost:hover { @apply text-zinc-100 -translate-y-px; border-color: rgb(63 63 70 / 0.9); background: rgb(39 39 42 / 0.6); }
+  .dash-btn-ghost:active { @apply translate-y-0 scale-[0.98]; }
+  .dash-table-row { @apply transition-colors duration-150; }
+  .dash-table-row:hover { background: rgba(39, 39, 42, 0.45); }
+  .dash-page-title { font-family: var(--font-bricolage), sans-serif; @apply text-[22px] font-semibold tracking-[-0.01em] text-zinc-100; }
+  .dash-section-title { @apply text-[15px] font-semibold text-zinc-100; }
+  .dash-muted { @apply text-[13px] text-zinc-400; }
+  .dash-skeleton {
+    @apply rounded-md bg-zinc-800/60;
+    background-image: linear-gradient(100deg, transparent 20%, rgba(255,255,255,0.06) 50%, transparent 80%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s linear infinite;
+  }
+}
+@keyframes dash-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.dash-enter { animation: dash-fade-up 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+.dash-enter-1 { animation-delay: 40ms; } .dash-enter-2 { animation-delay: 90ms; }
+.dash-enter-3 { animation-delay: 140ms; } .dash-enter-4 { animation-delay: 190ms; }
+@media (prefers-reduced-motion: reduce) {
+  .dash-enter { animation: none; }
+  .dash-skeleton { animation: none; }
+}

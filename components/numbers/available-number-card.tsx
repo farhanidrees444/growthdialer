@@ -35,7 +35,7 @@ export default function AvailableNumberCard({ num, countryCode, buyingPhone, onB
     <motion.div
       variants={{ hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } }}
       transition={{ duration: 0.2 }}
-      className="group rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition hover:border-emerald-500/20"
+      className="dash-card group p-4 hover:border-emerald-500/20"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
@@ -59,7 +59,7 @@ export default function AvailableNumberCard({ num, countryCode, buyingPhone, onB
           type="button"
           onClick={() => onBuy(num)}
           disabled={buyingPhone !== null}
-          className="shrink-0 flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.08] px-3 py-2 text-xs font-bold text-emerald-300 transition hover:bg-emerald-500/15 disabled:opacity-50"
+          className="dash-btn-primary shrink-0 px-3! py-2! text-xs!"
         >
           {isBuying ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
           Buy

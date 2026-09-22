@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { claimWebhookEvent } from '@/lib/webhooks/dedup';
 import { isBillingCycle, isPaidPlan } from '@/lib/plan/polar';
+import { isBillingEnabled } from '@/lib/billing/billing-flag';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -107,6 +108,10 @@ function normalizeSubscription(eventType: string, object: JsonRecord) {
 }
 
 export async function POST(request: NextRequest) {
+  // Billing bypass: acknowledge without processing (avoids provider retry storms).
+  if (!isBillingEnabled()) {
+    return NextResponse.json({ received: true, billingEnabled: false });
+  }
   const body = await request.text();
 
   if (!verifyPolarSignature(body, request)) {

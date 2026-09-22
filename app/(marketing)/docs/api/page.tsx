@@ -28,7 +28,7 @@ export default function ApiReferencePage() {
           <>
             Pipe call events
             <br />
-            <span className="font-medium">into your stack.</span>
+            <span className="font-semibold">into your stack.</span>
           </>
         }
         description="Workspace-scoped REST endpoints power the dashboard today. Webhook delivery for call.completed is on the roadmap — join the waitlist from Integrations."
@@ -36,28 +36,28 @@ export default function ApiReferencePage() {
 
       <section className="px-5 pb-20 lg:px-8">
         <div className="mx-auto max-w-3xl">
-          <article className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8 backdrop-blur-xl">
-            <h2 className="font-display text-xl font-medium text-[#F5F5F7]">Authentication</h2>
-            <p className="mt-4 text-[15px] leading-relaxed text-zinc-400">
+          <article className="mk-card p-8">
+            <h2 className="font-display text-xl font-semibold text-zinc-950">Authentication</h2>
+            <p className="mt-4 text-[15px] leading-relaxed text-zinc-600">
               Browser sessions use secure workspace auth cookies. Server-to-server integrations should use a
               service token from your workspace settings (Enterprise) or contact us for early API access.
             </p>
           </article>
 
-          <div className="mt-6 overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02]">
-            <h2 className="border-b border-white/[0.06] px-6 py-4 font-display text-lg font-medium text-[#F5F5F7]">
+          <div className="mt-6 overflow-hidden rounded-2xl border border-zinc-950/[0.08] bg-white">
+            <h2 className="border-b border-zinc-950/[0.08] px-6 py-4 font-display text-lg font-semibold text-zinc-950">
               Core endpoints
             </h2>
-            <ul className="divide-y divide-white/[0.06]">
+            <ul className="divide-y divide-zinc-950/[0.06]">
               {ENDPOINTS.map((e) => (
                 <li key={e.path} className="px-6 py-4">
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-[11px] font-bold text-emerald-400">
+                    <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-[11px] font-bold text-emerald-700">
                       {e.method}
                     </span>
-                    <code className="font-mono text-[13px] text-zinc-300">{e.path}</code>
+                    <code className="font-mono text-[13px] text-zinc-800">{e.path}</code>
                   </div>
-                  <p className="mt-2 text-[14px] text-zinc-500">{e.desc}</p>
+                  <p className="mt-2 text-[14px] text-zinc-600">{e.desc}</p>
                 </li>
               ))}
             </ul>
@@ -65,11 +65,11 @@ export default function ApiReferencePage() {
 
           <p className="mt-8 text-center text-[14px] text-zinc-500">
             Full OpenAPI spec ships with{' '}
-            <Link href="/docs" className="text-[#A78BFA] hover:underline">
+            <Link href="/docs" className="text-[#6D28D9] hover:underline">
               Documentation
             </Link>
             . See also{' '}
-            <Link href="/integrations" className="text-[#A78BFA] hover:underline">
+            <Link href="/integrations" className="text-[#6D28D9] hover:underline">
               Integrations
             </Link>
             .

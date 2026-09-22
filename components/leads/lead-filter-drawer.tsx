@@ -257,7 +257,7 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
                       max={50}
                       value={draft.minAttempts}
                       onChange={(e) => setDraft((p) => ({ ...p, minAttempts: Number(e.target.value) }))}
-                      className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-emerald-500/25"
+                      className="dash-input w-full px-3 py-2"
                     />
                   </div>
                   <span className="mt-4 text-slate-600">–</span>
@@ -270,7 +270,7 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
                       value={draft.maxAttempts === 999 ? '' : draft.maxAttempts}
                       placeholder="Any"
                       onChange={(e) => setDraft((p) => ({ ...p, maxAttempts: e.target.value ? Number(e.target.value) : 999 }))}
-                      className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-slate-600 outline-none focus:border-emerald-500/25"
+                      className="dash-input w-full px-3 py-2"
                     />
                   </div>
                 </div>
@@ -282,7 +282,7 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
               <button
                 type="button"
                 onClick={reset}
-                className="flex items-center gap-1.5 rounded-xl border border-white/[0.07] px-4 py-2.5 text-sm font-semibold text-slate-400 hover:text-white transition"
+                className="dash-btn-ghost px-4"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 Reset
@@ -291,7 +291,7 @@ export function LeadFilterDrawer({ open, filters, onChange, onClose }: Props) {
                 type="button"
                 onClick={apply}
                 disabled={!hasChanges}
-                className="flex-1 rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-40 transition"
+                className="dash-btn-primary flex-1"
               >
                 Apply Filters
               </button>

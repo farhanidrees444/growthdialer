@@ -14,7 +14,7 @@ import { useWebPhone } from '@/contexts/webphone-context';
 import { useCallContext } from '@/lib/call-context';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { DispositionModal } from '@/components/dialer/disposition-modal';
-import type { DispositionType, LeadRecord } from '@/lib/dialer/state-machine';
+import type { DispositionType, LeadRecord } from '@/lib/dialer/dialer-types';
 import { isProviderCallId } from '@/lib/voice/extract-call-id';
 
 const MIN_WRAP_UP_CONNECTED_SECONDS = 5;

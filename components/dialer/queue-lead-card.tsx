@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import { getAvatarGradient, getInitials } from '@/lib/dialer/avatar-color';
 import { getLocalTime } from '@/lib/utils/timezone';
-import type { LeadRecord } from '@/lib/dialer/state-machine';
+import type { LeadRecord } from '@/lib/dialer/dialer-types';
 import { cn } from '@/lib/utils';
 
 const LAST_DISPOSITION_COLOR: Record<string, string> = {

@@ -11,7 +11,7 @@ import {
   listInboundBlockers,
   resolveInboundAppUrl,
 } from '@/lib/voice/inbound-readiness';
-import { readCallControlAppId } from '@/lib/voice/read-env';
+import { readCallControlAppId } from '@/lib/telephony/telnyx/env';
 import {
   auditNumberRouting,
   backfillProviderIds,

@@ -200,14 +200,14 @@ export function LeadAddModal({ onClose, onCreated }: Props) {
               onChange={set('notes')}
               rows={2}
               placeholder="Optional notes…"
-              className="w-full resize-none rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-emerald-500/25 transition"
+              className="dash-input w-full resize-none px-3 py-2.5"
             />
           </div>
 
           <button
             type="submit"
             disabled={saving}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-50 transition active:scale-[0.98]"
+            className="dash-btn-primary w-full"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add Lead'}
           </button>
@@ -246,11 +246,9 @@ const Field = forwardRef<HTMLInputElement, {
           onChange={onChange}
           placeholder={placeholder}
           className={[
-            'w-full rounded-xl border bg-white/[0.03] px-3 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition',
+            'dash-input w-full px-3 py-2.5',
             icon ? 'pl-9' : '',
-            error
-              ? 'border-red-500/40 focus:border-red-500/60'
-              : 'border-white/[0.07] focus:border-emerald-500/25',
+            error ? 'border-red-500/40!' : '',
           ].join(' ')}
         />
       </div>

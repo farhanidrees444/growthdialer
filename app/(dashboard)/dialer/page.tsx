@@ -38,7 +38,7 @@ import { ParallelSessionBanner } from '@/components/dialer/parallel-session-bann
 import { DialerFloatingActions } from '@/components/dialer/dialer-floating-actions';
 import { DialerStageAmbient } from '@/components/dialer/dialer-stage-ambient';
 
-import type { LeadRecord, DispositionType } from '@/lib/dialer/state-machine';
+import type { LeadRecord, DispositionType } from '@/lib/dialer/dialer-types';
 import { isInboundPreAnswer } from '@/lib/inbound/pre-answer';
 
 // ── DTMF keypad overlay ────────────────────────────────────────────────────────
@@ -505,7 +505,7 @@ export default function DialerPage() {
   const showAiPanel = (mode === 'preview' || mode === 'live') && !inboundPreAnswer;
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950 overflow-hidden" aria-label="AI Dialer">
+    <div className="dash-enter flex flex-col h-full bg-zinc-950 overflow-hidden" aria-label="AI Dialer">
 
       {/* Header strip — always visible */}
       <HeaderStrip
@@ -521,7 +521,7 @@ export default function DialerPage() {
         onReconnect={reconnect}
       />
 
-      <div className="flex-shrink-0 border-b border-white/[0.06] bg-white/[0.01] px-4 py-3 backdrop-blur-xl">
+      <div className="dash-enter dash-enter-1 flex-shrink-0 border-b border-white/[0.06] bg-white/[0.01] px-4 py-3 backdrop-blur-xl">
         <DialModeSegmented
           mode={dialMode}
           onModeChange={setDialMode}
@@ -589,7 +589,7 @@ export default function DialerPage() {
 
         {/* Queue column */}
         <div
-          className={`flex-shrink-0 border-r border-white/[0.06] overflow-hidden bg-white/[0.01] transition-all duration-300 backdrop-blur-xl ${
+          className={`dash-enter dash-enter-2 flex-shrink-0 border-r border-white/[0.06] overflow-hidden bg-white/[0.01] transition-all duration-300 backdrop-blur-xl ${
             isLive ? 'w-0 md:w-20' : 'w-0 md:w-[300px] lg:w-[380px]'
           } flex-col hidden md:flex`}
         >
@@ -623,7 +623,7 @@ export default function DialerPage() {
         </div>
 
         {/* Center stage */}
-        <div className="relative min-w-0 flex-1 overflow-hidden">
+        <div className="dash-enter dash-enter-3 relative min-w-0 flex-1 overflow-hidden">
           <DialerStageAmbient
             variant={
               isLive ? 'live' : powerDialer.isActive ? 'power' : 'idle'
@@ -708,7 +708,7 @@ export default function DialerPage() {
               animate={{ width: 340, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-              className="flex-shrink-0 border-l border-white/[0.06] overflow-hidden hidden xl:flex flex-col bg-white/[0.01] backdrop-blur-xl"
+              className="dash-enter dash-enter-4 flex-shrink-0 border-l border-white/[0.06] overflow-hidden hidden xl:flex flex-col bg-white/[0.01] backdrop-blur-xl"
             >
               {mode === 'preview' ? (
                 <AiBriefPanel lead={selectedLead} />
@@ -733,20 +733,19 @@ export default function DialerPage() {
           >
             <button
               onClick={() => setDialpadOpen(true)}
-              className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl bg-white/[0.06] border border-white/[0.08] text-sm text-white/70"
+              className="dash-btn-ghost flex-1 h-11"
             >
               <Phone className="w-4 h-4" />
               Manual Dial
             </button>
             <button
-              className="flex-1 flex items-center justify-center h-11 rounded-xl bg-white/[0.06] border border-white/[0.08] text-sm text-white/70"
+              className="dash-btn-ghost flex-1 h-11"
               onClick={() => setMobileQueueOpen(true)}
             >
               Filters
             </button>
             <button
-              className="flex-1 h-11 rounded-xl text-sm font-semibold text-white"
-              style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}
+              className="dash-btn-primary flex-1 h-11"
               onClick={() => setPowerConfirmOpen(true)}
             >
               Power Dial
@@ -795,14 +794,14 @@ export default function DialerPage() {
                 <button
                   type="button"
                   onClick={() => setDncConfirmOpen(false)}
-                  className="flex-1 min-h-11 rounded-xl text-sm text-white/50 bg-white/[0.05] border border-white/[0.07]"
+                  className="dash-btn-ghost flex-1 min-h-11"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={() => void confirmDnc()}
-                  className="flex-[2] min-h-11 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-500"
+                  className="flex-[2] min-h-11 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-500 transition-all active:scale-[0.98]"
                 >
                   Mark DNC
                 </button>
@@ -838,14 +837,14 @@ export default function DialerPage() {
                 <button
                   type="button"
                   onClick={() => setSwitchLeadTarget(null)}
-                  className="flex-1 min-h-11 rounded-xl text-sm text-white/50 bg-white/[0.05] border border-white/[0.07]"
+                  className="dash-btn-ghost flex-1 min-h-11"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={confirmSwitchLead}
-                  className="flex-[2] min-h-11 rounded-xl text-sm font-semibold text-white gradient-brand"
+                  className="dash-btn-primary flex-[2] min-h-11"
                 >
                   End &amp; switch
                 </button>
@@ -894,7 +893,7 @@ export default function DialerPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setPowerConfirmOpen(false)}
-                  className="flex-1 h-10 rounded-xl text-sm text-white/50 bg-white/[0.05] border border-white/[0.07] hover:bg-white/[0.09] transition-colors"
+                  className="dash-btn-ghost flex-1 h-10"
                 >
                   Cancel
                 </button>
@@ -917,8 +916,7 @@ export default function DialerPage() {
                       powerDialer.start({ delay_seconds: 5 });
                     })();
                   }}
-                  className="flex-[2] h-10 rounded-xl text-sm font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed"
-                  style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}
+                  className="dash-btn-primary flex-[2] h-10"
                 >
                   Start Session
                 </button>
@@ -959,7 +957,7 @@ export default function DialerPage() {
               <button
                 type="button"
                 onClick={() => parallelDialer.dismissSummary()}
-                className="w-full min-h-11 rounded-xl text-sm font-semibold text-white gradient-brand"
+                className="dash-btn-primary w-full min-h-11"
               >
                 Done
               </button>
@@ -999,8 +997,7 @@ export default function DialerPage() {
               </div>
               <button
                 onClick={powerDialer.dismissSummary}
-                className="w-full h-10 rounded-xl text-sm font-semibold text-white"
-                style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)' }}
+                className="dash-btn-primary w-full h-10"
               >
                 Done
               </button>

@@ -48,25 +48,25 @@ export default function BestAISalesDialers2026() {
   const wordCount = 4200;
 
   return (
-    <article className="pt-24 pb-16 bg-black text-white">
+    <article className="pt-24 pb-16 bg-white text-zinc-950">
       {/* Breadcrumb */}
-      <nav className="max-w-4xl mx-auto px-4 mb-8 text-sm text-gray-400">
-        <Link href="/" className="hover:text-[#8B5CF6]">Home</Link>
+      <nav className="max-w-4xl mx-auto px-4 mb-8 text-sm text-zinc-600">
+        <Link href="/" className="hover:text-[#6D28D9]">Home</Link>
         <span className="mx-2">›</span>
-        <Link href="/blog" className="hover:text-[#8B5CF6]">Blog</Link>
+        <Link href="/blog" className="hover:text-[#6D28D9]">Blog</Link>
         <span className="mx-2">›</span>
-        <span className="text-gray-300">7 Best AI Sales Dialers in 2026</span>
+        <span className="text-zinc-700">7 Best AI Sales Dialers in 2026</span>
       </nav>
 
       <div className="max-w-4xl mx-auto px-4">
         {/* Hero Section */}
         <div className="mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-zinc-950 to-zinc-500 bg-clip-text text-transparent">
             7 Best AI Sales Dialers in 2026:
-            <span className="block text-[#8B5CF6]">Honest Reviews & Comparisons</span>
+            <span className="block text-[#6D28D9]">Honest Reviews & Comparisons</span>
           </h1>
           
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-gray-400 mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-zinc-600 mb-8">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span>{readingTime} min read</span>
@@ -77,7 +77,7 @@ export default function BestAISalesDialers2026() {
             <span>April 9, 2026</span>
           </div>
 
-          <p className="text-xl text-gray-300 leading-relaxed mb-6">
+          <p className="text-xl text-zinc-700 leading-relaxed mb-6">
             We tested every major AI sales dialer available in 2026. From startup-friendly options to enterprise platforms, we've conducted hands-on testing to bring you honest, data-backed reviews that cut through the marketing hype.
           </p>
         </div>
@@ -85,51 +85,51 @@ export default function BestAISalesDialers2026() {
         {/* Stats Bar — product facts, not market vanity metrics */}
         <div className="grid grid-cols-3 gap-4 mb-12 bg-gradient-to-r from-[#7C3AED]/10 to-transparent border border-[#7C3AED]/30 rounded-lg p-6">
           <div>
-            <div className="text-3xl font-bold text-[#A78BFA] mb-2">10</div>
-            <p className="text-sm text-gray-400">Parallel lines on GrowthDialer Pro</p>
+            <div className="text-3xl font-bold text-[#6D28D9] mb-2">10</div>
+            <p className="text-sm text-zinc-600">Parallel lines on GrowthDialer Pro</p>
           </div>
           <div>
-            <div className="text-3xl font-bold text-[#A78BFA] mb-2">Free</div>
-            <p className="text-sm text-gray-400">Starter tier — dial, record, AI summaries</p>
+            <div className="text-3xl font-bold text-[#6D28D9] mb-2">Free</div>
+            <p className="text-sm text-zinc-600">Starter tier — dial, record, AI summaries</p>
           </div>
           <div>
-            <div className="text-3xl font-bold text-[#A78BFA] mb-2">{GROWTHDIALER_PRICING.proAnnualShort}</div>
-            <p className="text-sm text-gray-400">Pro workspace (annual billing, up to 3 seats)</p>
+            <div className="text-3xl font-bold text-[#6D28D9] mb-2">{GROWTHDIALER_PRICING.proAnnualShort}</div>
+            <p className="text-sm text-zinc-600">Pro workspace (annual billing, up to 3 seats)</p>
           </div>
         </div>
 
         <BlogHonestyBanner />
 
         {/* Key Takeaways */}
-        <div className="bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 rounded-lg p-8 mb-12">
-          <h2 className="text-2xl font-bold text-[#8B5CF6] mb-4">Key Takeaways</h2>
+        <div className="bg-[#7C3AED]/[0.06] border border-[#7C3AED]/20 rounded-lg p-8 mb-12">
+          <h2 className="text-2xl font-bold text-[#6D28D9] mb-4">Key Takeaways</h2>
           <ul className="space-y-3">
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#8B5CF6] flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-[#6D28D9] flex-shrink-0 mt-0.5" />
               <span><strong>GrowthDialer</strong> offers the best overall combination of AI capability, ease of use, and pricing for teams of all sizes</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#8B5CF6] flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-[#6D28D9] flex-shrink-0 mt-0.5" />
               <span><strong>Orum</strong> is the top choice for enterprise teams needing advanced customization and dedicated support</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#8B5CF6] flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-[#6D28D9] flex-shrink-0 mt-0.5" />
               <span><strong>Parallel dialing</strong> increases connect rates by 40-60% compared to traditional power dialers</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#8B5CF6] flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-[#6D28D9] flex-shrink-0 mt-0.5" />
               <span>AI-powered dialers reduce SDR ramp-up time by 60-70%, delivering ROI in under 90 days</span>
             </li>
           </ul>
         </div>
 
         {/* Table of Contents */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8 mb-12">
+        <div className="bg-zinc-100/80 border border-zinc-200 rounded-lg p-8 mb-12">
           <h2 className="text-2xl font-bold mb-6">Table of Contents</h2>
           <ul className="space-y-2">
             {tableOfContents.map((item) => (
               <li key={item.id} className={item.level === 3 ? "ml-6" : ""}>
-                <a href={`#${item.id}`} className="text-gray-300 hover:text-[#8B5CF6] transition-colors flex items-center gap-2">
+                <a href={`#${item.id}`} className="text-zinc-700 hover:text-[#6D28D9] transition-colors flex items-center gap-2">
                   <ChevronRight className="w-4 h-4" />
                   {item.title}
                 </a>
@@ -141,44 +141,44 @@ export default function BestAISalesDialers2026() {
         {/* Content Sections */}
         <section id="what-makes-different" className="mb-12">
           <h2 className="text-3xl font-bold mb-6">What Makes an AI Sales Dialer Different in 2026?</h2>
-          <p className="text-gray-300 leading-relaxed mb-6">
+          <p className="text-zinc-700 leading-relaxed mb-6">
             Traditional power dialers have been the standard for SDR teams for over a decade. They automated the dialing process, but they still required humans to handle every conversation. In 2026, AI sales dialers have fundamentally changed the game.
           </p>
-          <p className="text-gray-300 leading-relaxed mb-6">
+          <p className="text-zinc-700 leading-relaxed mb-6">
             An AI sales dialer in 2026 usually means parallel or power dial plus conversation intelligence — transcripts, summaries, sentiment, and coaching — not necessarily a robot that runs the full call alone. We label which tools ship autonomous voice agents vs post-call AI only.
           </p>
           
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-6 mb-6">
-            <h3 className="font-bold text-yellow-400 mb-2">⚠️ Important Note</h3>
-            <p className="text-gray-300">GrowthDialer&apos;s AI today is post-call and in-call intelligence (summaries, briefs, coaching) — not an autonomous voice agent. We call out competitors the same way in the table below.</p>
+            <h3 className="font-bold text-yellow-500 mb-2">⚠️ Important Note</h3>
+            <p className="text-zinc-700">GrowthDialer&apos;s AI today is post-call and in-call intelligence (summaries, briefs, coaching) — not an autonomous voice agent. We call out competitors the same way in the table below.</p>
           </div>
 
           <div className="overflow-x-auto mb-8">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-700 bg-gray-900/50">
+                <tr className="border-b border-zinc-200 bg-zinc-100/80">
                   <th className="text-left p-3 font-bold">Feature</th>
                   <th className="text-center p-3 font-bold">Traditional Power Dialer</th>
                   <th className="text-center p-3 font-bold">AI Sales Dialer</th>
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-b border-gray-800">
+                <tr className="border-b border-zinc-200">
                   <td className="p-3">Parallel Dialing</td>
                   <td className="text-center">✓</td>
                   <td className="text-center">✓</td>
                 </tr>
-                <tr className="border-b border-gray-800 bg-gray-900/30">
+                <tr className="border-b border-zinc-200 bg-zinc-100/60">
                   <td className="p-3">Autonomous Calls</td>
                   <td className="text-center">✗</td>
                   <td className="text-center">✓</td>
                 </tr>
-                <tr className="border-b border-gray-800">
+                <tr className="border-b border-zinc-200">
                   <td className="p-3">24/7 Operation</td>
                   <td className="text-center">✗</td>
                   <td className="text-center">✓</td>
                 </tr>
-                <tr className="border-b border-gray-800 bg-gray-900/30">
+                <tr className="border-b border-zinc-200 bg-zinc-100/60">
                   <td className="p-3">Objection Handling</td>
                   <td className="text-center">Manual</td>
                   <td className="text-center">AI-Powered</td>
@@ -189,13 +189,13 @@ export default function BestAISalesDialers2026() {
         </section>
 
         {/* GrowthDialer Review */}
-        <section id="growthdialer" className="mb-12 bg-gray-900/50 border border-[#8B5CF6]/30 rounded-lg p-8">
+        <section id="growthdialer" className="mb-12 bg-zinc-100/80 border border-[#7C3AED]/20 rounded-lg p-8">
           <h2 className="text-3xl font-bold mb-4">1. GrowthDialer — Best Overall AI Sales Dialer</h2>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 pb-6 border-b border-gray-800">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 pb-6 border-b border-zinc-200">
             <div>
-              <p className="text-gray-300 mb-2">
+              <p className="text-zinc-700 mb-2">
                 Starter: {GROWTHDIALER_PRICING.starter} · Pro: {GROWTHDIALER_PRICING.proMonthly} ({GROWTHDIALER_PRICING.proAnnual} annual) · Team & Enterprise on{' '}
-                <Link href="/pricing" className="text-[#A78BFA] hover:underline">pricing</Link>
+                <Link href="/pricing" className="text-[#6D28D9] hover:underline">pricing</Link>
               </p>
               <p className="text-sm text-zinc-500">{NO_VANITY_METRICS}</p>
             </div>
@@ -206,7 +206,7 @@ export default function BestAISalesDialers2026() {
             </Link>
           </div>
 
-          <p className="text-gray-300 leading-relaxed mb-6">
+          <p className="text-zinc-700 leading-relaxed mb-6">
             GrowthDialer is our pick for teams that want a modern dialer with AI on every recorded call — power and parallel modes, live coaching floor, and HubSpot sync — without enterprise seat pricing. Autonomous voice agents are on the roadmap, not in production.
           </p>
 
@@ -214,8 +214,8 @@ export default function BestAISalesDialers2026() {
           <ul className="space-y-2 mb-6">
             {SHIPPED_TODAY.map((item) => (
               <li key={item} className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-[#A78BFA] flex-shrink-0 mt-0.5" />
-                <span className="text-gray-300">{item}</span>
+                <CheckCircle2 className="w-5 h-5 text-[#6D28D9] flex-shrink-0 mt-0.5" />
+                <span className="text-zinc-700">{item}</span>
               </li>
             ))}
           </ul>
@@ -229,8 +229,8 @@ export default function BestAISalesDialers2026() {
               "HubSpot integration live; other CRMs labeled on roadmap",
             ].map((pro) => (
               <li key={pro} className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-[#8B5CF6] flex-shrink-0 mt-0.5" />
-                <span className="text-gray-300">{pro}</span>
+                <CheckCircle2 className="w-5 h-5 text-[#6D28D9] flex-shrink-0 mt-0.5" />
+                <span className="text-zinc-700">{pro}</span>
               </li>
             ))}
           </ul>
@@ -243,8 +243,8 @@ export default function BestAISalesDialers2026() {
               "HubSpot is the live CRM integration; others coming",
             ].map((con) => (
               <li key={con} className="flex items-start gap-3">
-                <XCircle className="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-300">{con}</span>
+                <XCircle className="w-5 h-5 text-zinc-500 flex-shrink-0 mt-0.5" />
+                <span className="text-zinc-700">{con}</span>
               </li>
             ))}
           </ul>
@@ -253,12 +253,12 @@ export default function BestAISalesDialers2026() {
         {/* Quick Mention of Other Tools */}
         <section id="comparison" className="mb-12">
           <h2 className="text-3xl font-bold mb-6">Side-by-Side Comparison Table</h2>
-          <p className="text-gray-300 mb-6">Here's how all 7 platforms stack up on the most important features:</p>
+          <p className="text-zinc-700 mb-6">Here's how all 7 platforms stack up on the most important features:</p>
           
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-700 bg-gray-900/50">
+                <tr className="border-b border-zinc-200 bg-zinc-100/80">
                   <th className="text-left p-3 font-bold">Platform</th>
                   <th className="text-center p-3 font-bold">AI Autonomous</th>
                   <th className="text-center p-3 font-bold">Parallel Dialing</th>
@@ -276,12 +276,12 @@ export default function BestAISalesDialers2026() {
                   { name: "Aircall", ai: "✗", parallel: "✗", price: "$45+", best: "Call centers" },
                   { name: "Apollo.io", ai: "Partial", parallel: "✓", price: "$165+", best: "All-in-one" },
                 ].map((row, idx) => (
-                  <tr key={row.name} className={idx % 2 === 0 ? "bg-gray-900/30" : "border-b border-gray-800"}>
+                  <tr key={row.name} className={idx % 2 === 0 ? "bg-zinc-100/60" : "border-b border-zinc-200"}>
                     <td className="p-3 font-semibold">{row.name}</td>
-                    <td className="text-center p-3">{row.ai === "✓" ? <CheckCircle2 className="w-5 h-5 text-[#8B5CF6] mx-auto" /> : row.ai === "Partial" ? "◐" : "✗"}</td>
-                    <td className="text-center p-3">{row.parallel === "✓" ? <CheckCircle2 className="w-5 h-5 text-[#8B5CF6] mx-auto" /> : "✗"}</td>
-                    <td className="text-center p-3 text-gray-300">{row.price}</td>
-                    <td className="text-center p-3 text-gray-300">{row.best}</td>
+                    <td className="text-center p-3">{row.ai === "✓" ? <CheckCircle2 className="w-5 h-5 text-[#6D28D9] mx-auto" /> : row.ai === "Partial" ? "◐" : "✗"}</td>
+                    <td className="text-center p-3">{row.parallel === "✓" ? <CheckCircle2 className="w-5 h-5 text-[#6D28D9] mx-auto" /> : "✗"}</td>
+                    <td className="text-center p-3 text-zinc-700">{row.price}</td>
+                    <td className="text-center p-3 text-zinc-700">{row.best}</td>
                   </tr>
                 ))}
               </tbody>
@@ -290,15 +290,15 @@ export default function BestAISalesDialers2026() {
         </section>
 
         {/* Pro Tip Box */}
-        <div className="bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 rounded-lg p-6 mb-12">
-          <h3 className="font-bold text-[#8B5CF6] mb-2">💡 Pro Tip</h3>
-          <p className="text-gray-300">Most platforms offer free trials or freemium versions. We recommend testing at least 2-3 options with your team before making a final decision. What works for one sales process may not work for another.</p>
+        <div className="bg-[#7C3AED]/[0.06] border border-[#7C3AED]/20 rounded-lg p-6 mb-12">
+          <h3 className="font-bold text-[#6D28D9] mb-2">💡 Pro Tip</h3>
+          <p className="text-zinc-700">Most platforms offer free trials or freemium versions. We recommend testing at least 2-3 options with your team before making a final decision. What works for one sales process may not work for another.</p>
         </div>
 
         {/* CTA Section */}
-        <div className="bg-gradient-to-r from-[#8B5CF6]/10 to-transparent border border-[#8B5CF6]/30 rounded-lg p-8 mb-12 text-center">
+        <div className="bg-gradient-to-r from-[#8B5CF6]/10 to-transparent border border-[#7C3AED]/20 rounded-lg p-8 mb-12 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Upgrade Your Sales Dialer?</h2>
-          <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
+          <p className="text-zinc-700 mb-6 max-w-2xl mx-auto">
             The right AI sales dialer can double your team's productivity while reducing SDR burnout. Most sales leaders see ROI in under 90 days.
           </p>
           <Link href="https://app.growthdialer.com/signup">
@@ -306,7 +306,7 @@ export default function BestAISalesDialers2026() {
               Try GrowthDialer Free <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
-          <p className="text-sm text-gray-400 mt-4">No credit card required. 14-day free trial. Full feature access.</p>
+          <p className="text-sm text-zinc-600 mt-4">No credit card required. 14-day free trial. Full feature access.</p>
         </div>
 
         {/* FAQ Section */}
@@ -335,24 +335,24 @@ export default function BestAISalesDialers2026() {
                 a: "Most teams see meaningful improvements in connect rates within 2 weeks. Full ROI typically appears in 60-90 days as the team optimizes their process and the AI learns your scripts."
               },
             ].map((item) => (
-              <div key={item.q} className="border-l-4 border-[#8B5CF6] pl-6 py-4">
+              <div key={item.q} className="border-l-4 border-[#7C3AED] pl-6 py-4">
                 <h3 className="font-bold text-lg mb-2">{item.q}</h3>
-                <p className="text-gray-300">{item.a}</p>
+                <p className="text-zinc-700">{item.a}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* Author Bio */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8 mb-12">
+        <div className="bg-zinc-100/80 border border-zinc-200 rounded-lg p-8 mb-12">
           <div className="flex flex-col sm:flex-row items-start gap-6">
-            <div className="w-20 h-20 rounded-full bg-[#8B5CF6]/20 flex items-center justify-center text-2xl flex-shrink-0">
+            <div className="w-20 h-20 rounded-full bg-[#7C3AED]/10 flex items-center justify-center text-2xl flex-shrink-0">
               👤
             </div>
             <div>
               <h3 className="font-bold text-lg mb-1">Written by GrowthDialer Sales Team</h3>
-              <p className="text-gray-400 mb-4">{AUTHOR_BIO}</p>
-              <Link href="/about" className="text-[#8B5CF6] hover:text-[#7C3AED]">Learn more about our team →</Link>
+              <p className="text-zinc-600 mb-4">{AUTHOR_BIO}</p>
+              <Link href="/about" className="text-[#6D28D9] hover:text-[#6D28D9]">Learn more about our team →</Link>
             </div>
           </div>
         </div>
@@ -361,13 +361,13 @@ export default function BestAISalesDialers2026() {
         <div className="mb-12">
           <h2 className="text-3xl font-bold mb-8">Related Articles</h2>
           <div className="grid md:grid-cols-2 gap-6">
-            <Link href="/blog/how-parallel-dialing-works" className="border border-gray-800 rounded-lg p-6 hover:border-[#8B5CF6] transition-colors">
+            <Link href="/blog/how-parallel-dialing-works" className="border border-zinc-200 rounded-lg p-6 hover:border-[#7C3AED] transition-colors">
               <h3 className="font-bold text-lg mb-2">How Parallel Dialing Raises Connect Rates</h3>
-              <p className="text-gray-400 text-sm">Line math, AMD, and when parallel beats single-line power dial.</p>
+              <p className="text-zinc-600 text-sm">Line math, AMD, and when parallel beats single-line power dial.</p>
             </Link>
-            <Link href="/blog/replace-sdr-team-with-ai" className="border border-gray-800 rounded-lg p-6 hover:border-[#8B5CF6] transition-colors">
+            <Link href="/blog/replace-sdr-team-with-ai" className="border border-zinc-200 rounded-lg p-6 hover:border-[#7C3AED] transition-colors">
               <h3 className="font-bold text-lg mb-2">SDR Teams and AI: What Actually Ships Today</h3>
-              <p className="text-gray-400 text-sm">Where AI removes dial-and-log busywork vs where humans still own the call.</p>
+              <p className="text-zinc-600 text-sm">Where AI removes dial-and-log busywork vs where humans still own the call.</p>
             </Link>
           </div>
         </div>
@@ -375,7 +375,7 @@ export default function BestAISalesDialers2026() {
         {/* Final CTA */}
         <div className="text-center">
           <h2 className="text-3xl font-bold mb-4">Start Getting More Sales Meetings Today</h2>
-          <p className="text-gray-300 mb-8 max-w-2xl mx-auto">{BLOG_CTA}</p>
+          <p className="text-zinc-700 mb-8 max-w-2xl mx-auto">{BLOG_CTA}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="https://app.growthdialer.com/signup">
               <Button size="lg" className="bg-[#8B5CF6] text-white hover:bg-[#7C3AED]">
@@ -383,7 +383,7 @@ export default function BestAISalesDialers2026() {
               </Button>
             </Link>
             <Link href="/pricing">
-              <Button size="lg" variant="outline" className="border-white/20">
+              <Button size="lg" variant="outline" className="border-zinc-950/15">
                 View Pricing
               </Button>
             </Link>
