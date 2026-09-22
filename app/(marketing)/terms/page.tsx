@@ -3,7 +3,7 @@ import { Navbar, Footer } from "@/components/marketing/v2/Chrome";
 import { Reveal } from "@/components/ui/reveal";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | GrowthDialer",
+  title: "Terms of Service",
   description: "The terms for using GrowthDialer — lawful use, accounts, billing, and changes.",
   alternates: { canonical: "https://growthdialer.com/terms" },
 };

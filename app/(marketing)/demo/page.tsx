@@ -23,7 +23,7 @@ import { JsonLd } from '@/components/marketing/v2/JsonLd';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
-  title: 'Product Demo — See GrowthDialer in action | GrowthDialer',
+  title: 'Product Demo — See GrowthDialer in action',
   description:
     'Walk through the AI Dialer, power dial sessions, call recordings, AI summaries, and team analytics. Start free — 7-day trial, no credit card.',
   alternates: { canonical: `${MARKETING_SITE}/demo` },
@@ -50,7 +50,7 @@ const DEMO_STEPS = [
     body: 'Power dial with auto-advance, or parallel lines with voicemail drop. One click and you’re talking.',
     href: '/features',
     visual: (
-      <BrowserFrame url="app.growthdialer.com/dialer/parallel" badge={<LiveBadge label="3 lines · live" />}>
+      <BrowserFrame url="app.growthdialer.com/dialer/parallel" badge={<LiveBadge label="5 lines · live" />}>
         <ParallelDial />
       </BrowserFrame>
     ),

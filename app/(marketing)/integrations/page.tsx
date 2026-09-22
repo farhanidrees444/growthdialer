@@ -14,7 +14,7 @@ import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
-  title: 'Integrations — CRM Connectors on the Roadmap | GrowthDialer',
+  title: 'Integrations — CRM Connectors on the Roadmap',
   description:
     'Native CRM integrations for GrowthDialer are in development — HubSpot, Salesforce, Pipedrive, Slack, Zapier and more. Join the waitlist for your stack.',
   alternates: { canonical: `${MARKETING_SITE}/integrations` },

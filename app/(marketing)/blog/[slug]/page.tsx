@@ -248,7 +248,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   if (!post) return {};
 
   return {
-    title: `${post.title} | GrowthDialer Blog`,
+    title: `${post.title} | Blog`,
     description: post.excerpt,
     keywords: `${post.category.toLowerCase()}, sales dialer, b2b sales, ${post.title.toLowerCase()}`,
     openGraph: {

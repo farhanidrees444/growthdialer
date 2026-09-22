@@ -7,7 +7,7 @@ import { Reveal } from '@/components/ui/reveal';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
-  title: 'Blog — Outbound Strategy & Dialer Mechanics | GrowthDialer',
+  title: 'Blog — Outbound Strategy & Dialer Mechanics',
   description:
     'Practical articles on AI power dialing, parallel dial strategy, CRM hygiene, and B2B outbound from the GrowthDialer team.',
   alternates: { canonical: `${MARKETING_SITE}/blog` },

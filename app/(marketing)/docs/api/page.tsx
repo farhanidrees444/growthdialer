@@ -8,7 +8,7 @@ import { MARKETING_SITE } from '@/lib/marketing/navigation';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'API Reference | GrowthDialer',
+  title: 'API Reference',
   description:
     'GrowthDialer REST API and webhooks for call events, leads, and workspace data. Authentication and endpoint overview.',
   alternates: { canonical: `${MARKETING_SITE}/docs/api` },

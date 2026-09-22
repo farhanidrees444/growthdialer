@@ -39,7 +39,7 @@ export function Navbar() {
         )}
         style={{ maxWidth: 'min(80rem, calc(100% - 2rem))' }}
       >
-        <BrandLogo href="/" showText size="nav" priority className="shrink-0" />
+        <BrandLogo href="/" showText size="nav" priority wordmarkTone="onLight" className="shrink-0" />
 
         <nav className="hidden items-center gap-1 lg:flex" onMouseLeave={() => setDrop(null)}>
           {TOP_NAV.map((item) =>
@@ -191,7 +191,7 @@ export function Footer() {
       <div className="pm-container">
         <div className="grid gap-12 lg:grid-cols-[1.3fr_2fr]">
           <div>
-            <BrandLogo href="/" showText size="footer" />
+            <BrandLogo href="/" showText size="footer" wordmarkTone="onLight" />
             <p className="pm-body mt-5 max-w-xs">{FOOTER_TAGLINE}</p>
             <a
               href={APP_SIGNUP}

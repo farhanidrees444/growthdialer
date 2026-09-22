@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: data.description,
     alternates: { canonical: `${MARKETING_SITE}/solutions/${slug}` },
     openGraph: {
-      title: `${data.eyebrow} | GrowthDialer`,
+      title: `${data.eyebrow}`,
       description: data.description,
       url: `${MARKETING_SITE}/solutions/${slug}`,
     },

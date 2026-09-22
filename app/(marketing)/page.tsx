@@ -55,15 +55,15 @@ const DIALING_ROWS: FeatureRow[] = [
   },
   {
     eyebrow: 'Parallel dialer',
-    title: 'Three lines. One conversation.',
-    body: 'Dial up to three prospects at once. Answering-machine detection drops your voicemail and moves on — you only ever talk to humans.',
+    title: 'Five lines. One conversation.',
+    body: 'Dial up to five prospects at once. Answering-machine detection drops your voicemail and moves on — you only ever talk to humans.',
     bullets: [
       'AI answering-machine detection on every line',
       'Automatic voicemail drop, zero effort',
       'Connects you the instant a real person picks up',
     ],
     visual: (
-      <BrowserFrame url="app.growthdialer.com/dialer/parallel" badge={<LiveBadge label="3 lines · live" />}>
+      <BrowserFrame url="app.growthdialer.com/dialer/parallel" badge={<LiveBadge label="5 lines · live" />}>
         <ParallelDial />
       </BrowserFrame>
     ),

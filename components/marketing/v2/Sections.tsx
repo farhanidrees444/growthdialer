@@ -242,6 +242,7 @@ export function PricingTeaser() {
                       <span className="pm-stat-num">{p.price}</span>
                       <span className="pm-small"> / seat / mo</span>
                     </p>
+                    <p className="pm-small mt-1.5 !text-[12px] text-zinc-400">per month, billed annually</p>
                     <p className="pm-small mt-3">{p.tag}</p>
                   </article>
                 </GradientBorder>
@@ -252,6 +253,7 @@ export function PricingTeaser() {
                     <span className="pm-stat-num">{p.price}</span>
                     <span className="pm-small"> / seat / mo</span>
                   </p>
+                  <p className="pm-small mt-1.5 !text-[12px] text-zinc-400">per month, billed annually</p>
                   <p className="pm-small mt-3">{p.tag}</p>
                 </article>
               )}
@@ -532,17 +534,23 @@ function PhaseVisual({
 }) {
   const start = index / SHOWCASE_STEPS.length;
   const end = (index + 1) / SHOWCASE_STEPS.length;
+  const isLast = index === SHOWCASE_STEPS.length - 1;
+  /* Sequential cross-fade: each phase fully exits before the next enters,
+     so two browser frames never visibly collide mid-transition. The final
+     phase stays put instead of fading to blank at the end of the pin. */
   const opacity = useTransform(
     progress,
-    [Math.max(0, start - 0.12), start + 0.02, end - 0.06, Math.min(1, end + 0.1)],
-    [0, 1, 1, 0]
+    isLast
+      ? [Math.max(0, start - 0.02), start + 0.1]
+      : [Math.max(0, start - 0.02), start + 0.1, end - 0.16, end - 0.06],
+    isLast ? [0, 1] : [0, 1, 1, 0]
   );
   const y = useTransform(progress, [start, start + 0.12, end - 0.12, end], [48, 0, 0, -48]);
   const scale = useTransform(progress, [start, start + 0.12, end - 0.12, end], [0.96, 1, 1, 0.98]);
   return (
     <motion.div
       aria-hidden={hidden}
-      className="absolute inset-0 flex items-center"
+      className={cn('absolute inset-0 flex items-center', hidden && 'pointer-events-none')}
       style={{ opacity, y, scale }}
     >
       <div className="w-full">

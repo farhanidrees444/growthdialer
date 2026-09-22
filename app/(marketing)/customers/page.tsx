@@ -8,7 +8,7 @@ import { Reveal } from '@/components/ui/reveal';
 import { APP_SIGNUP, MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
-  title: 'Customers — Who GrowthDialer Is For | GrowthDialer',
+  title: 'Customers — Who GrowthDialer Is For',
   description:
     'Outbound teams use GrowthDialer for power dialing, AI call summaries, HubSpot logging, and manager coaching. No invented testimonials — see who it’s built for and join early access.',
   alternates: { canonical: `${MARKETING_SITE}/customers` },

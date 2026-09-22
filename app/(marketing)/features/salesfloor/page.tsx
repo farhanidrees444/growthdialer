@@ -20,7 +20,7 @@ import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
-  title: 'Salesfloor — Live Coaching & Team Visibility | GrowthDialer',
+  title: 'Salesfloor — Live Coaching & Team Visibility',
   description:
     'The GrowthDialer salesfloor: listen to live calls, leave post-call feedback, and review team performance from real call data. Whisper and barge coaching coming soon.',
   alternates: { canonical: `${MARKETING_SITE}/features/salesfloor` },

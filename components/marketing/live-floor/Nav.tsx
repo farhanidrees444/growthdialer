@@ -45,7 +45,7 @@ export function Nav() {
             : 'max-w-[calc(100%-1.5rem)] border border-transparent bg-white/60 backdrop-blur-md'
         )}
       >
-        <BrandLogo href="/" showText size="nav" priority className="shrink-0" />
+        <BrandLogo href="/" showText size="nav" priority wordmarkTone="onLight" className="shrink-0" />
 
         <nav
           className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 lg:flex"

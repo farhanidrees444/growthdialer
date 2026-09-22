@@ -71,10 +71,10 @@ export function Waveform({ bars = 40, color = '#6d28d9', className }: { bars?: n
 /* ── HERO: dialer command console ─────────────────────── */
 export function DialerConsole() {
   const queue = [
-    { name: 'Maya Patel', role: 'RevOps · Acme', state: 'active' },
-    { name: 'Daniel Kim', role: 'VP Sales · Northwind', state: 'queued' },
-    { name: 'Sofia Reyes', role: 'Founder · Loopwork', state: 'queued' },
-    { name: 'James Okafor', role: 'SDR Lead · Vantage', state: 'done' },
+    { name: 'VP Sales', role: 'Enterprise · Outbound', state: 'active' },
+    { name: 'Sales Manager', role: 'Mid-market · Outbound', state: 'queued' },
+    { name: 'SDR', role: 'SMB · Outbound', state: 'queued' },
+    { name: 'Account Executive', role: 'Enterprise · Follow-up', state: 'done' },
   ];
   return (
     <div className="grid md:grid-cols-[240px_1fr_260px]">
@@ -112,8 +112,8 @@ export function DialerConsole() {
             <Phone className="h-6 w-6" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[16px] font-semibold text-zinc-950">Maya Patel · RevOps</p>
-            <p className="text-[12.5px] text-zinc-500">Connected · Recording on · Line 1 of 3</p>
+            <p className="truncate text-[16px] font-semibold text-zinc-950">VP Sales · Enterprise</p>
+            <p className="text-[12.5px] text-zinc-500">Connected · Recording on · Line 1 of 5</p>
           </div>
           <p className="font-mono text-[26px] font-semibold tabular-nums text-zinc-950">03:18</p>
         </div>
@@ -170,17 +170,17 @@ export function DialerConsole() {
   );
 }
 
-/* ── Parallel dialing: three live legs ────────────────── */
+/* ── Parallel dialing: five live legs ────────────────── */
 export function ParallelDial() {
   const legs = [
-    { name: 'Daniel Kim', status: 'Ringing', tone: 'zinc', icon: Phone },
-    { name: 'Sofia Reyes', status: 'Voicemail · dropped', tone: 'amber', icon: Voicemail },
-    { name: 'James Okafor', status: 'Connected · you’re talking', tone: 'emerald', icon: Mic },
+    { name: 'VP Sales', status: 'Ringing', tone: 'zinc', icon: Phone },
+    { name: 'Sales Manager', status: 'Voicemail · dropped', tone: 'amber', icon: Voicemail },
+    { name: 'SDR', status: 'Connected · you’re talking', tone: 'emerald', icon: Mic },
   ];
   return (
     <div className="p-5 sm:p-6">
       <div className="mb-4 flex items-center justify-between">
-        <p className="text-[13px] font-semibold text-zinc-900">Parallel session · 3 lines</p>
+        <p className="text-[13px] font-semibold text-zinc-900">Parallel session · 5 lines</p>
         <span className="pm-chip !text-[11px]"><Zap className="h-3 w-3 text-[#6d28d9]" /> AMD active</span>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
@@ -244,7 +244,7 @@ export function AiBrief() {
       </div>
       <div className="mt-4 flex items-center gap-3 rounded-xl bg-zinc-950 p-3.5 text-white">
         <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />
-        <p className="text-[12.5px]">Synced to CRM · logged under <span className="font-semibold">Maya Patel</span> with recording attached.</p>
+        <p className="text-[12.5px]">Synced to CRM · logged on the lead timeline with recording attached.</p>
       </div>
     </div>
   );
@@ -377,10 +377,10 @@ export function MockupReveal({ children, delay = 0, className }: { children: Rea
 /* ── Power dialer queue ───────────────────────────────── */
 export function PowerQueue() {
   const rows = [
-    { name: 'Maya Patel', meta: 'Called 2m ago · Connected 3:18', done: true },
-    { name: 'Daniel Kim', meta: 'Calling now…', active: true },
-    { name: 'Sofia Reyes', meta: 'Up next · (415) 555-0119' },
-    { name: 'James Okafor', meta: 'Up next · (212) 555-0142' },
+    { name: 'VP Sales', meta: 'Called 2m ago · Connected 3:18', done: true },
+    { name: 'Sales Manager', meta: 'Calling now…', active: true },
+    { name: 'SDR', meta: 'Up next · (415) 555-0119' },
+    { name: 'Account Executive', meta: 'Up next · (212) 555-0142' },
   ];
   return (
     <div className="p-5 sm:p-6">
@@ -431,12 +431,12 @@ export function PowerQueue() {
 export function ClickToCall() {
   return (
     <div className="p-5 sm:p-6">
-      <p className="text-[13px] font-semibold text-zinc-900">Leads · Acme pipeline</p>
+      <p className="text-[13px] font-semibold text-zinc-900">Leads · Prospect pipeline</p>
       <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-950/[0.07]">
         {[
-          { name: 'Maya Patel', co: 'Acme Corp', hot: true },
-          { name: 'Daniel Kim', co: 'Northwind', hot: false },
-          { name: 'Sofia Reyes', co: 'Loopwork', hot: true },
+          { name: 'VP Sales', co: 'Enterprise · Outbound', hot: true },
+          { name: 'Sales Manager', co: 'Mid-market · Outbound', hot: false },
+          { name: 'SDR', co: 'SMB · Outbound', hot: true },
         ].map((l, i) => (
           <div
             key={l.name}
