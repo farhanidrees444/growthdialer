@@ -8,13 +8,7 @@ import {
   RiskBullets,
 } from '@/components/marketing/v2/Sections';
 import { Reveal } from '@/components/ui/reveal';
-import {
-  AiSummaryVisual,
-  DashboardVisual,
-  DialerConsoleVisual,
-  QueueVisual,
-  VisualFigure,
-} from '@/components/marketing/visuals';
+import { RealShot } from '../features/_components/real-shot';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { JsonLd } from '@/components/marketing/v2/JsonLd';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
@@ -22,11 +16,11 @@ import { MARKETING_SITE } from '@/lib/marketing/navigation';
 export const metadata: Metadata = {
   title: 'Product Demo — See GrowthDialer in action | GrowthDialer',
   description:
-    'See how GrowthDialer works: the dialer, queue, AI summaries, and team metrics — illustrated step by step. Start free — 7-day trial, no credit card.',
+    'Walk through the real GrowthDialer UI: the dialer, queue, AI summaries, and team metrics. Every screenshot is the actual product. Start free — 7-day trial, no credit card.',
   alternates: { canonical: `${MARKETING_SITE}/demo` },
   openGraph: {
     title: 'GrowthDialer Demo',
-    description: 'How the product works: dial, record, analyze, and review — in four steps.',
+    description: 'The real product UI: dial, record, analyze, and review — in four steps.',
     url: `${MARKETING_SITE}/demo`,
   },
 };
@@ -36,37 +30,41 @@ const DEMO_STEPS = [
     title: 'Load your queue',
     body: 'Import a CSV or add leads manually. Queue, Hot, and Callbacks tabs keep reps focused on the right calls — and the dialer prompts you to claim a caller ID before outbound.',
     href: '/features',
-    visual: <QueueVisual />,
+    shot: 'dialerMain' as const,
+    alt: 'The real GrowthDialer AI Dialer showing Queue, Hot, and Callbacks tabs with an empty queue and Import CSV prompt',
     caption:
-      'Illustrated preview of the lead queue — Queue, Hot, and Callbacks tabs with Import CSV and claim-caller-ID prompts. Your leads fill this view.',
+      'A fresh account\u2019s queue — Queue, Hot, and Callbacks tabs with Import CSV and Claim caller ID prompts. Your leads fill this view.',
   },
   {
     title: 'Dial your way',
     body: 'Manual, Power, and Parallel modes sit in the tab bar — switch without losing the queue. One click and you\u2019re talking; 8 one-click dispositions close out every call.',
     href: '/features',
-    visual: <DialerConsoleVisual />,
-    caption: 'Illustrated preview of the dialer — Manual, Power, and Parallel mode tabs with the AI scoring toggle.',
+    shot: 'dialerBanner' as const,
+    alt: 'The real GrowthDialer dialer header with Manual, Power, and Parallel mode tabs and the AI scoring toggle',
+    caption: 'The same dialer\u2019s header — Manual, Power, and Parallel mode tabs with the AI scoring toggle.',
   },
   {
     title: 'Hang up — notes are done',
     body: 'The AI SUMMARIES card runs automatically after calls: bullet summary, sentiment, objections, buying signals, next steps, and a suggested disposition. Playback, transcripts, and AI analysis appear for calls over 30 seconds.',
     href: '/features/ai',
-    visual: <AiSummaryVisual />,
-    caption: 'Illustrated preview of the AI summary card — bullet notes, sentiment, buying signals, and a suggested disposition.',
+    shot: 'dashboardBanner' as const,
+    alt: 'The real GrowthDialer dashboard showing the AI SUMMARIES status card that runs automatically after calls',
+    caption: 'The AI SUMMARIES card on the dashboard — analysis runs automatically after recorded calls.',
   },
   {
     title: 'Review and coach',
     body: 'The dashboard fills with your numbers from the first call: calls today, connect rate, talk time, meetings booked. Managers open the salesfloor to listen live and leave feedback tied to the transcript.',
     href: '/features/salesfloor',
-    visual: <DashboardVisual />,
-    caption: 'Illustrated preview of the dashboard — calls today, connect rate, talk time, meetings booked.',
+    shot: 'dashboardMain' as const,
+    alt: 'The real GrowthDialer dashboard with metric cards for calls today, connect rate, talk time, and meetings booked',
+    caption: 'The dashboard\u2019s metric cards — calls today, connect rate, talk time, meetings booked. Real numbers from your first call on.',
   },
 ];
 
 const DEMO_FAQS = [
   {
     q: 'Is this a real product or a staged demo?',
-    a: 'Real product, illustrated tour. The visuals on this page are hand-crafted illustrations of the actual GrowthDialer workflow — the dialer, queue, AI summaries, and dashboard. Start a free trial and you\u2019re in the same product with your own leads.',
+    a: 'Real. Every screenshot on this page is the actual GrowthDialer UI — fresh account, empty queue and all. Start a free trial and you\u2019re in the same workspace with your own leads.',
   },
   {
     q: 'How fast can we be calling?',
@@ -87,7 +85,7 @@ export default function DemoPage() {
           '@context': 'https://schema.org',
           '@type': 'WebPage',
           name: 'GrowthDialer Product Demo',
-          description: 'A four-step illustrated tour of how GrowthDialer works.',
+          description: 'A four-step tour of the real GrowthDialer product UI.',
           url: `${MARKETING_SITE}/demo`,
         }}
       />
@@ -100,11 +98,11 @@ export default function DemoPage() {
             <Reveal>
               <p className="pm-eyebrow !text-white/60">Demo</p>
               <h1 className="pm-h-section-dark mt-4 max-w-3xl">
-                Ten minutes. Four steps. How it works.
+                Ten minutes. Four steps. The real product.
               </h1>
               <p className="pm-lead-dark mt-5 max-w-2xl">
-                Illustrated, step by step: the queue, the dialer, the AI-written notes, and the
-                dashboard. Walk the flow here, then start a free trial and walk it with your
+                Every screenshot on this page is the actual GrowthDialer UI — fresh account, empty
+                queue and all. Walk the flow here, then start a free trial and walk it with your
                 own leads.
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
@@ -136,7 +134,7 @@ export default function DemoPage() {
           </div>
         </section>
 
-        {/* The tour — illustrated, alternating rhythm */}
+        {/* The tour — real screenshots, alternating rhythm */}
         <div className="pm-section">
           <div className="pm-container">
             <div className="space-y-20 sm:space-y-28">
@@ -154,7 +152,7 @@ export default function DemoPage() {
                     </Link>
                   </Reveal>
                   <Reveal delay={120} className={i % 2 === 1 ? 'lg:order-1' : ''}>
-                    <VisualFigure caption={step.caption}>{step.visual}</VisualFigure>
+                    <RealShot shot={step.shot} alt={step.alt} caption={step.caption} />
                   </Reveal>
                 </div>
               ))}

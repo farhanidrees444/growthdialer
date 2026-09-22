@@ -8,18 +8,18 @@ import {
   PricingTeaser,
 } from '@/components/marketing/v2/Sections';
 import { Reveal } from '@/components/ui/reveal';
-import { CoachingVisual, VisualFigure } from '@/components/marketing/visuals';
+import { RealShot } from '../_components/real-shot';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
   title: 'Salesfloor — Live Coaching & Team Metrics | GrowthDialer',
   description:
-    'The GrowthDialer salesfloor: live coaching listen mode, call takeover, team metrics, and number health — illustrated feature by feature.',
+    'The GrowthDialer salesfloor: live coaching listen mode, call takeover, team metrics, and number health. Shown with the real product UI.',
   alternates: { canonical: `${MARKETING_SITE}/features/salesfloor` },
   openGraph: {
     title: 'GrowthDialer Salesfloor',
-    description: 'Live call coaching, team metrics, and number health — illustrated, honestly labeled.',
+    description: 'Live call coaching, team metrics, and number health — the real UI, honestly labeled.',
     url: `${MARKETING_SITE}/features/salesfloor`,
   },
 };
@@ -72,8 +72,8 @@ export default function SalesfloorPage() {
               </h1>
               <p className="pm-lead mt-6 max-w-2xl">
                 Listen live, take over when it matters, and read the numbers that tell you who needs
-                coaching. Everything below is illustrated from the real product — and every coaching
-                mode is labeled with exactly where it stands.
+                coaching. Everything below is the real product — and every coaching mode is labeled
+                with exactly where it stands.
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
@@ -101,7 +101,7 @@ export default function SalesfloorPage() {
           </div>
         </section>
 
-        {/* Manager dashboard — illustrated metrics */}
+        {/* Manager dashboard — real screenshot */}
         <section className="pm-section pm-divider bg-zinc-50/60">
           <div className="pm-container">
             <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
@@ -127,9 +127,11 @@ export default function SalesfloorPage() {
                 </ul>
               </Reveal>
               <Reveal delay={120}>
-                <VisualFigure caption="Illustrated preview of the salesfloor — live rep rows with listen and take-over coaching actions. Whisper and barge are on the roadmap.">
-                  <CoachingVisual />
-                </VisualFigure>
+                <RealShot
+                  shot="dashboardMain"
+                  alt="The real GrowthDialer dashboard: activation path, AI summaries status card, and metric cards for calls today, connect rate, talk time, and meetings booked"
+                  caption="The real dashboard — the metric cards above are what your managers read every morning."
+                />
               </Reveal>
             </div>
           </div>

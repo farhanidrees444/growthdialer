@@ -8,11 +8,7 @@ import {
   PricingTeaser,
 } from '@/components/marketing/v2/Sections';
 import { Reveal } from '@/components/ui/reveal';
-import {
-  AiSummaryVisual,
-  DialerConsoleVisual,
-  VisualFigure,
-} from '@/components/marketing/visuals';
+import { RealShot } from '../_components/real-shot';
 import { cn } from '@/lib/utils';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
@@ -120,9 +116,11 @@ export default function AiFeaturesPage() {
                 </ul>
               </Reveal>
               <Reveal delay={120}>
-                <VisualFigure caption="Illustrated preview of the AI summary card — bullet notes, sentiment, buying signals, a suggested disposition, and per-lead memory.">
-                  <AiSummaryVisual />
-                </VisualFigure>
+                <RealShot
+                  shot="dashboardBanner"
+                  alt="The real GrowthDialer dashboard with the AI SUMMARIES status card showing analysis runs automatically after calls"
+                  caption="The dashboard's AI SUMMARIES status card — call analysis runs automatically after recorded calls."
+                />
               </Reveal>
             </div>
           </div>
@@ -154,9 +152,11 @@ export default function AiFeaturesPage() {
                 </ul>
               </Reveal>
               <Reveal delay={120} className="lg:order-1">
-                <VisualFigure caption="Illustrated preview of the dialer header — the AI scoring toggle next to the Manual, Power, and Parallel mode tabs.">
-                  <DialerConsoleVisual badges={false} />
-                </VisualFigure>
+                <RealShot
+                  shot="dialerBanner"
+                  alt="The real GrowthDialer AI Dialer showing the AI scoring toggle and Manual, Power, and Parallel mode tabs"
+                  caption="The dialer header with the AI scoring toggle and the three dialing modes."
+                />
               </Reveal>
             </div>
           </div>
