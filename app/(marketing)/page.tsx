@@ -3,17 +3,17 @@ import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
 import { Hero } from '@/components/marketing/v2/Hero';
 import {
   CapabilityMarquee,
+  DarkIntelligence,
+  DeliverabilityBand,
   Faq,
-  FeatureGroup,
   FinalCta,
   HowItWorks,
+  ModesBento,
   PersonaCards,
-  PinnedShowcase,
   PositioningStrip,
   PricingTeaser,
+  ProofBand,
   StackBand,
-  StatsRow,
-  TrustBand,
   type FeatureRow,
 } from '@/components/marketing/v2/Sections';
 import {
@@ -31,7 +31,7 @@ import {
 import { POSITIONING } from '@/components/marketing/v2/copy';
 
 export const metadata: Metadata = {
-  title: 'GrowthDialer — The AI Dialer for Teams That Close on Calls',
+  title: { absolute: 'GrowthDialer — The AI Dialer for Teams That Close on Calls' },
   description:
     'Power and parallel dialing, automatic transcripts, and AI-written call briefs. The voice-first sales dialer for outbound teams. Start free — 7-day trial, no credit card.',
   alternates: { canonical: 'https://growthdialer.com' },
@@ -161,7 +161,7 @@ const NUMBER_ROWS: FeatureRow[] = [
       'Full disposition history on each lead’s timeline',
     ],
     visual: (
-      <BrowserFrame url="app.growthdialer.com/leads/maya-patel" caption={null}>
+      <BrowserFrame url="app.growthdialer.com/leads/rec_8f3k2" caption={null}>
         <ComplianceCard />
       </BrowserFrame>
     ),
@@ -175,39 +175,38 @@ export default function LandingPage() {
       <Navbar />
       <main>
         <Hero />
+        <ProofBand />
         <CapabilityMarquee />
         <PositioningStrip line={POSITIONING.line} />
-        <StackBand />
-        <FeatureGroup
+        <ModesBento
           eyebrow="Dialing"
           title="Dial at the speed of your list."
           lede="Three ways to call, one rhythm. Pick the mode that fits the moment — the workflow never changes."
           rows={DIALING_ROWS}
         />
-        <div className="pm-divider bg-zinc-50/60">
-          <FeatureGroup
-            eyebrow="Intelligence"
-            title="Every call, understood."
-            lede="Transcription, summaries, and analytics run on every conversation — automatically. Your CRM has never been this honest."
-            rows={INTEL_ROWS}
-          />
-        </div>
+        <DarkIntelligence
+          eyebrow="Intelligence"
+          title="The call writes its own notes."
+          lede="Transcription, summaries, and analytics run on every conversation — automatically. Your CRM has never been this honest."
+          rows={INTEL_ROWS}
+        />
+        <StackBand />
         <PersonaCards />
-        <FeatureGroup
+        <DeliverabilityBand
           eyebrow="Deliverability"
           title="Numbers that stay out of spam."
           lede="Connect rate is a deliverability game. We watch every number like it's our own."
           rows={NUMBER_ROWS}
         />
-        <PinnedShowcase />
-        <TrustBand />
         <HowItWorks />
-        <StatsRow />
         <PricingTeaser />
         <div className="pm-divider">
-          <Faq />
+          <Faq title="Fair questions. Straight answers." />
         </div>
-        <FinalCta />
+        <FinalCta
+          title="Put your list on five lines."
+          lede="Start your 7-day trial — every call transcribed, briefed, and logged. No credit card, no sales call required."
+        />
       </main>
       <Footer />
     </div>

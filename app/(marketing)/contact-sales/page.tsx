@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { Navbar, Footer } from "@/components/marketing/v2/Chrome";
-import { RiskBullets } from "@/components/marketing/v2/Sections";
+import { RiskBullets, SectionHead } from "@/components/marketing/v2/Sections";
 import { Reveal } from "@/components/ui/reveal";
 import { ContactForm } from "./ContactForm";
 import { APP_SIGNUP } from "@/components/marketing/v2/copy";
 import { MARKETING_SITE } from "@/lib/marketing/navigation";
 
 export const metadata: Metadata = {
-  title: "Contact Sales — Talk to the GrowthDialer Team",
+  title: { absolute: "Contact Sales — Talk to the GrowthDialer Team" },
   description:
     "Questions about GrowthDialer, a larger team, or custom needs? Send a note and we'll reply within one business day.",
   alternates: { canonical: `${MARKETING_SITE}/contact-sales` },
@@ -53,6 +55,71 @@ export default function ContactSalesPage() {
                 <ContactForm />
               </Reveal>
             </div>
+          </div>
+        </section>
+
+        {/* What happens after you submit */}
+        <section className="pm-section-tight pm-divider bg-zinc-50/60">
+          <div className="pm-container">
+            <SectionHead
+              eyebrow="What happens next"
+              title="After you hit send."
+              align="left"
+            />
+            <div className="grid gap-4 md:grid-cols-3">
+              {[
+                {
+                  n: '01',
+                  title: 'An honest reply',
+                  body: 'A real person — not a sequence — replies within one business day. If we’re a bad fit, we’ll say so.',
+                },
+                {
+                  n: '02',
+                  title: 'A 20-minute fit call',
+                  body: 'We walk through your current outbound workflow and whether GrowthDialer actually fits it. No deck, no discovery theater.',
+                },
+                {
+                  n: '03',
+                  title: 'A trial workspace',
+                  body: 'If it’s a fit, you get your own workspace and a 7-day trial — your leads, your calls, no credit card.',
+                },
+              ].map((s, i) => (
+                <Reveal key={s.n} delay={i * 80}>
+                  <article className="pm-card h-full p-7">
+                    <span className="pm-h-display !text-[clamp(1.75rem,3.5vw,2.25rem)] !leading-none text-violet-600/80">
+                      {s.n}
+                    </span>
+                    <h3 className="pm-h-card mt-4">{s.title}</h3>
+                    <p className="pm-body mt-3 !text-[14.5px]">{s.body}</p>
+                  </article>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Page-specific closing CTA */}
+        <section className="pm-dark">
+          <div aria-hidden className="pm-dark-grid absolute inset-0" />
+          <div aria-hidden className="pm-dark-glow absolute inset-x-0 top-0 h-[380px]" />
+          <div className="pm-container-narrow relative py-20 text-center sm:py-24">
+            <Reveal>
+              <p className="pm-eyebrow pm-eyebrow-centered !text-violet-300">Skip the call</p>
+              <h2 className="pm-h-section-dark mx-auto max-w-2xl">
+                Rather just try it yourself?
+              </h2>
+              <p className="pm-lead-dark mx-auto mt-5 max-w-xl">
+                The trial needs no conversation. Spin up a workspace, import a list, and put 7 days of your own calls through the dialer — no credit card.
+              </p>
+              <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <a href={APP_SIGNUP} className="pm-btn pm-btn-white">
+                  Start free trial <ArrowRight className="h-4 w-4" />
+                </a>
+                <Link href="/pricing" className="pm-btn pm-btn-ghostlight">
+                  See pricing first
+                </Link>
+              </div>
+            </Reveal>
           </div>
         </section>
       </main>

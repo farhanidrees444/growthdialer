@@ -7,7 +7,7 @@ import { MARKETING_SITE } from '@/lib/marketing/navigation';
 const SLUG = 'kixie';
 
 export const metadata: Metadata = {
-  title: 'GrowthDialer vs Kixie — AI Dialer Comparison',
+  title: { absolute: 'GrowthDialer vs Kixie — AI Dialer Comparison' },
   description:
     'Compare GrowthDialer vs Kixie: power dialing, AI call intelligence, live coaching floor, and per-seat pricing. 7-day free trial, no credit card.',
   alternates: { canonical: `${MARKETING_SITE}/compare/vs-kixie` },

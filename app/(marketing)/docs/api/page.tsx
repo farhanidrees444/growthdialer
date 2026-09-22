@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Lock } from 'lucide-react';
+import { ArrowRight, Lock, TerminalSquare } from 'lucide-react';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
-import { FinalCta, PageHero, SectionHead } from '@/components/marketing/v2/Sections';
+import { PageHero, SectionHead } from '@/components/marketing/v2/Sections';
 import { Reveal } from '@/components/ui/reveal';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
 import { cn } from '@/lib/utils';
@@ -57,8 +57,30 @@ export default function ApiReferencePage() {
               </article>
             </Reveal>
 
+            <Reveal delay={60}>
+              <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-950 bg-zinc-950">
+                <div className="flex items-center justify-between gap-3 border-b border-white/10 px-6 py-4">
+                  <p className="flex items-center gap-2 font-mono text-[12px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
+                    <TerminalSquare className="h-4 w-4 text-violet-400" />
+                    Illustrative example
+                  </p>
+                  <span className="font-mono text-[12px] text-zinc-500">GET /api/leads</span>
+                </div>
+                <pre className="overflow-x-auto p-6 font-mono text-[13px] leading-relaxed text-zinc-200">
+                  <code>
+{`# Replace $API_TOKEN with your workspace service token
+curl "https://app.growthdialer.com/api/leads?limit=50" \\
+  -H "Authorization: Bearer $API_TOKEN"`}
+                  </code>
+                </pre>
+              </div>
+              <p className="pm-small mt-3 text-center">
+                Request shape only — parameter and response details ship with the OpenAPI spec.
+              </p>
+            </Reveal>
+
             <Reveal delay={80}>
-              <div className="pm-card mt-4 overflow-hidden !p-0">
+              <div className="pm-card mt-6 overflow-hidden !p-0">
                 <h2 className="pm-h-card border-b border-zinc-950/[0.06] px-7 py-5 !text-[1.15rem]">
                   Core endpoints
                 </h2>
@@ -86,27 +108,32 @@ export default function ApiReferencePage() {
                 </ul>
               </div>
             </Reveal>
-
-            <Reveal delay={100}>
-              <p className="pm-body mt-8 text-center">
-                Full OpenAPI spec ships with{' '}
-                <Link href="/docs" className="font-semibold text-violet-700 hover:underline">
-                  Documentation
-                </Link>
-                . See also{' '}
-                <Link
-                  href="/integrations"
-                  className="inline-flex items-center gap-1 font-semibold text-violet-700 hover:underline"
-                >
-                  Integrations <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-                .
-              </p>
-            </Reveal>
           </div>
         </div>
 
-        <FinalCta />
+        {/* Page-specific closing CTA */}
+        <div className="pm-section-tight">
+          <div className="pm-container-narrow">
+            <Reveal>
+              <div className="pm-card p-8 text-center sm:p-10">
+                <p className="pm-eyebrow pm-eyebrow-centered">Early API access</p>
+                <h2 className="pm-h-section mt-3">Building something bigger?</h2>
+                <p className="pm-body mx-auto mt-4 max-w-md">
+                  Webhooks and the full OpenAPI spec are still on the roadmap. Talk to us about
+                  early API access and what you want to build.
+                </p>
+                <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                  <Link href="/contact-sales" className="pm-btn pm-btn-primary w-full sm:w-auto">
+                    Contact sales <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link href="/docs" className="pm-btn pm-btn-secondary w-full sm:w-auto">
+                    Back to docs
+                  </Link>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
       </main>
       <Footer />
     </div>

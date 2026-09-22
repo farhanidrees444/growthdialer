@@ -255,6 +255,44 @@ export function ArticleCta() {
   );
 }
 
+/* ── Essay-end CTA (ties the read back to the product) ─── */
+export function ArticleCtaEssay({ title }: { title: string }) {
+  return (
+    <div className="mt-14 overflow-hidden rounded-3xl border border-violet-600/20 bg-gradient-to-br from-violet-600/[0.07] via-white to-white p-8 text-center sm:p-12">
+      <p className="pm-eyebrow pm-eyebrow-centered">From the journal, to the floor</p>
+      <h2 className="pm-h-group mx-auto mt-4 max-w-xl !text-[1.7rem]">
+        Try the dialer this essay is about.
+      </h2>
+      <p className="pm-body mx-auto mt-4 max-w-xl">
+        &ldquo;{title}&rdquo; was written about the product we ship — not a hypothetical one.
+        Run it on your own list for 7 days and judge it on your own calls.
+      </p>
+      <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <a href={APP_SIGNUP} className="pm-btn pm-btn-primary">
+          Start free trial <ArrowRight className="h-4 w-4" />
+        </a>
+        <Link href="/demo" className="pm-btn pm-btn-secondary">
+          See the product tour
+        </Link>
+      </div>
+      <p className="pm-small mt-5">7-day free trial · No credit card · Cancel anytime</p>
+    </div>
+  );
+}
+
+/* ── Pull quote ───────────────────────────────────────── */
+export function PullQuote({ children }: { children: React.ReactNode }) {
+  return (
+    <Reveal>
+      <blockquote className="my-12 border-l-[3px] border-violet-600 pl-6 sm:pl-8">
+        <p className="font-display text-[1.45rem] font-medium leading-[1.4] tracking-tight text-zinc-950">
+          {children}
+        </p>
+      </blockquote>
+    </Reveal>
+  );
+}
+
 /* ── Honesty banner re-export ─────────────────────────── */
 export function Honesty() {
   return (

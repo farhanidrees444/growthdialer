@@ -64,7 +64,7 @@ export function ContactForm() {
       <div className="space-y-4">
         <div>
           <label htmlFor="name" className="mb-1.5 block text-xs font-medium text-zinc-600">Name</label>
-          <input id="name" name="name" required minLength={2} className={inputClass} placeholder="Alex Rivera" />
+          <input id="name" name="name" required minLength={2} className={inputClass} placeholder="Your name" />
         </div>
         <div>
           <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-zinc-600">Work email</label>

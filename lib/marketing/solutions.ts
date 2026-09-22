@@ -7,7 +7,7 @@ export const SOLUTION_PAGES: Record<string, SolutionPageData> = {
     title: 'More connects.',
     titleAccent: 'Less admin after every dial.',
     description:
-      'GrowthDialer is built for outbound reps who live in the queue: power dial, auto-record, disposition in one click, and a full call history when the conversation ends.',
+      'Built for reps who live in the queue: power-dial through call lists, auto-record every conversation, disposition in one click — and keep full call history on every lead.',
     pains: [
       {
         title: 'Queue friction',
@@ -38,7 +38,7 @@ export const SOLUTION_PAGES: Record<string, SolutionPageData> = {
     title: 'Every discovery call',
     titleAccent: 'becomes a searchable record.',
     description:
-      'Account executives run fewer, higher-stakes calls. GrowthDialer captures the full conversation, flags sentiment shifts, and links insights to the opportunity.',
+      'AEs run fewer, higher-stakes calls. GrowthDialer captures the full conversation — transcripts, sentiment shifts, summaries — and links it all to the opportunity.',
     pains: [
       {
         title: 'Lost nuance in notes',
@@ -69,7 +69,7 @@ export const SOLUTION_PAGES: Record<string, SolutionPageData> = {
     title: 'Call data that',
     titleAccent: 'stays clean by default.',
     description:
-      'RevOps teams need clean call objects, consistent dispositions, and exportable metrics. GrowthDialer writes structured records — not free-text chaos.',
+      'RevOps runs on clean call objects, consistent dispositions, and exportable metrics. GrowthDialer writes structured records by default — not free-text chaos.',
     pains: [
       {
         title: 'Dirty activity data',
@@ -100,7 +100,7 @@ export const SOLUTION_PAGES: Record<string, SolutionPageData> = {
     title: 'One dialer.',
     titleAccent: 'Separate workspaces per client.',
     description:
-      'Agencies running outbound for multiple brands need isolated lead lists, numbers, and reporting — without spinning up a new vendor contract each time.',
+      'Agencies running outbound for many brands get isolated lead lists, numbers, and reporting per client — without spinning up a new vendor contract each time.',
     pains: [
       {
         title: 'Client data bleed',
@@ -131,7 +131,7 @@ export const SOLUTION_PAGES: Record<string, SolutionPageData> = {
     title: 'Outbound at scale',
     titleAccent: 'with security you can audit.',
     description:
-      'Enterprise sales orgs need custom contracts, dedicated support, and honest answers about what ships today versus roadmap.',
+      'Enterprise sales orgs need straight answers about what ships today versus what’s roadmap — and a dialer built to pass procurement and security review.',
     pains: [
       {
         title: 'Procurement needs facts',

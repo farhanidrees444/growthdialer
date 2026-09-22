@@ -103,12 +103,12 @@ const CATEGORY_DEFAULTS: Record<
 
 export const GROWTHDIALER_FEATURES: Record<FeatureKey, boolean | string> = {
   powerDialing: true,
-  parallelDialing: 'Up to 10 lines',
+  parallelDialing: 'Up to 5 lines',
   aiSummaries: true,
   conversationIntel: true,
   liveCoaching: true,
-  crmSync: 'Waitlist',
-  freeTier: false,
+  crmSync: 'HubSpot (live)',
+  freeTier: true,
   localPresence: true,
   callRecording: true,
 };

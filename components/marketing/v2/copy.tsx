@@ -14,18 +14,55 @@ export const RISK_BULLETS = [
 ] as const;
 
 export const HERO = {
-  eyebrow: 'AI call summaries are live',
-  eyebrowHref: '/features/ai',
+  eyebrow: 'Parallel dialing is live',
+  eyebrowHref: '/features',
   title: (
     <>
-      The AI dialer for teams
+      Your reps were hired to <span className="text-[#6d28d9]">talk.</span>
       <br />
-      that close on calls.
+      Not to type.
     </>
   ),
-  lede: 'Power and parallel dialing, automatic transcripts, and AI-written call briefs — so your reps spend their hours talking, not typing.',
+  lede: 'GrowthDialer puts five lines on every rep, transcribes every call, and writes the notes and follow-ups — while your CRM stays exactly where it is.',
   primaryCta: { label: 'Start free trial', href: APP_SIGNUP },
-  secondaryCta: { label: 'Watch the demo', href: '/demo' },
+  secondaryCta: { label: 'Take the product tour', href: '/demo' },
+} as const;
+
+export const PROOF = {
+  eyebrow: 'Radical honesty',
+  title: (
+    <>
+      Four pillars. Three live —<br className="hidden sm:block" /> one in development.
+    </>
+  ),
+  lede: 'No vaporware, no demo checkboxes. If it isn’t live, it’s labeled — right here, before you sign up.',
+  pillars: [
+    {
+      name: 'Dialing',
+      status: 'live' as const,
+      fact: '3 modes · 5 parallel lines',
+      body: 'Power, parallel, and click-to-call — in your browser, on every plan, from the first call.',
+    },
+    {
+      name: 'Call intelligence',
+      status: 'live' as const,
+      fact: '8 dispositions · AI briefs',
+      body: 'Transcription, summaries, sentiment, and coaching signals on every recorded call.',
+    },
+    {
+      name: 'Number health',
+      status: 'live' as const,
+      fact: 'Spam-risk scoring',
+      body: 'Every number you own, scored for spam risk and watched continuously.',
+    },
+    {
+      name: 'AI receptionist',
+      status: 'dev' as const,
+      fact: 'In development',
+      body: 'Answers, routes, and books when your team can’t pick up. On the roadmap — deliberately not on the pricing page.',
+    },
+  ],
+  facts: ['3 dialing modes', '8 dispositions', '5 parallel lines', '7-day trial'],
 } as const;
 
 export const POSITIONING = {
@@ -35,8 +72,15 @@ export const POSITIONING = {
 export const STACK_BAND = {
   eyebrow: 'Fits your stack',
   title: 'Your CRM stays. We handle the calls.',
-  lede: 'GrowthDialer is the calling layer — not another system of record. Every call, recording, and AI brief is logged and exportable, and native CRM integrations are in development.',
-  items: ['HubSpot', 'Salesforce', 'Zapier', 'Slack', 'Webhooks', 'API'],
+  lede: 'GrowthDialer is the calling layer — not another system of record. HubSpot syncs today; everything else below is honestly labeled, and every call stays logged and exportable either way.',
+  items: [
+    { name: 'HubSpot', status: 'live' as const },
+    { name: 'Salesforce', status: 'dev' as const },
+    { name: 'Zapier', status: 'roadmap' as const },
+    { name: 'Slack', status: 'roadmap' as const },
+    { name: 'Webhooks', status: 'roadmap' as const },
+    { name: 'API', status: 'roadmap' as const },
+  ],
 } as const;
 
 export const PERSONAS = {
@@ -77,7 +121,7 @@ export const TRUST = {
     },
     {
       title: 'Plays well with your CRM',
-      body: 'HubSpot, Salesforce, Zapier, webhooks. Calls log themselves where your pipeline already lives — no migration, no duplicate records.',
+      body: 'HubSpot syncs calls today; Salesforce, Zapier, and webhooks are in development. Until then, every call is logged and exportable — no migration, no duplicate records.',
     },
     {
       title: 'Compliance is the floor',
@@ -88,7 +132,7 @@ export const TRUST = {
 
 export const HOW_IT_WORKS = {
   eyebrow: 'Get started',
-  title: 'Live in an afternoon.',
+  title: 'Three steps to your first call.',
   steps: [
     {
       title: 'Import your list',
@@ -107,7 +151,7 @@ export const HOW_IT_WORKS = {
 
 export const PRICING_TEASER = {
   eyebrow: 'Pricing',
-  title: 'Simple pricing, per seat.',
+  title: 'One seat. The whole dialer.',
   lede: 'Every plan includes unlimited calling workflows, AI summaries, and the full dialer. 20% off annual.',
   plans: [
     { name: 'Starter', price: '$39', tag: 'For solo reps getting started', popular: false },
@@ -145,8 +189,8 @@ export const FAQS = [
 ] as const;
 
 export const FINAL_CTA = {
-  title: 'Your next call could be your next customer.',
-  lede: 'Join the teams who stopped typing call notes and started closing.',
+  title: 'Start your 7-day trial.',
+  lede: 'Every call transcribed, briefed, and logged. No credit card, no sales call required.',
   primaryCta: { label: 'Start free trial', href: APP_SIGNUP },
   secondaryCta: { label: 'Talk to sales', href: '/contact-sales' },
 } as const;

@@ -7,7 +7,7 @@ import { MARKETING_SITE } from '@/lib/marketing/navigation';
 const SLUG = 'ringcentral';
 
 export const metadata: Metadata = {
-  title: 'GrowthDialer vs RingCentral — AI Dialer Comparison',
+  title: { absolute: 'GrowthDialer vs RingCentral — AI Dialer Comparison' },
   description:
     'Compare GrowthDialer vs RingCentral: power dialing, AI call intelligence, live coaching floor, and per-seat pricing. 7-day free trial, no credit card.',
   alternates: { canonical: `${MARKETING_SITE}/compare/vs-ringcentral` },

@@ -7,7 +7,7 @@ import { MARKETING_SITE } from '@/lib/marketing/navigation';
 const SLUG = 'krispcall';
 
 export const metadata: Metadata = {
-  title: 'GrowthDialer vs KrispCall — AI Dialer Comparison',
+  title: { absolute: 'GrowthDialer vs KrispCall — AI Dialer Comparison' },
   description:
     'Compare GrowthDialer vs KrispCall: power dialing, AI call intelligence, live coaching floor, and per-seat pricing. 7-day free trial, no credit card.',
   alternates: { canonical: `${MARKETING_SITE}/compare/vs-krispcall` },

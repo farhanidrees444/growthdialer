@@ -3,14 +3,15 @@
 import { useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform, type MotionValue } from 'framer-motion';
-import { ArrowRight, Check, ChevronDown, PhoneCall, Plug2 } from 'lucide-react';
+import { ArrowRight, Check, ChevronDown, Phone, PhoneCall, Plug2, Zap } from 'lucide-react';
 import { Reveal } from '@/components/ui/reveal';
 import { APP_SIGNUP } from './copy';
-import { FAQS, FINAL_CTA, HOW_IT_WORKS, PERSONAS, PRICING_TEASER, RISK_BULLETS, STACK_BAND, TRUST } from './copy';
+import { FAQS, FINAL_CTA, HOW_IT_WORKS, PERSONAS, PRICING_TEASER, PROOF, RISK_BULLETS, STACK_BAND, TRUST } from './copy';
 import {
   AiBrief,
   BrowserFrame,
   LiveBadge,
+  NumberHealth,
   PowerQueue,
   TranscriptStream,
 } from './Mockups';
@@ -194,7 +195,15 @@ export function HowItWorks() {
   );
 }
 
-/* ── Stack band (honest integrations) ─────────────────── */
+/* ── Stack band (honest integrations) ───────────────────
+   HubSpot is the only Live connector — every other pill carries its
+   real status so nothing implies equal availability. */
+const STACK_STATUS = {
+  live: { dot: 'bg-emerald-500', label: 'Live', text: 'text-emerald-700' },
+  dev: { dot: 'bg-[#6d28d9]', label: 'In development', text: 'text-[#6d28d9]' },
+  roadmap: { dot: 'bg-zinc-300', label: 'Roadmap', text: 'text-zinc-500' },
+} as const;
+
 export function StackBand() {
   return (
     <div className="pm-section-tight pm-divider">
@@ -206,11 +215,18 @@ export function StackBand() {
         </Reveal>
         <Reveal delay={120}>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            {STACK_BAND.items.map((name) => (
-              <span key={name} className="pm-chip !px-5 !py-2.5 !text-[14px]">
-                {name}
-              </span>
-            ))}
+            {STACK_BAND.items.map((item) => {
+              const s = STACK_STATUS[item.status];
+              return (
+                <span key={item.name} className="pm-chip !gap-2.5 !px-5 !py-2.5 !text-[14px]">
+                  <span className={cn('h-1.5 w-1.5 rounded-full', s.dot)} aria-hidden />
+                  {item.name}
+                  <span className={cn('text-[10.5px] font-bold uppercase tracking-[0.1em]', s.text)}>
+                    {s.label}
+                  </span>
+                </span>
+              );
+            })}
           </div>
         </Reveal>
       </div>
@@ -292,7 +308,7 @@ export function RiskBullets({ className, dark = false }: { className?: string; d
 }
 
 /* ── FAQ accordion ────────────────────────────────────── */
-export function Faq({ items = FAQS, eyebrow = 'FAQ', title = 'Answers, before you ask.' }: { items?: readonly { q: string; a: string }[]; eyebrow?: string; title?: ReactNode }) {
+export function Faq({ items = FAQS, eyebrow = 'FAQ', title = 'Straight answers.' }: { items?: readonly { q: string; a: string }[]; eyebrow?: string; title?: ReactNode }) {
   const [open, setOpen] = useState<number | null>(0);
   return (
     <div className="pm-section">
@@ -343,8 +359,22 @@ export function Faq({ items = FAQS, eyebrow = 'FAQ', title = 'Answers, before yo
   );
 }
 
-/* ── Final CTA (dark) ─────────────────────────────────── */
-export function FinalCta() {
+/* ── Final CTA (dark) ───────────────────────────────────
+   Accepts optional overrides so each page can close with its own line;
+   defaults preserve the shared FINAL_CTA for every existing caller. */
+export function FinalCta({
+  eyebrow = 'Get started',
+  title = FINAL_CTA.title,
+  lede = FINAL_CTA.lede,
+  primaryCta = FINAL_CTA.primaryCta,
+  secondaryCta = FINAL_CTA.secondaryCta,
+}: {
+  eyebrow?: string;
+  title?: ReactNode;
+  lede?: ReactNode;
+  primaryCta?: { label: string; href: string };
+  secondaryCta?: { label: string; href: string };
+} = {}) {
   return (
     <section className="pm-dark">
       <div aria-hidden className="pm-dark-grid absolute inset-0" />
@@ -354,20 +384,20 @@ export function FinalCta() {
       <Noise className="mx-noise-light" opacity={0.06} />
       <div className="pm-container relative py-24 text-center sm:py-32">
         <Reveal>
-          <p className="pm-eyebrow pm-eyebrow-centered !text-violet-300">Get started</p>
-          <h2 className="pm-h-section-dark mx-auto max-w-3xl">{FINAL_CTA.title}</h2>
-          <p className="pm-lead-dark mx-auto mt-5 max-w-xl">{FINAL_CTA.lede}</p>
+          <p className="pm-eyebrow pm-eyebrow-centered !text-violet-300">{eyebrow}</p>
+          <h2 className="pm-h-section-dark mx-auto max-w-3xl">{title}</h2>
+          <p className="pm-lead-dark mx-auto mt-5 max-w-xl">{lede}</p>
         </Reveal>
         <Reveal delay={140}>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Magnetic strength={14} className="w-full sm:w-auto">
-              <a href={FINAL_CTA.primaryCta.href} className="pm-btn pm-btn-white w-full sm:w-auto">
-                {FINAL_CTA.primaryCta.label} <ArrowRight className="h-4 w-4" />
+              <a href={primaryCta.href} className="pm-btn pm-btn-white w-full sm:w-auto">
+                {primaryCta.label} <ArrowRight className="h-4 w-4" />
               </a>
             </Magnetic>
             <Magnetic strength={14} className="w-full sm:w-auto">
-              <Link href={FINAL_CTA.secondaryCta.href} className="pm-btn pm-btn-ghostlight w-full sm:w-auto">
-                {FINAL_CTA.secondaryCta.label}
+              <Link href={secondaryCta.href} className="pm-btn pm-btn-ghostlight w-full sm:w-auto">
+                {secondaryCta.label}
               </Link>
             </Magnetic>
           </div>
@@ -640,5 +670,279 @@ export function PinnedShowcase() {
         )}
       </div>
     </section>
+  );
+}
+
+/* ══ Homepage-only section variants ═══════════════════════
+   These break the eyebrow→headline→copy→checks→mockup rhythm:
+   a truthful proof band, a dialing bento, one dark intelligence
+   band, and a full-width deliverability visual. Existing exports
+   above are untouched for the pages that already use them. */
+
+/* ── Truthful proof band: four pillars, honest statuses ── */
+export function ProofBand() {
+  return (
+    <div className="pm-section-tight pm-divider bg-white">
+      <div className="pm-container">
+        <SectionHead eyebrow={PROOF.eyebrow} title={PROOF.title} lede={PROOF.lede} />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {PROOF.pillars.map((p, i) => {
+            const live = p.status === 'live';
+            return (
+              <Reveal key={p.name} delay={i * 80} className="h-full">
+                <article
+                  className={cn(
+                    'h-full rounded-[1.4rem] border p-6',
+                    live
+                      ? 'pm-card'
+                      : 'border-dashed border-[#6d28d9]/40 bg-[#6d28d9]/[0.03]'
+                  )}
+                >
+                  <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em]">
+                    <span
+                      aria-hidden
+                      className={cn(
+                        'h-1.5 w-1.5 rounded-full',
+                        live ? 'pm-pulse-dot bg-emerald-500' : 'bg-[#6d28d9]'
+                      )}
+                    />
+                    <span className={live ? 'text-emerald-700' : 'text-[#6d28d9]'}>
+                      {live ? 'Live' : 'In development'}
+                    </span>
+                  </p>
+                  <h3 className="mt-3 font-display text-[1.2rem] font-semibold tracking-tight text-zinc-950">
+                    {p.name}
+                  </h3>
+                  <p className="mt-1 font-mono text-[11.5px] font-medium text-zinc-500">{p.fact}</p>
+                  <p className="mt-3 text-[13.5px] leading-relaxed text-zinc-600">{p.body}</p>
+                </article>
+              </Reveal>
+            );
+          })}
+        </div>
+        <Reveal delay={160}>
+          <p className="mx-auto mt-10 max-w-3xl text-center font-mono text-[12.5px] font-medium tracking-wide text-zinc-500">
+            {PROOF.facts.map((f, i) => (
+              <span key={f}>
+                {i > 0 && (
+                  <span aria-hidden className="mx-3 font-bold text-[#6d28d9]">
+                    ·
+                  </span>
+                )}
+                {f}
+              </span>
+            ))}
+          </p>
+        </Reveal>
+      </div>
+    </div>
+  );
+}
+
+/* ── Dialing bento: three modes, three different tiles ──── */
+function BentoTicks({ items, dark = false }: { items: readonly string[]; dark?: boolean }) {
+  return (
+    <ul className="mt-6 space-y-3">
+      {items.map((b) => (
+        <li key={b} className={cn('pm-tick', dark && 'text-zinc-300')}>
+          <span
+            className={cn(
+              'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
+              dark ? 'bg-emerald-400/15 text-emerald-300' : 'bg-emerald-500/12 text-emerald-700'
+            )}
+          >
+            <Check className="h-3 w-3" strokeWidth={3} />
+          </span>
+          {b}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function ModesBento({
+  eyebrow,
+  title,
+  lede,
+  rows,
+}: {
+  eyebrow: string;
+  title: ReactNode;
+  lede?: ReactNode;
+  rows: FeatureRow[];
+}) {
+  const [power, parallel, click] = rows;
+  return (
+    <div className="pm-section">
+      <div className="pm-container">
+        <SectionHead eyebrow={eyebrow} title={title} lede={lede} align="left" />
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* Parallel — the signature tile, spans both rows */}
+          {parallel && (
+            <Reveal className="h-full lg:row-span-2">
+              <article className="pm-card pm-card-hover flex h-full flex-col overflow-hidden p-7 sm:p-8">
+                <p className="pm-eyebrow !mb-3">{parallel.eyebrow}</p>
+                <h3 className="font-display text-[1.65rem] font-semibold tracking-tight text-zinc-950">
+                  {parallel.title}
+                </h3>
+                <p className="pm-body mt-4 max-w-md">{parallel.body}</p>
+                <BentoTicks items={parallel.bullets} />
+                <div className="mx-visual mt-8">{parallel.visual}</div>
+              </article>
+            </Reveal>
+          )}
+
+          {/* Power — compact tile with a live session strip */}
+          {power && (
+            <Reveal delay={100} className="h-full">
+              <article className="pm-card pm-card-hover h-full p-7 sm:p-8">
+                <p className="pm-eyebrow !mb-3">{power.eyebrow}</p>
+                <h3 className="pm-h-card">{power.title}</h3>
+                <p className="pm-body mt-3">{power.body}</p>
+                <div className="mt-6 rounded-2xl border border-zinc-950/[0.07] bg-zinc-50/70 p-4">
+                  <div className="flex items-center justify-between text-[12px]">
+                    <span className="font-semibold text-zinc-900">Power session · Q3 follow-ups</span>
+                    <span className="font-mono font-semibold text-[#6d28d9]">47 / 200</span>
+                  </div>
+                  <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-zinc-950/[0.07]">
+                    <div className="h-full w-[23%] rounded-full bg-[#6d28d9]" />
+                  </div>
+                  <div className="mt-3 flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#6d28d9] text-[12px] font-bold text-white">
+                      SM
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-semibold text-zinc-900">Sales Manager</p>
+                      <p className="truncate text-[11.5px] text-zinc-500">Calling now…</p>
+                    </div>
+                    <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#6d28d9] px-3 py-1.5 text-[11px] font-semibold text-white">
+                      <span className="pm-pulse-dot h-1.5 w-1.5 rounded-full bg-white" /> Calling
+                    </span>
+                  </div>
+                </div>
+                <BentoTicks items={power.bullets} />
+              </article>
+            </Reveal>
+          )}
+
+          {/* Click-to-call — compact tile with a one-tap row */}
+          {click && (
+            <Reveal delay={180} className="h-full">
+              <article className="pm-card pm-card-hover h-full p-7 sm:p-8">
+                <p className="pm-eyebrow !mb-3">{click.eyebrow}</p>
+                <h3 className="pm-h-card">{click.title}</h3>
+                <p className="pm-body mt-3">{click.body}</p>
+                <div className="mt-6 flex items-center gap-3 rounded-2xl border border-zinc-950/[0.07] bg-zinc-50/70 p-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13.5px] font-semibold text-zinc-900">VP Sales</p>
+                    <p className="truncate text-[12px] text-zinc-500">Enterprise · Outbound</p>
+                  </div>
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#6d28d9] text-white shadow-[0_8px_20px_-6px_rgba(109,40,217,0.6)]">
+                    <Phone className="h-4 w-4" />
+                  </span>
+                </div>
+                <p className="pm-small mt-3">One click on any number — in your list, your CRM, anywhere.</p>
+                <BentoTicks items={click.bullets} />
+              </article>
+            </Reveal>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Dark intelligence band: "mission control" ────────────
+   The single dark mid-page section — violet-tinted to stand apart
+   from the neutral-dark trust band and final CTA. */
+export function DarkIntelligence({
+  eyebrow,
+  title,
+  lede,
+  rows,
+}: {
+  eyebrow: string;
+  title: ReactNode;
+  lede?: ReactNode;
+  rows: FeatureRow[];
+}) {
+  return (
+    <section className="pm-dark">
+      <div aria-hidden className="pm-dark-grid absolute inset-0" />
+      <div
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(124,58,237,0.24),transparent_70%)]"
+      />
+      <div aria-hidden className="mx-dark-sheen" />
+      <Aurora dark className="opacity-60" />
+      <div className="pm-container pm-section relative">
+        <SectionHead dark eyebrow={eyebrow} title={title} lede={lede} />
+        <div className="grid gap-5 lg:grid-cols-3">
+          {rows.map((row, i) => (
+            <Reveal key={row.title} delay={i * 100} className="h-full">
+              <article className="flex h-full flex-col rounded-[1.4rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-sm sm:p-7">
+                <p className="flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-violet-300">
+                  <Zap className="h-3.5 w-3.5" aria-hidden />
+                  {row.eyebrow}
+                </p>
+                <h3 className="mt-3 font-display text-[1.35rem] font-semibold tracking-tight text-white">
+                  {row.title}
+                </h3>
+                <p className="mt-3 text-[14.5px] leading-relaxed text-zinc-400">{row.body}</p>
+                <BentoTicks dark items={row.bullets} />
+                <div className="mt-6">{row.visual}</div>
+              </article>
+            </Reveal>
+          ))}
+        </div>
+        <Reveal delay={200}>
+          <p className="mt-10 text-center text-[14px] text-zinc-400">
+            The fourth pillar — the AI receptionist — is still in the lab.{' '}
+            <Link href="/roadmap" className="font-semibold text-violet-300 underline-offset-4 hover:underline">
+              See the roadmap <ArrowRight className="inline h-3.5 w-3.5" />
+            </Link>
+          </p>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ── Deliverability: full-width visual band ─────────────── */
+export function DeliverabilityBand({
+  eyebrow,
+  title,
+  lede,
+  rows,
+}: {
+  eyebrow: string;
+  title: ReactNode;
+  lede?: ReactNode;
+  rows: FeatureRow[];
+}) {
+  return (
+    <div className="pm-section bg-white">
+      <div className="pm-container">
+        <SectionHead eyebrow={eyebrow} title={title} lede={lede} align="left" />
+        <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
+          {rows.map((row, i) => (
+            <Reveal key={row.title} delay={i * 100}>
+              <p className="pm-eyebrow !mb-3">{row.eyebrow}</p>
+              <h3 className="pm-h-group">{row.title}</h3>
+              <p className="pm-body mt-4 max-w-lg">{row.body}</p>
+              <BentoTicks items={row.bullets} />
+            </Reveal>
+          ))}
+        </div>
+        <Reveal delay={120} variant="scale" className="mt-12">
+          <BrowserFrame
+            url="app.growthdialer.com/numbers"
+            badge={<LiveBadge label="Monitoring · live" />}
+          >
+            <NumberHealth />
+          </BrowserFrame>
+        </Reveal>
+      </div>
+    </div>
   );
 }

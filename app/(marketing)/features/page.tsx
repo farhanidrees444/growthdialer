@@ -4,30 +4,23 @@ import { ArrowRight, BrainCircuit, Plug2, Users } from 'lucide-react';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
 import {
   Faq,
-  FeatureGroup,
-  FinalCta,
   HowItWorks,
-  PageHero,
   PricingTeaser,
   SectionHead,
   StackBand,
-  type FeatureRow,
 } from '@/components/marketing/v2/Sections';
-import {
-  AiBrief,
-  AnalyticsSnap,
-  BrowserFrame,
-  ClickToCall,
-  ComplianceCard,
-  LiveBadge,
-  NumberHealth,
-  ParallelDial,
-  PowerQueue,
-  TranscriptStream,
-} from '@/components/marketing/v2/Mockups';
 import { Reveal } from '@/components/ui/reveal';
-import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
+import {
+  ChapterNav,
+  CoachingStrip,
+  DeliverabilityRail,
+  DialingBento,
+  FeaturePageCta,
+  FloorplanHero,
+  IntelligenceBand,
+  VoiceAgentRoadmap,
+} from '@/components/marketing/pages/features-floorplan';
 
 export const metadata: Metadata = {
   title: 'Features — AI Dialer, Power Dialer & Conversation Intelligence',
@@ -40,123 +33,6 @@ export const metadata: Metadata = {
     url: `${MARKETING_SITE}/features`,
   },
 };
-
-const DIALING_ROWS: FeatureRow[] = [
-  {
-    eyebrow: 'Power dialer',
-    title: 'Back-to-back calls. Zero dead air.',
-    body: 'The next number loads the second you disposition. Notes, follow-ups, and logging happen between rings — not after hours.',
-    bullets: [
-      'One-click dispositions keep the rhythm unbroken',
-      'Every call logged automatically — no manual entry',
-      'Local presence dialing lifts pickup rates',
-    ],
-    visual: (
-      <BrowserFrame url="app.growthdialer.com/dialer" badge={<LiveBadge label="Power session · live" />}>
-        <PowerQueue />
-      </BrowserFrame>
-    ),
-  },
-  {
-    eyebrow: 'Parallel dialer',
-    title: 'Five lines. One conversation.',
-    body: 'Dial multiple prospects at once on Pro. Answering-machine detection drops your voicemail and moves on — you only ever talk to humans.',
-    bullets: [
-      'AI answering-machine detection on every line',
-      'Automatic voicemail drop, zero effort',
-      'Connects you the instant a real person picks up',
-    ],
-    visual: (
-      <BrowserFrame url="app.growthdialer.com/dialer/parallel" badge={<LiveBadge label="Multi-line · live" />}>
-        <ParallelDial />
-      </BrowserFrame>
-    ),
-    flip: true,
-  },
-  {
-    eyebrow: 'Click-to-call',
-    title: 'Your browser is the phone.',
-    body: 'No desk phone. No softphone app. Click any number — in your lead list, anywhere — and you’re talking in seconds.',
-    bullets: [
-      'WebRTC calling built into the browser',
-      'Recording on every call, automatically',
-      'Bring your own numbers or buy local ones in-app',
-    ],
-    visual: (
-      <BrowserFrame url="app.growthdialer.com/leads" caption={null}>
-        <ClickToCall />
-      </BrowserFrame>
-    ),
-  },
-];
-
-const INTEL_ROWS: FeatureRow[] = [
-  {
-    eyebrow: 'AI call briefs',
-    title: 'Hang up. Your notes are already written.',
-    body: 'Every recorded call is transcribed and distilled into a 30-second brief — summary, objections, next steps — ready before your rep reaches for the keyboard.',
-    bullets: [
-      'Key points, objections, and follow-ups extracted automatically',
-      'Buying signals flagged the moment they happen',
-      'Briefs stored on the lead timeline with the recording attached',
-    ],
-    visual: (
-      <BrowserFrame url="app.growthdialer.com/calls/rec_8f3k2" badge={<LiveBadge label="Brief ready · 8s after hang-up" />}>
-        <AiBrief />
-      </BrowserFrame>
-    ),
-  },
-  {
-    eyebrow: 'Conversation analytics',
-    title: 'See what “great” sounds like.',
-    body: 'Connect rate, talk time, sentiment, and topics — tracked across every rep and every call. Find the patterns your top performers already know.',
-    bullets: [
-      'Talk-time, sentiment, and keyword trends per rep',
-      'Call scorecards that write themselves',
-      'Leaderboards that update in real time',
-    ],
-    visual: (
-      <BrowserFrame url="app.growthdialer.com/analytics" caption={null}>
-        <AnalyticsSnap />
-      </BrowserFrame>
-    ),
-    flip: true,
-  },
-];
-
-const COACHING_ROWS: FeatureRow[] = [
-  {
-    eyebrow: 'Live coaching floor',
-    title: 'Coach the call, not the recording.',
-    body: 'Managers listen live, read the transcript as it forms, and leave structured feedback after hang-up. Whisper and barge audio are coming soon.',
-    bullets: [
-      'Listen to any live call from the salesfloor',
-      'Post-call feedback tied to the transcript',
-      'Whisper and barge coaching — coming soon',
-    ],
-    visual: (
-      <BrowserFrame url="app.growthdialer.com/salesfloor" badge={<LiveBadge label="Manager listening · live" />}>
-        <TranscriptStream />
-      </BrowserFrame>
-    ),
-  },
-  {
-    eyebrow: 'Records & audit',
-    title: 'Every call, on the record.',
-    body: 'Calls, recordings, dispositions, and DNC flags are logged automatically — the audit trail your compliance review wants, without the spreadsheet.',
-    bullets: [
-      'DNC flags remove leads from every queue instantly',
-      'Recordings stored with transcripts, searchable by lead',
-      'Full disposition history on each lead’s timeline',
-    ],
-    visual: (
-      <BrowserFrame url="app.growthdialer.com/leads/maya-patel" caption={null}>
-        <ComplianceCard />
-      </BrowserFrame>
-    ),
-    flip: true,
-  },
-];
 
 const SUBPAGES = [
   {
@@ -182,7 +58,7 @@ const SUBPAGES = [
 const FEATURES_FAQS = [
   {
     q: 'Is everything on this page live today?',
-    a: 'Almost. Dialing, recordings, transcripts, AI briefs, analytics, and the coaching listen mode are live. Sequences are coming soon, whisper/barge coaching audio is on the roadmap, and native CRM integrations are waitlist-only. We label each one on the site.',
+    a: 'Almost. Dialing, recordings, transcripts, AI briefs, analytics, and the coaching listen mode are live. Whisper/barge coaching audio is coming soon, and native CRM integrations are waitlist-only. We label each one on the site.',
   },
   {
     q: 'How does the AI work — is it a black box?',
@@ -203,43 +79,15 @@ export default function FeaturesPage() {
     <div className="theme-marketing min-h-screen bg-white text-zinc-950 antialiased">
       <Navbar />
       <main>
-        <PageHero
-          eyebrow="Features"
-          title={
-            <>
-              Every part of the call,
-              <br />
-              covered.
-            </>
-          }
-          lede="Dialing, intelligence, coaching, and number health — one calling layer for your team. Labeled honestly: live today, coming soon, or roadmap."
-          cta={{ label: 'Start free trial', href: APP_SIGNUP }}
-        />
+        <FloorplanHero />
+        <ChapterNav />
+        <DialingBento />
+        <IntelligenceBand />
+        <DeliverabilityRail />
+        <CoachingStrip />
+        <VoiceAgentRoadmap />
 
-        <FeatureGroup
-          eyebrow="Dialing"
-          title="Dial at the speed of your list."
-          lede="Three ways to call, one rhythm. Pick the mode that fits the moment — the workflow never changes."
-          rows={DIALING_ROWS}
-        />
-
-        <div className="pm-divider bg-zinc-50/60">
-          <FeatureGroup
-            eyebrow="Intelligence"
-            title="Every call, understood."
-            lede="Transcription, summaries, and analytics run on every conversation — automatically."
-            rows={INTEL_ROWS}
-          />
-        </div>
-
-        <FeatureGroup
-          eyebrow="Coaching & records"
-          title="Manage the floor from evidence."
-          lede="Live listening today, whisper and barge on the roadmap — and an audit trail that writes itself."
-          rows={COACHING_ROWS}
-        />
-
-        <div className="pm-section pm-divider bg-zinc-50/60">
+        <div className="pm-section-tight pm-divider bg-zinc-50/60">
           <div className="pm-container">
             <SectionHead eyebrow="Go deeper" title="Explore each surface." />
             <div className="grid gap-4 md:grid-cols-3">
@@ -267,7 +115,12 @@ export default function FeaturesPage() {
         <div className="pm-divider">
           <Faq items={FEATURES_FAQS} eyebrow="FAQ" title="Straight answers." />
         </div>
-        <FinalCta />
+        <FeaturePageCta
+          eyebrow="Get started"
+          title="Walk the whole floor. Free for 7 days."
+          lede="Dialing, briefs, coaching, and number health — live today, in your browser. No credit card, no phone system."
+          secondary={{ label: 'See pricing', href: '/pricing' }}
+        />
       </main>
       <Footer />
     </div>

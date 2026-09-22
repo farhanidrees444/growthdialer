@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, BookMarked, Gauge, Scale } from 'lucide-react';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
-import { FinalCta, PageHero, SectionHead } from '@/components/marketing/v2/Sections';
+import { PageHero, SectionHead } from '@/components/marketing/v2/Sections';
 import { Reveal } from '@/components/ui/reveal';
-import { MARKETING_SITE } from '@/lib/marketing/navigation';
+import { APP_SIGNUP, MARKETING_SITE } from '@/lib/marketing/navigation';
 
 export const metadata: Metadata = {
   title: 'Guides — Outbound sales playbooks',
@@ -18,7 +18,8 @@ const GUIDES = [
     icon: Gauge,
     title: 'How parallel dialing works',
     href: '/blog/how-parallel-dialing-works',
-    description: 'Line counts, AMD, and when parallel dial beats single-line power dial for B2B.',
+    description:
+      'Line counts and AMD, explained — and when parallel dial beats single-line power dial for B2B teams.',
     readTime: '16 min',
   },
   {
@@ -51,7 +52,7 @@ export default function GuidesPage() {
               outbound that scales.
             </>
           }
-          lede="Long-form guides from the GrowthDialer team — dialing mechanics, CRM hygiene, and AI workflows that match what the product does today."
+          lede="Playbooks from the GrowthDialer team: dialing mechanics, CRM hygiene, and AI call workflows — all written against what the product actually does today."
         />
 
         <div className="pm-section-tight">
@@ -59,6 +60,7 @@ export default function GuidesPage() {
             <SectionHead
               eyebrow="Start here"
               title="Read the floor before you run it."
+              lede="Three deep reads. No filler — every guide maps back to a live feature or a real integration."
               align="left"
             />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -90,7 +92,29 @@ export default function GuidesPage() {
           </div>
         </div>
 
-        <FinalCta />
+        {/* Page-specific closing CTA */}
+        <div className="pm-section-tight">
+          <div className="pm-container-narrow">
+            <Reveal>
+              <div className="pm-card p-8 text-center sm:p-10">
+                <p className="pm-eyebrow pm-eyebrow-centered">Go live</p>
+                <h2 className="pm-h-section mt-3">Put the playbooks to work.</h2>
+                <p className="pm-body mx-auto mt-4 max-w-md">
+                  Start a free trial and run the parallel-dial playbook against your own list — 7
+                  days, no credit card.
+                </p>
+                <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                  <a href={APP_SIGNUP} className="pm-btn pm-btn-primary w-full sm:w-auto">
+                    Start free trial <ArrowRight className="h-4 w-4" />
+                  </a>
+                  <Link href="/blog" className="pm-btn pm-btn-secondary w-full sm:w-auto">
+                    Browse the blog
+                  </Link>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
       </main>
       <Footer />
     </div>

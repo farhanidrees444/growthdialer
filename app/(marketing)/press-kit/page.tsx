@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Download, Mail } from 'lucide-react';
+import { ArrowRight, Download, Mail, Palette } from 'lucide-react';
 import { BrandLogo } from '@/components/ui/brand-logo';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
 import { PageHero, SectionHead } from '@/components/marketing/v2/Sections';
 import { Reveal } from '@/components/ui/reveal';
 import { MARKETING_SITE } from '@/lib/marketing/navigation';
+import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 
 export const metadata: Metadata = {
   title: 'Press Kit — Brand Assets & Company Info',
@@ -28,6 +29,14 @@ const ASSETS = [
   ['/brand/wordmark.png', 'Wordmark (PNG)'],
   ['/brand/mark.png', 'Gradient mark (PNG)'],
   ['/brand/icon-dark.png', 'App icon — dark (PNG)'],
+] as const;
+
+const PALETTE = [
+  { name: 'Brand violet', hex: '#7C3AED', swatch: 'bg-violet-600', dark: true },
+  { name: 'Violet deep', hex: '#6D28D9', swatch: 'bg-violet-700', dark: true },
+  { name: 'Ink', hex: '#09090B', swatch: 'bg-zinc-950', dark: true },
+  { name: 'Mid gray', hex: '#71717A', swatch: 'bg-zinc-500', dark: true },
+  { name: 'Paper', hex: '#FFFFFF', swatch: 'bg-white border border-zinc-950/10', dark: false },
 ] as const;
 
 export default function PressKitPage() {
@@ -56,19 +65,20 @@ export default function PressKitPage() {
             />
             <div className="space-y-4">
               <Reveal>
-                <article className="pm-card p-7">
+                <article className="pm-card p-7 sm:p-8">
                   <h2 className="pm-h-card !text-[1.25rem]">Boilerplate</h2>
                   <p className="pm-body mt-4 !text-[14.5px]">
-                    GrowthDialer is an AI sales dialer that records, transcribes, and analyzes
-                    every outbound call. Teams use power dialing, HubSpot logging, and conversation
-                    intelligence to turn phone conversations into searchable revenue data — without
-                    manual note-taking.
+                    GrowthDialer is an AI sales dialer for B2B sales teams. It combines three
+                    dialing modes — manual, power, and parallel — with call recording,
+                    transcription, and AI-written summaries, plus HubSpot call logging on every
+                    disposition. Eight built-in dispositions and multi-step call sequences turn phone
+                    conversations into searchable data without manual note-taking.
                   </p>
                 </article>
               </Reveal>
 
               <Reveal delay={60}>
-                <article className="pm-card p-7">
+                <article className="pm-card p-7 sm:p-8">
                   <h2 className="pm-h-card !text-[1.25rem]">Quick facts</h2>
                   <dl className="mt-5 space-y-3">
                     {FACTS.map((f) => (
@@ -85,7 +95,7 @@ export default function PressKitPage() {
               </Reveal>
 
               <Reveal delay={80}>
-                <article className="pm-card p-7">
+                <article className="pm-card p-7 sm:p-8">
                   <h2 className="pm-h-card !text-[1.25rem]">Brand assets</h2>
                   <div className="mt-6 flex flex-wrap items-center gap-10 rounded-xl bg-zinc-50/80 px-6 py-8">
                     <BrandLogo showText size="xl" wordmarkTone="onLight" />
@@ -108,7 +118,32 @@ export default function PressKitPage() {
               </Reveal>
 
               <Reveal delay={100}>
-                <article className="pm-card p-7">
+                <article className="pm-card p-7 sm:p-8">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600/10 text-violet-700">
+                      <Palette className="h-5 w-5" />
+                    </span>
+                    <h2 className="pm-h-card !text-[1.25rem]">Brand colors</h2>
+                  </div>
+                  <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
+                    {PALETTE.map((c) => (
+                      <li key={c.hex} className="min-w-0">
+                        <span
+                          className={`block h-16 w-full rounded-lg ${c.swatch}`}
+                          aria-hidden
+                        />
+                        <p className="mt-2 truncate text-[12.5px] font-semibold text-zinc-800">
+                          {c.name}
+                        </p>
+                        <p className="font-mono text-[11.5px] text-zinc-500">{c.hex}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              </Reveal>
+
+              <Reveal delay={120}>
+                <article className="pm-card p-7 sm:p-8">
                   <div className="flex items-center gap-3">
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600/10 text-violet-700">
                       <Mail className="h-5 w-5" />
@@ -128,6 +163,28 @@ export default function PressKitPage() {
                 </article>
               </Reveal>
             </div>
+
+            {/* Page-specific closing CTA */}
+            <Reveal delay={140}>
+              <section className="mt-10 rounded-[1.4rem] border border-zinc-950/[0.08] bg-zinc-50/60 p-8 text-center sm:p-10">
+                <p className="pm-eyebrow pm-eyebrow-centered">Hands-on</p>
+                <h2 className="pm-h-card mx-auto mt-4 max-w-xl !text-[1.75rem] leading-tight">
+                  Covering GrowthDialer? Try it yourself.
+                </h2>
+                <p className="pm-body mx-auto mt-3 max-w-lg">
+                  The fastest way to describe the product is to dial on it — free for 7 days,
+                  no credit card.
+                </p>
+                <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                  <a href={APP_SIGNUP} className="pm-btn pm-btn-primary w-full sm:w-auto">
+                    Start free trial <ArrowRight className="h-4 w-4" />
+                  </a>
+                  <Link href="/demo" className="pm-btn pm-btn-secondary w-full sm:w-auto">
+                    Take the product tour
+                  </Link>
+                </div>
+              </section>
+            </Reveal>
           </div>
         </div>
       </main>

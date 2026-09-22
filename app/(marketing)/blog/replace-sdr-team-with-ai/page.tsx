@@ -67,14 +67,14 @@ const COST_ROWS = [
 ];
 
 const CAPABILITY_ROWS = [
-  { task: 'Cold calling', cap: '✓ Excellent', quality: '95%', note: 'Handles objections, books meetings' },
-  { task: 'Voicemail drops', cap: '✓ Excellent', quality: '98%', note: 'Professional, consistent delivery' },
-  { task: 'Initial qualification', cap: '✓ Good', quality: '78%', note: 'Gets the basics, misses nuance' },
-  { task: 'Company research', cap: '✓ Good', quality: '82%', note: 'Relies on real-time data accuracy' },
-  { task: 'Relationship building', cap: '◐ Limited', quality: '45%', note: 'Can sound robotic, lacks personalization' },
-  { task: 'Complex negotiations', cap: '✗ Poor', quality: '12%', note: 'Escalate to human for any negotiation' },
-  { task: 'Handling hostile prospects', cap: '◐ Limited', quality: '35%', note: 'Often escalates to human' },
-  { task: 'Industry expertise (technical)', cap: '◐ Limited', quality: '55%', note: 'Works well with technical documentation' },
+  { task: 'Cold calling', cap: '✓ Excellent', note: 'Handles objections, books meetings' },
+  { task: 'Voicemail drops', cap: '✓ Excellent', note: 'Professional, consistent delivery' },
+  { task: 'Initial qualification', cap: '✓ Good', note: 'Gets the basics, misses nuance' },
+  { task: 'Company research', cap: '✓ Good', note: 'Relies on real-time data accuracy' },
+  { task: 'Relationship building', cap: '◐ Limited', note: 'Can sound robotic, lacks personalization' },
+  { task: 'Complex negotiations', cap: '✗ Poor', note: 'Escalate to human for any negotiation' },
+  { task: 'Handling hostile prospects', cap: '◐ Limited', note: 'Often escalates to human' },
+  { task: 'Industry expertise (technical)', cap: '◐ Limited', note: 'Works well with technical documentation' },
 ];
 
 const TRANSITION = [
@@ -140,7 +140,7 @@ const OBJECTIONS = [
   },
   {
     obj: 'We\u2019ll lose competitive advantage if we replace SDRs',
-    answer: 'The opposite is true. Your competitors are getting faster at sales development. If you\u2019re still using pure human SDRs in 2026, you\u2019re 40–60% slower than competition using AI. You lose advantage by staying behind, not by moving forward.',
+    answer: 'The opposite is true. If your competitors run AI-assisted dialing and you don\u2019t, they will run more quality conversations per rep-hour — and that gap compounds quarter over quarter. You lose advantage by staying behind, not by moving forward.',
   },
   {
     obj: 'What if the AI makes mistakes or says something wrong?',
@@ -148,7 +148,7 @@ const OBJECTIONS = [
   },
   {
     obj: 'Our sales process is too unique for AI to handle',
-    answer: 'Probably not. 95% of B2B sales follow the same basic pattern: identify prospect, make initial contact, qualify, book meeting. The 5% that\u2019s unique is the stuff humans should do anyway. AI handles the 95%, humans focus on the 5% where your real differentiation is.',
+    answer: 'Probably not. Most B2B outreach follows the same basic pattern: identify prospect, make initial contact, qualify, book meeting. The parts that are genuinely unique to you are the parts humans should own anyway. AI handles the repeatable motion; humans handle the exceptions.',
   },
 ];
 
@@ -235,9 +235,9 @@ export default function ReplaceSDRTeamWithAI() {
           </div>
 
           <p className={artP}>
-            So one fully-loaded SDR costs you ~$89K per year. Productivity metrics: most reach 50–70
-            people per day, with 4–6 month ramp time. After ramp, they book 6–12 qualified meetings
-            per month.
+            So one fully-loaded SDR costs you ~$89K per year. Industry-typical productivity
+            ranges look like 50–70 connects per day, a 4–6 month ramp, and 6–12 qualified meetings
+            per month after ramp — ranges, not guarantees. Measure your own floor.
           </p>
 
           <h3 className={artH3}>Dialer software vs loaded SDR cost</h3>
@@ -282,7 +282,6 @@ export default function ReplaceSDRTeamWithAI() {
                 <tr className="border-b border-zinc-950/[0.08] bg-zinc-50/80">
                   <th className="p-4 text-left font-bold">Task</th>
                   <th className="p-4 text-center font-bold">AI capability</th>
-                  <th className="p-4 text-center font-bold">Quality level</th>
                   <th className="p-4 text-left font-bold">Notes</th>
                 </tr>
               </thead>
@@ -291,13 +290,15 @@ export default function ReplaceSDRTeamWithAI() {
                   <tr key={row.task} className={i % 2 === 1 ? 'bg-zinc-50/50' : ''}>
                     <td className="p-4 font-medium">{row.task}</td>
                     <td className="p-4 text-center font-semibold">{row.cap}</td>
-                    <td className="p-4 text-center text-zinc-600">{row.quality}</td>
                     <td className="p-4 text-[12.5px] text-zinc-500">{row.note}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          <p className="pm-small mt-4">
+            Qualitative assessment of where AI assistance fits — not measured benchmarks.
+          </p>
           <Callout tone="violet" title="The 80/20 rule">
             AI excels at the 80% of work that’s repetitive, high-volume, and rule-based: making calls,
             handling standard objections, booking meetings. It struggles with the 20% that requires
@@ -391,7 +392,9 @@ export default function ReplaceSDRTeamWithAI() {
         <section id="transition-plan" className="scroll-mt-28">
           <h2 className={artH2}>Step-by-step: how to transition to AI SDRs</h2>
           <p className={artP}>
-            This is the critical part. Rushing the transition leads to failure. Here’s the proper approach:
+            This is the critical part. Rushing the transition leads to failure. Here’s the proper approach.
+            One scope note: this playbook covers AI-assisted outbound — summaries, prep, coaching — the
+            kind GrowthDialer ships today. Fully autonomous voice agents are still on our roadmap.
           </p>
           <div className="mt-8 space-y-4">
             {TRANSITION.map((section) => (
@@ -473,7 +476,7 @@ export default function ReplaceSDRTeamWithAI() {
                   'AI summaries, sentiment, and next steps',
                   'Power / parallel dialing with AMD',
                   'Dispositions and pipeline logging',
-                  'Manager coaching / whisper on live calls',
+                  'Manager listen-mode coaching on live calls',
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2">
                     <span className="mt-0.5 font-bold text-violet-700">✓</span>
@@ -542,7 +545,7 @@ export default function ReplaceSDRTeamWithAI() {
             items={[
               {
                 q: 'How long before AI ROI becomes positive?',
-                a: 'Typically 30–60 days. After that, dialer + AI summary cost per qualified lead is a fraction of a human SDR\u2019s. The payback period is fast because the cost difference is so dramatic.',
+                a: 'You should know within the 7-day free trial whether the workflow fits your team. After that, model payback on your own call volume and time saved per rep — not on vendor timelines.',
               },
               {
                 q: 'What if AI doesn\u2019t work well for our market/industry?',

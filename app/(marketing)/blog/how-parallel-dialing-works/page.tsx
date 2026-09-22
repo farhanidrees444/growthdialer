@@ -54,7 +54,7 @@ const TOC = [
 
 const STEPS = [
   { num: '1', title: 'List upload & scrubbing', desc: 'Upload your prospect list. The system automatically scrubs against DNC registries and removes duplicates.' },
-  { num: '2', title: 'Batch dialing', desc: 'The system dials 10 prospects simultaneously from your queue.' },
+  { num: '2', title: 'Batch dialing', desc: 'The system dials up to 5 prospects simultaneously from your queue.' },
   { num: '3', title: 'Smart call routing', desc: 'Whoever picks up first gets routed to your available agent. If multiple people pick up, the second and third get a brief hold message.' },
   { num: '4', title: 'Voicemail detection', desc: 'If it\u2019s a voicemail or disconnected number, the system instantly hangs up — avoiding wasted time.' },
   { num: '5', title: 'Voicemail drop', desc: "For prospects who don't answer, a professional voicemail message is dropped automatically (if enabled)." },
@@ -72,7 +72,7 @@ const SETUP = [
   },
   {
     step: 2, title: 'Configure dialing settings', points: [
-      'Set parallel dial batch size (start with 4–6, increase to 10 after testing)',
+      'Set parallel dial batch size (start with 2–3 lines, raise to 5 after testing)',
       'Configure voicemail drop message (script must include company name + callback number)',
       'Set time window restrictions (e.g., 8AM–6PM prospect\u2019s local time)',
       'Enable DNC scrubbing',
@@ -140,7 +140,7 @@ export default function ParallelDialingGuide() {
       <div className="pm-container-narrow max-w-3xl pb-24">
         <ArticleStats
           items={[
-            { value: '10', label: 'Max parallel lines on GrowthDialer Pro' },
+            { value: '5', label: 'Max parallel lines on GrowthDialer Pro' },
             { value: 'AMD', label: 'Auto hang-up on machines + VM drop' },
             { value: GROWTHDIALER_PRICING.proAnnualShort, label: 'Pro workspace (annual) includes parallel' },
           ]}
@@ -151,8 +151,8 @@ export default function ParallelDialingGuide() {
         <div id="key-takeaways" className="scroll-mt-28">
           <KeyTakeaways
             items={[
-              '<strong>Parallel dialing</strong> dials 10+ prospects simultaneously instead of waiting for one call to end.',
-              'The science is simple: <strong>more dials = more connects</strong>, assuming call quality doesn\u2019t decrease.',
+              '<strong>Parallel dialing</strong> dials several prospects at once instead of waiting for one call to end — up to 5 lines per rep on GrowthDialer Pro.',
+              'The math is simple: <strong>more attempts per hour</strong> — whether that lifts your connects depends on your list, market, and AMD tuning, not a vendor benchmark.',
               '<strong>Voicemail drop</strong> is the key innovation that makes parallel dialing work at scale.',
               'Parallel dialing is <strong>TCPA compliant</strong> when implemented correctly with proper consent and disclosures.',
             ]}
@@ -177,7 +177,7 @@ export default function ParallelDialingGuide() {
           <div className="mt-8 overflow-x-auto rounded-2xl border border-zinc-950/[0.08] bg-zinc-950/[0.02] p-6 font-mono text-[13px] leading-loose">
             <p className="text-zinc-400">// Simple explanation in code logic:</p>
             <div className="mt-3 text-zinc-700">
-              <p>dial_batch_size = 10</p>
+              <p>dial_batch_size = 5</p>
               <p>for prospect in queue:</p>
               <p className="ml-4">call(prospect)</p>
               <p className="ml-4">if person_answered:</p>
@@ -188,9 +188,10 @@ export default function ParallelDialingGuide() {
           </div>
 
           <p className={artP}>
-            That’s the core concept. Instead of calling one person and waiting 30 seconds, you call
-            10 people in 3 seconds. Now your agent can realistically connect with 3–5 people per
-            minute instead of 2–3 people per hour.
+            That’s the core concept. Instead of calling one person and waiting through the
+            voicemail cycle, you call up to 5 people in the same few seconds. Now your agent’s
+            minutes go into live conversations instead of dead air — the exact lift depends on
+            your list and market.
           </p>
         </section>
 
@@ -212,10 +213,10 @@ export default function ParallelDialingGuide() {
               </thead>
               <tbody>
                 {[
-                  { feature: 'Dials per minute', preview: '1–2', power: '3–5', parallel: '15–30' },
+                  { feature: 'Dials per minute', preview: '1–2', power: '3–5', parallel: '10–20 (5 lines)' },
                   { feature: 'Control level', preview: 'Full preview before call', power: 'Auto-dial with manual answer', parallel: 'Smart routing' },
                   { feature: 'Voicemail drops', preview: 'Manual', power: 'Manual', parallel: 'Automatic' },
-                  { feature: 'Typical connect rate', preview: '18–22%', power: '22–28%', parallel: '48–65%' },
+                  { feature: 'Connect-rate pattern', preview: 'Baseline', power: 'Baseline', parallel: 'Often lower % — volume compensates' },
                   { feature: 'Best for', preview: 'Warm leads, executives', power: 'SDR outbound work', parallel: 'Volume outbound' },
                 ].map((row, i) => (
                   <tr key={row.feature} className={i % 2 === 1 ? 'bg-zinc-50/50' : ''}>
@@ -233,31 +234,39 @@ export default function ParallelDialingGuide() {
             power dialing for known prospects, and parallel dialing for cold outbound. This hybrid
             approach maximizes both quality and quantity.
           </Callout>
+          <p className="pm-small mt-4">
+            Volumes above are illustrative — your list, market, and call windows decide your real
+            numbers. We don&apos;t publish connect-rate benchmarks we can&apos;t verify.
+          </p>
         </section>
 
         <section id="science" className="scroll-mt-28">
           <h2 className={artH2}>The math behind more conversations per hour</h2>
-          <p className={artP}>The mathematics behind parallel dialing is surprisingly simple. Let’s break it down:</p>
+          <p className={artP}>The mathematics behind parallel dialing is surprisingly simple. Here’s a worked example — placeholder numbers, not a benchmark. Plug in your own list’s connect rate:</p>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl border border-zinc-950/[0.08] bg-white p-6">
-              <h3 className="text-[15px] font-bold text-zinc-950">Single-line dialing (traditional)</h3>
+              <h3 className="text-[15px] font-bold text-zinc-950">Single-line dialing (example)</h3>
               <div className="mt-4 space-y-2.5 font-mono text-[13px] text-zinc-700">
                 <p>Calls per hour: <span className="font-bold text-violet-700">60</span></p>
-                <p>Average connect rate: <span className="font-bold text-violet-700">25%</span></p>
+                <p>Example connect rate: <span className="font-bold text-violet-700">25%</span></p>
                 <p className="pt-1 text-zinc-950">Connects per hour: 60 × 0.25 = <strong>15</strong></p>
               </div>
             </div>
             <div className="rounded-2xl border border-violet-600/25 bg-violet-600/[0.04] p-6">
-              <h3 className="text-[15px] font-bold text-violet-900">Parallel dialing (10 lines)</h3>
+              <h3 className="text-[15px] font-bold text-violet-900">Parallel dialing, 5 lines (same example)</h3>
               <div className="mt-4 space-y-2.5 font-mono text-[13px] text-zinc-700">
-                <p>Calls per hour: <span className="font-bold text-violet-700">600</span></p>
-                <p>Connect rate (slightly lower): <span className="font-bold text-violet-700">22%</span></p>
-                <p className="pt-1 text-zinc-950">Connects per hour: 600 × 0.22 = <strong>132</strong></p>
-                <p className="font-bold text-violet-700">8.8× improvement in total connects</p>
+                <p>Calls per hour: <span className="font-bold text-violet-700">~300</span></p>
+                <p>Example connect rate (slightly lower): <span className="font-bold text-violet-700">22%</span></p>
+                <p className="pt-1 text-zinc-950">Connects per hour: 300 × 0.22 = <strong>66</strong></p>
+                <p className="font-bold text-violet-700">~4.4× more connects — in this example</p>
               </div>
             </div>
           </div>
+          <p className="pm-small mt-4">
+            Illustrative math with assumed rates. Your real multiplier comes from your own list —
+            measure it on your floor, not from this table.
+          </p>
 
           <p className={artP}>
             Notice that the connect rate actually decreases slightly. Why? Because you’re dialing
@@ -296,13 +305,13 @@ export default function ParallelDialingGuide() {
           </div>
 
           <div className="mt-8 rounded-2xl border border-zinc-950/[0.08] bg-zinc-950/[0.02] p-6">
-            <h3 className="text-[15px] font-bold text-zinc-950">Timeline of 10 parallel dials</h3>
+            <h3 className="text-[15px] font-bold text-zinc-950">Timeline of a 5-line parallel session</h3>
             <div className="mt-4 space-y-2 font-mono text-[13px]">
-              <p className="text-zinc-400">0.0s&nbsp;&nbsp;| System initiates 10 simultaneous dials</p>
-              <p className="text-zinc-600">0.3s&nbsp;&nbsp;| Person #7 answers → routed to agent</p>
-              <p className="text-zinc-600">0.8s&nbsp;&nbsp;| Prospect #3 voicemail detected → hangup</p>
-              <p className="text-zinc-600">1.2s&nbsp;&nbsp;| Person #4 answers → placed on brief hold</p>
-              <p className="text-zinc-600">12.0s | Agent finishes first call, #4 routed to agent</p>
+              <p className="text-zinc-400">0.0s&nbsp;&nbsp;| System initiates 5 simultaneous dials</p>
+              <p className="text-zinc-600">0.3s&nbsp;&nbsp;| Prospect #3 answers → routed to agent</p>
+              <p className="text-zinc-600">0.8s&nbsp;&nbsp;| Prospect #5 voicemail detected → hangup</p>
+              <p className="text-zinc-600">1.2s&nbsp;&nbsp;| Prospect #2 answers → placed on brief hold</p>
+              <p className="text-zinc-600">12.0s | Agent finishes first call, #2 routed to agent</p>
               <p className="text-zinc-600">18.0s | Remaining disconnects → voicemail drop sent</p>
             </div>
           </div>
@@ -432,7 +441,7 @@ export default function ParallelDialingGuide() {
               },
               {
                 q: 'How many lines should I parallel dial?',
-                a: 'Start with 4–6 and test. Enterprise teams might go to 15+. SMB teams often find sweet spot at 6–8. Test different batch sizes weekly to find what works for your team\u2019s pace.',
+                a: 'Start with 2–3 while reps ramp, then raise to your plan\u2019s max — 5 lines on GrowthDialer Pro. More lines only help if reps still disposition honestly between connects.',
               },
               {
                 q: 'What if someone says I\u2019m spam calling?',
@@ -440,7 +449,7 @@ export default function ParallelDialingGuide() {
               },
               {
                 q: 'How does parallel dialing affect connect time?',
-                a: "Total time per conversation doesn't change. But time between conversations drops dramatically. With power dialing, it's 30–45 seconds between calls. With parallel, it's 2–5 seconds.",
+                a: "Total time per conversation doesn't change. But idle time between conversations drops — reps spend their hour in live conversations instead of dialing and waiting. The exact seconds depend on your list and AMD settings.",
               },
               {
                 q: 'Can I use parallel dialing for B2B and B2C?',

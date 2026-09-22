@@ -7,7 +7,7 @@ import { MARKETING_SITE } from '@/lib/marketing/navigation';
 const SLUG = 'readymode';
 
 export const metadata: Metadata = {
-  title: 'GrowthDialer vs ReadyMode — AI Dialer Comparison',
+  title: { absolute: 'GrowthDialer vs ReadyMode — AI Dialer Comparison' },
   description:
     'Compare GrowthDialer vs ReadyMode: power dialing, AI call intelligence, live coaching floor, and per-seat pricing. 7-day free trial, no credit card.',
   alternates: { canonical: `${MARKETING_SITE}/compare/vs-readymode` },

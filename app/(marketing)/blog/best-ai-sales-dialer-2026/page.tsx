@@ -113,7 +113,7 @@ export default function BestAISalesDialers2026() {
       <div className="pm-container-narrow max-w-3xl pb-24">
         <ArticleStats
           items={[
-            { value: '10', label: 'Parallel lines on GrowthDialer Pro' },
+            { value: '5', label: 'Parallel lines on GrowthDialer Pro' },
             { value: 'Free', label: 'Starter tier — dial, record, AI summaries' },
             { value: GROWTHDIALER_PRICING.proAnnualShort, label: 'Pro workspace (annual billing, up to 3 seats)' },
           ]}
@@ -126,8 +126,8 @@ export default function BestAISalesDialers2026() {
             items={[
               '<strong>GrowthDialer</strong> offers the best overall combination of AI capability, ease of use, and pricing for teams of all sizes.',
               '<strong>Orum</strong> is the top choice for enterprise teams needing advanced customization and dedicated support.',
-              '<strong>Parallel dialing</strong> increases connect rates by 40–60% compared to traditional power dialers on comparable lists.',
-              'AI-powered dialers reduce SDR ramp-up time by 60–70%, delivering ROI in under 90 days for teams that run real volume.',
+              '<strong>Parallel dialing</strong> multiplies attempts per hour versus single-line power dial — whether that lifts <em>your</em> connects depends on your list, line count, and AMD tuning, not a vendor benchmark.',
+              'AI removes the paperwork around the call — summaries, logging, prep. That admin tail is where most reps actually lose their day.',
             ]}
           />
         </div>
@@ -352,12 +352,12 @@ export default function BestAISalesDialers2026() {
               <tbody>
                 {[
                   { name: 'GrowthDialer', ai: 'Post-call', parallel: true, price: GROWTHDIALER_PRICING.proAnnualShort, best: 'Best value' },
-                  { name: 'Orum', ai: 'Live coach', parallel: true, price: '$650+', best: 'Enterprise' },
-                  { name: 'Nooks', ai: 'Live coach', parallel: true, price: '$800+', best: 'Virtual floor' },
-                  { name: 'PhoneBurner', ai: '—', parallel: true, price: '$149+', best: 'Power dial' },
-                  { name: 'Kixie', ai: 'Partial', parallel: true, price: '$35+', best: 'Small teams' },
-                  { name: 'Aircall', ai: '—', parallel: false, price: '$45+', best: 'Call centers' },
-                  { name: 'Apollo.io', ai: 'Partial', parallel: true, price: '$165+', best: 'All-in-one' },
+                  { name: 'Orum', ai: 'Live coach', parallel: true, price: 'Vendor-quoted', best: 'Enterprise' },
+                  { name: 'Nooks', ai: 'Live coach', parallel: true, price: 'Vendor-quoted', best: 'Virtual floor' },
+                  { name: 'PhoneBurner', ai: '—', parallel: true, price: 'Vendor-quoted', best: 'Power dial' },
+                  { name: 'Kixie', ai: 'Partial', parallel: true, price: 'Vendor-quoted', best: 'Small teams' },
+                  { name: 'Aircall', ai: '—', parallel: false, price: 'Vendor-quoted', best: 'Call centers' },
+                  { name: 'Apollo.io', ai: 'Partial', parallel: true, price: 'Vendor-quoted', best: 'All-in-one' },
                 ].map((row, i) => (
                   <tr key={row.name} className={i % 2 === 1 ? 'bg-zinc-50/50' : ''}>
                     <td className="p-4 font-semibold">{row.name}</td>
@@ -376,6 +376,10 @@ export default function BestAISalesDialers2026() {
               </tbody>
             </table>
           </div>
+          <p className="pm-small mt-4">
+            Competitor pricing is vendor-quoted — we don&apos;t publish competitor prices we can&apos;t
+            verify. Confirm list pricing with each vendor before buying.
+          </p>
         </section>
 
         <section id="choose" className="scroll-mt-28">
@@ -421,7 +425,7 @@ export default function BestAISalesDialers2026() {
               },
               {
                 q: 'How long does it take to see results?',
-                a: 'Most teams see meaningful improvements in connect rates within 2 weeks of consistent use. Full ROI typically appears in 60–90 days as the team optimizes their process.',
+                a: 'That depends on your list, call windows, and how your team dispositions — we don’t publish timelines we can’t verify. Run a 7-day free trial on your own list, measure your baseline, and judge the difference yourself.',
               },
             ]}
           />

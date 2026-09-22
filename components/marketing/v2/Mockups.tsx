@@ -495,3 +495,142 @@ export function ComplianceCard() {
     </div>
   );
 }
+
+/* ── SIGNATURE VISUAL: five lines fan into one conversation ──
+   An ownable concept diagram (not a screenshot): one rep, five parallel
+   lines, one live conversation. Desktop shows the fan; mobile gets a
+   purpose-built stacked list so nothing collides at 390px. */
+const FAN_LEGS = [
+  { line: 'Line 1', who: 'VP Sales', status: 'Ringing', tone: 'zinc' as const },
+  { line: 'Line 2', who: 'Sales Manager', status: 'Voicemail · dropped', tone: 'amber' as const },
+  { line: 'Line 3', who: 'SDR', status: 'Connected · 03:18', tone: 'live' as const },
+  { line: 'Line 4', who: 'Account Executive', status: 'Ringing', tone: 'zinc' as const },
+  { line: 'Line 5', who: 'Founder', status: 'Ringing', tone: 'zinc' as const },
+];
+
+/* Fan curve per row: each line starts near the vertical middle of the rep
+   rail (the fan's origin) and lands centered on its prospect card. */
+function fanPath(i: number) {
+  const startY = [58, 47, 38, 29, 18][i] ?? 38;
+  return `M 0 ${startY} C 110 ${startY}, 170 38, 300 38`;
+}
+
+function FanLegCard({ leg }: { leg: (typeof FAN_LEGS)[number] }) {
+  return (
+    <div
+      className={cn(
+        'w-40 shrink-0 rounded-xl border p-3 sm:w-44',
+        leg.tone === 'live' && 'border-[#6d28d9]/35 bg-[#6d28d9]/[0.06] shadow-[0_8px_24px_-12px_rgba(109,40,217,0.45)]',
+        leg.tone === 'amber' && 'border-amber-500/25 bg-amber-50/60',
+        leg.tone === 'zinc' && 'border-zinc-950/[0.07] bg-zinc-50/60'
+      )}
+    >
+      <p className="flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-zinc-400">
+        {leg.tone === 'live' && <span className="pm-pulse-dot h-1.5 w-1.5 rounded-full bg-[#6d28d9]" />}
+        {leg.line}
+      </p>
+      <p className="mt-1 truncate text-[13px] font-semibold text-zinc-900">{leg.who}</p>
+      <p
+        className={cn(
+          'mt-0.5 truncate text-[11.5px] font-medium',
+          leg.tone === 'live' && 'text-[#6d28d9]',
+          leg.tone === 'amber' && 'text-amber-700',
+          leg.tone === 'zinc' && 'text-zinc-500'
+        )}
+      >
+        {leg.status}
+      </p>
+    </div>
+  );
+}
+
+export function ParallelFan({ className }: { className?: string }) {
+  return (
+    <figure className={cn('not-prose', className)}>
+      <div className="overflow-hidden rounded-[1.6rem] border border-zinc-950/[0.08] bg-white shadow-[0_2px_4px_rgba(9,9,11,0.04),0_32px_64px_-24px_rgba(109,40,217,0.18)]">
+        {/* header */}
+        <div className="flex items-center justify-between gap-3 border-b border-zinc-950/[0.06] px-5 py-4 sm:px-6">
+          <p className="text-[13px] font-semibold text-zinc-900">Parallel session</p>
+          <span className="pm-chip !gap-1.5 !text-[11px]">
+            <span className="font-bold text-[#6d28d9]">5 lines</span>
+            <span aria-hidden>→</span>
+            <span className="font-semibold text-zinc-600">1 conversation</span>
+          </span>
+        </div>
+
+        {/* desktop: the fan */}
+        <div aria-hidden={false} className="hidden px-5 py-6 sm:block sm:px-6">
+          <div className="grid grid-cols-[60px_1fr] gap-x-2">
+            <div className="row-span-5 flex flex-col items-center justify-center gap-3 rounded-2xl bg-gradient-to-b from-[#7c3aed] via-[#6d28d9] to-[#5b21b6] py-5 text-white shadow-[0_12px_28px_-10px_rgba(109,40,217,0.6)]">
+              <Phone className="h-5 w-5" />
+              <span className="text-[10px] font-bold tracking-[0.28em] [writing-mode:vertical-rl]">YOU</span>
+            </div>
+            {FAN_LEGS.map((leg, i) => (
+              <div key={leg.line} className="flex items-center gap-3 py-[6px]">
+                <svg viewBox="0 0 300 76" preserveAspectRatio="none" className="h-[62px] min-w-0 flex-1" aria-hidden="true">
+                  <path
+                    d={fanPath(i)}
+                    fill="none"
+                    stroke={leg.tone === 'live' ? '#6d28d9' : leg.tone === 'amber' ? '#f59e0b' : '#d4d4d8'}
+                    strokeWidth={leg.tone === 'live' ? 5 : 2.5}
+                    strokeLinecap="round"
+                    opacity={leg.tone === 'live' ? 1 : 0.9}
+                  />
+                </svg>
+                <FanLegCard leg={leg} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* mobile: stacked list + the one conversation */}
+        <div className="px-5 py-5 sm:hidden">
+          <div className="overflow-hidden rounded-2xl border border-zinc-950/[0.07]">
+            {FAN_LEGS.map((leg, i) => (
+              <div
+                key={leg.line}
+                className={cn(
+                  'flex items-center gap-3 px-4 py-3',
+                  i > 0 && 'border-t border-zinc-950/[0.05]',
+                  leg.tone === 'live' && 'bg-[#6d28d9]/[0.05]'
+                )}
+              >
+                <span className="w-14 shrink-0 text-[10.5px] font-bold uppercase tracking-[0.12em] text-zinc-400">
+                  {leg.line}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-semibold text-zinc-900">{leg.who}</p>
+                  <p
+                    className={cn(
+                      'truncate text-[11.5px] font-medium',
+                      leg.tone === 'live' && 'text-[#6d28d9]',
+                      leg.tone === 'amber' && 'text-amber-700',
+                      leg.tone === 'zinc' && 'text-zinc-500'
+                    )}
+                  >
+                    {leg.status}
+                  </p>
+                </div>
+                {leg.tone === 'live' && <span className="pm-pulse-dot h-2 w-2 shrink-0 rounded-full bg-[#6d28d9]" />}
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 rounded-2xl bg-[#6d28d9] p-4 text-white shadow-[0_16px_32px_-12px_rgba(109,40,217,0.55)]">
+            <p className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-white/70">One conversation</p>
+            <p className="mt-1 text-[14px] font-semibold">SDR · connected 03:18 — you’re talking</p>
+            <Waveform bars={26} color="#ffffff" className="mt-2 h-7 opacity-70" />
+          </div>
+        </div>
+
+        {/* footer */}
+        <div className="border-t border-zinc-950/[0.06] bg-zinc-50/70 px-5 py-4 sm:px-6">
+          <p className="flex items-start gap-2.5 text-[12.5px] leading-relaxed text-zinc-600">
+            <Voicemail className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            Answering-machine detection dropped your voicemail on line 2 — you only ever talk to humans.
+          </p>
+        </div>
+      </div>
+      <figcaption className="pm-caption">Concept visual — five lines, one conversation.</figcaption>
+    </figure>
+  );
+}

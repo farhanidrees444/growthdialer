@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ArrowRight, BookOpen, GitBranch, Mic, PhoneCall, Plug2, Upload, Users } from 'lucide-react';
 import { DOC_SECTIONS } from '@/lib/marketing/docs-data';
 import { Navbar, Footer } from '@/components/marketing/v2/Chrome';
-import { FinalCta, PageHero, SectionHead } from '@/components/marketing/v2/Sections';
+import { PageHero, SectionHead } from '@/components/marketing/v2/Sections';
 import { JsonLd } from '@/components/marketing/v2/JsonLd';
 import { Reveal } from '@/components/ui/reveal';
 import { APP_SIGNUP, MARKETING_SITE } from '@/lib/marketing/navigation';
@@ -48,7 +48,7 @@ export default function DocsPage() {
               to run your floor.
             </>
           }
-          lede="Practical guides tied to what ships today — not a wiki of promises. Start free and follow along in your workspace."
+          lede="Practical guides for what the product does today — workspace setup, dialing, leads, recordings, and integrations. Start free and follow along in your workspace."
           cta={{ label: 'Create workspace', href: APP_SIGNUP }}
         />
 
@@ -57,7 +57,7 @@ export default function DocsPage() {
             <SectionHead
               eyebrow="Contents"
               title="Find it fast."
-              lede="Seven sections, each mapped to the product as it works today."
+              lede="Seven sections — one for every part of the product, as it works today."
               align="left"
             />
             <div className="grid gap-4 sm:grid-cols-2">
@@ -67,8 +67,13 @@ export default function DocsPage() {
                   <Reveal key={section.id} delay={(i % 2) * 70}>
                     <article id={section.id} className="pm-card pm-card-hover h-full scroll-mt-32 p-7">
                       <Link href={section.href} className="group block">
-                        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-600/10 text-violet-700">
-                          <Icon className="h-5 w-5" />
+                        <span className="flex items-start justify-between">
+                          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-600/10 text-violet-700">
+                            <Icon className="h-5 w-5" />
+                          </span>
+                          <span className="pm-caption font-mono">
+                            {String(i + 1).padStart(2, '0')}
+                          </span>
                         </span>
                         <h2 className="pm-h-card mt-5 flex items-center gap-2">
                           {section.title}
@@ -91,7 +96,29 @@ export default function DocsPage() {
           </div>
         </div>
 
-        <FinalCta />
+        {/* Page-specific closing CTA */}
+        <div className="pm-section-tight">
+          <div className="pm-container-narrow">
+            <Reveal>
+              <div className="pm-card p-8 text-center sm:p-10">
+                <p className="pm-eyebrow pm-eyebrow-centered">Still stuck?</p>
+                <h2 className="pm-h-section mt-3">Docs can’t answer everything.</h2>
+                <p className="pm-body mx-auto mt-4 max-w-md">
+                  Start a free trial and follow the guides inside your own workspace — or talk to us
+                  about your setup.
+                </p>
+                <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                  <a href={APP_SIGNUP} className="pm-btn pm-btn-primary w-full sm:w-auto">
+                    Start free trial <ArrowRight className="h-4 w-4" />
+                  </a>
+                  <Link href="/contact-sales" className="pm-btn pm-btn-secondary w-full sm:w-auto">
+                    Talk to us
+                  </Link>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
       </main>
       <Footer />
     </div>
