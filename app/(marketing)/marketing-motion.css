@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════
    MARKETING MOTION (design/product-premium) — mx-* system
    Scope: `.theme-marketing`. 3D hero, scroll effects, micro-interactions.
-   transform/opacity-only animations. Full prefers-reduced-motion support.
+   transform/opacity-only animations. Marketing always animates on every
+   device (OS reduced-motion is honored on dashboard/app routes only).
    ═══════════════════════════════════════════════════════════════════ */
 
 .theme-marketing {
@@ -368,26 +369,17 @@
 /* ── parallax ─────────────────────────────────────────── */
 .theme-marketing .mx-parallax { will-change: transform; }
 
-/* ── reduced motion: kill all mx animation ────────────── */
-@media (prefers-reduced-motion: reduce) {
-  .theme-marketing .mx-blob,
-  .theme-marketing .mx-breathe,
-  .theme-marketing .mx-caret,
-  .theme-marketing .mx-marquee-track,
-  .theme-marketing .mx-scroll-hint svg,
-  .theme-marketing .mx-dark-sheen {
-    animation: none !important;
-  }
-  .theme-marketing .mx-marquee-track { transform: none; }
-  .theme-marketing .mx-tilt-inner,
-  .theme-marketing .mx-float-card,
-  .theme-marketing .mx-magnetic,
-  .theme-marketing .mx-visual,
-  .theme-marketing .mx-parallax {
-    transform: none !important;
-    transition: none !important;
-  }
-  .theme-marketing .mx-glow-card::before { display: none; }
+/* ── reduced motion: marketing intentionally ignores the OS setting ──
+   Policy (see globals.css): the marketing site always animates so desktop,
+   laptop and mobile are identical. Reduced-motion support lives on the
+   dashboard/app routes only. */
+.theme-marketing .mx-blob,
+.theme-marketing .mx-breathe,
+.theme-marketing .mx-caret,
+.theme-marketing .mx-marquee-track,
+.theme-marketing .mx-scroll-hint svg,
+.theme-marketing .mx-dark-sheen {
+  animation-play-state: running;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -466,18 +458,7 @@
   transform-origin: left center;
 }
 
-/* ── reduced motion: kill animated-pass motion ──────────── */
-@media (prefers-reduced-motion: reduce) {
-  .theme-marketing .pm-flow,
-  .theme-marketing .pm-flow-slow,
-  .theme-marketing .pm-live-glow,
-  .theme-marketing .pm-shimmer::after {
-    animation: none !important;
-  }
-  .theme-marketing .pm-lift:hover {
-    transform: none;
-  }
-}
+/* ── reduced motion: marketing always animates (see note above) ── */
 
 /* ── voice-loop waveform bars (homepage AI agents section) ─ */
 @keyframes pm-wave {
@@ -502,13 +483,4 @@
   will-change: transform, opacity;
 }
 
-/* ── reduced motion: freeze homepage loop accents ───────── */
-@media (prefers-reduced-motion: reduce) {
-  .theme-marketing .pm-wave-bar,
-  .theme-marketing .pm-fade-step {
-    animation: none !important;
-  }
-  .theme-marketing .pm-wave-bar {
-    transform: scaleY(0.5);
-  }
-}
+/* ── reduced motion: homepage loops always animate (see note above) ── */

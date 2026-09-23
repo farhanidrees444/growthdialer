@@ -21,16 +21,17 @@ import { motion, useScroll, useSpring } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 /* ── reduced motion + coarse pointer hooks ────────────── */
+/**
+ * Marketing pages always animate — desktop, laptop, tablet and mobile run
+ * the exact same motion. The OS `prefers-reduced-motion` setting (commonly
+ * enabled on desktop/laptop OSes) previously froze every homepage loop and
+ * ambient animation on those devices while mobile kept animating, so this
+ * hook intentionally reports `false` on marketing routes.
+ * Reduced-motion support is preserved where it matters: the dashboard/app
+ * routes honor the OS setting via their own hooks and CSS.
+ */
 export function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduced(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
-  return reduced;
+  return false;
 }
 
 export function useIsCoarsePointer() {
