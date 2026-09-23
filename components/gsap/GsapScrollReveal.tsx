@@ -37,12 +37,17 @@ export function GsapScrollReveal({ children, className }: GsapScrollRevealProps)
 
           gsap.set('[data-gsap-reveal]', { autoAlpha: 0, y: 20 });
 
-          ScrollTrigger.batch('[data-gsap-reveal]', {
+          // The scroll container is this component's own element (a nested
+          // overflow-y-auto div), not the window — ScrollTrigger must be told
+          // or reveals never fire on desktop/mobile scroll. (The installed
+          // gsap types omit `scroller` on batch vars; the runtime supports it.)
+          const batchVars = {
             interval: 0.08,
             batchMax: 8,
             start: 'top 88%',
             once: true,
-            onEnter: (elements) => {
+            scroller: scopeRef.current,
+            onEnter: (elements: Element[]) => {
               gsap.to(elements, {
                 autoAlpha: 1,
                 y: 0,
@@ -52,7 +57,10 @@ export function GsapScrollReveal({ children, className }: GsapScrollRevealProps)
                 overwrite: true,
               });
             },
-          });
+          } as Parameters<typeof ScrollTrigger.batch>[1] & { scroller: Element | null };
+          ScrollTrigger.batch('[data-gsap-reveal]', batchVars);
+
+          ScrollTrigger.refresh();
         },
       );
 

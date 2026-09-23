@@ -13,6 +13,7 @@ import {
 import { MiniWave } from '@/components/marketing/live-floor/LiveWaveform';
 import { ShimmerSkeleton } from '@/components/ui/shimmer-skeleton';
 import { WorkflowSceneMotion } from '@/components/ui/workflow-scene-motion';
+import { useSiteTheme } from '@/components/theme/site-theme';
 import { cn } from '@/lib/utils';
 import type { HourlyMetricPoint } from '@/lib/dashboard-types';
 
@@ -22,8 +23,10 @@ export interface DailyPoint {
   connected: number;
 }
 
-const premiumPanel =
+const premiumPanelDark =
   'relative overflow-hidden rounded-[1.5rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-xl';
+const premiumPanelLight =
+  'relative overflow-hidden rounded-[1.5rem] border border-zinc-950/[0.07] bg-white/80 shadow-[0_20px_60px_-20px_rgba(76,29,149,0.15),0_2px_6px_rgba(9,9,11,0.04)] backdrop-blur-xl';
 
 function fmtHour(h: number): string {
   if (h === 0) return '12A';
@@ -45,6 +48,8 @@ export function CallActivityChart({
   onTimeRangeChange: (r: '24H' | '7D') => void;
 }) {
   const nowHour = new Date().getHours();
+  const { isDark } = useSiteTheme();
+  const panel = isDark ? premiumPanelDark : premiumPanelLight;
   const chart24H = Array.from({ length: 24 }, (_, i) => {
     const h = (nowHour - 23 + i + 24) % 24;
     const pt = sparkline.find((p) => p.hour === h);
@@ -57,20 +62,28 @@ export function CallActivityChart({
   const enoughToChart = nonZeroPoints >= 2;
 
   return (
-    <div data-gsap-reveal className={premiumPanel}>
+    <div data-gsap-reveal className={panel}>
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(139,92,246,0.13),transparent_34%),radial-gradient(circle_at_88%_12%,rgba(6,182,212,0.09),transparent_30%)]"
         aria-hidden
       />
       <div className="relative flex items-center justify-between p-5 pb-3">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.035]">
-            <Activity className="h-4 w-4 text-violet-300" />
+          <span className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-xl border",
+            isDark
+              ? "border-white/[0.07] bg-white/[0.035]"
+              : "border-zinc-950/[0.08] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.06)]",
+          )}>
+            <Activity className={cn("h-4 w-4", isDark ? "text-violet-300" : "text-violet-600")} />
           </span>
-          <h3 className="text-sm font-semibold text-white">Call Activity</h3>
+          <h3 className={cn("text-sm font-semibold", isDark ? "text-white" : "text-zinc-950")}>Call Activity</h3>
           <MiniWave className="h-3.5 opacity-80" />
         </div>
-        <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-black/20 p-0.5">
+        <div className={cn(
+          "flex items-center gap-0.5 rounded-lg border p-0.5",
+          isDark ? "border-white/[0.06] bg-black/20" : "border-zinc-950/[0.08] bg-zinc-950/[0.04]",
+        )}>
           {(['24H', '7D'] as const).map((r) => (
             <button
               key={r}
@@ -78,7 +91,9 @@ export function CallActivityChart({
               onClick={() => onTimeRangeChange(r)}
               className={cn(
                 'rounded-md px-3 py-1 text-xs font-semibold transition-colors',
-                timeRange === r ? 'bg-white/[0.09] text-white' : 'text-slate-600 hover:text-slate-400',
+                timeRange === r
+                  ? (isDark ? 'bg-white/[0.09] text-white' : 'bg-white text-zinc-900 shadow-[0_1px_2px_rgba(9,9,11,0.08)]')
+                  : (isDark ? 'text-slate-600 hover:text-slate-400' : 'text-zinc-400 hover:text-zinc-600'),
               )}
             >
               {r}
@@ -106,10 +121,10 @@ export function CallActivityChart({
                     <stop offset="95%" stopColor="#06B6D4" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.04)" : "rgba(9,9,11,0.06)"} vertical={false} />
                 <XAxis
                   dataKey="label"
-                  tick={{ fill: '#475569', fontSize: 10 }}
+                  tick={{ fill: isDark ? '#475569' : '#a1a1aa', fontSize: 10 }}
                   tickLine={false}
                   axisLine={false}
                   interval={timeRange === '24H' ? 3 : 0}
@@ -118,8 +133,13 @@ export function CallActivityChart({
                   content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null;
                     return (
-                      <div className="rounded-lg border border-white/10 bg-[oklch(0.1_0.006_285)] px-3 py-2 text-xs shadow-xl">
-                        <p className="mb-1 font-medium text-slate-300">{String(label ?? '')}</p>
+                      <div className={cn(
+                        "rounded-lg border px-3 py-2 text-xs shadow-xl",
+                        isDark
+                          ? "border-white/10 bg-[oklch(0.1_0.006_285)]"
+                          : "border-zinc-950/[0.08] bg-white shadow-[0_12px_32px_-8px_rgba(9,9,11,0.18)]",
+                      )}>
+                        <p className={cn("mb-1 font-medium", isDark ? "text-slate-300" : "text-zinc-600")}>{String(label ?? '')}</p>
                         {payload.map((p) => (
                           <p key={String(p.name)} style={{ color: String(p.color ?? '#fff') }}>
                             {p.name}: {p.value}
@@ -155,20 +175,25 @@ export function CallActivityChart({
           <div className="flex justify-end gap-4 px-5 pb-4 pt-1">
             <div className="flex items-center gap-1.5">
               <div className="h-[2px] w-3 rounded bg-[#8B5CF6]" />
-              <span className="text-[10px] text-slate-500">Calls Made</span>
+              <span className={cn("text-[10px]", isDark ? "text-slate-500" : "text-zinc-500")}>Calls Made</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="h-[2px] w-3 rounded bg-[#06B6D4]" />
-              <span className="text-[10px] text-slate-500">Connected</span>
+              <span className={cn("text-[10px]", isDark ? "text-slate-500" : "text-zinc-500")}>Connected</span>
             </div>
           </div>
         </>
       ) : (
         <div className="flex h-[240px] flex-col items-center justify-center gap-4 px-5 lg:h-[280px]">
-          <div className="relative h-20 w-20 overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/60 shadow-[0_0_45px_rgba(139,92,246,0.12)]">
+          <div className={cn(
+            "relative h-20 w-20 overflow-hidden rounded-2xl border",
+            isDark
+              ? "border-white/[0.08] bg-zinc-900/60 shadow-[0_0_45px_rgba(139,92,246,0.12)]"
+              : "border-zinc-950/[0.08] bg-white shadow-[0_10px_30px_rgba(76,29,149,0.12)]",
+          )}>
             <WorkflowSceneMotion scene="analytics" />
           </div>
-          <p className="max-w-xs text-center text-sm text-slate-500">
+          <p className={cn("max-w-xs text-center text-sm", isDark ? "text-slate-500" : "text-zinc-500")}>
             {anyData
               ? 'Your activity chart builds as more calls come in'
               : 'Start a call to build your activity timeline'}

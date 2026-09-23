@@ -54,12 +54,23 @@ export function GsapCountUp({
 
           if (reduceMotion) return;
 
+          // The dashboard scrolls inside a nested overflow container, not the
+          // window — point ScrollTrigger at it so the count-up fires on every device.
+          let scroller: Element | undefined;
+          let node: HTMLElement | null = el.parentElement;
+          while (node) {
+            const oy = window.getComputedStyle(node).overflowY;
+            if (oy === 'auto' || oy === 'scroll') { scroller = node; break; }
+            node = node.parentElement;
+          }
+
           gsap.to(counter, {
             val: value,
             duration,
             ease: 'power2.out',
             scrollTrigger: {
               trigger: el,
+              scroller,
               start: 'top 90%',
               once: true,
             },

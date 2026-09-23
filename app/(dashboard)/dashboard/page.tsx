@@ -18,6 +18,7 @@ import { useLeads } from "@/contexts/leads-context";
 import { useSupabaseSession } from "@/lib/supabase/hooks";
 import { createClient } from "@/lib/supabase/client";
 import { useWorkspace } from "@/contexts/workspace-context";
+import { useSiteTheme } from "@/components/theme/site-theme";
 import { cn } from "@/lib/utils";
 import type { SystemMetricsData, HourlyMetricPoint } from "@/lib/dashboard-types";
 import { ActivationChecklist } from "@/components/activation/activation-checklist";
@@ -81,6 +82,17 @@ const DISP_STYLES: Record<string, string> = {
   dnc: "border-red-500/20 bg-red-500/10 text-red-400",
 };
 
+const DISP_STYLES_LIGHT: Record<string, string> = {
+  interested: "border-emerald-600/25 bg-emerald-600/[0.08] text-emerald-700",
+  callback: "border-amber-600/25 bg-amber-600/[0.08] text-amber-700",
+  meeting_booked: "border-violet-600/25 bg-violet-600/[0.08] text-violet-700",
+  voicemail: "border-zinc-950/[0.10] bg-zinc-950/[0.03] text-zinc-500",
+  not_interested: "border-rose-600/25 bg-rose-600/[0.08] text-rose-700",
+  no_answer: "border-zinc-950/[0.10] bg-zinc-950/[0.03] text-zinc-500",
+  wrong_number: "border-orange-600/25 bg-orange-600/[0.08] text-orange-700",
+  dnc: "border-red-600/25 bg-red-600/[0.08] text-red-700",
+};
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtDuration(s: number | null): string {
@@ -132,8 +144,18 @@ function Skeleton({ className }: { className?: string }) {
   return <div className={cn("dash-skeleton", className)} aria-hidden />;
 }
 
-const premiumPanel =
+const premiumPanelDark =
   "relative overflow-hidden rounded-[1.5rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-xl";
+const premiumPanelLight =
+  "relative overflow-hidden rounded-[1.5rem] border border-zinc-950/[0.07] bg-white/80 shadow-[0_20px_60px_-20px_rgba(76,29,149,0.15),0_2px_6px_rgba(9,9,11,0.04)] backdrop-blur-xl";
+
+// Light-mode deepened icon colors for KPI tiles (dark uses the -400 soft glows)
+const ICON_COLOR_LIGHT: Record<string, string> = {
+  "text-violet-400": "text-violet-600",
+  "text-cyan-400": "text-cyan-600",
+  "text-emerald-400": "text-emerald-600",
+  "text-amber-400": "text-amber-600",
+};
 
 // ── KPI Card ──────────────────────────────────────────────────────────────────
 
@@ -168,21 +190,41 @@ function KpiCard({
   // every card shows its value (even 0) so the row stays consistent.
   const hasData = hasActivity;
   const reduce = useReducedMotion();
+  const { isDark } = useSiteTheme();
+  const panel = isDark ? premiumPanelDark : premiumPanelLight;
+  const tileIconColor = isDark ? iconColor : (ICON_COLOR_LIGHT[iconColor] ?? iconColor);
 
   return (
     <motion.div
       data-gsap-reveal
       whileHover={reduce ? undefined : { y: -2 }}
       transition={{ duration: 0.2 }}
-      className={cn(premiumPanel, "transition-all hover:-translate-y-0.5 hover:border-white/[0.13] hover:shadow-[0_26px_90px_rgba(0,0,0,0.42)]")}
+      className={cn(
+        panel,
+        "transition-all hover:-translate-y-0.5",
+        isDark
+          ? "hover:border-white/[0.13] hover:shadow-[0_26px_90px_rgba(0,0,0,0.42)]"
+          : "hover:border-zinc-950/[0.12] hover:shadow-[0_26px_60px_-20px_rgba(76,29,149,0.22),0_2px_6px_rgba(9,9,11,0.05)]",
+      )}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.16] to-transparent" aria-hidden />
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent to-transparent",
+          isDark ? "via-white/[0.16]" : "via-zinc-950/[0.08]",
+        )}
+        aria-hidden
+      />
       <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: color }} aria-hidden />
       <div className="p-4 pb-1">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[10px] uppercase tracking-widest text-white/40">{title}</p>
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.035]">
-            <Icon className={cn("h-4 w-4", iconColor)} />
+          <p className={cn("text-[10px] uppercase tracking-widest", isDark ? "text-white/40" : "text-zinc-400")}>{title}</p>
+          <span className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-xl border",
+            isDark
+              ? "border-white/[0.07] bg-white/[0.035]"
+              : "border-zinc-950/[0.08] bg-white shadow-[0_1px_2px_rgba(9,9,11,0.06)]",
+          )}>
+            <Icon className={cn("h-4 w-4", tileIconColor)} />
           </span>
         </div>
         {loading ? (
@@ -192,7 +234,10 @@ function KpiCard({
           </div>
         ) : hasData ? (
           <>
-            <p className="mt-1.5 font-display text-3xl font-semibold tracking-tight tabular-nums text-white sm:text-4xl">
+            <p className={cn(
+              "mt-1.5 font-display text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl",
+              isDark ? "text-white" : "text-zinc-950",
+            )}>
               {countUp ? (
                 <GsapCountUp
                   value={countUp.value}
@@ -206,7 +251,9 @@ function KpiCard({
             {trend !== undefined && trend !== null && (
               <div className={cn(
                 "mt-1.5 flex items-center gap-1 text-xs font-medium",
-                trend.positive ? "text-emerald-400" : "text-rose-400",
+                trend.positive
+                  ? (isDark ? "text-emerald-400" : "text-emerald-600")
+                  : (isDark ? "text-rose-400" : "text-rose-600"),
               )}>
                 {trend.positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                 <span>{Math.abs(trend.pct).toFixed(0)}% vs yesterday</span>
@@ -216,18 +263,28 @@ function KpiCard({
         ) : (
           <div className="mt-2 flex flex-col gap-2">
             <motion.div
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03]"
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-xl border",
+                isDark
+                  ? "border-white/[0.06] bg-white/[0.03]"
+                  : "border-zinc-950/[0.08] bg-white shadow-sm",
+              )}
               animate={reduce ? {} : { scale: [1, 1.06, 1] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
             >
-              <Icon className={cn("h-4 w-4", iconColor)} />
+              <Icon className={cn("h-4 w-4", tileIconColor)} />
             </motion.div>
-            <p className="max-w-[10rem] text-xs leading-relaxed text-slate-500">
+            <p className={cn("max-w-[10rem] text-xs leading-relaxed", isDark ? "text-slate-500" : "text-zinc-500")}>
               Metrics unlock after your first completed call.
             </p>
             <Link
               href="/dialer"
-              className="inline-flex w-fit items-center gap-1 rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-semibold text-zinc-200 transition hover:bg-white/[0.1]"
+              className={cn(
+                "inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition",
+                isDark
+                  ? "bg-white/[0.06] text-zinc-200 hover:bg-white/[0.1]"
+                  : "bg-zinc-950/[0.05] text-zinc-700 hover:bg-zinc-950/[0.08]",
+              )}
             >
               Open dialer
               <ChevronRight className="h-3 w-3" />
@@ -267,15 +324,24 @@ function KpiCard({
 // ── Recent Calls ──────────────────────────────────────────────────────────────
 
 function RecentCallsList({ calls, loading }: { calls: DashboardRecentCall[] | null; loading: boolean }) {
+  const { isDark } = useSiteTheme();
+  const panel = isDark ? premiumPanelDark : premiumPanelLight;
+
   return (
-    <div className={premiumPanel}>
+    <div className={panel}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(6,182,212,0.12),transparent_34%)]" aria-hidden />
       <div className="relative flex items-center justify-between px-5 py-4">
         <div className="flex items-center gap-2">
-          <Activity className="h-4 w-4 text-cyan-300" />
-          <h3 className="text-sm font-semibold text-white">Recent Calls</h3>
+          <Activity className={cn("h-4 w-4", isDark ? "text-cyan-300" : "text-cyan-600")} />
+          <h3 className={cn("text-sm font-semibold", isDark ? "text-white" : "text-zinc-950")}>Recent Calls</h3>
         </div>
-        <Link href="/call-logs" className="flex items-center gap-1 text-xs text-slate-600 transition-colors hover:text-slate-400">
+        <Link
+          href="/call-logs"
+          className={cn(
+            "flex items-center gap-1 text-xs transition-colors",
+            isDark ? "text-slate-600 hover:text-slate-400" : "text-zinc-400 hover:text-zinc-600",
+          )}
+        >
           All <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
@@ -308,12 +374,13 @@ function RecentCallsList({ calls, loading }: { calls: DashboardRecentCall[] | nu
           />
         </div>
       ) : (
-        <div className="relative divide-y divide-white/[0.04]">
+        <div className={cn("relative divide-y", isDark ? "divide-white/[0.04]" : "divide-zinc-950/[0.05]")}>
           {calls.map(call => {
             const name = getRecentCallCounterparty(call);
             const company = call.leads?.company;
             const dispKey = call.disposition ?? 'no_answer';
-            const dispStyle = DISP_STYLES[dispKey] ?? DISP_STYLES.no_answer;
+            const dispStyle = (isDark ? DISP_STYLES[dispKey] : DISP_STYLES_LIGHT[dispKey])
+              ?? (isDark ? DISP_STYLES.no_answer : DISP_STYLES_LIGHT.no_answer);
             const dispLabel = getRecentDispositionLabel(call.disposition);
             const grad = avatarGradient(name);
             const href = getRecentCallHref(call);
@@ -323,19 +390,22 @@ function RecentCallsList({ calls, loading }: { calls: DashboardRecentCall[] | nu
                 key={call.id}
                 href={href}
                 data-gsap-reveal
-                className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-white/[0.04]"
+                className={cn(
+                  "group flex items-center gap-3 px-5 py-3 transition-colors",
+                  isDark ? "hover:bg-white/[0.04]" : "hover:bg-zinc-950/[0.03]",
+                )}
               >
                 <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-[11px] font-bold text-white shadow-[0_10px_25px_rgba(0,0,0,0.25)]", grad)}>
                   {getInitials(name)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-white">{name}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className={cn("truncate text-sm font-medium", isDark ? "text-white" : "text-zinc-900")}>{name}</p>
+                  <p className={cn("text-xs", isDark ? "text-slate-500" : "text-zinc-500")}>
                     {company && <span className="mr-1">{company} ·</span>}
                     {timeAgo(call.display_at)}
                     {call.duration_seconds ? ` · ${fmtDuration(call.duration_seconds)}` : ''}
                     {call.direction === 'inbound' && (
-                      <span className="ml-1 text-cyan-500/80">· Inbound</span>
+                      <span className={cn("ml-1", isDark ? "text-cyan-500/80" : "text-cyan-700")}>· Inbound</span>
                     )}
                   </p>
                 </div>
