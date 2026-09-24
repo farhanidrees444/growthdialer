@@ -6,13 +6,12 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 import { useWebPhone } from '@/contexts/webphone-context';
 import { useCallContext } from '@/lib/call-context';
-import { useInboundCallsRing } from '@/hooks/use-inbound-calls-ring';
-import { useSupabaseSession } from '@/lib/supabase/hooks';
 import { isAnonymousCaller } from '@/lib/inbound/caller-id-utils';
 import { formatInboundCallerDisplay, isValidCallerPhone, normalizeE164 } from '@/lib/inbound/phone';
 
@@ -41,8 +40,6 @@ export interface CallsContextValue {
   isRinging: boolean;
   accept: () => Promise<void>;
   decline: () => void;
-  /** True when the server ring has no browser leg (hunt skipped it) — Accept would be dead. */
-  browserLegMissing: boolean;
 }
 
 const CallsContext = createContext<CallsContextValue | null>(null);
@@ -76,8 +73,6 @@ function lookupFromForContext(from: string | null): string | null {
 }
 
 export function CallsProvider({ children }: { children: ReactNode }) {
-  const session = useSupabaseSession();
-  const userId = session?.user?.id;
   const {
     incomingCall,
     requestMicPermission,
@@ -86,26 +81,19 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     staleTabWarning,
   } = useWebPhone();
   const { registerCallMeta } = useCallContext();
-  const { serverRing, clearServerRing } = useInboundCallsRing(userId);
   const [callerContext, setCallerContext] = useState<CallerContext>(EMPTY_CALLER_CONTEXT);
   const [ringElapsedSec, setRingElapsedSec] = useState(0);
-  const [connectingFromServer, setConnectingFromServer] = useState(false);
   /** Generic accept failure shown in the call overlay (never vendor-specific). */
   const [connectErrorLocal, setConnectErrorLocal] = useState<string | null>(null);
 
-  const webrtcPhase = mapIncomingPhase(incomingCall.phase, incomingCall.callId);
+  // Native inbound: the browser WebRTC client IS the call path now. When it
+  // rings, the call is genuinely answerable — no server hunt, no bridge step,
+  // no second "server ring" source of truth.
+  const phase: CallPhase = mapIncomingPhase(incomingCall.phase, incomingCall.callId);
 
-  const phase: CallPhase = useMemo(() => {
-    if (webrtcPhase !== 'idle') return webrtcPhase;
-    if (connectingFromServer) return 'connecting';
-    if (serverRing) return 'incoming';
-    return 'idle';
-  }, [connectingFromServer, serverRing, webrtcPhase]);
-
-  const fromNumber = incomingCall.fromNumber ?? serverRing?.fromNumber ?? null;
-  const toNumber = incomingCall.toNumber ?? serverRing?.toNumber ?? null;
-  const callId = incomingCall.callId ?? serverRing?.callId ?? null;
-  const telnyxSessionId = serverRing?.telnyxSessionId ?? null;
+  const fromNumber = incomingCall.fromNumber;
+  const toNumber = incomingCall.toNumber;
+  const callId = incomingCall.callId;
 
   const fetchCallerContext = useCallback((from: string | null) => {
     const lookup = lookupFromForContext(from);
@@ -140,129 +128,117 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     if (phase === 'idle') {
       setCallerContext(EMPTY_CALLER_CONTEXT);
       setRingElapsedSec(0);
-      setConnectingFromServer(false);
       setConnectErrorLocal(null);
       return;
     }
     fetchCallerContext(fromNumber);
   }, [fetchCallerContext, fromNumber, phase]);
 
+  // Client-side inbound call logging. The server is no longer in the call
+  // path, so the browser reports its own inbound calls for call history:
+  // create on ring, mark answered on accept, finalize on hangup/miss.
+  const loggedCallsRef = useRef(new Map<string, { answered: boolean; liveStartedAt: number | null }>());
   useEffect(() => {
-    if (
-      (webrtcPhase === 'incoming' || webrtcPhase === 'connecting')
-      && incomingCall.callId
-    ) {
-      clearServerRing({ stopTone: false });
-      setConnectingFromServer(false);
+    const id = incomingCall.callId;
+    const st = incomingCall.phase;
+    if (!id || st === 'idle') return;
+    const track = loggedCallsRef.current;
+
+    if (st === 'incoming' && !track.has(id)) {
+      track.set(id, { answered: false, liveStartedAt: null });
+      void fetch('/api/calls/log', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from_number: incomingCall.fromNumber,
+          to_number: incomingCall.toNumber,
+          telnyx_call_id: id,
+          started_at: new Date(incomingCall.ringStartedAt ?? Date.now()).toISOString(),
+        }),
+      }).catch(() => undefined);
+      return;
     }
-  }, [clearServerRing, incomingCall.callId, webrtcPhase]);
+
+    const entry = track.get(id);
+    if (!entry) return;
+
+    if (!entry.answered && (st === 'connecting' || st === 'active' || incomingCall.liveStartedAt)) {
+      entry.answered = true;
+      entry.liveStartedAt = incomingCall.liveStartedAt ?? Date.now();
+      void fetch('/api/calls/log', {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telnyx_call_id: id,
+          answered_at: new Date(entry.liveStartedAt).toISOString(),
+          status: 'in-progress',
+        }),
+      }).catch(() => undefined);
+      return;
+    }
+
+    if (st === 'ended' || st === 'failed') {
+      const endedAtMs = Date.now();
+      const duration =
+        entry.answered && entry.liveStartedAt
+          ? Math.max(0, Math.round((endedAtMs - entry.liveStartedAt) / 1000))
+          : 0;
+      void fetch('/api/calls/log', {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telnyx_call_id: id,
+          ended_at: new Date(endedAtMs).toISOString(),
+          duration_seconds: duration,
+          status: entry.answered ? 'completed' : 'no_answer',
+        }),
+      }).catch(() => undefined);
+      track.delete(id);
+    }
+  }, [incomingCall]);
 
   useEffect(() => {
     if (phase !== 'incoming' && phase !== 'connecting') return;
-    const startedAt = incomingCall.ringStartedAt ?? serverRing?.ringStartedAt ?? Date.now();
+    const startedAt = incomingCall.ringStartedAt ?? Date.now();
     const tick = () => setRingElapsedSec(Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [incomingCall.ringStartedAt, phase, serverRing?.ringStartedAt]);
+  }, [incomingCall.ringStartedAt, phase]);
 
   const VOICE_CONNECT_ERROR =
     "Voice isn't connected. Check your browser voice connection and try again.";
 
   const accept = useCallback(async () => {
     if (phase !== 'incoming') return;
-    // Never attempt a dead accept: when the hunt skipped the browser there is
-    // no browser leg to answer. The overlay disables the button; this guard
-    // covers any other caller.
-    if (webrtcPhase === 'idle' && serverRing?.legBStatus === 'none') {
-      setConnectErrorLocal(
-        "Browser voice isn't connected — this call can't be answered here right now.",
-      );
-      return;
-    }
     const micOk = await requestMicPermission();
     if (!micOk) return;
     setConnectErrorLocal(null);
 
-    // Answer the browser WebRTC leg FIRST, with bounded retries (~3s total).
-    // The server only bridges the caller after this succeeds, so we never
-    // enter a fake "connecting" state with a ticking timer.
+    // Native inbound: answer the browser call directly. The shim awaits the
+    // real SDK answer() and reports success/failure — the overlay never shows
+    // a fake "connecting" state, and there is no server bridge step anymore.
     let answered = await answerIncomingCall();
-    const webrtcDeadline = Date.now() + 3000;
-    while (!answered && Date.now() < webrtcDeadline) {
+    const deadline = Date.now() + 3000;
+    while (!answered && Date.now() < deadline) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       answered = await answerIncomingCall();
     }
 
     if (!answered) {
       setConnectErrorLocal(VOICE_CONNECT_ERROR);
-      clearServerRing();
       return;
     }
 
     registerCallMeta(null, fromNumber ?? '');
-
-    // Calls ringing purely on the server (no session to bridge) need nothing
-    // more once the browser leg is up.
-    if (!telnyxSessionId) {
-      clearServerRing();
-      return;
-    }
-
-    // Only now ask the server to bridge the caller onto the live browser leg.
-    let serverOk = false;
-    try {
-      const res = await fetch('/api/calls/answer', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telnyx_session_id: telnyxSessionId }),
-      });
-      const json = (await res.json().catch(() => null)) as { ok?: boolean } | null;
-      serverOk = json?.ok === true;
-    } catch {
-      serverOk = false;
-    }
-
-    if (!serverOk) {
-      // Server couldn't bridge the caller (voice node unreachable, bridge
-      // never formed). Tear down the orphaned browser leg rather than leave
-      // it live with no caller on the other side.
-      hangup();
-      setConnectErrorLocal(VOICE_CONNECT_ERROR);
-      clearServerRing();
-      return;
-    }
-
-    setConnectingFromServer(true);
-    clearServerRing();
-  }, [
-    answerIncomingCall,
-    clearServerRing,
-    fromNumber,
-    hangup,
-    phase,
-    registerCallMeta,
-    requestMicPermission,
-    serverRing,
-    telnyxSessionId,
-    toNumber,
-    webrtcPhase,
-  ]);
+  }, [answerIncomingCall, fromNumber, phase, registerCallMeta, requestMicPermission]);
 
   const decline = useCallback(() => {
-    if (telnyxSessionId) {
-      void fetch('/api/calls/decline', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telnyx_session_id: telnyxSessionId }),
-      }).catch(() => undefined);
-    }
-    clearServerRing();
-    setConnectingFromServer(false);
     hangup();
-  }, [clearServerRing, fromNumber, hangup, telnyxSessionId, toNumber]);
+  }, [hangup]);
 
   const connectError = useMemo(() => {
     if (incomingCall.error) return incomingCall.error;
@@ -272,16 +248,6 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     }
     return null;
   }, [connectErrorLocal, incomingCall.error, phase, staleTabWarning]);
-
-  // Honest overlay: when the ring comes only from the server (no WebRTC call
-  // yet) and the hunt explicitly skipped the browser (leg_b_status='none'),
-  // there is no browser leg to answer — Accept would be a dead button. The
-  // overlay disables Accept and explains instead of faking it.
-  const browserLegMissing = useMemo(() => {
-    if (webrtcPhase !== 'idle') return false;
-    if (!serverRing) return false;
-    return serverRing.legBStatus === 'none';
-  }, [serverRing, webrtcPhase]);
 
   return (
     <CallsContext.Provider
@@ -297,7 +263,6 @@ export function CallsProvider({ children }: { children: ReactNode }) {
         isRinging: phase === 'incoming',
         accept,
         decline,
-        browserLegMissing,
       }}
     >
       {children}

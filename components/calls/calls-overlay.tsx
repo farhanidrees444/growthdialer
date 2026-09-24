@@ -5,7 +5,6 @@ import {
   Phone, PhoneOff, Loader2, Clock, User, Building2, History,
 } from 'lucide-react';
 import { useCalls, useCallerDisplayName } from '@/contexts/calls-context';
-import { useWebPhone } from '@/contexts/webphone-context';
 import { useSiteTheme } from '@/components/theme/site-theme';
 import { cn } from '@/lib/utils';
 import { formatInboundCallerDisplay } from '@/lib/inbound/phone';
@@ -53,9 +52,7 @@ export default function CallsOverlay() {
     callerContext,
     accept,
     decline,
-    browserLegMissing,
   } = useCalls();
-  const { phoneStatus } = useWebPhone();
 
   const displayName = useCallerDisplayName(fromNumber, callerContext);
 
@@ -156,18 +153,6 @@ export default function CallsOverlay() {
               <p className="mt-3 font-mono text-base text-white/50">{formatInboundCallerDisplay(fromNumber)}</p>
             )}
             <p className="mt-1 text-xs text-white/30">To your line {fmtLine(toNumber)}</p>
-
-            {isIncoming && phoneStatus !== 'ready' && !browserLegMissing && (
-              <p className="mt-4 text-center text-xs text-amber-200/85">
-                Voice link is still connecting — you can accept now and we will bridge the call.
-              </p>
-            )}
-            {isIncoming && browserLegMissing && (
-              <p className="mt-4 text-center text-xs text-amber-200/85">
-                Browser voice isn&apos;t connected — this call can&apos;t be answered here right now.
-                Check your voice connection, then ask the caller to try again.
-              </p>
-            )}
             {isConnecting && (
               <div className="mt-6 w-full">
                 <WaveBars />
@@ -242,7 +227,7 @@ export default function CallsOverlay() {
                 console.log('[Inbound] ACCEPT CLICKED', { phase, callId });
                 void accept();
               }}
-              disabled={isConnecting || isEnded || browserLegMissing}
+              disabled={isConnecting || isEnded}
               className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-cyan-500 py-4 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:brightness-110 active:scale-[0.98] disabled:opacity-70"
             >
               {isConnecting ? (
