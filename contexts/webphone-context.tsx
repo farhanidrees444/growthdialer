@@ -33,6 +33,7 @@ import { useTwilioDevice } from '@/hooks/use-twilio-device';
 import { useVoicePresence } from '@/hooks/use-voice-presence';
 import { playInboundRingtone, stopInboundRingtone } from '@/lib/inbound/ringtone';
 import { callOrchestrator } from '@/src/calls';
+import { eventBus } from '@/src/calls';
 
 export type PhoneStatus = 'idle' | 'initializing' | 'ready' | 'error';
 export type WebRTCCallStatus = 'idle' | 'connecting' | 'ringing' | 'active' | 'held' | 'ended';
@@ -237,6 +238,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const mountedRef = useRef(true);
   const initAttemptsRef = useRef(0);
   const initClientRef = useRef<() => Promise<void>>(async () => {});
+  const scheduleReconnectRef = useRef<(reason: string) => void>(() => {});
   const inboundRingStartedRef = useRef<number | null>(null);
   const peerCleanupRef = useRef<(() => void) | null>(null);
   const reconnectDuringCallRef = useRef(false);
@@ -255,6 +257,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   const { staleTabWarning } = useVoicePresence({
     phoneStatus,
     device: twilioDevice.device,
+    deviceReady: twilioDevice.isReady,
     enabled: phoneStatus === 'ready' || phoneStatus === 'initializing',
   });
 
@@ -653,6 +656,7 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   }, [phoneStatus]);
 
   initClientRef.current = initClient;
+  scheduleReconnectRef.current = scheduleReconnect;
 
   useEffect(() => {
     deviceRef.current = twilioDevice.device;
@@ -708,9 +712,28 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener('gd-voice-account-prepared', onVoicePrepared);
 
+    // Honest presence: when the voice socket drops, the device is NOT reachable
+    // for inbound hunt legs. Downgrade status and reconnect immediately so the
+    // server never dials a dead browser (previously phoneStatus stayed 'ready'
+    // forever and the hunt dialed into the void -> 21s dead air -> missed).
+    const offUnregistered = eventBus.on('DEVICE_UNREGISTERED', () => {
+      if (!mountedRef.current) return;
+      console.warn('[WebPhone] voice socket dropped — reconnecting, presence downgraded');
+      safeSet(setPhoneStatus, 'initializing');
+      scheduleReconnectRef.current('socket closed');
+    });
+    const offReady = eventBus.on('DEVICE_READY', () => {
+      if (!mountedRef.current) return;
+      initAttemptsRef.current = 0;
+      safeSet(setPhoneStatus, 'ready');
+      safeSet(setVoiceError, null);
+    });
+
     return () => {
       mountedRef.current = false;
       window.removeEventListener('gd-voice-account-prepared', onVoicePrepared);
+      offUnregistered();
+      offReady();
       twilioDevice.destroyDevice();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

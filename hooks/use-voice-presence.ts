@@ -23,8 +23,12 @@ function mapPhoneStatus(status: PhoneStatus): 'idle' | 'initializing' | 'ready' 
   return status;
 }
 
-function mapDeviceState(device: TelnyxRTC | null, phoneStatus: PhoneStatus): string | null {
-  if (phoneStatus === 'ready') return device ? 'registered' : 'registered';
+function mapDeviceState(deviceReady: boolean, phoneStatus: PhoneStatus): string | null {
+  // Honest gate for the inbound hunt: only claim 'registered' when the WebRTC
+  // socket is actually up. Reporting 'registered' on a dead socket makes the
+  // server dial a browser that can never answer (21s of dead air -> missed).
+  if (!deviceReady) return 'not_registered';
+  if (phoneStatus === 'ready') return 'registered';
   if (phoneStatus === 'initializing') return 'registering';
   return null;
 }
@@ -32,6 +36,8 @@ function mapDeviceState(device: TelnyxRTC | null, phoneStatus: PhoneStatus): str
 export interface UseVoicePresenceOptions {
   phoneStatus: PhoneStatus;
   device: TelnyxRTC | null;
+  /** True only while the WebRTC socket is actually connected (not just "was ready once"). */
+  deviceReady: boolean;
   workspaceId?: string | null;
   enabled?: boolean;
 }
@@ -43,7 +49,7 @@ export interface UseVoicePresenceReturn {
 
 export function useVoicePresence({
   phoneStatus,
-  device,
+  deviceReady,
   workspaceId,
   enabled = true,
 }: UseVoicePresenceOptions): UseVoicePresenceReturn {
@@ -61,7 +67,7 @@ export function useVoicePresence({
     const body = {
       presence_status: presenceStatus,
       phone_status: mapPhoneStatus(phoneStatus),
-      device_state: mapDeviceState(device, phoneStatus),
+      device_state: mapDeviceState(deviceReady, phoneStatus),
       tab_id: tabIdRef.current,
       workspace_id: workspaceId ?? null,
     };
@@ -86,24 +92,28 @@ export function useVoicePresence({
       bc.postMessage(payload);
       bc.close();
     } catch { /* unsupported */ }
-  }, [device, enabled, phoneStatus, workspaceId]);
+  }, [deviceReady, enabled, phoneStatus, workspaceId]);
 
   useEffect(() => {
     if (!enabled) return undefined;
     if (phoneStatus !== 'ready' && phoneStatus !== 'initializing') return undefined;
 
-    const presenceStatus = phoneStatus === 'ready' ? 'online' : 'away';
+    // Honest presence: 'online' only when the voice socket is actually up.
+    // A dead socket reports 'away' so the inbound hunt never dials a browser
+    // that cannot answer.
+    const presenceStatus = phoneStatus === 'ready' && deviceReady ? 'online' : 'away';
     void sendHeartbeat(presenceStatus);
 
     const interval = setInterval(() => {
       const offline = typeof navigator !== 'undefined' && !navigator.onLine;
-      void sendHeartbeat(offline ? 'offline' : presenceStatus);
+      const current = phoneStatus === 'ready' && deviceReady ? 'online' : 'away';
+      void sendHeartbeat(offline ? 'offline' : current);
     }, HEARTBEAT_MS);
 
     const onVisibility = () => {
       const offline = typeof navigator !== 'undefined' && !navigator.onLine;
-      const presenceStatus = phoneStatus === 'ready' ? 'online' : 'away';
-      void sendHeartbeat(offline ? 'offline' : presenceStatus);
+      const current = phoneStatus === 'ready' && deviceReady ? 'online' : 'away';
+      void sendHeartbeat(offline ? 'offline' : current);
     };
 
     const onOnline = () => { void sendHeartbeat('online'); };
@@ -134,7 +144,7 @@ export function useVoicePresence({
       void sendHeartbeat('offline');
       bc?.close();
     };
-  }, [enabled, phoneStatus, sendHeartbeat]);
+  }, [deviceReady, enabled, phoneStatus, sendHeartbeat]);
 
   return { staleTabWarning };
 }
