@@ -57,10 +57,10 @@ const EMPTY_CALLER_CONTEXT: CallerContext = {
 
 function mapIncomingPhase(
   phase: ReturnType<typeof useWebPhone>['incomingCall']['phase'],
-  callId: string | null,
 ): CallPhase {
   if (phase === 'incoming') return 'incoming';
-  if (phase === 'failed' && callId) return 'incoming';
+  // A failed call is over — it must never reopen as a fresh "incoming" ring.
+  if (phase === 'failed') return 'ended';
   if (phase === 'connecting') return 'connecting';
   if (phase === 'ended') return 'ended';
   return 'idle';
@@ -89,7 +89,7 @@ export function CallsProvider({ children }: { children: ReactNode }) {
   // Native inbound: the browser WebRTC client IS the call path now. When it
   // rings, the call is genuinely answerable — no server hunt, no bridge step,
   // no second "server ring" source of truth.
-  const phase: CallPhase = mapIncomingPhase(incomingCall.phase, incomingCall.callId);
+  const phase: CallPhase = mapIncomingPhase(incomingCall.phase);
 
   const fromNumber = incomingCall.fromNumber;
   const toNumber = incomingCall.toNumber;
@@ -163,7 +163,10 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     const entry = track.get(id);
     if (!entry) return;
 
-    if (!entry.answered && (st === 'connecting' || st === 'active' || incomingCall.liveStartedAt)) {
+    // Answered is ONLY the SDK-confirmed active state (real media flowing).
+    // "connecting" is just the answer handshake in progress — marking it
+    // answered here was the lie that faked "active" calls with no audio.
+    if (!entry.answered && st === 'active') {
       entry.answered = true;
       entry.liveStartedAt = incomingCall.liveStartedAt ?? Date.now();
       void fetch('/api/calls/log', {

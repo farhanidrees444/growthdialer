@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isWorkspaceError, requireWorkspaceFromRequest } from '@/lib/auth/workspace-access';
-import { readCallControlAppId } from '@/lib/telephony/telnyx/env';
+import { readConnectionId } from '@/lib/telephony/telnyx/env';
 import {
   auditNumberRouting,
   backfillProviderIds,
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const connectionId = readCallControlAppId();
+  const connectionId = readConnectionId();
   if (!connectionId) {
     return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
   }
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const connectionId = readCallControlAppId();
+  const connectionId = readConnectionId();
   if (!connectionId) {
     return NextResponse.json({ error: 'Voice service is not configured' }, { status: 503 });
   }

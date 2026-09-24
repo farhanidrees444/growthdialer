@@ -11,7 +11,7 @@ import {
   listInboundBlockers,
   resolveInboundAppUrl,
 } from '@/lib/voice/inbound-readiness';
-import { readCallControlAppId } from '@/lib/telephony/telnyx/env';
+import { readCallControlAppId, readConnectionId } from '@/lib/telephony/telnyx/env';
 import {
   auditNumberRouting,
   backfillProviderIds,
@@ -60,6 +60,10 @@ export async function GET(request: NextRequest) {
   const appUrl = resolveInboundAppUrl(host);
   const eventsVerified = Boolean(readTelephonyPublicKey()?.trim());
   const callControlAppId = readCallControlAppId();
+  // Native inbound: "routed" means on the SIP (credential) connection, so the
+  // call rings the browser's TelnyxRTC client. The Call Control app is only
+  // relevant for server-side outbound legs now.
+  const sipConnectionId = readConnectionId();
 
   const [connection, credentialId, settingsRes, numbersRes, recentInboundRes] = await Promise.all([
     ensureVoiceConnectionConfigured(),
@@ -94,7 +98,7 @@ export async function GET(request: NextRequest) {
 
   const providerIndex = await fetchProviderPhoneIndex();
   await backfillProviderIds(supabase, numbers, providerIndex);
-  const routingAudit = await auditNumberRouting(numbers, callControlAppId, providerIndex);
+  const routingAudit = await auditNumberRouting(numbers, sipConnectionId, providerIndex);
 
   const blockers = listInboundBlockers({
     connection,

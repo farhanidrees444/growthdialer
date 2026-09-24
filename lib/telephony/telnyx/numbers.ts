@@ -1,4 +1,4 @@
-import { readCallControlAppId } from '@/lib/telephony/telnyx/env';
+import { readConnectionId } from '@/lib/telephony/telnyx/env';
 import { readVoiceApiKey } from '@/lib/voice/read-env';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import { calculateRetailPrice } from '@/lib/pricing/calculate-price';
@@ -103,7 +103,7 @@ export async function purchaseTelephonyNumber(input: {
   phoneNumber: string;
 }): Promise<TelephonyNumberPurchaseResult | null> {
   const apiKey = readVoiceApiKey();
-  const connectionId = readCallControlAppId();
+  const connectionId = readConnectionId();
   const e164 = normalizeE164(input.phoneNumber);
   if (!apiKey || !connectionId || !e164) return null;
 
@@ -251,7 +251,7 @@ export async function syncTelephonyNumbersForUser(
   workspaceId: string | null,
   options?: { claimOrphans?: boolean },
 ): Promise<TelephonySyncResult> {
-  const connectionId = readCallControlAppId();
+  const connectionId = readConnectionId();
   const providerIndex = await fetchProviderPhoneIndex();
   if (providerIndex.size === 0) {
     return { synced: 0, skipped: 0, total: 0, message: 'No numbers found on this voice account.' };

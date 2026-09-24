@@ -5,7 +5,7 @@ import { prepareInboundAccount, type PrepareInboundResult } from '@/lib/inbound/
 import { invalidateNumberOwnerCache } from '@/lib/inbound/number-owner-cache';
 import { normalizeE164 } from '@/lib/inbound/phone';
 import { ensureVoiceConnectionConfigured } from '@/lib/voice/configure-connection';
-import { readCallControlAppId } from '@/lib/telephony/telnyx/env';
+import { readConnectionId } from '@/lib/telephony/telnyx/env';
 import {
   activateRoutingForNumbers,
   auditNumberRouting,
@@ -69,16 +69,20 @@ export async function prepareVoiceAccount(
     const credentialId = await resolveActiveCredentialId(supabase, userId);
     credentialReady = Boolean(credentialId);
 
-    const callControlAppId = readCallControlAppId();
-    if (callControlAppId && rows.length > 0) {
+    // Native inbound routing: numbers must live on the SIP (credential)
+    // connection so calls ring the browser's TelnyxRTC client directly.
+    // Never route them to the Call Control app — that was the old cloud-hunt
+    // architecture and breaks browser ringing.
+    const sipConnectionId = readConnectionId();
+    if (sipConnectionId && rows.length > 0) {
       const providerIndex = await fetchProviderPhoneIndex();
       await backfillProviderIds(supabase, rows, providerIndex);
 
-      let audit = await auditNumberRouting(rows, callControlAppId, providerIndex);
+      let audit = await auditNumberRouting(rows, sipConnectionId, providerIndex);
       if (audit.needs_activation) {
-        const activate = await activateRoutingForNumbers(rows, callControlAppId, providerIndex);
+        const activate = await activateRoutingForNumbers(rows, sipConnectionId, providerIndex);
         routingActivated = activate.activated;
-        audit = await auditNumberRouting(rows, callControlAppId, providerIndex);
+        audit = await auditNumberRouting(rows, sipConnectionId, providerIndex);
       }
       primaryRouted = audit.primary_routed;
     }

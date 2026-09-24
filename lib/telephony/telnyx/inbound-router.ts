@@ -13,9 +13,7 @@ import { answerCall, hangupProviderCall, rejectCall, transferCall } from '@/lib/
 import {
   advanceCloudHunt,
   isAgentVoiceRegistered,
-  isCloudFirstEnabled,
   routeToVoicemail,
-  runCloudFirstHunt,
   waitForHuntBridge,
 } from './cloud-hunt';
 
@@ -627,11 +625,18 @@ export async function handleInboundCallInitiated(
     callsRowId,
   };
 
-  // Cloud-first: answer the caller in the cloud immediately and hunt
-  // browser -> mobile -> voicemail. The caller is held on reliable cloud
-  // media from second zero — never ringback-forever, never dead air.
-  if (routing.inbound_mode === 'browser' && isCloudFirstEnabled()) {
-    await runCloudFirstHunt(supabase, ctx, routing);
+  // Native inbound: the SIP connection routes the call straight to the
+  // browser's TelnyxRTC client, which rings and answers natively. The server
+  // NEVER answers, transfers, or hunts here — it records metadata only (the
+  // calls row inserted above). The old cloud-first hunt auto-answered in this
+  // branch and broke browser ringing, so it stays permanently bypassed in
+  // browser mode.
+  if (routing.inbound_mode === 'browser') {
+    console.log('[INBOUND-NATIVE] browser mode — metadata only, no server answer', {
+      telnyx_session_id: callSessionId,
+      calls_row: callsRowId,
+      to: toNumber,
+    });
     return;
   }
 

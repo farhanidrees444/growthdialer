@@ -1,12 +1,18 @@
-import { getActiveCallControlAppId } from '@/lib/voice/configure-connection';
+import { getActiveVoiceConnectionId } from '@/lib/voice/configure-connection';
 import { readVoiceApiKey } from '@/lib/voice/read-env';
 
 const VOICE_API = 'https://api.telnyx.com/v2';
 
-/** Assign a purchased number to the programmable voice (Call Control) application. */
+/**
+ * Assign a purchased number to the native inbound SIP (credential) connection.
+ * Inbound calls route to the browser's TelnyxRTC client through this
+ * connection — numbers must NEVER be moved to the Call Control application
+ * (that was the old cloud-hunt architecture and silently breaks native
+ * browser ringing).
+ */
 export async function assignNumberToVoiceConnection(telnyxNumberId: string): Promise<boolean> {
   const apiKey = readVoiceApiKey();
-  const connectionId = await getActiveCallControlAppId();
+  const connectionId = await getActiveVoiceConnectionId();
   if (!apiKey || !connectionId || !telnyxNumberId) return false;
 
   try {
