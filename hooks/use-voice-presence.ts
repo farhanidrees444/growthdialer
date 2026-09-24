@@ -56,8 +56,11 @@ export function useVoicePresence({
   const tabIdRef = useRef(getOrCreateTabId());
   const [staleTabWarning, setStaleTabWarning] = useState(false);
 
-  const sendHeartbeat = useCallback(async (presenceStatus: 'online' | 'away' | 'offline') => {
-    if (!enabled) return;
+  const sendHeartbeat = useCallback(async (presenceStatus: 'online' | 'away' | 'offline', opts?: { force?: boolean }) => {
+    // The terminal error/offline send must escape the enabled gate: when the
+    // voice node dies permanently, `enabled` is false, but the server still
+    // needs this one final heartbeat so the inbound hunt stops dialing us.
+    if (!enabled && !opts?.force) return;
 
     const payload = JSON.stringify({
       tab_id: tabIdRef.current,
@@ -95,13 +98,15 @@ export function useVoicePresence({
   }, [deviceReady, enabled, phoneStatus, workspaceId]);
 
   useEffect(() => {
-    if (!enabled) return undefined;
     // Terminal failure: tell the server the browser is gone so the inbound
     // hunt stops considering it once this final heartbeat lands.
+    // This runs even when `enabled` is false (phoneStatus 'error' disables
+    // it) — the forced send escapes the enabled gate.
     if (phoneStatus === 'error') {
-      void sendHeartbeat('offline');
+      void sendHeartbeat('offline', { force: true });
       return undefined;
     }
+    if (!enabled) return undefined;
     if (phoneStatus !== 'ready' && phoneStatus !== 'initializing') return undefined;
 
     // Honest presence: 'online' only when the voice socket is actually up.

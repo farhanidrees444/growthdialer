@@ -46,9 +46,11 @@ class DeviceManager {
     const rtc = new TelnyxRTC({ login_token: loginToken });
     rtc.remoteElement = 'remoteMedia';
     this.bindClientEvents(rtc);
+    // Assign before connect so any event from a replaced (stale) client can
+    // be identified and ignored by the guards in bindClientEvents.
+    this.client = rtc;
     rtc.connect();
 
-    this.client = rtc;
     return rtc;
   }
 
@@ -92,21 +94,28 @@ class DeviceManager {
   }
 
   private bindClientEvents(rtc: TelnyxRTC): void {
+    // Stale-client guard: destroy({ expected: true }) disconnects the old
+    // client, which may still emit ready/error/close/incoming afterwards.
+    // Only the current client may drive presence and incoming-call events.
     rtc.on('telnyx.ready', () => {
+      if (rtc !== this.client) return;
       this.isReady = true;
       eventBus.emit('DEVICE_READY', this.snapshot());
     });
 
     rtc.on('telnyx.error', (error: Error) => {
+      if (rtc !== this.client) return;
       eventBus.emit('DEVICE_ERROR', error);
     });
 
     rtc.on('telnyx.socket.close', () => {
+      if (rtc !== this.client) return;
       this.isReady = false;
       eventBus.emit('DEVICE_UNREGISTERED', { ...this.snapshot(), expected: false });
     });
 
     rtc.on('telnyx.notification', (notification: { type?: string; call?: TelnyxCall }) => {
+      if (rtc !== this.client) return;
       const call = notification.call;
       if (!call || notification.type !== 'callUpdate') return;
 
