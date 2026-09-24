@@ -71,7 +71,7 @@ export async function resolveNumberRouting(
   ) as ResolvedNumberRouting['inbound_mode'];
 
   const configuredRing = num?.inbound_ring_seconds ?? user?.inbound_ring_seconds ?? DEFAULT_RING;
-  const ringSeconds = inboundMode === 'browser' ? Math.max(configuredRing, 55) : configuredRing;
+  const ringSeconds = Math.min(120, Math.max(10, configuredRing));
 
   const userRecordingMode = (user?.recording_mode as string | null) ?? 'always';
   const recordingEnabled =

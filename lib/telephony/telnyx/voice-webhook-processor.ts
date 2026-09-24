@@ -95,6 +95,9 @@ interface CallRow {
   recording_status: string | null;
   telnyx_call_id?: string | null;
   telnyx_webrtc_leg_id?: string | null;
+  leg_b_status?: string | null;
+  leg_b_call_control_id?: string | null;
+  media_watchdog_deadline?: string | null;
   analytics_id: string | null;
   telnyx_session_id: string | null;
 }
@@ -130,7 +133,7 @@ async function findCall(
   supabase: NonNullable<SupabaseClient>,
   sessionId: string | undefined,
   callControlId: string | undefined,
-  select = 'id, user_id, lead_id, to_number, from_number, answered_at, direction, duration_seconds, was_recorded, ai_processing_status, ai_processed, ai_processed_at, recording_url, recording_supabase_path, recording_status, analytics_id, telnyx_session_id, telnyx_call_id, telnyx_webrtc_leg_id',
+  select = 'id, user_id, lead_id, to_number, from_number, answered_at, direction, duration_seconds, was_recorded, ai_processing_status, ai_processed, ai_processed_at, recording_url, recording_supabase_path, recording_status, analytics_id, telnyx_session_id, telnyx_call_id, telnyx_webrtc_leg_id, leg_b_status, leg_b_call_control_id, media_watchdog_deadline',
 ): Promise<CallRow | null> {
   // Try session ID first (more stable across call legs)
   if (sessionId) {
@@ -204,21 +207,24 @@ async function processTelnyxWebhookBackground(
       return;
     }
 
-    await logCallEvent(supabase, {
-      call_control_id: callControlId ?? 'unknown',
-      event_type,
-      received_at: receivedAt,
-      answer_sent_at: answerMeta?.answerSentAt ?? null,
-      answer_response_time_ms: answerMeta?.responseTimeMs ?? null,
-      telnyx_status: answerMeta?.telnyxStatus ?? null,
-      error_message: answerMeta?.errorMessage ?? null,
-    });
+    // Independent writes — run concurrently to cut hot-path latency.
+    const [, claimed] = await Promise.all([
+      logCallEvent(supabase, {
+        call_control_id: callControlId ?? 'unknown',
+        event_type,
+        received_at: receivedAt,
+        answer_sent_at: answerMeta?.answerSentAt ?? null,
+        answer_response_time_ms: answerMeta?.responseTimeMs ?? null,
+        telnyx_status: answerMeta?.telnyxStatus ?? null,
+        error_message: answerMeta?.errorMessage ?? null,
+      }),
+      event.id
+        ? claimWebhookEvent(supabase, event.id, 'telnyx', event_type)
+        : Promise.resolve(true),
+    ]);
 
-    if (event.id) {
-      const claimed = await claimWebhookEvent(supabase, event.id, 'telnyx', event_type);
-      if (!claimed) {
-        return;
-      }
+    if (event.id && !claimed) {
+      return;
     }
 
     // ── call.initiated ──────────────────────────────────────────────────────
@@ -321,6 +327,27 @@ async function processTelnyxWebhookBackground(
 
     // ── call.ringing ────────────────────────────────────────────────────────
     else if (event_type === 'call.ringing') {
+      // Leg B (agent's SIP transfer target) started ringing — track it so the
+      // accept flow can see the transfer is live before answering the PSTN leg.
+      const ringingBridgeState = decodeClientState(payload.client_state);
+      const ringingSessionId = ringingBridgeState?.telnyx_session_id
+        ?? ringingBridgeState?.inbound_call_id;
+      if (ringingBridgeState?.gd_inbound_leg_b && ringingSessionId && callControlId) {
+        const { findInboundCallBySession } = await import('@/lib/telephony/telnyx/inbound-router');
+        const inboundRingRow = await findInboundCallBySession(supabase, String(ringingSessionId));
+        if (inboundRingRow?.id) {
+          await supabase
+            .from('calls')
+            .update({
+              leg_b_status: 'ringing',
+              leg_b_call_control_id: callControlId,
+            })
+            .eq('id', inboundRingRow.id);
+          console.log('[INBOUND] Leg B ringing:', String(ringingSessionId));
+        }
+        return;
+      }
+
       console.log('[WEBHOOK] call.ringing — receiver phone is ringing:', {
         callControlId,
         from: payload.from,
@@ -412,6 +439,19 @@ async function processTelnyxWebhookBackground(
 
         const { findInboundCallBySession } = await import('@/lib/telephony/telnyx/inbound-router');
         const inboundRow = await findInboundCallBySession(supabase, telnyxSessionId);
+
+        // Media-plane state: Leg B is the browser leg — record it so the accept
+        // flow only answers the PSTN leg once a live peer exists.
+        if (inboundRow?.id && callControlId) {
+          await supabase
+            .from('calls')
+            .update({
+              leg_b_status: 'answered',
+              leg_b_call_control_id: callControlId,
+              telnyx_webrtc_leg_id: callControlId,
+            })
+            .eq('id', inboundRow.id);
+        }
 
         if (
           inboundRow
@@ -536,6 +576,13 @@ async function processTelnyxWebhookBackground(
         const telnyxSessionId = String(hangupSessionId);
         const { findInboundCallBySession, advanceInboundRingGroup } = await import('@/lib/telephony/telnyx/inbound-router');
         const inboundRow = await findInboundCallBySession(supabase, telnyxSessionId);
+
+        if (inboundRow?.id) {
+          await supabase
+            .from('calls')
+            .update({ leg_b_status: 'hungup' })
+            .eq('id', inboundRow.id);
+        }
 
         if (inboundRow?.status === 'ringing') {
           console.log('[INBOUND] Leg B hangup while ringing — advancing ring group:', telnyxSessionId);
@@ -764,11 +811,29 @@ async function processTelnyxWebhookBackground(
 
     // ── call.bridged ────────────────────────────────────────────────────────
     // Fires on the original PSTN leg when a SIP-transfer Leg B connects.
-    // Observability only — state transition is driven by Leg B's own
-    // call.answered/call.hangup (tagged via target_leg_client_state).
+    // This is the media-plane confirmation for inbound: the caller and the
+    // agent leg are joined — clear any pending media watchdog for the call.
     else if (event_type === 'call.bridged') {
       if (callControlId) {
         await logInboundCallStep(supabase, callControlId, 'call_bridged');
+
+        const { data: bridgedInbound } = await supabase
+          .from('calls')
+          .select('id')
+          .eq('telnyx_call_id', callControlId)
+          .eq('direction', 'inbound')
+          .maybeSingle();
+
+        if (bridgedInbound?.id) {
+          await supabase
+            .from('calls')
+            .update({
+              leg_b_status: 'bridged',
+              media_watchdog_deadline: null,
+            })
+            .eq('id', bridgedInbound.id);
+          console.log('[INBOUND] media bridged — watchdog cleared:', callControlId);
+        }
       }
     }
 

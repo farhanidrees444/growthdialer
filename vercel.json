@@ -6,6 +6,7 @@
     { "path": "/api/cron/cleanup-trash", "schedule": "0 3 * * *" },
     { "path": "/api/cron/release-expired-numbers", "schedule": "0 4 * * *" },
     { "path": "/api/cron/retry-ai-pipeline", "schedule": "0 5 * * *" },
-    { "path": "/api/cron/mirror-recordings", "schedule": "0 6 * * *" }
+    { "path": "/api/cron/mirror-recordings", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/inbound-health-sweep", "schedule": "0 2 * * *" }
   ]
 }

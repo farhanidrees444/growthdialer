@@ -88,6 +88,8 @@ export function CallsProvider({ children }: { children: ReactNode }) {
   const [callerContext, setCallerContext] = useState<CallerContext>(EMPTY_CALLER_CONTEXT);
   const [ringElapsedSec, setRingElapsedSec] = useState(0);
   const [connectingFromServer, setConnectingFromServer] = useState(false);
+  /** Generic accept failure shown in the call overlay (never vendor-specific). */
+  const [connectErrorLocal, setConnectErrorLocal] = useState<string | null>(null);
 
   const webrtcPhase = mapIncomingPhase(incomingCall.phase, incomingCall.callId);
 
@@ -137,6 +139,7 @@ export function CallsProvider({ children }: { children: ReactNode }) {
       setCallerContext(EMPTY_CALLER_CONTEXT);
       setRingElapsedSec(0);
       setConnectingFromServer(false);
+      setConnectErrorLocal(null);
       return;
     }
     fetchCallerContext(fromNumber);
@@ -161,40 +164,72 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [incomingCall.ringStartedAt, phase, serverRing?.ringStartedAt]);
 
+  const VOICE_CONNECT_ERROR =
+    "Voice isn't connected. Check your browser voice connection and try again.";
+
   const accept = useCallback(async () => {
     if (phase !== 'incoming') return;
     const micOk = await requestMicPermission();
     if (!micOk) return;
+    setConnectErrorLocal(null);
+
+    // Answer the browser WebRTC leg FIRST, with bounded retries (~3s total).
+    // The server only bridges the caller after this succeeds, so we never
+    // enter a fake "connecting" state with a ticking timer.
+    let answered = await answerIncomingCall();
+    const webrtcDeadline = Date.now() + 3000;
+    while (!answered && Date.now() < webrtcDeadline) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      answered = await answerIncomingCall();
+    }
+
+    if (!answered) {
+      setConnectErrorLocal(VOICE_CONNECT_ERROR);
+      clearServerRing();
+      return;
+    }
 
     registerCallMeta(null, fromNumber ?? '');
-    setConnectingFromServer(true);
 
-    if (telnyxSessionId) {
-      await fetch('/api/calls/answer', {
+    // Calls ringing purely on the server (no session to bridge) need nothing
+    // more once the browser leg is up.
+    if (!telnyxSessionId) {
+      clearServerRing();
+      return;
+    }
+
+    // Only now ask the server to bridge the caller onto the live browser leg.
+    let serverOk = false;
+    try {
+      const res = await fetch('/api/calls/answer', {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telnyx_session_id: telnyxSessionId }),
-      }).catch(() => undefined);
+      });
+      const json = (await res.json().catch(() => null)) as { ok?: boolean } | null;
+      serverOk = json?.ok === true;
+    } catch {
+      serverOk = false;
     }
 
-    let answered = await answerIncomingCall();
-    if (!answered) {
-      for (let i = 0; i < 24; i += 1) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        answered = await answerIncomingCall();
-        if (answered) break;
-      }
+    if (!serverOk) {
+      // Server couldn't bridge the caller (voice node unreachable, bridge
+      // never formed). Tear down the orphaned browser leg rather than leave
+      // it live with no caller on the other side.
+      hangup();
+      setConnectErrorLocal(VOICE_CONNECT_ERROR);
+      clearServerRing();
+      return;
     }
 
-    if (!answered) {
-      setConnectingFromServer(false);
-    }
+    setConnectingFromServer(true);
     clearServerRing();
   }, [
     answerIncomingCall,
     clearServerRing,
     fromNumber,
+    hangup,
     phase,
     registerCallMeta,
     requestMicPermission,
@@ -218,11 +253,12 @@ export function CallsProvider({ children }: { children: ReactNode }) {
 
   const connectError = useMemo(() => {
     if (incomingCall.error) return incomingCall.error;
+    if (connectErrorLocal) return connectErrorLocal;
     if (staleTabWarning && phase !== 'idle') {
       return 'Another browser tab may also be registered for calls. Use one active call tab per agent.';
     }
     return null;
-  }, [incomingCall.error, phase, staleTabWarning]);
+  }, [connectErrorLocal, incomingCall.error, phase, staleTabWarning]);
 
   return (
     <CallsContext.Provider

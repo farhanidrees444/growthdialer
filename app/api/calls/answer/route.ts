@@ -61,7 +61,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, status: call.status });
   }
 
-  await markInboundAccepted(service, telnyxSessionId, user.id);
+  const result = await markInboundAccepted(service, telnyxSessionId, user.id);
+  if (!result.ok) {
+    console.warn('[INBOUND-ANSWER] bridge failed', {
+      session: telnyxSessionId,
+      error: result.error,
+    });
+    return NextResponse.json(
+      { ok: false, error: result.error ?? 'answer_failed' },
+      { status: 409 },
+    );
+  }
   console.log('[INBOUND-ANSWERED]', telnyxSessionId);
   return NextResponse.json({
     ok: true,

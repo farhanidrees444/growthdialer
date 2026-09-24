@@ -22,14 +22,23 @@ export async function telephonyRequest<T = Record<string, unknown>>(
     throw new Error('Voice service is not configured');
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      ...(init.headers ?? {}),
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      signal: init.signal ?? AbortSignal.timeout(20_000),
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        ...(init.headers ?? {}),
+      },
+    });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Voice API request timed out');
+    }
+    throw err;
+  }
 
   const text = await res.text();
   if (!res.ok) {

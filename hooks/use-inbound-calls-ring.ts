@@ -197,16 +197,9 @@ export function useInboundCallsRing(userId: string | null | undefined) {
     };
   }, [clearRing, handleRealtimeRow, loadActiveRing, loadOwnedDids, userId]);
 
-  useEffect(() => {
-    if (!userId) return undefined;
-
-    const pollMs = ringRef.current ? 500 : 1000;
-    const poll = setInterval(() => {
-      void loadActiveRing();
-    }, pollMs);
-
-    return () => clearInterval(poll);
-  }, [loadActiveRing, ring, userId]);
+  // NOTE: no timer poll here — the Supabase realtime subscription above is the
+  // driver for incoming-ring state. loadActiveRing stays for explicit refreshes
+  // (subscribe handshake, tab visibility/focus) via refreshServerRing.
 
   useEffect(() => {
     if (!userId) return;
