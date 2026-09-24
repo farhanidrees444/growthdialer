@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
   // --- a. Ring-timeout sweep: oldest ringing inbound calls first ---
   const { data: ringing, error: ringingError } = await supabase
     .from('calls')
-    .select('id, telnyx_session_id, to_number, started_at')
+    .select('id, telnyx_session_id, to_number, started_at, cloud_anchored_at')
     .eq('direction', 'inbound')
     .eq('status', 'ringing')
     .not('telnyx_session_id', 'is', null)
@@ -86,7 +86,12 @@ export async function GET(req: NextRequest) {
       if (!sessionId) continue;
       const startedAt = call.started_at ? new Date(call.started_at as string).getTime() : 0;
       const ringSeconds = await resolveRingSeconds(call.to_number as string | null);
-      if (nowMs - startedAt <= ringSeconds * 1000) continue;
+      // Cloud-anchored hunts own their own phase timing (browser -> mobile ->
+      // voicemail inside the ring budget); the sweep only intervenes as a
+      // backstop when the hunt is stuck well past its budget (e.g. a lost
+      // webhook left a phase claimed forever).
+      const stuckGraceMs = (call.cloud_anchored_at as string | null) ? 30_000 : 0;
+      if (nowMs - startedAt <= ringSeconds * 1000 + stuckGraceMs) continue;
       try {
         await advanceInboundRingGroup(supabase, sessionId, 'ring_timeout');
         ringTimeoutsHandled += 1;

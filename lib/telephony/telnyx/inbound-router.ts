@@ -9,9 +9,15 @@ import {
 } from '@/lib/voice/phone-number-settings';
 import { resolveAgentSipUri } from '@/lib/telephony/telnyx/agent-sip';
 import { listRingableAgents } from '@/lib/telephony/telnyx/inbound';
-import { telephonyRequest } from '@/lib/telephony/telnyx/http';
 import { answerCall, hangupProviderCall, rejectCall, transferCall } from '@/lib/telephony/telnyx/outbound';
-import { startCallRecording } from '@/lib/telephony/telnyx/recording';
+import {
+  advanceCloudHunt,
+  isAgentVoiceRegistered,
+  isCloudFirstEnabled,
+  routeToVoicemail,
+  runCloudFirstHunt,
+  waitForHuntBridge,
+} from './cloud-hunt';
 
 export interface InboundRoutingContext {
   providerCallId: string;
@@ -30,7 +36,7 @@ export async function findInboundCallBySession(
 ) {
   const { data } = await supabase
     .from('calls')
-    .select('id, user_id, status, direction, telnyx_call_id, telnyx_webrtc_leg_id, telnyx_session_id, from_number, to_number, answered_at, workspace_id, leg_b_status')
+    .select('id, user_id, status, direction, telnyx_call_id, telnyx_webrtc_leg_id, telnyx_session_id, from_number, to_number, answered_at, workspace_id, leg_b_status, leg_b_call_control_id, cloud_anchored_at, hunt_step')
     .eq('telnyx_session_id', telnyxSessionId)
     .eq('direction', 'inbound')
     .order('started_at', { ascending: false })
@@ -140,162 +146,7 @@ async function setCallStatus(
   await supabase.from('calls').update(patch).eq('id', callsRowId);
 }
 
-/**
- * Freshness window for agent presence heartbeats.
- * Mirrors RINGABLE_HEARTBEAT_MS in inbound.ts and the 25s heartbeat cadence in
- * hooks/use-voice-presence.ts (a missed heartbeat or two still counts as fresh).
- */
-const VOICE_PRESENCE_FRESH_MS = 45_000;
-
-/**
- * True when the agent's browser voice node is actually registered and recently
- * heard from. This is the strict gate used before transferring the PSTN leg to
- * an agent's SIP credential: transferring to an unregistered node makes the
- * caller ring forever with no media on the other side.
- */
-async function isAgentVoiceRegistered(
-  supabase: SupabaseClient,
-  agentId: string,
-): Promise<boolean> {
-  const { data } = await supabase
-    .from('agent_presence')
-    .select('status, device_state, last_heartbeat_at')
-    .eq('agent_id', agentId)
-    .order('last_heartbeat_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (!data) return false;
-  if ((data.status as string) === 'offline') return false;
-
-  const heartbeatAt = new Date(data.last_heartbeat_at as string).getTime();
-  if (!Number.isFinite(heartbeatAt) || Date.now() - heartbeatAt > VOICE_PRESENCE_FRESH_MS) {
-    return false;
-  }
-
-  const deviceState = data.device_state as string | null;
-  return deviceState === 'registered' || deviceState === 'registering';
-}
-
-/** Speak text on a call via Call Control (payload + voice are the required params). */
-async function speakText(callControlId: string, text: string): Promise<boolean> {
-  try {
-    await telephonyRequest(
-      `/calls/${encodeURIComponent(callControlId)}/actions/speak`,
-      {
-        method: 'POST',
-        body: JSON.stringify({ payload: text, voice: 'female' }),
-      },
-    );
-    return true;
-  } catch (err) {
-    console.error('[INBOUND-VM] speak failed:', err);
-    return false;
-  }
-}
-
-/** Play a remote audio file on a call (used for a custom voicemail greeting URL). */
-async function playGreetingAudioUrl(callControlId: string, audioUrl: string): Promise<boolean> {
-  try {
-    await telephonyRequest(
-      `/calls/${encodeURIComponent(callControlId)}/actions/playback_start`,
-      {
-        method: 'POST',
-        body: JSON.stringify({ audio_url: audioUrl }),
-      },
-    );
-    return true;
-  } catch (err) {
-    console.error('[INBOUND-VM] greeting playback failed:', err);
-    return false;
-  }
-}
-
-interface VoicemailGreeting {
-  text?: string;
-  url?: string;
-}
-
-/**
- * Resolve the voicemail greeting for a number. Probes phone_number_settings for
- * an optional custom greeting (voicemail_greeting_text / voicemail_greeting_url
- * columns, when present); falls back to the generic spoken greeting.
- */
-async function resolveVoicemailGreeting(
-  supabase: SupabaseClient,
-  purchasedNumberId: string | undefined,
-): Promise<VoicemailGreeting> {
-  if (!purchasedNumberId) return {};
-  const { data } = await supabase
-    .from('phone_number_settings')
-    .select('*')
-    .eq('purchased_number_id', purchasedNumberId)
-    .maybeSingle();
-  const row = data as Record<string, unknown> | null;
-  const text = typeof row?.voicemail_greeting_text === 'string'
-    && row.voicemail_greeting_text.trim()
-    ? row.voicemail_greeting_text.trim()
-    : undefined;
-  const url = typeof row?.voicemail_greeting_url === 'string'
-    && row.voicemail_greeting_url.trim()
-    ? row.voicemail_greeting_url.trim()
-    : undefined;
-  return { text, url };
-}
-
-const DEFAULT_VOICEMAIL_GREETING =
-  "You've reached us. Please leave a message after the tone.";
-
-/**
- * Estimate how long a TTS greeting takes to play so the recording (and its
- * beep) can start after the greeting finishes instead of mid-sentence.
- * Heuristic: English TTS averages ~14 characters/second (roughly 850
- * chars/min). Clamped to [3s, 30s] so a huge custom greeting can't hold the
- * worker open indefinitely.
- */
-function greetingPlaybackWaitMs(text: string): number {
-  const estimated = Math.ceil(text.length / 14) * 1000;
-  return Math.min(30_000, Math.max(3_000, estimated));
-}
-
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-async function routeToVoicemail(
-  supabase: SupabaseClient,
-  ctx: InboundRoutingContext,
-  routing: ResolvedNumberRouting,
-  reason: string,
-): Promise<void> {
-  console.log('[INBOUND-ROUTE] voicemail', { reason, session: ctx.callSessionId });
-  await answerCall(ctx.providerCallId);
-
-  // Play the greeting first so the caller hears something human instead of
-  // answer-then-silence. Recording (with its beep) starts after the greeting
-  // finishes so the beep doesn't cut the greeting off.
-  const greeting = await resolveVoicemailGreeting(supabase, ctx.purchasedNumberId);
-  if (greeting.url) {
-    if (await playGreetingAudioUrl(ctx.providerCallId, greeting.url)) {
-      // A remote recording's duration is unknown — allow a generous fixed
-      // window so a normal-length greeting finishes before we record.
-      await sleep(20_000);
-    }
-  } else {
-    const greetingText = greeting.text ?? DEFAULT_VOICEMAIL_GREETING;
-    if (await speakText(ctx.providerCallId, greetingText)) {
-      await sleep(greetingPlaybackWaitMs(greetingText));
-    }
-  }
-
-  await startCallRecording(ctx.providerCallId, {
-    format: 'mp3',
-    channels: routing.inbound_mode === 'voicemail' ? 'single' : 'dual',
-    playBeep: routing.inbound_mode === 'voicemail',
-  });
-  await setCallStatus(supabase, ctx.callsRowId, {
-    status: 'voicemail',
-    disposition: 'voicemail',
-  });
-}
 
 async function routeToForward(
   supabase: SupabaseClient,
@@ -492,6 +343,15 @@ export async function advanceInboundRingGroup(
     callsRowId: call.id,
   };
 
+  // Cloud-first hunt: the caller is held on cloud media while we hunt
+  // browser -> mobile -> voicemail. Advance the hunt state machine instead of
+  // the legacy ring group — its compare-and-set on hunt_step keeps concurrent
+  // advancers (webhook, decline API, sweep) from double-dialing.
+  if ((call as { cloud_anchored_at?: string | null }).cloud_anchored_at) {
+    await advanceCloudHunt(supabase, ctx, routing, reason);
+    return { ok: true, status: 'ringing' };
+  }
+
   for (const agentId of remaining) {
     const rang = await ringCurrentAgent(supabase, ctx, agentId, routing);
     if (rang) return { ok: true, status: 'ringing' };
@@ -538,6 +398,15 @@ export async function markInboundAccepted(
   const call = await findInboundCallBySession(supabase, telnyxSessionId);
   if (!call) return { ok: false, error: 'not_found' };
   if (call.status === 'active' || call.status === 'answered') return { ok: true };
+
+  // Cloud-first: the caller leg is already anchored in the cloud and the hunt
+  // owns bridging — the agent's browser leg was answered in the UI before this
+  // API was called. Wait briefly for the hunt to finish the bridge and report
+  // honestly instead of touching provider legs here.
+  if ((call as { cloud_anchored_at?: string | null }).cloud_anchored_at) {
+    const bridged = await waitForHuntBridge(supabase, call.id, 10_000);
+    return bridged ? { ok: true } : { ok: false, error: 'voice_not_connected' };
+  }
 
   const legBStatus = (call.leg_b_status as string | null) ?? 'none';
   const pstnControlId = call.telnyx_call_id as string | null;
@@ -636,18 +505,34 @@ export async function markInboundDeclined(
   const call = await findInboundCallBySession(supabase, telnyxSessionId);
   if (!call || call.status !== 'ringing') return;
 
-  const webrtcLegId = call.telnyx_webrtc_leg_id as string | null;
+  const anchored = !!(call as { cloud_anchored_at?: string | null }).cloud_anchored_at;
 
-  if (webrtcLegId) {
-    await rejectCall(webrtcLegId).catch(() => hangupProviderCall(webrtcLegId).catch(() => undefined));
+  // Reject the ringing agent leg so it stops ringing on their device. For
+  // cloud hunts the leg id lives on leg_b_call_control_id; the leg-B hangup
+  // webhook then advances the hunt to the next phase on its own.
+  const agentLegId = anchored
+    ? (((call as { leg_b_call_control_id?: string | null }).leg_b_call_control_id ?? null) as string | null)
+    : (call.telnyx_webrtc_leg_id as string | null);
+
+  if (agentLegId) {
+    await rejectCall(agentLegId).catch(() => hangupProviderCall(agentLegId).catch(() => undefined));
   }
 
-  const result = await advanceInboundRingGroup(supabase, telnyxSessionId, 'agent_declined');
-  if (result.status !== 'ringing') {
-    await supabase
-      .from('calls')
-      .update({ status: 'missed', disposition: 'declined' })
-      .eq('id', call.id);
+  if (anchored) {
+    // No leg in flight (e.g. between phases) — advance the hunt directly so a
+    // decline never leaves the caller stranded. Otherwise the hangup webhook
+    // advances it.
+    if (!agentLegId) {
+      await advanceInboundRingGroup(supabase, telnyxSessionId, 'agent_declined');
+    }
+  } else {
+    const result = await advanceInboundRingGroup(supabase, telnyxSessionId, 'agent_declined');
+    if (result.status !== 'ringing') {
+      await supabase
+        .from('calls')
+        .update({ status: 'missed', disposition: 'declined' })
+        .eq('id', call.id);
+    }
   }
 
   console.log('[INBOUND-DECLINED]', telnyxSessionId);
@@ -741,6 +626,14 @@ export async function handleInboundCallInitiated(
     ...preCtx,
     callsRowId,
   };
+
+  // Cloud-first: answer the caller in the cloud immediately and hunt
+  // browser -> mobile -> voicemail. The caller is held on reliable cloud
+  // media from second zero — never ringback-forever, never dead air.
+  if (routing.inbound_mode === 'browser' && isCloudFirstEnabled()) {
+    await runCloudFirstHunt(supabase, ctx, routing);
+    return;
+  }
 
   if (routing.inbound_mode === 'off') {
     await hangupProviderCall(params.providerCallId);

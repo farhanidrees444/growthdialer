@@ -17,6 +17,10 @@ import { isExplicitOutboundTelnyxPayload } from '@/lib/telephony/telnyx/payload-
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+// The cloud-first inbound hunt runs short event-driven phases in the
+// background of this route (answer, dial legs, voicemail greeting) — allow
+// headroom beyond the default function timeout.
+export const maxDuration = 60;
 
 function readClientState(payload: Record<string, unknown>): string | undefined {
   const data = payload.data as Record<string, unknown> | undefined;

@@ -28,6 +28,7 @@ import { PremiumEmptyState } from '@/components/ui/premium-empty-state';
 import { InboundHistoryPanel } from '@/components/calls/inbound-history-panel';
 import { PostCallCommandCenter } from '@/components/calls/post-call-command-center';
 import { InboundHealthPanel } from '@/components/inbound/inbound-health-panel';
+import { PushNotificationToggle } from '@/components/inbound/push-notification-toggle';
 import { LiveWaveform } from '@/components/marketing/live-floor/LiveWaveform';
 import { NumberBillingBadge } from '@/components/numbers/number-billing-badge';
 import { withBillingMeta } from '@/lib/numbers/billing-lifecycle';
@@ -480,6 +481,7 @@ export function IncomingPageClient() {
               <RefreshCw className="h-3.5 w-3.5" />
               Refresh
             </button>
+            <PushNotificationToggle />
           </div>
         </PageHeader>
 

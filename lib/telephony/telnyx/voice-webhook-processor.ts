@@ -453,6 +453,17 @@ async function processTelnyxWebhookBackground(
             .eq('id', inboundRow.id);
         }
 
+        // Cloud-first hunt: the agent leg answered — bridge it to the anchored
+        // caller leg. Compare-and-set inside onHuntLegAnswered guarantees only
+        // the first answered leg wins.
+        const huntAnchored = !!(inboundRow as { cloud_anchored_at?: string | null } | null)
+          ?.cloud_anchored_at;
+        if (huntAnchored && inboundRow?.id && callControlId) {
+          const { onHuntLegAnswered } = await import('@/lib/telephony/telnyx/cloud-hunt');
+          const consumed = await onHuntLegAnswered(supabase, telnyxSessionId, callControlId);
+          if (consumed) return;
+        }
+
         if (
           inboundRow
           && (inboundRow.status === 'answered' || inboundRow.status === 'active')
@@ -576,6 +587,73 @@ async function processTelnyxWebhookBackground(
         const telnyxSessionId = String(hangupSessionId);
         const { findInboundCallBySession, advanceInboundRingGroup } = await import('@/lib/telephony/telnyx/inbound-router');
         const inboundRow = await findInboundCallBySession(supabase, telnyxSessionId);
+        const huntRow = inboundRow as unknown as {
+          id: string;
+          status: string | null;
+          telnyx_call_id: string | null;
+          leg_b_call_control_id: string | null;
+          cloud_anchored_at: string | null;
+          hunt_step: string | null;
+        } | null;
+        const huntStep = huntRow?.hunt_step ?? null;
+
+        // ── Cloud-first hunt leg hangup ──────────────────────────────────
+        if (huntRow?.cloud_anchored_at) {
+          const hungPhase = hangupBridgeState.gd_hunt_phase as string | undefined;
+
+          // Agent hung up after a successful bridge — end the caller leg too
+          // so the caller isn't parked in dead air. Only the actually-bridged
+          // leg triggers this; hangups from superseded legs are stale.
+          if (
+            huntStep === 'done'
+            && (huntRow.status === 'answered' || huntRow.status === 'active')
+            && callControlId
+            && huntRow.leg_b_call_control_id
+            && callControlId === huntRow.leg_b_call_control_id
+          ) {
+            console.log('[CLOUD-HUNT] agent hung up after bridge — ending caller leg:', telnyxSessionId);
+            await supabase
+              .from('calls')
+              .update({ leg_b_status: 'hungup' })
+              .eq('id', huntRow.id);
+            if (huntRow.telnyx_call_id) {
+              const { hangupProviderCall } = await import('@/lib/telephony/telnyx/outbound');
+              await hangupProviderCall(huntRow.telnyx_call_id).catch(() => undefined);
+            }
+            await supabase
+              .from('calls')
+              .update({ status: 'completed', ended_at: new Date().toISOString() })
+              .eq('id', huntRow.id);
+            return;
+          }
+
+          // Active hunt phase — only the current phase's leg may advance the
+          // hunt; hangups from superseded legs are stale and ignored.
+          const phaseActive = huntStep === 'browser_active' || huntStep === 'mobile_active';
+          const currentPhase = typeof huntStep === 'string'
+            ? huntStep.replace(/_active$/, '')
+            : null;
+          if (
+            huntRow.status === 'ringing'
+            && phaseActive
+            && hungPhase
+            && hungPhase === currentPhase
+          ) {
+            await supabase
+              .from('calls')
+              .update({ leg_b_status: 'hungup' })
+              .eq('id', huntRow.id);
+            console.log('[CLOUD-HUNT] hunt leg hangup — advancing:', telnyxSessionId);
+            await advanceInboundRingGroup(supabase, telnyxSessionId, 'agent_unreachable');
+          } else {
+            console.log('[CLOUD-HUNT] stale leg-B hangup ignored:', {
+              session: telnyxSessionId,
+              hungPhase,
+              huntStep,
+            });
+          }
+          return;
+        }
 
         if (inboundRow?.id) {
           await supabase
@@ -834,6 +912,27 @@ async function processTelnyxWebhookBackground(
             .eq('id', bridgedInbound.id);
           console.log('[INBOUND] media bridged — watchdog cleared:', callControlId);
         }
+      }
+    }
+
+    // ── call.speak.ended ───────────────────────────────────────────────────
+    // Cloud-first hunt: the greeting finished — start the looping hold-music
+    // bed so the caller never sits in silence while we hunt the agent.
+    // ensureHoldAudio is idempotent per hunt (call_events marker).
+    else if (event_type === 'call.speak.ended') {
+      if (callControlId) {
+        const { ensureHoldAudio } = await import('@/lib/telephony/telnyx/cloud-hunt');
+        await ensureHoldAudio(supabase, callControlId);
+      }
+    }
+
+    // ── call.playback.ended ────────────────────────────────────────────────
+    // Backstop: if the hold loop ended mid-hunt (interrupted), restart it.
+    // The restart is time-guarded inside restartHoldAudioIfHunting.
+    else if (event_type === 'call.playback.ended') {
+      if (callControlId) {
+        const { restartHoldAudioIfHunting } = await import('@/lib/telephony/telnyx/cloud-hunt');
+        await restartHoldAudioIfHunting(supabase, callControlId);
       }
     }
 

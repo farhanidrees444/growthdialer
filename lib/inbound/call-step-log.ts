@@ -17,6 +17,8 @@ export type InboundCallStep =
   | 'leg_b_dialed'
   | 'leg_b_answered'
   | 'call_bridged'
+  | 'hold_audio'
+  | 'hold_audio_restart'
   | 'ring_timeout';
 
 export async function logInboundCallStep(
