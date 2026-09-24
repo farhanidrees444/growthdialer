@@ -237,6 +237,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
   // Track whether we are mounted to avoid setState after unmount
   const mountedRef = useRef(true);
   const initAttemptsRef = useRef(0);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initClientRef = useRef<() => Promise<void>>(async () => {});
   const scheduleReconnectRef = useRef<(reason: string) => void>(() => {});
   const inboundRingStartedRef = useRef<number | null>(null);
@@ -285,7 +287,19 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     if (mountedRef.current) setter(value);
   }, []);
 
+  const clearPendingReconnect = useCallback(() => {
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+    if (initWatchdogRef.current) {
+      clearTimeout(initWatchdogRef.current);
+      initWatchdogRef.current = null;
+    }
+  }, []);
+
   const scheduleReconnect = useCallback((reason: string) => {
+    if (reconnectTimerRef.current) return; // one already in flight — never stack timers
     if (initAttemptsRef.current >= 3) {
       safeSet(setPhoneStatus, 'error');
       safeSet(setVoiceError, (prev) => prev ?? `Voice could not connect (${reason}). Tap reconnect or check server voice settings.`);
@@ -294,7 +308,8 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     initAttemptsRef.current += 1;
     const delay = 1200 * initAttemptsRef.current;
     console.warn(`[WebPhone] reconnect scheduled (${reason}) attempt ${initAttemptsRef.current}`);
-    setTimeout(() => {
+    reconnectTimerRef.current = setTimeout(() => {
+      reconnectTimerRef.current = null;
       if (mountedRef.current) void initClientRef.current();
     }, delay);
   }, [safeSet]);
@@ -638,13 +653,27 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     deviceRef.current = twilioDevice.device;
     if (twilioDevice.isReady) {
       initAttemptsRef.current = 0;
+      clearPendingReconnect();
       safeSet(setPhoneStatus, 'ready');
       safeSet(setVoiceError, null);
       safeSet(setIsReconnecting, false);
     } else if (twilioDevice.voiceError) {
       scheduleReconnect('token or device error');
+    } else {
+      // initDevice resolved but the socket never became ready and surfaced no
+      // error — don't sit in "initializing" forever. If we're still stuck here
+      // after a grace period, treat it as a failed attempt and retry.
+      if (initWatchdogRef.current) clearTimeout(initWatchdogRef.current);
+      initWatchdogRef.current = setTimeout(() => {
+        initWatchdogRef.current = null;
+        if (!mountedRef.current) return;
+        if (phoneStatusRef.current === 'initializing' && !twilioDevice.isReady && !twilioDevice.voiceError) {
+          console.warn('[WebPhone] voice init watchdog — still not ready after 25s, retrying');
+          scheduleReconnect('init watchdog');
+        }
+      }, 25_000);
     }
-  }, [safeSet, scheduleReconnect, twilioDevice]);
+  }, [safeSet, scheduleReconnect, clearPendingReconnect, twilioDevice]);
 
   useEffect(() => {
     if (phoneStatus !== 'ready') return;
@@ -716,21 +745,31 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     // for inbound hunt legs. Downgrade status and reconnect immediately so the
     // server never dials a dead browser (previously phoneStatus stayed 'ready'
     // forever and the hunt dialed into the void -> 21s dead air -> missed).
-    const offUnregistered = eventBus.on('DEVICE_UNREGISTERED', () => {
+    // NOTE: re-init paths (voice account bootstrap, token refresh) deliberately
+    // replace the client and mark the event `expected` — a fresh client is
+    // already connecting there, so scheduling another reconnect would destroy
+    // it mid-handshake and wedge the voice node in "connecting" forever.
+    const offUnregistered = eventBus.on<{ expected?: boolean }>('DEVICE_UNREGISTERED', (payload) => {
       if (!mountedRef.current) return;
-      console.warn('[WebPhone] voice socket dropped — reconnecting, presence downgraded');
       safeSet(setPhoneStatus, 'initializing');
+      if (payload?.expected) {
+        console.log('[WebPhone] voice client replaced (expected) — awaiting ready');
+        return;
+      }
+      console.warn('[WebPhone] voice socket dropped — reconnecting, presence downgraded');
       scheduleReconnectRef.current('socket closed');
     });
     const offReady = eventBus.on('DEVICE_READY', () => {
       if (!mountedRef.current) return;
       initAttemptsRef.current = 0;
+      clearPendingReconnect();
       safeSet(setPhoneStatus, 'ready');
       safeSet(setVoiceError, null);
     });
 
     return () => {
       mountedRef.current = false;
+      clearPendingReconnect();
       window.removeEventListener('gd-voice-account-prepared', onVoicePrepared);
       offUnregistered();
       offReady();

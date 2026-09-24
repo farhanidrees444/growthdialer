@@ -32,7 +32,12 @@ class DeviceManager {
     }
 
     if (this.client) {
-      this.destroy();
+      // Deliberate client replacement (re-init / token refresh), NOT a socket
+      // drop. Mark the event expected so listeners don't schedule a redundant
+      // reconnect — a fresh client is already connecting below. Scheduling one
+      // here would destroy the new client mid-handshake and wedge the voice
+      // node in "connecting" forever.
+      this.destroy({ expected: true });
     }
 
     this.token = loginToken;
@@ -63,7 +68,7 @@ class DeviceManager {
     return patchTelnyxCall(call);
   }
 
-  destroy(): void {
+  destroy(opts?: { expected?: boolean }): void {
     const client = this.client;
     this.client = null;
     this.token = null;
@@ -75,7 +80,7 @@ class DeviceManager {
         // Ignore SDK cleanup errors.
       }
     }
-    eventBus.emit('DEVICE_UNREGISTERED', this.snapshot());
+    eventBus.emit('DEVICE_UNREGISTERED', { ...this.snapshot(), expected: opts?.expected ?? false });
   }
 
   snapshot() {
@@ -98,7 +103,7 @@ class DeviceManager {
 
     rtc.on('telnyx.socket.close', () => {
       this.isReady = false;
-      eventBus.emit('DEVICE_UNREGISTERED', this.snapshot());
+      eventBus.emit('DEVICE_UNREGISTERED', { ...this.snapshot(), expected: false });
     });
 
     rtc.on('telnyx.notification', (notification: { type?: string; call?: TelnyxCall }) => {

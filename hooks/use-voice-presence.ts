@@ -96,6 +96,12 @@ export function useVoicePresence({
 
   useEffect(() => {
     if (!enabled) return undefined;
+    // Terminal failure: tell the server the browser is gone so the inbound
+    // hunt stops considering it once this final heartbeat lands.
+    if (phoneStatus === 'error') {
+      void sendHeartbeat('offline');
+      return undefined;
+    }
     if (phoneStatus !== 'ready' && phoneStatus !== 'initializing') return undefined;
 
     // Honest presence: 'online' only when the voice socket is actually up.
@@ -116,7 +122,11 @@ export function useVoicePresence({
       void sendHeartbeat(offline ? 'offline' : current);
     };
 
-    const onOnline = () => { void sendHeartbeat('online'); };
+    const onOnline = () => {
+      const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+      const current = phoneStatus === 'ready' && deviceReady ? 'online' : 'away';
+      void sendHeartbeat(offline ? 'offline' : current);
+    };
     const onOffline = () => { void sendHeartbeat('offline'); };
 
     document.addEventListener('visibilitychange', onVisibility);
