@@ -97,7 +97,17 @@ class CallOrchestrator {
     const session = this.incomingSession;
 
     if (session.call.status() !== 'open') {
-      session.call.accept(options);
+      // Honest accept: only claim the call when the provider-level answer
+      // actually succeeded. A failed answer returns null so the UI shows an
+      // error instead of a fake "connecting" state with no audio.
+      let ok = false;
+      try {
+        ok = await session.call.accept(options);
+      } catch (err) {
+        console.error('[Orchestrator] acceptIncoming failed', err);
+        ok = false;
+      }
+      if (!ok) return null;
       this.emitSnapshot();
       return session.call;
     }

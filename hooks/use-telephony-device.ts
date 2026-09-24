@@ -146,7 +146,7 @@ export function useTelephonyDevice(options: UseTelephonyDeviceOptions = {}): Use
     destroyDevice();
 
     const rtc = new TelnyxRTC({ login_token: loginToken });
-    rtc.remoteElement = 'remoteMedia';
+    rtc.remoteElement = 'twilio-remote-audio';
     bindClientEvents(rtc);
     rtc.connect();
 

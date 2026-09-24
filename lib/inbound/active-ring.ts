@@ -12,10 +12,12 @@ export interface ActiveInboundRingRow {
   started_at: string | null;
   direction: string;
   user_id: string;
+  leg_b_status: string | null;
+  hunt_step: string | null;
 }
 
 const RING_SELECT =
-  'id, telnyx_session_id, telnyx_call_id, from_number, to_number, status, started_at, direction, user_id';
+  'id, telnyx_session_id, telnyx_call_id, from_number, to_number, status, started_at, direction, user_id, leg_b_status, hunt_step';
 
 async function ownedNumberVariants(
   supabase: SupabaseClient,

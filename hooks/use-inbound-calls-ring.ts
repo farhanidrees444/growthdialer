@@ -13,6 +13,9 @@ export interface ServerInboundRing {
   toNumber: string | null;
   displayFrom: string;
   ringStartedAt: number;
+  /** Browser leg (leg B) dial status: 'initiated' | 'answered' | 'bridged' | 'none' | null. */
+  legBStatus: string | null;
+  huntStep: string | null;
 }
 
 function mapRow(row: Record<string, unknown>): ServerInboundRing | null {
@@ -30,6 +33,8 @@ function mapRow(row: Record<string, unknown>): ServerInboundRing | null {
     toNumber: (row.to_number as string | null) ?? null,
     displayFrom: formatInboundCallerDisplay(rawFrom),
     ringStartedAt: startedAt ? new Date(startedAt).getTime() : Date.now(),
+    legBStatus: (row.leg_b_status as string | null) ?? null,
+    huntStep: (row.hunt_step as string | null) ?? null,
   };
 }
 
@@ -67,6 +72,14 @@ export function useInboundCallsRing(userId: string | null | undefined) {
         console.log('[INBOUND-POPUP-TRIGGER] showing popup for', mapped.telnyxSessionId);
         setRing(mapped);
         playInboundRingtone();
+        dispatchInboundRingEvent(mapped);
+      } else if (
+        ringRef.current?.legBStatus !== mapped.legBStatus
+        || ringRef.current?.huntStep !== mapped.huntStep
+      ) {
+        // Same call, but the hunt progressed (e.g. browser leg skipped) —
+        // refresh so the overlay can stay honest about answerability.
+        setRing(mapped);
         dispatchInboundRingEvent(mapped);
       }
       return;

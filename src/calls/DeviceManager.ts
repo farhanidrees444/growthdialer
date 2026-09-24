@@ -44,7 +44,11 @@ class DeviceManager {
     this.isReady = false;
 
     const rtc = new TelnyxRTC({ login_token: loginToken });
-    rtc.remoteElement = 'remoteMedia';
+    // The hidden remote-audio element rendered by WebPhoneProvider is
+    // id="twilio-remote-audio". A previous 'remoteMedia' id matched nothing in
+    // the DOM, so the SDK resolved it to null and never attached inbound
+    // audio on its own (the app also binds the stream manually as backup).
+    rtc.remoteElement = 'twilio-remote-audio';
     this.bindClientEvents(rtc);
     // Assign before connect so any event from a replaced (stale) client can
     // be identified and ignored by the guards in bindClientEvents.

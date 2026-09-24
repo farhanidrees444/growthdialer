@@ -27,9 +27,13 @@ function mapDeviceState(deviceReady: boolean, phoneStatus: PhoneStatus): string 
   // Honest gate for the inbound hunt: only claim 'registered' when the WebRTC
   // socket is actually up. Reporting 'registered' on a dead socket makes the
   // server dial a browser that can never answer (21s of dead air -> missed).
+  // While reconnecting ('initializing') we report 'registering' even before
+  // the socket is back — the hunt accepts it and gives the node a chance to
+  // recover mid-hunt instead of skipping to mobile immediately. The caller is
+  // held on cloud media meanwhile, so there is no dead air.
+  if (phoneStatus === 'initializing') return 'registering';
   if (!deviceReady) return 'not_registered';
   if (phoneStatus === 'ready') return 'registered';
-  if (phoneStatus === 'initializing') return 'registering';
   return null;
 }
 

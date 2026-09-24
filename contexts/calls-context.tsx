@@ -41,6 +41,8 @@ export interface CallsContextValue {
   isRinging: boolean;
   accept: () => Promise<void>;
   decline: () => void;
+  /** True when the server ring has no browser leg (hunt skipped it) — Accept would be dead. */
+  browserLegMissing: boolean;
 }
 
 const CallsContext = createContext<CallsContextValue | null>(null);
@@ -169,6 +171,15 @@ export function CallsProvider({ children }: { children: ReactNode }) {
 
   const accept = useCallback(async () => {
     if (phase !== 'incoming') return;
+    // Never attempt a dead accept: when the hunt skipped the browser there is
+    // no browser leg to answer. The overlay disables the button; this guard
+    // covers any other caller.
+    if (webrtcPhase === 'idle' && serverRing?.legBStatus === 'none') {
+      setConnectErrorLocal(
+        "Browser voice isn't connected — this call can't be answered here right now.",
+      );
+      return;
+    }
     const micOk = await requestMicPermission();
     if (!micOk) return;
     setConnectErrorLocal(null);
@@ -233,8 +244,10 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     phase,
     registerCallMeta,
     requestMicPermission,
+    serverRing,
     telnyxSessionId,
     toNumber,
+    webrtcPhase,
   ]);
 
   const decline = useCallback(() => {
@@ -260,6 +273,16 @@ export function CallsProvider({ children }: { children: ReactNode }) {
     return null;
   }, [connectErrorLocal, incomingCall.error, phase, staleTabWarning]);
 
+  // Honest overlay: when the ring comes only from the server (no WebRTC call
+  // yet) and the hunt explicitly skipped the browser (leg_b_status='none'),
+  // there is no browser leg to answer — Accept would be a dead button. The
+  // overlay disables Accept and explains instead of faking it.
+  const browserLegMissing = useMemo(() => {
+    if (webrtcPhase !== 'idle') return false;
+    if (!serverRing) return false;
+    return serverRing.legBStatus === 'none';
+  }, [serverRing, webrtcPhase]);
+
   return (
     <CallsContext.Provider
       value={{
@@ -274,6 +297,7 @@ export function CallsProvider({ children }: { children: ReactNode }) {
         isRinging: phase === 'incoming',
         accept,
         decline,
+        browserLegMissing,
       }}
     >
       {children}

@@ -549,7 +549,20 @@ export async function startHuntPhase(
 
   if (phase === 'browser') {
     agentId = await pickHuntAgent(supabase, ctx);
-    if (agentId && (await isAgentVoiceRegistered(supabase, agentId))) {
+    let registered = agentId ? await isAgentVoiceRegistered(supabase, agentId) : false;
+    if (agentId && !registered) {
+      // Patience before skipping: the browser may be mid-reconnect (socket
+      // drop, tab just became visible). Give it one short grace window before
+      // giving up on the browser phase — otherwise the user sees a ringing
+      // popup whose Accept button can never work (no browser leg dialed).
+      console.log('[CLOUD-HUNT] browser not registered yet — waiting 5s and re-checking', {
+        agent_id: agentId,
+        session: ctx.callSessionId,
+      });
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      registered = await isAgentVoiceRegistered(supabase, agentId);
+    }
+    if (agentId && registered) {
       const sip = await resolveAgentSipUri(supabase, agentId);
       if (sip) {
         to = sip.sipUri;

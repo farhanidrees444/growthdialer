@@ -2,7 +2,7 @@ import type { Call as TelnyxCall } from '@telnyx/webrtc';
 
 export type VoiceSdkCall = TelnyxCall & {
   status: () => string;
-  accept: (options?: unknown) => void;
+  accept: (options?: unknown) => Promise<boolean>;
   disconnect: () => void;
   reject: () => void;
   mute: (muted: boolean) => void;
@@ -112,13 +112,24 @@ export function patchTelnyxCall(call: TelnyxCall): PatchedCall {
   patchedCall.customParameters = new Map(Object.entries(patchedCall.parameters));
 
   patchedCall.status = () => mapTelnyxStatus(call);
-  patchedCall.accept = () => {
+  patchedCall.accept = async () => {
     markInboundUserAccepted(call);
     if (call.state === 'active') {
       emitVoiceCallEvent(call, 'accept');
-      return;
+      return true;
     }
-    void call.answer();
+    // Honest accept: await the real SDK answer instead of fire-and-forget.
+    // Previously `void call.answer()` reported success to the UI before the
+    // provider confirmed anything — a silently ignored/failed answer left the
+    // overlay stuck on "connecting" with no audio and no error.
+    try {
+      await call.answer();
+      return true;
+    } catch (err) {
+      console.error('[VoiceShim] call.answer() failed', err, { state: call.state });
+      emitVoiceCallEvent(call, 'error');
+      return false;
+    }
   };
   patchedCall.disconnect = () => {
     void call.hangup();

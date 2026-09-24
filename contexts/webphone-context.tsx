@@ -300,14 +300,17 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
 
   const scheduleReconnect = useCallback((reason: string) => {
     if (reconnectTimerRef.current) return; // one already in flight — never stack timers
-    if (initAttemptsRef.current >= 3) {
-      safeSet(setPhoneStatus, 'error');
-      safeSet(setVoiceError, (prev) => prev ?? `Voice could not connect (${reason}). Tap reconnect or check server voice settings.`);
-      return;
-    }
+    // Persistent reconnect: the voice node must NEVER give up on a transient
+    // drop. A previous 3-attempt cap wedged the node in terminal 'error',
+    // which sent an 'offline' heartbeat and made the inbound hunt skip the
+    // browser entirely (user saw a ringing popup whose Accept could never
+    // work). Now we retry with capped exponential backoff indefinitely; only
+    // a genuine config failure (no credentials) is allowed to go 'error'.
     initAttemptsRef.current += 1;
-    const delay = 1200 * initAttemptsRef.current;
-    console.warn(`[WebPhone] reconnect scheduled (${reason}) attempt ${initAttemptsRef.current}`);
+    const attempt = initAttemptsRef.current;
+    const delay = Math.min(1200 * Math.pow(2, Math.min(attempt - 1, 5)), 30_000);
+    console.warn(`[WebPhone] reconnect scheduled (${reason}) attempt ${attempt} in ${delay}ms`);
+    safeSet(setPhoneStatus, 'initializing');
     reconnectTimerRef.current = setTimeout(() => {
       reconnectTimerRef.current = null;
       if (mountedRef.current) void initClientRef.current();
@@ -757,6 +760,23 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
         return;
       }
       console.warn('[WebPhone] voice socket dropped — reconnecting, presence downgraded');
+      // Telemetry: record why the voice node dropped so we can diagnose
+      // patterns (network blip, token expiry, tab throttling) from Sentry
+      // instead of guessing after a failed inbound test.
+      void import('@sentry/nextjs').then((Sentry) => {
+        Sentry.addBreadcrumb({
+          category: 'voice',
+          message: 'voice socket dropped — reconnect scheduled',
+          level: 'warning',
+          data: {
+            reason: 'socket closed',
+            phoneStatus: phoneStatusRef.current,
+            attempt: initAttemptsRef.current + 1,
+            online: typeof navigator !== 'undefined' ? navigator.onLine : null,
+            visible: typeof document !== 'undefined' ? document.visibilityState : null,
+          },
+        });
+      }).catch(() => { /* telemetry best-effort */ });
       scheduleReconnectRef.current('socket closed');
     });
     const offReady = eventBus.on('DEVICE_READY', () => {
@@ -767,10 +787,26 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
       safeSet(setVoiceError, null);
     });
 
+    // Background tabs get their timers throttled by the browser, so a socket
+    // drop while the tab is hidden may not reconnect until the user returns.
+    // Reconnect immediately when the tab becomes visible again instead of
+    // waiting on a throttled timer — otherwise the inbound hunt sees a dead
+    // browser and skips it (ringing popup with a dead Accept button).
+    const onVisibility = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!mountedRef.current) return;
+      if (phoneStatusRef.current === 'ready' && twilioDevice.isReady) return;
+      console.log('[WebPhone] tab visible again — refreshing voice connection');
+      clearPendingReconnect();
+      void initClientRef.current?.();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
     return () => {
       mountedRef.current = false;
       clearPendingReconnect();
       window.removeEventListener('gd-voice-account-prepared', onVoicePrepared);
+      document.removeEventListener('visibilitychange', onVisibility);
       offUnregistered();
       offReady();
       twilioDevice.destroyDevice();
@@ -945,7 +981,15 @@ export function WebPhoneProvider({ children }: { children: ReactNode }) {
     if (!target) {
       target = pendingTarget;
       try {
-        target.accept({ rtcConstraints: { audio: true } });
+        const ok = await target.accept({ rtcConstraints: { audio: true } });
+        if (!ok) {
+          acceptingInboundRef.current = false;
+          console.error('[Inbound] direct accept() reported failure', {
+            status: target.status?.() ?? null,
+            parameters: target.parameters,
+          });
+          return false;
+        }
         console.log('[Inbound] accept() called', getCallStableId(target), 'direct fallback');
       } catch (err) {
         acceptingInboundRef.current = false;
