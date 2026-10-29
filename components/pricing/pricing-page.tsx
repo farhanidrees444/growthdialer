@@ -11,6 +11,7 @@ import { usePlan } from '@/lib/plan/use-plan';
 import { cn } from '@/lib/utils';
 import { APP_SIGNUP } from '@/components/marketing/v2/copy';
 import { Faq, RiskBullets, SectionHead } from '@/components/marketing/v2/Sections';
+import { BILLING_CATALOG } from '@/lib/billing/catalog';
 import { Reveal } from '@/components/ui/reveal';
 
 type PaidPlan = 'starter' | 'growth' | 'pro';
@@ -18,11 +19,7 @@ type Cycle = 'monthly' | 'annual';
 
 const PAID_PLANS: PaidPlan[] = ['starter', 'growth', 'pro'];
 
-const PRICE = {
-  starter: { monthly: 49, annual: 39, annualBilled: 468 },
-  growth: { monthly: 79, annual: 63, annualBilled: 756 },
-  pro: { monthly: 119, annual: 95, annualBilled: 1140 },
-} as const;
+const PRICE = BILLING_CATALOG;
 
 const PLAN_COPY = {
   starter: {
@@ -243,7 +240,7 @@ function PlanCard({
   const lower = planIndex(currentPlan) > planIndex(plan);
   // Billing bypass: checkout is disabled until BILLING_ENABLED=true — every
   // CTA routes through signup; the plan/seat/cycle selection is preserved.
-  const signupUrl = `/signup?plan=${plan}&seats=${seats}&cycle=${cycle}`;
+  const signupUrl = `/checkout?plan=${plan}&seats=${seats}&cycle=${cycle}`;
 
   useEffect(() => {
     if (!highlighted || !ref.current) return;
@@ -251,7 +248,7 @@ function PlanCard({
   }, [highlighted]);
 
   // Billing bypass: no checkout exists yet — every CTA starts a free trial.
-  const cta = current ? 'Current plan' : lower ? 'Included in your plan' : 'Start free trial';
+  const cta = current ? 'Current plan' : lower ? 'Included in your plan' : 'Choose plan';
 
   return (
     <motion.div

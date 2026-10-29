@@ -1,3 +1,4 @@
+import { isWhopSelected } from '@/lib/billing/whop';
 import { NextRequest } from "next/server";
 import { stripe, isStripeConfigured, PLANS, type PlanKey } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
@@ -10,6 +11,7 @@ function stripeReadyForPlan(planData: (typeof PLANS)[PlanKey]) {
 }
 
 export async function POST(req: NextRequest) {
+  if (isWhopSelected()) return Response.json({ error: 'Choose your subscription on the pricing page' }, { status: 409 });
   // Billing bypass: checkout/portal disabled until BILLING_ENABLED=true.
   if (!isBillingEnabled()) {
     return Response.json({ error: 'Billing is temporarily unavailable', billingEnabled: false }, { status: 410 });

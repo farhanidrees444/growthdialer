@@ -1,3 +1,5 @@
+import { hasSubscriptionAccess } from './catalog';
+import { isWhopSelected, whopSandbox } from './whop';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { apiForbidden } from '@/lib/api/errors';
@@ -16,6 +18,14 @@ export async function assertUserCanPlaceCalls(
 ): Promise<NextResponse | null> {
   // Billing bypass: no gating while billing is disabled.
   if (!isBillingEnabled()) return null;
+
+  if (isWhopSelected()) {
+    const { data, error } = await supabase.from('subscriptions').select('status,current_period_end,whop_sandbox').eq('user_id', userId).maybeSingle();
+    if (error || !data || data.whop_sandbox !== whopSandbox() || !hasSubscriptionAccess(data.status, data.current_period_end)) {
+      return apiForbidden('An active subscription is required. Review billing to restore calling.', 'BILLING_BLOCKED');
+    }
+    return null;
+  }
 
   const { data: settings, error } = await supabase
     .from('user_settings')

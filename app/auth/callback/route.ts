@@ -13,8 +13,11 @@ export async function GET(request: Request) {
     }
   }
 
+  const next = searchParams.get('next')
+  const destination = next && (next.startsWith('/checkout?') || next.startsWith('/checkout/complete?')) ? next : '/dashboard'
+
   // Redirect to /dashboard on the SAME origin that served this callback
   // (app.growthdialer.com), so the freshly-set session cookies are used.
   // Never hardcode the marketing apex/www host here.
-  return NextResponse.redirect(`${origin}/dashboard`)
+  return NextResponse.redirect(`${origin}${destination}`)
 }

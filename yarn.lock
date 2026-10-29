@@ -5047,3 +5047,20 @@ zustand@^5.0.1, zustand@^5.0.3:
   version "1.0.1"
   resolved "https://registry.npmjs.org/buffer-equal-constant-time/-/buffer-equal-constant-time-1.0.1.tgz"
   integrity sha512-zRpUiDwd/xk6ADqPMATG8vc9VPrkck7T07OIx0gnjmJAnHnTVXNQG3vfvWNuiZIkwu9KrKdA1iJKfsfTVxE6NA==
+
+"@whop/sdk@2.4.0":
+  version "2.4.0"
+  resolved "https://registry.npmjs.org/@whop/sdk/-/sdk-2.4.0.tgz"
+  integrity sha512-A45/GxiNk9WLxICKliN4+NAf2Qsw+PFTwE6saisGcBXtp5q9uElFOJ7vp7FZc36ykCS2zolomKbWydweeDCIYQ==
+  dependencies:
+    standardwebhooks "^1.0.0"
+
+"@whop/checkout@0.7.0":
+  version "0.7.0"
+  resolved "https://registry.npmjs.org/@whop/checkout/-/checkout-0.7.0.tgz"
+  integrity sha512-Q7Sr1SuiTPsbUbeTLtYIOO045td9/0Z+JQWyFUC0+yjlQY51CiOudmKOcN5Fq2AzOdXOajsVITsdQFHoL43Pkg==
+
+"@electric-sql/pglite@^0.5.13":
+  version "0.5.13"
+  resolved "https://registry.npmjs.org/@electric-sql/pglite/-/pglite-0.5.13.tgz"
+  integrity sha512-4rZuxK1k07w6sSpJzjMri0B9+HuXuC7V9pxVB51pR0T9KPqXg6TD0mdaEwBA9rkcL4jdht4tGDf/wYzAiGhT7g==

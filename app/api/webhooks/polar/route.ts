@@ -1,3 +1,4 @@
+import { isWhopSelected } from '@/lib/billing/whop';
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -108,6 +109,7 @@ function normalizeSubscription(eventType: string, object: JsonRecord) {
 }
 
 export async function POST(request: NextRequest) {
+  if (isWhopSelected()) return Response.json({ error: 'Legacy billing requires reconciliation' }, { status: 409 });
   // Billing bypass: acknowledge without processing (avoids provider retry storms).
   if (!isBillingEnabled()) {
     return NextResponse.json({ received: true, billingEnabled: false });

@@ -28,13 +28,19 @@ import { cn } from '@/lib/utils';
 
 type Mode = 'login' | 'signup';
 
+function checkoutNext() {
+  if (typeof window === 'undefined') return '/dashboard';
+  const next = new URLSearchParams(window.location.search).get('next');
+  return next && (next.startsWith('/checkout?') || next.startsWith('/checkout/complete?')) ? next : '/dashboard';
+}
+
 const APP_ORIGIN = 'https://app.growthdialer.com';
 function authCallbackUrl(): string {
   if (typeof window !== 'undefined') {
     const h = window.location.hostname;
-    if (h === 'localhost' || h === '127.0.0.1') return `${window.location.origin}/auth/callback`;
+    if (h === 'localhost' || h === '127.0.0.1') return `${window.location.origin}/auth/callback?next=${encodeURIComponent(checkoutNext())}`;
   }
-  return `${APP_ORIGIN}/auth/callback`;
+  return `${APP_ORIGIN}/auth/callback?next=${encodeURIComponent(checkoutNext())}`;
 }
 
 const GoogleIcon = () => (
@@ -116,7 +122,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
     setMode(next);
     setError(null);
     if (typeof window !== 'undefined') {
-      window.history.replaceState(null, '', next === 'login' ? '/login' : '/signup');
+      window.history.replaceState(null, '', `${next === 'login' ? '/login' : '/signup'}${window.location.search}`);
     }
   }
 
@@ -143,7 +149,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
       if (!isSignup) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) setError(error.message);
-        else router.push('/dashboard');
+        else router.push(checkoutNext());
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -156,7 +162,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
         if (error) {
           setError(error.message);
         } else if (data.session) {
-          router.push('/dashboard');
+          router.push(checkoutNext());
         } else {
           setCheckEmail(true);
         }

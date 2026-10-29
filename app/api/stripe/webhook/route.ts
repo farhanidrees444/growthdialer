@@ -1,3 +1,4 @@
+import { isWhopSelected } from '@/lib/billing/whop';
 import { NextRequest } from "next/server";
 import { stripe, isStripeConfigured } from "@/lib/stripe";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -28,6 +29,7 @@ async function syncWorkspaceBilling(
 }
 
 export async function POST(req: NextRequest) {
+  if (isWhopSelected()) return Response.json({ error: 'Legacy billing requires reconciliation' }, { status: 409 });
   // Billing bypass: acknowledge without processing (avoids provider retry storms).
   if (!isBillingEnabled()) {
     return Response.json({ received: true, billingEnabled: false });
