@@ -128,7 +128,11 @@ export async function POST(request: NextRequest) {
       .update({ checkout_id: config.id, provider_plan_id: config.plan.id })
       .eq("id", intentId);
     if (error) throw error;
-    return NextResponse.json({ url: `/checkout?intent=${intentId}` });
+    return NextResponse.json({
+      url: `/checkout?intent=${intentId}`,
+      sessionId: config.id,
+      intentId,
+    });
   } catch {
     console.error("[WHOP-CHECKOUT] Could not prepare checkout");
     return NextResponse.json(

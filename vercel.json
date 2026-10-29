@@ -26,7 +26,7 @@
   ],
   "git": {
     "deploymentEnabled": {
-      "feat/whop-subscriptions": false
+      "feat/whop-subscriptions": true
     }
   }
 }

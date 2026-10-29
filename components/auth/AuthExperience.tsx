@@ -38,7 +38,7 @@ const APP_ORIGIN = 'https://app.growthdialer.com';
 function authCallbackUrl(): string {
   if (typeof window !== 'undefined') {
     const h = window.location.hostname;
-    if (h === 'localhost' || h === '127.0.0.1') return `${window.location.origin}/auth/callback?next=${encodeURIComponent(checkoutNext())}`;
+    if (h === 'localhost' || h === '127.0.0.1' || h.endsWith('.vercel.app')) return `${window.location.origin}/auth/callback?next=${encodeURIComponent(checkoutNext())}`;
   }
   return `${APP_ORIGIN}/auth/callback?next=${encodeURIComponent(checkoutNext())}`;
 }

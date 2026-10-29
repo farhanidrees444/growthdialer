@@ -25,6 +25,7 @@ import {
   ScrollText,
   LockKeyhole,
   Headset,
+  CreditCard,
 } from "lucide-react";
 import { useEffect, useState, Suspense } from "react";
 import { useMobileNav } from "@/contexts/mobile-nav-context";
@@ -83,6 +84,7 @@ const TEAM_ITEMS: NavItem[] = [
 const PREFETCH_HREFS = new Set(["/dialer", "/leads", "/analytics"]);
 
 const SETUP_ITEMS: NavItem[] = [
+  { id: "billing", icon: CreditCard, label: "Billing", href: "/billing" },
   { id: "numbers", icon: Hash, label: "My Numbers", href: "/numbers", countKey: "numbers" },
   { id: "integrations", icon: Zap, label: "Integrations", href: "/dashboard/integrations" },
 ];

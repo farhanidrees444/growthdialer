@@ -1,6 +1,6 @@
 # GrowthDialer billing review
 
-Prepared October 30, 2026. No deployment, live checkout publication, live product creation or real payment was authorized or performed.
+Updated October 30, 2026. The owner authorized a Vercel review deployment. Work remains on feat/whop-subscriptions; no production merge, live checkout publication, live product creation or real payment activation has been performed.
 
 ## Existing billing audit
 
@@ -16,7 +16,7 @@ The repository contains overlapping Stripe workspace plans, Polar user subscript
 - Calling authorization and client feature gating use subscription state and expiry. Sandbox/live subscription state is isolated. Canceled, expired, unknown and overdue states do not grant access. End-of-period cancellation keeps access only through the recorded period end.
 - Customer billing management retrieves the authenticated user's membership portal URL from the provider and validates its host.
 - Separate live-payment approval flag; defaults to sandbox. Disabled webhooks return a retryable error, not a false acknowledgement.
-- Automatic Vercel deployment is disabled specifically for feat/whop-subscriptions in vercel.json.
+- Automatic Vercel PREVIEW deployment is enabled for feat/whop-subscriptions after the owner requested a review URL. Production remains on main. Branch-specific preview variables keep BILLING_ENABLED=false, BILLING_PROVIDER=whop, WHOP_SANDBOX=true and WHOP_LIVE_PAYMENTS_APPROVED=false.
 
 ## Sandbox account and products
 
@@ -30,7 +30,7 @@ Account: biz_grbNEyRgxZKzXj (separate from the live biz_QkHaYBWEOHZ6dD account).
 
 All three are hidden. No live checkout links are published. The checkout API creates hidden seat-priced recurring variants for monthly or annual billing from the shared catalog. It never accepts a price from the browser. No free trial is configured for paid checkout.
 
-A sandbox key creation form is prepared but NOT submitted. Name: GrowthDialer sandbox integration. Expires November 6, 2026 at 00:00 UTC (05:00 Pakistan time). Six scopes selected: checkout_configuration:basic:read, checkout_configuration:create, plan:basic:read, plan:create, member:basic:read, member:manage. No payment, payout, transfer, membership-creation or administrative scopes are selected. Browser security rules require action-time confirmation before creating this credential. The API client explicitly pins requests to 2026-09-25.
+A sandbox key creation form is prepared but NOT submitted. Name: GrowthDialer sandbox integration. Expires November 6, 2026 at 00:00 UTC (05:00 Pakistan time). Six scopes selected: checkout_configuration:basic:read, checkout_configuration:create, plan:basic:read, plan:create, member:basic:read, member:manage. The in-app renewal controls and payment history additionally require membership:update and payment:basic:read; these are NOT yet granted. No payment-creation, payout, transfer, membership-creation or administrative scopes are needed. Credential creation remains unsubmitted and requires browser action-time confirmation. The API client explicitly pins requests to 2026-09-25.
 
 ## Validation
 
@@ -44,10 +44,10 @@ A sandbox key creation form is prepared but NOT submitted. Name: GrowthDialer sa
 ## Remaining work: not yet verified end to end
 
 1. Confirm creation of the scoped sandbox key, then store it only in local or test-server environment secrets. Never put credentials in this repository or in browser-exposed variables.
-2. Supply an isolated Supabase test project's URL, anon key and service-role key through secure environment configuration. Apply the existing subscription migration followed by 20261030_whop_billing.sql to that test project. No production migrations have been run.
-3. Configure a reachable TEST webhook receiver at /api/webhooks/whop, pinned to 2026-09-25, subscribed to membership.activated, membership.deactivated and membership.updated. Store its signing secret verbatim as WHOP_WEBHOOK_SECRET. No deployment or webhook destination is created in this turn.
+2. Supply an isolated Supabase test project's URL, anon key and service-role key through secure environment configuration. Apply the existing subscription migration followed by 20261030_whop_billing.sql to that test project. After the owner connected Supabase and requested launch preparation, the additive billing migration was applied to the existing project qnknfgbwcqchmhxobbnx. The subscription table was empty. Verification confirmed zero billing records, RLS, no anon/authenticated activation permission, service-role-only activation, and SECURITY INVOKER. Calls/leads/recordings and existing access were not changed.
+3. Configure a reachable TEST webhook receiver at /api/webhooks/whop, pinned to 2026-09-25, subscribed to membership.activated, membership.deactivated and membership.updated. Store its signing secret verbatim as WHOP_WEBHOOK_SECRET. A Vercel preview is authorized; no Whop webhook destination has been created yet.
 4. Test a signed-in test customer's selection, checkout, sandbox payment, webhook delivery, activation, access checks, receipt, billing portal, cancellation, failed renewal and recovery. Test a second user's attempted checkout/portal access, duplicate and out-of-order webhooks, decline and abandoned checkout. A provider sandbox purchase and full browser journey have NOT yet been executed.
-5. Verify desktop/mobile layouts visually and all actual payment options in the connected test deployment. Hosted payment branding must remain consistent with the application.
+5. Verify desktop/mobile layouts visually and all actual payment options in the connected test deployment. The new /billing-preview route is an explicitly labeled interactive design demo, unavailable in Vercel production. It never calls billing or telephony APIs. Hosted payment branding must remain consistent with the application.
 6. Confirm the product's outbound calling use case and Pakistan individual payout setup are approved by Whop before launch. This turn did not claim merchant or payout approval.
 7. Only after explicit launch approval: configure live products/secrets, apply reviewed production migration, reconcile existing subscriptions, set BILLING_PROVIDER=whop and BILLING_ENABLED=true, WHOP_SANDBOX=false, and WHOP_LIVE_PAYMENTS_APPROVED=true; then approve deployment separately. Preserve rollback access to old subscriptions. Never reuse sandbox subscription rows in production.
 
@@ -75,3 +75,22 @@ The script needs product read/create permissions beyond the runtime key; the thr
 - https://docs.whop.com/developer/guides/webhooks
 - Official @whop/sdk 2.4.0 generated API types and webhook helper implementation.
 - https://vercel.com/docs/project-configuration/git-configuration
+
+
+## In-product billing workspace
+
+- /billing is part of the authenticated product shell, with desktop and mobile navigation entries. The same UI is embedded in Settings → Billing when billing is enabled.
+- Customers can choose cycle/seats and complete checkout in an embedded dialog. Completion stays in the product and polls the exact checkout intent; it never unlocks on a client callback alone.
+- Current plan, recorded renewal amount, cycle, seats, period-end cancellation and resuming automatic renewal are handled inside the product.
+- Payment history and user-owned payment receipts are loaded from authenticated provider responses. Raw card data is never returned. Updating payment methods uses the secure hosted management page; that function is not represented as an in-product card editor.
+- Plan/seat changes for an existing subscription explicitly route to support, avoiding a second overlapping subscription. Automatic proration or self-service tier switching is not implemented.
+- Disabled billing returns its bypass state before querying new database columns. Existing calling access remains open while billing is off. The preview route uses sample subscription details and cannot activate access.
+- The current pricing page now has a single hero, coherent seat/annual totals, no unsupported paid-trial promise, and original generated acoustic-ribbon artwork.
+
+## Existing advisory findings
+
+The Supabase advisor had pre-existing warnings about mutable function search paths, workspace SECURITY DEFINER helper exposure, and leaked-password protection. They are outside this billing change and were not automatically altered because doing so could affect existing app authorization. The only new advisor informational finding is expected for whop_processed_events: RLS is enabled with no client policy because the table is service-only.
+
+## Generated visual asset
+
+Built-in image generation created public/billing/conversation-sculpture.webp (1672×941, approximately 74 KB). The source is an original graphite/frosted-glass acoustic ribbon with restrained cyan rim lighting, with no text, logos, people, UI or charts. It appears on the public pricing page and the in-product plan card. See docs/billing-artwork.md for the generation specification.

@@ -33,7 +33,7 @@ export function WorkspaceBillingPanel() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => void load()); }, [load]);
 
   async function startCheckout(plan: WorkspacePlanId) {
     setBusy(plan);
@@ -49,7 +49,7 @@ export function WorkspaceBillingPanel() {
         toast.error(data.error ?? 'Could not start checkout');
         return;
       }
-      if (data.url) window.location.href = data.url;
+      if (data.url) window.location.assign(data.url);
     } catch {
       toast.error('Checkout failed');
     } finally {
@@ -69,7 +69,7 @@ export function WorkspaceBillingPanel() {
         toast.error(data.error ?? 'Could not open billing portal');
         return;
       }
-      if (data.url) window.location.href = data.url;
+      if (data.url) window.location.assign(data.url);
     } catch {
       toast.error('Portal failed');
     } finally {

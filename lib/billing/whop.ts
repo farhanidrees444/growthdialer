@@ -12,6 +12,12 @@ export function whopReady() {
   return (
     isBillingEnabled() &&
     isWhopSelected() &&
+    !!process.env.WHOP_COMPANY_API_KEY?.trim() &&
+    !!process.env.WHOP_COMPANY_ID?.trim() &&
+    !!process.env.WHOP_WEBHOOK_SECRET?.trim() &&
+    ["STARTER", "GROWTH", "PRO"].every((plan) =>
+      process.env[`WHOP_PRODUCT_${plan}`]?.startsWith("prod_"),
+    ) &&
     (whopSandbox() || process.env.WHOP_LIVE_PAYMENTS_APPROVED === "true")
   );
 }
@@ -30,6 +36,9 @@ export function getWhop() {
   });
 }
 export function billingAppUrl() {
+  if (process.env.VERCEL_ENV === "preview" && process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
   const url = new URL(
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   );

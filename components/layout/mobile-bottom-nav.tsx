@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   Headphones,
   Settings,
+  CreditCard,
   Building2,
   BarChart2,
   Hash,
@@ -74,6 +75,7 @@ const MORE_SECTIONS: MoreSection[] = [
     links: [
       { icon: Hash, label: 'Numbers', href: '/numbers' },
       { icon: Zap, label: 'Integrations', href: '/dashboard/integrations' },
+      { icon: CreditCard, label: 'Billing', href: '/billing' },
       { icon: Settings, label: 'Settings', href: '/settings' },
     ],
   },

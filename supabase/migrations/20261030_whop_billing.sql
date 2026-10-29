@@ -1,4 +1,4 @@
--- Apply only to an isolated test database until launch is approved.
+-- Additive billing schema. Purchasing stays gated independently from schema rollout.
 ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS billing_provider text;
 ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS whop_membership_id text UNIQUE;
 ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS whop_updated_at timestamptz;
@@ -22,7 +22,7 @@ CREATE TABLE public.billing_checkout_intents (
 );
 CREATE INDEX billing_checkout_intents_user_created ON public.billing_checkout_intents(user_id, created_at);
 ALTER TABLE public.billing_checkout_intents ENABLE ROW LEVEL SECURITY;
-CREATE POLICY billing_intents_read_own ON public.billing_checkout_intents FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY billing_intents_read_own ON public.billing_checkout_intents FOR SELECT TO authenticated USING ((select auth.uid()) = user_id);
 REVOKE ALL ON public.billing_checkout_intents FROM anon, authenticated;
 GRANT SELECT ON public.billing_checkout_intents TO authenticated;
 GRANT ALL ON public.billing_checkout_intents TO service_role;
@@ -35,7 +35,7 @@ CREATE FUNCTION public.apply_whop_membership(
  p_event_id text, p_intent_id uuid, p_membership_id text, p_plan_id text, p_product_id text,
  p_status text, p_updated_at timestamptz, p_period_start timestamptz, p_period_end timestamptz,
  p_cancel_at_period_end boolean, p_sandbox boolean
-) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+) RETURNS void LANGUAGE plpgsql SECURITY INVOKER SET search_path = public AS $$
 DECLARE intent billing_checkout_intents; existing subscriptions;
 BEGIN
  -- Event receipt and entitlement changes commit together; failures remain retryable.
