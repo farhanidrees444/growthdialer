@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { safeReturnPath } from '@/lib/auth/return-path';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,7 +32,7 @@ type Mode = 'login' | 'signup';
 function checkoutNext() {
   if (typeof window === 'undefined') return '/dashboard';
   const next = new URLSearchParams(window.location.search).get('next');
-  return next && (next.startsWith('/checkout?') || next.startsWith('/checkout/complete?') || next.startsWith('/api/checkout?') || next === '/billing') ? next : '/dashboard';
+  return safeReturnPath(next);
 }
 
 const APP_ORIGIN = 'https://app.growthdialer.com';
@@ -390,6 +391,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
               <button
                 type="button"
                 onClick={handleGoogle}
+                disabled={loading}
                 className="group mt-7 flex w-full items-center justify-center gap-3 rounded-xl border border-[var(--auth-google-border)] bg-white py-3.5 text-sm font-semibold text-[#1f1f1f] shadow-[0_1px_2px_rgba(0,0,0,0.12),0_8px_24px_-8px_rgba(0,0,0,0.35)] transition hover:bg-zinc-50 hover:shadow-[0_2px_4px_rgba(0,0,0,0.1),0_12px_32px_-8px_rgba(0,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--auth-bg)]"
               >
                 <GoogleIcon />

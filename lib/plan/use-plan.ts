@@ -86,7 +86,7 @@ export function usePlan(): UsePlanResult {
     try {
       const res = await fetch('/api/subscription/status', { cache: 'no-store' });
       const data = await res.json();
-      if (!res.ok) { setBillingDisabled(false); setRow(null); setClosed(true); return; }
+      if (!res.ok) { setRow(null); setClosed(true); return; }
       const disabled = data.billingEnabled === false;
       setBillingDisabled(disabled);
       if (disabled) { setRow(null); setClosed(false); return; }
@@ -95,7 +95,7 @@ export function usePlan(): UsePlanResult {
         status: data.status, trial_ends_at: data.trialEndsAt,
         current_period_end: data.currentPeriodEnd, billing_provider: data.provider });
       setClosed(false);
-    } catch { setBillingDisabled(false); setRow(null); setClosed(true); }
+    } catch { setRow(null); setClosed(true); }
   }, []);
 
   useEffect(() => {

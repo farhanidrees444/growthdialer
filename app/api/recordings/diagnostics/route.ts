@@ -49,7 +49,7 @@ export async function GET(_req: NextRequest) {
     internal_pipeline: !!process.env.INTERNAL_API_SECRET,
     transcription: !!process.env.GROQ_API_KEY,
     call_analysis: !!process.env.GEMINI_API_KEY,
-    database_service: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    database_service: !!(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY),
   };
 
   // 2. User recording preferences

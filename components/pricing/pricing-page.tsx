@@ -322,10 +322,10 @@ function PlanCard({
 
   const cta = current
     ? "Manage subscription"
-    : !checkoutAvailable
-      ? "Create account"
-      : lower
+    : lower
       ? "Review plan options"
+      : !checkoutAvailable
+      ? "Create account"
       : "Choose plan";
 
   return (

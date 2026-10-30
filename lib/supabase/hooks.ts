@@ -4,8 +4,45 @@ import { useEffect, useState } from "react";
 import { type Session } from "@supabase/supabase-js";
 import { createClient } from "./client";
 
+/** Read session from Supabase local storage for instant first paint. */
+function readCachedSession(): Session | null {
+  if (typeof window === "undefined") return null;
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) return null;
+
+  try {
+    const projectRef = new URL(url).hostname.split(".")[0];
+    const storageKey = `sb-${projectRef}-auth-token`;
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as {
+      access_token?: string;
+      refresh_token?: string;
+      expires_at?: number;
+      expires_in?: number;
+      token_type?: string;
+      user?: Session["user"];
+    };
+
+    if (!parsed.access_token || !parsed.user) return null;
+
+    return {
+      access_token: parsed.access_token,
+      refresh_token: parsed.refresh_token ?? "",
+      expires_at: parsed.expires_at,
+      expires_in: parsed.expires_in,
+      token_type: parsed.token_type ?? "bearer",
+      user: parsed.user,
+    } as Session;
+  } catch {
+    return null;
+  }
+}
+
 export function useSupabaseSession() {
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<Session | null>(() => readCachedSession());
 
   useEffect(() => {
     let mounted = true;
@@ -33,7 +70,8 @@ export function useSupabaseSession() {
         listener.subscription.unsubscribe();
       };
     } catch {
-      return () => { mounted = false; };
+      if (mounted) setSession(null);
+      return () => {};
     }
   }, []);
 

@@ -60,7 +60,7 @@ async function checkDatabase(): Promise<ServiceStatus> {
   const start = Date.now();
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
     const res = await fetch(`${url}/rest/v1/`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` },
       signal: AbortSignal.timeout(5000),

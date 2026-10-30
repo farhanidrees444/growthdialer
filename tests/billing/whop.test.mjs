@@ -9,6 +9,7 @@ import {
   purchaseTotal,
   hasSubscriptionAccess,
 } from "../../lib/billing/catalog.ts";
+import { safeReturnPath } from "../../lib/auth/return-path.ts";
 import { membershipState } from "../../lib/billing/whop-membership.ts";
 
 test("server pricing rejects tampering and uses annual invoice totals", () => {
@@ -80,6 +81,7 @@ test("transactional subscription lifecycle, retry, dedup, ownership and ordering
   );
   await db.exec(await readFile(new URL("../../supabase/migrations/20261030001758_whop_single_pending_checkout.sql", import.meta.url), "utf8"));
   await db.exec(await readFile(new URL("../../supabase/migrations/20261030002217_whop_reserve_checkout.sql", import.meta.url), "utf8"));
+  await db.exec(await readFile(new URL("../../supabase/migrations/20261030191950_whop_consistent_lock_order.sql", import.meta.url), "utf8"));
   const user = "11111111-1111-4111-8111-111111111111",
     intent = "22222222-2222-4222-8222-222222222222";
   await db.query(
@@ -92,6 +94,7 @@ test("transactional subscription lifecycle, retry, dedup, ownership and ordering
   const reserve = (id, plan = "growth") => db.query("SELECT reserve_whop_checkout($1,$2,$3,'monthly',2,158,'prod_growth',true) AS intent", [id,user,plan]);
   const reserved = await reserve("44444444-4444-4444-8444-444444444444");
   assert.equal(reserved.rows[0].intent.id, intent);
+  assert.equal(reserved.rows[0].intent.checkout_id, "ch_test");
   await assert.rejects(reserve("44444444-4444-4444-8444-444444444444", "pro"), /Pending checkout selection differs/);
   const apply = (
     id,
@@ -169,4 +172,10 @@ test("transactional subscription lifecycle, retry, dedup, ownership and ordering
   await assert.rejects(reserve("44444444-4444-4444-8444-444444444444"), /permission denied for function reserve_whop_checkout/);
   await db.exec("RESET ROLE");
   await db.close();
+});
+
+test("auth continuation preserves owned receipt paths and rejects external destinations", () => {
+  assert.equal(safeReturnPath("/billing/receipt/pay_test?print=1"), "/billing/receipt/pay_test?print=1");
+  assert.equal(safeReturnPath("/checkout?plan=growth"), "/checkout?plan=growth");
+  for (const value of ["//evil.example", "https://evil.example", "/billing-evil", "/billing/receipt/pay_test/../../login", "/billing\\evil"]) assert.equal(safeReturnPath(value), "/dashboard");
 });

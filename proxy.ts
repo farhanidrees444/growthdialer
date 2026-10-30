@@ -33,7 +33,7 @@ export async function proxy(request: NextRequest) {
 
   if (!user && protectedRoutes.some(r => (path === r || path.startsWith(`${r}/`)))) {
     const login = new URL('/login', request.url)
-    if (path === '/billing' || path.startsWith('/billing/')) login.searchParams.set('next', '/billing')
+    if (path === '/billing' || path.startsWith('/billing/')) login.searchParams.set('next', `${path}${request.nextUrl.search}`)
     return NextResponse.redirect(login)
   }
 

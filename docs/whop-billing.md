@@ -32,7 +32,7 @@ All three are hidden. No live checkout links are published. The checkout API cre
 
 The scoped sandbox key was created with owner approval and stored as a server-only Vercel Preview Secret on feat/whop-subscriptions. Name: GrowthDialer sandbox integration. Expiration was verified in the dashboard as November 6, 2026 (seven days after creation). Eight scopes: checkout_configuration:basic:read, checkout_configuration:create, plan:basic:read, plan:create, member:basic:read, member:manage, membership:update and payment:basic:read. No payment-creation, payout, transfer, membership-creation or administrative scopes were granted. The API client explicitly pins requests to 2026-09-25.
 
-Sandbox webhook hook_43P1dCbodX2nI targets https://app.growthdialer.com/api/webhooks/whop for membership.activated, membership.deactivated, membership.updated and membership.cancel_at_period_end_changed. Its signing secret is stored only as a branch-specific Preview Secret. The dashboard labels the webhook schema V1; its editor exposes no date-version setting. Production has sandbox-only credentials and WHOP_SANDBOX_WEBHOOK_ENABLED=true for this signed test receiver. BILLING_ENABLED=false still disables production checkout and preserves existing access. The sandbox-only webhook exception never accepts live-mode events while billing is off. No successful delivery is claimed.
+Sandbox webhook hook_43P1dCbodX2nI targets https://app.growthdialer.com/api/webhooks/whop for membership.activated, membership.deactivated, membership.updated and membership.cancel_at_period_end_changed. Its signing secret is stored as a server-only Secret in both the branch preview and production receiver environments. The dashboard labels the webhook schema V1; its editor exposes no date-version setting. Production has sandbox-only credentials and WHOP_SANDBOX_WEBHOOK_ENABLED=true for this signed test receiver. BILLING_ENABLED=false still disables production checkout and preserves existing access. The sandbox-only webhook exception never accepts live-mode events while billing is off. No successful delivery is claimed.
 
 ## Validation
 
@@ -130,7 +130,7 @@ A pending checkout is now exposed only to its authenticated owner, with a Resume
 
 The hosted sandbox form was prepared with the vendor's published success test card and fictional test billing details, without submitting Subscribe. That action accepts the displayed buyer terms and needs browser action-time confirmation. No sandbox payment, membership activation or provider webhook success is claimed. The public receiver code also remains undeployed while the main-domain merge is blocked.
 
-The connected browser recorded the same React hydration error #418 on the existing production dashboard and the preview. Production also had intermittent data/voice fetch errors before this release. The session/theme initial-render mismatch was improved in this branch, but the broader pre-existing hydration error is not claimed fixed. A complete calling regression still requires a controlled test call and has not been performed.
+The connected browser recorded the same React hydration error #418 on the existing production dashboard and the preview. Production also had intermittent data/voice fetch errors before this release. Shared session/theme hooks retain their existing production caching and preference behavior. The pre-existing hydration error is not claimed fixed. A complete calling regression still requires a controlled test call and has not been performed.
 
 Current primary references checked October 30, 2026:
 - https://docs.whop.com/developer/guides/embed-checkout.md
@@ -140,3 +140,12 @@ Current primary references checked October 30, 2026:
 Local verification now supports GROWTHDIALER_VERIFY_ONLY=true, which disables Sentry source-map uploads and build telemetry. The branch preview uses this flag. Runtime error monitoring and the existing production configuration are unchanged. The local build with upload credentials and DSNs cleared passed after the source-upload attempt was blocked by automatic review.
 
 Native permission reference: https://docs.whop.com/api-reference/beta/memberships/retrieve-membership.md. Its GET /memberships/{id} security requirement is bearerAuth with member:basic:read; its native SDK example predates this integration's pinned date. This is distinct from the legacy API page cited by the review bot.
+
+## Final review corrections
+
+- Reservation and activation now both acquire locks in user → intent → subscription order; the additive follow-up migration was applied without changing customer rows. Both privileged functions remain SECURITY INVOKER and executable only by service_role.
+- Failed status refreshes retain a previously confirmed billing bypass, so transient network errors cannot hide existing features while billing is disabled.
+- Sign-in continuation now preserves owned receipt URLs through a shared strict relative-path allowlist. Tests cover external URLs and path traversal rejection.
+- Restored the production session/theme hooks to preserve existing cache and preference behavior. Google sign-in disables repeated submissions while loading.
+- Recording/storage readiness checks recognize both supported server credential names. The existing unused-variable lint warning in recording diagnostics remains unrelated.
+- Browser verification of the deployed resume flow displayed the correct saved annual plan and three-seat total, then the working hosted sandbox link. The legacy failing iframe is no longer mounted for sandbox checkouts.

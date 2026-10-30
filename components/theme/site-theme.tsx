@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useState,
   type ReactNode,
 } from 'react';
@@ -54,12 +53,10 @@ export function SiteTheme({
   children: ReactNode;
   className?: string;
 }) {
-  // Hydrate with the server default before restoring browser preferences.
-  // Suppressing a wrapper warning does not fix mismatched child controls.
-  const [theme, setTheme] = useState<SiteThemeMode>('dark');
-  useEffect(() => {
-    queueMicrotask(() => setTheme(readStoredTheme()));
-  }, []);
+  // Lazily read the stored choice on first client render so returning
+  // light-mode users never see a dark flash. Server renders 'dark';
+  // suppressHydrationWarning on the wrapper absorbs the difference.
+  const [theme, setTheme] = useState<SiteThemeMode>(() => readStoredTheme());
 
   const toggle = useCallback(() => {
     setTheme((prev) => {
@@ -77,7 +74,7 @@ export function SiteTheme({
 
   return (
     <SiteThemeContext.Provider value={{ theme, isDark, toggle }}>
-      <div className={cn('site-root', className)} data-theme={theme}>
+      <div className={cn('site-root', className)} data-theme={theme} suppressHydrationWarning>
         {children}
       </div>
     </SiteThemeContext.Provider>
