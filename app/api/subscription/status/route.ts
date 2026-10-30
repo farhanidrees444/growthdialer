@@ -1,4 +1,5 @@
 import { hasSubscriptionAccess } from "@/lib/billing/catalog";
+import { isGrandfatheredBillingAccess } from "@/lib/billing/access-rollout";
 import { isWhopSelected, whopReady, whopSandbox } from "@/lib/billing/whop";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -74,6 +75,8 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({
+    accessGrandfathered: isWhopSelected() && isGrandfatheredBillingAccess(user.created_at,
+      data?.billing_provider === "whop" && data.whop_sandbox === whopSandbox()),
     pendingCheckout,
     status: data?.status ?? "none",
     provider: isWhopSelected() ? "whop" : "legacy",

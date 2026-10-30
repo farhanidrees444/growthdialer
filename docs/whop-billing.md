@@ -36,6 +36,10 @@ Sandbox webhook hook_43P1dCbodX2nI targets https://app.growthdialer.com/api/webh
 
 ## Validation
 
+- Live activation is authorized by the owner, with the real-card purchase deferred to the owner. The live catalog in biz_QkHaYBWEOHZ6dD now contains hidden Starter prod_wB2AJJUaTEaDm ($49/month), Growth prod_9iu21FlbKHni1 ($79/month), and Pro prod_yXGqEetlbm8Ll ($119/month). No live checkout link was published and no payment was submitted. Live credentials and receiver configuration still need completion before activation.
+- BILLING_ACCESS_GRANDFATHERED_BEFORE preserves access for verified accounts created before the rollout cutoff until they start a subscription in the current provider environment. A matching provider subscription always follows its actual status and expiry. Set the cutoff to the activation instant before enabling billing; malformed or missing dates never grant bypass access.
+- Six billing tests and TypeScript type checking passed after adding rollout coverage. The latest local build could not download Google Fonts; a successful Vercel build is still required for this revision.
+
 - Database preparation completed: after the owner connected Supabase and requested launch preparation, the additive billing migration was applied to the existing project qnknfgbwcqchmhxobbnx. The subscription table was empty. Verification confirmed zero billing records, RLS, no anon/authenticated activation permission, service-role-only activation, and SECURITY INVOKER. Calls/leads/recordings and existing access were not changed.
 
 - TypeScript typecheck passed against the repository's locked Next.js/react-icons/Stripe versions.

@@ -87,7 +87,7 @@ export function usePlan(): UsePlanResult {
       const res = await fetch('/api/subscription/status', { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok) { setRow(null); setClosed(true); return; }
-      const disabled = data.billingEnabled === false;
+      const disabled = data.billingEnabled === false || data.accessGrandfathered === true;
       setBillingDisabled(disabled);
       if (disabled) { setRow(null); setClosed(false); return; }
       if (!data.active) { setRow(null); setClosed(true); return; }

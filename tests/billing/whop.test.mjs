@@ -1,3 +1,4 @@
+import { isGrandfatheredBillingAccess } from "../../lib/billing/access-rollout.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -178,4 +179,14 @@ test("auth continuation preserves owned receipt paths and rejects external desti
   assert.equal(safeReturnPath("/billing/receipt/pay_test?print=1"), "/billing/receipt/pay_test?print=1");
   assert.equal(safeReturnPath("/checkout?plan=growth"), "/checkout?plan=growth");
   for (const value of ["//evil.example", "https://evil.example", "/billing-evil", "/billing/receipt/pay_test/../../login", "/billing\\evil"]) assert.equal(safeReturnPath(value), "/dashboard");
+});
+
+test("billing rollout preserves existing access but never bypasses a provider subscription", () => {
+  const cutoff = "2026-10-31T00:00:00Z";
+  assert.equal(isGrandfatheredBillingAccess("2026-10-01T00:00:00Z", false, cutoff), true);
+  assert.equal(isGrandfatheredBillingAccess("2026-10-31T00:00:00Z", false, cutoff), false);
+  assert.equal(isGrandfatheredBillingAccess("2026-11-01T00:00:00Z", false, cutoff), false);
+  assert.equal(isGrandfatheredBillingAccess("2026-10-01T00:00:00Z", true, cutoff), false);
+  assert.equal(isGrandfatheredBillingAccess("bad", false, cutoff), false);
+  assert.equal(isGrandfatheredBillingAccess("2026-10-01T00:00:00Z", false, "bad"), false);
 });
