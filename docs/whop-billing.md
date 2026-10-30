@@ -8,7 +8,7 @@ The repository contains overlapping Stripe workspace plans, Polar user subscript
 
 ## Implemented
 
-- Branded two-column purchase review and embedded checkout with monthly/annual invoice totals, seat quantity, renewal disclosure, tax and usage notices, recovery messages and billing management.
+- Branded two-column purchase review and production Elements checkout with monthly/annual invoice totals, seat quantity, renewal disclosure, tax and usage notices, recovery messages and billing management.
 - Server-side authentication, origin checks, bounded seat validation, fixed server pricing, limited checkout creation frequency, persisted checkout intents, provider idempotency keys and user-owned checkout page access.
 - Server-generated checkout metadata contains an opaque intent ID. Browser-supplied plan, amount or success query parameters cannot activate access.
 - Raw webhook signature verification uses the official SDK helper. Membership state is retrieved from the provider and checked against business, product, intent and purchased variant before persistence.
@@ -82,7 +82,7 @@ The script needs product read/create permissions beyond the runtime key; the thr
 ## In-product billing workspace
 
 - /billing is part of the authenticated product shell, with desktop and mobile navigation entries. The same UI is embedded in Settings → Billing when billing is enabled.
-- Customers can choose cycle/seats and complete checkout in an embedded dialog. Completion stays in the product and polls the exact checkout intent; it never unlocks on a client callback alone.
+- Customers can choose cycle/seats and complete live checkout in an embedded dialog using @whop/elements and @whop/elements-react 1.9.0. Sandbox purchases use the provider-hosted test page because Elements sandbox support is not available yet. Completion stays in the product and polls the exact checkout intent; it never unlocks on a client callback alone.
 - Current plan, recorded renewal amount, cycle, seats, period-end cancellation and resuming automatic renewal are handled inside the product.
 - Payment history and user-owned payment receipts are loaded from authenticated provider responses. Raw card data is never returned. Updating payment methods uses the secure hosted management page; that function is not represented as an in-product card editor.
 - Plan/seat changes for an existing subscription explicitly route to support, avoiding a second overlapping subscription. Automatic proration or self-service tier switching is not implemented.
@@ -115,7 +115,28 @@ Built-in image generation created public/billing/conversation-sculpture.webp (16
 - Corrected annual invoice labels, fixed number formatting, removed pricing-page trial CTA wording, restored account signup while purchases are unavailable, and added pricing-specific Open Graph metadata.
 - Legacy provider events are signature-checked and acknowledged as ignored in Whop mode, avoiding conflicting writes and retry storms. The sandbox maintenance script requires a separate maintenance credential.
 - Added server-only support for the integration-provisioned SUPABASE_SECRET_KEY while retaining the existing service-role variable.
-- Pinned-version sandbox membership listing succeeded with the eight-scope key. Retrieving a deliberately nonexistent membership returned 404 rather than a scope error. This does not prove access to an actual customer membership; the legacy documentation's member:email:read requirement still needs verification with a real sandbox membership before enabling checkout.
+- Pinned-version sandbox membership listing succeeded with the eight-scope key. Retrieving a deliberately nonexistent membership returned 404 rather than a scope error. This does not prove access to an actual customer membership. The current native Retrieve Membership OpenAPI was subsequently checked and requires only member:basic:read; the legacy member:email:read requirement does not apply to this pinned native client. No scope expansion is needed. Actual membership activation still awaits the sandbox transaction.
 - Production safety flags explicitly preserve BILLING_ENABLED=false, WHOP_SANDBOX=true and WHOP_LIVE_PAYMENTS_APPROVED=false. Live products and live credentials remain untouched.
 
 A disposable test customer was created through the server admin API, without sending email. Browser email/password sign-in succeeded and the empty dashboard rendered without captured application errors. No calls or number purchases were made. Test credentials are temporary and are not in this repository.
+
+## Current release gate
+
+The main-domain merge was rejected by automatic approval review because the sandbox embed was failing and review issues remained unresolved. PR #7 is still unmerged. Production remains on the previous main commit; no main-domain release is claimed. Do not bypass the rejected merge through direct main pushes, aliases or promotions.
+
+The checkout configuration was verified through the pinned sandbox API: it exists, references the expected annual variant, and the variant has one unit of stock. The hosted sandbox checkout renders the correct three-seat annual total and test payment form. The legacy embedded checkout rejects the same configuration. Current official documentation now specifies Elements 1.9.0 and explicitly says Elements sandbox is unavailable. The source therefore uses Elements for production and a clearly labeled hosted test checkout for sandbox; sandbox configuration IDs and test cards are never sent to production Elements. The Elements dependency tarballs were verified against the npm registry's SHA-512 integrity metadata.
+
+A pending checkout is now exposed only to its authenticated owner, with a Resume checkout action restoring the recorded plan, cycle and seats. Different concurrent purchases remain blocked by the atomic reservation and one-unit variant.
+
+The hosted sandbox form was prepared with the vendor's published success test card and fictional test billing details, without submitting Subscribe. That action accepts the displayed buyer terms and needs browser action-time confirmation. No sandbox payment, membership activation or provider webhook success is claimed. The public receiver code also remains undeployed while the main-domain merge is blocked.
+
+The connected browser recorded the same React hydration error #418 on the existing production dashboard and the preview. Production also had intermittent data/voice fetch errors before this release. The session/theme initial-render mismatch was improved in this branch, but the broader pre-existing hydration error is not claimed fixed. A complete calling regression still requires a controlled test call and has not been performed.
+
+Current primary references checked October 30, 2026:
+- https://docs.whop.com/developer/guides/embed-checkout.md
+- https://docs.whop.com/payments/checkout-embed.md
+- https://docs.whop.com/developer/guides/sandbox.md
+
+Local verification now supports GROWTHDIALER_VERIFY_ONLY=true, which disables Sentry source-map uploads and build telemetry. The branch preview uses this flag. Runtime error monitoring and the existing production configuration are unchanged. The local build with upload credentials and DSNs cleared passed after the source-upload attempt was blocked by automatic review.
+
+Native permission reference: https://docs.whop.com/api-reference/beta/memberships/retrieve-membership.md. Its GET /memberships/{id} security requirement is bearerAuth with member:basic:read; its native SDK example predates this integration's pinned date. This is distinct from the legacy API page cited by the review bot.

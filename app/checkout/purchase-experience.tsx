@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { WhopCheckoutEmbed } from "@whop/checkout/react";
+import dynamic from "next/dynamic";
+const SecureCheckout = dynamic(() => import("@/components/billing/secure-checkout").then(m => m.SecureCheckout), { ssr: false });
 import {
   ArrowLeft,
   ArrowRight,
@@ -139,14 +140,10 @@ export function PurchaseExperience({
               </div>
             </div>
             {sessionId ? (
-              <WhopCheckoutEmbed
-                sessionId={sessionId}
-                environment={sandbox ? "sandbox" : "production"}
-                theme="dark"
+              <SecureCheckout
+                configurationId={sessionId}
+                sandbox={sandbox}
                 returnUrl={returnUrl}
-                fallback={
-                  <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
-                }
               />
             ) : (
               <>

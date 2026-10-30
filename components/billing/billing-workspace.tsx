@@ -3,8 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-const WhopCheckoutEmbed = dynamic(
-  () => import("@whop/checkout/react").then((m) => m.WhopCheckoutEmbed),
+const SecureCheckout = dynamic(
+  () => import("./secure-checkout").then((m) => m.SecureCheckout),
   {
     ssr: false,
     loading: () => (
@@ -59,6 +59,7 @@ type Snapshot = {
   amount: number | null;
   sandbox?: boolean;
   checkoutConfirmed?: boolean;
+  pendingCheckout?: { plan: BillingPlan; cycle: BillingCycle; seats: number; amount: number } | null;
 };
 type HistoryItem = {
   id: string;
@@ -277,7 +278,7 @@ export function BillingWorkspace({
       setBusy("");
     }
   }
-  async function begin(plan: BillingPlan) {
+  async function begin(plan: BillingPlan, resume?: { cycle: BillingCycle; seats: number }) {
     setError("");
     setNotice("");
     if (preview) {
@@ -296,12 +297,15 @@ export function BillingWorkspace({
       );
       return;
     }
+    const selectedCycle = resume?.cycle ?? cycle;
+    const selectedSeats = resume?.seats ?? seats;
+    if (resume) { setCycle(selectedCycle); setSeats(selectedSeats); }
     setBusy(plan);
     try {
       const res = await fetch("/api/billing/whop-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, cycle, seats }),
+        body: JSON.stringify({ plan, cycle: selectedCycle, seats: selectedSeats }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -419,6 +423,13 @@ export function BillingWorkspace({
           <Loader2 size={16} className="animate-spin shrink-0" />
           Confirming your subscription. Access will update when the payment
           service confirms it.
+        </div>
+      )}
+      {!preview && data.pendingCheckout && (
+        <div className="bill-notice flex-wrap items-center justify-between gap-4">
+          <span>You have an unfinished {BILLING_CATALOG[data.pendingCheckout.plan].name} checkout: {data.pendingCheckout.seats} seats, {formatMoney(Number(data.pendingCheckout.amount))} per {data.pendingCheckout.cycle === "annual" ? "year" : "month"}. Resume it before starting another purchase.</span>
+          <button type="button" className="bill-button" disabled={!!busy}
+            onClick={() => { const pending = data.pendingCheckout!; void begin(pending.plan, pending); }}>Resume checkout</button>
         </div>
       )}
       <div className="bill-grid">
@@ -798,19 +809,14 @@ export function BillingWorkspace({
               </button>
             </div>
           ) : checkout?.sessionId ? (
-            <WhopCheckoutEmbed
-              sessionId={checkout.sessionId}
-              skipRedirect
-              environment={data.sandbox ? "sandbox" : "production"}
-              theme="dark"
+            <SecureCheckout
+              configurationId={checkout.sessionId}
+              sandbox={!!data.sandbox}
               returnUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/checkout/complete?intent=${checkout.intentId}`}
               onComplete={() => {
                 setWaiting(checkout.intentId || null);
                 setCheckout(null);
               }}
-              fallback={
-                <div className="bill-payment-host animate-pulse rounded-xl bg-white/5" />
-              }
             />
           ) : null}
         </DialogContent>

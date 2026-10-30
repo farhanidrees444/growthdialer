@@ -1,6 +1,8 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
+const verificationBuild = process.env.GROWTHDIALER_VERIFY_ONLY === "true";
+
 const nextConfig: NextConfig = {
   typescript: {
     tsconfigPath: "tsconfig.build.json",
@@ -24,6 +26,9 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
+  // Local/preview verification must not upload source maps or build telemetry.
+  sourcemaps: { disable: verificationBuild },
+  telemetry: verificationBuild ? false : undefined,
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 

@@ -23,7 +23,6 @@
     "@supabase/supabase-js": "^2.103.0",
     "@telnyx/webrtc": "^2.27.1",
     "@vercel/functions": "^3.7.1",
-    "@whop/checkout": "0.7.0",
     "@whop/sdk": "2.4.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -55,7 +54,9 @@
     "tweetnacl": "^1.0.3",
     "web-push": "^3.6.7",
     "ws": "^8.21.0",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "@whop/elements": "1.9.0",
+    "@whop/elements-react": "1.9.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.13",

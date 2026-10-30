@@ -62,7 +62,17 @@ export async function GET(request: NextRequest) {
         .maybeSingle()
     : { data: null };
 
+  const { data: pendingCheckout, error: pendingError } = isWhopSelected()
+    ? await supabase.from("billing_checkout_intents")
+        .select("plan,cycle,seats,amount")
+        .eq("user_id", user.id).eq("sandbox", whopSandbox())
+        .is("membership_id", null).maybeSingle()
+    : { data: null, error: null };
+  if (pendingError)
+    return NextResponse.json({ error: "Could not load your pending checkout" }, { status: 503 });
+
   return NextResponse.json({
+    pendingCheckout,
     status: data?.status ?? "none",
     provider: isWhopSelected() ? "whop" : "legacy",
     sandbox: whopSandbox(),
