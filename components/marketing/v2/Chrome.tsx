@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-export function Navbar() {
+export function Navbar({ signupLabel = "Start free trial" }: { signupLabel?: string } = {}) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [drop, setDrop] = useState<string | null>(null);
@@ -97,7 +97,7 @@ export function Navbar() {
             Log in
           </a>
           <a href={APP_SIGNUP} className="pm-btn pm-btn-primary !px-5 !py-2.5 !text-[14px]">
-            Start free trial
+            {signupLabel}
             <ArrowRight className="h-4 w-4" />
           </a>
         </div>
@@ -147,7 +147,7 @@ export function Navbar() {
                 Log in
               </a>
               <a href={APP_SIGNUP} className="pm-btn pm-btn-primary flex-1 !py-3">
-                Start free trial
+                {signupLabel}
               </a>
             </div>
           </motion.div>
@@ -175,7 +175,7 @@ function SocialIcon({ label }: { label: string }) {
   );
 }
 
-export function Footer() {
+export function Footer({ signupLabel = "Start free trial" }: { signupLabel?: string } = {}) {
   // GoHighLevel is the founder's named competitor: surface it first in the
   // Compare column (the column renders its first 6 links).
   const footerColumns = FOOTER_COLUMNS.map((col) =>
@@ -197,7 +197,7 @@ export function Footer() {
               href={APP_SIGNUP}
               className="mt-6 inline-flex items-center gap-2 text-[14.5px] font-semibold text-[#6d28d9] transition-colors hover:text-[#7c3aed]"
             >
-              Start free trial <ArrowRight className="h-4 w-4" />
+              {signupLabel} <ArrowRight className="h-4 w-4" />
             </a>
             <div className="mt-6 flex items-center gap-2">
               {SOCIAL_LINKS.map((social) => (

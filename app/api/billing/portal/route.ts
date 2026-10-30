@@ -1,3 +1,4 @@
+import { billingAppUrl, getWhop, isWhopSelected, whopReady, whopSandbox } from '@/lib/billing/whop';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { stripe, isStripeConfigured } from '@/lib/stripe';
@@ -11,6 +12,20 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  if (isWhopSelected()) {
+    if (!whopReady()) return NextResponse.json({ error: 'Billing is not available yet' }, { status: 503 });
+    if (request.headers.get('origin') !== billingAppUrl(request.headers.get('origin') || undefined)) return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+    const { data, error } = await supabase.from('subscriptions').select('whop_membership_id, whop_sandbox').eq('user_id', user.id).maybeSingle();
+    if (error || !data?.whop_membership_id || data.whop_sandbox !== whopSandbox()) return NextResponse.json({ error: 'No subscription to manage' }, { status: 404 });
+    try {
+      const membership = await getWhop().memberships.retrieve({ id: data.whop_membership_id });
+      if (membership.account.id !== process.env.WHOP_COMPANY_ID || !membership.manage_url) throw new Error('Unavailable');
+      const url = new URL(membership.manage_url);
+      if (url.protocol !== 'https:' || url.hostname !== (whopSandbox() ? 'sandbox.whop.com' : 'whop.com')) throw new Error('Invalid URL');
+      return NextResponse.json({ url: url.toString() });
+    } catch { return NextResponse.json({ error: 'Could not open billing management' }, { status: 502 }); }
+  }
 
   if (!isStripeConfigured()) {
     return NextResponse.json({ error: 'Billing is not configured' }, { status: 503 });

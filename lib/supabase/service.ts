@@ -2,12 +2,12 @@ import { createClient as createSupabaseClient, type SupabaseClient } from '@supa
 
 export function createServiceClient(): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
 
   if (!url || !key) {
     console.warn('Supabase service role key is not configured. Webhook persistence will be disabled.');
     return null;
   }
 
-  return createSupabaseClient(url, key);
+  return createSupabaseClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }

@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const billingBlock = await assertUserCanPlaceCalls(supabase, user.id);
+    const billingBlock = await assertUserCanPlaceCalls(supabase, user.id, user);
     if (billingBlock) return billingBlock;
 
     await supabase

@@ -26,13 +26,15 @@ export async function proxy(request: NextRequest) {
     '/dashboard', '/dialer', '/leads', '/call-logs', '/sequences', '/leaderboard',
     '/analytics', '/recordings', '/settings',
     '/team', '/numbers', '/my-numbers', '/incoming', '/calls', '/inbound', '/live-floor',
-    '/coaching', '/workspace',
+    '/coaching', '/workspace', '/billing',
   ]
   const authRoutes = ['/login', '/signup']
   const path = request.nextUrl.pathname
 
-  if (!user && protectedRoutes.some(r => path.startsWith(r))) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  if (!user && protectedRoutes.some(r => (path === r || path.startsWith(`${r}/`)))) {
+    const login = new URL('/login', request.url)
+    if (path === '/billing' || path.startsWith('/billing/')) login.searchParams.set('next', `${path}${request.nextUrl.search}`)
+    return NextResponse.redirect(login)
   }
 
   if (user && authRoutes.includes(path)) {

@@ -1,3 +1,4 @@
+import { isWhopSelected } from '@/lib/billing/whop';
 import { NextRequest } from "next/server";
 import { stripe, isStripeConfigured } from "@/lib/stripe";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -61,6 +62,8 @@ export async function POST(req: NextRequest) {
     console.error("[STRIPE-WEBHOOK] Signature verification failed:", err);
     return Response.json({ error: "Invalid signature" }, { status: 400 });
   }
+
+  if (isWhopSelected()) return Response.json({ received: true, ignored: true });
 
   const supabase = createServiceClient();
   if (!supabase) {

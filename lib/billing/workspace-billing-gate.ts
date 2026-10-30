@@ -1,4 +1,7 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { hasSubscriptionAccess } from './catalog';
+import { isGrandfatheredBillingAccess } from './access-rollout';
+import { isWhopSelected, whopSandbox } from './whop';
+import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { apiForbidden } from '@/lib/api/errors';
 import { isBillingEnabled } from '@/lib/billing/billing-flag';
@@ -13,9 +16,24 @@ const BLOCKED_STATUSES = new Set(['past_due', 'canceled', 'unpaid']);
 export async function assertUserCanPlaceCalls(
   supabase: SupabaseClient,
   userId: string,
+  authenticatedUser?: Pick<User, 'id' | 'created_at' | 'email_confirmed_at' | 'phone_confirmed_at'>,
 ): Promise<NextResponse | null> {
   // Billing bypass: no gating while billing is disabled.
   if (!isBillingEnabled()) return null;
+
+  if (isWhopSelected()) {
+    const { data, error } = await supabase.from('subscriptions').select('status,current_period_end,whop_sandbox,billing_provider').eq('user_id', userId).maybeSingle();
+    if (error) return apiForbidden('Could not verify billing status', 'BILLING_BLOCKED');
+    const providerSubscription = data?.billing_provider === 'whop' && data.whop_sandbox === whopSandbox();
+    if (!providerSubscription) {
+      const user = authenticatedUser ?? (await supabase.auth.getUser()).data.user;
+      if (user?.id === userId && isGrandfatheredBillingAccess(user.created_at, false, user.email_confirmed_at || user.phone_confirmed_at)) return null;
+    }
+    if (!providerSubscription || !data || !hasSubscriptionAccess(data.status, data.current_period_end)) {
+      return apiForbidden('An active subscription is required. Review billing to restore calling.', 'BILLING_BLOCKED');
+    }
+    return null;
+  }
 
   const { data: settings, error } = await supabase
     .from('user_settings')

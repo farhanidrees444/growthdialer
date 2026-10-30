@@ -5047,3 +5047,28 @@ zustand@^5.0.1, zustand@^5.0.3:
   version "1.0.1"
   resolved "https://registry.npmjs.org/buffer-equal-constant-time/-/buffer-equal-constant-time-1.0.1.tgz"
   integrity sha512-zRpUiDwd/xk6ADqPMATG8vc9VPrkck7T07OIx0gnjmJAnHnTVXNQG3vfvWNuiZIkwu9KrKdA1iJKfsfTVxE6NA==
+
+"@whop/sdk@2.4.0":
+  version "2.4.0"
+  resolved "https://registry.npmjs.org/@whop/sdk/-/sdk-2.4.0.tgz"
+  integrity sha512-A45/GxiNk9WLxICKliN4+NAf2Qsw+PFTwE6saisGcBXtp5q9uElFOJ7vp7FZc36ykCS2zolomKbWydweeDCIYQ==
+  dependencies:
+    standardwebhooks "^1.0.0"
+
+"@electric-sql/pglite@^0.5.13":
+  version "0.5.13"
+  resolved "https://registry.npmjs.org/@electric-sql/pglite/-/pglite-0.5.13.tgz"
+  integrity sha512-4rZuxK1k07w6sSpJzjMri0B9+HuXuC7V9pxVB51pR0T9KPqXg6TD0mdaEwBA9rkcL4jdht4tGDf/wYzAiGhT7g==
+
+
+"@whop/elements@1.9.0":
+  version "1.9.0"
+  resolved "https://registry.npmjs.org/@whop/elements/-/elements-1.9.0.tgz"
+  integrity sha512-sUx/LixyyfHk+EdLFK47AYVWlP5rJdapVTN8UhRf18Q+oElY9ol7HqX+o+Z0clftrRIMDYLSh9S0hCBJ6qxalQ==
+
+"@whop/elements-react@1.9.0":
+  version "1.9.0"
+  resolved "https://registry.npmjs.org/@whop/elements-react/-/elements-react-1.9.0.tgz"
+  integrity sha512-O3HMYMh8xp+8Dp71TusvpOU2FCN+76f6dCYKDB1brOZFUmfLHIQ3ap8Y4+ZsfpqPCAwXaC1ckmRX8H5EeSjmDQ==
+  dependencies:
+    use-sync-external-store "^1.4.0"

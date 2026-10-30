@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { safeReturnPath } from '@/lib/auth/return-path';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,13 +29,19 @@ import { cn } from '@/lib/utils';
 
 type Mode = 'login' | 'signup';
 
+function checkoutNext() {
+  if (typeof window === 'undefined') return '/dashboard';
+  const next = new URLSearchParams(window.location.search).get('next');
+  return safeReturnPath(next);
+}
+
 const APP_ORIGIN = 'https://app.growthdialer.com';
 function authCallbackUrl(): string {
   if (typeof window !== 'undefined') {
     const h = window.location.hostname;
-    if (h === 'localhost' || h === '127.0.0.1') return `${window.location.origin}/auth/callback`;
+    if (h === 'localhost' || h === '127.0.0.1' || /^growthdialer-[a-z0-9-]+-growthdialers-projects-1864ecf9\.vercel\.app$/.test(h)) return `${window.location.origin}/auth/callback?next=${encodeURIComponent(checkoutNext())}`;
   }
-  return `${APP_ORIGIN}/auth/callback`;
+  return `${APP_ORIGIN}/auth/callback?next=${encodeURIComponent(checkoutNext())}`;
 }
 
 const GoogleIcon = () => (
@@ -116,16 +123,25 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
     setMode(next);
     setError(null);
     if (typeof window !== 'undefined') {
-      window.history.replaceState(null, '', next === 'login' ? '/login' : '/signup');
+      window.history.replaceState(null, '', `${next === 'login' ? '/login' : '/signup'}${window.location.search}`);
     }
   }
 
   async function handleGoogle() {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: authCallbackUrl() },
-    });
+    setError(null);
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: authCallbackUrl() },
+      });
+      if (error) throw error;
+    } catch {
+      setError('Google sign-in is unavailable right now. Please try email sign-in or retry.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -143,7 +159,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
       if (!isSignup) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) setError(error.message);
-        else router.push('/dashboard');
+        else router.push(checkoutNext());
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -156,7 +172,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
         if (error) {
           setError(error.message);
         } else if (data.session) {
-          router.push('/dashboard');
+          router.push(checkoutNext());
         } else {
           setCheckEmail(true);
         }
@@ -375,6 +391,7 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
               <button
                 type="button"
                 onClick={handleGoogle}
+                disabled={loading}
                 className="group mt-7 flex w-full items-center justify-center gap-3 rounded-xl border border-[var(--auth-google-border)] bg-white py-3.5 text-sm font-semibold text-[#1f1f1f] shadow-[0_1px_2px_rgba(0,0,0,0.12),0_8px_24px_-8px_rgba(0,0,0,0.35)] transition hover:bg-zinc-50 hover:shadow-[0_2px_4px_rgba(0,0,0,0.1),0_12px_32px_-8px_rgba(0,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--auth-bg)]"
               >
                 <GoogleIcon />

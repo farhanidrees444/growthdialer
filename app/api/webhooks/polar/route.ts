@@ -1,3 +1,4 @@
+import { isWhopSelected } from '@/lib/billing/whop';
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -128,6 +129,8 @@ export async function POST(request: NextRequest) {
   const eventType = getString(event.type) ?? getString(event.event) ?? 'unknown';
   const eventId = request.headers.get('webhook-id') ?? getString(event.id) ?? randomUUID();
   const object = asRecord(asRecord(event.data).object ?? event.data);
+  if (isWhopSelected()) return Response.json({ received: true, ignored: true });
+
   const supabase = createServiceClient();
 
   if (!supabase) {

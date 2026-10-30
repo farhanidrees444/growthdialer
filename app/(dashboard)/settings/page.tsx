@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { InboundHistoryPanel } from "@/components/calls/inbound-history-panel";
 import { useSearchParams } from "next/navigation";
-import { WorkspaceBillingPanel } from "@/components/billing/workspace-billing-panel";
+import { SubscriptionPanel } from "@/components/billing/subscription-panel";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { useSiteTheme } from "@/components/theme/site-theme";
@@ -826,7 +826,7 @@ function NotificationsTab({ settings, onChange }: {
 // ─── Billing Tab ──────────────────────────────────────────────────────────────
 
 function BillingTab() {
-  return <WorkspaceBillingPanel />;
+  return <SubscriptionPanel />;
 }
 
 // ─── Security Tab ─────────────────────────────────────────────────────────────

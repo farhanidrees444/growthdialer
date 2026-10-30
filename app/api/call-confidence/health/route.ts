@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
   const aiFeaturesEnabled = settings?.ai_auto_transcribe !== false || settings?.ai_auto_summarize !== false;
   const aiKeysReady = Boolean(process.env.GROQ_API_KEY?.trim() && process.env.GEMINI_API_KEY?.trim());
   const internalPipelineReady = Boolean(process.env.INTERNAL_API_SECRET?.trim());
-  const storageReady = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim());
+  const storageReady = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || process.env.SUPABASE_SECRET_KEY?.trim());
 
   let totalCallsQuery = supabase
     .from('calls')

@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import {
   FEATURE_GATES,
   type BillingCycle,
@@ -17,6 +16,8 @@ interface SubscriptionRow {
   seats: number | null;
   status: SubscriptionStatus | string | null;
   trial_ends_at: string | null;
+  current_period_end: string | null;
+  billing_provider: string | null;
 }
 
 export interface UsePlanResult {
@@ -82,60 +83,20 @@ export function usePlan(): UsePlanResult {
   const [billingDisabled, setBillingDisabled] = useState(false);
 
   const refresh = useCallback(async () => {
-    // Billing bypass: when billing is disabled server-side, everything is
-    // open — skip the subscription lookup entirely.
-    if (!billingDisabled) {
-      try {
-        const res = await fetch('/api/subscription/status', { cache: 'no-store' });
-        if (res.ok) {
-          const json = (await res.json()) as { billingEnabled?: boolean };
-          if (json && json.billingEnabled === false) {
-            setBillingDisabled(true);
-            setRow(null);
-            setClosed(false);
-            return;
-          }
-        }
-      } catch {
-        // Fall through to the subscription lookup on network errors.
-      }
-    } else {
-      setRow(null);
-      setClosed(false);
-      return;
-    }
-
     try {
-      const supabase = createClient();
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        setRow(null);
-        setClosed(true);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select('plan, billing_cycle, seats, status, trial_ends_at')
-        .eq('user_id', user.id)
-        .in('status', ['active', 'trialing'])
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error || !data) {
-        setRow(null);
-        setClosed(true);
-        return;
-      }
-
-      setRow(data as SubscriptionRow);
+      const res = await fetch('/api/subscription/status', { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok) { setRow(null); setClosed(true); return; }
+      const disabled = data.billingEnabled === false || data.accessGrandfathered === true;
+      setBillingDisabled(disabled);
+      if (disabled) { setRow(null); setClosed(false); return; }
+      if (!data.active) { setRow(null); setClosed(true); return; }
+      setRow({ plan: data.plan, billing_cycle: data.billingCycle, seats: data.seats,
+        status: data.status, trial_ends_at: data.trialEndsAt,
+        current_period_end: data.currentPeriodEnd, billing_provider: data.provider });
       setClosed(false);
-    } catch {
-      setRow(null);
-      setClosed(true);
-    }
-  }, [billingDisabled]);
+    } catch { setRow(null); setClosed(true); }
+  }, []);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -173,5 +134,5 @@ export function usePlan(): UsePlanResult {
         return isFeatureEnabled(effectivePlan, feature);
       },
     };
-  }, [closed, row]);
+  }, [billingDisabled, closed, row]);
 }
