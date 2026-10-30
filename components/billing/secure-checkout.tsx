@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSiteTheme } from "@/components/theme/site-theme";
 import { loadWhop } from "@whop/elements";
 import { Checkout, CheckoutElement, WhopElements } from "@whop/elements-react";
 
@@ -12,11 +13,12 @@ type Props = {
 };
 
 function LiveCheckout({ configurationId, returnUrl, onComplete }: Props) {
+  const { isDark } = useSiteTheme();
   const elements = useMemo(() => loadWhop(), []);
   const [retry, setRetry] = useState<(() => void) | null>(null);
   return (
     <WhopElements elements={elements} environment="production"
-      appearance={{ theme: { appearance: "dark", accentColor: "violet" } }}
+      appearance={{ theme: { appearance: isDark ? "dark" : "light", accentColor: "violet" } }}
       onLoadError={(_error, tryAgain) => setRetry(() => tryAgain)}>
       {retry ? <div role="alert" className="rounded-xl border border-white/10 p-5">
         <p>Secure payment could not load. Your subscription has not been confirmed.</p>

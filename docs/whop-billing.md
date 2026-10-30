@@ -2,7 +2,7 @@
 
 ## Release state
 
-The owner approved live billing and main-domain release, created the production API key in Chrome, and deferred the real-card purchase to their own later test. No card payment has been submitted by the agent. Production credentials are now stored as Vercel server-only secrets. Purchasing remains disabled until the release build is ready; activation and a successful customer payment must be recorded separately.
+The owner approved live billing and main-domain release, created the production API key in Chrome, and deferred the real-card purchase to their own later test. No card payment has been submitted by the agent. Production credentials are now stored as Vercel server-only secrets. Live purchasing is enabled by the release configuration; deployment readiness and a successful customer payment must be verified separately.
 
 ## Live catalog and connection
 
@@ -20,7 +20,7 @@ The owner-created key, GrowthDialer production billing, expires October 30, 2027
 
 Live webhook hook_akhFBLbBHtFnm is active at https://app.growthdialer.com/api/webhooks/whop for membership.activated, membership.deactivated, membership.updated and membership.cancel_at_period_end_changed. The editor offered current date versions; 2026-10-29-8 was selected, while its summary labels the schema v1. The handler verifies the signed envelope and retrieves authoritative membership through the pinned API rather than trusting event payload status. The signing secret is stored verbatim in Vercel production secrets. A successful provider delivery is not yet claimed.
 
-Production configuration uses BILLING_PROVIDER=whop, WHOP_SANDBOX=false, WHOP_LIVE_PAYMENTS_APPROVED=true and WHOP_SANDBOX_WEBHOOK_ENABLED=false. BILLING_ENABLED is the final purchasing/access switch and requires a new deployment to take effect. Never copy production credentials into preview environments. The existing branch preview retains sandbox configuration.
+Production configuration uses BILLING_PROVIDER=whop, WHOP_SANDBOX=false, WHOP_LIVE_PAYMENTS_APPROVED=true and WHOP_SANDBOX_WEBHOOK_ENABLED=false. BILLING_ENABLED=true is the purchasing/access switch and requires a new deployment to take effect. Never copy production credentials into preview environments. The existing branch preview retains sandbox configuration.
 
 ## Access and subscription security
 
@@ -42,7 +42,7 @@ Billing uses GrowthDialer's zinc surfaces and violet accent, including checkout 
 - Six automated billing tests cover server pricing and malformed selections, membership expiry/access, real Standard Webhooks HMAC validation, transaction rollback/retry/deduplication/order, owned auth continuation and confirmed-account rollout access including malformed calendar dates.
 - The database lifecycle fixture applies the four migrations in deployment timestamp order and verifies service-only RPC execution. Filenames match the connected database history: 20261029235135, 20261030001925, 20261030002317 and 20261030192127. No migration was reapplied or history rewritten during filename alignment.
 - The additive schema and consistent lock order were applied and verified in qnknfgbwcqchmhxobbnx. Existing calls/leads/recordings were not changed. The system health check uses the same non-empty secret fallback as the service client.
-- TypeScript checking and focused lint passed before the final style revision; rerun them for the release commit. Earlier Vercel previews compiled successfully. A recent local build failed downloading Google Fonts, which is an environment limitation rather than a successful production build.
+- TypeScript checking and focused lint passed for the branded release revision. Earlier Vercel previews compiled successfully. A recent local build failed downloading Google Fonts, which is an environment limitation rather than a successful production build.
 - Prior connected-Chrome checks covered desktop/mobile layouts, correct three-seat annual totals, signed-out billing protection, authenticated sandbox selection, reservation conflicts and resuming the correct hosted test form. No payment was submitted.
 
 ## Remaining customer verification
