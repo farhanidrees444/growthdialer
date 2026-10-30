@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     const access = await requireWorkspaceFromRequest(request, supabase, user.id, { body });
     if (isWorkspaceError(access)) return access;
 
-    const billingBlock = await assertUserCanPlaceCalls(supabase, user.id);
+    const billingBlock = await assertUserCanPlaceCalls(supabase, user.id, user);
     if (billingBlock) return billingBlock;
 
     const userId = user.id;

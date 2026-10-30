@@ -16,7 +16,7 @@ export default async function Checkout({
     return (
       <main className="min-h-screen bg-zinc-950 text-white grid place-items-center p-8">
         <div className="max-w-md">
-          <p className="text-cyan-300 text-sm">GROWTHDIALER</p>
+          <p className="text-violet-300 text-sm">GROWTHDIALER</p>
           <h1 className="text-4xl font-semibold mt-4">
             Checkout is coming soon.
           </h1>

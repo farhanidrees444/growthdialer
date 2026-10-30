@@ -561,11 +561,11 @@ export function PricingPage({ checkoutAvailable = false }: { checkoutAvailable?:
             alt=""
             fill
             sizes="(max-width: 768px) 100vw, 1200px"
-            className="object-cover"
+            className="object-cover hue-rotate-[85deg] saturate-125"
             priority
           />
           <div className="relative z-10 max-w-md bg-gradient-to-r from-black/80 via-black/50 to-transparent p-8 sm:p-12 min-h-52 sm:min-h-72">
-            <p className="text-[10px] font-semibold uppercase tracking-[.24em] text-cyan-200">
+            <p className="text-[10px] font-semibold uppercase tracking-[.24em] text-violet-200">
               Every conversation counts
             </p>
             <h2 className="mt-4 text-2xl sm:text-3xl font-semibold tracking-tight !text-white">

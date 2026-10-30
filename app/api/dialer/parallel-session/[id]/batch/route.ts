@@ -33,7 +33,7 @@ export async function POST(
       return NextResponse.json({ error: 'Session not ready for dialing' }, { status: 400 });
     }
 
-    const billingBlock = await assertUserCanPlaceCalls(supabase, user.id);
+    const billingBlock = await assertUserCanPlaceCalls(supabase, user.id, user);
     if (billingBlock) return billingBlock;
 
     const { legs, leads } = await dialParallelBatch(

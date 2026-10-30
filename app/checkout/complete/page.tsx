@@ -50,9 +50,9 @@ function Confirmation({ intent }: { intent: string | null }) {
           GROWTHDIALER
         </p>
         {state === "active" ? (
-          <CheckCircle2 className="mx-auto text-cyan-300" size={56} />
+          <CheckCircle2 className="mx-auto text-violet-300" size={56} />
         ) : state === "checking" ? (
-          <Loader2 className="mx-auto animate-spin text-cyan-300" size={48} />
+          <Loader2 className="mx-auto animate-spin text-violet-300" size={48} />
         ) : (
           <Clock3 className="mx-auto text-amber-300" size={48} />
         )}
@@ -71,7 +71,7 @@ function Confirmation({ intent }: { intent: string | null }) {
             : "We have not confirmed access yet. A redirect does not confirm payment. Please check your billing status before trying another purchase."}
         </p>
         <Link
-          className="inline-flex bg-cyan-300 text-zinc-950 rounded-xl px-6 py-3 mt-8 font-semibold"
+          className="inline-flex bg-violet-600 text-white rounded-xl px-6 py-3 mt-8 font-semibold"
           href={
             state === "signin"
               ? `/login?next=${encodeURIComponent(`/checkout/complete?intent=${intent || ""}`)}`

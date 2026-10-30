@@ -178,10 +178,15 @@ test("auth continuation preserves owned receipt paths and rejects external desti
 
 test("billing rollout preserves existing access but never bypasses a provider subscription", () => {
   const cutoff = "2026-10-31T00:00:00Z";
-  assert.equal(isGrandfatheredBillingAccess("2026-10-01T00:00:00Z", false, cutoff), true);
-  assert.equal(isGrandfatheredBillingAccess("2026-10-31T00:00:00Z", false, cutoff), false);
-  assert.equal(isGrandfatheredBillingAccess("2026-11-01T00:00:00Z", false, cutoff), false);
-  assert.equal(isGrandfatheredBillingAccess("2026-10-01T00:00:00Z", true, cutoff), false);
-  assert.equal(isGrandfatheredBillingAccess("bad", false, cutoff), false);
-  assert.equal(isGrandfatheredBillingAccess("2026-10-01T00:00:00Z", false, "bad"), false);
+  assert.equal(isGrandfatheredBillingAccess("2026-01-01T00:00:00Z", false, "2026-01-01T01:00:00Z", "2026-02-30T00:00:00Z"), false);
+  assert.equal(isGrandfatheredBillingAccess("2026-02-30T00:00:00Z", false, "2026-01-01T01:00:00Z", cutoff), false);
+  assert.equal(isGrandfatheredBillingAccess("2026-10-01T00:00:00.123456+00:00", false, "2026-10-01T01:00:00Z", cutoff), true);
+  assert.equal(isGrandfatheredBillingAccess("2026-10-01T00:00:00Z", false, undefined, cutoff), false);
+  assert.equal(isGrandfatheredBillingAccess("2026-10-01T00:00:00Z", false, "bad", cutoff), false);
+  assert.equal(isGrandfatheredBillingAccess("2026-10-01T00:00:00Z", false, "2026-10-01T01:00:00Z", cutoff), true);
+  assert.equal(isGrandfatheredBillingAccess("2026-10-31T00:00:00Z", false, "2026-10-01T01:00:00Z", cutoff), false);
+  assert.equal(isGrandfatheredBillingAccess("2026-11-01T00:00:00Z", false, "2026-10-01T01:00:00Z", cutoff), false);
+  assert.equal(isGrandfatheredBillingAccess("2026-10-01T00:00:00Z", true, "2026-10-01T01:00:00Z", cutoff), false);
+  assert.equal(isGrandfatheredBillingAccess("bad", false, "2026-10-01T01:00:00Z", cutoff), false);
+  assert.equal(isGrandfatheredBillingAccess("2026-10-01T00:00:00Z", false, "2026-10-01T01:00:00Z", "bad"), false);
 });

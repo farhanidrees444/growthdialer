@@ -64,7 +64,7 @@ export function PurchaseExperience({
             <ArrowLeft size={16} /> Back to plans
           </Link>
           <span className="font-semibold tracking-tight text-lg">
-            GrowthDialer<span className="text-cyan-300">.</span>
+            GrowthDialer<span className="text-violet-300">.</span>
           </span>
           <span className="hidden sm:flex gap-2 text-xs text-zinc-400 items-center">
             <LockKeyhole size={14} /> Secure checkout
@@ -77,7 +77,7 @@ export function PurchaseExperience({
         )}
         <div className="grid lg:grid-cols-[1fr_1.05fr] gap-12 lg:gap-20">
           <section>
-            <p className="text-xs uppercase tracking-[.22em] text-cyan-300">
+            <p className="text-xs uppercase tracking-[.22em] text-violet-300">
               Your next chapter starts here
             </p>
             <h1 className="mt-5 text-4xl md:text-5xl font-semibold tracking-tight leading-tight">
@@ -116,7 +116,7 @@ export function PurchaseExperience({
                   "Self-service subscription management",
                 ].map((text) => (
                   <p key={text} className="text-sm text-zinc-300 flex gap-3">
-                    <Check size={16} className="text-cyan-300 shrink-0" />
+                    <Check size={16} className="text-violet-300 shrink-0" />
                     {text}
                   </p>
                 ))}
@@ -132,7 +132,7 @@ export function PurchaseExperience({
           </section>
           <section className="rounded-3xl border border-white/10 bg-white/[.035] p-6 md:p-8 self-start">
             <div className="flex gap-3 items-center mb-6">
-              <ShieldCheck className="text-cyan-300" />
+              <ShieldCheck className="text-violet-300" />
               <div>
                 <h2 className="text-xl font-semibold">
                   Complete your purchase
@@ -157,7 +157,7 @@ export function PurchaseExperience({
                 <button
                   onClick={() => void proceed()}
                   disabled={busy}
-                  className="w-full flex gap-3 items-center justify-center rounded-xl bg-cyan-300 text-zinc-950 py-4 font-semibold hover:bg-cyan-200 disabled:opacity-60"
+                  className="w-full flex gap-3 items-center justify-center rounded-xl bg-violet-600 text-white py-4 font-semibold hover:bg-violet-500 disabled:opacity-60"
                 >
                   {busy ? (
                     <Loader2 className="animate-spin" size={18} />

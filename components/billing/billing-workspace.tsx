@@ -444,9 +444,9 @@ export function BillingWorkspace({
             fill
             sizes="(max-width:650px) 100vw, 700px"
             alt=""
-            className="object-cover opacity-55"
+            className="bill-artwork object-cover opacity-55"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#090d12] via-[#090d12]/65 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#09090b] via-[#09090b]/65 to-transparent" />
           <div className="bill-plan-content">
             <div className="flex items-center gap-3">
               <p className="bill-eyebrow">Current plan</p>
@@ -623,7 +623,7 @@ export function BillingWorkspace({
                       : "Your full potential"}
                 </span>
                 {key === "growth" && (
-                  <Sparkles size={14} className="text-cyan-200" />
+                  <Sparkles size={14} className="text-violet-200" />
                 )}
               </div>
               <h3>{option.name}</h3>
@@ -797,7 +797,7 @@ export function BillingWorkspace({
           </DialogDescription>
           {preview ? (
             <div className="rounded-xl border border-white/10 bg-white/[.03] p-8 my-4 text-center">
-              <LockKeyhole size={30} className="text-cyan-200 mx-auto mb-5" />
+              <LockKeyhole size={30} className="text-violet-200 mx-auto mb-5" />
               <h3 className="text-lg font-semibold">
                 Your secure payment form lives here.
               </h3>

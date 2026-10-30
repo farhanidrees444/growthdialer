@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     accessGrandfathered: isWhopSelected() && isGrandfatheredBillingAccess(user.created_at,
-      data?.billing_provider === "whop" && data.whop_sandbox === whopSandbox()),
+      data?.billing_provider === "whop" && data.whop_sandbox === whopSandbox(), user.email_confirmed_at || user.phone_confirmed_at),
     pendingCheckout,
     status: data?.status ?? "none",
     provider: isWhopSelected() ? "whop" : "legacy",
