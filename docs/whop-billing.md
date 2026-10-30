@@ -153,3 +153,9 @@ Native permission reference: https://docs.whop.com/api-reference/beta/membership
 - Restored the production session/theme hooks to preserve existing cache and preference behavior. Google sign-in disables repeated submissions while loading.
 - Recording/storage readiness checks recognize both supported server credential names. The existing unused-variable lint warning in recording diagnostics remains unrelated.
 - Browser verification of the deployed resume flow displayed the correct saved annual plan and three-seat total, then the working hosted sandbox link. The legacy failing iframe is no longer mounted for sandbox checkouts.
+
+## Live activation preparation
+
+The owner authorized live activation and will perform the real-card purchase later. The live webhook hook_akhFBLbBHtFnm was created for the main-domain receiver with the four membership events and is paused until credentials and the receiver are deployed. The production billing key form is prepared with eight runtime scopes, expiration October 30, 2027 at 00:00 UTC, and no charge, payout or administrative scopes; creation has not been submitted. Production purchases remain disabled.
+
+Migration filenames now match the four versions already recorded in the connected database (20261029235135, 20261030001925, 20261030002317, 20261030192127). No migration was reapplied or database history rewritten. The database fixture discovers these files in deployment timestamp order. The system health check uses the same non-empty secret fallback as the service client.

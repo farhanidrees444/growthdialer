@@ -1,7 +1,7 @@
 import { isGrandfatheredBillingAccess } from "../../lib/billing/access-rollout.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { createHmac } from "node:crypto";
 import { PGlite } from "@electric-sql/pglite";
 import { unwrapWebhook } from "@whop/sdk/helpers";
@@ -71,18 +71,13 @@ test("transactional subscription lifecycle, retry, dedup, ownership and ordering
  CREATE TABLE auth.users(id uuid PRIMARY KEY);
  CREATE TABLE subscriptions(user_id uuid PRIMARY KEY REFERENCES auth.users(id), plan text, billing_cycle text, seats int, status text, current_period_start timestamptz, current_period_end timestamptz);
  INSERT INTO auth.users VALUES('11111111-1111-4111-8111-111111111111');`);
-  await db.exec(
-    await readFile(
-      new URL(
-        "../../supabase/migrations/20261030_whop_billing.sql",
-        import.meta.url,
-      ),
-      "utf8",
-    ),
-  );
-  await db.exec(await readFile(new URL("../../supabase/migrations/20261030001758_whop_single_pending_checkout.sql", import.meta.url), "utf8"));
-  await db.exec(await readFile(new URL("../../supabase/migrations/20261030002217_whop_reserve_checkout.sql", import.meta.url), "utf8"));
-  await db.exec(await readFile(new URL("../../supabase/migrations/20261030191950_whop_consistent_lock_order.sql", import.meta.url), "utf8"));
+  // Use the same timestamp order as deployment, rather than hand-ordering SQL.
+  const migrations = (await readdir(new URL("../../supabase/migrations/", import.meta.url)))
+    .filter(name => /whop.*\.sql$/.test(name)).sort();
+  assert.equal(migrations.length, 4);
+  for (const name of migrations) {
+    await db.exec(await readFile(new URL(`../../supabase/migrations/${name}`, import.meta.url), "utf8"));
+  }
   const user = "11111111-1111-4111-8111-111111111111",
     intent = "22222222-2222-4222-8222-222222222222";
   await db.query(
