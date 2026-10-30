@@ -33,7 +33,7 @@ Production configuration uses BILLING_PROVIDER=whop, WHOP_SANDBOX=false, WHOP_LI
 
 ## In-product experience and visual design
 
-/billing and Settings → Billing share the authenticated product workspace. Customers can select seats/cycle, purchase with embedded Whop Elements 1.9.0, see subscription details, cancel or resume automatic renewal, and review owned payment history/receipts. Updating a payment method uses the secure provider portal. Tier/seat changes on an existing subscription route to support; automatic proration is not implemented.
+/billing and Settings → Billing share the authenticated product workspace. Customers can select seats/cycle, purchase live subscriptions with embedded Whop Elements 1.9.0, see subscription details, cancel or resume automatic renewal, and review owned payment history/receipts. Sandbox checkout opens a clearly labeled hosted test page because the provider's Elements sandbox is not yet available. Updating a payment method uses the secure provider portal. Tier/seat changes on an existing subscription route to support; automatic proration is not implemented.
 
 Billing uses GrowthDialer's zinc surfaces and violet accent, including checkout controls. The original optimized acoustic-ribbon image in public/billing/conversation-sculpture.webp is tinted violet at render time without adding another image download. Light and dark layouts retain the existing app shell. /billing-preview is a labeled sample-data demonstration and is unavailable in Vercel production.
 
