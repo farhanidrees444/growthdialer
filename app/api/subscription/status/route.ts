@@ -68,8 +68,10 @@ export async function GET(request: NextRequest) {
         .eq("user_id", user.id).eq("sandbox", whopSandbox())
         .is("membership_id", null).maybeSingle()
     : { data: null, error: null };
-  if (pendingError)
+  if (pendingError) {
+    console.error("[SUBSCRIPTION-STATUS] Pending checkout lookup failed", pendingError.code);
     return NextResponse.json({ error: "Could not load your pending checkout" }, { status: 503 });
+  }
 
   return NextResponse.json({
     pendingCheckout,

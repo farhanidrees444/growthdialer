@@ -165,6 +165,10 @@ export function BillingWorkspace({
         );
       const data = await response.json();
       setSnapshot(data);
+      if (data.pendingCheckout) {
+        setCycle(data.pendingCheckout.cycle);
+        setSeats(data.pendingCheckout.seats);
+      }
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Billing is temporarily unavailable.",
@@ -340,6 +344,7 @@ export function BillingWorkspace({
     }
   }
   const data = snapshot || EMPTY;
+  const selectionLocked = !preview && !!data.pendingCheckout;
   const plan = BILLING_CATALOG[data.plan as BillingPlan];
   const renewable =
     data.canManage && ["active", "trialing", "past_due"].includes(data.status);
@@ -573,6 +578,7 @@ export function BillingWorkspace({
               <button
                 key={c}
                 aria-pressed={cycle === c}
+                disabled={selectionLocked || !!busy}
                 onClick={() => setCycle(c)}
               >
                 {c === "monthly" ? "Monthly" : "Annual · save up to 20%"}
@@ -583,6 +589,7 @@ export function BillingWorkspace({
             <Users size={14} />
             <button
               aria-label="Fewer seats"
+              disabled={selectionLocked || !!busy}
               onClick={() => setSeats(Math.max(1, seats - 1))}
             >
               −
@@ -590,6 +597,7 @@ export function BillingWorkspace({
             <output aria-label="Selected seats">{seats}</output>
             <button
               aria-label="More seats"
+              disabled={selectionLocked || !!busy}
               onClick={() => setSeats(Math.min(500, seats + 1))}
             >
               +
@@ -643,11 +651,13 @@ export function BillingWorkspace({
               </ul>
               <button
                 className={`bill-button ${key === "growth" ? "bill-button-primary" : ""}`}
-                disabled={!!busy || (!preview && current)}
+                disabled={!!busy || selectionLocked || (!preview && current)}
                 onClick={() => void begin(key)}
               >
                 {busy === key ? (
                   <Loader2 size={14} className="animate-spin" />
+                ) : selectionLocked ? (
+                  "Resume checkout above"
                 ) : current ? (
                   "Current plan"
                 ) : renewable && !preview ? (

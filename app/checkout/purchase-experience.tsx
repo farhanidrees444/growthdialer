@@ -2,7 +2,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-const SecureCheckout = dynamic(() => import("@/components/billing/secure-checkout").then(m => m.SecureCheckout), { ssr: false });
+const SecureCheckout = dynamic(() => import("@/components/billing/secure-checkout").then(m => m.SecureCheckout), {
+  ssr: false,
+  loading: () => <div role="status" aria-label="Loading secure payment" className="h-96 animate-pulse rounded-2xl bg-white/5" />,
+});
 import {
   ArrowLeft,
   ArrowRight,
