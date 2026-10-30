@@ -16,7 +16,7 @@ The repository contains overlapping Stripe workspace plans, Polar user subscript
 - Calling authorization and client feature gating use subscription state and expiry. Sandbox/live subscription state is isolated. Canceled, expired, unknown and overdue states do not grant access. End-of-period cancellation keeps access only through the recorded period end.
 - Customer billing management retrieves the authenticated user's membership portal URL from the provider and validates its host.
 - Separate live-payment approval flag; defaults to sandbox. Disabled webhooks return a retryable error, not a false acknowledgement.
-- Automatic Vercel PREVIEW deployment is enabled for feat/whop-subscriptions after the owner requested a review URL. Production remains on main. Branch-specific preview variables keep BILLING_ENABLED=false, BILLING_PROVIDER=whop, WHOP_SANDBOX=true and WHOP_LIVE_PAYMENTS_APPROVED=false.
+- Automatic Vercel PREVIEW deployment is enabled for feat/whop-subscriptions after the owner requested a review URL. Production remains on main. Branch-specific preview variables initially kept BILLING_ENABLED=false and were subsequently enabled only for sandbox validation; production keeps BILLING_ENABLED=false. Other preview safety flags are, BILLING_PROVIDER=whop, WHOP_SANDBOX=true and WHOP_LIVE_PAYMENTS_APPROVED=false.
 
 ## Sandbox account and products
 
@@ -32,7 +32,7 @@ All three are hidden. No live checkout links are published. The checkout API cre
 
 The scoped sandbox key was created with owner approval and stored as a server-only Vercel Preview Secret on feat/whop-subscriptions. Name: GrowthDialer sandbox integration. Expiration was verified in the dashboard as November 6, 2026 (seven days after creation). Eight scopes: checkout_configuration:basic:read, checkout_configuration:create, plan:basic:read, plan:create, member:basic:read, member:manage, membership:update and payment:basic:read. No payment-creation, payout, transfer, membership-creation or administrative scopes were granted. The API client explicitly pins requests to 2026-09-25.
 
-Sandbox webhook hook_43P1dCbodX2nI targets https://app.growthdialer.com/api/webhooks/whop for membership.activated, membership.deactivated, membership.updated and membership.cancel_at_period_end_changed. Its signing secret is stored only as a branch-specific Preview Secret. The dashboard labels the webhook schema V1; its editor exposes no date-version setting. Production has no sandbox credentials and billing remains disabled, so this destination is not yet a working end-to-end sandbox receiver. No successful delivery is claimed.
+Sandbox webhook hook_43P1dCbodX2nI targets https://app.growthdialer.com/api/webhooks/whop for membership.activated, membership.deactivated, membership.updated and membership.cancel_at_period_end_changed. Its signing secret is stored only as a branch-specific Preview Secret. The dashboard labels the webhook schema V1; its editor exposes no date-version setting. Production has sandbox-only credentials and WHOP_SANDBOX_WEBHOOK_ENABLED=true for this signed test receiver. BILLING_ENABLED=false still disables production checkout and preserves existing access. The sandbox-only webhook exception never accepts live-mode events while billing is off. No successful delivery is claimed.
 
 ## Validation
 
@@ -47,7 +47,7 @@ Sandbox webhook hook_43P1dCbodX2nI targets https://app.growthdialer.com/api/webh
 
 ## Remaining work: not yet verified end to end
 
-1. Complete a reachable sandbox receiver configuration and verify a signed provider delivery. The saved main-domain receiver intentionally fails retryably until sandbox billing is enabled there; preview deployment protection also needs a supported delivery arrangement. Do not disable protection or expose bypass secrets in checkout links.
+1. Complete a reachable sandbox receiver configuration and verify a signed provider delivery. The saved main-domain receiver can accept signed sandbox events independently of purchasing once its code is deployed; verify that delivery before claiming activation. Do not disable protection or expose bypass secrets in checkout links.
 2. Test a signed-in test customer's selection, checkout, sandbox payment, webhook delivery, activation, access checks, receipt, billing portal, cancellation, failed renewal and recovery. Test a second user's attempted checkout/portal access, duplicate and out-of-order webhooks, decline and abandoned checkout. A provider sandbox purchase and full browser journey have NOT yet been executed.
 3. Desktop/mobile design checks completed in connected Chrome; actual provider payment options still require credentials. The new /billing-preview route is an explicitly labeled interactive design demo, unavailable in Vercel production. It never calls billing or telephony APIs. Hosted payment branding must remain consistent with the application.
 4. Confirm the product's outbound calling use case and Pakistan individual payout setup are approved by Whop before launch. This turn did not claim merchant or payout approval.
@@ -117,3 +117,5 @@ Built-in image generation created public/billing/conversation-sculpture.webp (16
 - Added server-only support for the integration-provisioned SUPABASE_SECRET_KEY while retaining the existing service-role variable.
 - Pinned-version sandbox membership listing succeeded with the eight-scope key. Retrieving a deliberately nonexistent membership returned 404 rather than a scope error. This does not prove access to an actual customer membership; the legacy documentation's member:email:read requirement still needs verification with a real sandbox membership before enabling checkout.
 - Production safety flags explicitly preserve BILLING_ENABLED=false, WHOP_SANDBOX=true and WHOP_LIVE_PAYMENTS_APPROVED=false. Live products and live credentials remain untouched.
+
+A disposable test customer was created through the server admin API, without sending email. Browser email/password sign-in succeeded and the empty dashboard rendered without captured application errors. No calls or number purchases were made. Test credentials are temporary and are not in this repository.

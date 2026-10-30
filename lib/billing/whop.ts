@@ -8,9 +8,8 @@ export function isWhopSelected() {
 export function whopSandbox() {
   return process.env.WHOP_SANDBOX !== "false";
 }
-export function whopReady() {
+function whopConfigured() {
   return (
-    isBillingEnabled() &&
     isWhopSelected() &&
     !!process.env.WHOP_COMPANY_API_KEY?.trim() &&
     !!process.env.WHOP_COMPANY_ID?.trim() &&
@@ -20,6 +19,16 @@ export function whopReady() {
     ) &&
     (whopSandbox() || process.env.WHOP_LIVE_PAYMENTS_APPROVED === "true")
   );
+}
+export function whopReady() {
+  return isBillingEnabled() && whopConfigured();
+}
+export function whopWebhookReady() {
+  // Explicitly permit sandbox deliveries on the public receiver while
+  // production purchasing/access gates remain off. Never accept live events
+  // through this test-only exception.
+  return whopConfigured() && (isBillingEnabled() ||
+    (whopSandbox() && process.env.WHOP_SANDBOX_WEBHOOK_ENABLED === "true"));
 }
 export function getWhop() {
   const token = process.env.WHOP_COMPANY_API_KEY?.trim();

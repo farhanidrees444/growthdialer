@@ -1,7 +1,7 @@
 import { unwrapWebhook } from "@whop/sdk/helpers";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
-import { getWhop, whopReady } from "@/lib/billing/whop";
+import { getWhop, whopWebhookReady } from "@/lib/billing/whop";
 import { syncWhopMembership } from "@/lib/billing/sync-membership";
 import { createServiceClient } from "@/lib/supabase/service";
 export const runtime = "nodejs";
@@ -13,7 +13,7 @@ const envelope = z.object({
 });
 export async function POST(request: NextRequest) {
   // Fail retryably while disabled: never silently discard a paid event.
-  if (!whopReady() || !process.env.WHOP_WEBHOOK_SECRET)
+  if (!whopWebhookReady() || !process.env.WHOP_WEBHOOK_SECRET)
     return NextResponse.json(
       { error: "Billing is unavailable" },
       { status: 503 },
