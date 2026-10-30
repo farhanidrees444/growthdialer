@@ -34,6 +34,8 @@ The sandbox key was prepared for review but NOT created; its dialog was canceled
 
 ## Validation
 
+- Database preparation completed: after the owner connected Supabase and requested launch preparation, the additive billing migration was applied to the existing project qnknfgbwcqchmhxobbnx. The subscription table was empty. Verification confirmed zero billing records, RLS, no anon/authenticated activation permission, service-role-only activation, and SECURITY INVOKER. Calls/leads/recordings and existing access were not changed.
+
 - TypeScript typecheck passed against the repository's locked Next.js/react-icons/Stripe versions.
 - Production Next.js build completed successfully using non-secret placeholder Supabase variables; this checks compilation and prerendering, not a real database connection.
 - Four automated billing tests cover server pricing and tampered selections; membership access/expiry; real Standard Webhooks HMAC validation including forgery/stale timestamps; and the SQL migration's transaction lifecycle on a local PostgreSQL engine (PGlite).
@@ -44,12 +46,11 @@ The sandbox key was prepared for review but NOT created; its dialog was canceled
 ## Remaining work: not yet verified end to end
 
 1. Confirm creation of the scoped sandbox key, then store it only in local or test-server environment secrets. Never put credentials in this repository or in browser-exposed variables.
-2. Database preparation completed: after the owner connected Supabase and requested launch preparation, the additive billing migration was applied to the existing project qnknfgbwcqchmhxobbnx. The subscription table was empty. Verification confirmed zero billing records, RLS, no anon/authenticated activation permission, service-role-only activation, and SECURITY INVOKER. Calls/leads/recordings and existing access were not changed.
-3. Configure a reachable TEST webhook receiver at /api/webhooks/whop, pinned to 2026-09-25, subscribed to membership.activated, membership.deactivated and membership.updated. Store its signing secret verbatim as WHOP_WEBHOOK_SECRET. A Vercel preview is authorized; no Whop webhook destination has been created yet.
-4. Test a signed-in test customer's selection, checkout, sandbox payment, webhook delivery, activation, access checks, receipt, billing portal, cancellation, failed renewal and recovery. Test a second user's attempted checkout/portal access, duplicate and out-of-order webhooks, decline and abandoned checkout. A provider sandbox purchase and full browser journey have NOT yet been executed.
-5. Desktop/mobile design checks completed in connected Chrome; actual provider payment options still require credentials. The new /billing-preview route is an explicitly labeled interactive design demo, unavailable in Vercel production. It never calls billing or telephony APIs. Hosted payment branding must remain consistent with the application.
-6. Confirm the product's outbound calling use case and Pakistan individual payout setup are approved by Whop before launch. This turn did not claim merchant or payout approval.
-7. Only after explicit launch approval: configure live products/secrets, verify the already-applied migration and reconcile existing subscriptions, set BILLING_PROVIDER=whop and BILLING_ENABLED=true, WHOP_SANDBOX=false, and WHOP_LIVE_PAYMENTS_APPROVED=true; then approve deployment separately. Preserve rollback access to old subscriptions. Never reuse sandbox subscription rows in production.
+2. Configure a reachable TEST webhook receiver at /api/webhooks/whop, pinned to 2026-09-25, subscribed to membership.activated, membership.deactivated and membership.updated. Store its signing secret verbatim as WHOP_WEBHOOK_SECRET. A Vercel preview is authorized; no Whop webhook destination has been created yet.
+3. Test a signed-in test customer's selection, checkout, sandbox payment, webhook delivery, activation, access checks, receipt, billing portal, cancellation, failed renewal and recovery. Test a second user's attempted checkout/portal access, duplicate and out-of-order webhooks, decline and abandoned checkout. A provider sandbox purchase and full browser journey have NOT yet been executed.
+4. Desktop/mobile design checks completed in connected Chrome; actual provider payment options still require credentials. The new /billing-preview route is an explicitly labeled interactive design demo, unavailable in Vercel production. It never calls billing or telephony APIs. Hosted payment branding must remain consistent with the application.
+5. Confirm the product's outbound calling use case and Pakistan individual payout setup are approved by Whop before launch. This turn did not claim merchant or payout approval.
+6. Only after explicit launch approval: configure live products/secrets, verify the already-applied migration and reconcile existing subscriptions, set BILLING_PROVIDER=whop and BILLING_ENABLED=true, WHOP_SANDBOX=false, and WHOP_LIVE_PAYMENTS_APPROVED=true; then approve deployment separately. Preserve rollback access to old subscriptions. Never reuse sandbox subscription rows in production.
 
 ## Local commands
 
