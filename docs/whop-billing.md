@@ -30,7 +30,7 @@ Account: biz_grbNEyRgxZKzXj (separate from the live biz_QkHaYBWEOHZ6dD account).
 
 All three are hidden. No live checkout links are published. The checkout API creates hidden seat-priced recurring variants for monthly or annual billing from the shared catalog. It never accepts a price from the browser. No free trial is configured for paid checkout.
 
-A sandbox key creation form is prepared but NOT submitted. Name: GrowthDialer sandbox integration. Expires November 6, 2026 at 00:00 UTC (05:00 Pakistan time). Six scopes selected: checkout_configuration:basic:read, checkout_configuration:create, plan:basic:read, plan:create, member:basic:read, member:manage. The in-app renewal controls and payment history additionally require membership:update and payment:basic:read; these are NOT yet granted. No payment-creation, payout, transfer, membership-creation or administrative scopes are needed. Credential creation remains unsubmitted and requires browser action-time confirmation. The API client explicitly pins requests to 2026-09-25.
+The sandbox key was prepared for review but NOT created; its dialog was canceled after scope review. Name: GrowthDialer sandbox integration. Expires November 6, 2026 at 00:00 UTC (05:00 Pakistan time). Eight proposed scopes: checkout_configuration:basic:read, checkout_configuration:create, plan:basic:read, plan:create, member:basic:read, member:manage, membership:update and payment:basic:read. None are granted until key creation is approved. No payment-creation, payout, transfer, membership-creation or administrative scopes are needed. Credential creation remains unsubmitted and requires browser action-time confirmation. The API client explicitly pins requests to 2026-09-25.
 
 ## Validation
 
@@ -44,12 +44,12 @@ A sandbox key creation form is prepared but NOT submitted. Name: GrowthDialer sa
 ## Remaining work: not yet verified end to end
 
 1. Confirm creation of the scoped sandbox key, then store it only in local or test-server environment secrets. Never put credentials in this repository or in browser-exposed variables.
-2. Supply an isolated Supabase test project's URL, anon key and service-role key through secure environment configuration. Apply the existing subscription migration followed by 20261030_whop_billing.sql to that test project. After the owner connected Supabase and requested launch preparation, the additive billing migration was applied to the existing project qnknfgbwcqchmhxobbnx. The subscription table was empty. Verification confirmed zero billing records, RLS, no anon/authenticated activation permission, service-role-only activation, and SECURITY INVOKER. Calls/leads/recordings and existing access were not changed.
+2. Database preparation completed: after the owner connected Supabase and requested launch preparation, the additive billing migration was applied to the existing project qnknfgbwcqchmhxobbnx. The subscription table was empty. Verification confirmed zero billing records, RLS, no anon/authenticated activation permission, service-role-only activation, and SECURITY INVOKER. Calls/leads/recordings and existing access were not changed.
 3. Configure a reachable TEST webhook receiver at /api/webhooks/whop, pinned to 2026-09-25, subscribed to membership.activated, membership.deactivated and membership.updated. Store its signing secret verbatim as WHOP_WEBHOOK_SECRET. A Vercel preview is authorized; no Whop webhook destination has been created yet.
 4. Test a signed-in test customer's selection, checkout, sandbox payment, webhook delivery, activation, access checks, receipt, billing portal, cancellation, failed renewal and recovery. Test a second user's attempted checkout/portal access, duplicate and out-of-order webhooks, decline and abandoned checkout. A provider sandbox purchase and full browser journey have NOT yet been executed.
-5. Verify desktop/mobile layouts visually and all actual payment options in the connected test deployment. The new /billing-preview route is an explicitly labeled interactive design demo, unavailable in Vercel production. It never calls billing or telephony APIs. Hosted payment branding must remain consistent with the application.
+5. Desktop/mobile design checks completed in connected Chrome; actual provider payment options still require credentials. The new /billing-preview route is an explicitly labeled interactive design demo, unavailable in Vercel production. It never calls billing or telephony APIs. Hosted payment branding must remain consistent with the application.
 6. Confirm the product's outbound calling use case and Pakistan individual payout setup are approved by Whop before launch. This turn did not claim merchant or payout approval.
-7. Only after explicit launch approval: configure live products/secrets, apply reviewed production migration, reconcile existing subscriptions, set BILLING_PROVIDER=whop and BILLING_ENABLED=true, WHOP_SANDBOX=false, and WHOP_LIVE_PAYMENTS_APPROVED=true; then approve deployment separately. Preserve rollback access to old subscriptions. Never reuse sandbox subscription rows in production.
+7. Only after explicit launch approval: configure live products/secrets, verify the already-applied migration and reconcile existing subscriptions, set BILLING_PROVIDER=whop and BILLING_ENABLED=true, WHOP_SANDBOX=false, and WHOP_LIVE_PAYMENTS_APPROVED=true; then approve deployment separately. Preserve rollback access to old subscriptions. Never reuse sandbox subscription rows in production.
 
 ## Local commands
 
@@ -94,3 +94,12 @@ The Supabase advisor had pre-existing warnings about mutable function search pat
 ## Generated visual asset
 
 Built-in image generation created public/billing/conversation-sculpture.webp (1672×941, approximately 74 KB). The source is an original graphite/frosted-glass acoustic ribbon with restrained cyan rim lighting, with no text, logos, people, UI or charts. It appears on the public pricing page and the in-product plan card. See docs/billing-artwork.md for the generation specification.
+
+## Vercel preview and browser verification
+
+- Tested deployment: https://growthdialer-f6zywykd6-growthdialers-projects-1864ecf9.vercel.app (READY, commit 9adb188e5464c03cd336fb9f4a07cfa4771c5ca4).
+- Billing design review: /billing-preview. Pricing review: /pricing. The design preview uses sample records, not a real activated subscription.
+- Desktop and mobile layouts were inspected in connected Chrome. Mobile pricing and billing had no horizontal overflow; the checkout dialog fit the screen. Pricing rendered a single H1 and the new optimized artwork.
+- Preview seat/cycle selection produced the correct three-seat annual totals: Starter $1,404, Growth $2,268, Pro $3,420. Cancellation confirmation and resuming renewal updated sample state correctly.
+- Protected /billing redirected a signed-out visitor to sign-in. Pricing selection retained its plan/seat/cycle parameters at /checkout, where purchasing correctly remained unavailable while billing was disabled.
+- Vercel built the source successfully. Production was not promoted. No provider sandbox payment, authenticated customer transaction, failed-renewal recovery, or existing calling workflow has been exercised against the deployment yet.
