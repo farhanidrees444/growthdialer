@@ -35,8 +35,9 @@ export default async function Checkout({
   } = await db.auth.getUser();
   const next = `/checkout?${new URLSearchParams(params as Record<string, string>).toString()}`;
   const host = (await headers()).get("host");
-  if (host && host !== new URL(billingAppUrl()).host)
-    redirect(`${billingAppUrl()}${next}`);
+  const appOrigin = billingAppUrl(host ? `https://${host}` : undefined);
+  if (host && host !== new URL(appOrigin).host)
+    redirect(`${appOrigin}${next}`);
   if (!user) redirect(`/login?next=${encodeURIComponent(next)}`);
   if (params.intent) {
     const { data: intent } = await db
@@ -55,7 +56,7 @@ export default async function Checkout({
           seats: intent.seats,
         }}
         sessionId={intent.checkout_id}
-        returnUrl={`${billingAppUrl()}/checkout/complete?intent=${intent.id}`}
+        returnUrl={`${appOrigin}/checkout/complete?intent=${intent.id}`}
         sandbox={whopSandbox()}
       />
     );

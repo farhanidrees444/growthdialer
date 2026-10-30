@@ -72,8 +72,8 @@ export async function GET(request: NextRequest) {
     trialEndsAt: data?.trial_ends_at ?? null,
     currentPeriodEnd: data?.current_period_end ?? null,
     active:
-      data?.billing_provider === "whop"
-        ? data.whop_sandbox === whopSandbox() &&
+      isWhopSelected()
+        ? data?.billing_provider === "whop" && data.whop_sandbox === whopSandbox() &&
           hasSubscriptionAccess(data.status, data.current_period_end)
         : data?.status === "active" || data?.status === "trialing",
     checkoutConfirmed:

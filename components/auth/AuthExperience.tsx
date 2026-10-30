@@ -31,14 +31,14 @@ type Mode = 'login' | 'signup';
 function checkoutNext() {
   if (typeof window === 'undefined') return '/dashboard';
   const next = new URLSearchParams(window.location.search).get('next');
-  return next && (next.startsWith('/checkout?') || next.startsWith('/checkout/complete?')) ? next : '/dashboard';
+  return next && (next.startsWith('/checkout?') || next.startsWith('/checkout/complete?') || next.startsWith('/api/checkout?') || next === '/billing') ? next : '/dashboard';
 }
 
 const APP_ORIGIN = 'https://app.growthdialer.com';
 function authCallbackUrl(): string {
   if (typeof window !== 'undefined') {
     const h = window.location.hostname;
-    if (h === 'localhost' || h === '127.0.0.1' || h.endsWith('.vercel.app')) return `${window.location.origin}/auth/callback?next=${encodeURIComponent(checkoutNext())}`;
+    if (h === 'localhost' || h === '127.0.0.1' || /^growthdialer-[a-z0-9-]+-growthdialers-projects-1864ecf9\.vercel\.app$/.test(h)) return `${window.location.origin}/auth/callback?next=${encodeURIComponent(checkoutNext())}`;
   }
   return `${APP_ORIGIN}/auth/callback?next=${encodeURIComponent(checkoutNext())}`;
 }
@@ -127,11 +127,20 @@ export function AuthExperience({ initialMode }: { initialMode: Mode }) {
   }
 
   async function handleGoogle() {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: authCallbackUrl() },
-    });
+    setError(null);
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: authCallbackUrl() },
+      });
+      if (error) throw error;
+    } catch {
+      setError('Google sign-in is unavailable right now. Please try email sign-in or retry.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {

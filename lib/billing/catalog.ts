@@ -27,8 +27,10 @@ export function parsePurchase(value: unknown) {
   const v = value as Record<string, unknown> | null;
   if (
     !v ||
-    !Object.hasOwn(BILLING_CATALOG, String(v.plan)) ||
-    !["monthly", "annual"].includes(String(v.cycle))
+    typeof v.plan !== "string" ||
+    typeof v.cycle !== "string" ||
+    !Object.hasOwn(BILLING_CATALOG, v.plan) ||
+    !["monthly", "annual"].includes(v.cycle)
   )
     throw new Error("Invalid selection");
   const seats = Number(v.seats);

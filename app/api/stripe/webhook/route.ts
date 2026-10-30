@@ -29,7 +29,6 @@ async function syncWorkspaceBilling(
 }
 
 export async function POST(req: NextRequest) {
-  if (isWhopSelected()) return Response.json({ error: 'Legacy billing requires reconciliation' }, { status: 409 });
   // Billing bypass: acknowledge without processing (avoids provider retry storms).
   if (!isBillingEnabled()) {
     return Response.json({ received: true, billingEnabled: false });
@@ -63,6 +62,8 @@ export async function POST(req: NextRequest) {
     console.error("[STRIPE-WEBHOOK] Signature verification failed:", err);
     return Response.json({ error: "Invalid signature" }, { status: 400 });
   }
+
+  if (isWhopSelected()) return Response.json({ received: true, ignored: true });
 
   const supabase = createServiceClient();
   if (!supabase) {

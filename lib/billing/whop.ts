@@ -35,9 +35,12 @@ export function getWhop() {
     maxRetries: 1,
   });
 }
-export function billingAppUrl() {
+export function billingAppUrl(requestOrigin?: string) {
   if (process.env.VERCEL_ENV === "preview" && process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
+    const approved = [process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL]
+      .filter(Boolean).map((host) => `https://${host}`);
+    if (requestOrigin && approved.includes(requestOrigin)) return requestOrigin;
+    return approved[0];
   }
   const url = new URL(
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",

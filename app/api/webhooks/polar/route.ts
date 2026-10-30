@@ -109,7 +109,6 @@ function normalizeSubscription(eventType: string, object: JsonRecord) {
 }
 
 export async function POST(request: NextRequest) {
-  if (isWhopSelected()) return Response.json({ error: 'Legacy billing requires reconciliation' }, { status: 409 });
   // Billing bypass: acknowledge without processing (avoids provider retry storms).
   if (!isBillingEnabled()) {
     return NextResponse.json({ received: true, billingEnabled: false });
@@ -130,6 +129,8 @@ export async function POST(request: NextRequest) {
   const eventType = getString(event.type) ?? getString(event.event) ?? 'unknown';
   const eventId = request.headers.get('webhook-id') ?? getString(event.id) ?? randomUUID();
   const object = asRecord(asRecord(event.data).object ?? event.data);
+  if (isWhopSelected()) return Response.json({ received: true, ignored: true });
+
   const supabase = createServiceClient();
 
   if (!supabase) {

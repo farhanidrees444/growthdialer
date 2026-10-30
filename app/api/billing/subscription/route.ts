@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       { error: "Subscription management is not available yet" },
       { status: 503 },
     );
-  if (request.headers.get("origin") !== billingAppUrl())
+  if (request.headers.get("origin") !== billingAppUrl(request.headers.get("origin") || undefined))
     return NextResponse.json(
       { error: "Invalid request origin" },
       { status: 403 },
@@ -65,13 +65,15 @@ export async function POST(request: NextRequest) {
     if (membership.account.id !== process.env.WHOP_COMPANY_ID)
       throw new Error("Account mismatch");
     // Ownership is checked against our server-recorded intent before any mutation.
-    const { data: intent } = await db
+    const { data: intent, error: intentError } = await db
       .from("billing_checkout_intents")
       .select("id")
       .eq("id", membership.metadata.growthdialer_intent)
       .eq("membership_id", membership.id)
       .eq("user_id", user.id)
       .maybeSingle();
+    if (intentError)
+      return NextResponse.json({ error: "Billing is temporarily unavailable. Please retry." }, { status: 503 });
     if (!intent)
       return NextResponse.json(
         { error: "Subscription ownership could not be verified" },

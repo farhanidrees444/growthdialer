@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
   if (isWhopSelected()) {
     if (!whopReady()) return NextResponse.json({ error: 'Billing is not available yet' }, { status: 503 });
-    if (request.headers.get('origin') !== billingAppUrl()) return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+    if (request.headers.get('origin') !== billingAppUrl(request.headers.get('origin') || undefined)) return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
     const { data, error } = await supabase.from('subscriptions').select('whop_membership_id, whop_sandbox').eq('user_id', user.id).maybeSingle();
     if (error || !data?.whop_membership_id || data.whop_sandbox !== whopSandbox()) return NextResponse.json({ error: 'No subscription to manage' }, { status: 404 });
     try {

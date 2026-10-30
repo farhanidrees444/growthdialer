@@ -32,7 +32,9 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
 
   if (!user && protectedRoutes.some(r => (path === r || path.startsWith(`${r}/`)))) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const login = new URL('/login', request.url)
+    if (path === '/billing' || path.startsWith('/billing/')) login.searchParams.set('next', '/billing')
+    return NextResponse.redirect(login)
   }
 
   if (user && authRoutes.includes(path)) {

@@ -16,7 +16,8 @@ export async function POST(request: NextRequest) {
       { error: "Checkout is not available yet" },
       { status: 503 },
     );
-  if (request.headers.get("origin") !== billingAppUrl())
+  const appOrigin = billingAppUrl(request.headers.get("origin") || undefined);
+  if (request.headers.get("origin") !== appOrigin)
     return NextResponse.json(
       { error: "Invalid request origin" },
       { status: 403 },
@@ -79,22 +80,24 @@ export async function POST(request: NextRequest) {
       { error: "This plan is not available yet" },
       { status: 503 },
     );
-  const intentId = randomUUID();
-  const { error: intentError } = await db
-    .from("billing_checkout_intents")
-    .insert({
-      id: intentId,
-      user_id: user.id,
-      ...selection,
-      sandbox: whopSandbox(),
-      product_id: productId,
-      amount: purchaseTotal(selection.plan, selection.cycle, selection.seats),
-    });
-  if (intentError)
-    return NextResponse.json(
-      { error: "Could not prepare checkout" },
-      { status: 503 },
-    );
+  // Reservation shares the activation transaction's user lock and reuses a
+  // single pending intent. Provider retries therefore share one idempotency key.
+  const { data: reservation, error: reservationError } = await db.rpc("reserve_whop_checkout", {
+    p_id: randomUUID(), p_user_id: user.id, p_plan: selection.plan,
+    p_cycle: selection.cycle, p_seats: selection.seats,
+    p_amount: purchaseTotal(selection.plan, selection.cycle, selection.seats),
+    p_product_id: productId, p_sandbox: whopSandbox(),
+  });
+  if (reservationError || !reservation) {
+    const conflict = reservationError?.code === "P0001";
+    return NextResponse.json({ error: conflict
+      ? "An existing subscription or unfinished checkout needs attention. Resume the original selection or contact support to change it."
+      : "Could not prepare checkout. Please retry." }, { status: conflict ? 409 : 503 });
+  }
+  const intentId = reservation.id;
+  if (reservation.checkout_id)
+    return NextResponse.json({ url: `/checkout?intent=${intentId}`, sessionId: reservation.checkout_id, intentId });
+
   try {
     const config = await getWhop().checkoutConfigurations.create(
       {
@@ -105,6 +108,9 @@ export async function POST(request: NextRequest) {
           product_id: productId,
           title: `${selection.plan} · ${selection.seats} seats`,
           plan_type: "renewal",
+          force_create_new_plan: true,
+          stock: 1,
+          unlimited_stock: false,
           currency: "usd",
           initial_price: 0,
           renewal_price: purchaseTotal(
@@ -118,7 +124,7 @@ export async function POST(request: NextRequest) {
           release_method: "buy_now",
         },
         metadata: { growthdialer_intent: intentId },
-        redirect_url: `${billingAppUrl()}/checkout/complete?intent=${intentId}`,
+        redirect_url: `${appOrigin}/checkout/complete?intent=${intentId}`,
       },
       { idempotencyKey: intentId },
     );

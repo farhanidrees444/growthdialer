@@ -18,6 +18,8 @@ test("server pricing rejects tampering and uses annual invoice totals", () => {
     { plan: "starter", cycle: "monthly", seats: 2 },
   );
   for (const bad of [
+    { plan: ["starter"], cycle: "monthly", seats: 1 },
+    { plan: "starter", cycle: ["monthly"], seats: 1 },
     { plan: "__proto__", cycle: "monthly", seats: 1 },
     { plan: "pro", cycle: "weekly", seats: 1 },
     { plan: "pro", cycle: "annual", seats: 0 },
@@ -29,6 +31,7 @@ test("server pricing rejects tampering and uses annual invoice totals", () => {
 test("only confirmed, unexpired subscriptions grant access", () => {
   const future = new Date(Date.now() + 60000).toISOString();
   assert.equal(hasSubscriptionAccess("active", future), true);
+  assert.equal(hasSubscriptionAccess("trialing", future), true);
   for (const status of ["past_due", "canceled", "incomplete"])
     assert.equal(hasSubscriptionAccess(status, future), false);
   assert.equal(hasSubscriptionAccess("active", null), false);
@@ -75,12 +78,21 @@ test("transactional subscription lifecycle, retry, dedup, ownership and ordering
       "utf8",
     ),
   );
+  await db.exec(await readFile(new URL("../../supabase/migrations/20261030001758_whop_single_pending_checkout.sql", import.meta.url), "utf8"));
+  await db.exec(await readFile(new URL("../../supabase/migrations/20261030002217_whop_reserve_checkout.sql", import.meta.url), "utf8"));
   const user = "11111111-1111-4111-8111-111111111111",
     intent = "22222222-2222-4222-8222-222222222222";
   await db.query(
     `INSERT INTO billing_checkout_intents(id,user_id,plan,cycle,seats,amount,product_id,sandbox,checkout_id,provider_plan_id) VALUES($1,$2,'growth','monthly',2,158,'prod_growth',true,'ch_test','plan_growth')`,
     [intent, user],
   );
+  await assert.rejects(db.query(
+    `INSERT INTO billing_checkout_intents(id,user_id,plan,cycle,seats,amount,product_id,sandbox) VALUES('44444444-4444-4444-8444-444444444444',$1,'pro','monthly',1,119,'prod_growth',true)`, [user]
+  ), /billing_one_pending_checkout/);
+  const reserve = (id, plan = "growth") => db.query("SELECT reserve_whop_checkout($1,$2,$3,'monthly',2,158,'prod_growth',true) AS intent", [id,user,plan]);
+  const reserved = await reserve("44444444-4444-4444-8444-444444444444");
+  assert.equal(reserved.rows[0].intent.id, intent);
+  await assert.rejects(reserve("44444444-4444-4444-8444-444444444444", "pro"), /Pending checkout selection differs/);
   const apply = (
     id,
     status,
@@ -116,6 +128,7 @@ test("transactional subscription lifecycle, retry, dedup, ownership and ordering
   );
   await apply("msg_retry", "active");
   assert.equal((await state()).seats, 2);
+  await assert.rejects(reserve("44444444-4444-4444-8444-444444444444"), /Existing subscription requires reconciliation/);
   await apply("msg_retry", "canceled", "2026-10-31T00:00:00Z");
   assert.equal((await state()).status, "active");
   await apply("msg_failed", "past_due", "2026-10-31T00:00:00Z");
@@ -151,10 +164,9 @@ test("transactional subscription lifecycle, retry, dedup, ownership and ordering
   );
   await apply("msg_old_cancel", "canceled", "2026-11-05T00:00:00Z");
   assert.equal((await state()).whop_membership_id, "mem_new");
-  await assert.rejects(
-    db.query(
-      "SET ROLE authenticated; SELECT apply_whop_membership(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)",
-    ),
-  );
+  await db.exec("SET ROLE authenticated");
+  await assert.rejects(apply("msg_unauthorized", "active"), /permission denied for function apply_whop_membership/);
+  await assert.rejects(reserve("44444444-4444-4444-8444-444444444444"), /permission denied for function reserve_whop_checkout/);
+  await db.exec("RESET ROLE");
   await db.close();
 });

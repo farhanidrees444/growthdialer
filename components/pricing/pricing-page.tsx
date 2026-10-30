@@ -296,33 +296,35 @@ function PlanCard({
   currentPlan,
   seats,
   setSeats,
+  checkoutAvailable,
 }: {
   plan: PaidPlan;
   cycle: Cycle;
   currentPlan: PlanKey;
   seats: number;
   setSeats: (value: number) => void;
+  checkoutAvailable: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
   const highlighted = searchParams.get("highlight") === plan;
   const unit = PRICE[plan][cycle];
-  const total = unit * seats;
+  const total = (cycle === "annual" ? PRICE[plan].annualBilled : unit) * seats;
   const current = currentPlan === plan;
   const lower = planIndex(currentPlan) > planIndex(plan);
-  // Billing bypass: checkout is disabled until BILLING_ENABLED=true — every
-  // CTA routes through signup; the plan/seat/cycle selection is preserved.
-  const signupUrl = `/checkout?plan=${plan}&seats=${seats}&cycle=${cycle}`;
+  const selectionPath = `/checkout?plan=${plan}&seats=${seats}&cycle=${cycle}`;
+  const signupUrl = checkoutAvailable ? selectionPath : "https://app.growthdialer.com/signup";
 
   useEffect(() => {
     if (!highlighted || !ref.current) return;
     ref.current.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [highlighted]);
 
-  // Billing bypass: no checkout exists yet — every CTA starts a free trial.
   const cta = current
     ? "Manage subscription"
-    : lower
+    : !checkoutAvailable
+      ? "Create account"
+      : lower
       ? "Review plan options"
       : "Choose plan";
 
@@ -382,7 +384,7 @@ function PlanCard({
         </div>
         {cycle === "annual" && (
           <p className="mt-2 text-xs text-zinc-500">
-            Billed ${PRICE[plan].annualBilled.toLocaleString()} per seat
+            Billed ${PRICE[plan].annualBilled.toLocaleString("en-US")} per seat
             annually.
           </p>
         )}
@@ -416,9 +418,9 @@ function PlanCard({
         <p className="mt-2 text-xs text-zinc-500">
           Total:{" "}
           <span className="font-semibold text-zinc-950 tabular-nums">
-            ${total.toLocaleString()}
+            ${total.toLocaleString("en-US")}
           </span>{" "}
-          / month
+          / {cycle === "annual" ? "year" : "month"}
         </p>
       </div>
 
@@ -447,7 +449,7 @@ function PlanCard({
   );
 }
 
-export function PricingPage() {
+export function PricingPage({ checkoutAvailable = false }: { checkoutAvailable?: boolean }) {
   const session = useSupabaseSession();
   const [currentPlan, setCurrentPlan] = useState<PlanKey>("trial");
   useEffect(() => {
@@ -589,6 +591,7 @@ export function PricingPage() {
                 currentPlan={currentPlan}
                 seats={seats[plan]}
                 setSeats={seatSetter[plan]}
+                checkoutAvailable={checkoutAvailable}
               />
             </Reveal>
           ))}

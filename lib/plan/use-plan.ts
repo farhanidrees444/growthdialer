@@ -83,40 +83,20 @@ export function usePlan(): UsePlanResult {
   const [billingDisabled, setBillingDisabled] = useState(false);
 
   const refresh = useCallback(async () => {
-    // Billing bypass: when billing is disabled server-side, everything is
-    // open — skip the subscription lookup entirely.
-    if (!billingDisabled) {
-      try {
-        const res = await fetch('/api/subscription/status', { cache: 'no-store' });
-        if (res.ok) {
-          const json = (await res.json()) as { billingEnabled?: boolean };
-          if (json && json.billingEnabled === false) {
-            setBillingDisabled(true);
-            setRow(null);
-            setClosed(false);
-            return;
-          }
-        }
-      } catch {
-        // Fall through to the subscription lookup on network errors.
-      }
-    } else {
-      setRow(null);
-      setClosed(false);
-      return;
-    }
-
     try {
       const res = await fetch('/api/subscription/status', { cache: 'no-store' });
       const data = await res.json();
-      if (!res.ok || !data.active) { setRow(null); setClosed(true); return; }
+      if (!res.ok) { setBillingDisabled(false); setRow(null); setClosed(true); return; }
+      const disabled = data.billingEnabled === false;
+      setBillingDisabled(disabled);
+      if (disabled) { setRow(null); setClosed(false); return; }
+      if (!data.active) { setRow(null); setClosed(true); return; }
       setRow({ plan: data.plan, billing_cycle: data.billingCycle, seats: data.seats,
         status: data.status, trial_ends_at: data.trialEndsAt,
         current_period_end: data.currentPeriodEnd, billing_provider: data.provider });
       setClosed(false);
-    } catch { setRow(null); setClosed(true); }
-
-  }, [billingDisabled]);
+    } catch { setBillingDisabled(false); setRow(null); setClosed(true); }
+  }, []);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -154,5 +134,5 @@ export function usePlan(): UsePlanResult {
         return isFeatureEnabled(effectivePlan, feature);
       },
     };
-  }, [closed, row]);
+  }, [billingDisabled, closed, row]);
 }

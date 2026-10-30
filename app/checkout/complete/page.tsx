@@ -3,9 +3,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2, Clock3 } from "lucide-react";
-function Confirmation() {
-  const query = useSearchParams();
-  const intent = query.get("intent");
+function Confirmation({ intent }: { intent: string | null }) {
   const [state, setState] = useState("checking");
   useEffect(() => {
     let canceled = false;
@@ -86,10 +84,14 @@ function Confirmation() {
     </main>
   );
 }
+function IntentConfirmation() {
+  const intent = useSearchParams().get("intent");
+  return <Confirmation key={intent} intent={intent} />;
+}
 export default function CompletePage() {
   return (
     <Suspense fallback={null}>
-      <Confirmation />
+      <IntentConfirmation />
     </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 # GrowthDialer billing review
 
-Updated October 30, 2026. The owner authorized a Vercel review deployment. Work remains on feat/whop-subscriptions; no production merge, live checkout publication, live product creation or real payment activation has been performed.
+Updated October 30, 2026. The owner authorized the Vercel review deployment and subsequently requested release to the main domain. Work remains on feat/whop-subscriptions; no production merge, live checkout publication, live product creation or real payment activation has been performed.
 
 ## Existing billing audit
 
@@ -30,7 +30,9 @@ Account: biz_grbNEyRgxZKzXj (separate from the live biz_QkHaYBWEOHZ6dD account).
 
 All three are hidden. No live checkout links are published. The checkout API creates hidden seat-priced recurring variants for monthly or annual billing from the shared catalog. It never accepts a price from the browser. No free trial is configured for paid checkout.
 
-The sandbox key was prepared for review but NOT created; its dialog was canceled after scope review. Name: GrowthDialer sandbox integration. Expires November 6, 2026 at 00:00 UTC (05:00 Pakistan time). Eight proposed scopes: checkout_configuration:basic:read, checkout_configuration:create, plan:basic:read, plan:create, member:basic:read, member:manage, membership:update and payment:basic:read. None are granted until key creation is approved. No payment-creation, payout, transfer, membership-creation or administrative scopes are needed. Credential creation remains unsubmitted and requires browser action-time confirmation. The API client explicitly pins requests to 2026-09-25.
+The scoped sandbox key was created with owner approval and stored as a server-only Vercel Preview Secret on feat/whop-subscriptions. Name: GrowthDialer sandbox integration. Expiration was verified in the dashboard as November 6, 2026 (seven days after creation). Eight scopes: checkout_configuration:basic:read, checkout_configuration:create, plan:basic:read, plan:create, member:basic:read, member:manage, membership:update and payment:basic:read. No payment-creation, payout, transfer, membership-creation or administrative scopes were granted. The API client explicitly pins requests to 2026-09-25.
+
+Sandbox webhook hook_43P1dCbodX2nI targets https://app.growthdialer.com/api/webhooks/whop for membership.activated, membership.deactivated, membership.updated and membership.cancel_at_period_end_changed. Its signing secret is stored only as a branch-specific Preview Secret. The dashboard labels the webhook schema V1; its editor exposes no date-version setting. Production has no sandbox credentials and billing remains disabled, so this destination is not yet a working end-to-end sandbox receiver. No successful delivery is claimed.
 
 ## Validation
 
@@ -45,12 +47,11 @@ The sandbox key was prepared for review but NOT created; its dialog was canceled
 
 ## Remaining work: not yet verified end to end
 
-1. Confirm creation of the scoped sandbox key, then store it only in local or test-server environment secrets. Never put credentials in this repository or in browser-exposed variables.
-2. Configure a reachable TEST webhook receiver at /api/webhooks/whop, pinned to 2026-09-25, subscribed to membership.activated, membership.deactivated and membership.updated. Store its signing secret verbatim as WHOP_WEBHOOK_SECRET. A Vercel preview is authorized; no Whop webhook destination has been created yet.
-3. Test a signed-in test customer's selection, checkout, sandbox payment, webhook delivery, activation, access checks, receipt, billing portal, cancellation, failed renewal and recovery. Test a second user's attempted checkout/portal access, duplicate and out-of-order webhooks, decline and abandoned checkout. A provider sandbox purchase and full browser journey have NOT yet been executed.
-4. Desktop/mobile design checks completed in connected Chrome; actual provider payment options still require credentials. The new /billing-preview route is an explicitly labeled interactive design demo, unavailable in Vercel production. It never calls billing or telephony APIs. Hosted payment branding must remain consistent with the application.
-5. Confirm the product's outbound calling use case and Pakistan individual payout setup are approved by Whop before launch. This turn did not claim merchant or payout approval.
-6. Only after explicit launch approval: configure live products/secrets, verify the already-applied migration and reconcile existing subscriptions, set BILLING_PROVIDER=whop and BILLING_ENABLED=true, WHOP_SANDBOX=false, and WHOP_LIVE_PAYMENTS_APPROVED=true; then approve deployment separately. Preserve rollback access to old subscriptions. Never reuse sandbox subscription rows in production.
+1. Complete a reachable sandbox receiver configuration and verify a signed provider delivery. The saved main-domain receiver intentionally fails retryably until sandbox billing is enabled there; preview deployment protection also needs a supported delivery arrangement. Do not disable protection or expose bypass secrets in checkout links.
+2. Test a signed-in test customer's selection, checkout, sandbox payment, webhook delivery, activation, access checks, receipt, billing portal, cancellation, failed renewal and recovery. Test a second user's attempted checkout/portal access, duplicate and out-of-order webhooks, decline and abandoned checkout. A provider sandbox purchase and full browser journey have NOT yet been executed.
+3. Desktop/mobile design checks completed in connected Chrome; actual provider payment options still require credentials. The new /billing-preview route is an explicitly labeled interactive design demo, unavailable in Vercel production. It never calls billing or telephony APIs. Hosted payment branding must remain consistent with the application.
+4. Confirm the product's outbound calling use case and Pakistan individual payout setup are approved by Whop before launch. This turn did not claim merchant or payout approval.
+5. Only after explicit launch approval: configure live products/secrets, verify the already-applied migration and reconcile existing subscriptions, set BILLING_PROVIDER=whop and BILLING_ENABLED=true, WHOP_SANDBOX=false, and WHOP_LIVE_PAYMENTS_APPROVED=true; then approve deployment separately. Preserve rollback access to old subscriptions. Never reuse sandbox subscription rows in production.
 
 ## Local commands
 
@@ -104,3 +105,15 @@ Built-in image generation created public/billing/conversation-sculpture.webp (16
 - Preview seat/cycle selection produced the correct three-seat annual totals: Starter $1,404, Growth $2,268, Pro $3,420. Cancellation confirmation and resuming renewal updated sample state correctly.
 - Protected /billing redirected a signed-out visitor to sign-in. Pricing selection retained its plan/seat/cycle parameters at /checkout, where purchasing correctly remained unavailable while billing was disabled.
 - Vercel built the source successfully. Production was not promoted. No provider sandbox payment, authenticated customer transaction, failed-renewal recovery, or existing calling workflow has been exercised against the deployment yet.
+
+## Review hardening after owner release approval
+
+- Fixed completed database preparation appearing among launch blockers (cubic thread 4419169078).
+- Added an atomic server-only checkout reservation sharing the membership activation lock, plus a unique pending-intent index. Retries reuse one idempotency key. Every inline variant is unique with one unit of stock. An unfinished checkout with different selection requires resuming the original selection or support; abandoned reservations are not silently expired while still payable.
+- Corrected malformed JSON plan/cycle handling, active-provider matching, terminal-subscription repurchase, database-error handling and authenticated RPC permission assertions. Added positive trial access coverage.
+- Limited preview auth callback hosts to this Vercel project, retained checkout/legacy continuation on auth failure, supported approved preview alias origins and removed duplicate subscription status fetches.
+- Corrected annual invoice labels, fixed number formatting, removed pricing-page trial CTA wording, restored account signup while purchases are unavailable, and added pricing-specific Open Graph metadata.
+- Legacy provider events are signature-checked and acknowledged as ignored in Whop mode, avoiding conflicting writes and retry storms. The sandbox maintenance script requires a separate maintenance credential.
+- Added server-only support for the integration-provisioned SUPABASE_SECRET_KEY while retaining the existing service-role variable.
+- Pinned-version sandbox membership listing succeeded with the eight-scope key. Retrieving a deliberately nonexistent membership returned 404 rather than a scope error. This does not prove access to an actual customer membership; the legacy documentation's member:email:read requirement still needs verification with a real sandbox membership before enabling checkout.
+- Production safety flags explicitly preserve BILLING_ENABLED=false, WHOP_SANDBOX=true and WHOP_LIVE_PAYMENTS_APPROVED=false. Live products and live credentials remain untouched.

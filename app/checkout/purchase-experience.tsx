@@ -94,7 +94,7 @@ export function PurchaseExperience({
               </div>
               <div className="my-6">
                 <span className="text-5xl tracking-tight font-semibold">
-                  ${total.toLocaleString()}
+                  ${total.toLocaleString("en-US")}
                 </span>
                 <span className="text-zinc-400">
                   {" "}
@@ -119,7 +119,7 @@ export function PurchaseExperience({
               </div>
             </div>
             <p className="text-xs text-zinc-500 leading-relaxed mt-5">
-              Renews at ${total.toLocaleString()} per{" "}
+              Renews at ${total.toLocaleString("en-US")} per{" "}
               {selection.cycle === "annual" ? "year" : "month"}, plus applicable
               taxes, until canceled. Calling, phone-number and messaging usage
               may incur separate charges. No free trial is included in this
@@ -152,7 +152,7 @@ export function PurchaseExperience({
               <>
                 <div className="border border-white/10 rounded-2xl p-5 mb-6 text-sm text-zinc-300 flex justify-between">
                   <span>Due at checkout, before tax</span>
-                  <strong>${total.toLocaleString()}</strong>
+                  <strong>${total.toLocaleString("en-US")}</strong>
                 </div>
                 <button
                   onClick={() => void proceed()}

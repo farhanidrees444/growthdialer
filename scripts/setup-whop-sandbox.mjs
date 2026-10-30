@@ -3,11 +3,11 @@ import { WhopClient } from "@whop/sdk";
 import { BILLING_CATALOG } from "../lib/billing/catalog.ts";
 if (process.env.WHOP_SANDBOX !== "true")
   throw new Error("This script only supports the sandbox");
-if (!process.env.WHOP_COMPANY_API_KEY || !process.env.WHOP_COMPANY_ID)
-  throw new Error("Sandbox credentials required");
+if (!process.env.WHOP_MAINTENANCE_API_KEY || !process.env.WHOP_COMPANY_ID)
+  throw new Error("Separate sandbox maintenance key with access_pass:basic:read and access_pass:create required");
 const account_id = process.env.WHOP_COMPANY_ID;
 const api = new WhopClient({
-  token: process.env.WHOP_COMPANY_API_KEY,
+  token: process.env.WHOP_MAINTENANCE_API_KEY,
   baseUrl: "https://sandbox-api.whop.com/api/v1",
   apiVersionDate: "2026-09-25",
 });

@@ -284,7 +284,7 @@ export function BillingWorkspace({
       setCheckout({ plan });
       return;
     }
-    if (snapshot?.canManage) {
+    if (snapshot?.canManage && ["active", "trialing", "past_due"].includes(snapshot.status)) {
       setNotice(
         "You already have a subscription. Contact support to arrange a plan or seat change without duplicate billing.",
       );
@@ -589,7 +589,7 @@ export function BillingWorkspace({
       <div className="bill-plan-options">
         {(Object.keys(BILLING_CATALOG) as BillingPlan[]).map((key) => {
           const option = BILLING_CATALOG[key];
-          const current = data.plan === key;
+          const current = data.plan === key && renewable;
           return (
             <section
               key={key}
@@ -639,7 +639,7 @@ export function BillingWorkspace({
                   <Loader2 size={14} className="animate-spin" />
                 ) : current ? (
                   "Current plan"
-                ) : data.canManage && !preview ? (
+                ) : renewable && !preview ? (
                   "Arrange a plan change"
                 ) : (
                   `Choose ${option.name}`
