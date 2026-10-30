@@ -1,4 +1,5 @@
 .gd-billing {
+  --bill-accent: #a78bfa;
   --bill-bg: var(--background, #09090b);
   --bill-panel: var(--card, #18181b);
   --bill-line: rgba(255, 255, 255, 0.08);
@@ -13,6 +14,7 @@
   padding: 32px 32px 100px;
 }
 .app-root[data-theme="light"] .gd-billing {
+  --bill-accent: #6d28d9;
   --bill-bg: #f7f8fa;
   --bill-panel: #fff;
   --bill-line: rgba(9, 9, 11, 0.09);
@@ -32,7 +34,7 @@
 }
 .gd-billing button:focus-visible,
 .gd-billing a:focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid var(--bill-accent);
   outline-offset: 4px;
 }
 .bill-top {
@@ -46,7 +48,7 @@
   font-size: 10px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #a78bfa;
+  color: var(--bill-accent);
   font-weight: 700;
 }
 .bill-title {
@@ -83,13 +85,13 @@
   cursor: not-allowed;
 }
 .bill-button-primary {
-  background: #8b5cf6;
+  background: #7c3aed;
   color: #ffffff;
-  border-color: #8b5cf6;
+  border-color: #7c3aed;
 }
 .bill-button-primary:hover {
-  background: #7c3aed;
-  border-color: #7c3aed;
+  background: #6d28d9;
+  border-color: #6d28d9;
 }
 .bill-status {
   display: inline-flex;
@@ -250,7 +252,7 @@
   width: 13px;
   height: 16px;
   flex-shrink: 0;
-  color: #a78bfa;
+  color: var(--bill-accent);
 }
 .bill-segment {
   display: inline-flex;

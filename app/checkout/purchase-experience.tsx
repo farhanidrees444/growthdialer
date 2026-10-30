@@ -157,7 +157,7 @@ export function PurchaseExperience({
                 <button
                   onClick={() => void proceed()}
                   disabled={busy}
-                  className="w-full flex gap-3 items-center justify-center rounded-xl bg-violet-600 text-white py-4 font-semibold hover:bg-violet-500 disabled:opacity-60"
+                  className="w-full flex gap-3 items-center justify-center rounded-xl bg-violet-600 text-white py-4 font-semibold hover:bg-violet-700 disabled:opacity-60"
                 >
                   {busy ? (
                     <Loader2 className="animate-spin" size={18} />
